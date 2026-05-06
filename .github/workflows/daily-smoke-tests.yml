@@ -1,0 +1,83 @@
+name: Daily Smoke Tests
+
+on:
+  schedule:
+    # Run at 06:00 UTC (11:30 AM IST) every day
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'API URL to test against'
+        required: true
+        default: 'http://localhost:8081'
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  smoke-test:
+    name: Critical Path Smoke Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Setup database
+        run: |
+          npx prisma generate
+          npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: 'file:./dev.db'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+        working-directory: ./flutter
+
+      - name: Start backend dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:8081 --timeout 30000
+        env:
+          NODE_ENV: development
+          JWT_SECRET: ci-test-secret-key-32-chars-long
+          TEST_MODE: true
+
+      - name: Run Smoke Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: ./flutter
+          script: |
+            adb reverse tcp:8081 tcp:8081
+            bash integration_test/e2e_individual/run_smoke_tests.sh
+
+      - name: Upload smoke test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-screenshots
+          path: flutter/screenshots/
+
+      - name: Slack/Email Notification on Failure
+        if: failure()
+        run: |
+          echo "Daily Smoke Test Failed! Please check the logs."
+          # Integrate with Slack/Discord webhooks here if needed
