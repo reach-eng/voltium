@@ -11,7 +11,7 @@ import '../theme/app_theme.dart';
 /// - Gradient "Proceed to UPI Payment" pill button
 
 class TopUpAmountScreen extends StatefulWidget {
-  final VoidCallback? onProceed;
+  final Function(int)? onProceed;
   final VoidCallback? onBack;
   final Function(int)? onAmountChanged;
 
@@ -56,8 +56,9 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
     super.dispose();
   }
 
-  int get _finalAmount =>
-      _isCustom ? int.tryParse(_customAmountCtrl.text) ?? 0 : _selectedAmount ?? 0;
+  int get _finalAmount => _isCustom
+      ? int.tryParse(_customAmountCtrl.text) ?? 0
+      : _selectedAmount ?? 0;
 
   bool get _canProceed => _finalAmount > 0;
 
@@ -122,6 +123,7 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
             top: 0,
             left: 0,
             child: GestureDetector(
+              key: const Key('backButton'),
               onTap: widget.onBack ?? () => Navigator.maybePop(context),
               child: Container(
                 width: 36,
@@ -278,7 +280,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: isSelected ? AppColors.primary : AppColors.onSurfaceAlt,
+                    color:
+                        isSelected ? AppColors.primary : AppColors.onSurfaceAlt,
                   ),
                 ),
                 if (isSelected) ...[
@@ -290,7 +293,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.star, color: Colors.white, size: 12),
+                    child:
+                        const Icon(Icons.star, color: Colors.white, size: 12),
                   ),
                 ],
               ],
@@ -360,15 +364,18 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: const BorderSide(color: AppColors.divider, width: 2),
+                    borderSide:
+                        const BorderSide(color: AppColors.divider, width: 2),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: const BorderSide(color: AppColors.divider, width: 2),
+                    borderSide:
+                        const BorderSide(color: AppColors.divider, width: 2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                    borderSide:
+                        const BorderSide(color: AppColors.primary, width: 2),
                   ),
                 ),
               ),
@@ -410,7 +417,7 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
   Widget _buildProceedButton() {
     return GestureDetector(
       key: const Key('proceedToUpiButton'),
-      onTap: _canProceed ? widget.onProceed : null,
+      onTap: _canProceed ? () => widget.onProceed?.call(_finalAmount) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 56,

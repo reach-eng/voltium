@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -32,6 +33,20 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
   late final AnimationController _pulseCtrl;
   late final AnimationController _entryCtrl;
 
+  Future<void> _reportIssue() async {
+    final uri = Uri.parse('mailto:support@voltium.app?subject=Issue Report');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _contactSupport() async {
+    final uri = Uri.parse('tel:+919876543210');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -56,15 +71,40 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
   @override
   Widget build(BuildContext context) {
     final rider = context.watch<AppProvider>().rider;
-    final isActive = rider?.rentalStatus == 'ACTIVE' || rider?.planStatus == 'ACTIVE';
+    final isActive =
+        rider?.rentalStatus == 'ACTIVE' || rider?.planStatus == 'ACTIVE';
 
     final infoItems = [
-      {'icon': Icons.directions_bike, 'label': 'Vehicle', 'value': rider?.assignedVehicle ?? 'Not Assigned'},
-      {'icon': Icons.credit_card, 'label': 'Plan', 'value': rider?.currentPlan ?? 'No Plan'},
-      {'icon': Icons.calendar_today, 'label': 'Start Date', 'value': rider?.planStartDate ?? 'N/A'},
-      {'icon': Icons.calendar_today, 'label': 'End Date', 'value': rider?.planEndDate ?? 'N/A'},
-      {'icon': Icons.map_outlined, 'label': 'Hub', 'value': rider?.pickupHub ?? 'Not Assigned'},
-      {'icon': Icons.bolt, 'label': 'Days Remaining', 'value': 'N/A'}, // logic simplified for parity
+      {
+        'icon': Icons.directions_bike,
+        'label': 'Vehicle',
+        'value': rider?.assignedVehicle ?? 'Not Assigned'
+      },
+      {
+        'icon': Icons.credit_card,
+        'label': 'Plan',
+        'value': rider?.currentPlan ?? 'No Plan'
+      },
+      {
+        'icon': Icons.calendar_today,
+        'label': 'Start Date',
+        'value': rider?.planStartDate ?? 'N/A'
+      },
+      {
+        'icon': Icons.calendar_today,
+        'label': 'End Date',
+        'value': rider?.planEndDate ?? 'N/A'
+      },
+      {
+        'icon': Icons.map_outlined,
+        'label': 'Hub',
+        'value': rider?.pickupHub ?? 'Not Assigned'
+      },
+      {
+        'icon': Icons.bolt,
+        'label': 'Days Remaining',
+        'value': 'N/A'
+      }, // logic simplified for parity
     ];
 
     return Scaffold(
@@ -99,6 +139,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
       child: Row(
         children: [
           GestureDetector(
+            key: const Key('backButton'),
             onTap: widget.onBack ?? () => Navigator.maybePop(context),
             child: Container(
               width: 40,
@@ -128,7 +169,8 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
 
   Widget _buildInfoCard(List<Map<String, dynamic>> items) {
     final anim = CurvedAnimation(
-        parent: _entryCtrl, curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic));
+        parent: _entryCtrl,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic));
 
     return FadeTransition(
       opacity: anim,
@@ -188,7 +230,8 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
                   ],
                 ),
               );
-            }).toList()..removeLast(), // Remove bottom padding from last item? No, actually last item is better with it or we can just remove it.
+            }).toList()
+              ..removeLast(), // Remove bottom padding from last item? No, actually last item is better with it or we can just remove it.
           ),
         ),
       ),
@@ -232,11 +275,13 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withOpacity(0.5 + (0.5 * _pulseCtrl.value)),
+                  color: const Color(0xFF22C55E)
+                      .withOpacity(0.5 + (0.5 * _pulseCtrl.value)),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF22C55E).withOpacity(0.3 * _pulseCtrl.value),
+                      color: const Color(0xFF22C55E)
+                          .withOpacity(0.3 * _pulseCtrl.value),
                       blurRadius: 8 * _pulseCtrl.value,
                       spreadRadius: 2 * _pulseCtrl.value,
                     )
@@ -284,7 +329,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
           color: Colors.white,
           textColor: AppColors.onSurfaceAlt,
           isOutlined: true,
-          onTap: () {},
+          onTap: _reportIssue,
         ),
         const SizedBox(height: 12),
         _buildActionButton(
@@ -292,7 +337,7 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
           icon: Icons.headset_mic_outlined,
           color: Colors.transparent,
           textColor: AppColors.primary,
-          onTap: () {},
+          onTap: _contactSupport,
         ),
       ],
     );
@@ -315,14 +360,18 @@ class _RentalDetailsScreenState extends State<RentalDetailsScreen>
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(999),
-          border: isOutlined ? Border.all(color: AppColors.divider, width: 2) : null,
-          boxShadow: isPrimary && !disabled ? [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            )
-          ] : null,
+          border: isOutlined
+              ? Border.all(color: AppColors.divider, width: 2)
+              : null,
+          boxShadow: isPrimary && !disabled
+              ? [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Opacity(
           opacity: disabled ? 0.5 : 1.0,

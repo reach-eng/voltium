@@ -40,9 +40,16 @@ class _AppBottomNavState extends State<AppBottomNav>
 
   static const _tabs = [
     _TabInfo(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
-    _TabInfo(icon: Icons.account_balance_wallet_outlined, activeIcon: Icons.account_balance_wallet, label: 'Wallet'),
-    _TabInfo(icon: Icons.headset_mic_outlined, activeIcon: Icons.headset_mic, label: 'Support'),
-    _TabInfo(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
+    _TabInfo(
+        icon: Icons.account_balance_wallet_outlined,
+        activeIcon: Icons.account_balance_wallet,
+        label: 'Wallet'),
+    _TabInfo(
+        icon: Icons.headset_mic_outlined,
+        activeIcon: Icons.headset_mic,
+        label: 'Support'),
+    _TabInfo(
+        icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
   ];
 
   @override
@@ -103,11 +110,14 @@ class _AppBottomNavState extends State<AppBottomNav>
                   child: Row(
                     children: List.generate(_tabs.length, (index) {
                       return _NavButton(
-                        key: widget.tabKeys != null && index < widget.tabKeys!.length ? widget.tabKeys![index] : null,
+                        key: widget.tabKeys != null &&
+                                index < widget.tabKeys!.length
+                            ? widget.tabKeys![index]
+                            : null,
                         tab: _tabs[index],
                         isActive: index == widget.currentIndex,
-                        hasNotification:
-                            (index == 0 || index == 2) && widget.unreadCount > 0,
+                        hasNotification: (index == 0 || index == 2) &&
+                            widget.unreadCount > 0,
                         onTap: () => widget.onTap(index),
                       );
                     }),
@@ -227,7 +237,9 @@ class _NavButtonState extends State<_NavButton>
                         clipBehavior: Clip.none,
                         children: [
                           Icon(
-                            widget.isActive ? widget.tab.activeIcon : widget.tab.icon,
+                            widget.isActive
+                                ? widget.tab.activeIcon
+                                : widget.tab.icon,
                             color: iconColor,
                             size: 20,
                           ),
@@ -292,71 +304,5 @@ class _NavButtonState extends State<_NavButton>
         ),
       ),
     );
-  }
-}
-
-// ── Legacy wrappers for backward compatibility with existing screens ──────────
-
-class AnimatedBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final List<BottomNavItem> items;
-  final ValueChanged<int> onTap;
-  final Color? backgroundColor;
-  final Color? selectedColor;
-  final Color? unselectedColor;
-  final List<Key>? itemKeys;
-
-  const AnimatedBottomNav({
-    super.key,
-    required this.currentIndex,
-    required this.items,
-    required this.onTap,
-    this.backgroundColor,
-    this.selectedColor,
-    this.unselectedColor,
-    this.itemKeys,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBottomNav(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      tabKeys: itemKeys,
-    );
-  }
-}
-
-class BottomNavItem {
-  final IconData icon;
-  final IconData? selectedIcon;
-  final String label;
-
-  const BottomNavItem({
-    required this.icon,
-    this.selectedIcon,
-    required this.label,
-  });
-}
-
-class FloatingBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final List<BottomNavItem> items;
-  final ValueChanged<int> onTap;
-  final Color? backgroundColor;
-  final Color? selectedColor;
-
-  const FloatingBottomNav({
-    super.key,
-    required this.currentIndex,
-    required this.items,
-    required this.onTap,
-    this.backgroundColor,
-    this.selectedColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBottomNav(currentIndex: currentIndex, onTap: onTap);
   }
 }

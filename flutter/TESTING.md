@@ -1,6 +1,6 @@
 # Flutter Integration Testing
 
-This directory contains the end-to-end (E2E) integration test suite for the VoltFleet Android app.
+This directory contains the end-to-end (E2E) integration test suite for the Voltium Android app.
 
 ## Test Structure
 

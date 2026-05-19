@@ -9,69 +9,71 @@ import '../gen/app_localizations.dart';
 
 class PickupVerificationScreen extends StatefulWidget {
   final VoidCallback onNext;
+  final VoidCallback? onBack;
+  final String hubId;
+  final String vehicleId;
+  final String emergencyContact;
+  final String? teamLeader;
+  final String? pickupPhotoFront;
+  final String? pickupPhotoBack;
+  final String? pickupPhotoLeft;
+  final String? pickupPhotoRight;
+  final String? pickupPhotoWithVehicle;
 
-  const PickupVerificationScreen({super.key, required this.onNext});
+  const PickupVerificationScreen({
+    super.key,
+    required this.onNext,
+    this.onBack,
+    required this.hubId,
+    required this.vehicleId,
+    required this.emergencyContact,
+    this.teamLeader,
+    this.pickupPhotoFront,
+    this.pickupPhotoBack,
+    this.pickupPhotoLeft,
+    this.pickupPhotoRight,
+    this.pickupPhotoWithVehicle,
+  });
 
   @override
-  State<PickupVerificationScreen> createState() => _PickupVerificationScreenState();
+  State<PickupVerificationScreen> createState() =>
+      _PickupVerificationScreenState();
 }
 
 class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
   bool _isLoading = false;
   bool _agreedToTerms = false;
-  String? _pickupPhotoUrl;
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 70,
-      );
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-          _isLoading = true;
-        });
-
-        // Upload immediately to get URL
-        final url = await ApiService().uploadFile(_selectedImage!, 'pickup_verification');
-        setState(() {
-          _pickupPhotoUrl = url;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to capture photo. Please try again.')),
-        );
-      }
-    }
-  }
 
   Future<void> _completePickup() async {
-    if (!_agreedToTerms || _pickupPhotoUrl == null) {
-      if (_pickupPhotoUrl == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please capture a pickup photo first.')),
-        );
-      }
+    if (!_agreedToTerms) {
       return;
     }
 
     setState(() => _isLoading = true);
     try {
       final provider = context.read<AppProvider>();
-      final riderId = provider.rider!.id!;
-      
+      final riderId = provider.rider?.id;
+      if (riderId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in again.')),
+          );
+        }
+        return;
+      }
+
       final response = await ApiService().syncPickup(
         riderId: riderId,
-        vehicleId: 'VF-PREVIEW-01',
-        hubId: 'HUB-DEL-01',
-        pickupPhoto: _pickupPhotoUrl!,
+        vehicleId: widget.vehicleId,
+        hubId: widget.hubId,
+        teamLeader: widget.teamLeader,
+        emergencyContact: widget.emergencyContact,
+        pickupPhoto: widget.pickupPhotoFront ?? '',
+        pickupPhotoFront: widget.pickupPhotoFront,
+        pickupPhotoBack: widget.pickupPhotoBack,
+        pickupPhotoLeft: widget.pickupPhotoLeft,
+        pickupPhotoRight: widget.pickupPhotoRight,
+        pickupPhotoWithVehicle: widget.pickupPhotoWithVehicle,
       );
 
       if (response['success'] == true) {
@@ -87,7 +89,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete pickup. Please try again.')),
+          const SnackBar(
+              content: Text('Failed to complete pickup. Please try again.')),
         );
       }
     } finally {
@@ -103,6 +106,10 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
       backgroundColor: AppColors.surface,
       appBar: AppBar(
         title: const Text('Final Verification'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => widget.onBack?.call(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -125,44 +132,6 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Pickup Photo Section
-              const Text(
-                'Capture Pickup Photo',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                key: const Key('uploadPhotoArea'),
-                onTap: _isLoading ? null : _pickImage,
-                child: Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.outlineVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    image: _selectedImage != null
-                        ? DecorationImage(
-                            image: FileImage(_selectedImage!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _selectedImage == null
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.camera_alt_outlined, size: 48, color: AppColors.onSurfaceMuted),
-                              SizedBox(height: 8),
-                              Text('Tap to take photo with vehicle', style: TextStyle(color: AppColors.onSurfaceMuted)),
-                            ],
-                          ),
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 32),
-
               // Mock Signature Pad
               const Text(
                 'Digital Signature',
@@ -179,7 +148,9 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                 child: const Center(
                   child: Text(
                     'Draw your signature here',
-                    style: TextStyle(fontStyle: FontStyle.italic, color: AppColors.onSurfaceMuted),
+                    style: TextStyle(
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.onSurfaceMuted),
                   ),
                 ),
               ),
@@ -192,7 +163,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                   Checkbox(
                     key: const Key('rentalAgreementCheckbox'),
                     value: _agreedToTerms,
-                    onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+                    onChanged: (val) =>
+                        setState(() => _agreedToTerms = val ?? false),
                     activeColor: AppColors.primary,
                   ),
                   const Expanded(
@@ -204,17 +176,19 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                 ],
               ),
               const SizedBox(height: 48),
-              
+
               ElevatedButton(
                 key: const Key('completePickupButton'),
-                onPressed: _agreedToTerms && !_isLoading && _pickupPhotoUrl != null ? _completePickup : null,
-                child: _isLoading 
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text('Complete & Start Ride'),
+                onPressed:
+                    _agreedToTerms && !_isLoading ? _completePickup : null,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Complete & Start Ride'),
               ),
             ],
           ),

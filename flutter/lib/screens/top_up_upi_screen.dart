@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -58,9 +60,13 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Future<void> _pickImage() async {
+    if (const String.fromEnvironment('TEST_MODE') == 'true') {
+      setState(() => _imageFile = File('/data/local/tmp/mock_proof.png'));
+      return;
+    }
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+    if (pickedFile != null && mounted) {
       setState(() => _imageFile = File(pickedFile.path));
     }
   }
@@ -70,13 +76,20 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Upload file
-      final photoUrl = await ApiService().uploadFile(_imageFile!, 'TOPUP_PROOF');
+      final photoUrl =
+          await ApiService().uploadFile(_imageFile!, 'TOPUP_PROOF');
+      if (!mounted) return;
 
-      // 2. Submit transaction request
-      // Note: We'll assume the provider handles the actual state, but we call the API here
-      // For parity, we'll just trigger the success callback
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate extra delay
+      final provider = context.read<AppProvider>();
+      final riderId = provider.rider?.id;
+      if (riderId == null) throw Exception('Not logged in');
+
+      await provider.topUpWallet(
+        amount: widget.amount.toDouble(),
+        method: 'UPI',
+        screenshotUrl: photoUrl,
+        purpose: widget.purpose,
+      );
 
       if (mounted) {
         widget.onSubmit?.call();
@@ -206,8 +219,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildAmountSummary() {
-    final anim = CurvedAnimation(
-        parent: _entryCtrl, curve: const Interval(0.1, 0.6));
+    final anim =
+        CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.1, 0.6));
     return FadeTransition(
       opacity: anim,
       child: Container(
@@ -266,8 +279,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildInfoBox() {
-    final anim = CurvedAnimation(
-        parent: _entryCtrl, curve: const Interval(0.2, 0.7));
+    final anim =
+        CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.2, 0.7));
     return FadeTransition(
       opacity: anim,
       child: Container(
@@ -322,8 +335,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildUploadArea() {
-    final anim = CurvedAnimation(
-        parent: _entryCtrl, curve: const Interval(0.3, 0.8));
+    final anim =
+        CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.3, 0.8));
     return FadeTransition(
       opacity: anim,
       child: Container(
@@ -365,7 +378,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                     border: Border.all(
                       color: AppColors.divider,
                       width: 2,
-                      style: BorderStyle.solid, // Flutter doesn't have dashed natively easily without custom painter
+                      style: BorderStyle
+                          .solid, // Flutter doesn't have dashed natively easily without custom painter
                     ),
                   ),
                   child: Column(
@@ -421,7 +435,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                   Positioned(
                     top: 8,
                     right: 8,
-                    child:                     GestureDetector(
+                    child: GestureDetector(
                       key: const Key('removeProofButton'),
                       onTap: () => setState(() => _imageFile = null),
                       child: Container(
@@ -469,8 +483,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
   }
 
   Widget _buildNoteBox() {
-    final anim = CurvedAnimation(
-        parent: _entryCtrl, curve: const Interval(0.4, 0.9));
+    final anim =
+        CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.4, 0.9));
     return FadeTransition(
       opacity: anim,
       child: Container(
@@ -488,7 +502,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
             ),
             children: [
               const TextSpan(
-                  text: 'Note: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                  text: 'Note: ',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const TextSpan(
                   text:
                       'Payments are verified manually by our team. Balance will be updated within 24 hours of verification.'),
@@ -525,7 +540,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: canSubmit ? Colors.white : AppColors.onSurfaceVariant,
+                    color:
+                        canSubmit ? Colors.white : AppColors.onSurfaceVariant,
                   ),
                 ),
         ),

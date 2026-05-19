@@ -33,6 +33,9 @@ jobs:
   analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
       
@@ -50,15 +53,18 @@ jobs:
             ${{ runner.os }}-flutter-
       
       - name: Get dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
       
       - name: Run Flutter analyze
-        run: cd flutter && flutter analyze --no-fatal-infos
+        run: flutter analyze --no-fatal-infos
 
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
     needs: [analyze]
+    defaults:
+      run:
+        working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
       
@@ -76,15 +82,18 @@ jobs:
             ${{ runner.os }}-flutter-
       
       - name: Get dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
       
       - name: Run tests
-        run: cd flutter && flutter test
+        run: flutter test
 
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
     needs: [analyze]
+    defaults:
+      run:
+        working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
       
@@ -102,10 +111,10 @@ jobs:
             ${{ runner.os }}-flutter-
       
       - name: Get dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
       
       - name: Build APK
-        run: cd flutter && flutter build apk --debug
+        run: flutter build apk --debug
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -121,26 +130,29 @@ jobs:
       matrix:
         api-level: [33]
         target: [google_apis]
+    defaults:
+      run:
+        working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
 
-      # ─── Setup Node.js backend ───────────────────────────────────────────
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
+        working-directory: .
 
       - name: Setup database
         run: |
           npx prisma generate
           npx prisma db push --accept-data-loss
+        working-directory: .
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./dev.db' }}
 
-      # ─── Setup Flutter ───────────────────────────────────────────────────
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -155,18 +167,17 @@ jobs:
             ${{ runner.os }}-flutter-
 
       - name: Get Flutter dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
 
-      # ─── Start dev server ────────────────────────────────────────────────
       - name: Start backend dev server
         run: |
           npm run dev &
           npx wait-on http://localhost:8081 --timeout 30000
+        working-directory: .
         env:
           NODE_ENV: development
           JWT_SECRET: ci-test-secret-key-32-chars-long
 
-      # ─── Run E2E tests on Android emulator ───────────────────────────────
       - name: Run Flutter integration tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -183,7 +194,6 @@ jobs:
               --dart-define=API_URL=http://localhost:8081 \
               --timeout=none
 
-      # ─── Upload test results ─────────────────────────────────────────────
       - name: Upload test screenshots
         if: failure()
         uses: actions/upload-artifact@v4
@@ -205,6 +215,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-debug, e2e-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
       
@@ -222,10 +235,10 @@ jobs:
             ${{ runner.os }}-flutter-
       
       - name: Get dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
       
       - name: Build Release APK
-        run: cd flutter && flutter build apk --release
+        run: flutter build apk --release
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}

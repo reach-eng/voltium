@@ -27,20 +27,16 @@ export function maskEmail(email: string | null): string | null {
 /**
  * Mask Aadhaar number (e.g. 1234-5678-9012 -> XXXX-XXXX-9012)
  */
-export function maskAadhaar(aadhaar: string | null): string | null {
-  if (!aadhaar) return null;
-  const clean = aadhaar.replace(/-/g, '');
-  if (clean.length !== 12) return aadhaar;
-  
-  return `XXXX-XXXX-${clean.slice(-4)}`;
+export function maskAadhaar(aadhaar: string | null | undefined): string {
+  if (!aadhaar) return '';
+  const cleanAadhaar = aadhaar.replace(/[^a-zA-Z0-9]/g, '');
+  if (cleanAadhaar.length !== 12) return cleanAadhaar;
+  return `********${cleanAadhaar.slice(-4)}`;
 }
 
-/**
- * Mask PAN number (e.g. ABCDE1234F -> XXXXX1234F)
- */
-export function maskPan(pan: string | null): string | null {
-  if (!pan) return null;
-  if (pan.length !== 10) return pan;
-  
-  return `XXXXX${pan.slice(-5)}`;
+export function maskPan(pan: string | null | undefined): string {
+  if (!pan) return '';
+  const cleanPan = pan.replace(/[^a-zA-Z0-9]/g, '');
+  if (cleanPan.length !== 10) return cleanPan;
+  return `******${cleanPan.slice(-4)}`;
 }

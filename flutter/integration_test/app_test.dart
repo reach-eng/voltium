@@ -1,6 +1,6 @@
 // integration_test/app_test.dart
 //
-// VoltFleet – Full end-to-end integration test for the Android client.
+// Voltium – Full end-to-end integration test for the Android client.
 // Covers: Auth → Onboarding → Plan → Pickup → Dashboard → Wallet →
 //         Rewards → Profile → Support → SOS → Notifications → Logout
 //
@@ -10,15 +10,16 @@
 //     -d <android-emulator-id>
 
 import 'package:flutter_test/flutter_test.dart';
+import 'helpers/test_helpers.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:voltfleet_rider/main.dart' as app;
+import 'package:voltium_rider/main.dart' as app;
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('VoltFleet Full E2E', () {
+  group('Voltium Full E2E', () {
     // Test data – any 10-digit phone works with the dev backend
     const testPhone = '9876543210';
     const testOtp = '111111';
@@ -33,9 +34,8 @@ void main() {
     }) async {
       final end = DateTime.now().add(timeout);
       while (DateTime.now().isBefore(end)) {
-        await tester.pumpAndSettle();
-        if (finder.evaluate().isNotEmpty) return;
         await tester.pump(const Duration(milliseconds: 500));
+        if (finder.evaluate().isNotEmpty) return;
       }
       fail('Widget not found within ${timeout.inSeconds}s: $finder');
     }
@@ -45,26 +45,38 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 1 – Authentication (Login + OTP)', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      // Wait for splash → legal screen
+      // Wait for splash -> Choice or Legal screen
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
+
+      // Handle AuthChoiceScreen if present
+      final loginPhoneBtn = find.byKey(const Key('loginWithPhoneButton'));
+      final createAccountBtn = find.byKey(const Key('createAccountButton'));
+
+      if (loginPhoneBtn.evaluate().isNotEmpty) {
+        await tester.tap(loginPhoneBtn);
+        await settle(tester);
+      } else if (createAccountBtn.evaluate().isNotEmpty) {
+        await tester.tap(createAccountBtn);
+        await settle(tester);
+      }
 
       // Legal screen – accept terms
       final acceptCheckbox = find.byKey(const Key('acceptCheckbox'));
       if (acceptCheckbox.evaluate().isNotEmpty) {
         await tester.tap(acceptCheckbox);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('continueLegalButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Permissions screen
       final permContinue = find.byKey(const Key('continuePermissionsButton'));
       if (permContinue.evaluate().isNotEmpty) {
         await tester.tap(permContinue);
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Login screen
@@ -73,23 +85,28 @@ void main() {
         find.byKey(const Key('phoneInput')),
         testPhone,
       );
-      await tester.pumpAndSettle();
+      await settle(tester);
+      await tester.ensureVisible(find.byKey(const Key('sendOtpButton')));
       await tester.tap(find.byKey(const Key('sendOtpButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // OTP screen
-      await waitFor(tester, find.byKey(const Key('otpInput')));
-      await tester.enterText(
-        find.byKey(const Key('otpInput')),
-        testOtp,
-      );
-      await tester.pumpAndSettle();
+      await waitFor(tester, find.byKey(const Key('otpInputRow')));
+      final otpRow = find.byKey(const Key('otpInputRow'));
+      final otpFields =
+          find.descendant(of: otpRow, matching: find.byType(TextField));
+      for (int i = 0; i < 6; i++) {
+        await tester.enterText(otpFields.at(i), '1');
+        await tester.pump();
+      }
+      await settle(tester);
+      await tester.ensureVisible(find.byKey(const Key('verifyOtpButton')));
       await tester.tap(find.byKey(const Key('verifyOtpButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Should reach auth wrapper / onboarding or dashboard
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -97,17 +114,17 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 2 – Onboarding', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Intent of use screen
       final intentCard = find.text('Deliver with Us');
       if (intentCard.evaluate().isNotEmpty) {
         await tester.tap(intentCard);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.text('Confirm Selection'));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // User onboarding screen
@@ -129,9 +146,9 @@ void main() {
           find.byKey(const Key('motherNameField')),
           'Test Mother',
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('nextOnboardingButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Guarantor onboarding screen
@@ -145,13 +162,13 @@ void main() {
           find.byKey(const Key('guarantorPhoneField')),
           '9998887776',
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('completeOnboardingButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -159,20 +176,20 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 3 – Plan Selection', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       final planCard = find.byKey(const Key('planCard'));
       if (planCard.evaluate().isNotEmpty) {
         await tester.tap(planCard.first);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('confirmPlanButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -180,26 +197,26 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 4 – Vehicle Pickup', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Pickup hub
       final hubCard = find.byKey(const Key('hubCard'));
       if (hubCard.evaluate().isNotEmpty) {
         await tester.tap(hubCard.first);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('confirmHubButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Pickup vehicle
       final vehicleField = find.byKey(const Key('vehicleIdField'));
       if (vehicleField.evaluate().isNotEmpty) {
         await tester.enterText(vehicleField, 'VH-TEST-001');
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('verifyVehicleButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Inspection checklist
@@ -216,23 +233,23 @@ void main() {
         final item = find.byKey(Key(key));
         if (item.evaluate().isNotEmpty) {
           await tester.tap(item);
-          await tester.pumpAndSettle();
+          await settle(tester);
         }
       }
       await tester.tap(find.byKey(const Key('capturePickupPhotoButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verification
       final uploadArea = find.byKey(const Key('uploadPhotoArea'));
       if (uploadArea.evaluate().isNotEmpty) {
         await tester.tap(find.byKey(const Key('rentalAgreementCheckbox')));
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('completePickupButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -240,18 +257,28 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 5 – Dashboard', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Dashboard should be loaded (check for bottom nav)
       final dashboardTab = find.byKey(const Key('dashboardTab'));
       if (dashboardTab.evaluate().isEmpty) {
-        // Might already be on dashboard
-        expect(find.byType(NavigationBar), findsOneWidget);
+        // Might be on Auth Choice screen
+        final loginPhoneBtn = find.byKey(const Key('loginWithPhoneButton'));
+        if (loginPhoneBtn.evaluate().isNotEmpty) {
+          await tester.tap(loginPhoneBtn);
+          await settle(tester);
+        }
+        // Check for NavigationBar as fallback
+        if (find.byType(NavigationBar).evaluate().isEmpty) {
+          print('Dashboard not found, dumping app state:');
+          debugDumpApp();
+        }
+        expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
       } else {
         await tester.tap(dashboardTab);
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Verify key dashboard elements
@@ -265,38 +292,34 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 6 – Wallet & Top-up', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Navigate to wallet tab
       await tester.tap(find.byKey(const Key('walletTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      // Top up
+      // Top up — open dialog
       await tester.tap(find.byKey(const Key('topUpButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      // Select amount
-      final amount500 = find.byKey(const Key('amount500'));
-      if (amount500.evaluate().isNotEmpty) {
-        await tester.tap(amount500);
-        await tester.pumpAndSettle();
+      // Enter top-up amount
+      final amountField = find.byKey(const Key('topUpAmountField'));
+      if (amountField.evaluate().isNotEmpty) {
+        await tester.enterText(amountField, '500');
+        await settle(tester);
       }
 
-      // Proceed to UPI
-      await tester.tap(find.byKey(const Key('proceedToUpiButton')));
-      await tester.pumpAndSettle();
-
-      // UPI screen – submit proof (mock)
-      final submitProof = find.byKey(const Key('submitProofButton'));
-      if (submitProof.evaluate().isNotEmpty) {
-        await tester.tap(submitProof);
-        await tester.pumpAndSettle();
+      // Submit top-up
+      final submitBtn = find.byKey(const Key('submitTopUpButton'));
+      if (submitBtn.evaluate().isNotEmpty) {
+        await tester.tap(submitBtn);
+        await settle(tester);
       }
 
       await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -304,22 +327,22 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 7 – Rewards', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Navigate to profile → rewards
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('rewardsLink')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verify rewards screen loaded
       expect(find.byKey(const Key('backButton')), findsOneWidget);
 
       // Go back
       await tester.tap(find.byKey(const Key('backButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -327,14 +350,14 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 8 – Edit Profile', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('editProfileLink')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Edit fields
       await tester.enterText(
@@ -345,12 +368,12 @@ void main() {
         find.byKey(const Key('editEmailField')),
         'updated@example.com',
       );
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('submitProfileButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -358,30 +381,30 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 9 – Support Ticket', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.tap(find.byKey(const Key('supportTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Fill ticket
       await tester.tap(find.byKey(const Key('issueTypeDropdown')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       // Select first dropdown item
       await tester.tap(find.text('Payment Issue').first);
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.enterText(
         find.byKey(const Key('ticketDescriptionField')),
         'Test support ticket from integration test',
       );
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('raiseTicketButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -389,14 +412,14 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 10 – Emergency SOS', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('emergencySosLink')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verify SOS screen elements
       expect(find.byKey(const Key('sosTriggerButton')), findsOneWidget);
@@ -404,7 +427,7 @@ void main() {
 
       // Cancel and go back
       await tester.tap(find.byKey(const Key('cancelSosButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -412,24 +435,24 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 11 – Notifications', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Tap notification bell on dashboard
       await tester.tap(find.byKey(const Key('notificationBell')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Mark all read
       final markAllRead = find.byKey(const Key('markAllReadButton'));
       if (markAllRead.evaluate().isNotEmpty) {
         await tester.tap(markAllRead);
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // Go back
       await tester.pageBack();
-      await tester.pumpAndSettle();
+      await settle(tester);
     });
 
     // -----------------------------------------------------------------------
@@ -437,18 +460,18 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Step 12 – Logout', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('logoutButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Should be back at login screen
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       expect(find.byKey(const Key('phoneInput')), findsOneWidget);
     });
@@ -458,23 +481,23 @@ void main() {
     // -----------------------------------------------------------------------
     testWidgets('Full Journey – All flows chained', (tester) async {
       await app.main();
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 4));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // --- Auth ---
       final acceptCheckbox = find.byKey(const Key('acceptCheckbox'));
       if (acceptCheckbox.evaluate().isNotEmpty) {
         await tester.tap(acceptCheckbox);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('continueLegalButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       final permContinue = find.byKey(const Key('continuePermissionsButton'));
       if (permContinue.evaluate().isNotEmpty) {
         await tester.tap(permContinue);
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       await waitFor(tester, find.byKey(const Key('phoneInput')));
@@ -482,28 +505,31 @@ void main() {
         find.byKey(const Key('phoneInput')),
         testPhone,
       );
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('sendOtpButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
-      await waitFor(tester, find.byKey(const Key('otpInput')));
-      await tester.enterText(
-        find.byKey(const Key('otpInput')),
-        testOtp,
-      );
-      await tester.pumpAndSettle();
+      await waitFor(tester, find.byKey(const Key('otpInputRow')));
+      final otpRow2 = find.byKey(const Key('otpInputRow'));
+      final otpFields2 =
+          find.descendant(of: otpRow2, matching: find.byType(TextField));
+      for (int i = 0; i < 6; i++) {
+        await tester.enterText(otpFields2.at(i), '1');
+        await tester.pump();
+      }
+      await settle(tester);
       await tester.tap(find.byKey(const Key('verifyOtpButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // --- Onboarding (if shown) ---
       final intentCard = find.text('Deliver with Us');
       if (intentCard.evaluate().isNotEmpty) {
         await tester.tap(intentCard);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.text('Confirm Selection'));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       final userOnboardingTitle = find.text('Secure\nVerification.');
@@ -524,9 +550,9 @@ void main() {
           find.byKey(const Key('motherNameField')),
           'Test Mother',
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('nextOnboardingButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       final guarantorTitle = find.text('Add a trusted backer.');
@@ -539,62 +565,62 @@ void main() {
           find.byKey(const Key('guarantorPhoneField')),
           '9998887776',
         );
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('completeOnboardingButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // --- Plan (if shown) ---
       final planCard = find.byKey(const Key('planCard'));
       if (planCard.evaluate().isNotEmpty) {
         await tester.tap(planCard.first);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('confirmPlanButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // --- Pickup (if shown) ---
       final hubCard = find.byKey(const Key('hubCard'));
       if (hubCard.evaluate().isNotEmpty) {
         await tester.tap(hubCard.first);
-        await tester.pumpAndSettle();
+        await settle(tester);
         await tester.tap(find.byKey(const Key('confirmHubButton')));
-        await tester.pumpAndSettle();
+        await settle(tester);
       }
 
       // --- Dashboard verification ---
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
 
       // --- Wallet ---
       await tester.tap(find.byKey(const Key('walletTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byKey(const Key('topUpButton')), findsOneWidget);
 
       // --- Profile ---
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byKey(const Key('editProfileLink')), findsOneWidget);
       expect(find.byKey(const Key('logoutButton')), findsOneWidget);
 
       // --- Support ---
       await tester.tap(find.byKey(const Key('supportTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byKey(const Key('raiseTicketButton')), findsOneWidget);
 
       // --- Back to dashboard ---
       await tester.tap(find.byKey(const Key('dashboardTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       expect(find.byKey(const Key('notificationBell')), findsOneWidget);
 
       // --- Logout ---
       await tester.tap(find.byKey(const Key('profileTab')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.tap(find.byKey(const Key('logoutButton')));
-      await tester.pumpAndSettle();
+      await settle(tester);
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await settle(tester);
 
       // Verify back at login
       expect(find.byKey(const Key('phoneInput')), findsOneWidget);

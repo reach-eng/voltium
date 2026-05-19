@@ -28,21 +28,23 @@ class PerformanceService {
 
     // Log to Monitoring (Sentry) as a breadcrumb or event
     MonitoringService.logInfo('Performance Trace: $name took ${durationMs}ms');
-    
+
     // In a real production app, we would use Sentry's performance monitoring:
     // final transaction = Sentry.getSpan() ?? Sentry.startTransaction(name, 'ui_load');
     // transaction.finish(status: SpanStatus.ok());
   }
 
   /// Helper to track a screen load from start to finish
-  void trackScreenLoad(String screenName, Future<void> Function() loadAction) async {
+  void trackScreenLoad(
+      String screenName, Future<void> Function() loadAction) async {
     startTrace('Load_$screenName');
     try {
       await loadAction();
       stopTrace('Load_$screenName');
     } catch (e, stack) {
       stopTrace('Load_$screenName', attributes: {'error': e.toString()});
-      MonitoringService.logError(e, stack, reason: 'Failed to load $screenName');
+      MonitoringService.logError(e, stack,
+          reason: 'Failed to load $screenName');
     }
   }
 }

@@ -14,17 +14,22 @@ class AppSettingsScreen extends StatefulWidget {
 
 class _AppSettingsScreenState extends State<AppSettingsScreen> {
   bool _twoFactor = true;
+  bool _notifications = true;
 
   Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Failed to launch URL: $e');
     }
   }
 
   Future<void> _rateApp() async {
     final uri = Uri.parse(
-      'https://play.google.com/store/apps/details?id=in.voltfleet.rider',
+      'https://play.google.com/store/apps/details?id=in.voltium.rider',
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -48,12 +53,12 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
           FilledButton(
             key: const Key('confirmDeleteButton'),
             onPressed: () {
-              // TODO: Call DELETE /api/rider/account backend endpoint
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Account deletion request submitted'),
-                  backgroundColor: Color(0xFFDC2626),
+                  content: Text(
+                      'Account deletion is not yet available. Please contact support.'),
+                  backgroundColor: Color(0xFFF59E0B),
                 ),
               );
             },
@@ -115,8 +120,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 iconColor: const Color(0xFF3B82F6),
                 iconBgColor: const Color(0xFFEFF6FF),
                 title: 'Notifications',
-                value: true,
-                onChanged: (v) {},
+                value: _notifications,
+                onChanged: (v) => setState(() => _notifications = v),
                 isDark: isDark,
               ),
               _buildDivider(isDark: isDark),
@@ -152,6 +157,14 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 iconColor: const Color(0xFF8B5CF6),
                 iconBgColor: const Color(0xFFF5F3FF),
                 title: 'Change Phone Number',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Phone number change coming soon'),
+                      backgroundColor: Color(0xFF64748B),
+                    ),
+                  );
+                },
                 isDark: isDark,
               ),
               _buildDivider(isDark: isDark),
@@ -161,6 +174,14 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 iconColor: const Color(0xFFF59E0B),
                 iconBgColor: const Color(0xFFFFFBEB),
                 title: 'Change Password',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password change coming soon'),
+                      backgroundColor: Color(0xFF64748B),
+                    ),
+                  );
+                },
                 isDark: isDark,
               ),
               _buildDivider(isDark: isDark),
@@ -195,7 +216,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 iconBgColor:
                     isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                 title: 'Terms of Service',
-                onTap: () => _launchUrl('https://voltfleet.app/terms'),
+                onTap: () => _launchUrl('https://voltium.app/terms'),
                 isDark: isDark,
               ),
               _buildDivider(isDark: isDark),
@@ -206,7 +227,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 iconBgColor:
                     isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
                 title: 'Privacy Policy',
-                onTap: () => _launchUrl('https://voltfleet.app/privacy'),
+                onTap: () => _launchUrl('https://voltium.app/privacy'),
                 isDark: isDark,
               ),
               _buildDivider(isDark: isDark),

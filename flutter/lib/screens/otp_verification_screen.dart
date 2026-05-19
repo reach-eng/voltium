@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../main.dart';
 import '../models/rider_model.dart';
 import '../services/api_service.dart';
+import '../services/secure_storage_service.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -42,7 +45,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   bool _isLoading = false;
-  int _resendCountdown = 60;
+  int _resendCountdown = 30;
+  Timer? _countdownTimer;
 
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceAnim;
@@ -55,7 +59,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     _bounceCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
+    );
+
+    if (VoltiumApp.isTestMode) {
+      _bounceCtrl.value = 0.0;
+    } else {
+      _bounceCtrl.repeat(reverse: true);
+    }
+
     _bounceAnim = Tween<double>(begin: 0.0, end: -8.0).animate(
       CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeInOut),
     );
@@ -63,13 +74,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
-    )..forward();
+    );
+
+    if (VoltiumApp.isTestMode) {
+      _entryCtrl.value = 1.0;
+    } else {
+      _entryCtrl.forward();
+    }
 
     _startCountdown();
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     for (var c in _controllers) {
       c.dispose();
     }
@@ -82,11 +100,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   }
 
   void _startCountdown() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted || _resendCountdown <= 0) return false;
+    if (VoltiumApp.isTestMode) {
+      setState(() => _resendCountdown = 0);
+      return;
+    }
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _resendCountdown <= 0) {
+        timer.cancel();
+        return;
+      }
       setState(() => _resendCountdown--);
-      return _resendCountdown > 0;
     });
   }
 
@@ -100,8 +124,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     setState(() {});
   }
 
-  bool get _isComplete =>
-      _controllers.every((c) => c.text.isNotEmpty);
+  bool get _isComplete => _controllers.every((c) => c.text.isNotEmpty);
 
   Future<void> _handleVerify() async {
     final code = _controllers.map((c) => c.text).join();
@@ -113,6 +136,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
       final response = await ApiService().verifyOtp(phone: phone, otp: code);
       if (mounted) {
         if (response['success'] == true) {
+          debugPrint('OtpVerificationScreen: verify-otp response: $response');
+          final token = response['data']?['token'] ??
+              response['token'] ??
+              response['accessToken'] as String?;
+          debugPrint(
+              'OtpVerificationScreen: Saving token: ${token != null && token.length > 10 ? token.substring(0, 10) : token}');
+          if (token != null) {
+            await SecureStorageService().setToken(token);
+          }
+          if (!mounted) return;
           final riderData = response['rider'] ?? response['data'];
           if (riderData != null && riderData is Map<String, dynamic>) {
             final rider = RiderModel.fromJson(riderData);
@@ -120,6 +153,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           }
           widget.onNext?.call();
         } else {
+          for (var c in _controllers) {
+            c.clear();
+          }
+          _focusNodes[0].requestFocus();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(response['message'] ?? 'Invalid OTP'),
@@ -130,9 +167,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
       }
     } catch (e) {
       if (mounted) {
+        String errorMsg = 'Failed to verify OTP. Please try again.';
+        if (e is ApiException) {
+          errorMsg = e.message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to verify OTP. Please try again.'),
+          SnackBar(
+            content: Text(errorMsg),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -151,7 +192,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         for (var c in _controllers) {
           c.clear();
         }
-        setState(() => _resendCountdown = 60);
+        setState(() => _resendCountdown = 30);
         _startCountdown();
         _focusNodes[0].requestFocus();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,11 +202,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           ),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        String errorMsg = 'Error resending OTP';
+        if (e is ApiException) {
+          errorMsg = e.message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error resending OTP'),
+          SnackBar(
+            content: Text(errorMsg),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -190,8 +235,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                   Align(
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(
-                      onTap: widget.onBack ??
-                          () => Navigator.maybePop(context),
+                      onTap: widget.onBack ?? () => Navigator.maybePop(context),
                       child: Container(
                         width: 40,
                         height: 40,
@@ -241,13 +285,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // Bouncing smartphone icon in white circle
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl,
-                          curve: const Interval(0, 0.7)),
+                          parent: _entryCtrl, curve: const Interval(0, 0.7)),
                       child: ScaleTransition(
                         scale: Tween<double>(begin: 0.8, end: 1.0).animate(
                           CurvedAnimation(
-                              parent: _entryCtrl,
-                              curve: Curves.easeOutCubic),
+                              parent: _entryCtrl, curve: Curves.easeOutCubic),
                         ),
                         child: AnimatedBuilder(
                           animation: _bounceAnim,
@@ -284,8 +326,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // Title
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl,
-                          curve: const Interval(0.1, 0.8)),
+                          parent: _entryCtrl, curve: const Interval(0.1, 0.8)),
                       child: Column(
                         children: [
                           Text(
@@ -332,60 +373,73 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // OTP Input boxes
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl,
-                          curve: const Interval(0.2, 0.9)),
-                      child: Row(
-                        key: const Key('otpInput'),
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(6, (index) {
-                          return SizedBox(
-                            width: 48,
-                            height: 56,
-                            child: TextField(
-                              controller: _controllers[index],
-                              focusNode: _focusNodes[index],
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              maxLength: 1,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                              ],
-                              onChanged: (v) => _onChanged(v, index),
-                              style: GoogleFonts.inter(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.onSurface,
+                          parent: _entryCtrl, curve: const Interval(0.2, 0.9)),
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          for (int i = 0; i < 6; i++) {
+                            if (_controllers[i].text.isEmpty) {
+                              _focusNodes[i].requestFocus();
+                              break;
+                            }
+                            if (i == 5) _focusNodes[5].requestFocus();
+                          }
+                        },
+                        child: Row(
+                          key: const Key('otpInputRow'),
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(6, (index) {
+                            return SizedBox(
+                              width: 48,
+                              height: 56,
+                              child: TextField(
+                                key: ValueKey('otp_box_$index'),
+                                controller: _controllers[index],
+                                focusNode: _focusNodes[index],
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                maxLength: 1,
+                                obscureText: false,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                onChanged: (v) => _onChanged(v, index),
+                                style: GoogleFonts.inter(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.onSurface,
+                                ),
+                                decoration: InputDecoration(
+                                  counterText: '',
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: EdgeInsets.zero,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.outlineVariant,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.outlineVariant,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
                               ),
-                              decoration: InputDecoration(
-                                counterText: '',
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: EdgeInsets.zero,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.outlineVariant,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.outlineVariant,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
+                            );
+                          }),
+                        ),
                       ),
                     ),
 
@@ -431,11 +485,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
 
             // Gradient "Verify & Proceed" CTA
             Padding(
-              padding:
-                  const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
+              padding: const EdgeInsets.only(
+                  left: 24, right: 24, bottom: 32, top: 16),
               child: GestureDetector(
                 key: const Key('verifyOtpButton'),
-                onTap: (_isComplete && !_isLoading) ? _handleVerify : null,
+                behavior: HitTestBehavior.opaque,
+                onTap: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+                    ? _handleVerify
+                    : null,
                 child: AnimatedOpacity(
                   opacity: (_isComplete && !_isLoading) ? 1.0 : 0.4,
                   duration: const Duration(milliseconds: 200),
@@ -444,8 +501,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     decoration: BoxDecoration(
                       gradient: AppGradients.primary,
                       borderRadius: BorderRadius.circular(999),
-                      boxShadow:
-                          (_isComplete && !_isLoading) ? AppShadows.primaryButton : null,
+                      boxShadow: (_isComplete && !_isLoading)
+                          ? AppShadows.primaryButton
+                          : null,
                     ),
                     child: Center(
                       child: _isLoading

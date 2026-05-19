@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/rider_model.dart';
 import '../providers/app_provider.dart';
@@ -58,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
                 if (rider?.guarantorName != null) ...[
                   const SizedBox(height: 24),
                   const Text(
-                    'GUARANTOR INFORMATION',
+                    'GUARANTOR DETAILS',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -129,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(9999),
                 onTap: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
@@ -154,20 +155,21 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
-    final String initial = rider?.name != null && rider!.name.isNotEmpty
-        ? rider.name.substring(0, 1).toUpperCase()
+    final String initial = (rider?.name.isNotEmpty ?? false)
+        ? rider!.name.substring(0, 1).toUpperCase()
         : '?';
     final String riderId = rider?.riderId ?? 'NOT-ASSIGNED';
-    final String kycStatusName = rider?.kycStatus != null ? rider!.kycStatus.name : 'PENDING';
-    final bool isVerified = kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
+    final String kycStatusName = rider?.kycStatus.name ?? 'PENDING';
+    final bool isVerified =
+        kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -183,23 +185,30 @@ class ProfileScreen extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: isVerified ? const Color(0xFF10B981) : const Color(0xFF2563EB),
+                  color: isVerified
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFF2563EB),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 4),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 alignment: Alignment.center,
-                child: rider?.profilePhoto != null
+                child: (rider?.profilePhoto != null &&
+                        rider!.profilePhoto!.isNotEmpty)
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(48),
                         child: Image.network(rider!.profilePhoto!,
-                            width: 96, height: 96, fit: BoxFit.cover),
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                            cacheWidth: 192,
+                            cacheHeight: 192),
                       )
                     : Text(
                         initial,
@@ -217,7 +226,9 @@ class ProfileScreen extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: isVerified ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                    color: isVerified
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFF59E0B),
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
@@ -261,18 +272,22 @@ class ProfileScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: isVerified ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(16),
+              color: isVerified
+                  ? const Color(0xFFECFDF5)
+                  : const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                   color: isVerified
-                      ? const Color(0xFF10B981).withOpacity(0.2)
+                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
                       : const Color(0xFFFDE68A)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.shield_outlined,
-                    color: isVerified ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                    color: isVerified
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFD97706),
                     size: 14),
                 const SizedBox(width: 6),
                 Text(
@@ -280,7 +295,9 @@ class ProfileScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isVerified ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                    color: isVerified
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFD97706),
                   ),
                 ),
               ],
@@ -300,7 +317,7 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -337,9 +354,35 @@ class ProfileScreen extends StatelessWidget {
           ),
           const CustomDivider(),
           _buildDetailRow(
-            Icons.phone_android_outlined,
-            'Emergency Contact',
-            rider?.emergencyContact ?? 'Not provided',
+            Icons.person_outline,
+            "Father's Name",
+            rider?.fatherName ?? 'Not provided',
+          ),
+          const CustomDivider(),
+          _buildDetailRow(
+            Icons.person_outline,
+            "Mother's Name",
+            rider?.motherName ?? 'Not provided',
+          ),
+          const CustomDivider(),
+          _buildDetailRow(
+            Icons.home_outlined,
+            'Address',
+            rider?.currentAddress ?? 'Not provided',
+          ),
+          const CustomDivider(),
+          GestureDetector(
+            onTap: () {
+              final phone = rider?.emergencyContact;
+              if (phone != null && phone.isNotEmpty) {
+                launchUrl(Uri.parse('tel:$phone'));
+              }
+            },
+            child: _buildDetailRow(
+              Icons.phone_android_outlined,
+              'Emergency Contact',
+              rider?.emergencyContact ?? 'Not provided',
+            ),
           ),
         ],
       ),
@@ -387,12 +430,9 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildStatusBentos(RiderModel? rider) {
-    final String kycStatus = rider?.kycStatus != null
-        ? _capitalize(rider!.kycStatus.name)
-        : 'Pending';
-    final String guarantorStatus = rider?.guarantorStatus != null
-        ? _capitalize(rider!.guarantorStatus.name)
-        : 'Pending';
+    final String kycStatus = _capitalize(rider?.kycStatus.name ?? 'Pending');
+    final String guarantorStatus =
+        _capitalize(rider?.guarantorStatus.name ?? 'Pending');
 
     return Row(
       children: [
@@ -419,62 +459,113 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 4),
-              ],
-            ),
-            child: const Icon(Icons.person, color: Color(0xFF94A3B8), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  rider.guarantorName ?? 'No Name Provided',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, blurRadius: 4),
+                  ],
                 ),
-                Text(
-                  rider.guarantorPhone ?? 'No Phone Provided',
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isApproved ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isApproved ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFFDE68A)),
-            ),
-            child: Text(
-              _capitalize(rider.guarantorStatus.name),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: isApproved ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                child: (rider.guarantorPhoto != null &&
+                        rider.guarantorPhoto!.isNotEmpty)
+                    ? ClipOval(
+                        child: Image.network(
+                          rider.guarantorPhoto!,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          cacheWidth: 96,
+                          cacheHeight: 96,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.person,
+                              color: Color(0xFF94A3B8), size: 24),
+                        ),
+                      )
+                    : const Icon(Icons.person,
+                        color: Color(0xFF94A3B8), size: 24),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rider.guarantorName ?? 'No Name Provided',
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B)),
+                    ),
+                    Text(
+                      rider.guarantorPhone ?? 'No Phone Provided',
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isApproved
+                      ? const Color(0xFFECFDF5)
+                      : const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: isApproved
+                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          : const Color(0xFFFDE68A)),
+                ),
+                child: Text(
+                  _capitalize(rider.guarantorStatus.name),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isApproved
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFD97706),
+                  ),
+                ),
+              ),
+            ],
           ),
+          if (rider.guarantorAddress != null &&
+              rider.guarantorAddress!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const CustomDivider(),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.home_outlined,
+                    color: Color(0xFF64748B), size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    rider.guarantorAddress!,
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -483,19 +574,19 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildQuickLinks(BuildContext context) {
     return Column(
       children: [
-          FadeUpWidget(
-            delay: 300,
-            child: _QuickLinkItem(
-              key: const Key('editProfileLink'),
-              icon: Icons.edit_outlined,
-              iconColor: const Color(0xFF3B82F6), // blue-500
-              iconBgColor: const Color(0xFFEFF6FF), // blue-50
-              title: 'Edit Profile',
-              onTap: () {
-                AppNavigator.push(context, const EditProfileScreen());
-              },
-            ),
+        FadeUpWidget(
+          delay: 300,
+          child: _QuickLinkItem(
+            key: const Key('editProfileLink'),
+            icon: Icons.edit_outlined,
+            iconColor: const Color(0xFF3B82F6), // blue-500
+            iconBgColor: const Color(0xFFEFF6FF), // blue-50
+            title: 'Edit Profile',
+            onTap: () {
+              AppNavigator.push(context, const EditProfileScreen());
+            },
           ),
+        ),
         const SizedBox(height: 8),
         FadeUpWidget(
           delay: 350,
@@ -574,14 +665,14 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2), // red-50
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFFECACA)), // red-200
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           key: const Key('emergencySosLink'),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: () {
             AppNavigator.push(context, const EmergencySOSScreen());
           },
@@ -633,7 +724,7 @@ class ProfileScreen extends StatelessWidget {
         side: const BorderSide(color: Color(0xFFFECACA), width: 1.5),
         minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(27),
+          borderRadius: BorderRadius.circular(9999),
         ),
       ),
       child: const Row(
@@ -679,7 +770,7 @@ class _StatusTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -749,7 +840,7 @@ class _QuickLinkItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -761,7 +852,7 @@ class _QuickLinkItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

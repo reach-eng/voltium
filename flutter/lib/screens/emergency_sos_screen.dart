@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/app_provider.dart';
 
 class EmergencySOSScreen extends StatefulWidget {
   const EmergencySOSScreen({super.key});
@@ -12,10 +14,12 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
   bool _sosActivated = false;
 
   Future<void> _callNumber(String phone) async {
-    final uri = Uri.parse('tel:$phone');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+    try {
+      final uri = Uri.parse('tel:$phone');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      }
+    } catch (_) {}
   }
 
   Future<void> _activateSOS() async {
@@ -188,7 +192,7 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your location will be shared with the emergency team',
+                  'Your current location will be shared with the emergency team',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -197,7 +201,7 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Location: Acquiring GPS...',
+                  'Fetching location...',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
@@ -234,11 +238,14 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
           ),
           child: Column(
             children: [
-              _contactTile('Voltium Emergency', '+91 1800 123 4567', key: const Key('emergencyContact1')),
+              _contactTile('Voltium Emergency', '+91 1800 123 4567',
+                  key: const Key('emergencyContact1')),
               _divider(),
-              _contactTile('Local Police', '100', key: const Key('emergencyContact2')),
+              _contactTile('Local Police', '100',
+                  key: const Key('emergencyContact2')),
               _divider(),
-              _contactTile('Ambulance', '108', key: const Key('emergencyContact3')),
+              _contactTile('Ambulance', '108',
+                  key: const Key('emergencyContact3')),
             ],
           ),
         ),
@@ -276,6 +283,7 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
   }
 
   Widget _buildFooter(BuildContext context) {
+    final riderName = context.read<AppProvider>().rider?.name ?? 'Rider';
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -292,9 +300,9 @@ class _EmergencySOSScreenState extends State<EmergencySOSScreen> {
               const Icon(Icons.account_circle_outlined,
                   color: Color(0xFF3B82F6), size: 18),
               const SizedBox(width: 8),
-              const Flexible(
+              Flexible(
                 child: Text(
-                  'Viewing as: Test Rider FullN...',
+                  'Viewing as: $riderName',
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                       color: Color(0xFF1E293B),

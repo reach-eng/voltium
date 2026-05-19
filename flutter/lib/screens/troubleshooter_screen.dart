@@ -27,7 +27,7 @@ class TroubleshooterResult {
       };
 }
 
-/// Smart Troubleshooter screen for the VoltFleet Rider App.
+/// Smart Troubleshooter screen for the Voltium Rider App.
 ///
 /// Guides the rider through a diagnostic decision tree to self‑resolve common
 /// EV issues or collect enough information for a support ticket.
@@ -270,7 +270,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
         'resolution': _result!.resolution,
       };
 
-      await ApiService().post('/api/support/ticket', body: payload);
+      await ApiService().post('/api/support/tickets', body: payload);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

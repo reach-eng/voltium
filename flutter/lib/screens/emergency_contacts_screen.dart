@@ -96,13 +96,13 @@ class EmergencyContactsScreen extends StatelessWidget {
     }
   }
 
-  void _showAddContactDialog(
-      BuildContext context, EmergencyContactsService service) {
+  Future<void> _showAddContactDialog(
+      BuildContext context, EmergencyContactsService service) async {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     String relationship = 'Other';
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Add Emergency Contact'),
@@ -153,6 +153,8 @@ class EmergencyContactsScreen extends StatelessWidget {
         ],
       ),
     );
+    nameController.dispose();
+    phoneController.dispose();
   }
 }
 

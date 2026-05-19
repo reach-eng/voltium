@@ -9,7 +9,8 @@ class NotificationCenterScreen extends StatefulWidget {
   const NotificationCenterScreen({super.key});
 
   @override
-  State<NotificationCenterScreen> createState() => _NotificationCenterScreenState();
+  State<NotificationCenterScreen> createState() =>
+      _NotificationCenterScreenState();
 }
 
 class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
@@ -31,14 +32,16 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   child: notifications.isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 8),
                           itemCount: notifications.length,
                           itemBuilder: (context, index) {
                             return FadeUpWidget(
                               delay: index * 50,
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildNotificationCard(notifications[index], provider),
+                                child: _buildNotificationCard(
+                                    notifications[index], provider),
                               ),
                             );
                           },
@@ -81,15 +84,22 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.05), blurRadius: 10)
+                    ],
                   ),
-                  child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF1E293B)),
+                  child: const Icon(Icons.arrow_back,
+                      size: 18, color: Color(0xFF1E293B)),
                 ),
               ),
               const SizedBox(width: 16),
               const Text(
                 'Notifications',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B)),
               ),
             ],
           ),
@@ -98,7 +108,11 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
               key: const Key('markAllReadButton'),
               onPressed: () => provider.markAllNotificationsRead(),
               icon: const Icon(Icons.done_all, size: 16),
-              label: const Text('MARK ALL READ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              label: const Text('MARK ALL READ',
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5)),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFF0053C1),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -117,13 +131,20 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
           Container(
             height: 80,
             width: 80,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-            child: Icon(Icons.notifications_none_outlined, size: 40, color: Colors.blue.withOpacity(0.1)),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(24)),
+            child: Icon(Icons.notifications_none_outlined,
+                size: 40, color: Colors.blue.withOpacity(0.1)),
           ),
           const SizedBox(height: 24),
-          const Text('No notifications', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+          const Text('No notifications',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B))),
           const SizedBox(height: 8),
-          const Text("You're all caught up!", style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
+          const Text("You're all caught up!",
+              style: TextStyle(fontSize: 14, color: Color(0xFF64748B))),
         ],
       ),
     );
@@ -167,15 +188,21 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
     }
 
     return InkWell(
-      key: const Key('notificationCard'),
+      key: Key('notificationCard_${notif.id}'),
       onTap: () => provider.markNotificationAsRead(notif.id),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: !notif.isRead ? Border.all(color: const Color(0xFF0053C1).withOpacity(0.1), width: 1.5) : null,
+          border: !notif.isRead
+              ? Border.all(
+                  color: const Color(0xFF0053C1).withOpacity(0.1), width: 1.5)
+              : null,
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20, offset: const Offset(0, 8)),
+            BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 20,
+                offset: const Offset(0, 8)),
           ],
         ),
         padding: const EdgeInsets.all(16),
@@ -187,7 +214,8 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                 Container(
                   height: 48,
                   width: 48,
-                  decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(
+                      color: bgColor, borderRadius: BorderRadius.circular(14)),
                   child: Icon(icon, color: color, size: 22),
                 ),
                 if (!notif.isRead)
@@ -216,11 +244,16 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                     children: [
                       Text(
                         notif.type.name.toUpperCase(),
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: color, letterSpacing: 0.5),
+                        style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: color,
+                            letterSpacing: 0.5),
                       ),
                       Text(
                         _formatTime(notif.createdAt),
-                        style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                        style: const TextStyle(
+                            fontSize: 10, color: Color(0xFF94A3B8)),
                       ),
                     ],
                   ),
@@ -229,14 +262,16 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
                     notif.title,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: !notif.isRead ? FontWeight.bold : FontWeight.w600,
+                      fontWeight:
+                          !notif.isRead ? FontWeight.bold : FontWeight.w600,
                       color: const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     notif.message,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF64748B), height: 1.4),
                   ),
                 ],
               ),

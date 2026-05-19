@@ -1,16 +1,20 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../gen/app_localizations.dart';
+import '../models/rider_model.dart';
 import '../models/transaction_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_constants.dart';
+import '../utils/app_navigator.dart';
 import '../widgets/fade_up_widget.dart';
+import 'history_screen.dart';
+import 'top_up_purpose_screen.dart';
+import 'top_up_amount_screen.dart';
+import 'top_up_upi_screen.dart';
 
-/// Wallet screen for the VoltFleet Rider App.
+/// Wallet screen for the Voltium Rider App.
 ///
 /// Shows the available balance, payment streak, top-up / history actions,
 /// and a list of recent transactions. All user-facing strings come from
@@ -23,6 +27,8 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
+  String _selectedFilter = 'All';
+
   @override
   void initState() {
     super.initState();
@@ -30,8 +36,6 @@ class _WalletScreenState extends State<WalletScreen> {
       context.read<AppProvider>().refreshTransactions();
     });
   }
-
-  String _selectedFilter = 'All';
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -60,17 +64,28 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 InkWell(
                   key: const Key('refreshButton'),
-                  onTap: () {
-                    context.read<AppProvider>().refresh();
-                    context.read<AppProvider>().refreshTransactions();
+                  onTap: () async {
+                    try {
+                      await context.read<AppProvider>().refresh();
+                      await context.read<AppProvider>().refreshTransactions();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to refresh'),
+                              backgroundColor: Color(0xFFEF4444)),
+                        );
+                      }
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                    child: const Icon(Icons.refresh,
+                        color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -86,8 +101,18 @@ class _WalletScreenState extends State<WalletScreen> {
                 return RefreshIndicator(
                   color: AppColors.primary,
                   onRefresh: () async {
-                    await provider.refresh();
-                    await provider.refreshTransactions();
+                    try {
+                      await provider.refresh();
+                      await provider.refreshTransactions();
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to refresh'),
+                              backgroundColor: Color(0xFFEF4444)),
+                        );
+                      }
+                    }
                   },
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -100,7 +125,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       ],
 
                       // Action Banner (Low Balance)
-                      if (rider != null && rider.walletBalance < 500)
+                      if (rider != null)
                         FadeUpWidget(
                           delay: 0,
                           child: _buildActionRequiredBanner(rider),
@@ -147,7 +172,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   // ── Widget builders ───────────────────────────────────────────────────────
 
-  Widget _buildSecurityDepositCard(BuildContext context, rider) {
+  Widget _buildSecurityDepositCard(BuildContext context, RiderModel? rider) {
     if (rider == null) return const SizedBox.shrink();
 
     final double deposit = rider.securityDeposit;
@@ -159,7 +184,7 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -271,7 +296,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildActionRequiredBanner(rider) {
+  Widget _buildActionRequiredBanner(RiderModel? rider) {
     if (rider == null) return const SizedBox.shrink();
     bool isLowBalance = rider.walletBalance <
         (rider.activeRentalPlanPrice * AppConstants.lowBalanceThresholdRatio);
@@ -284,7 +309,7 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB), // amber-50
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
       ),
       child: Row(
@@ -334,7 +359,8 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildBalanceCard(BuildContext context, rider, AppLocalizations l10n) {
+  Widget _buildBalanceCard(
+      BuildContext context, RiderModel? rider, AppLocalizations l10n) {
     final balance = rider?.walletBalance ?? 0.0;
     final int streak = rider?.paymentStreak ?? 0;
 
@@ -343,16 +369,16 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
+          colors: [Color(0xFF1B60DA), Color(0xFF2F6DDE)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
+            color: Color(0x261B60DA),
+            blurRadius: 40,
+            offset: Offset(0, 20),
           ),
         ],
       ),
@@ -361,26 +387,26 @@ class _WalletScreenState extends State<WalletScreen> {
         children: [
           // Decorative circles
           Positioned(
-            right: -40,
-            top: -40,
+            right: -16,
+            top: -16,
             child: Container(
               height: 160,
               width: 160,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
           Positioned(
-            right: 0,
-            bottom: -20,
+            right: -8,
+            bottom: -16,
             child: Container(
-              height: 96,
-              width: 96,
+              height: 24,
+              width: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -392,12 +418,12 @@ class _WalletScreenState extends State<WalletScreen> {
               Row(
                 children: [
                   Icon(Icons.account_balance_wallet,
-                      color: Colors.white.withOpacity(0.7), size: 16),
+                      color: Colors.white.withValues(alpha: 0.7), size: 16),
                   const SizedBox(width: 8),
                   Text(
                     l10n.wallet_availableBalance,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -419,6 +445,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   const SizedBox(width: 4),
                   Text(
                     _formatCurrency(balance),
+                    key: const Key('walletBalanceText'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,
@@ -437,7 +464,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   Text(
                     l10n.wallet_paymentStreak,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -445,7 +472,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   Text(
                     l10n.wallet_streakOf(streak),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -462,7 +489,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       decoration: BoxDecoration(
                         color: index < streak
                             ? Colors.white
-                            : Colors.white.withOpacity(0.25),
+                            : Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(5),
                       ),
                     ),
@@ -475,7 +502,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: Text(
                     '$streak day streak! Keep going to unlock premium tiers.',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 10,
                     ),
                   ),
@@ -494,18 +521,42 @@ class _WalletScreenState extends State<WalletScreen> {
         Expanded(
           child: InkWell(
             key: const Key('topUpButton'),
-            onTap: () => _showTopUpDialog(context),
-            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              AppNavigator.push(
+                context,
+                TopUpPurposeScreen(
+                  onContinue: (purpose) {
+                    AppNavigator.push(
+                      context,
+                      TopUpAmountScreen(
+                        onProceed: (amount) {
+                          AppNavigator.push(
+                            context,
+                            TopUpUpiScreen(
+                              amount: amount,
+                              purpose: purpose == TopUpPurpose.topUp
+                                  ? 'Wallet Top-up'
+                                  : 'Security Deposit',
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(24),
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              height: 64,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
+                    color: Color(0x05000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -513,21 +564,21 @@ class _WalletScreenState extends State<WalletScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 40,
+                    height: 40,
                     decoration: const BoxDecoration(
                       color: Color(0xFFDCFCE7),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.add,
-                        color: Color(0xFF16A34A), size: 18),
+                        color: Color(0xFF16A34A), size: 20),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Text(
                     l10n.wallet_topUp,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                       color: Color(0xFF191C1E),
                     ),
                   ),
@@ -541,18 +592,26 @@ class _WalletScreenState extends State<WalletScreen> {
         Expanded(
           child: InkWell(
             key: const Key('historyButton'),
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              final rider = context.read<AppProvider>().rider;
+              if (rider != null && rider.id != null) {
+                AppNavigator.push(
+                  context,
+                  HistoryScreen(riderId: rider.id!),
+                );
+              }
+            },
+            borderRadius: BorderRadius.circular(24),
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              height: 64,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
+                    color: Color(0x05000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -560,21 +619,21 @@ class _WalletScreenState extends State<WalletScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 40,
+                    height: 40,
                     decoration: const BoxDecoration(
                       color: Color(0xFFEFF6FF),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.download,
-                        color: Color(0xFF0053C1), size: 18),
+                        color: Color(0xFF0053C1), size: 20),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Text(
                     l10n.wallet_history,
                     style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                       color: Color(0xFF191C1E),
                     ),
                   ),
@@ -593,13 +652,9 @@ class _WalletScreenState extends State<WalletScreen> {
     final filtered = transactions.where((tx) {
       if (_selectedFilter == 'All') return true;
       if (_selectedFilter == 'Approved')
-        return tx.status == TransactionStatus.SUCCESS;
+        return tx.status == TransactionStatus.success;
       if (_selectedFilter == 'Rejected')
-        return tx.status == TransactionStatus.FAILED;
-      if (_selectedFilter == 'Damage')
-        return (tx.purpose ?? '').toUpperCase() == 'DAMAGE';
-      if (_selectedFilter == 'Cash') return tx.remark?.toUpperCase() == 'CASH';
-      if (_selectedFilter == 'UPI') return tx.upiRef != null;
+        return tx.status == TransactionStatus.failed;
       if (_selectedFilter == 'Rent')
         return tx.purpose?.toUpperCase() == 'RENTAL';
       if (_selectedFilter == 'Security')
@@ -610,7 +665,7 @@ class _WalletScreenState extends State<WalletScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A0F172A),
@@ -635,12 +690,6 @@ class _WalletScreenState extends State<WalletScreen> {
                   color: Color(0xFF191C1E),
                 ),
               ),
-              IconButton(
-                onPressed: () => _confirmDeleteHistory(context, provider),
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.redAccent, size: 20),
-                tooltip: 'Delete History',
-              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -649,31 +698,31 @@ class _WalletScreenState extends State<WalletScreen> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                'All',
-                'Approved',
-                'Rejected',
-                'Rent',
-                'Security'
-              ].map((f) {
+              children:
+                  ['All', 'Approved', 'Rejected', 'Rent', 'Security'].map((f) {
                 final isSelected = _selectedFilter == f;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(
                     key: Key('filter${f}Chip'),
                     onTap: () => setState(() => _selectedFilter = f),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1B60DA) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(20),
+                        color: isSelected
+                            ? const Color(0xFF1B60DA)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
                         f,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isSelected ? Colors.white : const Color(0xFF64748B),
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF64748B),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -711,30 +760,6 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _confirmDeleteHistory(BuildContext context, AppProvider provider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete History?'),
-        content: const Text(
-            'This will clear your local transaction history. This action cannot be undone.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              await provider.deleteTransactionHistory();
-              if (context.mounted) Navigator.pop(context);
-            },
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Formatting helpers ────────────────────────────────────────────────────
 
   String _formatCurrency(double amount) {
@@ -742,224 +767,10 @@ class _WalletScreenState extends State<WalletScreen> {
         .abs()
         .toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2);
   }
-
-  void _showTopUpDialog(BuildContext context) {
-    final provider = Provider.of<AppProvider>(context, listen: false);
-    final l10n = AppLocalizations.of(context)!;
-    final amountController = TextEditingController();
-    String selectedMethod = 'UPI';
-    final upiRefController = TextEditingController();
-    File? selectedImage;
-    bool isLoading = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            l10n.wallet_topUp,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Color(0xFF191C1E)),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Enter Amount (₹)',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('topUpAmountField'),
-                  controller: amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'e.g. 500',
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text('Payment Method',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _MethodChip(
-                      key: const Key('upiMethodChip'),
-                      label: 'UPI',
-                      isSelected: selectedMethod == 'UPI',
-                      onTap: () => setState(() => selectedMethod = 'UPI'),
-                    ),
-                    const SizedBox(width: 8),
-                    _MethodChip(
-                      key: const Key('cashMethodChip'),
-                      label: 'Cash',
-                      isSelected: selectedMethod == 'Cash',
-                      onTap: () => setState(() => selectedMethod = 'Cash'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Text('Transaction ID / UPI Ref',
-                    style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 8),
-                TextField(
-                  key: const Key('upiRefField'),
-                  controller: upiRefController,
-                  decoration: InputDecoration(
-                    hintText: 'Compulsory',
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                if (selectedMethod == 'Cash') ...[
-                  const SizedBox(height: 20),
-                  const Text('Payment Proof (Photo Required)',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    key: const Key('paymentProofUpload'),
-                    onTap: () async {
-                      final picker = ImagePicker();
-                      final img =
-                          await picker.pickImage(source: ImageSource.camera);
-                      if (img != null) {
-                        setState(() => selectedImage = File(img.path));
-                      }
-                    },
-                    child: Container(
-                      height: 120,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: selectedImage == null
-                          ? const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo_outlined,
-                                    color: Colors.grey),
-                                SizedBox(height: 4),
-                                Text('Take Photo',
-                                    style: TextStyle(
-                                        fontSize: 12, color: Colors.grey)),
-                              ],
-                            )
-                          : ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child:
-                                  Image.file(selectedImage!, fit: BoxFit.cover),
-                            ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              key: const Key('cancelTopUpButton'),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              key: const Key('submitTopUpButton'),
-              onPressed: isLoading
-                  ? null
-                  : () async {
-                      final amountText = amountController.text;
-                      final amount = double.tryParse(amountText);
-                      if (amount == null || amount <= 0) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Please enter a valid amount')),
-                        );
-                        return;
-                      }
-
-                      if (upiRefController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Transaction ID is compulsory')),
-                        );
-                        return;
-                      }
-
-                      if (selectedMethod == 'Cash' && selectedImage == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Please take a photo of the cash payment proof')),
-                        );
-                        return;
-                      }
-
-                      setState(() => isLoading = true);
-                      try {
-                        await provider.topUpWallet(
-                          amount: amount,
-                          method: selectedMethod.toUpperCase(),
-                          upiRef: upiRefController.text,
-                          image: selectedImage,
-                        );
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Top-up request submitted successfully!')),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed: $e')),
-                          );
-                        }
-                      } finally {
-                        if (context.mounted) {
-                          setState(() => isLoading = false);
-                        }
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0053C1),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : const Text('Top Up',
-                      style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
+// =============================================================================
+// Transaction list tile
 // =============================================================================
 // Transaction list tile
 // =============================================================================
@@ -967,34 +778,34 @@ class _WalletScreenState extends State<WalletScreen> {
 class _TransactionListTile extends StatelessWidget {
   const _TransactionListTile({required this.tx, required this.l10n});
 
-  final dynamic tx;
+  final TransactionModel tx;
   final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final String type = tx['type'] ?? 'OTHER';
-    final String purpose = tx['purpose'] ?? '';
-    final double amount = (tx['amount'] ?? 0).toDouble();
-    final String status = tx['status'] ?? 'pending';
-    final String dateStr = tx['createdAt'] ?? '';
+    final String type = tx.type.name;
+    final String purpose = tx.purpose ?? '';
+    final double amount = tx.amount;
+    final String status = tx.status.name;
+    final String dateStr = tx.createdAt?.toIso8601String() ?? '';
 
-    final isCredit = type == 'CREDIT' || type.contains('TOPUP');
+    final isCredit = tx.isCredit;
 
     // ── Status Color Logic (Web Parity) ──
     Color statusTextColor = const Color(0xFFD97706); // Amber
     Color statusBgColor = const Color(0xFFFFFBEB);
 
-    if (status == 'rejected' || status == 'failed' || !isCredit) {
+    if (tx.status == TransactionStatus.failed) {
       statusTextColor = const Color(0xFFDC2626);
       statusBgColor = const Color(0xFFFEF2F2);
-    } else if (status == 'approved' || status == 'success') {
+    } else if (tx.status == TransactionStatus.success) {
       if (purpose.contains('REWARD')) {
         statusTextColor = const Color(0xFFF59E0B);
         statusBgColor = const Color(0xFFFFFBEB);
       } else if (purpose.contains('REFUND')) {
         statusTextColor = const Color(0xFF1B60DA);
         statusBgColor = const Color(0xFFEFF6FF);
-      } else if (type.contains('TOPUP') || type == 'CREDIT') {
+      } else if (isCredit) {
         statusTextColor = const Color(0xFF16A34A);
         statusBgColor = const Color(0xFFDCFCE7);
       }
@@ -1012,7 +823,8 @@ class _TransactionListTile extends StatelessWidget {
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.account_balance_wallet, color: Color(0xFF64748B), size: 18),
+            child: const Icon(Icons.account_balance_wallet,
+                color: Color(0xFF64748B), size: 18),
           ),
           const SizedBox(width: 12),
 
@@ -1034,7 +846,8 @@ class _TransactionListTile extends StatelessWidget {
                     if (!isCredit)
                       const Padding(
                         padding: EdgeInsets.only(left: 4),
-                        child: Icon(Icons.arrow_outward, color: Color(0xFFDC2626), size: 12),
+                        child: Icon(Icons.arrow_outward,
+                            color: Color(0xFFDC2626), size: 12),
                       ),
                   ],
                 ),
@@ -1058,7 +871,9 @@ class _TransactionListTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isCredit ? const Color(0xFF16A34A) : const Color(0xFF1E293B),
+                  color: isCredit
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFF1E293B),
                 ),
               ),
               const SizedBox(height: 4),
@@ -1080,42 +895,6 @@ class _TransactionListTile extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _MethodChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _MethodChip({
-    super.key,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0053C1) : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey.shade700,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
       ),
     );
   }

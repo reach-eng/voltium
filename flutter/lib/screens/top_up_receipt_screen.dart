@@ -186,8 +186,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
 
   Widget _buildTextSection() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _mainCtrl, curve: const Interval(0.5, 0.8)),
+      opacity:
+          CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.5, 0.8)),
       child: Column(
         children: [
           Text(
@@ -213,7 +213,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   text:
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: AppColors.onSurfaceAlt),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurfaceAlt),
                 ),
                 TextSpan(
                     text:
@@ -228,8 +229,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
 
   Widget _buildStatusCard() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _mainCtrl, curve: const Interval(0.6, 0.9)),
+      opacity:
+          CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.6, 0.9)),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -281,8 +282,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
 
   Widget _buildInfoNote() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _mainCtrl, curve: const Interval(0.7, 1.0)),
+      opacity:
+          CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.7, 1.0)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -312,8 +313,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
 
   Widget _buildBackButton() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _mainCtrl, curve: const Interval(0.8, 1.0)),
+      opacity:
+          CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.8, 1.0)),
       child: GestureDetector(
         onTap: widget.onBackToDashboard,
         child: Container(
@@ -353,7 +354,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
       const Color(0xFF22C55E)
     ];
     final random = math.Random(i);
-    final delay = 0.5 + i * 0.1;
+    final rawDelay = 0.5 + i * 0.1;
+    final delay = rawDelay < 1.0 ? rawDelay : 0.99;
 
     return AnimatedBuilder(
       animation: _mainCtrl,

@@ -21,7 +21,7 @@ FAILED=0
 TOTAL=0
 
 echo "========================================"
-echo "VoltFleet Daily Smoke Test Suite"
+echo "Voltium Daily Smoke Test Suite"
 echo "Device: $DEVICE"
 echo "API: $API_URL"
 echo "========================================"

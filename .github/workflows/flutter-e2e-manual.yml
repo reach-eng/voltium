@@ -42,7 +42,7 @@ jobs:
           cache: 'npm'
 
       - name: Install backend dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Setup database
         run: |
@@ -66,7 +66,8 @@ jobs:
             ${{ runner.os }}-flutter-
 
       - name: Get Flutter dependencies
-        run: cd flutter && flutter pub get
+        run: flutter pub get
+        working-directory: ./flutter
 
       # ─── Start dev server ────────────────────────────────────────────────
       - name: Start backend dev server

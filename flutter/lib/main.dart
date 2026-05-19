@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -9,13 +10,21 @@ import 'gen/app_localizations.dart';
 import 'providers/locale_provider.dart';
 import 'providers/app_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/rider_provider.dart';
+import 'providers/wallet_provider.dart';
+import 'providers/support_provider.dart';
+import 'providers/engagement_provider.dart';
+import 'providers/device_policy_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'providers/notification_provider.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/analytics_service.dart';
 import 'services/offline_storage_service.dart';
 import 'services/notification_service.dart';
+import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'theme/app_theme.dart';
 import 'screens/active_dashboard_screen.dart';
 import 'screens/wallet_screen.dart';
@@ -25,10 +34,19 @@ import 'screens/auth_wrapper.dart';
 import 'widgets/shell_banners.dart';
 import 'widgets/animated_bottom_nav.dart';
 import 'widgets/error_boundary.dart';
+import 'widgets/overlay_manager.dart';
 
+bool isTestModeOverride = false;
 Future<void> main() async {
+  if (const String.fromEnvironment('TEST_MODE') == 'true') {
+    try {
+      enableFlutterDriverExtension();
+    } catch (e) {
+      debugPrint('Driver extension already enabled or binding initialized: $e');
+    }
+  }
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Error Monitoring
   await MonitoringService.initialize();
 
@@ -36,13 +54,15 @@ Future<void> main() async {
   FlutterError.onError = (details) {
     debugPrint('[FlutterError] ${details.exception}');
     AnalyticsService().trackError('FlutterError', details.exception.toString());
-    MonitoringService.logError(details.exception, details.stack, reason: 'FlutterError');
+    MonitoringService.logError(details.exception, details.stack,
+        reason: 'FlutterError');
   };
 
   // ── Custom ErrorWidget Builder (skip in test mode) ─────────────────────────
   if (!kIsWeb && const String.fromEnvironment('TEST_MODE') != 'true') {
     ErrorWidget.builder = (FlutterErrorDetails details) {
-      AnalyticsService().trackError('ErrorWidget', details.exception.toString());
+      AnalyticsService()
+          .trackError('ErrorWidget', details.exception.toString());
       return Material(
         color: Colors.white,
         child: Center(
@@ -96,7 +116,6 @@ Future<void> main() async {
       }
       await NotificationService().init();
       await ConnectivityService().init();
-      AnalyticsService().track(AnalyticsEvent.appOpened);
 
       // ── Determine initial locale from persisted preference ──────────────
       final savedLocale = CacheService().getLocale();
@@ -110,6 +129,21 @@ Future<void> main() async {
       final appProvider = AppProvider();
       final themeProvider = ThemeProvider();
 
+      if (!kIsWeb) {
+        try {
+          await Firebase.initializeApp();
+          await FCMService.initialize(
+            devicePolicy: appProvider.devicePolicyProvider,
+            wallet: appProvider.walletProvider,
+            support: appProvider.supportProvider,
+            rider: appProvider.riderProvider,
+          );
+        } catch (e) {
+          debugPrint('Failed to initialize Firebase: $e');
+        }
+      }
+      AnalyticsService().track(AnalyticsEvent.appOpened);
+
       // ── Connect connectivity stream to AppProvider ──────────────────────
       ConnectivityService().onConnectivityChanged.listen(appProvider.setOnline);
 
@@ -118,10 +152,22 @@ Future<void> main() async {
           providers: [
             ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
             ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-            ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+            ChangeNotifierProvider<RiderProvider>.value(
+                value: appProvider.riderProvider),
+            ChangeNotifierProvider<WalletProvider>.value(
+                value: appProvider.walletProvider),
+            ChangeNotifierProvider<SupportProvider>.value(
+                value: appProvider.supportProvider),
+            ChangeNotifierProvider<EngagementProvider>.value(
+                value: appProvider.engagementProvider),
+            ChangeNotifierProvider<DevicePolicyProvider>.value(
+                value: appProvider.devicePolicyProvider),
+            ChangeNotifierProvider<ConnectivityProvider>.value(
+                value: appProvider.connectivityProvider),
             ChangeNotifierProvider(create: (_) => NotificationProvider()),
+            ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
           ],
-          child: const VoltFleetApp(),
+          child: const VoltiumApp(),
         ),
       );
     },
@@ -133,8 +179,10 @@ Future<void> main() async {
   );
 }
 
-class VoltFleetApp extends StatelessWidget {
-  const VoltFleetApp({super.key});
+class VoltiumApp extends StatelessWidget {
+  static bool get isTestMode =>
+      isTestModeOverride || const String.fromEnvironment('TEST_MODE') == 'true';
+  const VoltiumApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +190,7 @@ class VoltFleetApp extends StatelessWidget {
     final themeMode = context.watch<ThemeProvider>().themeMode;
 
     return MaterialApp(
-      title: 'VoltFleet',
+      title: 'Voltium',
 
       // ── Localization ──────────────────────────────────────────────────────
       locale: locale,
@@ -160,7 +208,11 @@ class VoltFleetApp extends StatelessWidget {
       themeMode: themeMode,
 
       // ── Home ──────────────────────────────────────────────────────────────
-      home: const ErrorBoundary(child: AuthWrapper()),
+      home: const ErrorBoundary(
+        child: OverlayManager(
+          child: AuthWrapper(),
+        ),
+      ),
       debugShowCheckedModeBanner: false,
     );
   }

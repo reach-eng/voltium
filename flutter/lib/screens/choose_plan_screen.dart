@@ -7,8 +7,9 @@ import '../theme/app_theme.dart';
 
 class ChoosePlanScreen extends StatefulWidget {
   final VoidCallback onNext;
+  final VoidCallback? onBack;
 
-  const ChoosePlanScreen({super.key, required this.onNext});
+  const ChoosePlanScreen({super.key, required this.onNext, this.onBack});
 
   @override
   State<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
@@ -30,10 +31,13 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
   Future<void> _fetchPlans() async {
     try {
       final response = await ApiService().fetchPlans();
+      if (!mounted) return;
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
         setState(() {
-          _plans = data.map((e) => PlanModel.fromJson(e as Map<String, dynamic>)).toList();
+          _plans = data
+              .map((e) => PlanModel.fromJson(e as Map<String, dynamic>))
+              .toList();
           _isLoading = false;
         });
       } else {
@@ -43,6 +47,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = 'Connection error. Please try again.';
         _isLoading = false;
@@ -56,8 +61,17 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
     setState(() => _isSubmitting = true);
     try {
       final provider = context.read<AppProvider>();
+      final riderId = provider.rider?.id;
+      if (riderId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please log in again.')),
+          );
+        }
+        return;
+      }
       final response = await ApiService().subscribePlan(
-        riderId: provider.rider!.id!,
+        riderId: riderId,
         planId: _selectedPlanId!,
       );
 
@@ -68,14 +82,16 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Subscription failed')),
+            SnackBar(
+                content: Text(response['message'] ?? 'Subscription failed')),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to subscribe. Check your balance.')),
+          const SnackBar(
+              content: Text('Failed to subscribe. Check your balance.')),
         );
       }
     } finally {
@@ -91,7 +107,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         title: const Text('Choose a Plan'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => widget.onBack?.call(),
         ),
       ),
       body: _isLoading
@@ -101,9 +117,11 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!, style: const TextStyle(color: AppColors.error)),
+                      Text(_error!,
+                          style: const TextStyle(color: AppColors.error)),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _fetchPlans, child: const Text('Retry')),
+                      ElevatedButton(
+                          onPressed: _fetchPlans, child: const Text('Retry')),
                     ],
                   ),
                 )
@@ -119,23 +137,28 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                             final isSelected = _selectedPlanId == plan.id;
 
                             return GestureDetector(
-                              key: const Key('planCard'),
-                              onTap: () => setState(() => _selectedPlanId = plan.id),
+                              key: Key('planCard_$index'),
+                              onTap: () =>
+                                  setState(() => _selectedPlanId = plan.id),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 200),
                                 margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.all(Spacing.lg),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.xl),
                                   border: Border.all(
-                                    color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.outlineVariant,
                                     width: isSelected ? 2 : 1,
                                   ),
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: AppColors.primary.withOpacity(0.1),
+                                            color: AppColors.primary
+                                                .withOpacity(0.1),
                                             blurRadius: 20,
                                             offset: const Offset(0, 10),
                                           )
@@ -146,7 +169,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
                                           plan.name,
@@ -157,7 +181,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                           ),
                                         ),
                                         if (isSelected)
-                                          const Icon(Icons.check_circle, color: AppColors.primary),
+                                          const Icon(Icons.check_circle,
+                                              color: AppColors.primary),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
@@ -173,12 +198,18 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                     const Divider(),
                                     const SizedBox(height: 16),
                                     ...plan.features.map((feature) => Padding(
-                                          padding: const EdgeInsets.only(bottom: 8),
+                                          padding:
+                                              const EdgeInsets.only(bottom: 8),
                                           child: Row(
                                             children: [
-                                              const Icon(Icons.check, size: 16, color: AppColors.success),
+                                              const Icon(Icons.check,
+                                                  size: 16,
+                                                  color: AppColors.success),
                                               const SizedBox(width: 8),
-                                              Text(feature, style: const TextStyle(color: AppColors.onSurfaceVariant)),
+                                              Text(feature,
+                                                  style: const TextStyle(
+                                                      color: AppColors
+                                                          .onSurfaceVariant)),
                                             ],
                                           ),
                                         )),
@@ -193,9 +224,15 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                         padding: const EdgeInsets.all(Spacing.lg),
                         child: ElevatedButton(
                           key: const Key('confirmPlanButton'),
-                          onPressed: _selectedPlanId == null || _isSubmitting ? null : _subscribe,
+                          onPressed: _selectedPlanId == null || _isSubmitting
+                              ? null
+                              : _subscribe,
                           child: _isSubmitting
-                              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2))
                               : const Text('Confirm Subscription'),
                         ),
                       ),

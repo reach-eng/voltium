@@ -15,7 +15,7 @@ class AuthChoiceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('VoltFleet'),
+        title: const Text('Voltium'),
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
@@ -26,6 +26,7 @@ class AuthChoiceScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ElevatedButton(
+              key: const Key('createAccountButton'),
               onPressed: onCreateAccount,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
@@ -39,6 +40,7 @@ class AuthChoiceScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
+              key: const Key('loginWithPhoneButton'),
               onPressed: onLoginWithPhone,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),

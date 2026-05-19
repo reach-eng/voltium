@@ -137,7 +137,7 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27)),
+                  borderRadius: BorderRadius.circular(9999)),
               elevation: _allChecked ? 4 : 0,
               disabledBackgroundColor: const Color(0xFFCBD5E1),
               disabledForegroundColor: Colors.white70,

@@ -16,7 +16,7 @@ class OfflineStorageService {
     if (_initialized) return;
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
-      join(dbPath, 'voltfleet_offline.db'),
+      join(dbPath, 'voltium_offline.db'),
       version: 1,
       onCreate: _onCreate,
     );
@@ -147,7 +147,8 @@ class OfflineStorageService {
   Future<void> addPendingOperation(
       String endpoint, String method, Map<String, dynamic>? body) async {
     if (_db == null) return;
-    MonitoringService.logInfo('Offline: Queuing pending operation: $method $endpoint');
+    MonitoringService.logInfo(
+        'Offline: Queuing pending operation: $method $endpoint');
     await _db!.insert('pending_operations', {
       'endpoint': endpoint,
       'method': method,

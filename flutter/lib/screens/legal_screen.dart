@@ -19,6 +19,15 @@ const _kTermsContent =
 const _kPrivacyContent =
     'Voltium respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information.\n\n1. Information We Collect: We collect your name, phone number, email, government-issued ID (Aadhaar, PAN), bank details, location data, and vehicle usage information.\n\n2. How We Use Your Data: We use your information to provide and improve our services, process transactions, communicate with you, and comply with legal obligations.\n\n3. Data Sharing: We may share your data with trusted partners, government authorities as required by law, and service providers who assist our operations.\n\n4. Data Security: We implement industry-standard security measures including encryption, secure servers, and access controls to protect your data.\n\n5. Your Rights: You can access, correct, or delete your personal data by contacting our support team or through your account settings.\n\n6. Data Retention: We retain your data for as long as necessary to provide our services and comply with legal requirements.';
 
+const _kRentalSafetyContent =
+    'This Rental and Safety Agreement ("Agreement") governs the rental and operation of Voltium electric vehicles.\n\n1. Vehicle Inspection: You must inspect the vehicle before each ride and report any damage immediately. You are responsible for pre-existing damage not reported.\n\n2. Safe Operation: You agree to operate the vehicle in accordance with all traffic laws, wear a helmet at all times, and not operate under the influence of alcohol or drugs.\n\n3. Parking and Storage: Vehicles must be returned to designated hubs. Overnight parking is permitted only at approved locations. Improper parking may result in additional charges.\n\n4. Damage and Theft: You are liable for damage or theft during your rental period. Voltium recommends opting for damage protection plans where available.\n\n5. Speed and Usage Limits: Vehicles have speed governors and geo-fencing. Violation of usage zones or speed limits may result in penalties or account suspension.\n\n6. Accident Protocol: In case of an accident, ensure your safety first, contact emergency services if needed, and report the incident through the Voltium app within 24 hours.';
+
+const _kRefundContent =
+    'This Refund and Cancellation Policy outlines the terms for cancellations and refunds on Voltium\'s rental services.\n\n1. Rental Cancellation: You may cancel a rental booking up to 2 hours before the scheduled start time for a full refund. Cancellations within 2 hours may incur a fee of 10% of the booking amount.\n\n2. Security Deposit Refund: Security deposits are refundable after 180 days of active service, subject to the terms outlined in your rental agreement. Deductions may apply for outstanding dues, damages, or non-returned accessories.\n\n3. Top-Up Refunds: Wallet top-ups are non-refundable but remain in your Voltium wallet for future rentals. Refund requests for technical errors or duplicate transactions will be processed within 5-7 business days.\n\n4. Plan Changes: You may upgrade your rental plan at any time. Downgrades take effect at the next billing cycle. Prorated refunds are provided for unused days on annual or monthly plans.\n\n5. Service Disruptions: If Voltium is unable to provide a booked vehicle due to operational issues, you will receive a full refund or a comparable vehicle upgrade at no additional charge.';
+
+const _kGuarantorAgreementContent =
+    'This Guarantor\'s Agreement ("Agreement") is a legally binding contract between you (the "Guarantor") and Voltium, guaranteeing the obligations of the rider you are sponsoring.\n\n1. Guarantor Obligations: As a guarantor, you agree to be jointly and severally liable for all rental charges, damages, and penalties incurred by the rider during the rental period.\n\n2. Financial Responsibility: You authorize Voltium to recover any outstanding amounts from the rider\'s security deposit or wallet balance. If the balance is insufficient, you agree to pay the outstanding amount upon demand.\n\n3. Duration: This guarantor obligation remains in effect for the entire duration of the rider\'s active subscription with Voltium and for 30 days after the account is closed or terminated.\n\n4. Termination: You may request to be released as a guarantor by providing 30 days written notice. Voltium reserves the right to require the rider to provide an alternate guarantor before releasing you.\n\n5. Communication: You agree to receive communications from Voltium regarding the rider\'s account status, payment defaults, and other relevant notifications at the phone number and email address provided during registration.\n\n6. Verification: You confirm that all information provided during the guarantor registration process is accurate and complete. Voltium may verify your identity and financial standing through third-party services.';
+
 class LegalScreen extends StatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
@@ -105,7 +114,8 @@ class _LegalScreenState extends State<LegalScreen>
                     FadeTransition(
                       opacity: CurvedAnimation(
                           parent: _entryCtrl,
-                          curve: const Interval(0.2, 0.8, curve: Curves.easeIn)),
+                          curve:
+                              const Interval(0.2, 0.8, curve: Curves.easeIn)),
                       child: Text(
                         'Please review and accept our legal documents to continue.',
                         style: GoogleFonts.inter(
@@ -144,6 +154,27 @@ class _LegalScreenState extends State<LegalScreen>
                               title: 'Privacy Policy',
                               content: _kPrivacyContent,
                               headerKey: const Key('privacyExpand'),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildExpandableSection(
+                              id: 'rental_safety',
+                              title: 'Rental & Safety Agreement',
+                              content: _kRentalSafetyContent,
+                              headerKey: const Key('rentalSafetyExpand'),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildExpandableSection(
+                              id: 'refund',
+                              title: 'Refund & Cancellation',
+                              content: _kRefundContent,
+                              headerKey: const Key('refundExpand'),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildExpandableSection(
+                              id: 'guarantor',
+                              title: "Guarantor's Agreement",
+                              content: _kGuarantorAgreementContent,
+                              headerKey: const Key('guarantorExpand'),
                             ),
                           ],
                         ),
@@ -253,7 +284,8 @@ class _LegalScreenState extends State<LegalScreen>
                 setState(() => _expandedId = isExpanded ? null : id);
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -430,8 +462,7 @@ class _LegalScreenState extends State<LegalScreen>
                     decoration: BoxDecoration(
                       gradient: AppGradients.primary,
                       borderRadius: BorderRadius.circular(999),
-                      boxShadow:
-                          _accepted ? AppShadows.primaryButton : null,
+                      boxShadow: _accepted ? AppShadows.primaryButton : null,
                     ),
                     child: Center(
                       child: Text(

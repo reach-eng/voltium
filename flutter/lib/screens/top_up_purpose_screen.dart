@@ -13,7 +13,7 @@ import '../theme/app_theme.dart';
 enum TopUpPurpose { topUp, securityDeposit }
 
 class TopUpPurposeScreen extends StatefulWidget {
-  final VoidCallback? onContinue;
+  final Function(TopUpPurpose)? onContinue;
   final VoidCallback? onBack;
   final Function(TopUpPurpose)? onPurposeSelected;
 
@@ -75,6 +75,7 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                         setState(() => _selected = TopUpPurpose.topUp);
                         widget.onPurposeSelected?.call(TopUpPurpose.topUp);
                       },
+                      key: const Key('walletTopUpPurposeCard'),
                     ),
 
                     const SizedBox(height: 16),
@@ -85,16 +86,18 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       description: 'Refundable as per lease terms',
                       icon: Icons.lock_outline,
                       isSelected: _selected == TopUpPurpose.securityDeposit,
-                      badge: '₹2,000',
                       onTap: () {
-                        setState(() => _selected = TopUpPurpose.securityDeposit);
-                        widget.onPurposeSelected?.call(TopUpPurpose.securityDeposit);
+                        setState(
+                            () => _selected = TopUpPurpose.securityDeposit);
+                        widget.onPurposeSelected
+                            ?.call(TopUpPurpose.securityDeposit);
                       },
+                      badge: '₹2,000',
+                      key: const Key('securityDepositPurposeCard'),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    // Info box
                     _buildInfoBox(),
 
                     const SizedBox(height: 24),
@@ -185,6 +188,7 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
     required bool isSelected,
     required VoidCallback onTap,
     String? badge,
+    Key? key,
   }) {
     final delay = 0.15 + index * 0.06;
     final anim = CurvedAnimation(
@@ -199,6 +203,7 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
         position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
             .animate(anim),
         child: GestureDetector(
+          key: key,
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -269,7 +274,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppColors.onSurfaceAlt,
+                        color:
+                            isSelected ? Colors.white : AppColors.onSurfaceAlt,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -312,7 +318,9 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : AppColors.primary,
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.primary,
                               ),
                             ),
                           ],
@@ -350,8 +358,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
 
   Widget _buildInfoBox() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _entryCtrl, curve: const Interval(0.3, 0.9)),
+      opacity:
+          CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.3, 0.9)),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -405,10 +413,11 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
 
   Widget _buildContinueButton() {
     return FadeTransition(
-      opacity: CurvedAnimation(
-          parent: _entryCtrl, curve: const Interval(0.4, 1.0)),
+      opacity:
+          CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.4, 1.0)),
       child: GestureDetector(
-        onTap: widget.onContinue,
+        key: const Key('continueToPaymentButton'),
+        onTap: () => widget.onContinue?.call(_selected),
         child: Container(
           height: 52,
           decoration: BoxDecoration(

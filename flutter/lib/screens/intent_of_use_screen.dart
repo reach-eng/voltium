@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 
 enum IntentType { delivery, personal }
 
 class IntentOfUseScreen extends StatefulWidget {
   final VoidCallback? onNext;
+  final VoidCallback? onBack;
 
-  const IntentOfUseScreen({super.key, this.onNext});
+  const IntentOfUseScreen({super.key, this.onNext, this.onBack});
 
   @override
   State<IntentOfUseScreen> createState() => _IntentOfUseScreenState();
@@ -24,7 +28,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0053C1)),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => widget.onBack?.call(),
         ),
         title: const Text(
           'Intent of Use',
@@ -61,7 +65,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                         children: [
                           TextSpan(text: 'How will you use\n'),
                           TextSpan(
-                            text: 'VoltFleet',
+                            text: 'Voltium',
                             style: TextStyle(color: Color(0xFF0053C1)),
                           ),
                           TextSpan(text: '?'),
@@ -83,6 +87,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
 
                     // Delivery Card
                     _buildIntentCard(
+                      key: const Key('deliverWithUsCard'),
                       type: IntentType.delivery,
                       title: 'Deliver with Us',
                       description:
@@ -95,6 +100,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
 
                     // Personal Card
                     _buildIntentCard(
+                      key: const Key('personalUsageCard'),
                       type: IntentType.personal,
                       title: 'Personal Usage',
                       description:
@@ -153,9 +159,29 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
+                  key: const Key('confirmIntentButton'),
                   onPressed: _selectedIntent == null
                       ? null
-                      : () {
+                      : () async {
+                          if (_selectedIntent != null) {
+                            final intentStr =
+                                _selectedIntent == IntentType.delivery
+                                    ? 'deliver'
+                                    : 'personal';
+                            try {
+                              final provider = context.read<AppProvider>();
+                              final riderId = provider.rider?.id;
+                              if (riderId != null) {
+                                await ApiService().updateProfile(
+                                  riderId: riderId,
+                                  data: {'intent': intentStr},
+                                );
+                                await provider.refresh();
+                              }
+                            } catch (e) {
+                              debugPrint('Error saving intent: $e');
+                            }
+                          }
                           if (widget.onNext != null) {
                             widget.onNext!();
                           }
@@ -187,6 +213,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
   }
 
   Widget _buildIntentCard({
+    Key? key,
     required IntentType type,
     required String title,
     required String description,
@@ -197,6 +224,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
     final isSelected = _selectedIntent == type;
 
     return GestureDetector(
+      key: key,
       onTap: () {
         setState(() {
           _selectedIntent = type;

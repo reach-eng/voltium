@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../services/api_service.dart';
@@ -29,15 +31,28 @@ class EndRentalScreen extends StatefulWidget {
 class _EndRentalScreenState extends State<EndRentalScreen>
     with SingleTickerProviderStateMixin {
   final _odometerCtrl = TextEditingController();
-  final Map<String, bool> _photos = {
-    'front': false,
-    'rear': false,
-    'left': false,
-    'right': false,
+  final Map<String, XFile?> _photos = {
+    'front': null,
+    'rear': null,
+    'left': null,
+    'right': null,
   };
   bool _confirmed = false;
   bool _submitting = false;
   bool _submitted = false;
+
+  final _imagePicker = ImagePicker();
+
+  Future<void> _takePhoto(String key) async {
+    if (const String.fromEnvironment('TEST_MODE') == 'true') {
+      setState(() => _photos[key] = XFile('mock_photo.png'));
+      return;
+    }
+    final image = await _imagePicker.pickImage(source: ImageSource.camera);
+    if (image != null && mounted) {
+      setState(() => _photos[key] = image);
+    }
+  }
 
   late final AnimationController _entryCtrl;
 
@@ -57,7 +72,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
     super.dispose();
   }
 
-  bool get _allPhotosTaken => _photos.values.every((v) => v);
+  bool get _allPhotosTaken => _photos.values.every((v) => v != null);
   bool get _canSubmit => _allPhotosTaken && _confirmed && !_submitting;
 
   Future<void> _handleReturn() async {
@@ -67,10 +82,18 @@ class _EndRentalScreenState extends State<EndRentalScreen>
     try {
       final rider = context.read<AppProvider>().rider;
       final riderId = rider?.riderId ?? '';
-      final photoList = _photos.keys.where((k) => _photos[k] == true).toList();
+      final List<String> photoUrls = [];
+      for (final entry in _photos.entries) {
+        if (entry.value != null) {
+          final url = await ApiService()
+              .uploadFile(File(entry.value!.path), 'RETURN_PHOTO');
+          photoUrls.add(url);
+        }
+      }
+      if (!mounted) return;
       await ApiService().submitVehicleReturn(
         riderId: riderId,
-        photoUrls: photoList,
+        photoUrls: photoUrls,
         reason: 'End of rental – odometer: ${_odometerCtrl.text}',
       );
 
@@ -80,7 +103,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           _submitted = true;
         });
         await Future.delayed(const Duration(seconds: 2));
-        widget.onSuccess?.call();
+        if (mounted) widget.onSuccess?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -308,18 +331,18 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           physics: const NeverScrollableScrollPhysics(),
           children: slots.map((slot) {
             final key = slot['key']!;
-            final taken = _photos[key] ?? false;
+            final photo = _photos[key];
+            final taken = photo != null;
             return GestureDetector(
-              onTap: () => setState(() => _photos[key] = !(_photos[key] ?? false)),
+              key: Key('photoSlot_$key'),
+              onTap: () => _takePhoto(key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: taken ? AppColors.successLight : Colors.white,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
-                    color: taken
-                        ? const Color(0xFF86EFAC)
-                        : AppColors.divider,
+                    color: taken ? const Color(0xFF86EFAC) : AppColors.divider,
                     width: taken ? 2 : 1,
                     style: taken ? BorderStyle.solid : BorderStyle.solid,
                   ),
@@ -327,13 +350,21 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      taken ? Icons.check : Icons.camera_alt_outlined,
-                      size: 24,
-                      color: taken
-                          ? AppColors.successDark
-                          : AppColors.onSurfaceVariant,
-                    ),
+                    taken
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              File(photo.path),
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Icon(
+                            Icons.camera_alt_outlined,
+                            size: 24,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                     const SizedBox(height: 8),
                     Text(
                       slot['label']!,
@@ -377,6 +408,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           ),
           const SizedBox(height: 8),
           TextField(
+            key: const Key('odometerField'),
             controller: _odometerCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -395,8 +427,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
           ),
         ],
@@ -464,6 +496,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
 
   Widget _buildCheckbox() {
     return GestureDetector(
+      key: const Key('confirmCheckbox'),
       onTap: () => setState(() => _confirmed = !_confirmed),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -513,14 +546,13 @@ class _EndRentalScreenState extends State<EndRentalScreen>
     return Column(
       children: [
         GestureDetector(
+          key: const Key('submitReturnButton'),
           onTap: _canSubmit ? _handleReturn : null,
           child: Container(
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              color: _canSubmit
-                  ? const Color(0xFFBA1A1A)
-                  : AppColors.divider,
+              color: _canSubmit ? const Color(0xFFBA1A1A) : AppColors.divider,
               borderRadius: BorderRadius.circular(999),
               boxShadow: _canSubmit
                   ? const [

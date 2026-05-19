@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     const otp = await generateOtp(phone);
 
     // Use push notifications if enabled, otherwise fall back to SMS
-    const message = `Your VoltFleet verification code is: ${otp}. Do not share this code with anyone.`;
+    const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
     if (flags.enablePushNotifications) {
       await JobQueue.enqueue(JobTypes.SEND_SMS, {

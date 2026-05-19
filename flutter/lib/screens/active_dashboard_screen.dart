@@ -8,23 +8,67 @@ import 'package:share_plus/share_plus.dart';
 
 import '../gen/app_localizations.dart';
 import '../models/rider_model.dart';
+import '../models/transaction_model.dart';
+import '../models/sponsored_offer_model.dart';
 import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_constants.dart';
 import '../utils/app_navigator.dart';
 import 'rewards_screen.dart';
 import 'troubleshooter_screen.dart';
+import 'rental_details_screen.dart';
+import 'notification_center_screen.dart';
+import 'emergency_sos_screen.dart';
+import 'faq_screen.dart';
 import '../widgets/skeleton_loader.dart';
 import '../widgets/fade_up_widget.dart';
+import '../widgets/cards.dart';
+import '../widgets/effect_widgets.dart';
 
-/// Active Dashboard screen for the VoltFleet Rider App.
+/// Active Dashboard screen for the Voltium Rider App.
 ///
 /// Displays the rider's status, subscription details, performance metrics,
 /// assigned vehicle, and referral widget. Supports pull-to-refresh via
 /// [RefreshIndicator] and reacts to [AppProvider] state changes through
 /// [Consumer].
-class ActiveDashboardScreen extends StatelessWidget {
+class ActiveDashboardScreen extends StatefulWidget {
   const ActiveDashboardScreen({super.key});
+
+  @override
+  State<ActiveDashboardScreen> createState() => _ActiveDashboardScreenState();
+}
+
+class _ActiveDashboardScreenState extends State<ActiveDashboardScreen> {
+  List<SponsoredOffer> _sponsoredOffers = [];
+  bool _loadingOffers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSponsoredOffers();
+  }
+
+  Future<void> _loadSponsoredOffers() async {
+    setState(() => _loadingOffers = true);
+    try {
+      final response = await ApiService().fetchSponsoredOffers();
+      if (response['success'] == true && mounted) {
+        final offersData = response['data']?['offers'] as List<dynamic>?;
+        if (offersData != null) {
+          setState(() {
+            _sponsoredOffers = offersData
+                .map((e) => SponsoredOffer.fromJson(e as Map<String, dynamic>))
+                .toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load sponsored offers: $e');
+    } finally {
+      if (mounted) setState(() => _loadingOffers = false);
+    }
+  }
 
   // ── Status helpers ────────────────────────────────────────────────────────
 
@@ -46,237 +90,877 @@ class ActiveDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceContainer,
-      body: Consumer<AppProvider>(
-        builder: (context, provider, child) {
-          final l10n = AppLocalizations.of(context)!;
-          final rider = provider.rider;
-          final isCache = provider.dataState == DataState.fromCache;
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Stack(
+        children: [
+          Consumer<AppProvider>(
+            builder: (context, provider, child) {
+              final l10n = AppLocalizations.of(context)!;
+              final rider = provider.rider;
+              final isCache = provider.dataState == DataState.fromCache;
 
-          if (isCache && provider.isRefreshing && rider == null) {
-            return const DashboardSkeleton();
-          }
+              if (isCache && provider.isRefreshing && rider == null) {
+                return const DashboardSkeleton();
+              }
 
-          if (rider == null) {
-            if (provider.dataState == DataState.error) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Unable to connect to backend: ${provider.errorMessage}\nPlease ensure the local server is running.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
+              if (rider == null) {
+                if (provider.dataState == DataState.error) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: GlassCard(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.error_outline,
+                                color: Colors.red, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Unable to connect to command center: ${provider.errorMessage}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                            const SizedBox(height: 24),
+                            FilledButton(
+                              onPressed: () => provider.refresh(),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: Text(l10n.common_retry),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: () => provider.refresh(),
-                        child: Text(l10n.common_retry),
-                      ),
-                    ],
+                    ),
+                  );
+                }
+
+                if (provider.isRefreshing ||
+                    provider.dataState == DataState.initial) {
+                  return const DashboardSkeleton();
+                }
+
+                return Center(
+                  child: GlassCard(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(l10n.common_noData,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: () => provider.refresh(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Initialize System'),
+                        ),
+                      ],
+                    ),
                   ),
+                );
+              }
+
+              return RefreshIndicator(
+                color: AppColors.primary,
+                backgroundColor: Colors.white,
+                onRefresh: () => provider.refresh(),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.bolt,
+                                    color: Color(0xFF0053C1), size: 32),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Dashboard',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF1E293B),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              key: const Key('notificationBell'),
+                              onTap: () {
+                                AppNavigator.push(
+                                    context, const NotificationCenterScreen());
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    const Icon(Icons.notifications_none_rounded,
+                                        size: 20, color: Color(0xFF475569)),
+                                    Positioned(
+                                      right: -2,
+                                      top: -2,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFEF4444),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (isCache) _buildCacheIndicator(l10n),
+
+                            // 1. Profile with vehicle details
+                            _buildProfileCardWithVehicle(context, rider),
+                            const SizedBox(height: 16),
+
+                            // 2. Current subscription container
+                            _buildActivePlanCardLight(rider),
+                            const SizedBox(height: 16),
+
+                            // 3. Wallet container
+                            _buildWalletCardLight(
+                                rider, provider.walletMinTopup),
+                            const SizedBox(height: 16),
+
+                            // 4. TL container
+                            _buildTeamLeaderCardLight(context, rider),
+                            const SizedBox(height: 16),
+
+                            // 5. Referral code container
+                            _buildReferralCardLight(rider),
+
+                            const SizedBox(height: 120), // Bottom spacing
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
-            }
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-            // If we are refreshing OR in the initial state (no data yet), show skeleton.
-            if (provider.isRefreshing ||
-                provider.dataState == DataState.initial) {
-              return const DashboardSkeleton();
-            }
-
-            // Only show "No Data" if we explicitly finished a refresh and still have no rider.
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildProfileCardWithVehicle(BuildContext context, RiderModel rider) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFF1F5F9),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Center(
+                  child: Text(
+                    rider.name.isNotEmpty ? rider.name[0].toUpperCase() : 'A',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rider.name.isEmpty
+                          ? 'GUEST RIDER'
+                          : rider.name.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1E293B),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.badge_outlined,
+                            size: 14, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          rider.riderId.isEmpty ? 'VF-0000' : rider.riderId,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_outlined,
+                            size: 14, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          rider.phone,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l10n.common_noData,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  const Text(
+                    'ASSIGNED VEHICLE',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF94A3B8),
+                      letterSpacing: 1.0,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
-                    'Try refreshing or check your connection.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton.icon(
-                    onPressed: () => provider.refresh(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
+                    rider.assignedVehicle ?? 'Not Assigned',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    ),
                   ),
                 ],
               ),
-            );
-          }
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'PICKUP HUB',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF94A3B8),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    rider.pickupHub ?? 'Not Assigned',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0053C1),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: () => provider.refresh(),
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                // ── Header ──────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 48, 20, 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildActivePlanCardLight(RiderModel rider) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withOpacity(0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              (rider.currentPlan?.isNotEmpty ?? false)
+                  ? rider.currentPlan!.toUpperCase()
+                  : 'NO PLAN',
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            (rider.currentPlan?.replaceAll('_', ' ').toLowerCase() ?? 'no plan')
+                .split(' ')
+                .map((s) => s[0].toUpperCase() + s.substring(1))
+                .join(' '),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Voltium',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A2E), // vf-on-surface
-                            ),
-                          ),
-                          Text(
-                            l10n.dashboard_subtitle,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF6B7280), // vf-on-surface-variant
-                            ),
-                          ),
-                        ],
+                      const Text(
+                        'TIME REMAINING',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF93C5FD),
+                          letterSpacing: 1,
+                        ),
                       ),
-                      Row(
-                        children: [
-                          _buildStreakBadge(rider.paymentStreak),
-                          const SizedBox(width: 12),
-                          _buildPointsBadge(context, 0), // Default 0 pts
-                          const SizedBox(width: 12),
-                          InkWell(
-                            key: const Key('notificationBell'),
-                            onTap: () {},
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0x0A0F172A),
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  const Icon(Icons.notifications_none,
-                                      size: 20, color: Color(0xFF1A1A2E)),
-                                  Positioned(
-                                    right: -2,
-                                    top: -2,
-                                    child: Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: Colors.white, width: 1.5),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        _computeTimeRemaining(rider),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                // ── Body content ────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Cache indicator.
-                      if (isCache) _buildCacheIndicator(l10n),
-
-                      // Action Banner
-                      if (rider.returnPending) _buildReturnPendingCard(context),
-                      if (!rider.returnPending)
-                        _buildActionRequiredBanner(rider),
-                      const SizedBox(height: 16),
-
-                      // Status Badge centered
-                      FadeUpWidget(
-                        delay: 0,
-                        child: Center(child: _buildStatusBadge(context, rider, l10n)),
+                      const Text(
+                        'NEXT RECHARGE',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF93C5FD),
+                          letterSpacing: 1,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Profile Box
-                      FadeUpWidget(
-                        delay: 100,
-                        child: _buildProfileBox(context, rider, l10n),
+                      const SizedBox(height: 4),
+                      Text(
+                        _computeNextRecharge(rider),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // KPI Grid
-                      FadeUpWidget(
-                        delay: 200,
-                        child: _buildKPIGrid(context, rider, l10n),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Subscription card.
-                      FadeUpWidget(
-                        delay: 300,
-                        child: _buildSubscriptionCard(context, rider, provider, l10n),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Bento grid: Hub + Team Leader.
-                      FadeUpWidget(
-                        delay: 400,
-                        child: _buildBentoGrid(context, rider, l10n),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Performance Grid
-                      FadeUpWidget(
-                        delay: 500,
-                        child: _buildPerformanceGrid(context, rider, l10n),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Referral widget.
-                      FadeUpWidget(
-                        delay: 600,
-                        child: _buildReferralWidget(context, l10n),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Assigned vehicle card.
-                      FadeUpWidget(
-                        delay: 700,
-                        child: _buildVehicleCard(context, rider, l10n),
-                      ),
-
-                      const SizedBox(height: 32),
                     ],
                   ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _computeTimeRemaining(RiderModel rider) {
+    if (rider.planEndDate != null) {
+      final remaining = rider.planEndDate!.difference(DateTime.now());
+      if (remaining.inDays > 0)
+        return '${remaining.inDays}d ${remaining.inHours % 24}h';
+      if (remaining.inHours > 0) return '${remaining.inHours}h';
+    }
+    return '7d 0h';
+  }
+
+  String _computeNextRecharge(RiderModel rider) {
+    if (rider.planEndDate != null) {
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
+      return '${rider.planEndDate!.day} ${months[rider.planEndDate!.month - 1]}';
+    }
+    return '—';
+  }
+
+  Widget _buildWalletCardLight(RiderModel rider, double walletMinTopup) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'TOTAL BALANCE',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF94A3B8),
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${rider.walletBalance.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+              Material(
+                color: const Color(0xFF0053C1),
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    // Navigate to topup
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.add, color: Colors.white, size: 24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Rental Recovery Streak',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              Text(
+                '${rider.paymentStreak}/5 Days',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0053C1),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(
+                5,
+                (i) => Expanded(
+                      child: Container(
+                        height: 8,
+                        margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
+                        decoration: BoxDecoration(
+                          color: i < rider.paymentStreak
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeamLeaderCardLight(BuildContext context, RiderModel rider) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'TEAM LEADER',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF94A3B8),
+                  letterSpacing: 1.0,
+                ),
+              ),
+              InkWell(
+                onTap: () => _showTLDetailsBottomSheet(context, rider),
+                child: const Text(
+                  'View Details',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0053C1),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFEF3C7)),
+                ),
+                child:
+                    const Icon(Icons.stars, color: Color(0xFFF59E0B), size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rider.teamLeader ?? 'Not Assigned',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Assigned TL',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.phone,
+                      color: Color(0xFF475569), size: 20),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReferralCardLight(RiderModel rider) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.card_giftcard,
+                    color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Refer & Earn',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Share your code with friends',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFFA7F3D0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'YOUR CODE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white.withOpacity(0.8),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      rider.referralCode ?? 'VOLT123',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(
+                            text: rider.referralCode ?? 'VOLT123'));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.copy,
+                            color: Colors.white, size: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            text:
+                                'Use my code ${rider.referralCode ?? 'VOLT123'} to join VoltFleet!',
+                            subject: 'Join VoltFleet',
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.share,
+                            color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationBell(BuildContext context) {
+    return InkWell(
+      key: const Key('notificationBell'),
+      onTap: () {
+        AppNavigator.push(context, const NotificationCenterScreen());
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.notifications_none_rounded,
+                size: 20, color: Colors.white),
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -338,162 +1022,85 @@ class ActiveDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildKPIGrid(BuildContext context, RiderModel rider, AppLocalizations l10n) {
-    final daysLeft = rider.planEndDate != null
-        ? rider.planEndDate!.difference(DateTime.now()).inDays
-        : 0;
-
+  Widget _buildOperationalGrid(BuildContext context, RiderModel rider) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.6,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: 1.4,
       children: [
-        _buildKPITile(
-          label: 'Wallet',
+        _buildGlassKPITile(
+          label: 'COMMAND WALLET',
           value: '₹${rider.walletBalance.toInt()}',
-          icon: Icons.account_balance_wallet,
-          color: const Color(0xFF0053C1),
-          bg: const Color(0xFFEFF6FF),
+          icon: Icons.account_balance_wallet_rounded,
+          color: AppColors.primary,
         ),
-        _buildKPITile(
-          label: 'Days Left',
-          value: '${daysLeft}d',
-          icon: Icons.calendar_today,
-          color: daysLeft < 3 ? Colors.red : const Color(0xFFD97706),
-          bg: daysLeft < 3 ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB),
-        ),
-        _buildKPITile(
-          label: 'Speed',
-          value: '${rider.currentSpeed.toInt()} km/h',
-          icon: Icons.speed,
-          color: const Color(0xFF7C3AED),
-          bg: const Color(0xFFF5F3FF),
-        ),
-        _buildKPITile(
-          label: 'Battery',
+        _buildGlassKPITile(
+          label: 'SYSTEM HEALTH',
           value: '${rider.batteryPercent.toInt()}%',
-          icon: Icons.battery_charging_full,
-          color: const Color(0xFF059669),
-          bg: const Color(0xFFECFDF5),
+          icon: Icons.battery_charging_full_rounded,
+          color: rider.batteryPercent < 20 ? Colors.red : AppColors.success,
+        ),
+        _buildGlassKPITile(
+          label: 'VELOCITY',
+          value: '${rider.currentSpeed.toInt()} km/h',
+          icon: Icons.speed_rounded,
+          color: Colors.purpleAccent,
+        ),
+        _buildGlassKPITile(
+          label: 'TIME TO RENEW',
+          value:
+              '${rider.planEndDate?.difference(DateTime.now()).inDays ?? 0}d',
+          icon: Icons.timer_rounded,
+          color: Colors.orangeAccent,
         ),
       ],
     );
   }
 
-  Widget _buildKPITile({
+  Widget _buildGlassKPITile({
     required String label,
     required String value,
     required IconData icon,
     required Color color,
-    required Color bg,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.1)),
-      ),
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: color.withOpacity(0.7), fontWeight: FontWeight.bold),
-          ),
-          Text(
-            value,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPerformanceGrid(BuildContext context, RiderModel rider, AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'YOUR PERFORMANCE',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF64748B),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildPerformanceTile(
-                label: 'This Week',
-                value: '${rider.weeklyDistance} km',
-                icon: Icons.map_outlined,
-                color: const Color(0xFF2563EB),
-                bg: const Color(0xFFEFF6FF),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildPerformanceTile(
-                label: 'Carbon Saved',
-                value: '${rider.carbonSaved} kg',
-                icon: Icons.eco_outlined,
-                color: const Color(0xFF16A34A),
-                bg: const Color(0xFFF0FDF4),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPerformanceTile({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-    required Color bg,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(
-                label,
-                style: TextStyle(fontSize: 10, color: color.withOpacity(0.7), fontWeight: FontWeight.bold),
-              ),
-              Text(
-                value,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+              Icon(icon, color: color, size: 18),
+              const Spacer(),
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w900,
+              color: Colors.white.withOpacity(0.4),
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -633,125 +1240,284 @@ class ActiveDashboardScreen extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  Widget _buildProfileBox(
-      BuildContext context, RiderModel rider, AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: AppGradients.success, // User request #2: Green rider card
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.success.withOpacity(0.2),
-            blurRadius: 48,
-            offset: const Offset(0, 24),
-          ),
-        ],
-      ),
+  Widget _buildIdentityCard(BuildContext context, RiderModel rider) {
+    return GlassCard(
       child: Row(
         children: [
-          // User request #6: Photo instead of label
+          // Futuristic Avatar
           Container(
-            width: 64,
-            height: 64,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: rider.pickupPhoto != null && rider.pickupPhoto!.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  child: Image.network(
-                    rider.pickupPhoto!,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    (rider.name.isNotEmpty ? rider.name[0] : 'A').toUpperCase(),
-                    style: const TextStyle(
-                      color: AppColors.success,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: rider.pickupPhotoFront != null &&
+                      rider.pickupPhotoFront!.isNotEmpty
+                  ? Image.network(rider.pickupPhotoFront!, fit: BoxFit.cover)
+                  : Container(
+                      color: Colors.white.withOpacity(0.1),
+                      child: Center(
+                        child: Text(
+                          (rider.name.isNotEmpty ? rider.name[0] : 'A')
+                              .toUpperCase(),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'RIDER',
+                  rider.name.toUpperCase(),
+                  key: const Key('riderNameText'),
                   style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white70,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                Text(
-                  // User request #5: Rider name instead of label
-                  rider.name.isNotEmpty ? rider.name : 'Vollfleeet Rider',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    rider.id ?? '—',
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        rider.riderId,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    _buildAccountStatusIndicator(rider.accountStatus),
+                  ],
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right,
-              size: 24, color: Colors.white70),
+          Icon(Icons.qr_code_2_rounded,
+              color: Colors.white.withOpacity(0.5), size: 28),
         ],
       ),
     );
   }
 
-  Widget _buildSubscriptionCard(BuildContext context, RiderModel rider,
-      AppProvider provider, AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildAccountStatusIndicator(AccountStatus status) {
+    final color =
+        status == AccountStatus.ACTIVE ? AppColors.success : Colors.red;
+    return Row(
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        const SizedBox(width: 6),
+        Text(
+          status.name,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: color.withOpacity(0.8),
+            letterSpacing: 1.0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubscriptionGlassCard(
+      BuildContext context, RiderModel rider, AppProvider provider) {
+    return GlassCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SUBSCRIPTION PLAN',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    rider.currentPlan?.toUpperCase() ?? 'NONE ACTIVE',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.auto_awesome_motion_rounded,
+                    color: AppColors.primary, size: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSubscriptionDetailRow(
+            label: 'NEXT PAYMENT',
+            value: rider.planEndDate != null
+                ? '${rider.planEndDate!.day} ${_getMonth(rider.planEndDate!.month)}'
+                : '—',
+            icon: Icons.event_repeat_rounded,
+          ),
+          const SizedBox(height: 16),
+          _buildSubscriptionDetailRow(
+            label: 'AUTO-RENEWAL',
+            value: 'SYSTEM ENABLED',
+            icon: Icons.sync_rounded,
+            valueColor: AppColors.success,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  key: const Key('manageSubscriptionButton'),
+                  onPressed: () => _showSubscriptionBottomSheet(context, rider),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('MANAGE PLAN',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 1.0)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {},
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('PAY NOW',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 1.0)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionDetailRow({
+    required String label,
+    required String value,
+    required IconData icon,
+    Color? valueColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white.withOpacity(0.3), size: 16),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                  fontSize: 8,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white.withOpacity(0.4),
+                  letterSpacing: 1.0),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: valueColor ?? Colors.white),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _getMonth(int month) {
+    const months = [
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ];
+    return months[month - 1];
+  }
+
+  Widget _buildSponsoredBox(SponsoredOffer offer) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x330053C1),
-            blurRadius: 24,
-            offset: Offset(0, 12),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -760,201 +1526,49 @@ class ActiveDashboardScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                'CURRENT SUBSCRIPTION',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.star_rounded, color: Colors.white, size: 12),
+                    SizedBox(width: 4),
+                    Text(
+                      'SPONSORED',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Text(
-            rider.currentPlan ?? 'No Plan',
+            offer.title,
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TIME REMAINING',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        rider.planEndDate != null
-                            ? _daysRemaining(rider.planEndDate!)
-                            : 'N/A',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ENDS ON',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        rider.planEndDate != null
-                            ? _formatDate(rider.planEndDate!)
-                            : 'N/A',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (rider.submissionDate != null && !rider.returnPending) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2), // red-50
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFFCA5A5), width: 1.5),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                            color: Color(0xFFFEE2E2), shape: BoxShape.circle),
-                        child: const Icon(Icons.assignment_return,
-                            color: Color(0xFFDC2626), size: 24),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'RETURN SCHEDULED',
-                              style: TextStyle(
-                                  color: Color(0xFF991B1B),
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 11,
-                                  letterSpacing: 1.1),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Date: ${_formatDate(rider.submissionDate!)}',
-                              style: const TextStyle(
-                                  color: Color(0xFFDC2626),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        key: const Key('cancelReturnButton'),
-                        onTap: () {
-                          final updated = rider.copyWith(submissionDate: null);
-                          provider.updateRider(updated);
-                        },
-                        child: const Icon(Icons.cancel_outlined,
-                            color: Color(0xFF991B1B), size: 24),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    key: const Key('processReturnButton'),
-                    onPressed: () =>
-                        _showReturnVehicleBottomSheet(context, provider),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.camera_alt_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Text('Process Vehicle Return',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              key: const Key('manageSubscriptionButton'),
-              onPressed: () => _showSubscriptionBottomSheet(context, rider),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF0053C1),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('Manage Subscription',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(
+            offer.description,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+              height: 1.4,
             ),
           ),
         ],
@@ -1175,7 +1789,6 @@ class ActiveDashboardScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () {
-                    // Logic to submit reason
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -1200,7 +1813,7 @@ class ActiveDashboardScreen extends StatelessWidget {
           ),
         );
       },
-    );
+    ).whenComplete(() => reasonController.dispose());
   }
 
   Widget _buildReferralWidget(BuildContext context, AppLocalizations l10n) {
@@ -1208,7 +1821,7 @@ class ActiveDashboardScreen extends StatelessWidget {
       builder: (context, provider, _) {
         final referralCode = provider.rider?.riderId ?? 'VF-REF';
         final shareText =
-            'Hey! Use my referral code $referralCode to get ₹500 off your first EV rental with VoltFleet! http://voltfleet.app/refer/$referralCode';
+            'Hey! Use my referral code $referralCode to get ₹500 off your first EV rental with Voltium! http://voltium.app/refer/$referralCode';
         return Container(
           decoration: BoxDecoration(
             color: const Color(0xFF16A34A),
@@ -1252,7 +1865,7 @@ class ActiveDashboardScreen extends StatelessWidget {
                         SharePlus.instance.share(
                           ShareParams(
                             text: shareText,
-                            subject: 'Rent an EV with VoltFleet',
+                            subject: 'Rent an EV with Voltium',
                           ),
                         );
                       },
@@ -1314,75 +1927,6 @@ class ActiveDashboardScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildVehicleCard(
-      BuildContext context, RiderModel rider, AppLocalizations l10n) {
-    return InkWell(
-      key: const Key('assignedVehicleCard'),
-      onTap: () => _showVehicleDetailsBottomSheet(context, rider),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A0F172A),
-              blurRadius: 48,
-              offset: Offset(0, 24),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.electric_bike,
-                  color: Color(0xFF6B7280), size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Assigned Vehicle',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  Text(
-                    rider.assignedVehicle ?? 'Not Assigned',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A2E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Text(
-              'Details',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0053C1),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1803,9 +2347,13 @@ class ActiveDashboardScreen extends StatelessWidget {
                   FilledButton.icon(
                     key: const Key('captureReturnPhotoButton'),
                     onPressed: () async {
-                      final photo =
-                          await picker.pickImage(source: ImageSource.camera);
-                      if (context.mounted) Navigator.pop(context, photo);
+                      try {
+                        final photo =
+                            await picker.pickImage(source: ImageSource.camera);
+                        if (context.mounted) Navigator.pop(context, photo);
+                      } catch (e) {
+                        if (context.mounted) Navigator.pop(context);
+                      }
                     },
                     icon: const Icon(Icons.photo_camera),
                     label: const Text('Capture Photo'),
@@ -1993,273 +2541,361 @@ class ActiveDashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showReturnVehicleBottomSheet(
-      BuildContext context, AppProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        List<File?> selectedFiles = List.filled(4, null);
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            Future<void> pickImage(int index) async {
-              final ImagePicker picker = ImagePicker();
-              final XFile? image = await picker.pickImage(
-                source: ImageSource.camera,
-                imageQuality: 70,
-              );
-              if (image != null) {
-                setModalState(() {
-                  selectedFiles[index] = File(image.path);
-                });
-              }
-            }
-
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32)),
+  Widget _buildEmergencySOS(BuildContext context) {
+    return GlassCard(
+      padding: const EdgeInsets.all(16),
+      child: InkWell(
+        onTap: () => AppNavigator.push(context, const EmergencySOSScreen()),
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: const Icon(Icons.warning_amber_rounded,
+                  color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
-                  Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFE2E8F0),
-                          borderRadius: BorderRadius.circular(2))),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                      children: [
-                        const Text('Vehicle Return',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B))),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Please upload 4 current photos of your vehicle capturing all sides (Front, Back, Left, Right) to initiate the return process.',
-                          style:
-                              TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                        ),
-                        const SizedBox(height: 32),
-                        const Text('UPLOAD VEHICLE PHOTOS',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 1.0)),
-                        const SizedBox(height: 16),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                  childAspectRatio: 1.2),
-                          itemCount: 4,
-                          itemBuilder: (context, index) {
-                            final file = selectedFiles[index];
-                            return InkWell(
-                              onTap: () => pickImage(index),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                      color: const Color(0xFFE2E8F0)),
-                                  image: file != null
-                                      ? DecorationImage(
-                                          image: FileImage(file),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                ),
-                                child: file == null
-                                    ? const Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.add_a_photo_outlined,
-                                              color: Color(0xFF3B82F6),
-                                              size: 32),
-                                          SizedBox(height: 8),
-                                          Text('Add Photo',
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Color(0xFF64748B),
-                                                  fontWeight: FontWeight.bold)),
-                                        ],
-                                      )
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 48),
-                        ElevatedButton(
-                          key: const Key('completeReturnButton'),
-                          onPressed: () async {
-                            final files =
-                                selectedFiles.whereType<File>().toList();
-                            if (files.length < 4) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Please capture all 4 photos')),
-                              );
-                              return;
-                            }
-
-                            // Show loading
-                            showDialog(
-                              context: context,
-                              barrierDismissible: false,
-                              builder: (context) => const Center(
-                                  child: CircularProgressIndicator()),
-                            );
-
-                            final success = await provider.submitVehicleReturn(
-                              photos: files,
-                            );
-
-                            // Pop loading
-                            Navigator.pop(context);
-
-                            if (success) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Vehicle return process initiated!'),
-                                    backgroundColor: Color(0xFF10B981)),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Submission failed. Try again.')),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFDC2626),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.check_circle_outline, size: 20),
-                              SizedBox(width: 12),
-                              Text('Complete Return',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel',
-                              style: TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ],
+                  Text(
+                    'Emergency SOS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Tap for immediate assistance',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
-            );
-          },
-        );
-      },
+            ),
+            const Icon(Icons.arrow_forward_ios,
+                color: Colors.white54, size: 16),
+          ],
+        ),
+      ),
     );
   }
-}
+
+  Widget _buildSupportSection(BuildContext context, RiderModel rider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 16),
+          child: Text(
+            'SUPPORT',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.headset_mic_rounded,
+                iconColor: const Color(0xFF2563EB),
+                iconBgColor: const Color(0xFFDBEAFE),
+                title: 'Support Hub',
+                value: '+91 9901456182',
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.help_outline_rounded,
+                iconColor: const Color(0xFF9333EA),
+                iconBgColor: const Color(0xFFFAF5FF),
+                title: 'FAQ',
+                value: 'Find answers',
+                onTap: () => AppNavigator.push(context, const FaqScreen()),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _BentoTile(
+                icon: Icons.location_on_rounded,
+                iconColor: const Color(0xFF16A34A),
+                iconBgColor: const Color(0xFFDCFCE7),
+                title: 'Active Hub',
+                value: 'Electronic City Hub',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentTransactions(BuildContext context, AppProvider provider) {
+    final transactions = provider.transactions.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 16),
+          child: Text(
+            'RECENT TRANSACTIONS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+        if (transactions.isEmpty)
+          GlassCard(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                'No recent activity',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.5), fontSize: 13),
+              ),
+            ),
+          )
+        else
+          ...transactions.map((t) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GlassCard(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          t.type == TransactionType.credit
+                              ? Icons.add_rounded
+                              : Icons.remove_rounded,
+                          color: t.type == TransactionType.credit
+                              ? AppColors.success
+                              : Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.purpose?.toUpperCase() ??
+                                  t.description?.toUpperCase() ??
+                                  '',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${t.createdAt?.day ?? ''} ${_getMonth(t.createdAt?.month ?? 1)} • ${t.status.name}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white.withOpacity(0.4),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${t.type == TransactionType.credit ? '+' : '-'}₹${t.amount.toInt()}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: t.type == TransactionType.credit
+                              ? AppColors.success
+                              : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+        const SizedBox(height: 12),
+        Center(
+          child: TextButton(
+            onPressed: () {},
+            child: Text(
+              'VIEW ALL TRANSACTIONS',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: Colors.white.withOpacity(0.5),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
 // =============================================================================
 // Private sub-widgets
 // =============================================================================
 
-class _BentoTile extends StatelessWidget {
-  const _BentoTile({
-    required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
-    required this.title,
-    required this.value,
-  });
-
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBgColor;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
+  Widget _buildVehicleControlCard(BuildContext context, RiderModel rider) {
+    return InkWell(
+      key: const Key('assignedVehicleCard'),
+      onTap: () {
+        AppNavigator.push(context, RentalDetailsScreen());
+      },
+      child: GlassCard(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.electric_moped_rounded,
+                      color: AppColors.primary, size: 28),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VEHICLE STATUS',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white.withOpacity(0.4),
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      Text(
+                        rider.assignedVehicle ?? 'NO UNIT ASSIGNED',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.wifi_rounded,
+                    color: AppColors.success, size: 20),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Battery Visual
+            Container(
+              height: 8,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: (rider.batteryPercent / 100).clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withOpacity(0.5)
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                          color: AppColors.primary.withOpacity(0.4),
+                          blurRadius: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                _buildVehicleMetric(Icons.location_searching_rounded, 'RANGE',
+                    '${(rider.batteryPercent * 0.8).toInt()} KM'),
+                const Spacer(),
+                _buildVehicleMetric(Icons.thermostat_rounded, 'TEMP', '32°C'),
+                const Spacer(),
+                _buildVehicleMetric(
+                    Icons.lock_open_rounded, 'STATUS', 'UNLOCKED'),
+              ],
+            ),
+            if (rider.rentalStatus == 'ACTIVE' && !rider.returnPending) ...[
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                key: const Key('endRentalButton'),
+                onPressed: () => _startVehicleReturnWorkflow(context, rider),
+                icon: const Icon(Icons.assignment_return_outlined, size: 16),
+                label: const Text('INITIATE RETURN',
+                    style:
+                        TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size(double.infinity, 44),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title.toUpperCase(),
+    );
+  }
+
+  Widget _buildVehicleMetric(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white.withOpacity(0.3), size: 18),
+        const SizedBox(height: 8),
+        Text(label,
+            style: TextStyle(
+                fontSize: 8,
+                color: Colors.white38,
+                fontWeight: FontWeight.bold)),
+        Text(value,
             style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A2E), // vf-on-surface
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+      ],
     );
   }
 }
@@ -2284,6 +2920,86 @@ class _IntentOption extends StatelessWidget {
         color: isSelected ? const Color(0xFF0053C1) : Colors.grey,
       ),
       onTap: onTap,
+    );
+  }
+}
+
+class _BentoTile extends StatelessWidget {
+  const _BentoTile({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    required this.title,
+    required this.value,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final String title;
+  final String value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 48,
+            offset: Offset(0, 24),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 16),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

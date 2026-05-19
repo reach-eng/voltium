@@ -56,10 +56,15 @@ class _HistoryScreenState extends State<HistoryScreen>
   Future<void> _fetchTransactions() async {
     setState(() => _isLoading = true);
     try {
-      final res = await ApiService().fetchTransactionHistory(riderId: widget.riderId);
+      final res =
+          await ApiService().fetchTransactionHistory(riderId: widget.riderId);
       if (mounted) {
+        final rawData = res['data'];
+        final List<dynamic> txList = (rawData is Map)
+            ? (rawData['transactions'] ?? [])
+            : (rawData is List ? rawData : []);
         setState(() {
-          _transactions = res['data'] ?? [];
+          _transactions = txList;
           _isLoading = false;
         });
       }
@@ -72,24 +77,29 @@ class _HistoryScreenState extends State<HistoryScreen>
 
   List<dynamic> get _filteredTx {
     return _transactions.where((tx) {
-      final type = (tx['type'] as String).toUpperCase();
+      final type = (tx['type'] as String? ?? '').toUpperCase();
       final isCredit = type == 'CREDIT' || type == 'TOP_UP';
       final matchesFilter = _activeFilter == 'All' ||
           (_activeFilter == 'Credits' && isCredit) ||
           (_activeFilter == 'Debits' && !isCredit);
       final description = (tx['description'] ?? '').toString().toLowerCase();
-      final matchesSearch = _searchQuery.isEmpty || description.contains(_searchQuery.toLowerCase());
+      final matchesSearch = _searchQuery.isEmpty ||
+          description.contains(_searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     }).toList();
   }
 
   double get _totalCredits => _transactions
-      .where((t) => (t['type'] == 'CREDIT' || t['type'] == 'TOP_UP') && (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'))
-      .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
+      .where((t) =>
+          (t['type'] == 'CREDIT' || t['type'] == 'TOP_UP') &&
+          (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'))
+      .fold(0.0, (sum, t) => sum + ((t['amount'] as num?) ?? 0).toDouble());
 
   double get _totalDebits => _transactions
-      .where((t) => (t['type'] == 'DEBIT') && (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'))
-      .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
+      .where((t) =>
+          (t['type'] == 'DEBIT') &&
+          (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'))
+      .fold(0.0, (sum, t) => sum + ((t['amount'] as num?) ?? 0).toDouble());
 
   @override
   Widget build(BuildContext context) {
@@ -190,12 +200,18 @@ class _HistoryScreenState extends State<HistoryScreen>
   Widget _buildSummaryCards() {
     return Row(
       children: [
-        _buildSummaryItem('Credits', '+₹${_totalCredits.toInt()}', const Color(0xFF16A34A)),
+        _buildSummaryItem(
+            'Credits', '+₹${_totalCredits.toInt()}', const Color(0xFF16A34A)),
         const SizedBox(width: 8),
-        _buildSummaryItem('Debits', '-₹${_totalDebits.toInt()}', const Color(0xFFEF4444)),
+        _buildSummaryItem(
+            'Debits', '-₹${_totalDebits.toInt()}', const Color(0xFFEF4444)),
         const SizedBox(width: 8),
-        _buildSummaryItem('Net', '₹${(_totalCredits - _totalDebits).toInt()}', 
-            (_totalCredits - _totalDebits) >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444)),
+        _buildSummaryItem(
+            'Net',
+            '₹${(_totalCredits - _totalDebits).toInt()}',
+            (_totalCredits - _totalDebits) >= 0
+                ? const Color(0xFF16A34A)
+                : const Color(0xFFEF4444)),
       ],
     );
   }
@@ -247,7 +263,8 @@ class _HistoryScreenState extends State<HistoryScreen>
         style: GoogleFonts.inter(fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search transactions...',
-          prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.outline),
+          prefixIcon:
+              const Icon(Icons.search, size: 18, color: AppColors.outline),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: OutlineInputBorder(
@@ -276,7 +293,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 decoration: BoxDecoration(
                   color: isActive ? AppColors.primary : Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  boxShadow: isActive ? AppShadows.primaryButton : AppShadows.card,
+                  boxShadow:
+                      isActive ? AppShadows.primaryButton : AppShadows.card,
                 ),
                 child: Center(
                   child: Text(
@@ -284,7 +302,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: isActive ? Colors.white : AppColors.onSurfaceVariant,
+                      color:
+                          isActive ? Colors.white : AppColors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -306,7 +325,8 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.receipt_long_outlined, size: 14, color: Color(0xFF3B82F6)),
+          const Icon(Icons.receipt_long_outlined,
+              size: 14, color: Color(0xFF3B82F6)),
           const SizedBox(width: 8),
           Text(
             'Tap any transaction to see the full fee breakdown',
@@ -327,7 +347,8 @@ class _HistoryScreenState extends State<HistoryScreen>
         padding: const EdgeInsets.only(top: 40),
         child: Column(
           children: [
-            const Icon(Icons.filter_list_off, size: 48, color: AppColors.outline),
+            const Icon(Icons.filter_list_off,
+                size: 48, color: AppColors.outline),
             const SizedBox(height: 12),
             Text(
               'No transactions found',
@@ -361,19 +382,24 @@ class _HistoryScreenState extends State<HistoryScreen>
     final isCredit = type == 'CREDIT' || type == 'TOP_UP';
     final amount = (tx['amount'] as num).toDouble();
     final status = (tx['status'] as String).toUpperCase();
-    final date = tx['createdAt'] != null ? tx['createdAt'].toString().substring(0, 10) : '';
+    final date = tx['createdAt'] != null
+        ? tx['createdAt'].toString().substring(0, 10)
+        : '';
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: AppShadows.card,
-        border: isExpanded ? Border.all(color: AppColors.primary.withOpacity(0.2), width: 2) : null,
+        border: isExpanded
+            ? Border.all(color: AppColors.primary.withOpacity(0.2), width: 2)
+            : null,
       ),
       child: Column(
         children: [
           GestureDetector(
-            onTap: () => setState(() => _expandedId = isExpanded ? null : tx['id']),
+            onTap: () =>
+                setState(() => _expandedId = isExpanded ? null : tx['id']),
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -383,13 +409,17 @@ class _HistoryScreenState extends State<HistoryScreen>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: isCredit ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                      color: isCredit
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
-                      color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                      color: isCredit
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFEF4444),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -410,15 +440,24 @@ class _HistoryScreenState extends State<HistoryScreen>
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Text(date, style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant)),
+                            Text(date,
+                                style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: AppColors.onSurfaceVariant)),
                             const SizedBox(width: 8),
-                            Text('|', style: GoogleFonts.inter(fontSize: 11, color: AppColors.outline)),
+                            Text('|',
+                                style: GoogleFonts.inter(
+                                    fontSize: 11, color: AppColors.outline)),
                             const SizedBox(width: 8),
-                            Text(status, style: GoogleFonts.inter(
-                              fontSize: 11, 
-                              fontWeight: FontWeight.w700,
-                              color: status == 'SUCCESS' || status == 'APPROVED' ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-                            )),
+                            Text(status,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: status == 'SUCCESS' ||
+                                          status == 'APPROVED'
+                                      ? const Color(0xFF16A34A)
+                                      : const Color(0xFFD97706),
+                                )),
                           ],
                         ),
                       ],
@@ -427,9 +466,13 @@ class _HistoryScreenState extends State<HistoryScreen>
                   Row(
                     children: [
                       Icon(
-                        isCredit ? Icons.add_circle_outline : Icons.remove_circle_outline,
+                        isCredit
+                            ? Icons.add_circle_outline
+                            : Icons.remove_circle_outline,
                         size: 14,
-                        color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFBA1A1A),
+                        color: isCredit
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFBA1A1A),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -437,7 +480,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFBA1A1A),
+                          color: isCredit
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFBA1A1A),
                         ),
                       ),
                     ],
@@ -469,7 +514,10 @@ class _HistoryScreenState extends State<HistoryScreen>
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 tx['description'],
-                style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant, fontStyle: FontStyle.italic),
+                style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                    fontStyle: FontStyle.italic),
               ),
             ),
           ...breakdowns.map((b) => _buildBreakdownItem(b)),
@@ -477,10 +525,16 @@ class _HistoryScreenState extends State<HistoryScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('TOTAL CHARGED', style: GoogleFonts.inter(
-                fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.onSurfaceVariant)),
-              Text('₹${(tx['amount'] as num).toInt()}', style: GoogleFonts.inter(
-                fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.onSurfaceAlt)),
+              Text('TOTAL CHARGED',
+                  style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurfaceVariant)),
+              Text('₹${(tx['amount'] as num).toInt()}',
+                  style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurfaceAlt)),
             ],
           ),
         ],
@@ -492,15 +546,28 @@ class _HistoryScreenState extends State<HistoryScreen>
     final type = b['type'] as String;
     final label = b['label'] as String;
     final amount = (b['amount'] as num).toDouble();
-    
+
     Color color = AppColors.onSurfaceAlt;
     Color bg = const Color(0xFFF3F4F6);
     String prefix = '';
-    
-    if (type == 'TAX') { color = const Color(0xFFC2410C); bg = const Color(0xFFFFF7ED); }
-    if (type == 'DISCOUNT') { color = const Color(0xFF15803D); bg = const Color(0xFFF0FDF4); prefix = '-'; }
-    if (type == 'PENALTY') { color = const Color(0xFFB91C1C); bg = const Color(0xFFFEF2F2); }
-    if (type == 'ADJUSTMENT') { color = const Color(0xFF1D4ED8); bg = const Color(0xFFEFF6FF); }
+
+    if (type == 'TAX') {
+      color = const Color(0xFFC2410C);
+      bg = const Color(0xFFFFF7ED);
+    }
+    if (type == 'DISCOUNT') {
+      color = const Color(0xFF15803D);
+      bg = const Color(0xFFF0FDF4);
+      prefix = '-';
+    }
+    if (type == 'PENALTY') {
+      color = const Color(0xFFB91C1C);
+      bg = const Color(0xFFFEF2F2);
+    }
+    if (type == 'ADJUSTMENT') {
+      color = const Color(0xFF1D4ED8);
+      bg = const Color(0xFFEFF6FF);
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -511,16 +578,26 @@ class _HistoryScreenState extends State<HistoryScreen>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-                child: Text(type, style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w800, color: color)),
+                decoration: BoxDecoration(
+                    color: bg, borderRadius: BorderRadius.circular(4)),
+                child: Text(type,
+                    style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: color)),
               ),
               const SizedBox(width: 8),
-              Text(label, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.onSurfaceAlt)),
+              Text(label,
+                  style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.onSurfaceAlt)),
             ],
           ),
           Text(
             '$prefix₹${amount.toInt()}',
-            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+            style: GoogleFonts.inter(
+                fontSize: 12, fontWeight: FontWeight.w700, color: color),
           ),
         ],
       ),

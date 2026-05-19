@@ -15,7 +15,7 @@
  */
 
 import type { Prisma } from '@prisma/client';
-import { maskAadhaar, maskPan } from './pii';
+import { maskAadhaar, maskPan, maskPhone } from './pii';
 
 type RiderWithRelations = Prisma.RiderGetPayload<{
   include: {
@@ -69,23 +69,49 @@ export function flattenRider(rider: RiderWithRelations) {
     guarantorName: guarantor?.name ?? null,
     guarantorRelation: guarantor?.relation ?? null,
     guarantorDob: guarantor?.dob ?? null,
-    guarantorPhone: guarantor?.phone ?? null,
+    guarantorPhone: maskPhone(guarantor?.phone ?? null),
     guarantorAadhaarFront: guarantor?.aadhaarFront ?? null,
     guarantorAadhaarBack: guarantor?.aadhaarBack ?? null,
     guarantorPan: guarantor?.pan ?? null,
     guarantorVideo: guarantor?.video ?? null,
     guarantorSignature: guarantor?.signature ?? null,
-    guarantorFatherName: (guarantor as any)?.fatherName ?? null,
-    guarantorMotherName: (guarantor as any)?.motherName ?? null,
+    guarantorFatherName: guarantor?.fatherName ?? null,
+    guarantorMotherName: guarantor?.motherName ?? null,
+    guarantorAddress: guarantor?.address ?? null,
+    guarantorPhoto: guarantor?.photo ?? null,
 
     // --- Plan & Status fields (Explicitly mapped to prevent loss) ---
-    currentPlan: (rider as any).currentPlan ?? null,
-    currentPlanPrice: (rider as any).currentPlanPrice ?? null,
-    planStatus: (rider as any).planStatus ?? 'NONE',
-    planStartDate: (rider as any).planStartDate ? new Date((rider as any).planStartDate).toISOString() : null,
-    planEndDate: (rider as any).planEndDate ? new Date((rider as any).planEndDate).toISOString() : null,
-    pickupPhoto: (rider as any).pickupPhoto ?? null,
-    returnPending: rider.vehicleReturns?.some((v) => v.status === 'PENDING') ?? false,
+    currentPlan: rider.currentPlan ?? null,
+    currentPlanPrice: rider.currentPlanPrice ?? null,
+    planStatus: rider.planStatus || 'NONE',
+    rentalStatus: rider.rentalStatus || 'NONE',
+    assignedVehicle: rider.assignedVehicle ?? null,
+    vehicleId: rider.vehicleId ?? null,
+    planStartDate: rider.planStartDate ? new Date(rider.planStartDate as Date).toISOString() : null,
+    planEndDate: rider.planEndDate ? new Date(rider.planEndDate as Date).toISOString() : null,
+    
+    // --- Rental Return fields ---
+    returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'PENDING') ?? false,
+    ...(() => {
+      const pendingReturn = rider.vehicleReturns?.find((v: any) => v.status === 'PENDING');
+      if (!pendingReturn) return {};
+      return {
+        photoFront: pendingReturn.photoFront,
+        photoBack: pendingReturn.photoBack,
+        photoLeft: pendingReturn.photoLeft,
+        photoRight: pendingReturn.photoRight,
+        photoSpeedometer: pendingReturn.photoSpeedometer,
+        submissionDate: pendingReturn.createdAt,
+        scooterSubmissionDate: pendingReturn.createdAt,
+        returnPhotos: {
+          front: pendingReturn.photoFront,
+          back: pendingReturn.photoBack,
+          left: pendingReturn.photoLeft,
+          right: pendingReturn.photoRight,
+          speedometer: pendingReturn.photoSpeedometer,
+        },
+      };
+    })(),
   };
 }
 
@@ -134,15 +160,32 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     result.guarantorName = g.name ?? null;
     result.guarantorRelation = g.relation ?? null;
     result.guarantorDob = g.dob ?? null;
-    result.guarantorPhone = g.phone ?? null;
-    result.guarantorFatherName = (g as any).fatherName ?? null;
-    result.guarantorMotherName = (g as any).motherName ?? null;
+    result.guarantorPhone = maskPhone(g.phone as string ?? null);
+    result.guarantorFatherName = g.fatherName ?? null;
+    result.guarantorMotherName = g.motherName ?? null;
   }
 
   // Explicitly map Plan fields
-  result.currentPlan = (rider as any).currentPlan ?? (result.currentPlan || null);
-  result.planStatus = (rider as any).planStatus ?? (result.planStatus || 'NONE');
-  result.pickupPhoto = (rider as any).pickupPhoto ?? (result.pickupPhoto || null);
+  result.currentPlan = 'currentPlan' in rider ? rider.currentPlan : (result.currentPlan || null);
+  result.planStatus = 'planStatus' in rider ? rider.planStatus : (result.planStatus || 'NONE');
+  
+  
+  if (rider.vehicleReturns) {
+    const vr = rider.vehicleReturns as any[];
+    const pendingReturn = vr.find((v) => v.status === 'PENDING');
+    result.returnPending = !!pendingReturn;
+    if (pendingReturn) {
+      result.photoFront = pendingReturn.photoFront;
+      result.photoBack = pendingReturn.photoBack;
+      result.photoLeft = pendingReturn.photoLeft;
+      result.photoRight = pendingReturn.photoRight;
+      result.photoSpeedometer = pendingReturn.photoSpeedometer;
+      result.submissionDate = pendingReturn.createdAt;
+      result.scooterSubmissionDate = pendingReturn.createdAt;
+    }
+  } else if (!('returnPending' in result)) {
+    result.returnPending = false;
+  }
 
   // Remove the nested relation objects
   delete result.kycProfile;

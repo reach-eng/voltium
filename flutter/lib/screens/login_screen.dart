@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../main.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/phone_validator.dart';
+import '../utils/accessibility.dart';
 
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -30,40 +34,73 @@ class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _referralController = TextEditingController();
+  final FocusNode _phoneFocusNode = FocusNode();
   bool _isLoading = false;
+  String? _phoneError;
 
   late final AnimationController _entryCtrl;
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _entryCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..forward();
-
-    _phoneController.addListener(() => setState(() {}));
+      duration: const Duration(milliseconds: 800),
+    );
+    _entryCtrl.forward();
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _referralController.dispose();
+    _phoneFocusNode.dispose();
     _entryCtrl.dispose();
     super.dispose();
   }
 
   bool get _canSubmit =>
-      _phoneController.text.replaceAll(RegExp(r'\D'), '').length == 10 &&
-      !_isLoading;
+      PhoneValidator.isValidPhone(_phoneController.text) && !_isLoading;
+
+  void _onPhoneChanged(String value) {
+    setState(() {
+      final digits = value.replaceAll(RegExp(r'\D'), '');
+      if (digits.isEmpty) {
+        _phoneError = null;
+      } else if (digits.length == 10) {
+        _phoneError = PhoneValidator.validate(digits);
+      } else if (digits.length > 10) {
+        _phoneError = 'Phone number cannot exceed 10 digits';
+      } else if (!RegExp(r'^[6-9]').hasMatch(digits)) {
+        _phoneError = 'Phone number must start with 6, 7, 8, or 9';
+      } else {
+        _phoneError = null;
+      }
+    });
+  }
 
   Future<void> _handleLogin() async {
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    if (digits.length != 10) return;
+    final error = PhoneValidator.validate(digits);
+    if (error != null) {
+      setState(() => _phoneError = error);
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
-      final response = await ApiService().sendOtp(phone: digits);
+      final referralCode = _referralController.text.trim();
+      final response = await ApiService().sendOtp(
+        phone: digits,
+        referralCode: referralCode.isNotEmpty ? referralCode : null,
+      );
       if (mounted) {
         if (response['success'] == true) {
           widget.onNext?.call(digits);
@@ -78,9 +115,13 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       if (mounted) {
+        String errorMsg = 'Network error. Please try again.';
+        if (e is ApiException) {
+          errorMsg = e.message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Network error. Please try again.'),
+          SnackBar(
+            content: Text(errorMsg),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -145,72 +186,74 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildLogoSection() {
     return FadeTransition(
-      opacity: CurvedAnimation(parent: _entryCtrl, curve: const Interval(0, 0.7)),
+      opacity:
+          CurvedAnimation(parent: _entryCtrl, curve: const Interval(0, 0.7)),
       child: ScaleTransition(
         scale: Tween<double>(begin: 0.9, end: 1.0).animate(
           CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOutCubic),
         ),
-        child: Center(
-          child: Column(
-            children: [
-              // 72×72 circle, primary blue, bolt icon
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x331B60DA),
-                      blurRadius: 20,
-                      offset: Offset(0, 8),
+        child: Semantics(
+          header: true,
+          label: a11yHeading('Voltium', '1'),
+          child: Center(
+            child: Column(
+              children: [
+                ExcludeSemantics(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x331B60DA),
+                          blurRadius: 20,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Image.asset(
-                    'assets/logo.png',
-                    width: 40,
-                    height: 40,
-                    color: Colors.white,
-                    colorBlendMode: BlendMode.srcIn,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.bolt,
-                      color: Colors.white,
-                      size: 40,
+                    child: Center(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 40,
+                        height: 40,
+                        color: Colors.white,
+                        colorBlendMode: BlendMode.srcIn,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.bolt,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Brand name
-              Text(
-                'Voltium',
-                style: GoogleFonts.inter(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.onSurface, // #101828
-                  letterSpacing: -0.5,
-                  height: 1.2,
+                const SizedBox(height: 24),
+                Text(
+                  'Voltium',
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.onSurface,
+                    letterSpacing: -0.5,
+                    height: 1.2,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // Subtitle
-              Text(
-                'Manage your journey with precision.',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.onSurfaceVariant, // #475467
-                  height: 1.4,
+                const SizedBox(height: 8),
+                ExcludeSemantics(
+                  child: Text(
+                    'Manage your journey with precision.',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -226,28 +269,31 @@ class _LoginScreenState extends State<LoginScreen>
       child: FadeTransition(
         opacity: CurvedAnimation(
             parent: _entryCtrl, curve: const Interval(0.1, 0.7)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome',
-              style: GoogleFonts.inter(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: AppColors.onSurface,
-                letterSpacing: -0.5,
+        child: Semantics(
+          label: 'Welcome section with instructions',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome',
+                style: GoogleFonts.inter(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurface,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Enter the registered phone number to login or enter a new number to create another account.',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: AppColors.onSurfaceVariant,
-                height: 1.6,
+              const SizedBox(height: 8),
+              Text(
+                'Enter the registered phone number to login or enter a new number to create another account.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: AppColors.onSurfaceVariant,
+                  height: 1.6,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -262,67 +308,99 @@ class _LoginScreenState extends State<LoginScreen>
       child: FadeTransition(
         opacity: CurvedAnimation(
             parent: _entryCtrl, curve: const Interval(0.2, 0.8)),
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.inputBackground, // #E6EAEF
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            children: [
-              // +91 prefix
-              Padding(
-                padding: const EdgeInsets.only(left: 24, right: 12),
-                child: Text(
-                  '+91',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  ),
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: _phoneError != null
+                    ? const Color(0xFFFFF1F1)
+                    : AppColors.inputBackground,
+                borderRadius: BorderRadius.circular(999),
+                border: _phoneError != null
+                    ? Border.all(color: const Color(0xFFEF4444), width: 1.5)
+                    : null,
               ),
-
-              // Vertical divider
-              Container(width: 1, height: 20, color: AppColors.divider),
-
-              const SizedBox(width: 12),
-
-              // Phone number field
-              Expanded(
-                child: TextField(
-                  key: const Key('phoneInput'),
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  onSubmitted: (_) => _handleLogin(),
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
-                    letterSpacing: 1.5,
-                  ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    hintText: '00000 00000',
-                    hintStyle: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: AppColors.onSurfaceDisabled,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.w400,
+              child: Row(
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => _phoneFocusNode.requestFocus(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ExcludeSemantics(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 24, right: 12),
+                            child: Text(
+                              '+91',
+                              style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.onSurface),
+                            ),
+                          ),
+                        ),
+                        Container(width: 1, height: 20, color: AppColors.divider),
+                        const SizedBox(width: 12),
+                      ],
                     ),
-                    contentPadding: EdgeInsets.zero,
+                  ),
+                  Expanded(
+                    child: TextField(
+                      key: const Key('phoneInput'),
+                      controller: _phoneController,
+                      focusNode: _phoneFocusNode,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      onChanged: _onPhoneChanged,
+                      onSubmitted: (_) => _handleLogin(),
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                        letterSpacing: 1.5,
+                      ),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        hintText: '00000 00000',
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: 16,
+                          color: AppColors.onSurfaceDisabled,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                        errorText: null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_phoneError != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 20, top: 8),
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _phoneError!,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: const Color(0xFFDC2626),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -411,38 +489,47 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildEnterButton() {
-    return GestureDetector(
-      key: const Key('sendOtpButton'),
-      onTap: _canSubmit ? _handleLogin : null,
-      child: AnimatedOpacity(
-        opacity: _canSubmit ? 1.0 : 0.4,
-        duration: const Duration(milliseconds: 200),
-        child: Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            gradient: AppGradients.primary,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: _canSubmit ? AppShadows.primaryButton : null,
-          ),
-          child: Center(
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    'Enter',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
+    return Semantics(
+      button: true,
+      label: 'Send OTP',
+      child: Focus(
+        child: GestureDetector(
+          key: const Key('sendOtpButton'),
+          behavior: HitTestBehavior.opaque,
+          onTap: VoltiumApp.isTestMode
+              ? _handleLogin
+              : (_canSubmit ? _handleLogin : null),
+          child: AnimatedOpacity(
+            opacity: _canSubmit ? 1.0 : 0.4,
+            duration: const Duration(milliseconds: 200),
+            child: Container(
+              width: double.infinity,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: AppGradients.primary,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: _canSubmit ? AppShadows.primaryButton : null,
+              ),
+              child: Center(
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Enter',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ),
       ),
@@ -466,7 +553,7 @@ class _LoginScreenState extends State<LoginScreen>
               const TextSpan(text: 'By signing in, you agree to our\n'),
               WidgetSpan(
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () => _launchUrl('https://voltium.in/terms'),
                   child: Text(
                     'Terms of Service',
                     style: GoogleFonts.inter(
@@ -483,7 +570,7 @@ class _LoginScreenState extends State<LoginScreen>
                       fontSize: 12, color: AppColors.onSurfaceVariant)),
               WidgetSpan(
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () => _launchUrl('https://voltium.in/privacy'),
                   child: Text(
                     'Privacy Policy',
                     style: GoogleFonts.inter(
