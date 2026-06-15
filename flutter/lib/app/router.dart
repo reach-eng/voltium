@@ -11,6 +11,7 @@ import '../main.dart' show AppShell;
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/screens/auth_choice_screen.dart';
+import '../features/auth/presentation/rider_lifecycle_gate.dart';
 
 import '../features/onboarding/presentation/screens/splash_screen.dart';
 import '../features/onboarding/presentation/screens/legal_screen.dart';
@@ -67,35 +68,9 @@ import '../features/rewards/presentation/screens/rewards_screen.dart';
 import '../features/device_compliance/presentation/screens/emergency_contacts_screen.dart';
 import '../features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 
-enum AuthState {
-  splash,
-  legal,
-  permissions,
-  login,
-  otp,
-  intent,
-  userForm,
-  guarantorForm,
-  authChoice,
-  dashboard,
-  preDashboard,
-  choosePlan,
-  planSuccess,
-  pickupHub,
-  pickupVerification,
-  pickupSuccess,
-  tlDetails,
-  endRental,
-  faq,
-  vehiclePhotos,
-  topUpPurpose,
-  topUpAmount,
-  topUpUpi,
-  topUpReceipt,
-  referralDetails,
-  legalPage,
-  myDocuments
-}
+import 'app_state.dart';
+
+part 'router_body.dart';
 
 class AppRouter extends StatefulWidget {
   const AppRouter({super.key});
@@ -211,19 +186,8 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     if (provider.rider != null && !isUnauthenticatedState) {
       final r = provider.rider!;
       
-      // Determine where the user *should* be based on lifecycle status flags
-      AuthState correctState;
-      if (r.pickupDone) {
-        correctState = AuthState.dashboard;
-      } else if (r.intent == null || r.intent!.isEmpty || !r.registrationDone) {
-        correctState = AuthState.intent;
-      } else if (!r.kycDone) {
-        correctState = AuthState.userForm;
-      } else if (r.guarantorStatus == GuarantorStatus.PENDING) {
-        correctState = AuthState.guarantorForm;
-      } else {
-        correctState = AuthState.preDashboard;
-      }
+      // Delegate lifecycle routing to RiderLifecycleGate
+      final correctState = _lifecycleTargetToAuthState(RiderLifecycleGate.redirect(r));
 
       // Check if current state matches correctState, except when inside sub-flow screens of that phase
       bool stateMatches = _currentState == correctState;
@@ -291,372 +255,29 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     });
   }
 
+  AuthState _lifecycleTargetToAuthState(LifecycleTarget target) {
+    switch (target) {
+      case LifecycleTarget.intent:
+        return AuthState.intent;
+      case LifecycleTarget.kycForm:
+        return AuthState.userForm;
+      case LifecycleTarget.guarantorForm:
+        return AuthState.guarantorForm;
+      case LifecycleTarget.preDashboard:
+        return AuthState.preDashboard;
+      case LifecycleTarget.dashboard:
+        return AuthState.dashboard;
+      case LifecycleTarget.suspended:
+      case LifecycleTarget.terminated:
+        return AuthState.preDashboard;
+      case LifecycleTarget.unknown:
+        return AuthState.login;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    debugPrint('AppRouter: Building with state: $_currentState');
-    Widget currentScreen;
-
-    switch (_currentState) {
-      case AuthState.authChoice:
-        currentScreen = AuthChoiceScreen(
-          key: const ValueKey('authChoice'),
-          onCreateAccount: () {
-            _navigateToLocal(AuthState.legal);
-          },
-          onLoginWithPhone: () {
-            _navigateToLocal(AuthState.permissions);
-          },
-        );
-        break;
-
-      case AuthState.splash:
-        currentScreen = SplashScreen(
-          key: const ValueKey('splash'),
-          onComplete: () async {
-            final allGranted = await _areAllPermissionsGranted();
-            if (!allGranted) {
-              _navigateToLocal(AuthState.permissions);
-              return;
-            }
-            final cachedRider = CacheService().getCachedRider();
-            if (cachedRider != null && cachedRider['id'] != null) {
-              final savedStateStr = CacheService().getString('voltium_saved_auth_state');
-              AuthState? restoredState;
-              if (savedStateStr != null) {
-                try {
-                  restoredState = AuthState.values.firstWhere(
-                    (e) => e.name == savedStateStr,
-                  );
-                } catch (_) {}
-              }
-
-              if (restoredState != null &&
-                  restoredState != AuthState.splash &&
-                  restoredState != AuthState.login &&
-                  restoredState != AuthState.otp) {
-                _navigateToLocal(restoredState);
-              } else {
-                final isPickupDone = cachedRider['pickupDone'] == true ||
-                    cachedRider['pickupDone'] == 'true';
-                if (isPickupDone) {
-                  _navigateToLocal(AuthState.dashboard);
-                } else {
-                  _navigateToLocal(AuthState.preDashboard);
-                }
-              }
-            } else {
-              _navigateToLocal(AuthState.login);
-            }
-          },
-        );
-        break;
-
-      case AuthState.legal:
-        currentScreen = LegalScreen(
-          key: const ValueKey('legal'),
-          onNext: () {
-            _navigateToLocal(AuthState.permissions);
-          },
-        );
-        break;
-
-      case AuthState.permissions:
-        currentScreen = PermissionsScreen(
-          key: const ValueKey('permissions'),
-          onNext: () {
-            if (_postOtpTargetState != null) {
-              final target = _postOtpTargetState!;
-              setState(() {
-                _postOtpTargetState = null;
-              });
-              _navigateToLocal(target);
-            } else {
-              final cachedRider = CacheService().getCachedRider();
-              if (cachedRider != null && cachedRider['id'] != null) {
-                final isPickupDone = cachedRider['pickupDone'] == true ||
-                    cachedRider['pickupDone'] == 'true';
-                if (isPickupDone) {
-                  _navigateToLocal(AuthState.dashboard);
-                } else {
-                  _navigateToLocal(AuthState.preDashboard);
-                }
-              } else {
-                _navigateToLocal(AuthState.login);
-              }
-            }
-          },
-        );
-        break;
-
-      case AuthState.login:
-        currentScreen = LoginScreen(
-          key: const ValueKey('login'),
-          isSignUp: _isSignUpFlow,
-          onNext: (phone) {
-            _phone = phone;
-            _navigateToLocal(AuthState.otp);
-          },
-        );
-        break;
-
-      case AuthState.otp:
-        currentScreen = OtpVerificationScreen(
-          key: const ValueKey('otp'),
-          phoneNumber: _phone,
-          onBack: () => _navigateToLocal(AuthState.login),
-          onNext: () {
-            final provider = context.read<AppProvider>();
-            final rider = provider.rider;
-
-            if (rider == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Rider not found. Please contact support.')),
-              );
-              return;
-            }
-
-            final nextStateStr = provider.routeAfterLogin(rider);
-            AuthState nextState = AuthState.preDashboard;
-            try {
-              nextState = AuthState.values.firstWhere((e) => e.name == nextStateStr);
-            } catch (_) {}
-            setState(() {
-              _postOtpTargetState = nextState;
-            });
-            _navigateToLocal(AuthState.legal);
-          },
-        );
-        break;
-
-      case AuthState.intent:
-        currentScreen = IntentOfUseScreen(
-          key: const ValueKey('intent'),
-          onBack: () => _navigateToLocal(AuthState.preDashboard),
-          onNext: () {
-            _navigateToLocal(AuthState.userForm);
-          },
-        );
-        break;
-
-      case AuthState.userForm:
-        currentScreen = UserOnboardingScreen(
-          key: const ValueKey('userForm'),
-          onBack: () => _navigateToLocal(AuthState.intent),
-          onNext: () {
-            _navigateToLocal(AuthState.guarantorForm);
-          },
-        );
-        break;
-
-      case AuthState.guarantorForm:
-        currentScreen = GuarantorOnboardingScreen(
-          key: const ValueKey('guarantorForm'),
-          onBack: () => _navigateToLocal(AuthState.userForm),
-          onNext: () {
-            _navigateToLocal(AuthState.preDashboard);
-          },
-        );
-        break;
-
-      case AuthState.preDashboard:
-        currentScreen = PreDashboardScreen(
-          key: const ValueKey('preDashboard'),
-          onStepNavigation: (stateStr) {
-            try {
-              final state = AuthState.values.firstWhere((e) => e.name == stateStr);
-              _navigateToLocal(state);
-            } catch (_) {}
-          },
-        );
-        break;
-
-      case AuthState.choosePlan:
-        currentScreen = ChoosePlanScreen(
-          key: const ValueKey('choosePlan'),
-          onBack: () => _navigateToLocal(AuthState.preDashboard),
-          onNext: () => _navigateToLocal(AuthState.preDashboard),
-        );
-        break;
-
-      case AuthState.planSuccess:
-        currentScreen = PlanSuccessScreen(
-          key: const ValueKey('planSuccess'),
-          onNext: () => _navigateToLocal(AuthState.pickupHub),
-        );
-        break;
-
-      case AuthState.pickupHub:
-        currentScreen = PickupHubScreen(
-          key: const ValueKey('pickupHub'),
-          onBack: () => _navigateToLocal(AuthState.preDashboard),
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
-              photoBack, photoLeft, photoRight, photoWithVehicle) {
-            setState(() {
-              _pickupHubId = hubId;
-              _pickupVehicleId = vehicleId;
-              _pickupTeamLeader = teamLeader;
-              _pickupEmergencyContact = emergencyContact;
-              _pickupPhotoFront = photoFront;
-              _pickupPhotoBack = photoBack;
-              _pickupPhotoLeft = photoLeft;
-              _pickupPhotoRight = photoRight;
-              _pickupPhotoWithVehicle = photoWithVehicle;
-            });
-            _navigateToLocal(AuthState.pickupVerification);
-          },
-        );
-        break;
-
-      case AuthState.pickupVerification:
-        currentScreen = PickupVerificationScreen(
-          key: const ValueKey('pickupVerification'),
-          hubId: _pickupHubId ?? '',
-          vehicleId: _pickupVehicleId ?? '',
-          emergencyContact: _pickupEmergencyContact ?? '',
-          teamLeader: _pickupTeamLeader,
-          pickupPhotoFront: _pickupPhotoFront,
-          pickupPhotoBack: _pickupPhotoBack,
-          pickupPhotoLeft: _pickupPhotoLeft,
-          pickupPhotoRight: _pickupPhotoRight,
-          pickupPhotoWithVehicle: _pickupPhotoWithVehicle,
-          onBack: () => _navigateToLocal(AuthState.pickupHub),
-          onNext: () => _navigateToLocal(AuthState.pickupSuccess),
-        );
-        break;
-
-      case AuthState.pickupSuccess:
-        currentScreen = PickupSuccessScreen(
-          key: const ValueKey('pickupSuccess'),
-          onFinish: () => _navigateToLocal(AuthState.dashboard),
-        );
-        break;
-
-      case AuthState.dashboard:
-        currentScreen = const AppShell(key: ValueKey('dashboard'));
-        break;
-
-      case AuthState.tlDetails:
-        currentScreen = const TlDetailsScreen(key: ValueKey('tlDetails'));
-        break;
-
-      case AuthState.endRental:
-        currentScreen = EndRentalScreen(
-          key: const ValueKey('endRental'),
-          onBack: () => _navigateToLocal(AuthState.dashboard),
-          onSuccess: () => _navigateToLocal(AuthState.dashboard),
-        );
-        break;
-
-      case AuthState.faq:
-        currentScreen = const FaqScreen(key: ValueKey('faq'));
-        break;
-
-      case AuthState.vehiclePhotos:
-        currentScreen = const VehiclePhotosScreen(key: ValueKey('vehiclePhotos'));
-        break;
-
-      case AuthState.topUpPurpose:
-        currentScreen = TopUpPurposeScreen(
-          key: const ValueKey('topUpPurpose'),
-          onBack: () => _navigateToLocal(
-              _isOnboarding ? AuthState.preDashboard : AuthState.dashboard),
-          onContinue: (purpose) {
-            _topUpPurpose = purpose;
-            _navigateToLocal(AuthState.topUpAmount);
-          },
-        );
-        break;
-
-      case AuthState.topUpAmount:
-        currentScreen = TopUpAmountScreen(
-          key: const ValueKey('topUpAmount'),
-          onBack: () => _navigateToLocal(AuthState.topUpPurpose),
-          onProceed: (amount) {
-            _topUpAmount = amount;
-            _navigateToLocal(AuthState.topUpUpi);
-          },
-        );
-        break;
-
-      case AuthState.topUpUpi:
-        currentScreen = TopUpUpiScreen(
-          key: const ValueKey('topUpUpi'),
-          amount: _topUpAmount,
-          purpose: _topUpPurpose == TopUpPurpose.topUp ? 'TOP_UP' : 'SECURITY_DEPOSIT',
-          onBack: () => _navigateToLocal(AuthState.topUpAmount),
-          onSubmit: () => _navigateToLocal(AuthState.topUpReceipt),
-          onEditAmount: () => _navigateToLocal(AuthState.topUpAmount),
-        );
-        break;
-
-      case AuthState.topUpReceipt:
-        currentScreen = TopUpReceiptScreen(
-          key: const ValueKey('topUpReceipt'),
-          amount: _topUpAmount,
-          purpose: _topUpPurpose == TopUpPurpose.topUp ? 'TOP_UP' : 'SECURITY_DEPOSIT',
-          onBackToDashboard: () => _navigateToLocal(
-              _isOnboarding ? AuthState.preDashboard : AuthState.dashboard),
-        );
-        break;
-
-      case AuthState.referralDetails:
-        currentScreen = const ReferralScreen(key: ValueKey('referralDetails'));
-        break;
-
-      case AuthState.legalPage:
-        currentScreen = const LegalPageScreen(key: ValueKey('legalPage'));
-        break;
-
-      case AuthState.myDocuments:
-        currentScreen = const MyDocumentsScreen(key: ValueKey('myDocuments'));
-        break;
-    }
-
-    return Scaffold(
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          FocusManager.instance.primaryFocus?.unfocus();
-        },
-        child: Stack(
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              switchInCurve: Curves.easeIn,
-              switchOutCurve: Curves.easeOut,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              child: childScreenWrapper(currentScreen),
-            ),
-            if (_isTransitioning)
-              Container(
-                color: Colors.black26,
-                child: const Center(child: CircularProgressIndicator()),
-              ),
-          ],
-        ),
-      ),
-      floatingActionButton: kDebugMode && (_currentState == AuthState.login)
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                final provider = context.read<AppProvider>();
-                provider.forceLogin();
-                final nextStateStr = provider.routeAfterLogin(provider.rider!);
-                AuthState nextState = AuthState.preDashboard;
-                try {
-                  nextState = AuthState.values.firstWhere((e) => e.name == nextStateStr);
-                } catch (_) {}
-                _navigateToLocal(nextState);
-              },
-              icon: const Icon(Icons.bolt),
-              label: const Text('FORCE LOGIN (DEBUG)'),
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            )
-          : null,
-    );
+    return _buildRouterBody(context, this);
   }
 
   Widget childScreenWrapper(Widget child) => child;
