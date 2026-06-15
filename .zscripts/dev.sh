@@ -125,10 +125,10 @@ echo "[BUN] Installing dependencies..."
 bun install
 log_step_end "bun install"
 
-log_step_start "bun run db:push"
-echo "[BUN] Setting up database..."
-bun run db:push
-log_step_end "bun run db:push"
+log_step_start "prisma migrate dev"
+echo "[BUN] Running database migrations..."
+bun run db:migrate
+log_step_end "prisma migrate dev"
 
 log_step_start "Starting Next.js dev server"
 echo "[BUN] Starting development server..."
@@ -137,12 +137,12 @@ DEV_PID=$!
 log_step_end "Starting Next.js dev server"
 
 log_step_start "Waiting for Next.js dev server"
-wait_for_service "localhost" "3000" "Next.js dev server"
+wait_for_service "localhost" "8081" "Next.js dev server"
 log_step_end "Waiting for Next.js dev server"
 
 log_step_start "Health check"
 echo "[BUN] Performing health check..."
-curl -fsS localhost:3000 >/dev/null
+curl -fsS localhost:8081 >/dev/null
 echo "[BUN] Health check passed"
 log_step_end "Health check"
 

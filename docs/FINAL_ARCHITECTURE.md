@@ -15,7 +15,9 @@ Voltium is an electric vehicle rental and fleet management platform with three p
 | Admin Panel | Next.js App Router (React, Tailwind, shadcn/ui)       | Fleet operations command center |
 | API Layer   | Next.js API routes → Use-cases → Repositories → Prisma | Backend services               |
 
-**Database**: Prisma ORM → SQLite (dev) / PostgreSQL (production)
+**Database**: Prisma ORM → PostgreSQL (all environments via managed service)
+
+> **Note**: Voltium does not use Docker. All services use managed infrastructure or native Node.js process commands.
 
 ---
 
@@ -114,7 +116,7 @@ Use-Cases (business logic + auth + state machines)
      │
      └──► Outbox Event (reliable async processing)
               │
-              └──► Background Workers (Redis queues)
+              └──► Background Workers (DB-backed outbox, Node worker process)
 ```
 
 ---
@@ -216,11 +218,11 @@ Outbox pattern guarantees at-least-once delivery for important events.
 
 ## 10. Deployment Environments
 
-| Environment | Infrastructure | URL |
-|-------------|---------------|-----|
-| Local       | SQLite + Next.js dev | `http://localhost:8081` |
-| Staging     | Docker Compose (PG + Redis + Web + Workers) | `http://localhost:8082` |
-| Production  | Docker Compose (PG + Redis + Web + Workers + Caddy) | `https://voltium.example.com` |
+| Environment | Infrastructure                                              | URL                           |
+|-------------|-------------------------------------------------------------|-------------------------------|
+| Local       | Managed PostgreSQL + Next.js dev server + Node worker       | `http://localhost:8081`       |
+| Staging     | Managed PG + Web service + Worker service (Render/Railway)  | `https://staging.voltium.app` |
+| Production  | Managed PG + Web service + Worker service + Caddy/Reverse proxy | `https://voltium.example.com` |
 
 CI/CD: GitHub Actions with lint → typecheck → build → test → deploy gates.
 

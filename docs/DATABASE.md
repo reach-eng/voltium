@@ -3,6 +3,7 @@
 ## Provider
 
 **PostgreSQL only** — all environments (local, staging, production).
+**Voltium does not use Docker for the database.** Use a managed PostgreSQL service.
 
 ```prisma
 datasource db {
@@ -11,6 +12,15 @@ datasource db {
 }
 ```
 
+## Recommended Managed PostgreSQL
+
+| Environment | Provider                                              |
+|-------------|-------------------------------------------------------|
+| Local dev   | [Neon](https://neon.tech) free tier (serverless PG)   |
+| Staging     | Separate Neon / Supabase / Railway project            |
+| Production  | Separate Neon / Supabase / Railway project            |
+| CI tests    | GitHub Actions `services: postgres` (built-in)        |
+
 ## Schema Location
 
 The single source-of-truth schema is at:
@@ -18,6 +28,28 @@ The single source-of-truth schema is at:
 ```
 web/prisma/schema.prisma
 ```
+
+## Environment Variables
+
+```env
+# .env.local (development)
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
+APP_ENV="local"
+NODE_ENV="development"
+
+# .env.staging
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
+APP_ENV="staging"
+NODE_ENV="production"
+
+# .env.production
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
+APP_ENV="production"
+NODE_ENV="production"
+```
+
+> **Important**: Do not use `NODE_ENV=staging`. Use `APP_ENV=staging` with `NODE_ENV=production`.
 
 ## Migration Workflow
 
@@ -30,34 +62,48 @@ cd web
 # Create a new migration after schema changes
 npx prisma migrate dev --name describe_change
 
-# Apply migrations
+# Apply all pending migrations
 npx prisma migrate dev
 
-# Reset database (loses data)
+# Reset database (loses data — dev only)
 npx prisma migrate reset
 ```
 
-### Production / Staging
+### Staging / Production
 
 ```bash
-# Apply pending migrations (safe, preserves data)
+cd web
+
+# Apply pending migrations safely (preserves data)
 npx prisma migrate deploy
+
+# Check migration status
+npx prisma migrate status
+
+# Validate schema
+npx prisma validate
 
 # Generate Prisma client
 npx prisma generate
 ```
 
-**Never use `prisma db push` in production or staging.** Use `prisma migrate deploy` only.
+> **Never use `prisma db push` in staging or production.** Use `prisma migrate deploy` only.
 
-In Docker, migrations run automatically via a separate `migrate` service that starts before the web service:
+## Local Development Setup
 
 ```bash
-# Manual migration run
-docker compose -f docker-compose.production.yml run --rm migrate
+# 1. Sign up for a free Neon or Supabase account
+# 2. Create a new PostgreSQL project
+# 3. Copy the connection string
 
-# Check migration status
-docker compose -f docker-compose.production.yml exec db \
-  psql -U voltfleet_prod -c "SELECT * FROM _prisma_migrations WHERE finished_at IS NULL;"
+cd web
+cp ../.env.local.example .env.local
+# Edit .env.local — paste your DATABASE_URL
+
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run dev
 ```
 
 ## Enums
@@ -85,27 +131,6 @@ The schema defines Prisma enums for all major workflow statuses:
 | `OutboxEventStatus` | OutboxEvent model |
 
 > All enums are now wired to their corresponding model fields.
-
-## Local Development
-
-Start PostgreSQL via Docker:
-
-```bash
-docker compose up -d db
-```
-
-Set DATABASE_URL in `.env`:
-
-```
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voltium?schema=public"
-```
-
-Run migrations and seed:
-
-```bash
-npx prisma migrate dev
-npx prisma db seed
-```
 
 ## Key Tables
 

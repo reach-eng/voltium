@@ -1,5 +1,8 @@
 # Voltium — Project Structure
 
+> **Note**: Voltium does not use Docker for local development, CI, staging, or production.
+> All services use managed infrastructure (Neon/Supabase PostgreSQL) or native Node.js process commands.
+
 ## Repository Layout
 
 ```
@@ -11,7 +14,8 @@ voltium/
 │  │  │  └─ api/                 # Backend API routes
 │  │  ├─ server/
 │  │  │  ├─ modules/             # Domain modules (auth, riders, wallet, etc.)
-│  │  │  └─ shared/              # Shared utilities (db, auth, errors, logger, etc.)
+│  │  │  ├─ shared/              # Shared utilities (db, auth, errors, logger, etc.)
+│  │  │  └─ workers/             # Background job workers (outbox processor)
 │  │  ├─ contracts/              # Zod schemas + OpenAPI contracts
 │  │  ├─ components/             # React components (admin + rider UI)
 │  │  ├─ hooks/                  # React hooks
@@ -22,7 +26,6 @@ voltium/
 │  ├─ public/                    # Static assets
 │  ├─ tests/                     # Unit & integration tests
 │  ├─ e2e/                       # Playwright E2E tests
-│  ├─ db/                        # SQLite backups (dev only)
 │  │
 │  ├─ package.json
 │  ├─ tsconfig.json
@@ -31,8 +34,7 @@ voltium/
 │  ├─ postcss.config.mjs
 │  ├─ vitest.config.ts
 │  ├─ playwright.config.ts
-│  ├─ eslint.config.mjs
-│  └─ Dockerfile
+│  └─ eslint.config.mjs
 │
 ├─ flutter/                      # Flutter rider mobile app
 │  ├─ lib/                       # Dart source code
@@ -51,21 +53,29 @@ voltium/
 │  └─ ...
 │
 ├─ scripts/                      # Build & utility scripts
+│  ├─ check-no-docker.sh         # Enforcement: fails if Docker files/commands found
 │  ├─ export.sh                  # Clean ZIP export script
 │  ├─ db-sync.sh                 # Database sync/backup
 │  └─ ...
 │
 ├─ .github/workflows/            # CI/CD pipelines
-├─ .zscripts/                    # Workflow agent scripts (legacy)
-│
-├─ docker-compose.yml            # Local dev environment
-├─ docker-compose.production.yml # Production deployment
-├─ docker-compose.staging.yml    # Staging deployment
-├─ Caddyfile                     # Reverse proxy config
+├─ .zscripts/                    # Workflow agent scripts
+├─ Caddyfile                     # Reverse proxy config (for VPS deployments)
 ├─ .gitignore
 ├─ README.md
 └─ SECRET_ROTATION_CHECKLIST.md
 ```
+
+## Runtime Processes
+
+Two separate processes are needed:
+
+| Process | Command | Purpose |
+|---------|---------|---------|
+| Web/API | `npm run start` | Next.js server (admin dashboard + API routes) |
+| Worker  | `npm run worker:start` | Background job processor (outbox events, notifications) |
+
+Both processes connect to the same managed PostgreSQL database.
 
 ## Key Separations
 

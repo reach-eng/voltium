@@ -1,16 +1,19 @@
 # Voltium Deployment Guide
 
 > Deployment instructions for local development, staging, and production environments.
+> **Voltium does not use Docker.** All services use managed infrastructure or native Node.js process commands.
 
 ---
 
 ## Environment Overview
 
-| Environment | Database     | Storage         | Purpose                  |
-| ----------- | ------------ | --------------- | ------------------------ |
-| **local**   | SQLite       | Local files     | Development & testing    |
-| **staging** | PostgreSQL   | Local + GCS     | Integration testing      |
-| **production** | PostgreSQL | GCS bucket      | Live operations          |
+| Environment    | Database               | Storage         | Purpose                  |
+| -------------- | ---------------------- | --------------- | ------------------------ |
+| **local**      | Managed PostgreSQL     | Local files     | Development & testing    |
+| **staging**    | Managed PostgreSQL     | Local + GCS     | Integration testing      |
+| **production** | Managed PostgreSQL     | GCS bucket      | Live operations          |
+
+Recommended managed databases: [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway PostgreSQL](https://railway.app).
 
 ---
 
@@ -18,32 +21,37 @@
 
 ### Prerequisites
 - Node.js 20+
-- Bun (recommended package manager)
-- VS Code (recommended)
+- npm or Bun
+- Managed PostgreSQL database (Neon / Supabase / Railway free tier)
 
 ### Setup
 
 ```bash
-cp .env.template .env
-# Edit .env — set JWT_SECRET to a random string
-bun install
-bun run db:push
-bun run dev  # starts on port 8081
+cd web
+cp ../.env.local.example .env.local
+# Edit .env.local — set DATABASE_URL to your managed PostgreSQL connection string
+# Set JWT_SECRET to a random string (min 32 chars)
+
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run dev  # starts on port 8081
 ```
 
 ### Running Workers
 
 ```bash
 # In a separate terminal:
-npx tsx src/server/workers/index.ts
+cd web
+npm run worker:dev
 ```
 
 ### Running Tests
 
 ```bash
-bun run test:unit        # Unit tests
-bun run test:api         # API integration tests
-bun run test:contracts   # Contract consistency tests
+cd web
+npm run test:unit        # Unit tests
+npm run test:contracts   # Contract consistency tests
 ```
 
 ---
@@ -51,102 +59,111 @@ bun run test:contracts   # Contract consistency tests
 ## 2. Staging Environment
 
 ### Prerequisites
-- Docker & Docker Compose
-- Access to staging secrets
+- Managed PostgreSQL staging database (separate from production)
+- Staging secrets configured on your hosting platform
 
-### Setup
+### Environment Variables
 
 ```bash
-# 1. Set up environment
-export STAGING_DB_PASSWORD=<secure-password>
-export JWT_SECRET=<jwt-secret>
-export CRON_SECRET=<cron-secret>
-
-# 2. Build and start
-docker compose -f docker-compose.staging.yml build
-docker compose -f docker-compose.staging.yml up -d
-
-# 3. Run database migrations (automatic in docker-compose)
-# Migrations run via the 'migrate' service before web starts.
-# Manual: docker compose -f docker-compose.staging.yml run --rm migrate
-
-# 4. Verify health
-curl http://localhost:8082/api/health
-curl http://localhost:8082/api/health/db
-curl http://localhost:8082/api/health/worker
-curl http://localhost:8082/api/health/storage
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
+APP_ENV="staging"
+NODE_ENV="production"
+JWT_SECRET="<secure-random-64-char-string>"
+CRON_SECRET="<secure-random-32-char-string>"
+SMS_PROVIDER="mock"
+STORAGE_PROVIDER="local"
 ```
 
-### CI/CD
+### Deploy to Render (Recommended)
 
-Staging deployments are triggered by pushes to the `develop` branch.
-See `.github/workflows/ci-cd.yml` for details.
+**Web service:**
+```
+Build command: cd web && npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
+Start command: cd web && npm run start
+```
+
+**Worker service:**
+```
+Build command: cd web && npm ci && npx prisma generate && npm run worker:build
+Start command: cd web && npm run worker:start
+```
+
+### Verify Health
+
+```bash
+curl https://your-staging-url/api/health
+curl https://your-staging-url/api/health/db
+curl https://your-staging-url/api/health/worker
+curl https://your-staging-url/api/health/storage
+```
 
 ---
 
 ## 3. Production Environment
 
 ### Prerequisites
-- Docker & Docker Compose
-- Production secrets (see below)
+- Managed PostgreSQL production database
+- Production secrets configured in your hosting platform
 - Domain name with DNS configured
-- SSL certificates (auto-managed by Caddy)
 
 ### Required Secrets
 
 ```bash
-export PROD_DB_PASSWORD=<strong-random-password>
-export REDIS_PASSWORD=<strong-random-password>
-export JWT_SECRET=<random-64-char-hex-string>
-export CRON_SECRET=<random-32-char-string>
-export SENTRY_DSN=<sentry-dsn>  # Optional but recommended
-export SMS_PROVIDER=msg91       # Or your SMS provider
-export STORAGE_PROVIDER=gcs     # Or 'local' for file storage
-export GCS_BUCKET_NAME=voltfleet-uploads
-export SITE_URL=https://voltium.example.com
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
+APP_ENV="production"
+NODE_ENV="production"
+JWT_SECRET="<strong-random-64-char-hex-string>"
+CRON_SECRET="<strong-random-32-char-string>"
+SENTRY_DSN="<sentry-dsn>"          # Optional but recommended
+SMS_PROVIDER="msg91"               # Or your SMS provider
+STORAGE_PROVIDER="gcs"             # Or 'local' for file storage
+GCS_BUCKET_NAME="voltium-uploads"
+NEXT_PUBLIC_APP_URL="https://voltium.example.com"
 ```
 
-### Deployment Steps
+### Deploy to Render / Railway
+
+**Web service:**
+```
+Build command: cd web && npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
+Start command: cd web && npm run start
+```
+
+**Worker service (separate service):**
+```
+Build command: cd web && npm ci && npx prisma generate && npm run worker:build
+Start command: cd web && npm run worker:start
+```
+
+> Both services share the same `DATABASE_URL` environment variable pointing to your managed PostgreSQL.
+
+### Deploy to Vercel (Web only)
+
+Vercel handles the web/API process. For the background worker, use a separate Render or Railway service.
 
 ```bash
-# 1. Build production images
-docker compose -f docker-compose.production.yml build
+# Deploy via Vercel CLI
+vercel --prod
+```
 
-# 2. Start services
-docker compose -f docker-compose.production.yml up -d
+### Database Migrations (Production)
 
-# 3. Run database migrations (automatic in docker-compose)
-# Migrations run via the 'migrate' service before web starts.
-# Manual: docker compose -f docker-compose.production.yml run --rm migrate
+Always use `migrate deploy` — never `db push` — in production:
 
-# 4. Verify health
-curl https://voltium.example.com/api/health
-curl https://voltium.example.com/api/health/db
-curl https://voltium.example.com/api/health/worker
-curl https://voltium.example.com/api/health/storage
-
-# 5. Check monitoring dashboard
-curl -H "Authorization: Bearer $CRON_SECRET" \
-  https://voltium.example.com/api/monitoring/metrics
+```bash
+cd web
+npx prisma migrate deploy
 ```
 
 ### Rollback
 
 ```bash
-# Rollback to previous version
-docker compose -f docker-compose.production.yml down
-git checkout <previous-tag>
-docker compose -f docker-compose.production.yml build
-docker compose -f docker-compose.production.yml up -d
-
-# Database rollback (if needed)
-docker compose -f docker-compose.production.yml exec db \
-  psql -U voltfleet_prod -c "DROP DATABASE voltfleet_prod;"
-docker compose -f docker-compose.production.yml exec db \
-  psql -U voltfleet_prod -c "CREATE DATABASE voltfleet_prod;"
-# Restore from backup
-docker compose -f docker-compose.production.yml exec db \
-  psql -U voltfleet_prod voltfleet_prod < /backups/latest.sql
+# Revert to previous migration
+cd web
+npx prisma migrate resolve --rolled-back "<migration-name>"
+npx prisma migrate deploy
 ```
 
 ---
@@ -160,6 +177,16 @@ Push to main/develop
     │
     ▼
 ┌─────────────────────┐
+│ Secret Scan         │ ← Gitleaks
+└─────────────────────┘
+    │
+    ▼
+┌─────────────────────┐
+│ No-Docker Check     │ ← scripts/check-no-docker.sh
+└─────────────────────┘
+    │
+    ▼
+┌─────────────────────┐
 │ Lint & Typecheck    │ ← ESLint, Prettier, tsc --noEmit
 └─────────────────────┘
     │
@@ -170,17 +197,17 @@ Push to main/develop
     │
     ▼
 ┌─────────────────────┐
-│ Build               │ ← next build
+│ Build               │ ← next build + worker:build
 └─────────────────────┘
     │
     ▼
 ┌─────────────────────┐
-│ Tests               │ ← unit tests (vitest)
+│ Tests               │ ← unit tests (vitest) + contract tests
 └─────────────────────┘
     │
     ├──► (PR) Deploy Preview  → Vercel preview URL
     │
-    └──► (main) Deploy Production → Vercel production
+    └──► (main) Deploy Production → Vercel/Render production
 ```
 
 ### GitHub Actions Workflows
@@ -197,24 +224,43 @@ Push to main/develop
 
 ## 5. Database Migrations
 
-### Daily Operations
+### Development
 
 ```bash
-# Backup (should run daily via cron)
-bash scripts/migrate.sh backup
+cd web
 
-# Check status
-bash scripts/migrate.sh status
+# Create a new migration after schema changes
+npx prisma migrate dev --name describe_change
 
-# Full SQLite → PostgreSQL migration
-bash scripts/migrate.sh to-pg
+# Apply all pending migrations
+npx prisma migrate dev
+
+# Reset database (loses data — dev only)
+npx prisma migrate reset
 ```
+
+### Staging / Production
+
+```bash
+cd web
+
+# Apply pending migrations safely (preserves data)
+npx prisma migrate deploy
+
+# Check migration status
+npx prisma migrate status
+
+# Validate schema
+npx prisma validate
+```
+
+> **Never use `prisma db push` in staging or production.** Use `prisma migrate deploy` only.
 
 ### Backup Strategy
 
-- **Daily**: Automated SQLite backups via cron
-- **Pre-deployment**: Manual backup before any production deploy
-- **PostgreSQL**: Use `pg_dump` for production DB backups
+- **Daily**: Automated backups via your managed PostgreSQL provider (Neon / Supabase auto-backup)
+- **Pre-deployment**: Use your provider's point-in-time restore or `pg_dump` before any production deploy
+- **PostgreSQL**: `pg_dump <DATABASE_URL> > backup.sql`
 
 ---
 
@@ -253,13 +299,15 @@ bash scripts/migrate.sh to-pg
 
 - [ ] All secrets set (JWT_SECRET, CRON_SECRET, DB passwords)
 - [ ] Sentry DSN configured
-- [ ] Redis credentials set
+- [ ] Managed PostgreSQL provisioned (not SQLite, not Docker)
+- [ ] `prisma migrate deploy` run against production database
 - [ ] SMS provider configured (not mock)
 - [ ] Storage provider configured (not local)
 - [ ] CORS/middleware configured for production domain
 - [ ] `VOLTIUM_DEV_BYPASS_RATELIMIT` NOT set
 - [ ] `LOG_LEVEL` set to `info` (not `debug`)
-- [ ] SSL certificates in place
+- [ ] SSL certificates in place (managed by Caddy or your hosting platform)
 - [ ] Database backed up
-- [ ] Workers configured for background job processing
+- [ ] Worker service running separately (not inside the Next.js process)
 - [ ] Cron jobs configured for reconciliation and cleanup
+- [ ] No Docker files or commands present (`bash scripts/check-no-docker.sh`)

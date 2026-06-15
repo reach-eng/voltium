@@ -14,7 +14,9 @@ Voltium is an electric vehicle rental and fleet management platform with three p
 | Admin Panel | Next.js App Router (React, Tailwind, shadcn/ui)      | Fleet operations command center |
 | API Layer   | Next.js API routes (Prisma, Zod, JWT)                 | Backend services                |
 
-**Database**: Prisma ORM → SQLite (dev) / PostgreSQL (production target)
+**Database**: Prisma ORM → PostgreSQL (all environments via managed service — Neon / Supabase / Railway)
+
+> **Note**: Voltium does not use Docker for local development, CI, staging, or production. All services use managed infrastructure or native Node.js process commands.
 
 ---
 
@@ -292,7 +294,7 @@ Use-Cases (business logic + auth)
      │
      └──► Audit Log (append-only)
               │
-              └──► Background Workers (BullMQ/Redis)
+              └──► Background Workers (DB-backed outbox, Node worker process)
 ```
 
 ---
@@ -339,10 +341,11 @@ Each workflow is complete when it has:
 
 ## 8. Environment Strategy
 
-| Environment | Database     | Storage         | Purpose           |
-| ----------- | ------------ | --------------- | ----------------- |
-| local       | SQLite/PostgreSQL | Local files | Development       |
-| staging     | PostgreSQL   | GCS bucket      | Integration tests |
-| production  | PostgreSQL   | GCS bucket      | Live operations   |
+| Environment | Database               | Storage         | Purpose           |
+| ----------- | ---------------------- | --------------- | ----------------- |
+| local       | Managed PostgreSQL     | Local files     | Development       |
+| staging     | Managed PostgreSQL     | GCS bucket      | Integration tests |
+| production  | Managed PostgreSQL     | GCS bucket      | Live operations   |
 
-All environments use the same DB provider (PostgreSQL target).
+All environments use PostgreSQL via a managed provider (Neon / Supabase / Railway).
+No Docker containers are used in any environment.

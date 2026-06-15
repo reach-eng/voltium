@@ -130,16 +130,18 @@ flutter drive \
 ### Quick Start
 
 ```bash
-# Install dependencies
+# Install dependencies (from web/ directory)
+cd web
 npm install
 
 # Setup environment
-cp .env.example .env
-# Edit .env with your credentials
+cp ../.env.local.example .env.local
+# Edit .env.local — set DATABASE_URL to your managed PostgreSQL connection string
+# Set JWT_SECRET to a random string (min 32 chars)
 
 # Initialize database
-npm run db:push
 npm run db:generate
+npm run db:migrate
 
 # Start development server
 npm run dev
@@ -149,9 +151,8 @@ npm run dev
 ### Environment Variables
 
 ```env
-# Database
-DATABASE_URL="file:./dev.db"          # SQLite (dev)
-# DATABASE_URL="postgresql://..."      # PostgreSQL (prod)
+# Database (managed PostgreSQL — Neon / Supabase / Railway)
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
 
 # Firebase Auth
 FIREBASE_PROJECT_ID="your-project"
@@ -165,7 +166,7 @@ ADMIN_PASSWORD="your-admin-password"
 # JWT
 JWT_SECRET="your-jwt-secret-min-32-chars"
 
-# Redis (optional — for rate limiting & OTP in production)
+# Redis (optional — Upstash for rate limiting & OTP in production)
 UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-token"
 
@@ -182,18 +183,20 @@ NEXT_PUBLIC_ENABLE_PUSH_NOTIFICATIONS="true"
 
 ### Key Scripts
 
-| Command               | Description                   |
-| --------------------- | ----------------------------- |
-| `npm run dev`         | Start dev server on port 8081 |
-| `npm run build`       | Production build              |
-| `npm run start`       | Start production server       |
-| `npm run lint`        | ESLint                        |
-| `npm run typecheck`   | TypeScript validation         |
-| `npm run test:unit`   | Unit tests                    |
-| `npm run db:push`     | Push schema to database       |
-| `npm run db:generate` | Generate Prisma client        |
-| `npm run db:migrate`  | Run migrations                |
-| `npm run db:seed`     | Seed database                 |
+| Command                 | Description                    |
+| ----------------------- | ------------------------------ |
+| `npm run dev`           | Start dev server on port 8081  |
+| `npm run build`         | Production build               |
+| `npm run start`         | Start production server        |
+| `npm run lint`          | ESLint                         |
+| `npm run typecheck`     | TypeScript validation          |
+| `npm run test:unit`     | Unit tests                     |
+| `npm run db:generate`   | Generate Prisma client         |
+| `npm run db:migrate`    | Run migrations (dev)           |
+| `npm run db:deploy`     | Deploy migrations (prod)       |
+| `npm run db:seed`       | Seed database                  |
+| `npm run worker:dev`    | Start worker process (dev)     |
+| `npm run worker:start`  | Start worker process (prod)    |
 
 ---
 
@@ -417,9 +420,12 @@ voltfleet/
 
 ```bash
 # 1. Start backend
+cd web
+cp ../.env.local.example .env.local
+# Edit .env.local with your managed PostgreSQL DATABASE_URL
 npm install
-cp .env.example .env
-npm run db:push
+npm run db:generate
+npm run db:migrate
 npm run dev
 
 # 2. Set up port forwarding (for emulator)
@@ -431,6 +437,10 @@ flutter pub get
 flutter run -d emulator-5554 \
   --dart-define=API_URL=http://localhost:8081 \
   --dart-define=TEST_MODE=true
+
+# 4. Optionally start workers (separate terminal)
+cd web
+npm run worker:dev
 ```
 
 ### Testing OTP
@@ -491,11 +501,11 @@ flutter build apk --release
 
 ### Environment Setup
 
-| Environment | Database   | Rate Limit | OTP      |
-| ----------- | ---------- | ---------- | -------- |
-| Development | SQLite     | In-memory  | `111111` |
-| Staging     | PostgreSQL | Redis      | Real SMS |
-| Production  | PostgreSQL | Redis      | Real SMS |
+| Environment | Database              | Rate Limit | OTP      |
+| ----------- | --------------------- | ---------- | -------- |
+| Development | Managed PostgreSQL    | In-memory  | `111111` |
+| Staging     | Managed PostgreSQL    | Redis      | Real SMS |
+| Production  | Managed PostgreSQL    | Redis      | Real SMS |
 
 ---
 

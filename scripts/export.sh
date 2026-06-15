@@ -44,6 +44,10 @@ EXCLUDES=(
   "--exclude=.qodo"
   "--exclude=flutter/pubspec.lock"
   "--exclude=flutter/.flutter-plugins*"
+  # Docker files should never be in exports
+  "--exclude=*Dockerfile*"
+  "--exclude=*docker-compose*"
+  "--exclude=.dockerignore"
 )
 
 if [ "$FORMAT" = "zip" ]; then

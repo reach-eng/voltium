@@ -44,19 +44,21 @@ case "${1:-help}" in
     ;;
 
   to-pg)
-    echo "🔄 Migrating SQLite → PostgreSQL..."
+    echo "Migrating to PostgreSQL..."
     echo ""
     echo "This migration requires:"
-    echo "  1. A running PostgreSQL instance (see docker-compose.yml)"
+    echo "  1. A managed PostgreSQL database (Neon / Supabase / Railway)"
     echo "  2. prisma schema set to postgresql provider"
     echo ""
     echo "Steps:"
-    echo "  1. Update prisma/schema.prisma: provider = \"postgresql\""
-    echo "  2. Set DATABASE_URL to PostgreSQL connection string"
-    echo "  3. Run: npx prisma db push"
-    echo "  4. If using SQLite data, run: npx tsx scripts/migrate-data.ts"
+    echo "  1. Sign up for Neon (https://neon.tech) or Supabase (https://supabase.com)"
+    echo "  2. Create a new PostgreSQL project and copy the connection string"
+    echo "  3. Update prisma/schema.prisma: provider = \"postgresql\""
+    echo "  4. Set DATABASE_URL=\"postgresql://...\" in your .env.local"
+    echo "  5. Run: cd web && npx prisma migrate dev"
+    echo "  6. If migrating existing SQLite data, run: npx tsx scripts/migrate-data.ts"
     echo ""
-    echo "See docs/DEPLOYMENT.md for full instructions."
+    echo "See docs/DATABASE.md for full instructions."
     ;;
 
   postgres)

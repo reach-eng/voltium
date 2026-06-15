@@ -14,6 +14,9 @@
     "db:deploy": "prisma migrate deploy",
     "db:reset": "prisma migrate reset",
     "db:seed": "npx tsx prisma/seed.ts",
+    "worker:dev": "tsx src/server/workers/index.ts",
+    "worker:build": "esbuild src/server/workers/index.ts --bundle --platform=node --outfile=dist/workers.js --alias:@=./src --external:@prisma/client --external:next --external:@sentry/nextjs --external:sharp",
+    "worker:start": "node dist/workers.js",
     "generate:openapi": "npx tsx src/contracts/openapi.ts",
     "test:contracts": "vitest --run src/contracts/__tests__/",
     "test": "vitest",
@@ -22,7 +25,8 @@
     "test:e2e": "npx playwright test",
     "test:onboarding": "npx playwright test e2e/onboarding-flow.spec.ts",
     "format:check": "prettier --check .",
-    "format:write": "prettier --write ."
+    "format:write": "prettier --write .",
+    "check:no-docker": "bash ../scripts/check-no-docker.sh"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.48",
@@ -106,6 +110,7 @@
     "@tailwindcss/postcss": "^4.2.4",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "^16.1.1",
     "prettier": "^3.8.3",

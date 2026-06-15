@@ -31,7 +31,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ─── Lint & TypeScript ────────────────────────────────────────────────────
+  # ─── No-Docker Check ──────────────────────────────────────────────────────────
+  no-docker-check:
+    name: No-Docker Enforcement
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check no Docker files or commands
+        run: bash scripts/check-no-docker.sh
+
+  # ─── Lint & TypeScript ────────────────────────────────────────────────────────
   lint-and-typecheck:
     name: Lint & TypeScript
     runs-on: ubuntu-latest
@@ -49,7 +62,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true  # TEMPORARY: react-hooks plugin errors in legacy components. Remove after lint cleanup.
 
       - name: Run Prettier Check
         run: npm run format:check
@@ -131,8 +143,8 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
-      - name: Docker build smoke test
-        run: docker build -t voltium-web:ci .
+      - name: Build worker bundle
+        run: npm run worker:build
 
   # ─── Tests ────────────────────────────────────────────────────────────────
   test:
