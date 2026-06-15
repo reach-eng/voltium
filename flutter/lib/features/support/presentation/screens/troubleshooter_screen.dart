@@ -5,27 +5,8 @@ import '../data/troubleshooter_tree.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/api_service.dart';
 
-/// Result of a completed troubleshooting session.
-class TroubleshooterResult {
-  const TroubleshooterResult({
-    required this.path,
-    required this.resolution,
-    required this.resolutionType,
-    this.category,
-  });
-
-  final List<TroubleshooterAnswer> path;
-  final String resolution;
-  final String resolutionType;
-  final String? category;
-
-  Map<String, dynamic> toJson() => {
-        'path': path.map((a) => a.toJson()).toList(),
-        'resolution': resolution,
-        'resolutionType': resolutionType,
-        'category': category,
-      };
-}
+import 'troubleshooter_result.dart';
+import '../widgets/troubleshooter_widgets.dart';
 
 /// Smart Troubleshooter screen for the Ryd Rider App.
 ///
@@ -351,7 +332,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           fontSize: 18,
         ),
       ),
-      backgroundColor: _vfBlue,
+      backgroundColor: vfBlue,
       foregroundColor: Colors.white,
       elevation: 0,
       leading: _mode == _Mode.categorySelect
@@ -383,7 +364,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
         children: [
           const SizedBox(height: 8),
           // Header illustration.
-          _buildHeaderIcon(),
+          const TroubleshooterHeaderIcon(),
           const SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
@@ -400,78 +381,23 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                 ),
           ),
           const SizedBox(height: 20),
-          ...troubleshooterCategories.map(_buildCategoryCard),
+          ...troubleshooterCategories.map(
+            (cat) => CategoryCard(
+              icon: tsIconData(cat.icon),
+              color: Color(cat.color),
+              title: cat.label,
+              onTap: () => _selectCategory(cat),
+            ),
+          ),
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderIcon() {
-    return Center(
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: _vfBlueLight,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: const Icon(
-          Icons.build_circle_rounded,
-          color: _vfBlue,
-          size: 44,
-        ),
-      ),
-    );
-  }
 
-  Widget _buildCategoryCard(TroubleshooterCategory category) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        child: InkWell(
-          onTap: () => _selectCategory(category),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Color(category.color).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _iconData(category.icon),
-                    color: Color(category.color),
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    category.label,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF1A1A2E),
-                        ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: const Color(0xFF9CA3AF),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
+
 
   // ── Question view ──────────────────────────────────────────────────────────
 
@@ -490,7 +416,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           const SizedBox(height: 8),
 
           // Step counter.
-          _buildStepCounter(displayStep),
+          TroubleshooterStepCounter(
+            currentStep: displayStep,
+            totalSteps: _totalSteps,
+          ),
 
           const SizedBox(height: 20),
 
@@ -511,8 +440,14 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                 ),
               );
             },
-            child: _buildQuestionCard(
-              l10n,
+            child: QuestionCard(
+              question: _currentNode!.question,
+              icon: _selectedCategory != null
+                  ? tsIconData(_selectedCategory!.icon)
+                  : Icons.help_outline,
+              categoryColor: _selectedCategory != null
+                  ? Color(_selectedCategory!.color)
+                  : vfBlue,
               key: ValueKey<String>(_currentNode!.id),
             ),
           ),
@@ -524,7 +459,9 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             duration: const Duration(milliseconds: 350),
             switchInCurve: Curves.easeInCubic,
             switchOutCurve: Curves.easeOutCubic,
-            child: _buildActionButtons(
+            child: ActionButtons(
+              onYes: () => _answerQuestion(true),
+              onNo: () => _answerQuestion(false),
               key: ValueKey<String>(_currentNode!.id),
             ),
           ),
@@ -532,7 +469,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           // Path summary (collapsible).
           if (_path.isNotEmpty) ...[
             const SizedBox(height: 24),
-            _buildPathSummary(),
+            PathSummary(path: _path),
           ],
 
           const SizedBox(height: 32),
@@ -541,201 +478,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     );
   }
 
-  Widget _buildStepCounter(int currentStep) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: _vfBlueLight,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.timeline, size: 16, color: _vfBlue),
-          const SizedBox(width: 6),
-          Text(
-            'Step $currentStep of $_totalSteps',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: _vfBlue,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildQuestionCard(AppLocalizations l10n, {Key? key}) {
-    final theme = Theme.of(context);
-    final categoryColor =
-        _selectedCategory != null ? Color(_selectedCategory!.color) : _vfBlue;
 
-    return Card(
-      key: key,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Icon.
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: _selectedCategory != null
-                  ? Icon(
-                      _iconData(_selectedCategory!.icon),
-                      color: categoryColor,
-                      size: 32,
-                    )
-                  : Icon(Icons.help_outline, color: categoryColor, size: 32),
-            ),
-            const SizedBox(height: 20),
 
-            // Question text.
-            Text(
-              _currentNode!.question,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                color: const Color(0xFF1A1A2E),
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 8),
 
-            // Hint.
-            Text(
-              'Answer honestly for the most accurate diagnosis.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF9CA3AF),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildActionButtons({Key? key}) {
-    return Row(
-      key: key,
-      children: [
-        // Yes button.
-        Expanded(
-          child: SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: () => _answerQuestion(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text(
-                'Yes',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
 
-        // No button.
-        Expanded(
-          child: SizedBox(
-            height: 52,
-            child: FilledButton.icon(
-              onPressed: () => _answerQuestion(false),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              icon: const Icon(Icons.cancel_outlined, size: 20),
-              label: const Text(
-                'No',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildPathSummary() {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      color: Colors.white,
-      child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading:
-              const Icon(Icons.history, size: 18, color: Color(0xFF9CA3AF)),
-          title: Text(
-            'Your answers (${_path.length})',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
-          children: [
-            for (final answer in _path)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: answer.answer
-                            ? Colors.green.withOpacity(0.15)
-                            : Colors.red.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Icon(
-                        answer.answer ? Icons.check : Icons.close,
-                        size: 12,
-                        color: answer.answer ? Colors.green : Colors.red,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        answer.question,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF4B5563),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ── Result view ────────────────────────────────────────────────────────────
 
@@ -754,7 +503,9 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             scale: _resultScaleAnim,
             child: FadeTransition(
               opacity: _resultOpacityAnim,
-              child: _buildResultIcon(),
+              child: TroubleshooterResultIcon(
+                resolutionType: _result!.resolutionType,
+              ),
             ),
           ),
 
@@ -763,7 +514,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           // Resolution card.
           FadeTransition(
             opacity: _resultOpacityAnim,
-            child: _buildResolutionCard(l10n),
+            child: ResolutionCard(
+              resolution: _result!.resolution,
+              resolutionType: _result!.resolutionType,
+            ),
           ),
 
           // Path taken (for NEEDS_SUPPORT / FAILED).
@@ -772,12 +526,17 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             const SizedBox(height: 16),
             FadeTransition(
               opacity: _resultOpacityAnim,
-              child: _buildPathTakenCard(l10n),
+              child: TroubleshooterPathTakenCard(
+                path: _result!.path,
+              ),
             ),
             const SizedBox(height: 16),
             FadeTransition(
               opacity: _resultOpacityAnim,
-              child: _buildSupportTicketButton(l10n),
+              child: TroubleshooterSupportTicketButton(
+                onPressed: _isSubmitting ? null : _createSupportTicket,
+                isSubmitting: _isSubmitting,
+              ),
             ),
           ],
 
@@ -786,7 +545,9 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             const SizedBox(height: 16),
             FadeTransition(
               opacity: _resultOpacityAnim,
-              child: _buildSosButton(),
+              child: TroubleshooterSosButton(
+                onPressed: _triggerSOS,
+              ),
             ),
           ],
 
@@ -800,8 +561,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
               child: OutlinedButton.icon(
                 onPressed: _resetToCategories,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _vfBlue,
-                  side: const BorderSide(color: _vfBlue),
+                  foregroundColor: vfBlue,
+                  side: const BorderSide(color: vfBlue),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -822,280 +583,11 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     );
   }
 
-  Widget _buildResultIcon() {
-    final (icon, color, bgColor) = switch (_result!.resolutionType) {
-      'SUCCESS' => (
-          Icons.check_circle_rounded,
-          Colors.green,
-          Colors.green.withOpacity(0.12),
-        ),
-      'FAILED' => (
-          Icons.error_outline,
-          Colors.orange,
-          Colors.orange.withOpacity(0.12),
-        ),
-      'NEEDS_SUPPORT' => (
-          Icons.support_agent_rounded,
-          _vfBlue,
-          _vfBlueLight,
-        ),
-      'DANGER' => (
-          Icons.warning_rounded,
-          Colors.red,
-          Colors.red.withOpacity(0.12),
-        ),
-      _ => (
-          Icons.info_outline,
-          Colors.grey,
-          Colors.grey.withOpacity(0.12),
-        ),
-    };
 
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, color: color, size: 48),
-    );
-  }
 
-  Widget _buildResolutionCard(AppLocalizations l10n) {
-    final theme = Theme.of(context);
-    final (title, titleColor) = switch (_result!.resolutionType) {
-      'SUCCESS' => ('Issue Resolved', Colors.green),
-      'FAILED' => ('Troubleshooting Tip', Colors.orange),
-      'NEEDS_SUPPORT' => ('Support Required', _vfBlue),
-      'DANGER' => ('Safety Warning', Colors.red),
-      _ => ('Result', Colors.grey),
-    };
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: titleColor.withOpacity(0.3)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: titleColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _result!.resolution,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF1A1A2E),
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildPathTakenCard(AppLocalizations l10n) {
-    final theme = Theme.of(context);
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.route, size: 18, color: Color(0xFF6B7280)),
-                const SizedBox(width: 8),
-                Text(
-                  'Diagnostic path taken',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A2E),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 8),
-            for (int i = 0; i < _result!.path.length; i++) ...[
-              _buildPathStep(theme, i + 1, _result!.path[i]),
-              if (i < _result!.path.length - 1) ...[
-                Padding(
-                  padding: const EdgeInsets.only(left: 13),
-                  child: SizedBox(
-                    height: 16,
-                    child: VerticalDivider(
-                      width: 2,
-                      thickness: 1.5,
-                      color: const Color(0xFFE5E7EB),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPathStep(
-      ThemeData theme, int stepNumber, TroubleshooterAnswer answer) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Step number badge.
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: answer.answer
-                  ? Colors.green.withOpacity(0.15)
-                  : Colors.red.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '$stepNumber',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: answer.answer ? Colors.green : Colors.red,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Question + answer.
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  answer.question,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF4B5563),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(
-                      answer.answer ? Icons.check : Icons.close,
-                      size: 14,
-                      color: answer.answer
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      answer.answer ? 'Yes' : 'No',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: answer.answer
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSupportTicketButton(AppLocalizations l10n) {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: _isSubmitting ? null : _createSupportTicket,
-        style: FilledButton.styleFrom(
-          backgroundColor: _vfBlue,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: _vfBlue.withOpacity(0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        icon: _isSubmitting
-            ? SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white.withOpacity(0.8),
-                ),
-              )
-            : const Icon(Icons.send_rounded, size: 18),
-        label: Text(
-          _isSubmitting ? 'Submitting...' : 'Create Support Ticket',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSosButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: () => _triggerSOS(),
-        style: FilledButton.styleFrom(
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        icon: const Icon(Icons.warning_amber_rounded, size: 22),
-        label: const Text(
-          'Emergency SOS',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  // ── Icon helper ────────────────────────────────────────────────────────────
-
-  IconData _iconData(String name) {
-    return switch (name) {
-      'speed' => Icons.speed_rounded,
-      'display_settings' => Icons.display_settings_rounded,
-      'battery_charging_full' => Icons.battery_charging_full_rounded,
-      'hearing' => Icons.hearing_rounded,
-      'lock_open' => Icons.lock_open_rounded,
-      'gps_off' => Icons.gps_off_rounded,
-      'tire_repair' => Icons.tire_repair_rounded,
-      _ => Icons.help_outline_rounded,
-    };
-  }
-
-  // ── Brand colours ──────────────────────────────────────────────────────────
-
-  static const _vfBlue = Color(0xFF0053C1);
-  static const _vfBlueLight = Color(0xFFE8F0FE);
 }
 
 // =============================================================================
