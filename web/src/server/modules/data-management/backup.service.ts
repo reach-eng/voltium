@@ -357,6 +357,7 @@ export const backupService = {
           const [expectedHash, filename] = line.split(/\s+/);
           if (!expectedHash || !filename) continue;
 
+          if (!job.backupPath) continue;
           const filePath = join(job.backupPath, filename);
           if (existsSync(filePath)) {
             const actualHash = createHash('sha256').update(readFileSync(filePath)).digest('hex');

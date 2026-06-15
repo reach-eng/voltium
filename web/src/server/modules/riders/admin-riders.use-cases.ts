@@ -17,6 +17,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
+import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
