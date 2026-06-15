@@ -1,0 +1,478 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Voltium",
+  "@appTitle": { "description": "Application name shown in AppBar" },
+
+  "common_loading": "Loading...",
+  "@common_loading": { "description": "Generic loading indicator" },
+
+  "common_error": "Something went wrong",
+  "@common_error": { "description": "Generic error message" },
+
+  "common_retry": "Retry",
+  "@common_retry": { "description": "Retry button label" },
+
+  "common_offline": "You're Offline",
+  "@common_offline": { "description": "Offline status banner title" },
+
+  "common_offlineMessage": "Data shown may be outdated. Actions will sync when you reconnect.",
+  "@common_offlineMessage": { "description": "Offline status banner subtitle" },
+
+  "common_syncing": "Syncing...",
+  "@common_syncing": { "description": "Sync in progress indicator" },
+
+  "common_pendingSync": "{count, plural, =0{} =1{1 pending action will sync} =2{{count} pending actions will sync} other{{count} pending actions will sync}}",
+  "@common_pendingSync": { "description": "Pending sync count message", "placeholders": { "count": { "type": "int" } } },
+
+  "common_savedOffline": "Saved offline — will submit when connected",
+  "@common_savedOffline": { "description": "Toast when action queued offline" },
+
+  "common_noData": "No data available",
+  "@common_noData": { "description": "Empty state message" },
+
+  "common_currencyRupee": "₹",
+  "@common_currencyRupee": { "description": "Indian Rupee symbol" },
+
+  "common_rupeeAmount": "₹{amount}",
+  "@common_rupeeAmount": { "description": "Formatted rupee amount", "placeholders": { "amount": { "type": "String" } } },
+
+  "common_cancel": "Cancel",
+  "@common_cancel": { "description": "Cancel button label" },
+
+  "common_save": "Save",
+  "@common_save": { "description": "Save button label" },
+
+  "common_confirm": "Confirm",
+  "@common_confirm": { "description": "Confirm button label" },
+
+  "common_close": "Close",
+  "@common_close": { "description": "Close button label" },
+
+  "common_fromCache": "Showing cached data",
+  "@common_fromCache": { "description": "Indicator that data is from local cache" },
+
+  "common_updated": "Updated just now",
+  "@common_updated": { "description": "Fresh data indicator" },
+
+  "dashboard_title": "Voltium",
+  "@dashboard_title": { "description": "Active Dashboard AppBar title" },
+
+  "dashboard_subtitle": "Dashboard",
+  "@dashboard_subtitle": { "description": "Active Dashboard AppBar subtitle" },
+
+  "dashboard_statusActive": "ACCOUNT ACTIVE",
+  "@dashboard_statusActive": { "description": "Green active status badge" },
+
+  "dashboard_statusSuspended": "ACCOUNT SUSPENDED",
+  "@dashboard_statusSuspended": { "description": "Red suspended status badge" },
+
+  "dashboard_statusPreActive": "PENDING ACTIVATION",
+  "@dashboard_statusPreActive": { "description": "Amber pre-active status badge" },
+
+  "dashboard_welcomeBack": "Welcome back,",
+  "@dashboard_welcomeBack": { "description": "Dashboard greeting prefix" },
+
+  "dashboard_subscription": "Current Subscription",
+  "@dashboard_subscription": { "description": "Subscription card section label" },
+
+  "dashboard_timeRemaining": "Time Remaining",
+  "@dashboard_timeRemaining": { "description": "Time left in plan" },
+
+  "dashboard_nextRecharge": "Next Recharge",
+  "@dashboard_nextRecharge": { "description": "Next recharge date label" },
+
+  "dashboard_manageSubscription": "Manage Subscription",
+  "@dashboard_manageSubscription": { "description": "Manage subscription button" },
+
+  "dashboard_activeHub": "Active Hub",
+  "@dashboard_activeHub": { "description": "Active hub section label" },
+
+  "dashboard_teamLeader": "Team Leader",
+  "@dashboard_teamLeader": { "description": "Team leader section label" },
+
+  "dashboard_inviteEarnTitle": "Refer Friends, Get Rewards!",
+  "@dashboard_inviteEarnTitle": { "description": "Referral widget headline" },
+
+  "dashboard_inviteEarnSubtitle": "Invite & Earn",
+  "@dashboard_inviteEarnSubtitle": { "description": "Referral widget section label" },
+
+  "dashboard_referralCopied": "Referral code copied!",
+  "@dashboard_referralCopied": { "description": "Toast after copying referral code" },
+
+  "dashboard_todaysPerformance": "Today's Performance",
+  "@dashboard_todaysPerformance": { "description": "Performance section header" },
+
+  "dashboard_distance": "Distance",
+  "@dashboard_distance": { "description": "Distance metric label" },
+
+  "dashboard_power": "Power",
+  "@dashboard_power": { "description": "Power consumption label" },
+
+  "dashboard_assignedVehicle": "Assigned Vehicle",
+  "@dashboard_assignedVehicle": { "description": "Vehicle assignment label" },
+
+  "dashboard_vehicleDetails": "Details",
+  "@dashboard_vehicleDetails": { "description": "Vehicle details button" },
+
+  "dashboard_kilometers": "{km} km",
+  "@dashboard_kilometers": { "description": "Formatted kilometers", "placeholders": { "km": { "type": "String" } } },
+
+  "dashboard_kwh": "{kwh} kWh",
+  "@dashboard_kwh": { "description": "Formatted kilowatt-hours", "placeholders": { "kwh": { "type": "String" } } },
+
+  "dashboard_notifications": "Notifications",
+  "@dashboard_notifications": { "description": "Notifications screen title" },
+
+  "dashboard_rentalDetails": "Rental Details",
+  "@dashboard_rentalDetails": { "description": "Rental details screen title" },
+
+  "dashboard_choosePlan": "Choose Plan",
+  "@dashboard_choosePlan": { "description": "Choose plan screen title" },
+
+  "suspension_negativeBalance": "Wallet Balance Below ₹0",
+  "@suspension_negativeBalance": { "description": "Suspension reason: negative wallet" },
+
+  "suspension_negativeBalanceDesc": "Your wallet has a negative balance of ₹{amount}. Please top up to restore your account.",
+  "@suspension_negativeBalanceDesc": { "description": "Suspension description for negative balance", "placeholders": { "amount": { "type": "String" } } },
+
+  "suspension_lowBalance": "Low Wallet Balance",
+  "@suspension_lowBalance": { "description": "Warning: low wallet balance" },
+
+  "suspension_lowBalanceDesc": "Your wallet balance is ₹{amount}. Daily rental charges may cause suspension.",
+  "@suspension_lowBalanceDesc": { "description": "Warning description for low balance", "placeholders": { "amount": { "type": "String" } } },
+
+  "suspension_kycPending": "KYC Verification Pending",
+  "@suspension_kycPending": { "description": "KYC not completed" },
+
+  "suspension_kycPendingDesc": "Your KYC is {status}. Complete document verification to activate your account.",
+  "@suspension_kycPendingDesc": { "description": "KYC pending description", "placeholders": { "status": { "type": "String" } } },
+
+  "suspension_depositPending": "Security Deposit Required",
+  "@suspension_depositPending": { "description": "Deposit not paid" },
+
+  "suspension_depositPendingDesc": "Your security deposit has not been received or approved. Please submit your payment.",
+  "@suspension_depositPendingDesc": { "description": "Deposit pending description" },
+
+  "suspension_planExpired": "Subscription Expired",
+  "@suspension_planExpired": { "description": "Plan expired" },
+
+  "suspension_planExpiredDesc": "Your rental plan has expired. Select a new plan to continue riding.",
+  "@suspension_planExpiredDesc": { "description": "Plan expired description" },
+
+  "suspension_noActivePlan": "No Active Subscription",
+  "@suspension_noActivePlan": { "description": "No plan selected" },
+
+  "suspension_noActivePlanDesc": "You need an active rental plan to use Voltium services.",
+  "@suspension_noActivePlanDesc": { "description": "No plan description" },
+
+  "suspension_returnRequired": "Vehicle Return Overdue",
+  "@suspension_returnRequired": { "description": "Vehicle return overdue" },
+
+  "suspension_returnRequiredDesc": "Your vehicle return is overdue. Please return the vehicle to avoid penalties.",
+  "@suspension_returnRequiredDesc": { "description": "Return overdue description" },
+
+  "suspension_terminated": "Account Terminated",
+  "@suspension_terminated": { "description": "Account terminated" },
+
+  "suspension_terminatedDesc": "Your account has been terminated. Please contact support for assistance.",
+  "@suspension_terminatedDesc": { "description": "Account terminated description" },
+
+  "suspension_topUpNow": "Top Up Now",
+  "@suspension_topUpNow": { "description": "Action button for balance issues" },
+
+  "suspension_resubmitKyc": "Resubmit KYC",
+  "@suspension_resubmitKyc": { "description": "Action button for rejected KYC" },
+
+  "suspension_completeKyc": "Complete KYC",
+  "@suspension_completeKyc": { "description": "Action button for pending KYC" },
+
+  "suspension_payDeposit": "Pay Deposit",
+  "@suspension_payDeposit": { "description": "Action button for deposit" },
+
+  "suspension_choosePlan": "Choose Plan",
+  "@suspension_choosePlan": { "description": "Action button for plan" },
+
+  "suspension_endRental": "End Rental",
+  "@suspension_endRental": { "description": "Action button for return" },
+
+  "suspension_contactSupport": "Contact Support",
+  "@suspension_contactSupport": { "description": "Action button for support" },
+
+  "wallet_title": "My Wallet",
+  "@wallet_title": { "description": "Wallet screen title" },
+
+  "wallet_availableBalance": "Available Balance",
+  "@wallet_availableBalance": { "description": "Balance label on wallet card" },
+
+  "wallet_paymentStreak": "Payment Streak",
+  "@wallet_paymentStreak": { "description": "Streak progress label" },
+
+  "wallet_streakOf": "{days} / 5 Days",
+  "@wallet_streakOf": { "description": "Streak progress counter", "placeholders": { "days": { "type": "int" } } },
+
+  "wallet_streakMessage": "{days} day streak! Keep going to unlock premium tiers.",
+  "@wallet_streakMessage": { "description": "Streak motivation message", "placeholders": { "days": { "type": "int" } } },
+
+  "wallet_topUp": "Top Up",
+  "@wallet_topUp": { "description": "Top up button" },
+
+  "wallet_history": "History",
+  "@wallet_history": { "description": "History button" },
+
+  "wallet_transactionHistory": "Transaction History",
+  "@wallet_transactionHistory": { "description": "Transaction list section header" },
+
+  "wallet_viewAll": "View All",
+  "@wallet_viewAll": { "description": "View all transactions link" },
+
+  "wallet_recentTransactions": "Recent Transactions",
+  "@wallet_recentTransactions": { "description": "Recent transactions section" },
+
+  "wallet_noTransactions": "No transactions yet",
+  "@wallet_noTransactions": { "description": "Empty transaction list" },
+
+  "wallet_dailyRental": "Daily Rental",
+  "@wallet_dailyRental": { "description": "Transaction type: daily rental" },
+
+  "wallet_weeklyPlan": "Weekly Plan",
+  "@wallet_weeklyPlan": { "description": "Transaction type: weekly plan" },
+
+  "wallet_securityDeposit": "Security Deposit",
+  "@wallet_securityDeposit": { "description": "Transaction type: security deposit" },
+
+  "wallet_topUpUpi": "Top Up — UPI",
+  "@wallet_topUpUpi": { "description": "Transaction type: UPI top up" },
+
+  "wallet_loyaltyReward": "Loyalty Reward",
+  "@wallet_loyaltyReward": { "description": "Transaction type: loyalty reward" },
+
+  "wallet_penalty": "Penalty",
+  "@wallet_penalty": { "description": "Transaction type: penalty" },
+
+  "wallet_refund": "Refund",
+  "@wallet_refund": { "description": "Transaction type: refund" },
+
+  "wallet_statusPending": "PENDING",
+  "@wallet_statusPending": { "description": "Transaction status" },
+
+  "wallet_statusApproved": "APPROVED",
+  "@wallet_statusApproved": { "description": "Transaction status" },
+
+  "wallet_statusRejected": "REJECTED",
+  "@wallet_statusRejected": { "description": "Transaction status" },
+
+  "wallet_streakKeepGoing": "Maintaining a 5-day streak unlocks premium tiers",
+  "@wallet_streakKeepGoing": { "description": "Streak info text" },
+
+  "wallet_unlockPremiumTiers": "{days} day streak! Keep going to unlock premium tiers.",
+  "@wallet_unlockPremiumTiers": { "description": "Streak motivation", "placeholders": { "days": { "type": "int" } } },
+
+  "history_title": "Transaction History",
+  "@history_title": { "description": "History screen title" },
+
+  "history_credits": "Credits",
+  "@history_credits": { "description": "Credit filter tab" },
+
+  "history_debits": "Debits",
+  "@history_debits": { "description": "Debit filter tab" },
+
+  "history_all": "All",
+  "@history_all": { "description": "All filter tab" },
+
+  "history_searchHint": "Search transactions...",
+  "@history_searchHint": { "description": "Search placeholder" },
+
+  "history_noResults": "No transactions found",
+  "@history_noResults": { "description": "Empty search results" },
+
+  "history_tapBreakdown": "Tap any transaction to see the full fee breakdown",
+  "@history_tapBreakdown": { "description": "Info hint about breakdowns" },
+
+  "history_netAmount": "Net",
+  "@history_netAmount": { "description": "Net amount label" },
+
+  "history_totalCharged": "Total Charged",
+  "@history_totalCharged": { "description": "Breakdown total label" },
+
+  "history_includesTax": "Includes ₹{amount} in taxes",
+  "@history_includesTax": { "description": "Tax info in breakdown", "placeholders": { "amount": { "type": "String" } } },
+
+  "history_savedAmount": "Saved ₹{amount}",
+  "@history_savedAmount": { "description": "Discount savings", "placeholders": { "amount": { "type": "String" } } },
+
+  "history_baseRentalFee": "Base Rental Fee",
+  "@history_baseRentalFee": { "description": "Breakdown line item" },
+
+  "history_gst": "GST (18%)",
+  "@history_gst": { "description": "Breakdown line item" },
+
+  "history_lateReturnSurcharge": "Late Return Surcharge",
+  "@history_lateReturnSurcharge": { "description": "Breakdown line item" },
+
+  "history_streakDiscount": "Streak Discount",
+  "@history_streakDiscount": { "description": "Breakdown line item" },
+
+  "history_penaltyAmount": "Penalty Amount",
+  "@history_penaltyAmount": { "description": "Breakdown line item" },
+
+  "history_gstOnSurcharge": "GST on Surcharge (18%)",
+  "@history_gstOnSurcharge": { "description": "Breakdown line item" },
+
+  "history_typeCharge": "Charge",
+  "@history_typeCharge": { "description": "Breakdown type badge" },
+
+  "history_typeTax": "Tax",
+  "@history_typeTax": { "description": "Breakdown type badge" },
+
+  "history_typeDiscount": "Discount",
+  "@history_typeDiscount": { "description": "Breakdown type badge" },
+
+  "history_typePenalty": "Penalty",
+  "@history_typePenalty": { "description": "Breakdown type badge" },
+
+  "history_typeInfo": "Info",
+  "@history_typeInfo": { "description": "Breakdown type badge" },
+
+  "settings_title": "Settings",
+  "@settings_title": { "description": "Settings screen title" },
+
+  "settings_appSection": "App Settings",
+  "@settings_appSection": { "description": "Settings section header" },
+
+  "settings_language": "Language",
+  "@settings_language": { "description": "Language setting label" },
+
+  "settings_languageDesc": "Choose your preferred language",
+  "@settings_languageDesc": { "description": "Language setting description" },
+
+  "settings_english": "English",
+  "@settings_english": { "description": "English language option" },
+
+  "settings_hindi": "हिंदी",
+  "@settings_hindi": { "description": "Hindi language option" },
+
+  "settings_securitySection": "Security",
+  "@settings_securitySection": { "description": "Security section header" },
+
+  "settings_changePassword": "Change Password",
+  "@settings_changePassword": { "description": "Change password option" },
+
+  "settings_biometricLogin": "Biometric Login",
+  "@settings_biometricLogin": { "description": "Biometric login option" },
+
+  "settings_aboutSection": "About",
+  "@settings_aboutSection": { "description": "About section header" },
+
+  "settings_version": "Version {version}",
+  "@settings_version": { "description": "App version", "placeholders": { "version": { "type": "String" } } },
+
+  "settings_privacyPolicy": "Privacy Policy",
+  "@settings_privacyPolicy": { "description": "Privacy policy link" },
+
+  "settings_termsOfService": "Terms of Service",
+  "@settings_termsOfService": { "description": "Terms link" },
+
+  "settings_logout": "Log Out",
+  "@settings_logout": { "description": "Logout button" },
+
+  "settings_logoutConfirm": "Are you sure you want to log out?",
+  "@settings_logoutConfirm": { "description": "Logout confirmation dialog" },
+
+  "settings_deleteAccount": "Delete Account",
+  "@settings_deleteAccount": { "description": "Delete account option" },
+
+  "settings_notificationPreferences": "Notification Preferences",
+  "@settings_notificationPreferences": { "description": "Notification settings" },
+
+  "nav_home": "Home",
+  "@nav_home": { "description": "Bottom nav: home" },
+
+  "nav_wallet": "Wallet",
+  "@nav_wallet": { "description": "Bottom nav: wallet" },
+
+  "nav_support": "Support",
+  "@nav_support": { "description": "Bottom nav: support" },
+
+  "nav_profile": "Profile",
+  "@nav_profile": { "description": "Bottom nav: profile" },
+
+  "onboarding_welcome": "Welcome, {name}!",
+  "@onboarding_welcome": { "description": "Onboarding welcome greeting", "placeholders": { "name": { "type": "String" } } },
+
+  "onboarding_completeProfile": "Complete the following steps to activate your account and start your journey with Voltium.",
+  "@onboarding_completeProfile": { "description": "Onboarding intro text" },
+
+  "onboarding_nextStep": "Next Step",
+  "@onboarding_nextStep": { "description": "Generic next step button" },
+
+  "onboarding_completeKyc": "Complete KYC",
+  "@onboarding_completeKyc": { "description": "KYC step label" },
+
+  "onboarding_addGuarantor": "Add Guarantor",
+  "@onboarding_addGuarantor": { "description": "Guarantor step label" },
+
+  "onboarding_payDeposit": "Pay Deposit",
+  "@onboarding_payDeposit": { "description": "Deposit step label" },
+
+  "onboarding_choosePlan": "Choose Plan",
+  "@onboarding_choosePlan": { "description": "Plan selection step label" },
+
+  "onboarding_schedulePickup": "Schedule Pickup",
+  "@onboarding_schedulePickup": { "description": "Pickup step label" },
+
+  "onboarding_confirmed": "Subscription Confirmed!",
+  "@onboarding_confirmed": { "description": "Plan success title" },
+
+  "onboarding_planActive": "Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.",
+  "@onboarding_planActive": { "description": "Plan success body" },
+
+  "onboarding_proceedToPickup": "Proceed to Pickup",
+  "@onboarding_proceedToPickup": { "description": "Plan success button" },
+
+  "onboarding_selectHub": "Select Pickup Hub",
+  "@onboarding_selectHub": { "description": "Pickup hub screen title" },
+
+  "onboarding_connectVehicle": "Connect Vehicle",
+  "@onboarding_connectVehicle": { "description": "Connect vehicle screen title" },
+
+  "onboarding_verifyVehicle": "Verify Vehicle",
+  "@onboarding_verifyVehicle": { "description": "Verify vehicle button" },
+
+  "onboarding_inspection": "Vehicle Inspection",
+  "@onboarding_inspection": { "description": "Inspection screen title" },
+
+  "onboarding_capturePhoto": "Capture Pickup Photo",
+  "@onboarding_capturePhoto": { "description": "Capture photo button" },
+
+  "onboarding_finalVerification": "Final Verification",
+  "@onboarding_finalVerification": { "description": "Final verification screen title" },
+
+  "onboarding_readyToRoll": "Ready to Roll?",
+  "@onboarding_readyToRoll": { "description": "Final screen headline" },
+
+  "onboarding_reviewSign": "Review and sign to complete your vehicle collection.",
+  "@onboarding_reviewSign": { "description": "Final screen subtitle" },
+
+  "onboarding_signature": "Digital Signature",
+  "@onboarding_signature": { "description": "Signature pad label" },
+
+  "onboarding_completeStart": "Complete & Start Riding",
+  "@onboarding_completeStart": { "description": "Final completion button" },
+
+  "onboarding_youAreLive": "You're Live!",
+  "@onboarding_youAreLive": { "description": "Onboarding completion title" },
+
+  "onboarding_successBody": "Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!",
+  "@onboarding_successBody": { "description": "Onboarding completion body" },
+
+  "onboarding_goToDashboard": "Go to Dashboard",
+  "@onboarding_goToDashboard": { "description": "Final success button" },
+
+  "dashboard_syncingIndicator": "Syncing... 1 pending action being uploaded",
+  "@dashboard_syncingIndicator": { "description": "Dashboard sync status message" },
+
+  "dashboard_riderLabel": "RIDER",
+  "@dashboard_riderLabel": { "description": "Label above rider name in profile card" }
+}
+

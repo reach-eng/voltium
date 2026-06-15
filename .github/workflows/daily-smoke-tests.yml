@@ -18,7 +18,7 @@ jobs:
   smoke-test:
     name: Critical Path Smoke Tests
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +29,13 @@ jobs:
 
       - name: Install backend dependencies
         run: npm ci --legacy-peer-deps
+        working-directory: ./web
 
       - name: Setup database
         run: |
           npx prisma generate
           npx prisma db push --accept-data-loss
+        working-directory: ./web
         env:
           DATABASE_URL: 'file:./dev.db'
 
@@ -50,6 +52,7 @@ jobs:
         run: |
           npm run dev &
           npx wait-on http://localhost:8081 --timeout 30000
+        working-directory: ./web
         env:
           NODE_ENV: development
           JWT_SECRET: ci-test-secret-key-32-chars-long

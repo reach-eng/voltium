@@ -1,0 +1,4749 @@
+{
+  "unconnected_admin_actions": [
+    {
+      "label": "2. Remove Hardcoded Admin Password",
+      "file_type": "document",
+      "source_file": ".opencode/plans/fix-plan.md",
+      "source_location": "L18",
+      "id": "plans_fix_plan_2_remove_hardcoded_admin_password",
+      "community": 23,
+      "norm_label": "2. remove hardcoded admin password"
+    },
+    {
+      "label": "\ud83d\udda5\ufe0f Admin Dashboard (Next.js)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L90",
+      "id": "voltfleet_readme_admin_dashboard_next_js",
+      "community": 232,
+      "norm_label": "\ud83d\udda5\ufe0f admin dashboard (next.js)"
+    },
+    {
+      "label": "Admin",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L355",
+      "id": "voltfleet_readme_admin",
+      "community": 339,
+      "norm_label": "admin"
+    },
+    {
+      "label": "Admin Access",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L440",
+      "id": "voltfleet_readme_admin_access",
+      "community": 294,
+      "norm_label": "admin access"
+    },
+    {
+      "label": "Admin Endpoints",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L113",
+      "id": "docs_api_admin_endpoints",
+      "community": 27,
+      "norm_label": "admin endpoints"
+    },
+    {
+      "label": "code:http (GET /api/admin/dashboard)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L117",
+      "id": "docs_api_codeblock_9",
+      "community": 27,
+      "norm_label": "code:http (get /api/admin/dashboard)"
+    },
+    {
+      "label": "code:http (GET /api/admin/riders?page=1&limit=10&state=ONBOARDING)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L123",
+      "id": "docs_api_codeblock_10",
+      "community": 27,
+      "norm_label": "code:http (get /api/admin/riders?page=1&limit=10&state=onboarding)"
+    },
+    {
+      "label": "code:http (POST /api/admin/riders)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L129",
+      "id": "docs_api_codeblock_11",
+      "community": 27,
+      "norm_label": "code:http (post /api/admin/riders)"
+    },
+    {
+      "label": "code:http (PUT /api/admin/riders/:id)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L141",
+      "id": "docs_api_codeblock_12",
+      "community": 27,
+      "norm_label": "code:http (put /api/admin/riders/:id)"
+    },
+    {
+      "label": "code:http (GET /api/admin/transactions?status=PENDING&page=1&limit=20)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L153",
+      "id": "docs_api_codeblock_13",
+      "community": 27,
+      "norm_label": "code:http (get /api/admin/transactions?status=pending&page=1&limit=20)"
+    },
+    {
+      "label": "code:http (PUT /api/admin/transactions)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L159",
+      "id": "docs_api_codeblock_14",
+      "community": 27,
+      "norm_label": "code:http (put /api/admin/transactions)"
+    },
+    {
+      "label": "code:http (GET /api/admin/tickets?status=OPEN&priority=HIGH)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L171",
+      "id": "docs_api_codeblock_15",
+      "community": 27,
+      "norm_label": "code:http (get /api/admin/tickets?status=open&priority=high)"
+    },
+    {
+      "label": "code:http (PUT /api/admin/tickets)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L177",
+      "id": "docs_api_codeblock_16",
+      "community": 27,
+      "norm_label": "code:http (put /api/admin/tickets)"
+    },
+    {
+      "label": "VoltiumDeviceAdminReceiver.kt",
+      "file_type": "code",
+      "source_file": "flutter/android/app/src/main/kotlin/com/example/voltium_rider/VoltiumDeviceAdminReceiver.kt",
+      "source_location": "L1",
+      "id": "flutter_android_app_src_main_kotlin_com_example_voltium_rider_voltiumdeviceadminreceiver_kt",
+      "community": 342,
+      "norm_label": "voltiumdeviceadminreceiver.kt"
+    },
+    {
+      "label": "VoltiumDeviceAdminReceiver",
+      "file_type": "code",
+      "source_file": "flutter/android/app/src/main/kotlin/com/example/voltium_rider/VoltiumDeviceAdminReceiver.kt",
+      "source_location": "L8",
+      "id": "voltium_rider_voltiumdeviceadminreceiver_voltiumdeviceadminreceiver",
+      "community": 342,
+      "norm_label": "voltiumdeviceadminreceiver"
+    },
+    {
+      "label": "firebase-admin",
+      "file_type": "code",
+      "source_file": "package.json",
+      "source_location": "L72",
+      "id": "voltfleet_package_dependencies_firebase_admin",
+      "community": 5,
+      "norm_label": "firebase-admin"
+    },
+    {
+      "label": "code:ts (86  |     await page.route('**/api/admin/offers*', async (ro)",
+      "file_type": "document",
+      "source_file": "playwright-report/data/0e472f76740bbd086c6ca87ae9b6ae7e3007e5c6.md",
+      "source_location": "L180",
+      "community": 206,
+      "norm_label": "code:ts (86  |     await page.route('**/api/admin/offers*', async (ro)",
+      "id": "data_0e472f76740bbd086c6ca87ae9b6ae7e3007e5c6_codeblock_3"
+    },
+    {
+      "label": "code:ts (147 |     await page.route('**/api/admin/plans*', async (rou)",
+      "file_type": "document",
+      "source_file": "playwright-report/data/5b6beb8fd19c0898e0db1242d9264b898056ea4c.md",
+      "source_location": "L178",
+      "community": 217,
+      "norm_label": "code:ts (147 |     await page.route('**/api/admin/plans*', async (rou)",
+      "id": "data_5b6beb8fd19c0898e0db1242d9264b898056ea4c_codeblock_3"
+    },
+    {
+      "label": "AdminRedirect()",
+      "file_type": "code",
+      "source_file": "src/app/admin/page.tsx",
+      "source_location": "L6",
+      "id": "admin_page_adminredirect",
+      "community": 453,
+      "norm_label": "adminredirect()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/admins/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_admins_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/admins/route.ts",
+      "source_location": "L11",
+      "id": "admins_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/admins/route.ts",
+      "source_location": "L64",
+      "id": "admins_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/admins/route.ts",
+      "source_location": "L126",
+      "id": "admins_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/analytics/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_analytics_route_ts",
+      "community": 45,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/analytics/route.ts",
+      "source_location": "L8",
+      "id": "analytics_route_get",
+      "community": 45,
+      "norm_label": "get()"
+    },
+    {
+      "label": "getMonthlyTrend()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/analytics/route.ts",
+      "source_location": "L98",
+      "id": "analytics_route_getmonthlytrend",
+      "community": 45,
+      "norm_label": "getmonthlytrend()"
+    },
+    {
+      "label": "getCohortData()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/analytics/route.ts",
+      "source_location": "L122",
+      "id": "analytics_route_getcohortdata",
+      "community": 45,
+      "norm_label": "getcohortdata()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/announcements/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_announcements_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/announcements/route.ts",
+      "source_location": "L10",
+      "id": "announcements_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/announcements/route.ts",
+      "source_location": "L82",
+      "id": "announcements_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/audit-logs/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_audit_logs_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/audit-logs/route.ts",
+      "source_location": "L7",
+      "id": "audit_logs_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/audit/cleanup/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_audit_cleanup_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/audit/cleanup/route.ts",
+      "source_location": "L8",
+      "id": "cleanup_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/audit/cleanup/route.ts",
+      "source_location": "L29",
+      "id": "cleanup_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/auto-login/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_auth_auto_login_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/auto-login/route.ts",
+      "source_location": "L10",
+      "id": "auto_login_route_post",
+      "community": 45,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/login/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_auth_login_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "loginSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/login/route.ts",
+      "source_location": "L10",
+      "id": "login_route_loginschema",
+      "community": 4,
+      "norm_label": "loginschema"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/login/route.ts",
+      "source_location": "L16",
+      "id": "login_route_post",
+      "community": 9,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/logout/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_auth_logout_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/logout/route.ts",
+      "source_location": "L6",
+      "id": "logout_route_post",
+      "community": 4,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/me/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_auth_me_route_ts",
+      "community": 21,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/auth/me/route.ts",
+      "source_location": "L7",
+      "id": "me_route_get",
+      "community": 21,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/cache/invalidate/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_cache_invalidate_route_ts",
+      "community": 21,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/cache/invalidate/route.ts",
+      "source_location": "L7",
+      "id": "invalidate_route_post",
+      "community": 21,
+      "norm_label": "post()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/cache/invalidate/route.ts",
+      "source_location": "L32",
+      "id": "invalidate_route_get",
+      "community": 21,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_coupons_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "deleteCouponSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L11",
+      "id": "coupons_route_deletecouponschema",
+      "community": 1,
+      "norm_label": "deletecouponschema"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L16",
+      "id": "coupons_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L45",
+      "id": "coupons_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L103",
+      "id": "coupons_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/coupons/route.ts",
+      "source_location": "L147",
+      "id": "coupons_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/dashboard/route.ts",
+      "source_location": "L10",
+      "id": "dashboard_route_get",
+      "community": 21,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/dashboard/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_dashboard_route_ts",
+      "community": 21,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/earnings/route.ts",
+      "source_location": "L8",
+      "id": "earnings_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/earnings/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_earnings_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/faqs/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_faqs_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/faqs/route.ts",
+      "source_location": "L53",
+      "id": "faqs_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/faqs/route.ts",
+      "source_location": "L94",
+      "id": "faqs_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/faqs/route.ts",
+      "source_location": "L133",
+      "id": "faqs_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/feature-flags/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_feature_flags_route_ts",
+      "community": 9,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/feature-flags/route.ts",
+      "source_location": "L9",
+      "id": "feature_flags_route_get",
+      "community": 9,
+      "norm_label": "get()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/feature-flags/route.ts",
+      "source_location": "L23",
+      "id": "feature_flags_route_put",
+      "community": 9,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/fleet/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_fleet_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/fleet/route.ts",
+      "source_location": "L8",
+      "id": "fleet_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_hubs_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_hubs_route_ts",
+      "community": 21,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "deleteHubSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L11",
+      "id": "hubs_route_deletehubschema",
+      "community": 21,
+      "norm_label": "deletehubschema"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L18",
+      "id": "hubs_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L93",
+      "id": "hubs_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L132",
+      "id": "hubs_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/hubs/route.ts",
+      "source_location": "L170",
+      "id": "hubs_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/[id]/route.ts",
+      "source_location": "L10",
+      "id": "id_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/[id]/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_incidents_id_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/[id]/route.ts",
+      "source_location": "L71",
+      "id": "id_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_incidents_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "IncidentWithRelations",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/route.ts",
+      "source_location": "L11",
+      "id": "incidents_route_incidentwithrelations",
+      "community": 1,
+      "norm_label": "incidentwithrelations"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/route.ts",
+      "source_location": "L18",
+      "id": "incidents_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/incidents/route.ts",
+      "source_location": "L96",
+      "id": "incidents_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/legal/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_legal_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/legal/route.ts",
+      "source_location": "L11",
+      "id": "legal_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/legal/route.ts",
+      "source_location": "L28",
+      "id": "legal_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/notifications/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_notifications_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "NotificationWithRider",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/notifications/route.ts",
+      "source_location": "L11",
+      "id": "notifications_route_notificationwithrider",
+      "community": 1,
+      "norm_label": "notificationwithrider"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/notifications/route.ts",
+      "source_location": "L94",
+      "id": "notifications_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L20",
+      "id": "offers_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_offers_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "deleteOfferSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L11",
+      "id": "offers_route_deleteofferschema",
+      "community": 1,
+      "norm_label": "deleteofferschema"
+    },
+    {
+      "label": "checkOfferPermission()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L15",
+      "id": "offers_route_checkofferpermission",
+      "community": 1,
+      "norm_label": "checkofferpermission()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L49",
+      "id": "offers_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L91",
+      "id": "offers_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/offers/route.ts",
+      "source_location": "L132",
+      "id": "offers_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L31",
+      "id": "plans_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L65",
+      "id": "plans_route_post",
+      "community": 32,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_plans_route_ts",
+      "community": 32,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "PERM_MAP",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L16",
+      "id": "plans_route_perm_map",
+      "community": 32,
+      "norm_label": "perm_map"
+    },
+    {
+      "label": "checkPlansPermission()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L23",
+      "id": "plans_route_checkplanspermission",
+      "community": 32,
+      "norm_label": "checkplanspermission()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L106",
+      "id": "plans_route_put",
+      "community": 32,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/plans/route.ts",
+      "source_location": "L144",
+      "id": "plans_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/referrals/route.ts",
+      "source_location": "L26",
+      "id": "referrals_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/referrals/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_referrals_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "ReferrerInfo",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/referrals/route.ts",
+      "source_location": "L8",
+      "id": "referrals_route_referrerinfo",
+      "community": 4,
+      "norm_label": "referrerinfo"
+    },
+    {
+      "label": "RefereeRow",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/referrals/route.ts",
+      "source_location": "L14",
+      "id": "referrals_route_refereerow",
+      "community": 4,
+      "norm_label": "refereerow"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/rewards/route.ts",
+      "source_location": "L12",
+      "id": "rewards_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/rewards/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_rewards_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/rewards/route.ts",
+      "source_location": "L87",
+      "id": "rewards_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/[id]/device-data/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_riders_id_device_data_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/[id]/device-data/route.ts",
+      "source_location": "L8",
+      "id": "device_data_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/actions/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_riders_actions_route_ts",
+      "community": 36,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/actions/route.ts",
+      "source_location": "L20",
+      "id": "actions_route_post",
+      "community": 36,
+      "norm_label": "post()"
+    },
+    {
+      "label": "handleAssignPlan()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/actions/route.ts",
+      "source_location": "L219",
+      "id": "actions_route_handleassignplan",
+      "community": 36,
+      "norm_label": "handleassignplan()"
+    },
+    {
+      "label": "handleCompletePickup()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/actions/route.ts",
+      "source_location": "L258",
+      "id": "actions_route_handlecompletepickup",
+      "community": 36,
+      "norm_label": "handlecompletepickup()"
+    },
+    {
+      "label": "handleEndRental()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/actions/route.ts",
+      "source_location": "L296",
+      "id": "actions_route_handleendrental",
+      "community": 36,
+      "norm_label": "handleendrental()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_riders_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/bulk/route.ts",
+      "source_location": "L11",
+      "id": "bulk_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "postHandler()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/bulk/route.ts",
+      "source_location": "L15",
+      "id": "bulk_route_posthandler",
+      "community": 1,
+      "norm_label": "posthandler()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_riders_route_ts",
+      "community": 36,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "SAFE_RIDER_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L16",
+      "id": "riders_route_safe_rider_fields",
+      "community": 36,
+      "norm_label": "safe_rider_fields"
+    },
+    {
+      "label": "KYC_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L37",
+      "id": "riders_route_kyc_fields",
+      "community": 36,
+      "norm_label": "kyc_fields"
+    },
+    {
+      "label": "WALLET_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L56",
+      "id": "riders_route_wallet_fields",
+      "community": 36,
+      "norm_label": "wallet_fields"
+    },
+    {
+      "label": "GUARANTOR_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L63",
+      "id": "riders_route_guarantor_fields",
+      "community": 36,
+      "norm_label": "guarantor_fields"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L83",
+      "id": "riders_route_get",
+      "community": 36,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L331",
+      "id": "riders_route_post",
+      "community": 36,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L375",
+      "id": "riders_route_put",
+      "community": 36,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/riders/route.ts",
+      "source_location": "L503",
+      "id": "riders_route_delete",
+      "community": 36,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/recalculate/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_scores_recalculate_route_ts",
+      "community": 305,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/recalculate/route.ts",
+      "source_location": "L10",
+      "id": "recalculate_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_scores_route_ts",
+      "community": 305,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "ScoreWithRider",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/route.ts",
+      "source_location": "L12",
+      "id": "scores_route_scorewithrider",
+      "community": 305,
+      "norm_label": "scorewithrider"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/route.ts",
+      "source_location": "L27",
+      "id": "scores_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/scores/route.ts",
+      "source_location": "L122",
+      "id": "scores_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/settings/route.ts",
+      "source_location": "L24",
+      "id": "settings_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/settings/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_settings_route_ts",
+      "community": 32,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "MONETARY_KEYS",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/settings/route.ts",
+      "source_location": "L13",
+      "id": "settings_route_monetary_keys",
+      "community": 32,
+      "norm_label": "monetary_keys"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/settings/route.ts",
+      "source_location": "L73",
+      "id": "settings_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_shifts_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "shiftSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L11",
+      "id": "shifts_route_shiftschema",
+      "community": 1,
+      "norm_label": "shiftschema"
+    },
+    {
+      "label": "deleteShiftSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L19",
+      "id": "shifts_route_deleteshiftschema",
+      "community": 1,
+      "norm_label": "deleteshiftschema"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L54",
+      "id": "shifts_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L82",
+      "id": "shifts_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/shifts/route.ts",
+      "source_location": "L111",
+      "id": "shifts_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_team_leaders_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_team_leaders_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "deleteTeamLeaderSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L11",
+      "id": "team_leaders_route_deleteteamleaderschema",
+      "community": 1,
+      "norm_label": "deleteteamleaderschema"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L16",
+      "id": "team_leaders_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L84",
+      "id": "team_leaders_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L123",
+      "id": "team_leaders_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/team-leaders/route.ts",
+      "source_location": "L161",
+      "id": "team_leaders_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/[id]/messages/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_tickets_id_messages_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/[id]/messages/route.ts",
+      "source_location": "L10",
+      "id": "messages_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/[id]/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_tickets_id_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_tickets_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_tickets_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "TicketWithRider",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/route.ts",
+      "source_location": "L11",
+      "id": "tickets_route_ticketwithrider",
+      "community": 1,
+      "norm_label": "ticketwithrider"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/tickets/route.ts",
+      "source_location": "L102",
+      "id": "tickets_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_transactions_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_transactions_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/route.ts",
+      "source_location": "L13",
+      "id": "transactions_route_get",
+      "community": 1,
+      "norm_label": "get()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/route.ts",
+      "source_location": "L96",
+      "id": "transactions_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "TransactionError",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/route.ts",
+      "source_location": "L238",
+      "id": "transactions_route_transactionerror",
+      "community": 836,
+      "norm_label": "transactionerror"
+    },
+    {
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/transactions/route.ts",
+      "source_location": "L240",
+      "id": "transactions_route_transactionerror_constructor",
+      "community": 836,
+      "norm_label": ".constructor()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/[id]/history/route.ts",
+      "source_location": "L8",
+      "id": "history_route_get",
+      "community": 32,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/[id]/history/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_vehicles_id_history_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/bulk/route.ts",
+      "source_location": "L10",
+      "id": "bulk_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/bulk/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_vehicles_bulk_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_admin_vehicles_route_ts",
+      "community": 1,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "checkVehiclePermission()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/route.ts",
+      "source_location": "L9",
+      "id": "vehicles_route_checkvehiclepermission",
+      "community": 1,
+      "norm_label": "checkvehiclepermission()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/route.ts",
+      "source_location": "L75",
+      "id": "vehicles_route_post",
+      "community": 1,
+      "norm_label": "post()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/route.ts",
+      "source_location": "L117",
+      "id": "vehicles_route_put",
+      "community": 1,
+      "norm_label": "put()"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "src/app/api/admin/vehicles/route.ts",
+      "source_location": "L145",
+      "id": "vehicles_route_delete",
+      "community": 1,
+      "norm_label": "delete()"
+    },
+    {
+      "label": "AdminLayout",
+      "file_type": "code",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L14",
+      "id": "app_page_adminlayout",
+      "community": 114,
+      "norm_label": "adminlayout"
+    },
+    {
+      "label": "AdminLayout.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_adminlayout_tsx",
+      "community": 12,
+      "norm_label": "adminlayout.tsx"
+    },
+    {
+      "label": "ScreenLoader()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L16",
+      "id": "admin_adminlayout_screenloader",
+      "community": 12,
+      "norm_label": "screenloader()"
+    },
+    {
+      "label": "loadAdminScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L32",
+      "id": "admin_adminlayout_loadadminscreen",
+      "community": 12,
+      "norm_label": "loadadminscreen()"
+    },
+    {
+      "label": "sectionMap",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L36",
+      "id": "admin_adminlayout_sectionmap",
+      "community": 12,
+      "norm_label": "sectionmap"
+    },
+    {
+      "label": "PlaceholderSection()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L63",
+      "id": "admin_adminlayout_placeholdersection",
+      "community": 12,
+      "norm_label": "placeholdersection()"
+    },
+    {
+      "label": "sectionLabels",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L75",
+      "id": "admin_adminlayout_sectionlabels",
+      "community": 12,
+      "norm_label": "sectionlabels"
+    },
+    {
+      "label": "numberToSection",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L103",
+      "id": "admin_adminlayout_numbertosection",
+      "community": 12,
+      "norm_label": "numbertosection"
+    },
+    {
+      "label": "AdminSectionRenderer()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L115",
+      "id": "admin_adminlayout_adminsectionrenderer",
+      "community": 12,
+      "norm_label": "adminsectionrenderer()"
+    },
+    {
+      "label": "AdminLayout()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminLayout.tsx",
+      "source_location": "L123",
+      "id": "admin_adminlayout_adminlayout",
+      "community": 12,
+      "norm_label": "adminlayout()"
+    },
+    {
+      "label": "AdminSidebar.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminSidebar.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_adminsidebar_tsx",
+      "community": 12,
+      "norm_label": "adminsidebar.tsx"
+    },
+    {
+      "label": "iconMap",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminSidebar.tsx",
+      "source_location": "L43",
+      "id": "admin_adminsidebar_iconmap",
+      "community": 12,
+      "norm_label": "iconmap"
+    },
+    {
+      "label": "AdminSidebarProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminSidebar.tsx",
+      "source_location": "L70",
+      "id": "admin_adminsidebar_adminsidebarprops",
+      "community": 12,
+      "norm_label": "adminsidebarprops"
+    },
+    {
+      "label": "AdminSidebar()",
+      "file_type": "code",
+      "source_file": "src/components/admin/AdminSidebar.tsx",
+      "source_location": "L74",
+      "id": "admin_adminsidebar_adminsidebar",
+      "community": 12,
+      "norm_label": "adminsidebar()"
+    },
+    {
+      "label": "CommandPalette.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/CommandPalette.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_commandpalette_tsx",
+      "community": 3,
+      "norm_label": "commandpalette.tsx"
+    },
+    {
+      "label": "navItems",
+      "file_type": "code",
+      "source_file": "src/components/admin/CommandPalette.tsx",
+      "source_location": "L32",
+      "id": "admin_commandpalette_navitems",
+      "community": 3,
+      "norm_label": "navitems"
+    },
+    {
+      "label": "PaletteItem",
+      "file_type": "code",
+      "source_file": "src/components/admin/CommandPalette.tsx",
+      "source_location": "L66",
+      "id": "admin_commandpalette_paletteitem",
+      "community": 3,
+      "norm_label": "paletteitem"
+    },
+    {
+      "label": "CommandPalette()",
+      "file_type": "code",
+      "source_file": "src/components/admin/CommandPalette.tsx",
+      "source_location": "L74",
+      "id": "admin_commandpalette_commandpalette",
+      "community": 12,
+      "norm_label": "commandpalette()"
+    },
+    {
+      "label": "admin-map.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/admin-map.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_admin_map_tsx",
+      "community": 49,
+      "norm_label": "admin-map.tsx"
+    },
+    {
+      "label": "MapMarker",
+      "file_type": "code",
+      "source_file": "src/components/admin/admin-map.tsx",
+      "source_location": "L10",
+      "id": "admin_admin_map_mapmarker",
+      "community": 49,
+      "norm_label": "mapmarker"
+    },
+    {
+      "label": "AdminMapProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/admin-map.tsx",
+      "source_location": "L21",
+      "id": "admin_admin_map_adminmapprops",
+      "community": 49,
+      "norm_label": "adminmapprops"
+    },
+    {
+      "label": "AdminMap()",
+      "file_type": "code",
+      "source_file": "src/components/admin/admin-map.tsx",
+      "source_location": "L30",
+      "id": "admin_admin_map_adminmap",
+      "community": 49,
+      "norm_label": "adminmap()"
+    },
+    {
+      "label": "MiniMap()",
+      "file_type": "code",
+      "source_file": "src/components/admin/admin-map.tsx",
+      "source_location": "L227",
+      "id": "admin_admin_map_minimap",
+      "community": 49,
+      "norm_label": "minimap()"
+    },
+    {
+      "label": "analytics-charts.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_analytics_charts_tsx",
+      "community": 49,
+      "norm_label": "analytics-charts.tsx"
+    },
+    {
+      "label": "ChartData",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L8",
+      "id": "admin_analytics_charts_chartdata",
+      "community": 49,
+      "norm_label": "chartdata"
+    },
+    {
+      "label": "AnalyticsChartProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L13",
+      "id": "admin_analytics_charts_analyticschartprops",
+      "community": 49,
+      "norm_label": "analyticschartprops"
+    },
+    {
+      "label": "AnalyticsChart()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L24",
+      "id": "admin_analytics_charts_analyticschart",
+      "community": 49,
+      "norm_label": "analyticschart()"
+    },
+    {
+      "label": "RevenueChartProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L155",
+      "id": "admin_analytics_charts_revenuechartprops",
+      "community": 49,
+      "norm_label": "revenuechartprops"
+    },
+    {
+      "label": "RevenueChart()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L159",
+      "id": "admin_analytics_charts_revenuechart",
+      "community": 49,
+      "norm_label": "revenuechart()"
+    },
+    {
+      "label": "RidesChartProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L163",
+      "id": "admin_analytics_charts_rideschartprops",
+      "community": 49,
+      "norm_label": "rideschartprops"
+    },
+    {
+      "label": "RidesChart()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L167",
+      "id": "admin_analytics_charts_rideschart",
+      "community": 49,
+      "norm_label": "rideschart()"
+    },
+    {
+      "label": "UserGrowthChartProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L171",
+      "id": "admin_analytics_charts_usergrowthchartprops",
+      "community": 49,
+      "norm_label": "usergrowthchartprops"
+    },
+    {
+      "label": "UserGrowthChart()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L175",
+      "id": "admin_analytics_charts_usergrowthchart",
+      "community": 49,
+      "norm_label": "usergrowthchart()"
+    },
+    {
+      "label": "TrendIndicatorProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L179",
+      "id": "admin_analytics_charts_trendindicatorprops",
+      "community": 49,
+      "norm_label": "trendindicatorprops"
+    },
+    {
+      "label": "TrendIndicator()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L185",
+      "id": "admin_analytics_charts_trendindicator",
+      "community": 49,
+      "norm_label": "trendindicator()"
+    },
+    {
+      "label": "StatsOverviewProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L210",
+      "id": "admin_analytics_charts_statsoverviewprops",
+      "community": 49,
+      "norm_label": "statsoverviewprops"
+    },
+    {
+      "label": "StatsOverview()",
+      "file_type": "code",
+      "source_file": "src/components/admin/analytics-charts.tsx",
+      "source_location": "L219",
+      "id": "admin_analytics_charts_statsoverview",
+      "community": 49,
+      "norm_label": "statsoverview()"
+    },
+    {
+      "label": "dashboard-cards.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_dashboard_cards_tsx",
+      "community": 49,
+      "norm_label": "dashboard-cards.tsx"
+    },
+    {
+      "label": "SparklineProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L7",
+      "id": "admin_dashboard_cards_sparklineprops",
+      "community": 49,
+      "norm_label": "sparklineprops"
+    },
+    {
+      "label": "Sparkline()",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L15",
+      "id": "admin_dashboard_cards_sparkline",
+      "community": 49,
+      "norm_label": "sparkline()"
+    },
+    {
+      "label": "DashboardCardProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L69",
+      "id": "admin_dashboard_cards_dashboardcardprops",
+      "community": 49,
+      "norm_label": "dashboardcardprops"
+    },
+    {
+      "label": "DashboardCard()",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L80",
+      "id": "admin_dashboard_cards_dashboardcard",
+      "community": 49,
+      "norm_label": "dashboardcard()"
+    },
+    {
+      "label": "StatCardProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L130",
+      "id": "admin_dashboard_cards_statcardprops",
+      "community": 49,
+      "norm_label": "statcardprops"
+    },
+    {
+      "label": "StatCard()",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L139",
+      "id": "admin_dashboard_cards_statcard",
+      "community": 49,
+      "norm_label": "statcard()"
+    },
+    {
+      "label": "MetricCardProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L170",
+      "id": "admin_dashboard_cards_metriccardprops",
+      "community": 49,
+      "norm_label": "metriccardprops"
+    },
+    {
+      "label": "MetricCard()",
+      "file_type": "code",
+      "source_file": "src/components/admin/dashboard-cards.tsx",
+      "source_location": "L178",
+      "id": "admin_dashboard_cards_metriccard",
+      "community": 49,
+      "norm_label": "metriccard()"
+    },
+    {
+      "label": "data-table.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/data-table.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_data_table_tsx",
+      "community": 8,
+      "norm_label": "data-table.tsx"
+    },
+    {
+      "label": "SortDirection",
+      "file_type": "code",
+      "source_file": "src/components/admin/data-table.tsx",
+      "source_location": "L17",
+      "id": "admin_data_table_sortdirection",
+      "community": 8,
+      "norm_label": "sortdirection"
+    },
+    {
+      "label": "Column",
+      "file_type": "code",
+      "source_file": "src/components/admin/data-table.tsx",
+      "source_location": "L19",
+      "id": "admin_data_table_column",
+      "community": 8,
+      "norm_label": "column"
+    },
+    {
+      "label": "DataTableProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/data-table.tsx",
+      "source_location": "L28",
+      "id": "admin_data_table_datatableprops",
+      "community": 8,
+      "norm_label": "datatableprops"
+    },
+    {
+      "label": "DataTable()",
+      "file_type": "code",
+      "source_file": "src/components/admin/data-table.tsx",
+      "source_location": "L39",
+      "id": "admin_data_table_datatable",
+      "community": 8,
+      "norm_label": "datatable()"
+    },
+    {
+      "label": "error-boundary.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_error_boundary_tsx",
+      "community": 3,
+      "norm_label": "error-boundary.tsx"
+    },
+    {
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L9",
+      "id": "admin_error_boundary_props",
+      "community": 3,
+      "norm_label": "props"
+    },
+    {
+      "label": "State",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L14",
+      "id": "admin_error_boundary_state",
+      "community": 3,
+      "norm_label": "state"
+    },
+    {
+      "label": "AdminErrorBoundary",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L19",
+      "id": "admin_error_boundary_adminerrorboundary",
+      "community": 3,
+      "norm_label": "adminerrorboundary"
+    },
+    {
+      "label": ".constructor()",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L20",
+      "id": "admin_error_boundary_adminerrorboundary_constructor",
+      "community": 3,
+      "norm_label": ".constructor()"
+    },
+    {
+      "label": ".getDerivedStateFromError()",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L25",
+      "id": "admin_error_boundary_adminerrorboundary_getderivedstatefromerror",
+      "community": 3,
+      "norm_label": ".getderivedstatefromerror()"
+    },
+    {
+      "label": ".componentDidCatch()",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L29",
+      "id": "admin_error_boundary_adminerrorboundary_componentdidcatch",
+      "community": 3,
+      "norm_label": ".componentdidcatch()"
+    },
+    {
+      "label": ".render()",
+      "file_type": "code",
+      "source_file": "src/components/admin/error-boundary.tsx",
+      "source_location": "L33",
+      "id": "admin_error_boundary_adminerrorboundary_render",
+      "community": 3,
+      "norm_label": ".render()"
+    },
+    {
+      "label": "export-button.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/export-button.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_export_button_tsx",
+      "community": 3,
+      "norm_label": "export-button.tsx"
+    },
+    {
+      "label": "escapeCsvValue()",
+      "file_type": "code",
+      "source_file": "src/components/admin/export-button.tsx",
+      "source_location": "L13",
+      "id": "admin_export_button_escapecsvvalue",
+      "community": 3,
+      "norm_label": "escapecsvvalue()"
+    },
+    {
+      "label": "ExportButtonProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/export-button.tsx",
+      "source_location": "L37",
+      "id": "admin_export_button_exportbuttonprops",
+      "community": 3,
+      "norm_label": "exportbuttonprops"
+    },
+    {
+      "label": "ExportButton()",
+      "file_type": "code",
+      "source_file": "src/components/admin/export-button.tsx",
+      "source_location": "L46",
+      "id": "admin_export_button_exportbutton",
+      "community": 3,
+      "norm_label": "exportbutton()"
+    },
+    {
+      "label": "realtime-updates.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_realtime_updates_tsx",
+      "community": 49,
+      "norm_label": "realtime-updates.tsx"
+    },
+    {
+      "label": "RealtimeConfig",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L9",
+      "id": "admin_realtime_updates_realtimeconfig",
+      "community": 49,
+      "norm_label": "realtimeconfig"
+    },
+    {
+      "label": "RealtimeData",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L15",
+      "id": "admin_realtime_updates_realtimedata",
+      "community": 49,
+      "norm_label": "realtimedata"
+    },
+    {
+      "label": "RealtimeUpdate",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L19",
+      "id": "admin_realtime_updates_realtimeupdate",
+      "community": 49,
+      "norm_label": "realtimeupdate"
+    },
+    {
+      "label": "UseRealtimeOptions",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L25",
+      "id": "admin_realtime_updates_userealtimeoptions",
+      "community": 49,
+      "norm_label": "userealtimeoptions"
+    },
+    {
+      "label": "useRealtime()",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L31",
+      "id": "admin_realtime_updates_userealtime",
+      "community": 49,
+      "norm_label": "userealtime()"
+    },
+    {
+      "label": "RealtimeCardProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L69",
+      "id": "admin_realtime_updates_realtimecardprops",
+      "community": 49,
+      "norm_label": "realtimecardprops"
+    },
+    {
+      "label": "RealtimeCard()",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L78",
+      "id": "admin_realtime_updates_realtimecard",
+      "community": 49,
+      "norm_label": "realtimecard()"
+    },
+    {
+      "label": "LiveUpdatesBadgeProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L130",
+      "id": "admin_realtime_updates_liveupdatesbadgeprops",
+      "community": 49,
+      "norm_label": "liveupdatesbadgeprops"
+    },
+    {
+      "label": "LiveUpdatesBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L135",
+      "id": "admin_realtime_updates_liveupdatesbadge",
+      "community": 49,
+      "norm_label": "liveupdatesbadge()"
+    },
+    {
+      "label": "RealtimeTableProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L166",
+      "id": "admin_realtime_updates_realtimetableprops",
+      "community": 49,
+      "norm_label": "realtimetableprops"
+    },
+    {
+      "label": "RealtimeTable()",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L177",
+      "id": "admin_realtime_updates_realtimetable",
+      "community": 49,
+      "norm_label": "realtimetable()"
+    },
+    {
+      "label": "ConnectionStatusProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L239",
+      "id": "admin_realtime_updates_connectionstatusprops",
+      "community": 49,
+      "norm_label": "connectionstatusprops"
+    },
+    {
+      "label": "ConnectionStatus()",
+      "file_type": "code",
+      "source_file": "src/components/admin/realtime-updates.tsx",
+      "source_location": "L244",
+      "id": "admin_realtime_updates_connectionstatus",
+      "community": 49,
+      "norm_label": "connectionstatus()"
+    },
+    {
+      "label": "AdminUserManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AdminUserManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_adminusermanagement_tsx",
+      "community": 8,
+      "norm_label": "adminusermanagement.tsx"
+    },
+    {
+      "label": "Admin",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AdminUserManagement.tsx",
+      "source_location": "L42",
+      "id": "screens_adminusermanagement_admin",
+      "community": 8,
+      "norm_label": "admin"
+    },
+    {
+      "label": "roleColors",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AdminUserManagement.tsx",
+      "source_location": "L57",
+      "id": "screens_adminusermanagement_rolecolors",
+      "community": 8,
+      "norm_label": "rolecolors"
+    },
+    {
+      "label": "AdminUserManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AdminUserManagement.tsx",
+      "source_location": "L65",
+      "id": "screens_adminusermanagement_adminusermanagement",
+      "community": 8,
+      "norm_label": "adminusermanagement()"
+    },
+    {
+      "label": "AnalyticsDashboard.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AnalyticsDashboard.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_analyticsdashboard_tsx",
+      "community": 8,
+      "norm_label": "analyticsdashboard.tsx"
+    },
+    {
+      "label": "AnalyticsData",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AnalyticsDashboard.tsx",
+      "source_location": "L42",
+      "id": "screens_analyticsdashboard_analyticsdata",
+      "community": 8,
+      "norm_label": "analyticsdata"
+    },
+    {
+      "label": "formatINR()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AnalyticsDashboard.tsx",
+      "source_location": "L64",
+      "id": "screens_analyticsdashboard_formatinr",
+      "community": 8,
+      "norm_label": "formatinr()"
+    },
+    {
+      "label": "getMonthLabel()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AnalyticsDashboard.tsx",
+      "source_location": "L72",
+      "id": "screens_analyticsdashboard_getmonthlabel",
+      "community": 8,
+      "norm_label": "getmonthlabel()"
+    },
+    {
+      "label": "AnalyticsDashboard()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/AnalyticsDashboard.tsx",
+      "source_location": "L78",
+      "id": "screens_analyticsdashboard_analyticsdashboard",
+      "community": 8,
+      "norm_label": "analyticsdashboard()"
+    },
+    {
+      "label": "BulkMessagingScreen.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_bulkmessagingscreen_tsx",
+      "community": 8,
+      "norm_label": "bulkmessagingscreen.tsx"
+    },
+    {
+      "label": "Announcement",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L52",
+      "id": "screens_bulkmessagingscreen_announcement",
+      "community": 8,
+      "norm_label": "announcement"
+    },
+    {
+      "label": "HubOption",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L71",
+      "id": "screens_bulkmessagingscreen_huboption",
+      "community": 8,
+      "norm_label": "huboption"
+    },
+    {
+      "label": "getStatusBadgeClass()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L79",
+      "id": "screens_bulkmessagingscreen_getstatusbadgeclass",
+      "community": 8,
+      "norm_label": "getstatusbadgeclass()"
+    },
+    {
+      "label": "getChannelIcon()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L94",
+      "id": "screens_bulkmessagingscreen_getchannelicon",
+      "community": 8,
+      "norm_label": "getchannelicon()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L107",
+      "id": "screens_bulkmessagingscreen_formatdate",
+      "community": 8,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "BulkMessagingScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/BulkMessagingScreen.tsx",
+      "source_location": "L118",
+      "id": "screens_bulkmessagingscreen_bulkmessagingscreen",
+      "community": 8,
+      "norm_label": "bulkmessagingscreen()"
+    },
+    {
+      "label": "DashboardOverview.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_dashboardoverview_tsx",
+      "community": 12,
+      "norm_label": "dashboardoverview.tsx"
+    },
+    {
+      "label": "TrendPoint",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L49",
+      "id": "screens_dashboardoverview_trendpoint",
+      "community": 12,
+      "norm_label": "trendpoint"
+    },
+    {
+      "label": "DashboardStats",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L55",
+      "id": "screens_dashboardoverview_dashboardstats",
+      "community": 12,
+      "norm_label": "dashboardstats"
+    },
+    {
+      "label": "RecentTransaction",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L73",
+      "id": "screens_dashboardoverview_recenttransaction",
+      "community": 12,
+      "norm_label": "recenttransaction"
+    },
+    {
+      "label": "RecentTicket",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L83",
+      "id": "screens_dashboardoverview_recentticket",
+      "community": 12,
+      "norm_label": "recentticket"
+    },
+    {
+      "label": "AuditLogEntry",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L94",
+      "id": "screens_dashboardoverview_auditlogentry",
+      "community": 12,
+      "norm_label": "auditlogentry"
+    },
+    {
+      "label": "formatINR()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L104",
+      "id": "screens_dashboardoverview_formatinr",
+      "community": 12,
+      "norm_label": "formatinr()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L112",
+      "id": "screens_dashboardoverview_formatdate",
+      "community": 12,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "statCards",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L120",
+      "id": "screens_dashboardoverview_statcards",
+      "community": 12,
+      "norm_label": "statcards"
+    },
+    {
+      "label": "HealthCheck",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L137",
+      "id": "screens_dashboardoverview_healthcheck",
+      "community": 12,
+      "norm_label": "healthcheck"
+    },
+    {
+      "label": "runHealthChecks()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L144",
+      "id": "screens_dashboardoverview_runhealthchecks",
+      "community": 12,
+      "norm_label": "runhealthchecks()"
+    },
+    {
+      "label": "DashboardOverview()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DashboardOverview.tsx",
+      "source_location": "L178",
+      "id": "screens_dashboardoverview_dashboardoverview",
+      "community": 12,
+      "norm_label": "dashboardoverview()"
+    },
+    {
+      "label": "DeviceTrackingView.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_devicetrackingview_tsx",
+      "community": 12,
+      "norm_label": "devicetrackingview.tsx"
+    },
+    {
+      "label": "Contact",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L38",
+      "id": "screens_devicetrackingview_contact",
+      "community": 12,
+      "norm_label": "contact"
+    },
+    {
+      "label": "CallLog",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L44",
+      "id": "screens_devicetrackingview_calllog",
+      "community": 12,
+      "norm_label": "calllog"
+    },
+    {
+      "label": "LocationPing",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L52",
+      "id": "screens_devicetrackingview_locationping",
+      "community": 12,
+      "norm_label": "locationping"
+    },
+    {
+      "label": "DeviceData",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L61",
+      "id": "screens_devicetrackingview_devicedata",
+      "community": 12,
+      "norm_label": "devicedata"
+    },
+    {
+      "label": "DeviceTrackingView()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/DeviceTrackingView.tsx",
+      "source_location": "L74",
+      "id": "screens_devicetrackingview_devicetrackingview",
+      "community": 12,
+      "norm_label": "devicetrackingview()"
+    },
+    {
+      "label": "EarningsManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_earningsmanagement_tsx",
+      "community": 8,
+      "norm_label": "earningsmanagement.tsx"
+    },
+    {
+      "label": "Earning",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L36",
+      "id": "screens_earningsmanagement_earning",
+      "community": 8,
+      "norm_label": "earning"
+    },
+    {
+      "label": "Summary",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L54",
+      "id": "screens_earningsmanagement_summary",
+      "community": 8,
+      "norm_label": "summary"
+    },
+    {
+      "label": "PLATFORMS",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L60",
+      "id": "screens_earningsmanagement_platforms",
+      "community": 8,
+      "norm_label": "platforms"
+    },
+    {
+      "label": "formatINR()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L62",
+      "id": "screens_earningsmanagement_formatinr",
+      "community": 8,
+      "norm_label": "formatinr()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L70",
+      "id": "screens_earningsmanagement_formatdate",
+      "community": 8,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "EarningsManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/EarningsManagement.tsx",
+      "source_location": "L80",
+      "id": "screens_earningsmanagement_earningsmanagement",
+      "community": 8,
+      "norm_label": "earningsmanagement()"
+    },
+    {
+      "label": "FaqManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FaqManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_faqmanagement_tsx",
+      "community": 3,
+      "norm_label": "faqmanagement.tsx"
+    },
+    {
+      "label": "Faq",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FaqManagement.tsx",
+      "source_location": "L49",
+      "id": "screens_faqmanagement_faq",
+      "community": 3,
+      "norm_label": "faq"
+    },
+    {
+      "label": "categoryColors",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FaqManagement.tsx",
+      "source_location": "L58",
+      "id": "screens_faqmanagement_categorycolors",
+      "community": 3,
+      "norm_label": "categorycolors"
+    },
+    {
+      "label": "CATEGORIES",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FaqManagement.tsx",
+      "source_location": "L66",
+      "id": "screens_faqmanagement_categories",
+      "community": 3,
+      "norm_label": "categories"
+    },
+    {
+      "label": "FaqManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FaqManagement.tsx",
+      "source_location": "L68",
+      "id": "screens_faqmanagement_faqmanagement",
+      "community": 8,
+      "norm_label": "faqmanagement()"
+    },
+    {
+      "label": "FeatureFlagsScreen.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_featureflagsscreen_tsx",
+      "community": 49,
+      "norm_label": "featureflagsscreen.tsx"
+    },
+    {
+      "label": "FlagEntry",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L12",
+      "id": "screens_featureflagsscreen_flagentry",
+      "community": 49,
+      "norm_label": "flagentry"
+    },
+    {
+      "label": "FLAG_LABELS",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L17",
+      "id": "screens_featureflagsscreen_flag_labels",
+      "community": 49,
+      "norm_label": "flag_labels"
+    },
+    {
+      "label": "FLAG_DESCRIPTIONS",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L30",
+      "id": "screens_featureflagsscreen_flag_descriptions",
+      "community": 49,
+      "norm_label": "flag_descriptions"
+    },
+    {
+      "label": "apiFetch()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L43",
+      "id": "screens_featureflagsscreen_apifetch",
+      "community": 49,
+      "norm_label": "apifetch()"
+    },
+    {
+      "label": "FeatureFlagsScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FeatureFlagsScreen.tsx",
+      "source_location": "L54",
+      "id": "screens_featureflagsscreen_featureflagsscreen",
+      "community": 49,
+      "norm_label": "featureflagsscreen()"
+    },
+    {
+      "label": "FleetMapScreen.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_fleetmapscreen_tsx",
+      "community": 8,
+      "norm_label": "fleetmapscreen.tsx"
+    },
+    {
+      "label": "FleetRider",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L39",
+      "id": "screens_fleetmapscreen_fleetrider",
+      "community": 8,
+      "norm_label": "fleetrider"
+    },
+    {
+      "label": "HubOption",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L66",
+      "id": "screens_fleetmapscreen_huboption",
+      "community": 8,
+      "norm_label": "huboption"
+    },
+    {
+      "label": "getBatteryIcon()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L72",
+      "id": "screens_fleetmapscreen_getbatteryicon",
+      "community": 8,
+      "norm_label": "getbatteryicon()"
+    },
+    {
+      "label": "getBatteryColor()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L79",
+      "id": "screens_fleetmapscreen_getbatterycolor",
+      "community": 8,
+      "norm_label": "getbatterycolor()"
+    },
+    {
+      "label": "getRiderStatus()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L86",
+      "id": "screens_fleetmapscreen_getriderstatus",
+      "community": 8,
+      "norm_label": "getriderstatus()"
+    },
+    {
+      "label": "getStatusColor()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L94",
+      "id": "screens_fleetmapscreen_getstatuscolor",
+      "community": 8,
+      "norm_label": "getstatuscolor()"
+    },
+    {
+      "label": "getStatusBadgeClass()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L107",
+      "id": "screens_fleetmapscreen_getstatusbadgeclass",
+      "community": 8,
+      "norm_label": "getstatusbadgeclass()"
+    },
+    {
+      "label": "FleetMapScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/FleetMapScreen.tsx",
+      "source_location": "L120",
+      "id": "screens_fleetmapscreen_fleetmapscreen",
+      "community": 8,
+      "norm_label": "fleetmapscreen()"
+    },
+    {
+      "label": "HubManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/HubManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_hubmanagement_tsx",
+      "community": 3,
+      "norm_label": "hubmanagement.tsx"
+    },
+    {
+      "label": "Hub",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/HubManagement.tsx",
+      "source_location": "L48",
+      "id": "screens_hubmanagement_hub",
+      "community": 3,
+      "norm_label": "hub"
+    },
+    {
+      "label": "HubManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/HubManagement.tsx",
+      "source_location": "L65",
+      "id": "screens_hubmanagement_hubmanagement",
+      "community": 3,
+      "norm_label": "hubmanagement()"
+    },
+    {
+      "label": "IncidentManagementScreen.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_incidentmanagementscreen_tsx",
+      "community": 8,
+      "norm_label": "incidentmanagementscreen.tsx"
+    },
+    {
+      "label": "Incident",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L59",
+      "id": "screens_incidentmanagementscreen_incident",
+      "community": 8,
+      "norm_label": "incident"
+    },
+    {
+      "label": "RiderOption",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L84",
+      "id": "screens_incidentmanagementscreen_rideroption",
+      "community": 8,
+      "norm_label": "rideroption"
+    },
+    {
+      "label": "VehicleOption",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L91",
+      "id": "screens_incidentmanagementscreen_vehicleoption",
+      "community": 8,
+      "norm_label": "vehicleoption"
+    },
+    {
+      "label": "getStatusBadgeClass()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L97",
+      "id": "screens_incidentmanagementscreen_getstatusbadgeclass",
+      "community": 8,
+      "norm_label": "getstatusbadgeclass()"
+    },
+    {
+      "label": "getSeverityBadgeClass()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L112",
+      "id": "screens_incidentmanagementscreen_getseveritybadgeclass",
+      "community": 8,
+      "norm_label": "getseveritybadgeclass()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L127",
+      "id": "screens_incidentmanagementscreen_formatdate",
+      "community": 8,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "IncidentManagementScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/IncidentManagementScreen.tsx",
+      "source_location": "L137",
+      "id": "screens_incidentmanagementscreen_incidentmanagementscreen",
+      "community": 8,
+      "norm_label": "incidentmanagementscreen()"
+    },
+    {
+      "label": "KycManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_kycmanagement_tsx",
+      "community": 3,
+      "norm_label": "kycmanagement.tsx"
+    },
+    {
+      "label": "MediaPreview()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L60",
+      "id": "screens_kycmanagement_mediapreview",
+      "community": 3,
+      "norm_label": "mediapreview()"
+    },
+    {
+      "label": "KycRider",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L106",
+      "id": "screens_kycmanagement_kycrider",
+      "community": 3,
+      "norm_label": "kycrider"
+    },
+    {
+      "label": "kycDocuments",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L161",
+      "id": "screens_kycmanagement_kycdocuments",
+      "community": 3,
+      "norm_label": "kycdocuments"
+    },
+    {
+      "label": "getCompletion()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L168",
+      "id": "screens_kycmanagement_getcompletion",
+      "community": 3,
+      "norm_label": "getcompletion()"
+    },
+    {
+      "label": "getKycBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L174",
+      "id": "screens_kycmanagement_getkycbadge",
+      "community": 3,
+      "norm_label": "getkycbadge()"
+    },
+    {
+      "label": "KycManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/KycManagement.tsx",
+      "source_location": "L186",
+      "id": "screens_kycmanagement_kycmanagement",
+      "community": 3,
+      "norm_label": "kycmanagement()"
+    },
+    {
+      "label": "LegalManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/LegalManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_legalmanagement_tsx",
+      "community": 3,
+      "norm_label": "legalmanagement.tsx"
+    },
+    {
+      "label": "LegalDoc",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/LegalManagement.tsx",
+      "source_location": "L20",
+      "id": "screens_legalmanagement_legaldoc",
+      "community": 3,
+      "norm_label": "legaldoc"
+    },
+    {
+      "label": "DOC_TYPES",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/LegalManagement.tsx",
+      "source_location": "L28",
+      "id": "screens_legalmanagement_doc_types",
+      "community": 3,
+      "norm_label": "doc_types"
+    },
+    {
+      "label": "LegalManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/LegalManagement.tsx",
+      "source_location": "L35",
+      "id": "screens_legalmanagement_legalmanagement",
+      "community": 3,
+      "norm_label": "legalmanagement()"
+    },
+    {
+      "label": "NotificationManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/NotificationManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_notificationmanagement_tsx",
+      "community": 8,
+      "norm_label": "notificationmanagement.tsx"
+    },
+    {
+      "label": "Notification",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/NotificationManagement.tsx",
+      "source_location": "L46",
+      "id": "screens_notificationmanagement_notification",
+      "community": 8,
+      "norm_label": "notification"
+    },
+    {
+      "label": "RiderOption",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/NotificationManagement.tsx",
+      "source_location": "L57",
+      "id": "screens_notificationmanagement_rideroption",
+      "community": 8,
+      "norm_label": "rideroption"
+    },
+    {
+      "label": "typeColors",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/NotificationManagement.tsx",
+      "source_location": "L63",
+      "id": "screens_notificationmanagement_typecolors",
+      "community": 8,
+      "norm_label": "typecolors"
+    },
+    {
+      "label": "NotificationManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/NotificationManagement.tsx",
+      "source_location": "L74",
+      "id": "screens_notificationmanagement_notificationmanagement",
+      "community": 8,
+      "norm_label": "notificationmanagement()"
+    },
+    {
+      "label": "OfferManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/OfferManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_offermanagement_tsx",
+      "community": 3,
+      "norm_label": "offermanagement.tsx"
+    },
+    {
+      "label": "Offer",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/OfferManagement.tsx",
+      "source_location": "L48",
+      "id": "screens_offermanagement_offer",
+      "community": 3,
+      "norm_label": "offer"
+    },
+    {
+      "label": "Coupon",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/OfferManagement.tsx",
+      "source_location": "L59",
+      "id": "screens_offermanagement_coupon",
+      "community": 3,
+      "norm_label": "coupon"
+    },
+    {
+      "label": "OfferManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/OfferManagement.tsx",
+      "source_location": "L73",
+      "id": "screens_offermanagement_offermanagement",
+      "community": 3,
+      "norm_label": "offermanagement()"
+    },
+    {
+      "label": "ReferralManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ReferralManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_referralmanagement_tsx",
+      "community": 8,
+      "norm_label": "referralmanagement.tsx"
+    },
+    {
+      "label": "Referral",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ReferralManagement.tsx",
+      "source_location": "L35",
+      "id": "screens_referralmanagement_referral",
+      "community": 8,
+      "norm_label": "referral"
+    },
+    {
+      "label": "ReferralManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ReferralManagement.tsx",
+      "source_location": "L49",
+      "id": "screens_referralmanagement_referralmanagement",
+      "community": 8,
+      "norm_label": "referralmanagement()"
+    },
+    {
+      "label": "RentalManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_rentalmanagement_tsx",
+      "community": 8,
+      "norm_label": "rentalmanagement.tsx"
+    },
+    {
+      "label": "RentalPlan",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L60",
+      "id": "screens_rentalmanagement_rentalplan",
+      "community": 8,
+      "norm_label": "rentalplan"
+    },
+    {
+      "label": "ActiveRental",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L71",
+      "id": "screens_rentalmanagement_activerental",
+      "community": 8,
+      "norm_label": "activerental"
+    },
+    {
+      "label": "typeColors",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L91",
+      "id": "screens_rentalmanagement_typecolors",
+      "community": 8,
+      "norm_label": "typecolors"
+    },
+    {
+      "label": "formatINR()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L97",
+      "id": "screens_rentalmanagement_formatinr",
+      "community": 8,
+      "norm_label": "formatinr()"
+    },
+    {
+      "label": "RentalManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RentalManagement.tsx",
+      "source_location": "L105",
+      "id": "screens_rentalmanagement_rentalmanagement",
+      "community": 8,
+      "norm_label": "rentalmanagement()"
+    },
+    {
+      "label": "RewardManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RewardManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_rewardmanagement_tsx",
+      "community": 8,
+      "norm_label": "rewardmanagement.tsx"
+    },
+    {
+      "label": "Reward",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RewardManagement.tsx",
+      "source_location": "L37",
+      "id": "screens_rewardmanagement_reward",
+      "community": 8,
+      "norm_label": "reward"
+    },
+    {
+      "label": "Summary",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RewardManagement.tsx",
+      "source_location": "L46",
+      "id": "screens_rewardmanagement_summary",
+      "community": 8,
+      "norm_label": "summary"
+    },
+    {
+      "label": "RiderListItem",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RewardManagement.tsx",
+      "source_location": "L53",
+      "id": "screens_rewardmanagement_riderlistitem",
+      "community": 8,
+      "norm_label": "riderlistitem"
+    },
+    {
+      "label": "RewardManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RewardManagement.tsx",
+      "source_location": "L59",
+      "id": "screens_rewardmanagement_rewardmanagement",
+      "community": 8,
+      "norm_label": "rewardmanagement()"
+    },
+    {
+      "label": "RiderManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_ridermanagement_tsx",
+      "community": 3,
+      "norm_label": "ridermanagement.tsx"
+    },
+    {
+      "label": "Rider",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L90",
+      "id": "screens_ridermanagement_rider",
+      "community": 3,
+      "norm_label": "rider"
+    },
+    {
+      "label": "STATE_FILTERS",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L175",
+      "id": "screens_ridermanagement_state_filters",
+      "community": 3,
+      "norm_label": "state_filters"
+    },
+    {
+      "label": "getStateBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L177",
+      "id": "screens_ridermanagement_getstatebadge",
+      "community": 3,
+      "norm_label": "getstatebadge()"
+    },
+    {
+      "label": "getKycBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L192",
+      "id": "screens_ridermanagement_getkycbadge",
+      "community": 3,
+      "norm_label": "getkycbadge()"
+    },
+    {
+      "label": "permissions",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L209",
+      "id": "screens_ridermanagement_permissions",
+      "community": 3,
+      "norm_label": "permissions"
+    },
+    {
+      "label": "DetailGroupProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L219",
+      "id": "screens_ridermanagement_detailgroupprops",
+      "community": 3,
+      "norm_label": "detailgroupprops"
+    },
+    {
+      "label": "DetailGroup()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L229",
+      "id": "screens_ridermanagement_detailgroup",
+      "community": 3,
+      "norm_label": "detailgroup()"
+    },
+    {
+      "label": "MediaPreview()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L275",
+      "id": "screens_ridermanagement_mediapreview",
+      "community": 3,
+      "norm_label": "mediapreview()"
+    },
+    {
+      "label": "RiderManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderManagement.tsx",
+      "source_location": "L348",
+      "id": "screens_ridermanagement_ridermanagement",
+      "community": 3,
+      "norm_label": "ridermanagement()"
+    },
+    {
+      "label": "RiderScoringScreen.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_riderscoringscreen_tsx",
+      "community": 8,
+      "norm_label": "riderscoringscreen.tsx"
+    },
+    {
+      "label": "RiderScore",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L48",
+      "id": "screens_riderscoringscreen_riderscore",
+      "community": 8,
+      "norm_label": "riderscore"
+    },
+    {
+      "label": "getRiskBadgeClass()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L64",
+      "id": "screens_riderscoringscreen_getriskbadgeclass",
+      "community": 8,
+      "norm_label": "getriskbadgeclass()"
+    },
+    {
+      "label": "getRiskIcon()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L79",
+      "id": "screens_riderscoringscreen_getriskicon",
+      "community": 8,
+      "norm_label": "getriskicon()"
+    },
+    {
+      "label": "getScoreColor()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L94",
+      "id": "screens_riderscoringscreen_getscorecolor",
+      "community": 8,
+      "norm_label": "getscorecolor()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L101",
+      "id": "screens_riderscoringscreen_formatdate",
+      "community": 8,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "RiderScoringScreen()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/RiderScoringScreen.tsx",
+      "source_location": "L111",
+      "id": "screens_riderscoringscreen_riderscoringscreen",
+      "community": 8,
+      "norm_label": "riderscoringscreen()"
+    },
+    {
+      "label": "SettingsManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/SettingsManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_settingsmanagement_tsx",
+      "community": 49,
+      "norm_label": "settingsmanagement.tsx"
+    },
+    {
+      "label": "Settings",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/SettingsManagement.tsx",
+      "source_location": "L12",
+      "id": "screens_settingsmanagement_settings",
+      "community": 49,
+      "norm_label": "settings"
+    },
+    {
+      "label": "DEFAULT_SETTINGS",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/SettingsManagement.tsx",
+      "source_location": "L26",
+      "id": "screens_settingsmanagement_default_settings",
+      "community": 49,
+      "norm_label": "default_settings"
+    },
+    {
+      "label": "SettingsManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/SettingsManagement.tsx",
+      "source_location": "L40",
+      "id": "screens_settingsmanagement_settingsmanagement",
+      "community": 49,
+      "norm_label": "settingsmanagement()"
+    },
+    {
+      "label": "ShiftManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ShiftManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_shiftmanagement_tsx",
+      "community": 3,
+      "norm_label": "shiftmanagement.tsx"
+    },
+    {
+      "label": "Shift",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ShiftManagement.tsx",
+      "source_location": "L34",
+      "id": "screens_shiftmanagement_shift",
+      "community": 3,
+      "norm_label": "shift"
+    },
+    {
+      "label": "ShiftManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ShiftManagement.tsx",
+      "source_location": "L45",
+      "id": "screens_shiftmanagement_shiftmanagement",
+      "community": 8,
+      "norm_label": "shiftmanagement()"
+    },
+    {
+      "label": "TeamLeaderManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TeamLeaderManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_teamleadermanagement_tsx",
+      "community": 3,
+      "norm_label": "teamleadermanagement.tsx"
+    },
+    {
+      "label": "TeamLeader",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TeamLeaderManagement.tsx",
+      "source_location": "L56",
+      "id": "screens_teamleadermanagement_teamleader",
+      "community": 3,
+      "norm_label": "teamleader"
+    },
+    {
+      "label": "TeamLeaderManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TeamLeaderManagement.tsx",
+      "source_location": "L65",
+      "id": "screens_teamleadermanagement_teamleadermanagement",
+      "community": 3,
+      "norm_label": "teamleadermanagement()"
+    },
+    {
+      "label": "TicketManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_ticketmanagement_tsx",
+      "community": 3,
+      "norm_label": "ticketmanagement.tsx"
+    },
+    {
+      "label": "Ticket",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L55",
+      "id": "screens_ticketmanagement_ticket",
+      "community": 3,
+      "norm_label": "ticket"
+    },
+    {
+      "label": "TicketMessage",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L72",
+      "id": "screens_ticketmanagement_ticketmessage",
+      "community": 3,
+      "norm_label": "ticketmessage"
+    },
+    {
+      "label": "STATUS_FLOW",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L81",
+      "id": "screens_ticketmanagement_status_flow",
+      "community": 3,
+      "norm_label": "status_flow"
+    },
+    {
+      "label": "StatusBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L83",
+      "id": "screens_ticketmanagement_statusbadge",
+      "community": 3,
+      "norm_label": "statusbadge()"
+    },
+    {
+      "label": "PriorityBadge()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L113",
+      "id": "screens_ticketmanagement_prioritybadge",
+      "community": 3,
+      "norm_label": "prioritybadge()"
+    },
+    {
+      "label": "TicketManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TicketManagement.tsx",
+      "source_location": "L135",
+      "id": "screens_ticketmanagement_ticketmanagement",
+      "community": 3,
+      "norm_label": "ticketmanagement()"
+    },
+    {
+      "label": "TransactionManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_transactionmanagement_tsx",
+      "community": 3,
+      "norm_label": "transactionmanagement.tsx"
+    },
+    {
+      "label": "Transaction",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L55",
+      "id": "screens_transactionmanagement_transaction",
+      "community": 3,
+      "norm_label": "transaction"
+    },
+    {
+      "label": "formatINR()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L78",
+      "id": "screens_transactionmanagement_formatinr",
+      "community": 3,
+      "norm_label": "formatinr()"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L86",
+      "id": "screens_transactionmanagement_formatdate",
+      "community": 3,
+      "norm_label": "formatdate()"
+    },
+    {
+      "label": "getTransactionColors()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L97",
+      "id": "screens_transactionmanagement_gettransactioncolors",
+      "community": 3,
+      "norm_label": "gettransactioncolors()"
+    },
+    {
+      "label": "TransactionManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/TransactionManagement.tsx",
+      "source_location": "L132",
+      "id": "screens_transactionmanagement_transactionmanagement",
+      "community": 3,
+      "norm_label": "transactionmanagement()"
+    },
+    {
+      "label": "VehicleManagement.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/VehicleManagement.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_vehiclemanagement_tsx",
+      "community": 3,
+      "norm_label": "vehiclemanagement.tsx"
+    },
+    {
+      "label": "Vehicle",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/VehicleManagement.tsx",
+      "source_location": "L71",
+      "id": "screens_vehiclemanagement_vehicle",
+      "community": 3,
+      "norm_label": "vehicle"
+    },
+    {
+      "label": "Hub",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/VehicleManagement.tsx",
+      "source_location": "L87",
+      "id": "screens_vehiclemanagement_hub",
+      "community": 3,
+      "norm_label": "hub"
+    },
+    {
+      "label": "statusColors",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/VehicleManagement.tsx",
+      "source_location": "L92",
+      "id": "screens_vehiclemanagement_statuscolors",
+      "community": 3,
+      "norm_label": "statuscolors"
+    },
+    {
+      "label": "VehicleManagement()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/VehicleManagement.tsx",
+      "source_location": "L101",
+      "id": "screens_vehiclemanagement_vehiclemanagement",
+      "community": 3,
+      "norm_label": "vehiclemanagement()"
+    },
+    {
+      "label": "ViewAsRiderButton.tsx",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ViewAsRiderButton.tsx",
+      "source_location": "L1",
+      "id": "src_components_admin_screens_viewasriderbutton_tsx",
+      "community": 22,
+      "norm_label": "viewasriderbutton.tsx"
+    },
+    {
+      "label": "ViewAsRiderButtonProps",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ViewAsRiderButton.tsx",
+      "source_location": "L7",
+      "id": "screens_viewasriderbutton_viewasriderbuttonprops",
+      "community": 22,
+      "norm_label": "viewasriderbuttonprops"
+    },
+    {
+      "label": "ViewAsRiderButton()",
+      "file_type": "code",
+      "source_file": "src/components/admin/screens/ViewAsRiderButton.tsx",
+      "source_location": "L12",
+      "id": "screens_viewasriderbutton_viewasriderbutton",
+      "community": 22,
+      "norm_label": "viewasriderbutton()"
+    },
+    {
+      "label": "ADMIN_ROLES",
+      "file_type": "code",
+      "source_file": "src/lib/auth.ts",
+      "source_location": "L9",
+      "id": "lib_auth_admin_roles",
+      "community": 45,
+      "norm_label": "admin_roles"
+    },
+    {
+      "label": "AdminRole",
+      "file_type": "code",
+      "source_file": "src/lib/auth.ts",
+      "source_location": "L16",
+      "id": "lib_auth_adminrole",
+      "community": 45,
+      "norm_label": "adminrole"
+    },
+    {
+      "label": "firebase-admin.ts",
+      "file_type": "code",
+      "source_file": "src/lib/firebase-admin.ts",
+      "source_location": "L1",
+      "id": "src_lib_firebase_admin_ts",
+      "community": 9,
+      "norm_label": "firebase-admin.ts"
+    },
+    {
+      "label": "getAdminApp()",
+      "file_type": "code",
+      "source_file": "src/lib/firebase-admin.ts",
+      "source_location": "L11",
+      "id": "lib_firebase_admin_getadminapp",
+      "community": 9,
+      "norm_label": "getadminapp()"
+    },
+    {
+      "label": "firebaseAdmin",
+      "file_type": "code",
+      "source_file": "src/lib/firebase-admin.ts",
+      "source_location": "L41",
+      "id": "lib_firebase_admin_firebaseadmin",
+      "community": 9,
+      "norm_label": "firebaseadmin"
+    },
+    {
+      "label": "getAdminSession()",
+      "file_type": "code",
+      "source_file": "src/lib/get-session.ts",
+      "source_location": "L46",
+      "id": "lib_get_session_getadminsession",
+      "community": 21,
+      "norm_label": "getadminsession()"
+    },
+    {
+      "label": "getAdminId()",
+      "file_type": "code",
+      "source_file": "src/lib/get-session.ts",
+      "source_location": "L109",
+      "id": "lib_get_session_getadminid",
+      "community": 21,
+      "norm_label": "getadminid()"
+    },
+    {
+      "label": "requireAdmin()",
+      "file_type": "code",
+      "source_file": "src/lib/rbac.ts",
+      "source_location": "L9",
+      "id": "lib_rbac_requireadmin",
+      "community": 1,
+      "norm_label": "requireadmin()"
+    },
+    {
+      "label": "adminUnauthorized()",
+      "file_type": "code",
+      "source_file": "src/lib/rbac.ts",
+      "source_location": "L23",
+      "id": "lib_rbac_adminunauthorized",
+      "community": 1,
+      "norm_label": "adminunauthorized()"
+    },
+    {
+      "label": "adminForbidden()",
+      "file_type": "code",
+      "source_file": "src/lib/rbac.ts",
+      "source_location": "L27",
+      "id": "lib_rbac_adminforbidden",
+      "community": 1,
+      "norm_label": "adminforbidden()"
+    },
+    {
+      "label": "AdminRole",
+      "file_type": "code",
+      "source_file": "src/lib/types/enums.ts",
+      "source_location": "L1",
+      "id": "types_enums_adminrole",
+      "community": 441,
+      "norm_label": "adminrole"
+    },
+    {
+      "label": "admin.ts",
+      "file_type": "code",
+      "source_file": "src/store/admin.ts",
+      "source_location": "L1",
+      "id": "src_store_admin_ts",
+      "community": 12,
+      "norm_label": "admin.ts"
+    },
+    {
+      "label": "AdminState",
+      "file_type": "code",
+      "source_file": "src/store/admin.ts",
+      "source_location": "L4",
+      "id": "store_admin_adminstate",
+      "community": 12,
+      "norm_label": "adminstate"
+    },
+    {
+      "label": "useAdminStore",
+      "file_type": "code",
+      "source_file": "src/store/admin.ts",
+      "source_location": "L23",
+      "id": "store_admin_useadminstore",
+      "community": 12,
+      "norm_label": "useadminstore"
+    },
+    {
+      "label": "referrals.test.ts",
+      "file_type": "code",
+      "source_file": "tests/api/admin/referrals.test.ts",
+      "source_location": "L1",
+      "id": "tests_api_admin_referrals_test_ts",
+      "community": 454,
+      "norm_label": "referrals.test.ts"
+    },
+    {
+      "label": "api()",
+      "file_type": "code",
+      "source_file": "tests/api/admin/referrals.test.ts",
+      "source_location": "L5",
+      "id": "admin_referrals_test_api",
+      "community": 454,
+      "norm_label": "api()"
+    }
+  ],
+  "unconnected_driver_actions": [
+    {
+      "label": "4. Add Session Auth to All Rider API Routes",
+      "file_type": "document",
+      "source_file": ".opencode/plans/fix-plan.md",
+      "source_location": "L34",
+      "id": "plans_fix_plan_4_add_session_auth_to_all_rider_api_routes",
+      "community": 23,
+      "norm_label": "4. add session auth to all rider api routes"
+    },
+    {
+      "label": "17. Remove Phone Fallback on Rider Profile GET",
+      "file_type": "document",
+      "source_file": ".opencode/plans/fix-plan.md",
+      "source_location": "L130",
+      "id": "plans_fix_plan_17_remove_phone_fallback_on_rider_profile_get",
+      "community": 23,
+      "norm_label": "17. remove phone fallback on rider profile get"
+    },
+    {
+      "label": "Phase 6: Add Missing Rider Model Fields",
+      "file_type": "document",
+      "source_file": ".opencode/plans/flutter-parity.md",
+      "source_location": "L404",
+      "id": "plans_flutter_parity_phase_6_add_missing_rider_model_fields",
+      "community": 19,
+      "norm_label": "phase 6: add missing rider model fields"
+    },
+    {
+      "label": "6.1 Add to `lib/models/rider_model.dart`",
+      "file_type": "document",
+      "source_file": ".opencode/plans/flutter-parity.md",
+      "source_location": "L406",
+      "id": "plans_flutter_parity_6_1_add_to_lib_models_rider_model_dart",
+      "community": 19,
+      "norm_label": "6.1 add to `lib/models/rider_model.dart`"
+    },
+    {
+      "label": "\ud83d\udcf1 Rider App (Flutter)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L24",
+      "id": "voltfleet_readme_rider_app_flutter",
+      "community": 248,
+      "norm_label": "\ud83d\udcf1 rider app (flutter)"
+    },
+    {
+      "label": "Rider",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L343",
+      "id": "voltfleet_readme_rider",
+      "community": 339,
+      "norm_label": "rider"
+    },
+    {
+      "label": "Rider Endpoints",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L61",
+      "id": "docs_api_rider_endpoints",
+      "community": 27,
+      "norm_label": "rider endpoints"
+    },
+    {
+      "label": "code:http (GET /api/rider/profile?riderId=xxx)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L65",
+      "id": "docs_api_codeblock_5",
+      "community": 27,
+      "norm_label": "code:http (get /api/rider/profile?riderid=xxx)"
+    },
+    {
+      "label": "code:http (PUT /api/rider/profile)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L71",
+      "id": "docs_api_codeblock_6",
+      "community": 27,
+      "norm_label": "code:http (put /api/rider/profile)"
+    },
+    {
+      "label": "code:http (POST /api/rider/kyc)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L85",
+      "id": "docs_api_codeblock_7",
+      "community": 27,
+      "norm_label": "code:http (post /api/rider/kyc)"
+    },
+    {
+      "label": "code:http (POST /api/rider/guarantor)",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L101",
+      "id": "docs_api_codeblock_8",
+      "community": 27,
+      "norm_label": "code:http (post /api/rider/guarantor)"
+    },
+    {
+      "label": "List Riders",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L121",
+      "id": "docs_api_list_riders",
+      "community": 27,
+      "norm_label": "list riders"
+    },
+    {
+      "label": "Create Rider",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L127",
+      "id": "docs_api_create_rider",
+      "community": 27,
+      "norm_label": "create rider"
+    },
+    {
+      "label": "Update Rider",
+      "file_type": "document",
+      "source_file": "docs/API.md",
+      "source_location": "L139",
+      "id": "docs_api_update_rider",
+      "community": 27,
+      "norm_label": "update rider"
+    },
+    {
+      "label": "2.1 Rider Onboarding & Identity",
+      "file_type": "document",
+      "source_file": "docs/APP_FUNCTIONALITY.md",
+      "source_location": "L17",
+      "id": "docs_app_functionality_2_1_rider_onboarding_identity",
+      "community": 108,
+      "norm_label": "2.1 rider onboarding & identity"
+    },
+    {
+      "label": "Voltium Rider App: Technical Design Specification",
+      "file_type": "document",
+      "source_file": "docs/DESIGN.md",
+      "source_location": "L1",
+      "id": "docs_design_voltium_rider_app_technical_design_specification",
+      "community": 116,
+      "norm_label": "voltium rider app: technical design specification"
+    },
+    {
+      "label": "Voltium Rider App: Granular Screen Specifications (DESIGN2.md)",
+      "file_type": "document",
+      "source_file": "docs/design2.md",
+      "source_location": "L1",
+      "id": "docs_design2_voltium_rider_app_granular_screen_specifications_design2_md",
+      "community": 226,
+      "norm_label": "voltium rider app: granular screen specifications (design2.md)"
+    },
+    {
+      "label": "voltfleet_rider",
+      "file_type": "document",
+      "source_file": "flutter/README.md",
+      "source_location": "L1",
+      "id": "flutter_readme_voltfleet_rider",
+      "community": 425,
+      "norm_label": "voltfleet_rider"
+    },
+    {
+      "label": "rider_model.g.dart",
+      "file_type": "code",
+      "source_file": "flutter/lib/models/rider_model.g.dart",
+      "source_location": null,
+      "id": "flutter_lib_models_rider_model_g_dart",
+      "community": 495,
+      "norm_label": "rider_model.g.dart"
+    },
+    {
+      "label": "code:ts (316 |     await reinjectRiderState(page, sharedState.rider);)",
+      "file_type": "document",
+      "source_file": "playwright-report/data/083f1bf496bc86277166cef8f558a310f1ec26ec.md",
+      "source_location": "L168",
+      "community": 282,
+      "norm_label": "code:ts (316 |     await reinjectriderstate(page, sharedstate.rider);)",
+      "id": "data_083f1bf496bc86277166cef8f558a310f1ec26ec_codeblock_3"
+    },
+    {
+      "label": "code:ts (109 |     await page.route('**/api/rider/dashboard*', async )",
+      "file_type": "document",
+      "source_file": "playwright-report/data/58370af1544da5aa75c160edce4120ca321c5f44.md",
+      "source_location": "L68",
+      "community": 322,
+      "norm_label": "code:ts (109 |     await page.route('**/api/rider/dashboard*', async )",
+      "id": "data_58370af1544da5aa75c160edce4120ca321c5f44_codeblock_3"
+    },
+    {
+      "label": "code:ts (202 |         Object.assign(sharedState.rider, body);)",
+      "file_type": "document",
+      "source_file": "playwright-report/data/9b2f36963609bb0f6ca6b3713fffb0cd58f77537.md",
+      "source_location": "L183",
+      "community": 528,
+      "norm_label": "code:ts (202 |         object.assign(sharedstate.rider, body);)",
+      "id": "data_9b2f36963609bb0f6ca6b3713fffb0cd58f77537_codeblock_3"
+    },
+    {
+      "label": "code:ts (26  |             id: 'edge_rider',)",
+      "file_type": "document",
+      "source_file": "playwright-report/data/d23753e5da9d5fe640e9f694b3616c8929c6eed6.md",
+      "source_location": "L72",
+      "community": 542,
+      "norm_label": "code:ts (26  |             id: 'edge_rider',)",
+      "id": "data_d23753e5da9d5fe640e9f694b3616c8929c6eed6_codeblock_3"
+    },
+    {
+      "label": "code:ts (134 |     // Riders mock (for notifications dialog & riders )",
+      "file_type": "document",
+      "source_file": "playwright-report/data/e65d76fffbcca6107d17ed1089765cd4b5deb636.md",
+      "source_location": "L193",
+      "community": 207,
+      "norm_label": "code:ts (134 |     // riders mock (for notifications dialog & riders )",
+      "id": "data_e65d76fffbcca6107d17ed1089765cd4b5deb636_codeblock_3"
+    },
+    {
+      "label": "query_rider.ts",
+      "file_type": "code",
+      "source_file": "prisma/query_rider.ts",
+      "source_location": "L1",
+      "id": "prisma_query_rider_ts",
+      "community": 432,
+      "norm_label": "query_rider.ts"
+    },
+    {
+      "label": "check_rider.js",
+      "file_type": "code",
+      "source_file": "scratch/check_rider.js",
+      "source_location": "L1",
+      "id": "scratch_check_rider_js",
+      "community": 336,
+      "norm_label": "check_rider.js"
+    },
+    {
+      "label": "check_rider.ts",
+      "file_type": "code",
+      "source_file": "scratch/check_rider.ts",
+      "source_location": "L1",
+      "id": "scratch_check_rider_ts",
+      "community": 336,
+      "norm_label": "check_rider.ts"
+    },
+    {
+      "label": "scratch_lock_rider.ts",
+      "file_type": "code",
+      "source_file": "scratch_lock_rider.ts",
+      "source_location": "L1",
+      "id": "scratch_lock_rider_ts",
+      "community": 36,
+      "norm_label": "scratch_lock_rider.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/dashboard/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_dashboard_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/device/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_device_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "reportViolationSchema",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/device/route.ts",
+      "source_location": "L8",
+      "id": "device_route_reportviolationschema",
+      "community": 4,
+      "norm_label": "reportviolationschema"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/device/route.ts",
+      "source_location": "L12",
+      "id": "device_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/device/route.ts",
+      "source_location": "L75",
+      "id": "device_route_post",
+      "community": 4,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/earnings/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_earnings_route_ts",
+      "community": 21,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/earnings/route.ts",
+      "source_location": "L94",
+      "id": "earnings_route_post",
+      "community": 21,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/guarantor/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_guarantor_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/guarantor/route.ts",
+      "source_location": "L8",
+      "id": "guarantor_route_post",
+      "community": 4,
+      "norm_label": "post()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/guarantor/route.ts",
+      "source_location": "L104",
+      "id": "guarantor_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/kyc/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_kyc_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/kyc/route.ts",
+      "source_location": "L8",
+      "id": "kyc_route_post",
+      "community": 4,
+      "norm_label": "post()"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/kyc/route.ts",
+      "source_location": "L92",
+      "id": "kyc_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/offers/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_offers_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/plans/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_plans_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/pricing/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_pricing_route_ts",
+      "community": 32,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "PLANS",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/pricing/route.ts",
+      "source_location": "L12",
+      "id": "pricing_route_plans",
+      "community": 32,
+      "norm_label": "plans"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/profile/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_profile_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "RIDER_UPDATE_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/profile/route.ts",
+      "source_location": "L12",
+      "id": "profile_route_rider_update_fields",
+      "community": 4,
+      "norm_label": "rider_update_fields"
+    },
+    {
+      "label": "KYC_FIELDS",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/profile/route.ts",
+      "source_location": "L42",
+      "id": "profile_route_kyc_fields",
+      "community": 4,
+      "norm_label": "kyc_fields"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/profile/route.ts",
+      "source_location": "L59",
+      "id": "profile_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "PUT()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/profile/route.ts",
+      "source_location": "L106",
+      "id": "profile_route_put",
+      "community": 4,
+      "norm_label": "put()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/referral/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_referral_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/referral/route.ts",
+      "source_location": "L7",
+      "id": "referral_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/referrals/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_referrals_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/rewards/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_rewards_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/settings/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_settings_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "PUBLIC_SETTINGS",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/settings/route.ts",
+      "source_location": "L7",
+      "id": "settings_route_public_settings",
+      "community": 4,
+      "norm_label": "public_settings"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/device-data/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_sync_device_data_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/device-data/route.ts",
+      "source_location": "L7",
+      "id": "device_data_route_post",
+      "community": 4,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/pickup/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_sync_pickup_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/pickup/route.ts",
+      "source_location": "L9",
+      "id": "pickup_route_post",
+      "community": 36,
+      "norm_label": "post()"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/pickup/vehicle/route.ts",
+      "source_location": "L1",
+      "id": "src_app_api_rider_sync_pickup_vehicle_route_ts",
+      "community": 4,
+      "norm_label": "route.ts"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "src/app/api/rider/sync/pickup/vehicle/route.ts",
+      "source_location": "L7",
+      "id": "vehicle_route_get",
+      "community": 4,
+      "norm_label": "get()"
+    },
+    {
+      "label": "RiderSelector.tsx",
+      "file_type": "code",
+      "source_file": "src/components/voltium/RiderSelector.tsx",
+      "source_location": "L1",
+      "id": "src_components_voltium_riderselector_tsx",
+      "community": 3,
+      "norm_label": "riderselector.tsx"
+    },
+    {
+      "label": "RiderOption",
+      "file_type": "code",
+      "source_file": "src/components/voltium/RiderSelector.tsx",
+      "source_location": "L20",
+      "id": "voltium_riderselector_rideroption",
+      "community": 3,
+      "norm_label": "rideroption"
+    },
+    {
+      "label": "RiderSelector()",
+      "file_type": "code",
+      "source_file": "src/components/voltium/RiderSelector.tsx",
+      "source_location": "L50",
+      "id": "voltium_riderselector_riderselector",
+      "community": 22,
+      "norm_label": "riderselector()"
+    },
+    {
+      "label": "useCachedRiderLoad()",
+      "file_type": "code",
+      "source_file": "src/hooks/useOfflineSync.ts",
+      "source_location": "L153",
+      "id": "hooks_useofflinesync_usecachedriderload",
+      "community": 11,
+      "norm_label": "usecachedriderload()"
+    },
+    {
+      "label": "useRiderData.ts",
+      "file_type": "code",
+      "source_file": "src/hooks/useRiderData.ts",
+      "source_location": "L1",
+      "id": "src_hooks_useriderdata_ts",
+      "community": 33,
+      "norm_label": "useriderdata.ts"
+    },
+    {
+      "label": "RiderProfile",
+      "file_type": "code",
+      "source_file": "src/hooks/useRiderData.ts",
+      "source_location": "L9",
+      "id": "hooks_useriderdata_riderprofile",
+      "community": 33,
+      "norm_label": "riderprofile"
+    },
+    {
+      "label": "useRiderProfile()",
+      "file_type": "code",
+      "source_file": "src/hooks/useRiderData.ts",
+      "source_location": "L106",
+      "id": "hooks_useriderdata_useriderprofile",
+      "community": 33,
+      "norm_label": "useriderprofile()"
+    },
+    {
+      "label": "flatten-rider.ts",
+      "file_type": "code",
+      "source_file": "src/lib/flatten-rider.ts",
+      "source_location": "L1",
+      "id": "src_lib_flatten_rider_ts",
+      "community": 32,
+      "norm_label": "flatten-rider.ts"
+    },
+    {
+      "label": "RiderWithRelations",
+      "file_type": "code",
+      "source_file": "src/lib/flatten-rider.ts",
+      "source_location": "L20",
+      "id": "lib_flatten_rider_riderwithrelations",
+      "community": 32,
+      "norm_label": "riderwithrelations"
+    },
+    {
+      "label": "RiderPartial",
+      "file_type": "code",
+      "source_file": "src/lib/flatten-rider.ts",
+      "source_location": "L29",
+      "id": "lib_flatten_rider_riderpartial",
+      "community": 32,
+      "norm_label": "riderpartial"
+    },
+    {
+      "label": "flattenRider()",
+      "file_type": "code",
+      "source_file": "src/lib/flatten-rider.ts",
+      "source_location": "L37",
+      "id": "lib_flatten_rider_flattenrider",
+      "community": 36,
+      "norm_label": "flattenrider()"
+    },
+    {
+      "label": "flattenRiderPartial()",
+      "file_type": "code",
+      "source_file": "src/lib/flatten-rider.ts",
+      "source_location": "L121",
+      "id": "lib_flatten_rider_flattenriderpartial",
+      "community": 32,
+      "norm_label": "flattenriderpartial()"
+    },
+    {
+      "label": "getRiderId()",
+      "file_type": "code",
+      "source_file": "src/lib/get-session.ts",
+      "source_location": "L81",
+      "id": "lib_get_session_getriderid",
+      "community": 21,
+      "norm_label": "getriderid()"
+    },
+    {
+      "label": "getRiderPhone()",
+      "file_type": "code",
+      "source_file": "src/lib/get-session.ts",
+      "source_location": "L96",
+      "id": "lib_get_session_getriderphone",
+      "community": 21,
+      "norm_label": "getriderphone()"
+    },
+    {
+      "label": "RiderCache",
+      "file_type": "code",
+      "source_file": "src/lib/offline-store.ts",
+      "source_location": "L27",
+      "id": "lib_offline_store_ridercache",
+      "community": 11,
+      "norm_label": "ridercache"
+    },
+    {
+      "label": "cacheRiderState()",
+      "file_type": "code",
+      "source_file": "src/lib/offline-store.ts",
+      "source_location": "L70",
+      "id": "lib_offline_store_cacheriderstate",
+      "community": 11,
+      "norm_label": "cacheriderstate()"
+    },
+    {
+      "label": "loadCachedRiderState()",
+      "file_type": "code",
+      "source_file": "src/lib/offline-store.ts",
+      "source_location": "L72",
+      "id": "lib_offline_store_loadcachedriderstate",
+      "community": 11,
+      "norm_label": "loadcachedriderstate()"
+    },
+    {
+      "label": "clearRiderCache()",
+      "file_type": "code",
+      "source_file": "src/lib/offline-store.ts",
+      "source_location": "L84",
+      "id": "lib_offline_store_clearridercache",
+      "community": 11,
+      "norm_label": "clearridercache()"
+    },
+    {
+      "label": "rider-auth.ts",
+      "file_type": "code",
+      "source_file": "src/lib/rider-auth.ts",
+      "source_location": "L1",
+      "id": "src_lib_rider_auth_ts",
+      "community": 4,
+      "norm_label": "rider-auth.ts"
+    },
+    {
+      "label": "requireRiderSession()",
+      "file_type": "code",
+      "source_file": "src/lib/rider-auth.ts",
+      "source_location": "L6",
+      "id": "lib_rider_auth_requireridersession",
+      "community": 4,
+      "norm_label": "requireridersession()"
+    },
+    {
+      "label": "calculateRiderScore()",
+      "file_type": "code",
+      "source_file": "src/lib/score-calculator.ts",
+      "source_location": "L3",
+      "id": "lib_score_calculator_calculateriderscore",
+      "community": 305,
+      "norm_label": "calculateriderscore()"
+    },
+    {
+      "label": "sign-rider.ts",
+      "file_type": "code",
+      "source_file": "src/lib/sign-rider.ts",
+      "source_location": "L1",
+      "id": "src_lib_sign_rider_ts",
+      "community": 36,
+      "norm_label": "sign-rider.ts"
+    },
+    {
+      "label": "signRiderUrls()",
+      "file_type": "code",
+      "source_file": "src/lib/sign-rider.ts",
+      "source_location": "L30",
+      "id": "lib_sign_rider_signriderurls",
+      "community": 36,
+      "norm_label": "signriderurls()"
+    },
+    {
+      "label": "signRiderUrlsWithProvider()",
+      "file_type": "code",
+      "source_file": "src/lib/sign-rider.ts",
+      "source_location": "L42",
+      "id": "lib_sign_rider_signriderurlswithprovider",
+      "community": 36,
+      "norm_label": "signriderurlswithprovider()"
+    },
+    {
+      "label": "createRiderSchema",
+      "file_type": "code",
+      "source_file": "src/lib/validators.ts",
+      "source_location": "L134",
+      "id": "lib_validators_createriderschema",
+      "community": 149,
+      "norm_label": "createriderschema"
+    },
+    {
+      "label": "riderActionSchema",
+      "file_type": "code",
+      "source_file": "src/lib/validators.ts",
+      "source_location": "L344",
+      "id": "lib_validators_rideractionschema",
+      "community": 36,
+      "norm_label": "rideractionschema"
+    },
+    {
+      "label": "RiderData",
+      "file_type": "code",
+      "source_file": "src/store/app.ts",
+      "source_location": "L100",
+      "id": "store_app_riderdata",
+      "community": 11,
+      "norm_label": "riderdata"
+    },
+    {
+      "label": "defaultRider",
+      "file_type": "code",
+      "source_file": "src/store/app.ts",
+      "source_location": "L135",
+      "id": "store_app_defaultrider",
+      "community": 10,
+      "norm_label": "defaultrider"
+    },
+    {
+      "label": "riderSession.ts",
+      "file_type": "code",
+      "source_file": "src/store/riderSession.ts",
+      "source_location": "L1",
+      "id": "src_store_ridersession_ts",
+      "community": 22,
+      "norm_label": "ridersession.ts"
+    },
+    {
+      "label": "RiderSessionState",
+      "file_type": "code",
+      "source_file": "src/store/riderSession.ts",
+      "source_location": "L4",
+      "id": "store_ridersession_ridersessionstate",
+      "community": 22,
+      "norm_label": "ridersessionstate"
+    },
+    {
+      "label": "useRiderSession",
+      "file_type": "code",
+      "source_file": "src/store/riderSession.ts",
+      "source_location": "L11",
+      "id": "store_ridersession_useridersession",
+      "community": 22,
+      "norm_label": "useridersession"
+    },
+    {
+      "label": "RiderState",
+      "file_type": "code",
+      "source_file": "src/types/api.d.ts",
+      "source_location": "L6",
+      "id": "types_api_d_riderstate",
+      "community": 150,
+      "norm_label": "riderstate"
+    },
+    {
+      "label": "FlatRider",
+      "file_type": "code",
+      "source_file": "src/types/api.d.ts",
+      "source_location": "L39",
+      "id": "types_api_d_flatrider",
+      "community": 150,
+      "norm_label": "flatrider"
+    },
+    {
+      "label": "code:ts (316 |     await reinjectRiderState(page, sharedState.rider);)",
+      "file_type": "document",
+      "source_file": "test-results/cross-app-sync-Cross-App-S-baa1b-on-End-Rental-Approval-Sync-chromium/error-context.md",
+      "source_location": "L168",
+      "community": 165,
+      "norm_label": "code:ts (316 |     await reinjectriderstate(page, sharedstate.rider);)",
+      "id": "cross_app_sync_cross_app_s_baa1b_on_end_rental_approval_sync_chromium_error_context_codeblock_3"
+    },
+    {
+      "label": "code:ts (202 |         Object.assign(sharedState.rider, body);)",
+      "file_type": "document",
+      "source_file": "test-results/cross-app-sync-Cross-App-S-f2eda-equest-Approval-Propagation-chromium/error-context.md",
+      "source_location": "L183",
+      "community": 280,
+      "norm_label": "code:ts (202 |         object.assign(sharedstate.rider, body);)",
+      "id": "cross_app_sync_cross_app_s_f2eda_equest_approval_propagation_chromium_error_context_codeblock_3"
+    },
+    {
+      "label": "code:ts (26  |             id: 'edge_rider',)",
+      "file_type": "document",
+      "source_file": "test-results/edge-cases-Edge-Cases-Erro-87ff0-ing-\u2014-Wrong-OTP-shows-error-chromium/error-context.md",
+      "source_location": "L72",
+      "community": 553,
+      "norm_label": "code:ts (26  |             id: 'edge_rider',)",
+      "id": "edge_cases_edge_cases_erro_87ff0_ing_wrong_otp_shows_error_chromium_error_context_codeblock_3"
+    },
+    {
+      "label": "code:ts (109 |     await page.route('**/api/rider/dashboard*', async )",
+      "file_type": "document",
+      "source_file": "test-results/transactions-extended-Tran-ad3b9-bmit-disabled-without-photo-chromium/error-context.md",
+      "source_location": "L68",
+      "community": 560,
+      "norm_label": "code:ts (109 |     await page.route('**/api/rider/dashboard*', async )",
+      "id": "transactions_extended_tran_ad3b9_bmit_disabled_without_photo_chromium_error_context_codeblock_3"
+    },
+    {
+      "label": "makeRiderState()",
+      "file_type": "code",
+      "source_file": "tests/offline-store.test.ts",
+      "source_location": "L58",
+      "id": "tests_offline_store_test_makeriderstate",
+      "community": 11,
+      "norm_label": "makeriderstate()"
+    },
+    {
+      "label": "baseRider",
+      "file_type": "code",
+      "source_file": "tests/offline-store.test.ts",
+      "source_location": "L519",
+      "id": "tests_offline_store_test_baserider",
+      "community": 11,
+      "norm_label": "baserider"
+    },
+    {
+      "label": "riderPayload",
+      "file_type": "code",
+      "source_file": "tests/security/pii_leak.test.ts",
+      "source_location": "L23",
+      "id": "security_pii_leak_test_riderpayload",
+      "community": 45,
+      "norm_label": "riderpayload"
+    },
+    {
+      "label": "riderToken",
+      "file_type": "code",
+      "source_file": "tests/security/pii_leak.test.ts",
+      "source_location": "L30",
+      "id": "security_pii_leak_test_ridertoken",
+      "community": 45,
+      "norm_label": "ridertoken"
+    },
+    {
+      "label": "riderPayload",
+      "file_type": "code",
+      "source_file": "tests/security/privilege_escalation.test.ts",
+      "source_location": "L22",
+      "id": "security_privilege_escalation_test_riderpayload",
+      "community": 45,
+      "norm_label": "riderpayload"
+    },
+    {
+      "label": "riderToken",
+      "file_type": "code",
+      "source_file": "tests/security/privilege_escalation.test.ts",
+      "source_location": "L29",
+      "id": "security_privilege_escalation_test_ridertoken",
+      "community": 45,
+      "norm_label": "ridertoken"
+    },
+    {
+      "label": "flatten-rider.test.ts",
+      "file_type": "code",
+      "source_file": "tests/unit/flatten-rider.test.ts",
+      "source_location": "L1",
+      "id": "tests_unit_flatten_rider_test_ts",
+      "community": 36,
+      "norm_label": "flatten-rider.test.ts"
+    },
+    {
+      "label": "mockRider",
+      "file_type": "code",
+      "source_file": "tests/unit/flatten-rider.test.ts",
+      "source_location": "L4",
+      "id": "unit_flatten_rider_test_mockrider",
+      "community": 36,
+      "norm_label": "mockrider"
+    },
+    {
+      "label": "minimalRider",
+      "file_type": "code",
+      "source_file": "tests/unit/flatten-rider.test.ts",
+      "source_location": "L60",
+      "id": "unit_flatten_rider_test_minimalrider",
+      "community": 36,
+      "norm_label": "minimalrider"
+    },
+    {
+      "label": "riderWithReturn",
+      "file_type": "code",
+      "source_file": "tests/unit/flatten-rider.test.ts",
+      "source_location": "L75",
+      "id": "unit_flatten_rider_test_riderwithreturn",
+      "community": 36,
+      "norm_label": "riderwithreturn"
+    }
+  ]
+}

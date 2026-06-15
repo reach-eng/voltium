@@ -1,0 +1,86 @@
+name: Windows E2E Tests (Playwright & Flutter)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  playwright-e2e:
+    name: Playwright E2E Tests (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Setup Prisma Database
+        run: |
+          npx prisma generate
+          npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: 'file:./dev.db'
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright Tests
+        run: npx playwright test
+        env:
+          DATABASE_URL: 'file:./dev.db'
+          JWT_SECRET: ci-test-secret-key-32-chars-long
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  flutter-e2e:
+    name: Flutter Android E2E Tests (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        run: |
+          cd flutter
+          flutter pub get
+
+      - name: Run E2E on Windows Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: ./flutter
+          script: |
+            flutter test integration_test/app_test.dart --dart-define=API_URL=http://localhost:8081 --timeout=none

@@ -1,0 +1,394 @@
+Analyzing active_dashboard_screen.dart...
+
+  error - active_dashboard_screen.dart:356:33 - The getter 'mobile' isn't defined for the type 'RiderModel'. Try importing the library that defines 'mobile', correcting the name to the name of an existing getter, or defining a getter or field named 'mobile'. - undefined_getter
+  error - active_dashboard_screen.dart:356:33 - The getter 'mobile' isn't defined for the type 'RiderModel'. Try importing the library that defines 'mobile', correcting the name to the name of an existing getter, or defining a getter or field named 'mobile'. - undefined_getter
+warning - active_dashboard_screen.dart:25:8 - Unused import: '../widgets/fade_up_widget.dart'. Try removing the import directive. - unused_import
+warning - active_dashboard_screen.dart:25:8 - Unused import: '../widgets/fade_up_widget.dart'. Try removing the import directive. - unused_import
+warning - active_dashboard_screen.dart:27:8 - Unused import: '../widgets/effect_widgets.dart'. Try removing the import directive. - unused_import
+warning - active_dashboard_screen.dart:27:8 - Unused import: '../widgets/effect_widgets.dart'. Try removing the import directive. - unused_import
+warning - active_dashboard_screen.dart:43:24 - The value of the field '_sponsoredOffers' isn't used. Try removing the field, or using it. - unused_field
+warning - active_dashboard_screen.dart:43:24 - The value of the field '_sponsoredOffers' isn't used. Try removing the field, or using it. - unused_field
+warning - active_dashboard_screen.dart:44:8 - The value of the field '_loadingOffers' isn't used. Try removing the field, or using it. - unused_field
+warning - active_dashboard_screen.dart:44:8 - The value of the field '_loadingOffers' isn't used. Try removing the field, or using it. - unused_field
+warning - active_dashboard_screen.dart:932:10 - The declaration '_buildNotificationBell' isn't referenced. Try removing the declaration of '_buildNotificationBell'. - unused_element
+warning - active_dashboard_screen.dart:932:10 - The declaration '_buildNotificationBell' isn't referenced. Try removing the declaration of '_buildNotificationBell'. - unused_element
+warning - active_dashboard_screen.dart:968:10 - The declaration '_buildPointsBadge' isn't referenced. Try removing the declaration of '_buildPointsBadge'. - unused_element
+warning - active_dashboard_screen.dart:968:10 - The declaration '_buildPointsBadge' isn't referenced. Try removing the declaration of '_buildPointsBadge'. - unused_element
+warning - active_dashboard_screen.dart:1000:10 - The declaration '_buildStreakBadge' isn't referenced. Try removing the declaration of '_buildStreakBadge'. - unused_element
+warning - active_dashboard_screen.dart:1000:10 - The declaration '_buildStreakBadge' isn't referenced. Try removing the declaration of '_buildStreakBadge'. - unused_element
+warning - active_dashboard_screen.dart:1025:10 - The declaration '_buildOperationalGrid' isn't referenced. Try removing the declaration of '_buildOperationalGrid'. - unused_element
+warning - active_dashboard_screen.dart:1025:10 - The declaration '_buildOperationalGrid' isn't referenced. Try removing the declaration of '_buildOperationalGrid'. - unused_element
+warning - active_dashboard_screen.dart:1112:10 - The declaration '_buildActionRequiredBanner' isn't referenced. Try removing the declaration of '_buildActionRequiredBanner'. - unused_element
+warning - active_dashboard_screen.dart:1112:10 - The declaration '_buildActionRequiredBanner' isn't referenced. Try removing the declaration of '_buildActionRequiredBanner'. - unused_element
+warning - active_dashboard_screen.dart:1203:10 - The declaration '_buildStatusBadge' isn't referenced. Try removing the declaration of '_buildStatusBadge'. - unused_element
+warning - active_dashboard_screen.dart:1203:10 - The declaration '_buildStatusBadge' isn't referenced. Try removing the declaration of '_buildStatusBadge'. - unused_element
+warning - active_dashboard_screen.dart:1205:11 - The value of the local variable 'statusText' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - active_dashboard_screen.dart:1205:11 - The value of the local variable 'statusText' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - active_dashboard_screen.dart:1211:11 - The value of the local variable 'color' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - active_dashboard_screen.dart:1211:11 - The value of the local variable 'color' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - active_dashboard_screen.dart:1243:10 - The declaration '_buildIdentityCard' isn't referenced. Try removing the declaration of '_buildIdentityCard'. - unused_element
+warning - active_dashboard_screen.dart:1243:10 - The declaration '_buildIdentityCard' isn't referenced. Try removing the declaration of '_buildIdentityCard'. - unused_element
+warning - active_dashboard_screen.dart:1355:10 - The declaration '_buildSubscriptionGlassCard' isn't referenced. Try removing the declaration of '_buildSubscriptionGlassCard'. - unused_element
+warning - active_dashboard_screen.dart:1355:10 - The declaration '_buildSubscriptionGlassCard' isn't referenced. Try removing the declaration of '_buildSubscriptionGlassCard'. - unused_element
+warning - active_dashboard_screen.dart:1510:10 - The declaration '_buildSponsoredBox' isn't referenced. Try removing the declaration of '_buildSponsoredBox'. - unused_element
+warning - active_dashboard_screen.dart:1510:10 - The declaration '_buildSponsoredBox' isn't referenced. Try removing the declaration of '_buildSponsoredBox'. - unused_element
+warning - active_dashboard_screen.dart:1579:10 - The declaration '_buildBentoGrid' isn't referenced. Try removing the declaration of '_buildBentoGrid'. - unused_element
+warning - active_dashboard_screen.dart:1579:10 - The declaration '_buildBentoGrid' isn't referenced. Try removing the declaration of '_buildBentoGrid'. - unused_element
+warning - active_dashboard_screen.dart:1819:10 - The declaration '_buildReferralWidget' isn't referenced. Try removing the declaration of '_buildReferralWidget'. - unused_element
+warning - active_dashboard_screen.dart:1819:10 - The declaration '_buildReferralWidget' isn't referenced. Try removing the declaration of '_buildReferralWidget'. - unused_element
+warning - active_dashboard_screen.dart:1933:8 - The declaration '_showVehicleDetailsBottomSheet' isn't referenced. Try removing the declaration of '_showVehicleDetailsBottomSheet'. - unused_element
+warning - active_dashboard_screen.dart:1933:8 - The declaration '_showVehicleDetailsBottomSheet' isn't referenced. Try removing the declaration of '_showVehicleDetailsBottomSheet'. - unused_element
+warning - active_dashboard_screen.dart:2065:10 - The declaration '_daysRemaining' isn't referenced. Try removing the declaration of '_daysRemaining'. - unused_element
+warning - active_dashboard_screen.dart:2065:10 - The declaration '_daysRemaining' isn't referenced. Try removing the declaration of '_daysRemaining'. - unused_element
+warning - active_dashboard_screen.dart:2072:10 - The declaration '_formatDate' isn't referenced. Try removing the declaration of '_formatDate'. - unused_element
+warning - active_dashboard_screen.dart:2072:10 - The declaration '_formatDate' isn't referenced. Try removing the declaration of '_formatDate'. - unused_element
+warning - active_dashboard_screen.dart:2499:10 - The declaration '_buildReturnPendingCard' isn't referenced. Try removing the declaration of '_buildReturnPendingCard'. - unused_element
+warning - active_dashboard_screen.dart:2499:10 - The declaration '_buildReturnPendingCard' isn't referenced. Try removing the declaration of '_buildReturnPendingCard'. - unused_element
+warning - active_dashboard_screen.dart:2544:10 - The declaration '_buildEmergencySOS' isn't referenced. Try removing the declaration of '_buildEmergencySOS'. - unused_element
+warning - active_dashboard_screen.dart:2544:10 - The declaration '_buildEmergencySOS' isn't referenced. Try removing the declaration of '_buildEmergencySOS'. - unused_element
+warning - active_dashboard_screen.dart:2594:10 - The declaration '_buildSupportSection' isn't referenced. Try removing the declaration of '_buildSupportSection'. - unused_element
+warning - active_dashboard_screen.dart:2594:10 - The declaration '_buildSupportSection' isn't referenced. Try removing the declaration of '_buildSupportSection'. - unused_element
+warning - active_dashboard_screen.dart:2648:10 - The declaration '_buildRecentTransactions' isn't referenced. Try removing the declaration of '_buildRecentTransactions'. - unused_element
+warning - active_dashboard_screen.dart:2648:10 - The declaration '_buildRecentTransactions' isn't referenced. Try removing the declaration of '_buildRecentTransactions'. - unused_element
+warning - active_dashboard_screen.dart:2766:10 - The declaration '_buildVehicleControlCard' isn't referenced. Try removing the declaration of '_buildVehicleControlCard'. - unused_element
+warning - active_dashboard_screen.dart:2766:10 - The declaration '_buildVehicleControlCard' isn't referenced. Try removing the declaration of '_buildVehicleControlCard'. - unused_element
+   info - active_dashboard_screen.dart:116:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:116:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:129:76 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:129:76 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:154:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:154:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:154:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:154:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:180:29 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:180:29 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:183:71 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:183:71 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:200:78 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:200:78 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:208:69 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:208:69 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:214:75 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:214:75 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:238:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:238:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:254:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:254:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:287:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:287:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:336:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:336:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:353:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:353:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:441:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:441:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:453:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:453:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:487:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:487:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:520:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:520:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:559:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - active_dashboard_screen.dart:559:9 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - active_dashboard_screen.dart:580:7 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:580:7 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:594:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:594:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:684:22 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:684:22 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:699:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:699:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:779:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:779:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:802:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:802:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:817:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:817:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:821:50 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:821:50 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:853:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:853:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:855:54 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:855:54 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:868:45 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:868:45 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:889:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:889:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:889:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:889:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:894:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:894:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:898:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:898:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:915:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:915:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:919:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:919:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:941:31 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:941:31 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:943:50 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:943:50 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:949:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:949:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1092:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1092:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1113:5 - Local variables should be final. Try making the variable final. - prefer_final_locals
+   info - active_dashboard_screen.dart:1113:5 - Local variables should be final. Try making the variable final. - prefer_final_locals
+   info - active_dashboard_screen.dart:1130:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1130:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1171:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1171:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1204:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1204:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1225:13 - Unnecessary 'const' keyword. Try removing the keyword. - unnecessary_const
+   info - active_dashboard_screen.dart:1225:13 - Unnecessary 'const' keyword. Try removing the keyword. - unnecessary_const
+   info - active_dashboard_screen.dart:1253:54 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1253:54 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1256:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1256:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1268:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1268:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1276:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1276:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1302:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1302:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1304:50 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1304:50 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1325:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1325:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1325:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1325:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1347:26 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1347:26 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1356:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1356:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1371:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1371:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1391:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1391:44 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1395:55 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1395:55 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1422:51 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1422:51 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1424:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1424:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1431:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1431:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1431:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1431:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1441:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1441:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1448:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1448:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1448:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1448:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1466:40 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1466:40 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1476:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1476:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1477:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1477:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1484:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1484:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1506:5 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1506:5 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1518:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1518:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1580:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1580:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1636:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1636:61 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1651:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1651:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1659:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1659:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1666:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1666:60 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1670:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1670:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1676:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1676:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1676:54 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1676:54 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1681:79 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1681:79 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1699:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1699:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1704:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1704:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1704:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1704:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1716:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1716:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1719:72 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1719:72 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1760:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1760:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1769:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1769:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1786:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1786:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1796:75 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1796:75 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1806:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1806:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1809:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1809:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1843:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1843:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1877:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1877:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1881:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1881:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1892:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1892:39 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1921:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1921:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:1921:73 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1921:73 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1956:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1956:59 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1967:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1967:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1967:54 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1967:54 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1970:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1970:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1980:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1980:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1980:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1980:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1990:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1990:52 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1999:126 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:1999:126 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2010:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2010:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2012:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2012:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2026:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2026:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2030:72 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2030:72 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2030:73 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2030:73 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2052:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2052:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2052:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2052:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2057:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2057:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2057:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2057:47 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2154:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2154:58 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2174:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2174:63 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2267:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2267:68 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2298:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2298:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2306:5 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2306:5 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2323:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2323:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2330:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2330:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2338:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2338:49 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2364:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2364:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2372:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2372:67 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2397:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2397:64 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2400:69 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2400:69 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2419:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2419:53 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2422:119 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2422:119 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2513:65 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2513:65 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2515:51 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2515:51 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2523:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2523:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2523:38 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2523:38 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2531:44 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2531:44 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2538:31 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2538:31 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2538:32 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2538:32 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2556:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2556:35 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2560:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2560:46 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2587:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2587:48 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2612:13 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2612:13 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2613:22 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2613:22 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2633:13 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2633:13 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2634:22 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2634:22 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2673:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2673:41 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2673:71 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2673:71 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2688:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2688:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2722:53 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2722:53 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2742:16 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2742:16 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2752:37 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2752:37 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2770:36 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2770:36 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2782:46 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2782:46 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2786:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2786:57 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2798:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2798:47 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2814:55 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2814:55 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2823:37 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2823:37 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2834:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2834:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2835:23 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2835:23 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2840:52 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2840:52 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2841:40 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2841:40 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2851:65 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2851:65 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2856:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2856:66 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2867:77 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2867:77 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2870:60 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2870:60 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2872:62 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2872:62 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2886:40 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2886:40 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - active_dashboard_screen.dart:2889:20 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2889:20 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - active_dashboard_screen.dart:2892:44 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2892:44 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2892:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2892:45 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2897:36 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2897:36 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2897:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+   info - active_dashboard_screen.dart:2897:37 - Missing a required trailing comma. Try adding a trailing comma. - require_trailing_commas
+
+390 issues found.

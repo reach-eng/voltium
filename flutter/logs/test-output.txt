@@ -1,0 +1,1955 @@
+Resolving dependencies...
+Downloading packages...
+  _fe_analyzer_shared 92.0.0 (100.0.0 available)
+  _flutterfire_internals 1.3.59 (1.3.71 available)
+  analysis_server_plugin 0.3.4 (0.3.15 available)
+  analyzer 9.0.0 (13.0.0 available)
+  analyzer_plugin 0.13.11 (0.14.9 available)
+  build 4.0.5 (4.0.6 available)
+  build_runner 2.13.1 (2.15.0 available)
+  built_value 8.12.5 (8.12.6 available)
+  cli_util 0.4.2 (0.5.1 available)
+  code_assets 1.0.0 (1.1.0 available)
+  connectivity_plus 6.1.5 (7.1.1 available)
+  dart_style 3.1.3 (3.1.9 available)
+  firebase_core 3.15.2 (4.9.0 available)
+  firebase_core_platform_interface 6.0.3 (7.0.1 available)
+  firebase_core_web 2.24.1 (3.7.0 available)
+  firebase_messaging 15.2.10 (16.2.2 available)
+  firebase_messaging_platform_interface 4.6.10 (4.7.11 available)
+  firebase_messaging_web 3.10.10 (4.1.7 available)
+  fl_chart 0.70.2 (1.2.0 available)
+  flutter_contacts 1.1.9+2 (2.0.2 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_local_notifications 18.0.1 (21.0.0 available)
+  flutter_local_notifications_linux 5.0.0 (8.0.0 available)
+  flutter_local_notifications_platform_interface 8.0.0 (11.0.0 available)
+  flutter_secure_storage 9.2.4 (10.2.0 available)
+  flutter_secure_storage_linux 1.2.3 (3.0.0 available)
+  flutter_secure_storage_macos 3.1.3 (4.0.0 available)
+  flutter_secure_storage_platform_interface 1.1.2 (2.0.1 available)
+  flutter_secure_storage_web 1.2.1 (2.1.1 available)
+  flutter_secure_storage_windows 3.1.2 (4.2.1 available)
+  flutter_svg 2.2.4 (2.3.0 available)
+  geolocator 13.0.4 (14.0.2 available)
+  geolocator_android 4.6.2 (5.0.2 available)
+  google_fonts 6.3.3 (8.1.0 available)
+  hooks 1.0.2 (2.0.0 available)
+  image_cropper 8.1.0 (12.2.1 available)
+  image_cropper_for_web 6.1.0 (7.0.0 available)
+  image_cropper_platform_interface 7.2.0 (8.0.0 available)
+  image_picker 1.2.1 (1.2.2 available)
+  image_picker_android 0.8.13+15 (0.8.13+17 available)
+  js 0.6.7 (0.7.2 available)
+  json_annotation 4.11.0 (4.12.0 available)
+  json_serializable 6.13.0 (6.14.0 available)
+  lints 5.1.1 (6.1.0 available)
+  local_auth 2.3.0 (3.0.1 available)
+  local_auth_android 1.0.56 (2.0.8 available)
+  local_auth_darwin 1.6.1 (2.0.3 available)
+  local_auth_windows 1.0.11 (2.0.1 available)
+  lottie 3.3.2 (3.3.3 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  native_toolchain_c 0.17.6 (0.19.0 available)
+  package_info_plus 9.0.1 (10.1.0 available)
+  package_info_plus_platform_interface 3.2.1 (4.1.0 available)
+  path_provider_android 2.2.23 (2.3.1 available)
+  qr 3.0.2 (4.0.0 available)
+  saropa_lints 9.10.0 (13.9.1 available)
+  sentry 8.14.2 (9.20.0 available)
+  sentry_flutter 8.14.2 (9.20.0 available)
+  share_plus 12.0.2 (13.1.0 available)
+  share_plus_platform_interface 6.1.0 (7.1.0 available)
+  sqflite 2.4.2 (2.4.2+1 available)
+  sqflite_common 2.5.6 (2.5.8 available)
+  synchronized 3.4.0 (3.4.0+1 available)
+  test_api 0.7.10 (0.7.12 available)
+  timezone 0.10.1 (0.11.0 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_graphics 1.1.21 (1.2.2 available)
+  vector_graphics_compiler 1.2.0 (1.2.3 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.0.2 (15.2.0 available)
+  win32 5.15.0 (6.2.0 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies!
+73 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleDebug'...                             19.3s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...        2,504ms
+D/FlutterRenderer(22191): Width is zero. 0,0
+D/FlutterGeolocator(22191): Creating service.
+D/FlutterGeolocator(22191): Binding to location service.
+D/FlutterRenderer(22191): Width is zero. 0,0
+D/FlutterJNI(22191): Sending viewport metrics to the engine.
+I/e.voltium_rider(22191): Compiler allocated 5111KB to compile void android.view.ViewRootImpl.performTraversals()
+D/FlutterGeolocator(22191): Geolocator foreground service connected
+D/FlutterGeolocator(22191): Initializing Geolocator services
+D/FlutterGeolocator(22191): Flutter engine connected. Connected engine count 1
+I/Choreographer(22191): Skipped 132 frames!  The application may be doing too much work on its main thread.
+D/WindowLayoutComponentImpl(22191): Register WindowLayoutInfoListener on Context=com.example.voltium_rider.MainActivity@40fb90b, of which baseContext=android.app.ContextImpl@8d43e83
+D/ProfileInstaller(22191): Installing profile for com.example.voltium_rider
+D/FlutterJNI(22191): Sending viewport metrics to the engine.
+VMServiceFlutterDriver: Connecting to Flutter application at http://127.0.0.1:50687/OqTnfJrINO0=/
+VMServiceFlutterDriver: Isolate found with number: 6012653187537351
+VMServiceFlutterDriver: Isolate 6012653187537351 is runnable.
+VMServiceFlutterDriver: Isolate is paused at start.
+VMServiceFlutterDriver: Attempting to resume isolate
+I/flutter (22191): 00:00 +0: Diagnostic – app launches and preamble completes
+VMServiceFlutterDriver: Connected to Flutter application.
+I/Choreographer(22191): Skipped 37 frames!  The application may be doing too much work on its main thread.
+I/Choreographer(22191): Skipped 44 frames!  The application may be doing too much work on its main thread.
+I/HWUI    (22191): Davey! duration=817ms; Flags=1, FrameTimelineVsyncId=1072534, IntendedVsync=45989191462906, Vsync=45989924796210, InputEventId=0, HandleInputStart=45989933426628, AnimationStart=45989933428003, PerformTraversalsStart=45989933428712, DrawStart=45989944626712, FrameDeadline=45989208129572, FrameStartTime=45989929019545, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=45989950136295, SyncStart=45989951583795, IssueDrawCommandsStart=45989954471712, SwapBuffers=45989990761462, FrameCompleted=45990010825045, DequeueBufferDuration=1742875, QueueBufferDuration=2519125, GpuCompleted=45990009011795, SwapBuffersCompleted=45990010825045, DisplayPresentTime=0, CommandSubmissionCompleted=45989990761462, 
+D/InsetsController(22191): hide(ime(), fromIme=false)
+I/ImeTracker(22191): com.example.voltium_rider:1fe9fedf: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+I/flutter (22191): Driver extension already enabled or binding initialized: 'package:flutter/src/foundation/binding.dart': Failed assertion: line 165 pos 7: '_debugInitializedType == null': Binding is already initialized to IntegrationTestWidgetsFlutterBinding
+I/e.voltium_rider(22191): hiddenapi: Accessing hidden field Landroid/view/Choreographer;->mLastFrameTimeNanos:J (runtime_flags=0, domain=platform, api=unsupported) from Lio/sentry/android/core/internal/util/SentryFrameMetricsCollector; (domain=app) using reflection: allowed
+D/nativeloader(22191): Load /system/lib64/liblog.so using class loader ns clns-9 (caller=/data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!classes21.dex): ok
+D/nativeloader(22191): Load /data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!/lib/arm64-v8a/libsentry.so using class loader ns clns-9 (caller=/data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!classes21.dex): ok
+D/nativeloader(22191): Load /data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!/lib/arm64-v8a/libsentry-android.so using class loader ns clns-9 (caller=/data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!classes21.dex): ok
+D/Sentry  (22191): Class not available:androidx.compose.ui.node.Owner
+D/Sentry  (22191): java.lang.ClassNotFoundException: androidx.compose.ui.node.Owner
+D/Sentry  (22191): 	at java.lang.Class.classForName(Native Method)
+D/Sentry  (22191): 	at java.lang.Class.forName(Class.java:597)
+D/Sentry  (22191): 	at java.lang.Class.forName(Class.java:502)
+D/Sentry  (22191): 	at io.sentry.android.core.LoadClass.loadClass(LoadClass.java:21)
+D/Sentry  (22191): 	at io.sentry.android.core.LoadClass.isClassAvailable(LoadClass.java:39)
+D/Sentry  (22191): 	at io.sentry.android.core.LoadClass.isClassAvailable(LoadClass.java:44)
+D/Sentry  (22191): 	at io.sentry.android.core.AndroidOptionsInitializer.initializeIntegrationsAndProcessors(AndroidOptionsInitializer.java:186)
+D/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid.lambda$init$1(SentryAndroid.java:163)
+D/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid$$ExternalSyntheticLambda0.configure(D8$$SyntheticClass:0)
+D/Sentry  (22191): 	at io.sentry.Sentry.applyOptionsConfiguration(Sentry.java:197)
+D/Sentry  (22191): 	at io.sentry.Sentry.init(Sentry.java:167)
+D/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid.init(SentryAndroid.java:93)
+D/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid.init(SentryAndroid.java:76)
+D/Sentry  (22191): 	at io.sentry.flutter.SentryFlutterPlugin.initNativeSdk(SentryFlutterPlugin.kt:152)
+D/Sentry  (22191): 	at io.sentry.flutter.SentryFlutterPlugin.onMethodCall(SentryFlutterPlugin.kt:86)
+D/Sentry  (22191): 	at io.flutter.plugin.common.MethodChannel$IncomingMethodCallHandler.onMessage(MethodChannel.java:267)
+D/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger.invokeHandler(DartMessenger.java:286)
+D/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger.lambda$dispatchMessageToQueue$0$io-flutter-embedding-engine-dart-DartMessenger(DartMessenger.java:313)
+D/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+D/Sentry  (22191): 	at android.os.Handler.handleCallback(Handler.java:995)
+D/Sentry  (22191): 	at android.os.Handler.dispatchMessage(Handler.java:103)
+D/Sentry  (22191): 	at android.os.Looper.loopOnce(Looper.java:248)
+D/Sentry  (22191): 	at android.os.Looper.loop(Looper.java:338)
+D/Sentry  (22191): 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+D/Sentry  (22191): 	at java.lang.reflect.Method.invoke(Native Method)
+D/Sentry  (22191): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+D/Sentry  (22191): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+D/Sentry  (22191): Caused by: java.lang.ClassNotFoundException: Didn't find class "androidx.compose.ui.node.Owner" on path: DexPathList[[zip file "/data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk"],nativeLibraryDirectories=[/data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/lib/arm64, /data/app/~~nmiZRgnR3cf-nR4z-dAeNw==/com.example.voltium_rider-RergJTBxwC0BrpMRYCsu7Q==/base.apk!/lib/arm64-v8a, /system/lib64, /system_ext/lib64]]
+D/Sentry  (22191): 	at dalvik.system.BaseDexClassLoader.findClass(BaseDexClassLoader.java:259)
+D/Sentry  (22191): 	at java.lang.ClassLoader.loadClass(ClassLoader.java:637)
+D/Sentry  (22191): 	at java.lang.ClassLoader.loadClass(ClassLoader.java:573)
+D/Sentry  (22191): 	... 27 more
+I/Sentry  (22191): Initializing SDK with DSN: 'https://example@sentry.io/example'
+W/pool-8-thread-1(22191): type=1400 audit(0.0:678): avc:  denied  { read } for  name="version" dev="proc" ino=4026531998 scontext=u:r:untrusted_app:s0:c8,c257,c512,c768 tcontext=u:object_r:proc_version:s0 tclass=file permissive=0 app=com.example.voltium_rider
+I/Sentry  (22191): sentry-debug-meta.properties file was not found.
+I/Sentry  (22191): java.io.FileNotFoundException: sentry-debug-meta.properties
+I/Sentry  (22191): 	at android.content.res.AssetManager.nativeOpenAsset(Native Method)
+I/Sentry  (22191): 	at android.content.res.AssetManager.open(AssetManager.java:1010)
+I/Sentry  (22191): 	at android.content.res.AssetManager.open(AssetManager.java:987)
+I/Sentry  (22191): 	at io.sentry.android.core.internal.debugmeta.AssetsDebugMetaLoader.loadDebugMeta(AssetsDebugMetaLoader.java:39)
+I/Sentry  (22191): 	at io.sentry.Sentry.initConfigurations(Sentry.java:493)
+I/Sentry  (22191): 	at io.sentry.Sentry.init(Sentry.java:235)
+I/Sentry  (22191): 	at io.sentry.Sentry.init(Sentry.java:168)
+I/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid.init(SentryAndroid.java:93)
+I/Sentry  (22191): 	at io.sentry.android.core.SentryAndroid.init(SentryAndroid.java:76)
+I/Sentry  (22191): 	at io.sentry.flutter.SentryFlutterPlugin.initNativeSdk(SentryFlutterPlugin.kt:152)
+I/Sentry  (22191): 	at io.sentry.flutter.SentryFlutterPlugin.onMethodCall(SentryFlutterPlugin.kt:86)
+I/Sentry  (22191): 	at io.flutter.plugin.common.MethodChannel$IncomingMethodCallHandler.onMessage(MethodChannel.java:267)
+I/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger.invokeHandler(DartMessenger.java:286)
+I/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger.lambda$dispatchMessageToQueue$0$io-flutter-embedding-engine-dart-DartMessenger(DartMessenger.java:313)
+I/Sentry  (22191): 	at io.flutter.embedding.engine.dart.DartMessenger$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+I/Sentry  (22191): 	at android.os.Handler.handleCallback(Handler.java:995)
+I/Sentry  (22191): 	at android.os.Handler.dispatchMessage(Handler.java:103)
+I/Sentry  (22191): 	at android.os.Looper.loopOnce(Looper.java:248)
+I/Sentry  (22191): 	at android.os.Looper.loop(Looper.java:338)
+I/Sentry  (22191): 	at android.app.ActivityThread.main(ActivityThread.java:9067)
+I/Sentry  (22191): 	at java.lang.reflect.Method.invoke(Native Method)
+I/Sentry  (22191): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:593)
+I/Sentry  (22191): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:932)
+I/Sentry  (22191): GlobalHubMode: 'true'
+D/Sentry  (22191): SU isn't found on this Device.
+D/Sentry  (22191): UncaughtExceptionHandlerIntegration enabled: true
+D/Sentry  (22191): default UncaughtExceptionHandler class='com.android.internal.os.RuntimeInit$KillApplicationHandler'
+D/Sentry  (22191): UncaughtExceptionHandlerIntegration installed.
+D/Sentry  (22191): ShutdownHookIntegration installed.
+D/Sentry  (22191): SpotlightIntegration is not enabled. BeforeEnvelopeCallback is already set or spotlight is not enabled.
+D/Sentry  (22191): SendCachedEnvelopeIntegration installed.
+D/Sentry  (22191): NdkIntegration enabled: true
+I/sentry-native(22191): using database path "/data/data/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.sentry-native"
+D/sentry-native(22191): starting backend
+D/sentry-native(22191): using existing signal stack (size: 32768, flags: 0)
+D/sentry-native(22191): processing and pruning old runs
+I/e.voltium_rider(22191): NativeAlloc concurrent mark compact GC freed 3227KB AllocSpace bytes, 21(716KB) LOS objects, 49% free, 3522KB/7045KB, paused 3.062ms,3.151ms total 118.957ms
+D/Sentry  (22191): NdkIntegration installed.
+D/Sentry  (22191): Registering EnvelopeFileObserverIntegration for path: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): SendCachedEnvelopeIntegration installed.
+D/Sentry  (22191): enableSessionTracking enabled: true
+D/Sentry  (22191): enableAppLifecycleBreadcrumbs enabled: true
+D/Sentry  (22191): Started processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): Processing dir. /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+W/Sentry  (22191): Current session is not ended, we'd need to end it.
+D/Sentry  (22191): AppLifecycleIntegration installed.
+D/Sentry  (22191): AnrIntegration enabled: false
+D/Sentry  (22191): ActivityLifecycleIntegration installed.
+D/Sentry  (22191): ActivityBreadcrumbsIntegration enabled: true
+D/Sentry  (22191): ActivityBreadcrumbIntegration installed.
+D/Sentry  (22191): UserInteractionIntegration enabled: true
+D/Sentry  (22191): UserInteractionIntegration installed.
+D/Sentry  (22191): AppComponentsBreadcrumbsIntegration enabled: true
+D/Sentry  (22191): AppComponentsBreadcrumbsIntegration installed.
+D/Sentry  (22191): SystemEventsBreadcrumbsIntegration enabled: true
+D/Sentry  (22191): NetworkBreadcrumbsIntegration enabled: true
+D/Sentry  (22191): Processing 1 items from cache dir /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox is not a File.
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.sentry-native is not a File.
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache is not a File.
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/session.json
+D/Sentry  (22191): File '/data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/session.json' doesn't match extension expected.
+D/Sentry  (22191): SendCachedEnvelopeIntegration installed.
+D/Sentry  (22191): Overwriting session to offline storage: df3d9a40-db92-4c2e-9c3c-f8bfcfa778f8
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"sid": "df3d9a40-db92-4c2e-9c3c-f8bfcfa778f8",
+D/Sentry  (22191): 	"did": "6fe69844-982d-4acc-b229-e6f565ecaf72",
+D/Sentry  (22191): 	"init": true,
+D/Sentry  (22191): 	"started": "2026-05-19T00:06:18.883Z",
+D/Sentry  (22191): 	"status": "ok",
+D/Sentry  (22191): 	"errors": 0,
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:06:18.883Z",
+D/Sentry  (22191): 	"attrs": {
+D/Sentry  (22191): 		"release": "com.example.voltium_rider@1.0.0+1",
+D/Sentry  (22191): 		"environment": "development"
+D/Sentry  (22191): 	}
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"sid": "fc180c65-7445-402e-ae73-5b61ddaa1a2f",
+D/Sentry  (22191): 	"did": "6fe69844-982d-4acc-b229-e6f565ecaf72",
+D/Sentry  (22191): 	"init": true,
+D/Sentry  (22191): 	"started": "2026-05-19T00:08:32.349Z",
+D/Sentry  (22191): 	"status": "ok",
+D/Sentry  (22191): 	"errors": 0,
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:32.349Z",
+D/Sentry  (22191): 	"attrs": {
+D/Sentry  (22191): 		"release": "com.example.voltium_rider@1.0.0+1",
+D/Sentry  (22191): 		"environment": "development"
+D/Sentry  (22191): 	}
+D/Sentry  (22191): }
+D/Sentry  (22191): Overwriting session to offline storage: fc180c65-7445-402e-ae73-5b61ddaa1a2f
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"sid": "fc180c65-7445-402e-ae73-5b61ddaa1a2f",
+D/Sentry  (22191): 	"did": "6fe69844-982d-4acc-b229-e6f565ecaf72",
+D/Sentry  (22191): 	"init": true,
+D/Sentry  (22191): 	"started": "2026-05-19T00:08:32.349Z",
+D/Sentry  (22191): 	"status": "ok",
+D/Sentry  (22191): 	"errors": 0,
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:32.349Z",
+D/Sentry  (22191): 	"attrs": {
+D/Sentry  (22191): 		"release": "com.example.voltium_rider@1.0.0+1",
+D/Sentry  (22191): 		"environment": "development"
+D/Sentry  (22191): 	}
+D/Sentry  (22191): }
+D/Sentry  (22191): Adding Envelope to offline storage: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/b7601d7b-be82-477e-9aae-727030a8d06e.envelope
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.options-cache is not a File.
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/previous_session.json
+D/Sentry  (22191): File '/data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/previous_session.json' doesn't match extension expected.
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/43f1232e-2a0b-49c7-bc66-bf16da997f84.envelope
+D/Sentry  (22191): Captured Envelope is already cached
+D/Sentry  (22191): Envelope enqueued
+D/Sentry  (22191): Request failed, API returned 403
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="vRAB77yWyFilF4eR3fRTVmGNbjlTqzZeCP77Aus9eXNbIyIab6rYLlGg2wq7eA0O">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="diEqEywZvq4rUzXbF8tTWA==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="diEqEywZvq4rUzXbF8tTWA==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="diEqEywZvq4rUzXbF8tTWA==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Attaching client report to envelope.
+I/flutter (22191): Failed to initialize Firebase: PlatformException(java.lang.Exception: Failed to load FirebaseOptions from resource. Check that you have defined values.xml correctly., Exception, Cause: null, Stacktrace: java.lang.Exception: Failed to load FirebaseOptions from resource. Check that you have defined values.xml correctly.
+I/flutter (22191): 	at io.flutter.plugins.firebase.core.FlutterFirebaseCorePlugin.lambda$optionsFromResource$5(FlutterFirebaseCorePlugin.java:222)
+I/flutter (22191): 	at io.flutter.plugins.firebase.core.FlutterFirebaseCorePlugin.$r8$lambda$UKjIMRLnh50mCq5Rg7c5X1_2d5w(Unknown Source:0)
+I/flutter (22191): 	at io.flutter.plugins.firebase.core.FlutterFirebaseCorePlugin$$ExternalSyntheticLambda3.run(D8$$SyntheticClass:0)
+I/flutter (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+I/flutter (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+I/flutter (22191): 	at java.lang.Thread.run(Thread.java:1119)
+I/flutter (22191): , null)
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:33.575Z",
+D/Sentry  (22191): 	"discarded_events": [
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "session",
+D/Sentry  (22191): 			"quantity": 1
+D/Sentry  (22191): 		}
+D/Sentry  (22191): 	]
+D/Sentry  (22191): }
+D/Sentry  (22191): Request failed, API returned 403
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="XjEiphYhHkug9itIF7mo7AwztQvwfmYCcOZu3oGw2uyWSL8jydYu8IXdbfiBPdZm">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="B4lkYOvReiqY84f8Q2s42A==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="B4lkYOvReiqY84f8Q2s42A==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="B4lkYOvReiqY84f8Q2s42A==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Marking envelope submission result: false
+D/Sentry  (22191): Deleted file /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/43f1232e-2a0b-49c7-bc66-bf16da997f84.envelope.
+D/Sentry  (22191): Adding Envelope to offline storage: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/3cff22e1-b86f-4bfb-a6d1-a6180efb8a93.envelope
+D/Sentry  (22191): Finished processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): EnvelopeFileObserverIntegration installed.
+D/Sentry  (22191): Started processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Processing dir. /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Processing 0 items from cache dir /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Finished processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): SendCachedEnvelopeIntegration installed.
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:32.355Z",
+D/Sentry  (22191): 	"type": "navigation",
+D/Sentry  (22191): 	"data": {
+D/Sentry  (22191): 		"state": "foreground"
+D/Sentry  (22191): 	},
+D/Sentry  (22191): 	"category": "app.lifecycle",
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): SystemEventsBreadcrumbsIntegration installed.
+D/Sentry  (22191): NetworkBreadcrumbsIntegration installed.
+D/Sentry  (22191): Serializing object: "com.example.voltium_rider@1.0.0+1"
+D/Sentry  (22191): Deleting proguard-uuid.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.options-cache/proguard-uuid.json
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"name": "sentry.java.android.flutter",
+D/Sentry  (22191): 	"version": "7.22.4",
+D/Sentry  (22191): 	"packages": [
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"name": "maven:io.sentry:sentry",
+D/Sentry  (22191): 			"version": "7.22.4"
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"name": "maven:io.sentry:sentry-android-core",
+D/Sentry  (22191): 			"version": "7.22.4"
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"name": "pub:sentry",
+D/Sentry  (22191): 			"version": "8.14.2"
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"name": "pub:sentry_flutter",
+D/Sentry  (22191): 			"version": "8.14.2"
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"name": "maven:io.sentry:sentry-android-ndk",
+D/Sentry  (22191): 			"version": "7.22.4"
+D/Sentry  (22191): 		}
+D/Sentry  (22191): 	],
+D/Sentry  (22191): 	"integrations": [
+D/Sentry  (22191): 		"isolateErrorIntegration",
+D/Sentry  (22191): 		"widgetsFlutterBindingIntegration",
+D/Sentry  (22191): 		"OnErrorIntegration",
+D/Sentry  (22191): 		"flutterErrorIntegration",
+D/Sentry  (22191): 		"widgetsBindingIntegration",
+D/Sentry  (22191): 		"UncaughtExceptionHandler",
+D/Sentry  (22191): 		"ShutdownHook",
+D/Sentry  (22191): 		"SendCachedEnvelope",
+D/Sentry  (22191): 		"Ndk",
+D/Sentry  (22191): 		"AppLifecycle",
+D/Sentry  (22191): 		"ActivityLifecycle",
+D/Sentry  (22191): 		"ActivityBreadcrumbs",
+D/Sentry  (22191): 		"UserInteraction",
+D/Sentry  (22191): 		"AppComponentsBreadcrumbs",
+D/Sentry  (22191): 		"SystemEventsBreadcrumbs",
+D/Sentry  (22191): 		"NetworkBreadcrumbs"
+D/Sentry  (22191): 	]
+D/Sentry  (22191): }
+D/Sentry  (22191): Deleting dist.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.options-cache/dist.json
+D/Sentry  (22191): Serializing object: "development"
+D/Sentry  (22191): Serializing object: {}
+D/Sentry  (22191): Deleting replay-error-sample-rate.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.options-cache/replay-error-sample-rate.json
+D/Sentry  (22191): Deleting user.json from scope cache
+D/Sentry  (22191): Deleting level.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/level.json
+D/Sentry  (22191): Deleting request.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/request.json
+D/Sentry  (22191): Deleting fingerprint.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/fingerprint.json
+D/Sentry  (22191): Deleting contexts.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/contexts.json
+D/Sentry  (22191): Deleting extras.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/extras.json
+D/Sentry  (22191): Deleting tags.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/tags.json
+D/Sentry  (22191): Deleting trace.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/trace.json
+D/Sentry  (22191): Deleting transaction.json from scope cache
+D/Sentry  (22191): Failed to delete: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache/transaction.json
+W/Sentry  (22191): Current session is not ended, we'd need to end it.
+D/Sentry  (22191): Started processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): Processing dir. /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): Processing 2 items from cache dir /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox is not a File.
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.sentry-native is not a File.
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.scope-cache is not a File.
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/session.json
+D/Sentry  (22191): File '/data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/session.json' doesn't match extension expected.
+D/Sentry  (22191): File /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/.options-cache is not a File.
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/3cff22e1-b86f-4bfb-a6d1-a6180efb8a93.envelope
+D/Sentry  (22191): Captured Envelope is already cached
+D/Sentry  (22191): Envelope enqueued
+D/Sentry  (22191): Request failed, API returned 403
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="lXasiAW9oi8Z263aLo9t926qQs8JLHTpgbpD3J9FmNYQaPzPFwxbfiKL74g06B6d">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="/JF27ur8bH5rqed2X1mflw==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="/JF27ur8bH5rqed2X1mflw==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="/JF27ur8bH5rqed2X1mflw==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Adding Envelope to offline storage: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/2948dabd-b5df-4084-a6ab-ca6dc90e98eb.envelope
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"sid": "df3d9a40-db92-4c2e-9c3c-f8bfcfa778f8",
+D/Sentry  (22191): 	"did": "6fe69844-982d-4acc-b229-e6f565ecaf72",
+D/Sentry  (22191): 	"started": "2026-05-19T00:06:18.883Z",
+D/Sentry  (22191): 	"status": "exited",
+D/Sentry  (22191): 	"seq": 1779149315136,
+D/Sentry  (22191): 	"errors": 0,
+D/Sentry  (22191): 	"duration": 136.253,
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:35.136Z",
+D/Sentry  (22191): 	"attrs": {
+D/Sentry  (22191): 		"release": "com.example.voltium_rider@1.0.0+1",
+D/Sentry  (22191): 		"environment": "development"
+D/Sentry  (22191): 	}
+D/Sentry  (22191): }
+D/Sentry  (22191): Attaching client report to envelope.
+I/flutter (22191): AuthWrapper: Building with state: AuthState.splash
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:36.276Z",
+D/Sentry  (22191): 	"discarded_events": [
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "span",
+D/Sentry  (22191): 			"quantity": 7
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "transaction",
+D/Sentry  (22191): 			"quantity": 1
+D/Sentry  (22191): 		}
+D/Sentry  (22191): 	]
+D/Sentry  (22191): }
+I/flutter (22191): ⏱️ [Performance] Starting trace: AppProvider_Init
+I/flutter (22191): ⏱️ [Performance] Starting trace: RiderProvider_Init
+D/Sentry  (22191): Request failed, API returned 403
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="bBl519TYM1cjYPQaCGnEghGuwUBz5YNnoitbqPcaxKgAjdD4OwBJtAdY9kSYmLgZ">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="+ts03W/R7dvQfqGLcR8acA==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="+ts03W/R7dvQfqGLcR8acA==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="+ts03W/R7dvQfqGLcR8acA==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Attaching client report to envelope.
+I/flutter (22191): ⏱️ [Performance] Starting trace: RiderProvider_RefreshAPI
+I/flutter (22191): AuthWrapper: Building with state: AuthState.splash
+D/FlutterJNI(22191): Sending viewport metrics to the engine.
+I/flutter (22191): --- Current Screen Check ---
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/profile?riderId=test-rider-id&phone=9876543210
+I/flutter (22191): ApiService: Attempt 1...
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:37.565Z",
+D/Sentry  (22191): 	"discarded_events": [
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "session",
+D/Sentry  (22191): 			"quantity": 1
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "span",
+D/Sentry  (22191): 			"quantity": 7
+D/Sentry  (22191): 		},
+D/Sentry  (22191): 		{
+D/Sentry  (22191): 			"reason": "network_error",
+D/Sentry  (22191): 			"category": "transaction",
+D/Sentry  (22191): 			"quantity": 1
+D/Sentry  (22191): 		}
+D/Sentry  (22191): 	]
+D/Sentry  (22191): }
+I/flutter (22191): No known preamble screen found, waiting... (0)
+I/flutter (22191): ApiService: Response status: 200
+D/Sentry  (22191): Request failed, API returned 403
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="nKfAXvuUOfH8YkIOMrRmI5FJY5G5tQHQVn8DNwy9iCMQVUfHMWTFtUpIYSa9zbCn">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="TFAKejKWrt3wNV8t8gF7xQ==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="TFAKejKWrt3wNV8t8gF7xQ==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="TFAKejKWrt3wNV8t8gF7xQ==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Marking envelope submission result: false
+D/Sentry  (22191): Deleted file /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/3cff22e1-b86f-4bfb-a6d1-a6180efb8a93.envelope.
+I/flutter (22191): ⏱️ [Performance] Trace stopped: RiderProvider_RefreshAPI took 1393ms
+I/flutter (22191): ℹ️ [Monitoring] Info: Performance Trace: RiderProvider_RefreshAPI took 1393ms
+D/Sentry  (22191): Processing file: /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/b7601d7b-be82-477e-9aae-727030a8d06e.envelope
+I/flutter (22191): ⏱️ [Performance] Trace stopped: RiderProvider_Init took 1451ms
+I/flutter (22191): ℹ️ [Monitoring] Info: Performance Trace: RiderProvider_Init took 1451ms
+D/Sentry  (22191): Captured Envelope is already cached
+D/Sentry  (22191): Envelope enqueued
+I/e.voltium_rider(22191): Background concurrent mark compact GC freed 2218KB AllocSpace bytes, 50(1528KB) LOS objects, 49% free, 4356KB/8712KB, paused 1.400ms,9.618ms total 88.026ms
+D/flutter/CALL_LOG(22191): onMethodCall
+I/flutter (22191): ApiService GET: http://localhost:8081/api/support/faqs
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): Failed to fetch FAQs: type 'Null' is not a subtype of type 'String' in type cast
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/rewards
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): AuthWrapper: Building with state: AuthState.splash
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/device
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 500
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 500 for 0 attempt(s)
+I/flutter (22191): ApiService: Error Response Body: {"success":false,"error":{"code":"SERVER_ERROR","message":"Failed to fetch device security flags"},"meta":{"timestamp":"2026-05-19T00:08:41.079Z"}}
+I/flutter (22191): ApiService: Retry 1/3 after 500ms
+I/flutter (22191): ℹ️ [Monitoring] Info: API Retry: 1/3 (0:00:00.500000)
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/rewards
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): AuthWrapper: Building with state: AuthState.splash
+I/flutter (22191): No known preamble screen found, waiting... (1)
+I/flutter (22191): ApiService PUT: http://localhost:8081/api/rider/profile
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): ApiService PUT success: http://localhost:8081/api/rider/profile
+I/flutter (22191): DeviceDataService: Permission state synced
+I/flutter (22191): ApiService GET: http://localhost:8081/api/support/tickets
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Attempt 2...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): ApiService: Response status: 500
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 500 for 1 attempt(s)
+I/flutter (22191): ApiService: Error Response Body: {"success":false,"error":{"code":"SERVER_ERROR","message":"Failed to fetch device security flags"},"meta":{"timestamp":"2026-05-19T00:08:41.696Z"}}
+I/flutter (22191): ApiService: Retry 2/3 after 1000ms
+I/flutter (22191): ℹ️ [Monitoring] Info: API Retry: 2/3 (0:00:01.000000)
+I/flutter (22191): ApiService PUT: http://localhost:8081/api/rider/profile
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 403
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 403 for 0 attempt(s)
+I/flutter (22191): ApiService: Error Response Body: {"success":false,"error":{"code":"FORBIDDEN","message":"Cannot update another rider's profile"},"meta":{"timestamp":"2026-05-19T00:08:41.909Z"}}
+I/flutter (22191): DeviceDataService: Failed to sync permission state: ApiException(403, FORBIDDEN): Cannot update another rider's profile
+I/flutter (22191): 🚨 [Monitoring] Error logged: ApiException(403, FORBIDDEN): Cannot update another rider's profile
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/referrals
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/referrals
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): AuthWrapper: Building with state: AuthState.preDashboard
+I/flutter (22191): PreDashboardScreen: currentPlan = null
+D/Sentry  (22191): Request failed, API returned 403
+D/Sentry  (22191): <!DOCTYPE html>
+D/Sentry  (22191): 
+D/Sentry  (22191): <html lang="en">
+D/Sentry  (22191):     <head>
+D/Sentry  (22191):         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+D/Sentry  (22191):         <meta name="robots" content="NONE,NOARCHIVE">
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/6d80581484ebeda151eae112ae64a836/sentry/images/favicon.ico" rel="shortcut icon" type="image/png"/>
+D/Sentry  (22191):         <link href="https://s1.sentry-cdn.com/_static/dist/sentry/entrypoints-hashed/sentry-LiT1nXY1RqsL2TCGky7s0yKLJLyZKroUK65FO9E4Ro8.css" rel="stylesheet" type="text/css" />
+D/Sentry  (22191): 
+D/Sentry  (22191):         <title>CSRF Validation Failed | Sentry</title>
+D/Sentry  (22191): 
+D/Sentry  (22191):         <style>
+D/Sentry  (22191):           body {
+D/Sentry  (22191):             display: flex;
+D/Sentry  (22191):             flex-direction: column;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           main {
+D/Sentry  (22191):             max-width: 800px;
+D/Sentry  (22191):             margin: 0 auto;
+D/Sentry  (22191):           }
+D/Sentry  (22191):           section {
+D/Sentry  (22191):             margin: 36px;
+D/Sentry  (22191):           }
+D/Sentry  (22191): 
+D/Sentry  (22191):           #official-system-status {
+D/Sentry  (22191):             display: block;
+D/Sentry  (22191):             min-height: 1.5em;
+D/Sentry  (22191):             font-weight: 800;
+D/Sentry  (22191):           }
+D/Sentry  (22191):         </style>
+D/Sentry  (22191):     </head>
+D/Sentry  (22191): 
+D/Sentry  (22191):     <body>
+D/Sentry  (22191):         <main>
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h2>CSRF Validation Failed</h2>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>A required security token was not found or was invalid.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <input type="hidden" name="csrfmiddlewaretoken" value="IjcUAolWfmzFudmkTn7ywH8aBpxdbKFJTwBMWvGoSMHWpfyL44JqksnnA570q4DC">
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <div style="margin: 20px 0 40px;">
+D/Sentry  (22191):                     <button id="csrf-rotate-btn" class="btn btn-primary">
+D/Sentry  (22191):                         Rotate the CSRF Token
+D/Sentry  (22191):                     </button>
+D/Sentry  (22191):                     <span id="csrf-status" style="margin-left: 10px;"></span>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>Why are you encountering a CSRF error after login?</p>
+D/Sentry  (22191):                 <ul>
+D/Sentry  (22191):                   <li>See explanation from <a href="https://docs.djangoproject.com/en/5.2/ref/csrf/#why-might-a-user-encounter-a-csrf-validation-failure-after-logging-in" target="_blank">Django docs</a>.</li>
+D/Sentry  (22191):                   <li>Read more about <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF on Wikipedia</a>.</li>
+D/Sentry  (22191):                 </ul>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If you're continually seeing this issue, try the following:</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <ol>
+D/Sentry  (22191):                   <li>Close other tabs with Sentry loaded.</li>
+D/Sentry  (22191):                   <li>Clear cookies (at least for Sentry's domain).</li>
+D/Sentry  (22191):                   <li>Reload the page you're trying to submit (don't re-submit data).</li>
+D/Sentry  (22191):                   <li>Re-enter the information, and submit the form again.</li>
+D/Sentry  (22191):                   <li>Ensure the URL does not contain an extra "/" anywhere (eg: https://foo//saml -> https://foo/saml).</li>
+D/Sentry  (22191):                 </ol>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 
+D/Sentry  (22191):             </section>
+D/Sentry  (22191): 
+D/Sentry  (22191):             <section class="container">
+D/Sentry  (22191):                 <div class="page-header">
+D/Sentry  (22191):                     <h3>System Status</h3>
+D/Sentry  (22191):                 </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p><span id="official-system-status">...</span></p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <p>If our status page says we're up but something is clearly wrong, <a href="mailto:support@sentry.io">let us know</a> what you're seeing.</p>
+D/Sentry  (22191): 
+D/Sentry  (22191):                 <script nonce="yNO4OLgIXRo81qsbBPPkig==" src="https://statuspage-production.s3.amazonaws.com/se.js" type="text/javascript"></script>
+D/Sentry  (22191):                 <script nonce="yNO4OLgIXRo81qsbBPPkig==" type="text/javascript">window.fetchStatusPage({
+D/Sentry  (22191):                     pageId: 't687h3m0nh65',
+D/Sentry  (22191):                     renderTo: '#official-system-status'
+D/Sentry  (22191):                   });</script>
+D/Sentry  (22191):             </div>
+D/Sentry  (22191): 
+D/Sentry  (22191):             
+D/Sentry  (22191): <script nonce="yNO4OLgIXRo81qsbBPPkig==">const status = document.getElementById('csrf-status');
+D/Sentry  (22191):   const button = document.getElementById('csrf-rotate-btn');
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Automatically refresh page to prevent form resubmission
+D/Sentry  (22191):    * Set a short timeout for UX, so user can have a glimpse of the request status
+D/Sentry  (22191):    * before they are forcefully redirected off the page.
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const forceRefreshPage = () => {
+D/Sentry  (22191):     setTimeout(() => {
+D/Sentry  (22191):       // NOTE: window.location.reload(true) does not work on Chrome
+D/Sentry  (22191):       window.location.replace(window.location.href);
+D/Sentry  (22191):     }, 500);
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to logout + delete cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchDeleteLogin = async () => {
+D/Sentry  (22191):     const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+D/Sentry  (22191):     return await fetch('/api/0/auth/?referrer=csrf_error', {
+D/Sentry  (22191):       method: 'DELETE',
+D/Sentry  (22191):       headers: {'X-CSRFToken': csrfToken},
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * API call to rotate CSRF token
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const fetchPutCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     const referrer = isAutoRotate ? 'csrf_error' : 'csrf_error_repeat';
+D/Sentry  (22191):     return await fetch(`/api/0/auth-v2/csrf/?referrer=${referrer}`, {
+D/Sentry  (22191):       method: 'PUT',
+D/Sentry  (22191):       credentials: 'include',
+D/Sentry  (22191):     });
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * onClick handler to rotate CSRF token. If 403 error, there's an existing session,
+D/Sentry  (22191):    * so try to logout to clear cookies
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const rotateCsrf = async (isAutoRotate = false) => {
+D/Sentry  (22191):     button.disabled = true;
+D/Sentry  (22191):     button.textContent = 'Rotating...';
+D/Sentry  (22191):     status.textContent = '';
+D/Sentry  (22191): 
+D/Sentry  (22191):     try {
+D/Sentry  (22191):       const csrfRes = await fetchPutCsrf(isAutoRotate);
+D/Sentry  (22191):       const logoutRes = csrfRes.status == 403 && (await fetchDeleteLogin());
+D/Sentry  (22191):       if (!csrfRes.ok && !logoutRes.ok) {
+D/Sentry  (22191):         throw new Error();
+D/Sentry  (22191):       }
+D/Sentry  (22191): 
+D/Sentry  (22191):       status.textContent = 'Token rotated! Refreshing the page in 1 sec...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       forceRefreshPage();
+D/Sentry  (22191):     } catch (error) {
+D/Sentry  (22191):       status.textContent = 'Failed to rotate token.';
+D/Sentry  (22191):       status.style.color = 'red';
+D/Sentry  (22191):     } finally {
+D/Sentry  (22191):       button.disabled = false;
+D/Sentry  (22191):       button.textContent = 'Rotate CSRF Token';
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Register onClick using JS instead of HTML to guarantee that method exists
+D/Sentry  (22191):    * before it is registered
+D/Sentry  (22191):    */
+D/Sentry  (22191):   button.addEventListener('click', () => rotateCsrf(false));
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * If user has not see this this page in the last 5min (i.e. they are not stuck
+D/Sentry  (22191):    * in a loop), then we invoke rotateCsrf() to try to fix the problem for them
+D/Sentry  (22191):    */
+D/Sentry  (22191):   const autoRotateCsrf = () => {
+D/Sentry  (22191):     const FIVE_MINUTES_MS = 5 * 60 * 1000;
+D/Sentry  (22191): 
+D/Sentry  (22191):     const storedCsrfError = localStorage.getItem('lastCsrfError');
+D/Sentry  (22191):     const lastDate = new Date(storedCsrfError);
+D/Sentry  (22191):     const diffDate = Date.now() - lastDate.getTime();
+D/Sentry  (22191): 
+D/Sentry  (22191):     if (!storedCsrfError || diffDate > FIVE_MINUTES_MS) {
+D/Sentry  (22191):       localStorage.setItem('lastCsrfError', new Date().toISOString());
+D/Sentry  (22191): 
+D/Sentry  (22191):       button.disabled = true;
+D/Sentry  (22191):       status.textContent = 'Automatically rotating tokens...';
+D/Sentry  (22191):       status.style.color = 'green';
+D/Sentry  (22191):       setTimeout(() => rotateCsrf(true), 1500);
+D/Sentry  (22191):     }
+D/Sentry  (22191):   };
+D/Sentry  (22191): 
+D/Sentry  (22191):   /**
+D/Sentry  (22191):    * Attempt to automatically fix the problem
+D/Sentry  (22191):    */
+D/Sentry  (22191):   autoRotateCsrf();</script>
+D/Sentry  (22191): 
+D/Sentry  (22191):           </main>
+D/Sentry  (22191):     </body>
+D/Sentry  (22191): </html>
+D/Sentry  (22191): The transport failed to send the envelope with response code 403
+E/Sentry  (22191): Envelope submission failed
+E/Sentry  (22191): java.lang.IllegalStateException: The transport failed to send the envelope with response code 403
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.flush(AsyncHttpTransport.java:321)
+E/Sentry  (22191): 	at io.sentry.transport.AsyncHttpTransport$EnvelopeSender.run(AsyncHttpTransport.java:244)
+E/Sentry  (22191): 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+E/Sentry  (22191): 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+E/Sentry  (22191): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+E/Sentry  (22191): 	at java.lang.Thread.run(Thread.java:1119)
+D/Sentry  (22191): Marking envelope submission result: false
+D/Sentry  (22191): Deleted file /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/b7601d7b-be82-477e-9aae-727030a8d06e.envelope.
+D/Sentry  (22191): Finished processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"id": "6fe69844-982d-4acc-b229-e6f565ecaf72"
+D/Sentry  (22191): }
+D/Sentry  (22191): Started processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Processing dir. /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Processing 0 items from cache dir /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Finished processing cached files from /data/user/0/com.example.voltium_rider/cache/sentry/a229791a46d4da5f38fc053f48a6368cb2b815e3/outbox
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:35.077Z",
+D/Sentry  (22191): 	"type": "system",
+D/Sentry  (22191): 	"data": {
+D/Sentry  (22191): 		"level": 100.0,
+D/Sentry  (22191): 		"charging": false,
+D/Sentry  (22191): 		"action": "BATTERY_CHANGED"
+D/Sentry  (22191): 	},
+D/Sentry  (22191): 	"category": "device.event",
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:35.116Z",
+D/Sentry  (22191): 	"type": "system",
+D/Sentry  (22191): 	"data": {
+D/Sentry  (22191): 		"action": "NETWORK_AVAILABLE"
+D/Sentry  (22191): 	},
+D/Sentry  (22191): 	"category": "network.event",
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:35.116Z",
+D/Sentry  (22191): 	"type": "system",
+D/Sentry  (22191): 	"data": {
+D/Sentry  (22191): 		"upload_bandwidth": 12000,
+D/Sentry  (22191): 		"action": "NETWORK_CAPABILITIES_CHANGED",
+D/Sentry  (22191): 		"vpn_active": false,
+D/Sentry  (22191): 		"signal_strength": -50,
+D/Sentry  (22191): 		"network_type": "wifi",
+D/Sentry  (22191): 		"download_bandwidth": 30000
+D/Sentry  (22191): 	},
+D/Sentry  (22191): 	"category": "network.event",
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:38.860Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:38.973Z",
+D/Sentry  (22191): 	"message": "Performance Trace: RiderProvider_RefreshAPI took 1393ms",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:38.996Z",
+D/Sentry  (22191): 	"message": "Performance Trace: RiderProvider_Init took 1451ms",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:39.536Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:39.679Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.086Z",
+D/Sentry  (22191): 	"message": "API Response: 500 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.091Z",
+D/Sentry  (22191): 	"message": "API Retry: 1/3 (0:00:00.500000)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.237Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.460Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.631Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.704Z",
+D/Sentry  (22191): 	"message": "API Response: 500 for 1 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.715Z",
+D/Sentry  (22191): 	"message": "API Retry: 2/3 (0:00:01.000000)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:40.898Z",
+D/Sentry  (22191): 	"message": "API Response: 403 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:41.126Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:41.294Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+I/flutter (22191): ApiService: Attempt 3...
+I/flutter (22191): ApiService GET: http://localhost:8081/api/support/faqs
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): Failed to fetch FAQs: type 'Null' is not a subtype of type 'String' in type cast
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:42.548Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+I/flutter (22191): ApiService: Response status: 500
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 500 for 2 attempt(s)
+I/flutter (22191): ApiService: Error Response Body: {"success":false,"error":{"code":"SERVER_ERROR","message":"Failed to fetch device security flags"},"meta":{"timestamp":"2026-05-19T00:08:43.547Z"}}
+I/flutter (22191): ApiService: Max retries reached after 3 attempts
+I/flutter (22191): DevicePolicyProvider: Security flag poll failed: ApiException(500, SERVER_ERROR): Failed to fetch device security flags
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:42.576Z",
+D/Sentry  (22191): 	"message": "API Response: 500 for 2 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+I/e.voltium_rider(22191): Background concurrent mark compact GC freed 1938KB AllocSpace bytes, 80(2528KB) LOS objects, 49% free, 4504KB/9008KB, paused 8.420ms,18.204ms total 145.867ms
+I/flutter (22191): ApiService GET: http://localhost:8081/api/rider/settings
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): ⏱️ [Performance] Trace stopped: AppProvider_Init took 5787ms
+I/flutter (22191): ℹ️ [Monitoring] Info: Performance Trace: AppProvider_Init took 5787ms
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:43.319Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:43.328Z",
+D/Sentry  (22191): 	"message": "Performance Trace: AppProvider_Init took 5787ms",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+I/flutter (22191): AuthWrapper: Building with state: AuthState.preDashboard
+I/flutter (22191): PreDashboardScreen: currentPlan = null
+I/flutter (22191): No known preamble screen found, waiting... (2)
+I/flutter (22191): ApiService POST: http://localhost:8081/api/rider/sync/device-data
+I/flutter (22191): ApiService: Attempt 1...
+I/flutter (22191): ApiService: Response status: 200
+I/flutter (22191): ℹ️ [Monitoring] Info: API Response: 200 for 0 attempt(s)
+I/flutter (22191): DeviceDataService: Location synced
+I/flutter (22191): DeviceDataService: syncAll completed
+D/Sentry  (22191): Serializing object: {
+D/Sentry  (22191): 	"timestamp": "2026-05-19T00:08:44.292Z",
+D/Sentry  (22191): 	"message": "API Response: 200 for 0 attempt(s)",
+D/Sentry  (22191): 	"data": {},
+D/Sentry  (22191): 	"level": "info"
+D/Sentry  (22191): }
+I/flutter (22191): No known preamble screen found, waiting... (3)
+I/flutter (22191): No known preamble screen found, waiting... (4)
+I/flutter (22191): DIAG: phone=false dashboard=false authChoice=false
+I/flutter (22191): ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+I/flutter (22191): The following TestFailure was thrown running a test:
+I/flutter (22191): Expected: true
+I/flutter (22191):   Actual: <false>
+I/flutter (22191): App should reach a valid screen after launch
+I/flutter (22191): 
+I/flutter (22191): When the exception was thrown, this was the stack:
+I/flutter (22191): #4      main.<anonymous closure> (file:///Users/amreenfarooq/Downloads/voltfleet/flutter/integration_test/e2e_individual/00_diagnostic_test.dart:37:5)
+I/flutter (22191): <asynchronous suspension>
+I/flutter (22191): #5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+I/flutter (22191): <asynchronous suspension>
+I/flutter (22191): #6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+I/flutter (22191): <asynchronous suspension>
+I/flutter (22191): #7      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:1437:12)
+I/flutter (22191): <asynchronous suspension>
+I/flutter (22191): 
+I/flutter (22191): This was caught by the test expectation on the following line:
+I/flutter (22191):   file:///Users/amreenfarooq/Downloads/voltfleet/flutter/integration_test/e2e_individual/00_diagnostic_test.dart line 37
+I/flutter (22191): The test description was:
+I/flutter (22191):   Diagnostic – app launches and preamble completes
+I/flutter (22191): ════════════════════════════════════════════════════════════════════════════════════════════════════
+I/flutter (22191): 00:19 +0: Diagnostic – app launches and preamble completes [E]
+I/flutter (22191):   Test failed. See exception logs above.
+I/flutter (22191):   The test description was: Diagnostic – app launches and preamble completes
+I/flutter (22191):   
+I/flutter (22191): 00:19 +0 -1: (tearDownAll)
+Failure Details:
+Failure in method: Diagnostic – app launches and preamble completes
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞═════════════════
+The following TestFailure was thrown running a test:
+Expected: true
+  Actual: <false>
+App should reach a valid screen after launch
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///Users/amreenfarooq/Downloads/voltfleet/flutter/integration_test/e2e_individual/00_diagnostic_test.dart:37:5)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1682:5)
+<asynchronous suspension>
+#7      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:1437:12)
+<asynchronous suspension>
+
+This was caught by the test expectation on the following line:
+  file:///Users/amreenfarooq/Downloads/voltfleet/flutter/integration_test/e2e_individual/00_diagnostic_test.dart line 37
+The test description was:
+  Diagnostic – app launches and preamble completes
+═════════════════════════════════════════════════════════════════
+
+end of failure 1
+
+
+
+I/flutter (22191): 00:20 +1 -1: Some tests failed.
+adb uninstall failed: ProcessException: Process exited abnormally with exit code 1:
+Failure [DELETE_FAILED_DEVICE_POLICY_MANAGER]
+  Command: /Users/amreenfarooq/Library/Android/sdk/platform-tools/adb -s emulator-5554 uninstall com.example.voltium_rider
+Failed to uninstall app

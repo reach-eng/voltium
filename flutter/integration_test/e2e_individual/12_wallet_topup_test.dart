@@ -38,9 +38,9 @@ void main() {
     expect(find.byKey(const Key('customAmountField')), findsOneWidget);
 
     // Back to wallet
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byKey(const Key('backButton')));
     await settle(tester);
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byKey(const Key('backButton')));
     await settle(tester);
 
     // Should be back on wallet

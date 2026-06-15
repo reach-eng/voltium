@@ -7,15 +7,28 @@ import '../helpers/test_helpers.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Support – ticket button is visible', (tester) async {
+  testWidgets('Support – can type in description and raise ticket', (tester) async {
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'supportTab');
 
-    // Ticket button should be visible
-    final hasTicket = find.textContaining('Ticket').evaluate().isNotEmpty ||
-        find.textContaining('Raise').evaluate().isNotEmpty ||
-        find.textContaining('Report').evaluate().isNotEmpty;
+    // Tap on description field
+    final descField = find.byKey(const Key('ticketDescriptionField'));
+    expect(descField, findsOneWidget);
 
-    expect(hasTicket, isTrue, reason: 'Should show ticket option');
+    await tester.tap(descField);
+    await tester.pumpAndSettle();
+
+    // Type in description field
+    await tester.enterText(descField, 'This is a test description');
+    await tester.pumpAndSettle();
+
+    // Verify text is entered
+    expect(find.text('This is a test description'), findsOneWidget);
+
+    // Tap Raise Ticket button
+    final raiseBtn = find.byKey(const Key('raiseTicketButton'));
+    expect(raiseBtn, findsOneWidget);
+    await tester.tap(raiseBtn);
+    await tester.pumpAndSettle(const Duration(seconds: 2));
   });
 }

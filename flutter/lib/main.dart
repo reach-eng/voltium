@@ -26,11 +26,11 @@ import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'theme/app_theme.dart';
-import 'screens/active_dashboard_screen.dart';
-import 'screens/wallet_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/support_center_screen.dart';
-import 'screens/auth_wrapper.dart';
+import 'features/dashboard/presentation/screens/active_dashboard_screen.dart';
+import 'features/wallet/presentation/screens/wallet_screen.dart';
+import 'features/profile/presentation/screens/profile_screen.dart';
+import 'features/support/presentation/screens/support_center_screen.dart';
+import 'app/router.dart';
 import 'widgets/shell_banners.dart';
 import 'widgets/animated_bottom_nav.dart';
 import 'widgets/error_boundary.dart';
@@ -59,8 +59,10 @@ Future<void> main() async {
   };
 
   // ── Custom ErrorWidget Builder (skip in test mode) ─────────────────────────
-  if (!kIsWeb && const String.fromEnvironment('TEST_MODE') != 'true') {
-    ErrorWidget.builder = (FlutterErrorDetails details) {
+  bool _isTestMode = false;
+assert(() { _isTestMode = true; return true; }());
+if (!kIsWeb && !_isTestMode && const String.fromEnvironment('TEST_MODE') != 'true') {
+  ErrorWidget.builder = (FlutterErrorDetails details) {
       AnalyticsService()
           .trackError('ErrorWidget', details.exception.toString());
       return Material(
@@ -210,7 +212,7 @@ class VoltiumApp extends StatelessWidget {
       // ── Home ──────────────────────────────────────────────────────────────
       home: const ErrorBoundary(
         child: OverlayManager(
-          child: AuthWrapper(),
+          child: AppRouter(),
         ),
       ),
       debugShowCheckedModeBanner: false,

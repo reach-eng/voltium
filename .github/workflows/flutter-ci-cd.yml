@@ -5,11 +5,15 @@ on:
     branches: [main, develop]
     paths:
       - 'flutter/**'
+      - 'web/src/contracts/**'
+      - 'web/prisma/**'
       - '.github/workflows/flutter-ci-cd.yml'
   pull_request:
     branches: [main, develop]
     paths:
       - 'flutter/**'
+      - 'web/src/contracts/**'
+      - 'web/prisma/**'
       - '.github/workflows/flutter-ci-cd.yml'
   workflow_dispatch:
     inputs:
@@ -38,12 +42,12 @@ jobs:
         working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -51,10 +55,10 @@ jobs:
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
-      
+
       - name: Get dependencies
         run: flutter pub get
-      
+
       - name: Run Flutter analyze
         run: flutter analyze --no-fatal-infos
 
@@ -67,12 +71,12 @@ jobs:
         working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -80,10 +84,10 @@ jobs:
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
-      
+
       - name: Get dependencies
         run: flutter pub get
-      
+
       - name: Run tests
         run: flutter test
 
@@ -96,12 +100,12 @@ jobs:
         working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -109,13 +113,13 @@ jobs:
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
-      
+
       - name: Get dependencies
         run: flutter pub get
-      
+
       - name: Build APK
         run: flutter build apk --debug
-      
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -220,12 +224,12 @@ jobs:
         working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
-      
+
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
@@ -233,10 +237,10 @@ jobs:
           key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
-      
+
       - name: Get dependencies
         run: flutter pub get
-      
+
       - name: Build Release APK
         run: flutter build apk --release
         env:
@@ -244,7 +248,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      
+
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:

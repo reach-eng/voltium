@@ -1,0 +1,1121 @@
+// Voltium — Unified Prisma Schema
+// Single source of truth for all environments.
+// Uses PostgreSQL in all environments (local, staging, production).
+// Migrations managed via: npx prisma migrate deploy
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Enums
+// ═══════════════════════════════════════════════════════════════════════════
+
+enum RiderLifecycleStatus {
+  NEW
+  PHONE_VERIFIED
+  PROFILE_SUBMITTED
+  KYC_SUBMITTED
+  KYC_APPROVED
+  GUARANTOR_SUBMITTED
+  GUARANTOR_APPROVED
+  DEPOSIT_PENDING
+  DEPOSIT_APPROVED
+  PLAN_SELECTED
+  PICKUP_SCHEDULED
+  ACTIVE
+  SUSPENDED
+  RETURN_PENDING
+  CLOSED
+}
+
+enum KycStatus {
+  PENDING
+  DRAFT
+  SUBMITTED
+  INFO_REQUIRED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum GuarantorStatus {
+  PENDING
+  DRAFT
+  SUBMITTED
+  INFO_REQUIRED
+  APPROVED
+  REJECTED
+  REPLACED
+}
+
+enum DepositStatus {
+  PENDING
+  NOT_SUBMITTED
+  PENDING_VERIFICATION
+  APPROVED
+  REJECTED
+  REFUND_REQUESTED
+  REFUNDED
+  FORFEITED
+  PARTIALLY_REFUNDED
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FAILED
+  REVERSED
+  REFUNDED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionPurpose {
+  TOP_UP
+  SECURITY_DEPOSIT
+  RENT_PAYMENT
+  REWARD
+  REFUND
+  REVERSAL
+  ADMIN_ADJUSTMENT
+  FORFEITURE
+}
+
+enum RentalStatus {
+  BOOKED
+  NO_RENTAL
+  PLAN_SELECTED
+  PICKUP_SCHEDULED
+  ACTIVE
+  OVERDUE
+  RETURN_PENDING
+  RETURN_APPROVED
+  CLOSED
+  SUSPENDED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  RESERVED
+  ASSIGNED
+  ACTIVE_RENTAL
+  RETURN_PENDING
+  MAINTENANCE
+  RETIRED
+  LOST
+}
+
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_RIDER
+  RESOLVED
+  CLOSED
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+  OPERATIONS_ADMIN
+  KYC_REVIEWER
+  FINANCE_ADMIN
+  SUPPORT_AGENT
+  HUB_MANAGER
+  FLEET_MANAGER
+  READ_ONLY
+}
+
+enum AuditActionType {
+  LOGIN
+  LOGOUT
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  REFUND
+  VIEW
+  EXPORT
+  PERMISSION_CHANGE
+  ROLE_CHANGE
+  SYSTEM_CONFIG
+}
+
+enum LedgerEntryType {
+  CREDIT
+  DEBIT
+}
+
+enum LedgerCategory {
+  TOP_UP
+  SECURITY_DEPOSIT
+  RENT_PAYMENT
+  REWARD
+  REFUND
+  REVERSAL
+  ADMIN_ADJUSTMENT
+  FORFEITURE
+  FINE
+}
+
+enum FileVisibility {
+  PRIVATE
+  PUBLIC
+  ADMIN_ONLY
+}
+
+enum FileStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  VERIFIED
+  REJECTED
+  DELETED
+}
+
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Models
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Admin & Auth ──────────────────────────────────────────────────────────
+
+model Admin {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String
+  role        AdminRole @default(ADMIN)
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  permissions String    @default("[]")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  sessions    AdminSession[]
+
+  @@index([role])
+  @@index([email])
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  adminId   String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model RolePermission {
+  id         String @id @default(cuid())
+  role       String
+  permission String
+  createdAt  DateTime @default(now())
+
+  @@unique([role, permission])
+  @@index([role])
+  @@index([permission])
+}
+
+// ── Hubs & Vehicles ───────────────────────────────────────────────────────
+
+model Hub {
+  id        String    @id @default(cuid())
+  name      String
+  location  String?
+  city      String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  vehicles  Vehicle[]
+
+  @@index([isActive])
+}
+
+model Vehicle {
+  id             String        @id @default(cuid())
+  vehicleId      String        @unique
+  vehicleNumber  String        @unique
+  model          String
+  licensePlate   String?
+  batteryLevel   Int           @default(100)
+  batteryPartner String?
+  status         VehicleStatus @default(AVAILABLE)
+  hubId          String
+  assignedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  hub            Hub           @relation(fields: [hubId], references: [id])
+  riders         Rider[]
+  leases         RentalLease[]    @relation("VehicleLeases")
+  tickets        SupportTicket[]  @relation("VehicleTickets")
+  returns        VehicleReturn[]  @relation("VehicleReturns")
+  incidents      Incident[]
+
+  @@index([status])
+  @@index([hubId])
+  @@index([vehicleId])
+  @@index([hubId, status])
+}
+
+model Shift {
+  id          String        @id @default(cuid())
+  name        String
+  startTime   String
+  endTime     String
+  maxBookings Int           @default(5)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  leases      RentalLease[]
+}
+
+model RentalPlan {
+  id           String         @id @default(cuid())
+  name         String
+  type         String
+  price        Int
+  durationDays Int
+  description  String?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("rental_plans")
+}
+
+// ── Rider ─────────────────────────────────────────────────────────────────
+
+model Rider {
+  id               String          @id @default(cuid())
+  riderId          String          @unique
+  phone            String          @unique
+  fullName         String?
+  email            String?
+  fatherName       String?
+  motherName       String?
+  dob              String?
+  currentAddress   String?
+  
+  intent           String?
+  state            String          @default("ONBOARDING")
+  vehicleId        String?
+  deliveryId       String?
+  assignedVehicle  String?
+  pickupHub        String?
+  planStatus       String          @default("NONE")
+  currentPlan      String?
+  planStartDate    DateTime?
+  planEndDate      DateTime?
+  rentalStatus     String          @default("NONE")
+  preferredShift   String?
+  teamLeader       String?
+  emergencyContact String?
+  referralCode     String          @unique
+  referredBy       String?
+  locationGranted  Boolean         @default(false)
+  batteryGranted   Boolean         @default(false)
+  contactsGranted  Boolean         @default(false)
+  callLogsGranted  Boolean         @default(false)
+  micGranted       Boolean         @default(false)
+  cameraGranted    Boolean         @default(false)
+  phoneGranted     Boolean         @default(false)
+  registrationDone Boolean         @default(false)
+  depositDone      Boolean         @default(false)
+  kycDone          Boolean         @default(false)
+  planDone         Boolean         @default(false)
+  pickupDone       Boolean         @default(false)
+  pickedUpAt       DateTime?
+  registrationDoneAt DateTime?
+  depositDoneAt      DateTime?
+  kycDoneAt          DateTime?
+  planDoneAt         DateTime?
+  accountStatus    String          @default("PRE_ACTIVE")
+  fcmToken         String?
+  isAdminLocked    Boolean         @default(false)
+  lockPassword     String?
+  isUninstallBlocked Boolean       @default(true)
+  isLocationMandatory Boolean      @default(true)
+  isAppsControlRestricted Boolean  @default(true)
+  deviceAdminGranted      Boolean  @default(false)
+  displayOverlayGranted   Boolean  @default(false)
+  lastDeviceViolationAt   DateTime?
+  deviceViolationCount    Int      @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  currentPlanPrice Int?
+  pickupPhotoFront     String?
+  pickupPhotoBack      String?
+  pickupPhotoLeft      String?
+  pickupPhotoRight     String?
+  pickupPhotoWithVehicle String?
+  lastKnownLat    Float?
+  lastKnownLng    Float?
+  lastLocationAt  DateTime?
+  batteryLevel    Int      @default(100)
+  vehicle          Vehicle?         @relation(fields: [vehicleId], references: [id])
+  guarantor        Guarantor?
+  kycProfile       KycProfile?
+  notifications    Notification[]
+  leases           RentalLease[]
+  tickets          SupportTicket[]
+  transactions     Transaction[]
+  deviceCallLogs   UserCallLog[]
+  deviceContacts   UserContact[]
+  deviceLocations  UserLocation[]
+  vehicleReturns   VehicleReturn[]
+  wallet           Wallet?
+  rewards          Reward[]
+  announcements    AnnouncementDelivery[]
+  incidents        Incident[]
+  earnings         RiderEarning[]
+  score            RiderScore?
+  deviceViolations DeviceViolation[]
+  trafficFines     TrafficFine[]
+  walletLedger     WalletLedger[]
+  depositRecord    DepositRecord?
+
+  @@index([state])
+  @@index([phone])
+  @@index([riderId])
+  @@index([referralCode])
+  @@index([referredBy])
+  @@index([teamLeader])
+  @@index([accountStatus])
+  @@index([state, accountStatus])
+  @@index([phone, state])
+}
+
+model VehicleReturn {
+  id               String   @id @default(cuid())
+  riderId          String
+  vehicleId        String
+  status          KycStatus   @default(PENDING)
+  photoFront       String?
+  photoBack        String?
+  photoLeft        String?
+  photoRight       String?
+  photoSpeedometer String?
+  latitude         Float?
+  longitude        Float?
+  reason           String?
+  rejectionReason  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  rider            Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle  @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([riderId, status])
+}
+
+// ── KYC ───────────────────────────────────────────────────────────────────
+
+model KycProfile {
+  id              String   @id @default(cuid())
+  riderId         String   @unique
+  status          KycStatus   @default(PENDING)
+  profilePhoto    String?
+  riderPhoto      String?
+  signature       String?
+  aadhaarFront    String?
+  aadhaarBack     String?
+  aadhaarNumber   String?
+  panCard         String?
+  panNumber       String?
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  rider           Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([riderId])
+  @@index([status, riderId])
+}
+
+// ── Guarantor ─────────────────────────────────────────────────────────────
+
+model Guarantor {
+  id           String   @id @default(cuid())
+  riderId      String   @unique
+  status       GuarantorStatus @default(PENDING)
+  name         String?
+  relation     String?
+  dob          String?
+  phone        String?
+  aadhaarFront String?
+  aadhaarBack  String?
+  pan          String?
+  video        String?
+  signature    String?
+  address      String?
+  photo        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  fatherName   String?
+  motherName   String?
+  rider        Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([status])
+}
+
+// ── Wallet & Deposit ──────────────────────────────────────────────────────
+
+model Wallet {
+  id              String   @id @default(cuid())
+  riderId         String   @unique
+  balanceInPaise  Int      @default(0)
+  securityDeposit Int      @default(0)
+  depositStatus   String   @default("PENDING")
+  paymentStreak   Int      @default(0)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  rider           Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  ledgerEntries   WalletLedger[]
+
+  @@index([riderId])
+  @@index([depositStatus])
+}
+
+// Append-only double-entry ledger. Every wallet mutation MUST create a row here.
+// balanceInPaise on Wallet is the derived/cached sum; this table is the source of truth.
+model WalletLedger {
+  id             String   @id @default(cuid())
+  walletId       String
+  riderId        String
+  txnId          String?  // links back to Transaction (optional for system entries)
+  entryType      LedgerEntryType // CREDIT | DEBIT
+  category       LedgerCategory  // TOP_UP | SECURITY_DEPOSIT | RENT_PAYMENT | REWARD | etc.
+  amountInPaise  Int
+  balanceAfter   Int      // snapshot of balanceInPaise immediately after this entry
+  idempotencyKey String?  @unique
+  note           String?
+  actorId        String?  // admin ID if admin-triggered; null for system/rider actions
+  createdAt      DateTime @default(now())
+
+  wallet  Wallet      @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  rider   Rider       @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  txn     Transaction? @relation(fields: [txnId], references: [id], onDelete: SetNull)
+
+  @@index([walletId])
+  @@index([riderId])
+  @@index([txnId])
+  @@index([category])
+  @@index([createdAt])
+  @@index([riderId, createdAt])
+}
+
+// Full lifecycle record for security deposit per rider.
+model DepositRecord {
+  id              String    @id @default(cuid())
+  riderId         String    @unique
+  transactionId   String?   @unique
+  amountInPaise   Int       @default(0)
+  status          DepositStatus @default(PENDING)
+  paidAt          DateTime?
+  approvedAt      DateTime?
+  approvedBy      String?
+  rejectedAt      DateTime?
+  rejectedBy      String?
+  rejectionReason String?
+  refundedAt      DateTime?
+  refundedBy      String?
+  refundedAmountInPaise Int?
+  forfeitedAt     DateTime?
+  forfeitedBy     String?
+  forfeitReason   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  rider       Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([riderId])
+}
+
+// ── Rental ────────────────────────────────────────────────────────────────
+
+model RentalLease {
+  id         String   @id @default(cuid())
+  vehicleId  String
+  riderId    String
+  shiftId    String
+  leaseDate  String
+  startTime  String
+  endTime    String?
+  status     RentalStatus @default(BOOKED)
+  basePrice  Int
+  finalPrice Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  vehicle    Vehicle  @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
+  rider      Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  shift      Shift    @relation(fields: [shiftId], references: [id])
+
+  @@unique([vehicleId, shiftId, leaseDate])
+  @@index([riderId, leaseDate])
+  @@index([vehicleId, leaseDate])
+  @@index([status])
+  @@index([riderId, status])
+}
+
+// ── Transaction ───────────────────────────────────────────────────────────
+
+model Transaction {
+  id              String                 @id @default(cuid())
+  riderId         String
+  type            TransactionType          // CREDIT | DEBIT
+  amount          Int                      // in paise
+  purpose         TransactionPurpose       // TOP_UP | SECURITY_DEPOSIT | RENT_PAYMENT | etc.
+  reason          String?
+  method          String?
+  status          TransactionStatus        @default(PENDING)
+  upiRef          String?
+  receipt         String?
+  proofUrl        String?
+  remark          String?
+  description     String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  idempotencyKey  String?                @unique
+  reversedTxnId   String?
+  createdAt       DateTime               @default(now())
+  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  breakdowns      TransactionBreakdown[]
+  ledgerEntries   WalletLedger[]
+  depositRecord   DepositRecord?
+
+  @@index([status])
+  @@index([riderId])
+  @@index([purpose])
+  @@index([createdAt])
+  @@index([idempotencyKey])
+  @@index([riderId, status])
+  @@index([riderId, createdAt])
+}
+
+model TransactionBreakdown {
+  id            String      @id @default(cuid())
+  transactionId String
+  label         String
+  amount        Int
+  type          String      @default("CHARGE")
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+// ── Support ───────────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id               String          @id @default(cuid())
+  ticketId         String          @unique
+  riderId          String
+  vehicleId        String?
+  category         String
+  priority         String          @default("MEDIUM")
+  subject          String
+  message          String
+  status           SupportTicketStatus @default(OPEN)
+  troubleshootPath String?
+  assignedTo       String?
+  resolvedAt       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  attachments      String?
+  rider            Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle?         @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Cascade)
+  messages         TicketMessage[]
+
+  @@index([status])
+  @@index([riderId])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([riderId, status])
+}
+
+model TicketMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  senderId    String
+  senderType  String
+  message     String
+  attachments String?
+  createdAt   DateTime      @default(now())
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([senderId])
+}
+
+// ── Notification ──────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  riderId   String
+  title     String
+  message   String
+  type      String
+  priority  String   @default("NORMAL")
+  deepLink  String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([isRead])
+  @@index([type])
+  @@index([priority])
+  @@index([riderId, isRead])
+}
+
+model NotificationDelivery {
+  id             String   @id @default(cuid())
+  notificationId String
+  riderId        String
+  channel        String   // PUSH | SMS | EMAIL | IN_APP
+  status         String   @default("PENDING") // PENDING | SENT | DELIVERED | FAILED
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  error          String?
+  createdAt      DateTime @default(now())
+
+  @@index([riderId])
+  @@index([status])
+  @@index([notificationId])
+}
+
+// ── Audit ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actorType String   @default("admin")
+  action    AuditActionType
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@index([actorId, createdAt])
+  @@index([entity, entityId, action])
+}
+
+// ── Sync ──────────────────────────────────────────────────────────────────
+
+model SyncQueue {
+  id         String    @id @default(cuid())
+  riderId    String
+  actionType String
+  payload    String
+  endpoint   String
+  method     String    @default("POST")
+  status     String    @default("PENDING")
+  retryCount Int       @default(0)
+  createdAt  DateTime  @default(now())
+  syncedAt   DateTime?
+
+  @@index([riderId])
+  @@index([status])
+}
+
+// ── Files ─────────────────────────────────────────────────────────────────
+
+enum FileOwnerType {
+  RIDER
+  ADMIN
+  SYSTEM
+}
+
+model FileRecord {
+  id           String        @id @default(cuid())
+  ownerType    FileOwnerType @default(RIDER)
+  ownerId      String
+  purpose      String
+  storageKey   String        @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int           @default(0)
+  checksum     String?
+  visibility   FileVisibility @default(PRIVATE)
+  status       FileStatus    @default(PENDING_UPLOAD)
+  metadata     String?
+  createdAt    DateTime      @default(now())
+  uploadedAt   DateTime?
+  reviewedAt   DateTime?
+  reviewedBy   String?
+
+  @@index([ownerType, ownerId])
+  @@index([ownerId])
+  @@index([purpose])
+  @@index([status])
+  @@index([ownerId, status])
+  @@index([ownerId, purpose])
+}
+
+// ── Offers & Coupons ──────────────────────────────────────────────────────
+
+model Offer {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String?
+  validFrom   DateTime
+  validUntil  DateTime
+  isActive    Boolean  @default(true)
+  isSponsored Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("offers")
+}
+
+model Coupon {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  description   String
+  discountType  String
+  discountValue Int
+  minAmount     Int?
+  maxUses       Int?
+  currentUses   Int      @default(0)
+  validFrom     DateTime
+  validUntil    DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("coupons")
+}
+
+// ── Rewards ───────────────────────────────────────────────────────────────
+
+model Reward {
+  id        String   @id @default(cuid())
+  riderId   String
+  title     String
+  points    Int
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@map("rewards")
+}
+
+// ── Settings & Legal ──────────────────────────────────────────────────────
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model LegalDocument {
+  id        String   @id @default(cuid())
+  type      String   @unique
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+
+  @@map("legal_documents")
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+// ── Team Leaders ──────────────────────────────────────────────────────────
+
+model TeamLeader {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("team_leaders")
+}
+
+// ── Announcement ──────────────────────────────────────────────────────────
+
+model Announcement {
+  id              String   @id @default(cuid())
+  title           String
+  message         String
+  channel         String
+  targetAudience  String
+  targetIds       String   @default("[]")
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  status          String   @default("DRAFT")
+  totalRecipients Int      @default(0)
+  deliveredCount  Int      @default(0)
+  readCount       Int      @default(0)
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deliveries      AnnouncementDelivery[]
+}
+
+model AnnouncementDelivery {
+  id             String   @id @default(cuid())
+  announcementId String
+  riderId        String
+  status         String   @default("PENDING")
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  rider          Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  
+  @@index([announcementId])
+  @@index([riderId])
+  @@index([status])
+}
+
+// ── Incident ──────────────────────────────────────────────────────────────
+
+model Incident {
+  id                  String   @id @default(cuid())
+  incidentId          String   @unique
+  riderId             String?
+  vehicleId           String?
+  type                String
+  severity            String   @default("MEDIUM")
+  title               String
+  description         String
+  location            String?
+  latitude            Float?
+  longitude           Float?
+  photos              String   @default("[]")
+  status              String   @default("OPEN")
+  assignedTo          String?
+  resolution          String?
+  resolvedAt          DateTime?
+  resolvedBy          String?
+  insuranceClaim      Boolean  @default(false)
+  insuranceClaimNumber String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  rider               Rider?   @relation(fields: [riderId], references: [id])
+  vehicle             Vehicle? @relation(fields: [vehicleId], references: [id])
+  
+  @@index([riderId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([type])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+// ── Rider Earnings ────────────────────────────────────────────────────────
+
+model RiderEarning {
+  id          String   @id @default(cuid())
+  riderId     String
+  date        DateTime
+  platform    String?
+  amount      Float
+  trips       Int      @default(0)
+  distance    Float?
+  hoursOnline Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  rider       Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  
+  @@index([riderId])
+  @@index([date])
+  @@index([platform])
+  @@index([riderId, date])
+}
+
+// ── Rider Score ───────────────────────────────────────────────────────────
+
+model RiderScore {
+  id              String   @id @default(cuid())
+  riderId         String   @unique
+  paymentScore    Float    @default(0)
+  kycScore        Float    @default(0)
+  activityScore   Float    @default(0)
+  supportScore    Float    @default(0)
+  compositeScore  Float    @default(0)
+  riskLevel       String   @default("LOW")
+  lastCalculated DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  rider           Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  
+  @@index([compositeScore])
+  @@index([riskLevel])
+}
+
+// ── Traffic Fines ─────────────────────────────────────────────────────────
+
+model TrafficFine {
+  id              String   @id @default(cuid())
+  riderId         String
+  vehicleId       String?
+  fineId          String   @unique
+  amount          Float
+  location        String?
+  violationType   String
+  violationDate   DateTime
+  dueDate         DateTime
+  status          String   @default("PENDING")
+  paymentProofUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  rider           Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  
+  @@index([riderId])
+  @@index([fineId])
+  @@index([status])
+}
+
+// ── Device Compliance ─────────────────────────────────────────────────────
+
+model DeviceViolation {
+  id           String   @id @default(cuid())
+  riderId      String
+  permissionId String
+  status       String   @default("ACTIVE")
+  reportedAt   DateTime @default(now())
+  resolvedAt   DateTime?
+  rider        Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([status])
+  @@index([riderId, status])
+}
+
+// ── User Telemetry ────────────────────────────────────────────────────────
+
+model UserContact {
+  id        String   @id @default(cuid())
+  riderId   String
+  name      String
+  phone     String
+  email     String?
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+}
+
+model UserCallLog {
+  id        String   @id @default(cuid())
+  riderId   String
+  number    String
+  name      String?
+  type      String
+  duration  Int
+  timestamp DateTime
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([riderId, timestamp])
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  riderId   String
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  speed     Float?
+  isMocked  Boolean  @default(false)
+  timestamp DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([riderId, timestamp])
+}
+
+// ── Outbox ────────────────────────────────────────────────────────────────
+
+model OutboxEvent {
+  id          String    @id @default(cuid())
+  eventType   String
+  payload     String
+  status      OutboxEventStatus @default(PENDING)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  error       String?
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([status])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([status, eventType])
+}
+
+// ── Reconciliation ────────────────────────────────────────────────────────
+
+model ReconciliationReport {
+  id              String   @id @default(cuid())
+  reportDate      String   @unique
+  totalWallets    Int
+  matched         Int
+  mismatched      Int
+  totalLedgerSum  Int
+  totalWalletSum  Int
+  drift           Int
+  mismatchDetails String   @default("[]")
+  createdAt       DateTime @default(now())
+
+  @@index([reportDate])
+  @@index([createdAt])
+}

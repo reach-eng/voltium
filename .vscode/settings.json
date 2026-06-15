@@ -1,0 +1,5 @@
+{
+  "saropaLints.enabled": true,
+  "saropaLints.runAnalysisAfterConfigChange": true,
+  "cmake.sourceDirectory": "/Users/amreenfarooq/Downloads/voltfleet/flutter/linux/runner"
+}

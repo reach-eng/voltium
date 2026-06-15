@@ -1,0 +1,1125 @@
+{
+  "audit_metadata": {
+    "timestamp": "2026-05-08T22:38:41.821Z",
+    "flutter_version": "3.41.4",
+    "dart_version": "3.11.1",
+    "total_packages_scanned": 31,
+    "execution_time_ms": 32774
+  },
+  "summary": {
+    "total": 31,
+    "vibrant": 9,
+    "stable": 12,
+    "outdated": 9,
+    "abandoned": 0,
+    "end_of_life": 1
+  },
+  "packages": [
+    {
+      "name": "build_runner",
+      "installed_version": "2.13.1",
+      "latest_version": "2.15.0",
+      "status": "Vibrant",
+      "vibrancy_score": 77.6,
+      "pub_points": 140,
+      "stars": 847,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/build_runner",
+      "repository_url": "https://github.com/dart-lang/build/tree/master/build_runner",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 285967,
+      "bloat_rating": 3,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "cached_network_image",
+      "installed_version": "3.4.1",
+      "latest_version": "3.4.1",
+      "status": "Outdated",
+      "vibrancy_score": 4.1,
+      "pub_points": 150,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/cached_network_image",
+      "repository_url": "https://github.com/Baseflow/flutter_cached_network_image",
+      "license": null,
+      "archive_size_bytes": 292939,
+      "bloat_rating": 3,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/widgets/cached_image.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "confetti",
+      "installed_version": "0.8.0",
+      "latest_version": "0.8.0",
+      "status": "Outdated",
+      "vibrancy_score": 1.5,
+      "pub_points": 160,
+      "stars": 458,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/confetti",
+      "repository_url": "https://github.com/funwithflutter/flutter_confetti/",
+      "license": "MIT",
+      "archive_size_bytes": 485922,
+      "bloat_rating": 3,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/widgets/confetti_celebration.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "connectivity_plus",
+      "installed_version": "6.1.5",
+      "latest_version": "7.1.1",
+      "status": "Vibrant",
+      "vibrancy_score": 72,
+      "pub_points": 160,
+      "stars": 1851,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/connectivity_plus",
+      "repository_url": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/connectivity_plus/connectivity_plus",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 295861,
+      "bloat_rating": 3,
+      "file_usage_count": 2,
+      "file_usages": [
+        {
+          "file_path": "lib/services/connectivity_service.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/widgets/network_status_banner.dart",
+          "line": 3,
+          "import_line": 3
+        }
+      ]
+    },
+    {
+      "name": "fl_chart",
+      "installed_version": "0.70.2",
+      "latest_version": "1.2.0",
+      "status": "Vibrant",
+      "vibrancy_score": 78.2,
+      "pub_points": 160,
+      "stars": 7512,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/fl_chart",
+      "repository_url": "https://github.com/imaNNeo/fl_chart",
+      "license": "MIT",
+      "archive_size_bytes": 20333273,
+      "bloat_rating": 9,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/widgets/charts.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "flutter_launcher_icons",
+      "installed_version": "0.14.4",
+      "latest_version": "0.14.4",
+      "status": "Outdated",
+      "vibrancy_score": 36.4,
+      "pub_points": 160,
+      "stars": 2110,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_launcher_icons",
+      "repository_url": "https://github.com/fluttercommunity/flutter_launcher_icons/",
+      "license": "MIT",
+      "archive_size_bytes": 1276191,
+      "bloat_rating": 5,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "flutter_lints",
+      "installed_version": "5.0.0",
+      "latest_version": "6.0.0",
+      "status": "Stable",
+      "vibrancy_score": 52.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_lints",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/flutter_lints",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 4980,
+      "bloat_rating": 0,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "flutter_local_notifications",
+      "installed_version": "18.0.1",
+      "latest_version": "21.0.0",
+      "status": "Stable",
+      "vibrancy_score": 60.9,
+      "pub_points": 160,
+      "stars": 2653,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_local_notifications",
+      "repository_url": "https://github.com/MaikuB/flutter_local_notifications/tree/master/flutter_local_notifications",
+      "license": null,
+      "archive_size_bytes": 727307,
+      "bloat_rating": 4,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/notification_service.dart",
+          "line": 1,
+          "import_line": 1
+        }
+      ]
+    },
+    {
+      "name": "flutter_native_splash",
+      "installed_version": "2.4.7",
+      "latest_version": "2.4.7",
+      "status": "Stable",
+      "vibrancy_score": 54.8,
+      "pub_points": 160,
+      "stars": 1460,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_native_splash",
+      "repository_url": "https://github.com/jonbhanson/flutter_native_splash",
+      "license": "MIT",
+      "archive_size_bytes": 1139700,
+      "bloat_rating": 5,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "flutter_secure_storage",
+      "installed_version": "9.2.4",
+      "latest_version": "10.1.0",
+      "status": "End of Life",
+      "vibrancy_score": 80.1,
+      "pub_points": 160,
+      "stars": 1266,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_secure_storage",
+      "repository_url": "https://github.com/mogol/flutter_secure_storage/tree/develop/flutter_secure_storage",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 377060,
+      "bloat_rating": 3,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/secure_storage_service.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "flutter_svg",
+      "installed_version": "2.2.4",
+      "latest_version": "2.3.0",
+      "status": "Outdated",
+      "vibrancy_score": 37.5,
+      "pub_points": 0,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/flutter_svg",
+      "repository_url": "https://github.com/flutter/packages/tree/main/third_party/packages/flutter_svg",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 505319,
+      "bloat_rating": 3,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "geolocator",
+      "installed_version": "13.0.4",
+      "latest_version": "14.0.2",
+      "status": "Outdated",
+      "vibrancy_score": 18.5,
+      "pub_points": 160,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/geolocator",
+      "repository_url": "https://github.com/baseflow/flutter-geolocator/tree/main/geolocator",
+      "license": "MIT",
+      "archive_size_bytes": 282308,
+      "bloat_rating": 3,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "google_fonts",
+      "installed_version": "6.3.3",
+      "latest_version": "8.1.0",
+      "status": "Stable",
+      "vibrancy_score": 51.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/google_fonts",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/google_fonts",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 1852300,
+      "bloat_rating": 5,
+      "file_usage_count": 14,
+      "file_usages": [
+        {
+          "file_path": "lib/widgets/animated_bottom_nav.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/theme/app_theme.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/top_up_purpose_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/history_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/top_up_amount_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/otp_verification_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/end_rental_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/tl_details_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/rental_details_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/legal_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/top_up_upi_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/top_up_receipt_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/login_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/vehicle_photos_screen.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "http",
+      "installed_version": "1.6.0",
+      "latest_version": "1.6.0",
+      "status": "Stable",
+      "vibrancy_score": 45.7,
+      "pub_points": 160,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/http",
+      "repository_url": "https://github.com/dart-lang/http/tree/master/pkgs/http",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 46315,
+      "bloat_rating": 0,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/api_service.dart",
+          "line": 5,
+          "import_line": 5
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "installed_version": "4.8.0",
+      "latest_version": "4.8.0",
+      "status": "Stable",
+      "vibrancy_score": 63,
+      "pub_points": 140,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/image",
+      "repository_url": "https://github.com/brendan-duncan/image",
+      "license": null,
+      "archive_size_bytes": 327146,
+      "bloat_rating": 3,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/image_compression_service.dart",
+          "line": 5,
+          "import_line": 5
+        }
+      ]
+    },
+    {
+      "name": "image_cropper",
+      "installed_version": "8.1.0",
+      "latest_version": "12.2.1",
+      "status": "Vibrant",
+      "vibrancy_score": 71.7,
+      "pub_points": 140,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/image_cropper",
+      "repository_url": "https://github.com/hnvn/flutter_image_cropper",
+      "license": null,
+      "archive_size_bytes": 24070256,
+      "bloat_rating": 9,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/image_crop_service.dart",
+          "line": 4,
+          "import_line": 4
+        }
+      ]
+    },
+    {
+      "name": "image_picker",
+      "installed_version": "1.2.1",
+      "latest_version": "1.2.2",
+      "status": "Stable",
+      "vibrancy_score": 49.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/image_picker",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/image_picker/image_picker",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 278627,
+      "bloat_rating": 2,
+      "file_usage_count": 10,
+      "file_usages": [
+        {
+          "file_path": "lib/services/image_compression_service.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/services/image_crop_service.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/support_center_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/guarantor_onboarding_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/user_onboarding_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/active_dashboard_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/pickup_verification_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/end_rental_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/edit_profile_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/top_up_upi_screen.dart",
+          "line": 4,
+          "import_line": 4
+        }
+      ]
+    },
+    {
+      "name": "intl",
+      "installed_version": "0.20.2",
+      "latest_version": "0.20.2",
+      "status": "Outdated",
+      "vibrancy_score": 9.1,
+      "pub_points": 150,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/intl",
+      "repository_url": "https://github.com/dart-lang/i18n/tree/main/pkgs/intl",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 305265,
+      "bloat_rating": 3,
+      "file_usage_count": 4,
+      "file_usages": [
+        {
+          "file_path": "lib/gen/app_localizations_en.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/gen/app_localizations_hi.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/gen/app_localizations.dart",
+          "line": 6,
+          "import_line": 6
+        },
+        {
+          "file_path": "lib/screens/profile_screen.dart",
+          "line": 3,
+          "import_line": 3
+        }
+      ]
+    },
+    {
+      "name": "local_auth",
+      "installed_version": "2.3.0",
+      "latest_version": "3.0.1",
+      "status": "Stable",
+      "vibrancy_score": 52.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/local_auth",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/local_auth/local_auth",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 247265,
+      "bloat_rating": 2,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/biometric_service.dart",
+          "line": 1,
+          "import_line": 1
+        }
+      ]
+    },
+    {
+      "name": "lottie",
+      "installed_version": "3.3.2",
+      "latest_version": "3.3.3",
+      "status": "Vibrant",
+      "vibrancy_score": 74.6,
+      "pub_points": 160,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/lottie",
+      "repository_url": "https://github.com/xvrh/lottie-flutter",
+      "license": "MIT",
+      "archive_size_bytes": 154711,
+      "bloat_rating": 2,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "path_provider",
+      "installed_version": "2.1.5",
+      "latest_version": "2.1.5",
+      "status": "Stable",
+      "vibrancy_score": 51.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/path_provider",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/path_provider/path_provider",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 164271,
+      "bloat_rating": 2,
+      "file_usage_count": 2,
+      "file_usages": [
+        {
+          "file_path": "lib/services/receipt_service.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/user_onboarding_screen.dart",
+          "line": 7,
+          "import_line": 7
+        }
+      ]
+    },
+    {
+      "name": "pdf",
+      "installed_version": "3.12.0",
+      "latest_version": "3.12.0",
+      "status": "Stable",
+      "vibrancy_score": 68.9,
+      "pub_points": 150,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/pdf",
+      "repository_url": "https://github.com/DavBfr/dart_pdf",
+      "license": null,
+      "archive_size_bytes": 382715,
+      "bloat_rating": 3,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/receipt_service.dart",
+          "line": 1,
+          "import_line": 1
+        }
+      ]
+    },
+    {
+      "name": "permission_handler",
+      "installed_version": "12.0.1",
+      "latest_version": "12.0.1",
+      "status": "Outdated",
+      "vibrancy_score": 17.8,
+      "pub_points": 150,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/permission_handler",
+      "repository_url": "https://github.com/baseflow/flutter-permission-handler",
+      "license": "MIT",
+      "archive_size_bytes": 149679,
+      "bloat_rating": 2,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/screens/permissions_screen.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "provider",
+      "installed_version": "6.1.5+1",
+      "latest_version": "6.1.5+1",
+      "status": "Outdated",
+      "vibrancy_score": 28.8,
+      "pub_points": 150,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/provider",
+      "repository_url": "https://github.com/rrousselGit/provider",
+      "license": "MIT",
+      "archive_size_bytes": 9236844,
+      "bloat_rating": 8,
+      "file_usage_count": 34,
+      "file_usages": [
+        {
+          "file_path": "lib/main.dart",
+          "line": 6,
+          "import_line": 6
+        },
+        {
+          "file_path": "lib/widgets/approval_matrix_widget.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/widgets/language_toggle.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/widgets/shell_banners.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/support_center_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/choose_plan_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/guarantor_onboarding_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/emergency_contacts_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/support_checklist_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/user_onboarding_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/intent_of_use_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/app_settings_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/otp_verification_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/active_dashboard_screen.dart",
+          "line": 6,
+          "import_line": 6
+        },
+        {
+          "file_path": "lib/screens/referral_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/auth_wrapper.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/smart_notifications_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/pickup_verification_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/end_rental_screen.dart",
+          "line": 6,
+          "import_line": 6
+        },
+        {
+          "file_path": "lib/screens/tl_details_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/rewards_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/rental_details_screen.dart",
+          "line": 6,
+          "import_line": 6
+        },
+        {
+          "file_path": "lib/screens/wallet_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/emergency_sos_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/edit_profile_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/notification_center_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/top_up_upi_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/pickup_hub_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/faq_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/documents_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/profile_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/vehicle_photos_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/pre_dashboard_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "test/login_screen_test.dart",
+          "line": 4,
+          "import_line": 4
+        }
+      ]
+    },
+    {
+      "name": "saropa_lints",
+      "installed_version": "9.10.0",
+      "latest_version": "13.5.0",
+      "status": "Vibrant",
+      "vibrancy_score": 75.1,
+      "pub_points": 110,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/saropa_lints",
+      "repository_url": "https://github.com/saropa/saropa_lints",
+      "license": "MIT",
+      "archive_size_bytes": 5728474,
+      "bloat_rating": 7,
+      "file_usage_count": 0,
+      "file_usages": []
+    },
+    {
+      "name": "sentry_flutter",
+      "installed_version": "8.14.2",
+      "latest_version": "9.20.0",
+      "status": "Vibrant",
+      "vibrancy_score": 75.9,
+      "pub_points": 140,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/sentry_flutter",
+      "repository_url": "https://github.com/getsentry/sentry-dart",
+      "license": "MIT",
+      "archive_size_bytes": 1805938,
+      "bloat_rating": 5,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/monitoring_service.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "share_plus",
+      "installed_version": "12.0.2",
+      "latest_version": "13.1.0",
+      "status": "Vibrant",
+      "vibrancy_score": 69.7,
+      "pub_points": 150,
+      "stars": 1851,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/share_plus",
+      "repository_url": "https://github.com/fluttercommunity/plus_plugins/tree/main/packages/share_plus/share_plus",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 292773,
+      "bloat_rating": 3,
+      "file_usage_count": 4,
+      "file_usages": [
+        {
+          "file_path": "lib/services/share_service.dart",
+          "line": 1,
+          "import_line": 1
+        },
+        {
+          "file_path": "lib/services/receipt_service.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/active_dashboard_screen.dart",
+          "line": 7,
+          "import_line": 7
+        },
+        {
+          "file_path": "lib/screens/referral_screen.dart",
+          "line": 4,
+          "import_line": 4
+        }
+      ]
+    },
+    {
+      "name": "shared_preferences",
+      "installed_version": "2.5.5",
+      "latest_version": "2.5.5",
+      "status": "Stable",
+      "vibrancy_score": 46.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/shared_preferences",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/shared_preferences/shared_preferences",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 14100667,
+      "bloat_rating": 8,
+      "file_usage_count": 11,
+      "file_usages": [
+        {
+          "file_path": "lib/services/emergency_contacts_service.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/services/referral_service.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/services/cache_service.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/earnings_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/notification_preferences_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/feedback_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/onboarding_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/utils/form_utils.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/providers/notification_provider.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "test/cache_service_test.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "integration_test/helpers/test_helpers.dart",
+          "line": 8,
+          "import_line": 8
+        }
+      ]
+    },
+    {
+      "name": "shimmer",
+      "installed_version": "3.0.0",
+      "latest_version": "3.0.0",
+      "status": "Outdated",
+      "vibrancy_score": 10,
+      "pub_points": 160,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/shimmer",
+      "repository_url": "https://github.com/hnvn/flutter_shimmer",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 1771115,
+      "bloat_rating": 5,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/widgets/shimmer_loading.dart",
+          "line": 2,
+          "import_line": 2
+        }
+      ]
+    },
+    {
+      "name": "sqflite",
+      "installed_version": "2.4.2",
+      "latest_version": "2.4.2+1",
+      "status": "Vibrant",
+      "vibrancy_score": 76.9,
+      "pub_points": 160,
+      "stars": 0,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/sqflite",
+      "repository_url": "https://github.com/tekartik/sqflite/tree/master/sqflite",
+      "license": "BSD-2-Clause",
+      "archive_size_bytes": 48049,
+      "bloat_rating": 0,
+      "file_usage_count": 1,
+      "file_usages": [
+        {
+          "file_path": "lib/services/offline_storage_service.dart",
+          "line": 1,
+          "import_line": 1
+        }
+      ]
+    },
+    {
+      "name": "url_launcher",
+      "installed_version": "6.3.2",
+      "latest_version": "6.3.2",
+      "status": "Stable",
+      "vibrancy_score": 50.5,
+      "pub_points": 160,
+      "stars": 5195,
+      "is_discontinued": false,
+      "is_unlisted": false,
+      "pub_dev_url": "https://pub.dev/packages/url_launcher",
+      "repository_url": "https://github.com/flutter/packages/tree/main/packages/url_launcher/url_launcher",
+      "license": "BSD-3-Clause",
+      "archive_size_bytes": 194701,
+      "bloat_rating": 2,
+      "file_usage_count": 10,
+      "file_usages": [
+        {
+          "file_path": "lib/screens/support_center_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/emergency_contacts_screen.dart",
+          "line": 5,
+          "import_line": 5
+        },
+        {
+          "file_path": "lib/screens/app_settings_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/tl_details_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/troubleshooter_screen.dart",
+          "line": 2,
+          "import_line": 2
+        },
+        {
+          "file_path": "lib/screens/rental_details_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/emergency_sos_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/login_screen.dart",
+          "line": 4,
+          "import_line": 4
+        },
+        {
+          "file_path": "lib/screens/faq_screen.dart",
+          "line": 3,
+          "import_line": 3
+        },
+        {
+          "file_path": "lib/screens/documents_screen.dart",
+          "line": 3,
+          "import_line": 3
+        }
+      ]
+    }
+  ]
+}

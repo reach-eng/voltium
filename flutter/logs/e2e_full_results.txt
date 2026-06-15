@@ -1,0 +1,17 @@
+🚀 Starting Voltium Comprehensive E2E Tests...
+📍 API URL: http://10.0.2.2:8081
+📱 Target Device: emulator-5554
+📦 Building and Installing App...
+Running Gradle task 'assembleDebug'...                             23.6s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Performing Streamed Install
+Success
+🔐 Granting Android permissions...
+Added: com.example.voltfleet_rider
+🏃 Running E2E Test...
+00:00 +0: loading /Users/amreenfarooq/Downloads/voltfleet/flutter/integration_test/comprehensive_e2e_test.dart
+Running Gradle task 'assembleDebug'...                             42.3s
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...          576ms
+./run_e2e.sh: line 62: 54910 Killed: 9               flutter test integration_test/comprehensive_e2e_test.dart --dart-define=API_URL=$API_URL -d $DEVICE_ID
+❌ Tests failed with exit code 137

@@ -9,7 +9,7 @@ plugins {
 }
 
 configure<ApplicationExtension> {
-    namespace = "com.example.voltium_rider"
+    namespace = "in.voltium.rider"
     compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ configure<ApplicationExtension> {
     }
 
     defaultConfig {
-        applicationId = "com.example.voltium_rider"
+        applicationId = "in.voltium.rider"
         minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode

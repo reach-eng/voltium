@@ -1,0 +1,2217 @@
+{
+  "integration_test.dart": {
+    "file": "flutter/test_driver/integration_test.dart",
+    "connections": [
+      "package:integration_test/integration_test_driver.dart"
+    ],
+    "community": 462
+  },
+  "package:integration_test/integration_test_driver.dart": {
+    "file": "flutter/test_driver/integration_test.dart",
+    "connections": [
+      "integration_test.dart"
+    ],
+    "community": 462
+  },
+  "onboarding_flow_test.dart": {
+    "file": "flutter/integration_test/e2e/onboarding_flow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "main": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "error_edge_cases_test.dart"
+    ],
+    "community": 7
+  },
+  "settle": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "waitFor": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "../helpers/test_helpers.dart": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "00_diagnostic_test.dart",
+      "01_splash_screen_test.dart",
+      "02_legal_screen_test.dart",
+      "03_permissions_screen_test.dart",
+      "04_debug_login_test.dart",
+      "04_login_screen_test.dart",
+      "05_otp_verification_test.dart",
+      "06_full_auth_login_test.dart",
+      "07_dashboard_elements_test.dart",
+      "08_dashboard_navigation_test.dart",
+      "09_notifications_test.dart",
+      "10_referral_widget_test.dart",
+      "11_wallet_balance_test.dart",
+      "12_wallet_topup_test.dart",
+      "13_wallet_filters_test.dart",
+      "14_profile_display_test.dart",
+      "15_profile_edit_test.dart",
+      "16_profile_kyc_status_test.dart",
+      "17_otp_resend_test.dart",
+      "18_otp_back_button_test.dart",
+      "19_logout_test.dart",
+      "20_support_screen_test.dart",
+      "21_support_faq_test.dart",
+      "22_support_chat_test.dart",
+      "23_support_ticket_test.dart",
+      "24_settings_screen_test.dart",
+      "25_settings_theme_toggle_test.dart",
+      "26_settings_biometric_toggle_test.dart",
+      "27_missing_vehicle_state_test.dart",
+      "28_offline_indicator_test.dart",
+      "29_empty_referral_test.dart",
+      "30_full_journey_test.dart",
+      "31_error_recovery_test.dart",
+      "32_rental_end_test.dart",
+      "33_onboarding_referral_logout_test.dart",
+      "34_full_onboarding_to_dashboard_test.dart",
+      "34_guarantor_flow_test.dart",
+      "35_admin_approval_wait_test.dart",
+      "35_kyc_notification_test.dart",
+      "36_offline_edge_cases_test.dart",
+      "37_wallet_topup_balance_test.dart",
+      "38_kyc_notification_flow_test.dart",
+      "39_vehicle_return_workflow_test.dart",
+      "40_exhaustive_ui_traversal_test.dart",
+      "41_realtime_onboarding_to_active_dashboard_test.dart",
+      "app_test.dart",
+      "auth_flow_test.dart",
+      "comprehensive_e2e_test.dart",
+      "dashboard_test.dart",
+      "diagnostic_test.dart",
+      "error_edge_cases_test.dart",
+      "full_journey_test.dart",
+      "login_flow_test.dart",
+      "onboarding_flow_test.dart",
+      "phase_2_integration_test.dart",
+      "phase_3_integration_test.dart",
+      "profile_test.dart",
+      "settings_test.dart",
+      "support_smoke_test.dart",
+      "support_test.dart",
+      "wallet_smoke_test.dart",
+      "wallet_test.dart"
+    ],
+    "community": 7
+  },
+  "package:integration_test/integration_test.dart": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "00_diagnostic_test.dart",
+      "01_splash_screen_test.dart",
+      "02_legal_screen_test.dart",
+      "03_permissions_screen_test.dart",
+      "04_debug_login_test.dart",
+      "04_login_screen_test.dart",
+      "05_otp_verification_test.dart",
+      "06_full_auth_login_test.dart",
+      "07_dashboard_elements_test.dart",
+      "08_dashboard_navigation_test.dart",
+      "09_notifications_test.dart",
+      "10_referral_widget_test.dart",
+      "11_wallet_balance_test.dart",
+      "12_wallet_topup_test.dart",
+      "13_wallet_filters_test.dart",
+      "14_profile_display_test.dart",
+      "15_profile_edit_test.dart",
+      "16_profile_kyc_status_test.dart",
+      "17_otp_resend_test.dart",
+      "18_otp_back_button_test.dart",
+      "19_logout_test.dart",
+      "20_support_screen_test.dart",
+      "21_support_faq_test.dart",
+      "22_support_chat_test.dart",
+      "23_support_ticket_test.dart",
+      "24_settings_screen_test.dart",
+      "25_settings_theme_toggle_test.dart",
+      "26_settings_biometric_toggle_test.dart",
+      "27_missing_vehicle_state_test.dart",
+      "28_offline_indicator_test.dart",
+      "29_empty_referral_test.dart",
+      "30_full_journey_test.dart",
+      "31_error_recovery_test.dart",
+      "32_rental_end_test.dart",
+      "33_onboarding_referral_logout_test.dart",
+      "34_full_onboarding_to_dashboard_test.dart",
+      "34_guarantor_flow_test.dart",
+      "35_admin_approval_wait_test.dart",
+      "35_kyc_notification_test.dart",
+      "36_offline_edge_cases_test.dart",
+      "37_wallet_topup_balance_test.dart",
+      "38_kyc_notification_flow_test.dart",
+      "39_vehicle_return_workflow_test.dart",
+      "40_exhaustive_ui_traversal_test.dart",
+      "41_realtime_onboarding_to_active_dashboard_test.dart",
+      "app_test.dart",
+      "auth_flow_test.dart",
+      "comprehensive_e2e_test.dart",
+      "dashboard_test.dart",
+      "diagnostic_test.dart",
+      "error_edge_cases_test.dart",
+      "full_journey_test.dart",
+      "login_flow_test.dart",
+      "onboarding_flow_test.dart",
+      "phase_2_integration_test.dart",
+      "phase_3_integration_test.dart",
+      "profile_test.dart",
+      "settings_test.dart",
+      "support_smoke_test.dart",
+      "support_test.dart",
+      "test_mode_check.dart",
+      "wallet_smoke_test.dart",
+      "wallet_test.dart"
+    ],
+    "community": 7
+  },
+  "package:voltium_rider/main.dart": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "app_test.dart",
+      "auth_flow_test.dart",
+      "comprehensive_e2e_test.dart",
+      "diagnostic_test.dart",
+      "login_flow_test.dart",
+      "onboarding_flow_test.dart",
+      "support_smoke_test.dart",
+      "test_helpers.dart",
+      "test_mode_check.dart",
+      "wallet_smoke_test.dart"
+    ],
+    "community": 17
+  },
+  "package:flutter/cupertino.dart": {
+    "file": "flutter/integration_test/app_test.dart",
+    "connections": [
+      "app_test.dart",
+      "onboarding_flow_test.dart"
+    ],
+    "community": 17
+  },
+  "diagnostic_test.dart": {
+    "file": "flutter/integration_test/diagnostic_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltfleet_rider/main.dart",
+      "package:voltium_rider/main.dart",
+      "settle"
+    ],
+    "community": 17
+  },
+  "phase_3_integration_test.dart": {
+    "file": "flutter/integration_test/phase_3_integration_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/models/rider_model.dart",
+      "package:voltium_rider/services/cache_service.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 173
+  },
+  "fullLoginFlow": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "error_edge_cases_test.dart"
+    ],
+    "community": 7
+  },
+  "navigateToTab": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "error_edge_cases_test.dart"
+    ],
+    "community": 7
+  },
+  "expectOnDashboard": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "error_edge_cases_test.dart"
+    ],
+    "community": 7
+  },
+  "package:voltium_rider/models/rider_model.dart": {
+    "file": "flutter/integration_test/e2e_individual/34_full_onboarding_to_dashboard_test.dart",
+    "connections": [
+      "34_full_onboarding_to_dashboard_test.dart",
+      "35_admin_approval_wait_test.dart",
+      "phase_3_integration_test.dart"
+    ],
+    "community": 173
+  },
+  "app_test.dart": {
+    "file": "flutter/integration_test/app_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/cupertino.dart",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltfleet_rider/main.dart",
+      "package:voltium_rider/main.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 17
+  },
+  "support_smoke_test.dart": {
+    "file": "flutter/integration_test/support_smoke_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart",
+      "settle"
+    ],
+    "community": 17
+  },
+  "wallet_smoke_test.dart": {
+    "file": "flutter/integration_test/wallet_smoke_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart",
+      "settle"
+    ],
+    "community": 17
+  },
+  "test_mode_check.dart": {
+    "file": "flutter/integration_test/test_mode_check.dart",
+    "connections": [
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart"
+    ],
+    "community": 17
+  },
+  "login_flow_test.dart": {
+    "file": "flutter/integration_test/login_flow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeLegalScreen",
+      "completePermissionsScreen",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart",
+      "settle"
+    ],
+    "community": 17
+  },
+  "completeLegalScreen": {
+    "file": "flutter/integration_test/e2e/auth_flow_test.dart",
+    "connections": [
+      "auth_flow_test.dart"
+    ],
+    "community": 17
+  },
+  "completePermissionsScreen": {
+    "file": "flutter/integration_test/e2e/auth_flow_test.dart",
+    "connections": [
+      "auth_flow_test.dart"
+    ],
+    "community": 17
+  },
+  "phase_2_integration_test.dart": {
+    "file": "flutter/integration_test/phase_2_integration_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "CacheService",
+      "completeAuthFlow",
+      "completeOnboardingFlow",
+      "expectOnDashboard",
+      "launchApp",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/services/cache_service.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle",
+      "setupReturningUser",
+      "waitFor"
+    ],
+    "community": 56
+  },
+  "launchApp": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "completeAuthFlow": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "completeOnboardingFlow": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "resetAppState": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "CacheService": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "safeAppMain": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "setupReturningUser": {
+    "file": "flutter/integration_test/e2e_individual/04_debug_login_test.dart",
+    "connections": [
+      "04_debug_login_test.dart"
+    ],
+    "community": 201
+  },
+  "comprehensive_e2e_test.dart": {
+    "file": "flutter/integration_test/comprehensive_e2e_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "log",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart",
+      "settle"
+    ],
+    "community": 17
+  },
+  "log": {
+    "file": "flutter/integration_test/comprehensive_e2e_test.dart",
+    "connections": [
+      "comprehensive_e2e_test.dart"
+    ],
+    "community": 17
+  },
+  "34_guarantor_flow_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/34_guarantor_flow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeAuthFlow",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 863
+  },
+  "handlePreamble": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "14_profile_display_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/14_profile_display_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "17_otp_resend_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/17_otp_resend_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 831
+  },
+  "04_debug_login_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/04_debug_login_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle",
+      "setupReturningUser",
+      "waitFor"
+    ],
+    "community": 201
+  },
+  "22_support_chat_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/22_support_chat_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "12_wallet_topup_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/12_wallet_topup_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/screens/top_up_purpose_screen.dart",
+      "package:voltium_rider/screens/wallet_screen.dart",
+      "settle"
+    ],
+    "community": 239
+  },
+  "package:voltium_rider/screens/wallet_screen.dart": {
+    "file": "flutter/integration_test/e2e_individual/12_wallet_topup_test.dart",
+    "connections": [
+      "12_wallet_topup_test.dart"
+    ],
+    "community": 239
+  },
+  "package:voltium_rider/screens/top_up_purpose_screen.dart": {
+    "file": "flutter/integration_test/e2e_individual/12_wallet_topup_test.dart",
+    "connections": [
+      "12_wallet_topup_test.dart"
+    ],
+    "community": 239
+  },
+  "08_dashboard_navigation_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/08_dashboard_navigation_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 768
+  },
+  "35_admin_approval_wait_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/35_admin_approval_wait_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "getRiderProvider",
+      "goBack",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:provider/provider.dart",
+      "package:voltium_rider/models/rider_model.dart",
+      "package:voltium_rider/providers/rider_provider.dart",
+      "scrollAndTap",
+      "settle",
+      "smartTap",
+      "waitFor"
+    ],
+    "community": 173
+  },
+  "getRiderProvider": {
+    "file": "flutter/integration_test/e2e_individual/34_full_onboarding_to_dashboard_test.dart",
+    "connections": [
+      "34_full_onboarding_to_dashboard_test.dart"
+    ],
+    "community": 173
+  },
+  "smartTap": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "scrollAndTap": {
+    "file": "flutter/integration_test/e2e_individual/37_wallet_topup_balance_test.dart",
+    "connections": [
+      "37_wallet_topup_balance_test.dart"
+    ],
+    "community": 230
+  },
+  "goBack": {
+    "file": "flutter/integration_test/e2e/support_test.dart",
+    "connections": [
+      "support_test.dart"
+    ],
+    "community": 526
+  },
+  "package:voltium_rider/providers/rider_provider.dart": {
+    "file": "flutter/integration_test/e2e_individual/34_full_onboarding_to_dashboard_test.dart",
+    "connections": [
+      "34_full_onboarding_to_dashboard_test.dart",
+      "35_admin_approval_wait_test.dart"
+    ],
+    "community": 173
+  },
+  "03_permissions_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/03_permissions_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "34_full_onboarding_to_dashboard_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/34_full_onboarding_to_dashboard_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "getRiderProvider",
+      "goBack",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:provider/provider.dart",
+      "package:voltium_rider/models/rider_model.dart",
+      "package:voltium_rider/providers/rider_provider.dart",
+      "scrollAndTap",
+      "settle",
+      "smartEnterText",
+      "smartTap",
+      "waitFor"
+    ],
+    "community": 173
+  },
+  "smartEnterText": {
+    "file": "flutter/integration_test/e2e_individual/37_wallet_topup_balance_test.dart",
+    "connections": [
+      "37_wallet_topup_balance_test.dart"
+    ],
+    "community": 230
+  },
+  "21_support_faq_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/21_support_faq_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "20_support_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/20_support_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "28_offline_indicator_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/28_offline_indicator_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 281
+  },
+  "06_full_auth_login_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/06_full_auth_login_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "23_support_ticket_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/23_support_ticket_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 281
+  },
+  "18_otp_back_button_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/18_otp_back_button_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 331
+  },
+  "01_splash_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/01_splash_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle"
+    ],
+    "community": 766
+  },
+  "38_kyc_notification_flow_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/38_kyc_notification_flow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "goBack",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle",
+      "smartTap"
+    ],
+    "community": 185
+  },
+  "39_vehicle_return_workflow_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/39_vehicle_return_workflow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 544
+  },
+  "09_notifications_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/09_notifications_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "goBack",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "25_settings_theme_toggle_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/25_settings_theme_toggle_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "10_referral_widget_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/10_referral_widget_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "33_onboarding_referral_logout_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/33_onboarding_referral_logout_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 769
+  },
+  "31_error_recovery_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/31_error_recovery_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 565
+  },
+  "04_login_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/04_login_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeAuthFlow",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 833
+  },
+  "36_offline_edge_cases_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/36_offline_edge_cases_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeAuthFlow",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "goBack",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "scrollAndTap",
+      "settle",
+      "smartEnterText",
+      "smartTap",
+      "waitFor"
+    ],
+    "community": 144
+  },
+  "30_full_journey_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/30_full_journey_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 281
+  },
+  "13_wallet_filters_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/13_wallet_filters_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 281
+  },
+  "41_realtime_onboarding_to_active_dashboard_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/41_realtime_onboarding_to_active_dashboard_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle"
+    ],
+    "community": 7
+  },
+  "15_profile_edit_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/15_profile_edit_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "goBack",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "00_diagnostic_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/00_diagnostic_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "safeAppMain",
+      "settle",
+      "setupReturningUser"
+    ],
+    "community": 7
+  },
+  "16_profile_kyc_status_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/16_profile_kyc_status_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "35_kyc_notification_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/35_kyc_notification_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 570
+  },
+  "26_settings_biometric_toggle_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/26_settings_biometric_toggle_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "40_exhaustive_ui_traversal_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/40_exhaustive_ui_traversal_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "goBack",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "safeAppMain",
+      "scrollAndTap",
+      "settle",
+      "setupReturningUser",
+      "smartEnterText",
+      "smartTap"
+    ],
+    "community": 180
+  },
+  "05_otp_verification_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/05_otp_verification_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "02_legal_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/02_legal_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "handlePreamble",
+      "launchApp",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "24_settings_screen_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/24_settings_screen_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "07_dashboard_elements_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/07_dashboard_elements_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "19_logout_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/19_logout_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "27_missing_vehicle_state_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/27_missing_vehicle_state_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "11_wallet_balance_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/11_wallet_balance_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "29_empty_referral_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/29_empty_referral_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "32_rental_end_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/32_rental_end_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart"
+    ],
+    "community": 7
+  },
+  "37_wallet_topup_balance_test.dart": {
+    "file": "flutter/integration_test/e2e_individual/37_wallet_topup_balance_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "scrollAndTap",
+      "settle",
+      "smartEnterText",
+      "smartTap"
+    ],
+    "community": 230
+  },
+  "dashboard_test.dart": {
+    "file": "flutter/integration_test/e2e/dashboard_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "Offset",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 199
+  },
+  "Offset": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "settings_test.dart": {
+    "file": "flutter/integration_test/e2e/settings_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "profile_test.dart": {
+    "file": "flutter/integration_test/e2e/profile_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "Key",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 281
+  },
+  "Key": {
+    "file": "flutter/integration_test/e2e/profile_test.dart",
+    "connections": [
+      "profile_test.dart"
+    ],
+    "community": 281
+  },
+  "wallet_test.dart": {
+    "file": "flutter/integration_test/e2e/wallet_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 7
+  },
+  "full_journey_test.dart": {
+    "file": "flutter/integration_test/e2e/full_journey_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeAuthFlow",
+      "completeLegalScreen",
+      "completeOnboardingFlow",
+      "completePermissionsScreen",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "goBack",
+      "launchApp",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 168
+  },
+  "auth_flow_test.dart": {
+    "file": "flutter/integration_test/e2e/auth_flow_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "completeAuthChoiceScreen",
+      "completeAuthFlow",
+      "completeLegalScreen",
+      "completePermissionsScreen",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "package:voltium_rider/main.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle",
+      "waitFor"
+    ],
+    "community": 17
+  },
+  "completeAuthChoiceScreen": {
+    "file": "flutter/integration_test/e2e/auth_flow_test.dart",
+    "connections": [
+      "auth_flow_test.dart"
+    ],
+    "community": 17
+  },
+  "support_test.dart": {
+    "file": "flutter/integration_test/e2e/support_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "fullLoginFlow",
+      "goBack",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle"
+    ],
+    "community": 526
+  },
+  "error_edge_cases_test.dart": {
+    "file": "flutter/integration_test/e2e/error_edge_cases_test.dart",
+    "connections": [
+      "../helpers/test_helpers.dart",
+      "expectOnDashboard",
+      "fullLoginFlow",
+      "main",
+      "navigateToTab",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:integration_test/integration_test.dart",
+      "settle",
+      "waitFor"
+    ],
+    "community": 7
+  },
+  "test_helpers.dart": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "CacheService",
+      "Offset",
+      "TestCredentials",
+      "completeAuthFlow",
+      "completeOnboardingFlow",
+      "expectOnAuthChoice",
+      "expectOnLogin",
+      "handlePreamble",
+      "launchApp",
+      "package:flutter/material.dart",
+      "package:flutter_test/flutter_test.dart",
+      "package:shared_preferences/shared_preferences.dart",
+      "package:voltium_rider/main.dart",
+      "package:voltium_rider/services/api_service.dart",
+      "package:voltium_rider/services/cache_service.dart",
+      "resetAppState",
+      "safeAppMain",
+      "settle",
+      "smartTap",
+      "waitFor"
+    ],
+    "community": 56
+  },
+  "TestCredentials": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "expectOnLogin": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "expectOnAuthChoice": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "package:voltium_rider/services/api_service.dart": {
+    "file": "flutter/integration_test/helpers/test_helpers.dart",
+    "connections": [
+      "test_helpers.dart"
+    ],
+    "community": 56
+  },
+  "dump-html.spec.ts": {
+    "file": "e2e/dump-html.spec.ts",
+    "connections": [],
+    "community": 523
+  },
+  "onboarding-flow.spec.ts": {
+    "file": "e2e/onboarding-flow.spec.ts",
+    "connections": [
+      "bankDetailsBtn",
+      "body",
+      "dummyFile",
+      "fileInputs",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "styles",
+      "submitBtn"
+    ],
+    "community": 564
+  },
+  "body": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "cross-app-extended.spec.ts"
+    ],
+    "community": 75
+  },
+  "styles": {
+    "file": "e2e/onboarding-flow.spec.ts",
+    "connections": [
+      "onboarding-flow.spec.ts"
+    ],
+    "community": 564
+  },
+  "dummyFile": {
+    "file": "e2e/onboarding-flow.spec.ts",
+    "connections": [
+      "onboarding-flow.spec.ts"
+    ],
+    "community": 564
+  },
+  "fileInputs": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "bankDetailsBtn": {
+    "file": "e2e/onboarding-flow.spec.ts",
+    "connections": [
+      "onboarding-flow.spec.ts"
+    ],
+    "community": 564
+  },
+  "submitBtn": {
+    "file": "e2e/transactions-extended.spec.ts",
+    "connections": [
+      "transactions-extended.spec.ts"
+    ],
+    "community": 117
+  },
+  "rent-payment.spec.ts": {
+    "file": "e2e/rent-payment.spec.ts",
+    "connections": [
+      "approveBtn",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "mockProfile",
+      "pendingApprTab",
+      "switchToAdmin()",
+      "topUpBtn"
+    ],
+    "community": 301
+  },
+  "mockProfile": {
+    "file": "e2e/rider-screens.spec.ts",
+    "connections": [
+      "rider-screens.spec.ts"
+    ],
+    "community": 117
+  },
+  "topUpBtn": {
+    "file": "e2e/transactions-flow.spec.ts",
+    "connections": [
+      "transactions-flow.spec.ts"
+    ],
+    "community": 152
+  },
+  "pendingApprTab": {
+    "file": "e2e/wallet-topup.spec.ts",
+    "connections": [
+      "wallet-topup.spec.ts"
+    ],
+    "community": 152
+  },
+  "approveBtn": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "transactions-flow.spec.ts": {
+    "file": "e2e/transactions-flow.spec.ts",
+    "connections": [
+      "bookVehicleBtn",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "store",
+      "topUpBtn"
+    ],
+    "community": 152
+  },
+  "bookVehicleBtn": {
+    "file": "e2e/transactions-flow.spec.ts",
+    "connections": [
+      "transactions-flow.spec.ts"
+    ],
+    "community": 152
+  },
+  "store": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "onboarding-extended.spec.ts": {
+    "file": "e2e/onboarding-extended.spec.ts",
+    "connections": [
+      "continueBtn",
+      "helpers.ts",
+      "loginAsRiderWithSession()"
+    ],
+    "community": 152
+  },
+  "continueBtn": {
+    "file": "e2e/onboarding-extended.spec.ts",
+    "connections": [
+      "onboarding-extended.spec.ts"
+    ],
+    "community": 152
+  },
+  "dashboard-transition.spec.ts": {
+    "file": "e2e/dashboard-transition.spec.ts",
+    "connections": [
+      "buttons",
+      "canvas",
+      "captureBtns",
+      "completeBtn",
+      "currentRider",
+      "helpers.ts",
+      "hideOverlays()",
+      "hubBtn",
+      "loginAsRiderWithSession()",
+      "proceedBtn",
+      "scanBtn",
+      "vehiclePhotoBtn"
+    ],
+    "community": 192
+  },
+  "currentRider": {
+    "file": "e2e/dashboard-transition.spec.ts",
+    "connections": [
+      "dashboard-transition.spec.ts"
+    ],
+    "community": 192
+  },
+  "hubBtn": {
+    "file": "e2e/dashboard-transition.spec.ts",
+    "connections": [
+      "dashboard-transition.spec.ts"
+    ],
+    "community": 192
+  },
+  "scanBtn": {
+    "file": "e2e/pickup-form.spec.ts",
+    "connections": [
+      "pickup-form.spec.ts"
+    ],
+    "community": 152
+  },
+  "proceedBtn": {
+    "file": "e2e/dashboard-transition.spec.ts",
+    "connections": [
+      "dashboard-transition.spec.ts"
+    ],
+    "community": 192
+  },
+  "buttons": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "captureBtns": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "vehiclePhotoBtn": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "canvas": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "completeBtn": {
+    "file": "e2e/dashboard-transition.spec.ts",
+    "connections": [
+      "dashboard-transition.spec.ts"
+    ],
+    "community": 192
+  },
+  "kyc-approval.spec.ts": {
+    "file": "e2e/kyc-approval.spec.ts",
+    "connections": [
+      "confirmBtn",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "switchToAdmin()"
+    ],
+    "community": 128
+  },
+  "confirmBtn": {
+    "file": "e2e/kyc-approval.spec.ts",
+    "connections": [
+      "kyc-approval.spec.ts"
+    ],
+    "community": 128
+  },
+  "support-ticket.spec.ts": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "body",
+      "descTextarea",
+      "helpers.ts",
+      "issueDropdown",
+      "loginAsRiderWithSession()",
+      "raiseBtn",
+      "supportNavBtn",
+      "switchToAdmin()",
+      "tickets"
+    ],
+    "community": 128
+  },
+  "tickets": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "support-ticket.spec.ts"
+    ],
+    "community": 128
+  },
+  "supportNavBtn": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "support-ticket.spec.ts"
+    ],
+    "community": 128
+  },
+  "descTextarea": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "support-ticket.spec.ts"
+    ],
+    "community": 128
+  },
+  "issueDropdown": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "support-ticket.spec.ts"
+    ],
+    "community": 128
+  },
+  "raiseBtn": {
+    "file": "e2e/support-ticket.spec.ts",
+    "connections": [
+      "support-ticket.spec.ts"
+    ],
+    "community": 128
+  },
+  "cross-app-sync.spec.ts": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "body",
+      "getInitialRiderState()",
+      "handleSupportTicket()",
+      "helpers.ts",
+      "hideOverlays()",
+      "loginAsRiderWithSession()",
+      "method",
+      "reinjectRiderState()",
+      "returnCard",
+      "riderContainer()",
+      "riderRow",
+      "selectRiderApp()",
+      "sharedState",
+      "switchToAdmin()"
+    ],
+    "community": 75
+  },
+  "sharedState": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "cross-app-extended.spec.ts"
+    ],
+    "community": 75
+  },
+  "getInitialRiderState()": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "cross-app-sync.spec.ts"
+    ],
+    "community": 75
+  },
+  "method": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "cross-app-sync.spec.ts",
+      "handleSupportTicket()"
+    ],
+    "community": 75
+  },
+  "handleSupportTicket()": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "cross-app-sync.spec.ts",
+      "method"
+    ],
+    "community": 75
+  },
+  "riderRow": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "cross-app-sync.spec.ts"
+    ],
+    "community": 75
+  },
+  "returnCard": {
+    "file": "e2e/cross-app-sync.spec.ts",
+    "connections": [
+      "cross-app-sync.spec.ts"
+    ],
+    "community": 75
+  },
+  "transactions-extended.spec.ts": {
+    "file": "e2e/transactions-extended.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "selectRiderApp()",
+      "store",
+      "submitBtn"
+    ],
+    "community": 117
+  },
+  "wallet-topup.spec.ts": {
+    "file": "e2e/wallet-topup.spec.ts",
+    "connections": [
+      "approveBtn",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "pendingApprTab",
+      "row",
+      "switchToAdmin()"
+    ],
+    "community": 152
+  },
+  "row": {
+    "file": "e2e/wallet-topup.spec.ts",
+    "connections": [
+      "wallet-topup.spec.ts"
+    ],
+    "community": 152
+  },
+  "vehicle-onboarding.spec.ts": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "btn",
+      "buttons",
+      "canvas",
+      "captureBtns",
+      "fileInput",
+      "helpers.ts",
+      "inspectionDummyFile",
+      "loginAsRiderWithSession()",
+      "selfieBtn",
+      "subscribBtn",
+      "vehicleInput",
+      "vehiclePhotoBtn"
+    ],
+    "community": 179
+  },
+  "subscribBtn": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "vehicleInput": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "inspectionDummyFile": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "fileInput": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "btn": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "selfieBtn": {
+    "file": "e2e/vehicle-onboarding.spec.ts",
+    "connections": [
+      "vehicle-onboarding.spec.ts"
+    ],
+    "community": 179
+  },
+  "security-deposit.spec.ts": {
+    "file": "e2e/security-deposit.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "securityDepositCard",
+      "switchToAdmin()"
+    ],
+    "community": 128
+  },
+  "securityDepositCard": {
+    "file": "e2e/security-deposit.spec.ts",
+    "connections": [
+      "security-deposit.spec.ts"
+    ],
+    "community": 128
+  },
+  "edit-profile.spec.ts": {
+    "file": "e2e/edit-profile.spec.ts",
+    "connections": [
+      "currentProfile",
+      "helpers.ts",
+      "selectRiderApp()",
+      "sessionData"
+    ],
+    "community": 117
+  },
+  "currentProfile": {
+    "file": "e2e/edit-profile.spec.ts",
+    "connections": [
+      "edit-profile.spec.ts"
+    ],
+    "community": 117
+  },
+  "sessionData": {
+    "file": "e2e/rewards.spec.ts",
+    "connections": [
+      "rewards.spec.ts"
+    ],
+    "community": 117
+  },
+  "auth-flow.spec.ts": {
+    "file": "e2e/auth-flow.spec.ts",
+    "connections": [],
+    "community": 524
+  },
+  "production-onboarding.spec.ts": {
+    "file": "e2e/production-onboarding.spec.ts",
+    "connections": [
+      "guarantorData",
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "store",
+      "userData"
+    ],
+    "community": 321
+  },
+  "userData": {
+    "file": "e2e/production-onboarding.spec.ts",
+    "connections": [
+      "production-onboarding.spec.ts"
+    ],
+    "community": 321
+  },
+  "guarantorData": {
+    "file": "e2e/production-onboarding.spec.ts",
+    "connections": [
+      "production-onboarding.spec.ts"
+    ],
+    "community": 321
+  },
+  "admin-live.spec.ts": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "dashboard",
+      "deviceTab",
+      "eyeBtn",
+      "liveGpsBtn",
+      "loginBtn",
+      "pingIndicator",
+      "timeoutArm"
+    ],
+    "community": 227
+  },
+  "dashboard": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "loginBtn": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "pingIndicator": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "timeoutArm": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "eyeBtn": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "deviceTab": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "liveGpsBtn": {
+    "file": "e2e/admin-live.spec.ts",
+    "connections": [
+      "admin-live.spec.ts"
+    ],
+    "community": 227
+  },
+  "rider-features.spec.ts": {
+    "file": "e2e/rider-features.spec.ts",
+    "connections": [
+      "anyTextarea",
+      "helpers.ts",
+      "hideOverlays()",
+      "mockProfile",
+      "reasonInput",
+      "restoreRiderSession()",
+      "sosBtn"
+    ],
+    "community": 745
+  },
+  "reasonInput": {
+    "file": "e2e/rider-features.spec.ts",
+    "connections": [
+      "rider-features.spec.ts"
+    ],
+    "community": 745
+  },
+  "anyTextarea": {
+    "file": "e2e/rider-features.spec.ts",
+    "connections": [
+      "rider-features.spec.ts"
+    ],
+    "community": 745
+  },
+  "sosBtn": {
+    "file": "e2e/rider-features.spec.ts",
+    "connections": [
+      "rider-features.spec.ts"
+    ],
+    "community": 745
+  },
+  "admin-crud.spec.ts": {
+    "file": "e2e/admin-crud.spec.ts",
+    "connections": [
+      "gotoAdminPanel()",
+      "helpers.ts",
+      "settingsBtn"
+    ],
+    "community": 117
+  },
+  "settingsBtn": {
+    "file": "e2e/admin-crud.spec.ts",
+    "connections": [
+      "admin-crud.spec.ts"
+    ],
+    "community": 117
+  },
+  "end-rental.spec.ts": {
+    "file": "e2e/end-rental.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "selectRiderApp()",
+      "sessionData"
+    ],
+    "community": 117
+  },
+  "pickup-form.spec.ts": {
+    "file": "e2e/pickup-form.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "scanBtn",
+      "vehicleText"
+    ],
+    "community": 152
+  },
+  "vehicleText": {
+    "file": "e2e/pickup-form.spec.ts",
+    "connections": [
+      "pickup-form.spec.ts"
+    ],
+    "community": 152
+  },
+  "cross-app-extended.spec.ts": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "body",
+      "getInitialRider()",
+      "helpers.ts",
+      "hideOverlays()",
+      "reinjectRiderState()",
+      "restoreRider()",
+      "riderContainer()",
+      "selectRiderApp()",
+      "sharedState",
+      "switchToAdmin()",
+      "tx"
+    ],
+    "community": 75
+  },
+  "getInitialRider()": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "cross-app-extended.spec.ts"
+    ],
+    "community": 75
+  },
+  "tx": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "cross-app-extended.spec.ts"
+    ],
+    "community": 75
+  },
+  "restoreRider()": {
+    "file": "e2e/cross-app-extended.spec.ts",
+    "connections": [
+      "cross-app-extended.spec.ts",
+      "hideOverlays()",
+      "selectRiderApp()"
+    ],
+    "community": 75
+  },
+  "rider-screens.spec.ts": {
+    "file": "e2e/rider-screens.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "loginAsRider()",
+      "mockProfile",
+      "restoreRiderSession()",
+      "selectRiderApp()"
+    ],
+    "community": 117
+  },
+  "referrals.spec.ts": {
+    "file": "e2e/referrals.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "loginAsRiderWithSession()",
+      "switchToAdmin()",
+      "table"
+    ],
+    "community": 128
+  },
+  "table": {
+    "file": "e2e/referrals.spec.ts",
+    "connections": [
+      "referrals.spec.ts"
+    ],
+    "community": 128
+  },
+  "rewards.spec.ts": {
+    "file": "e2e/rewards.spec.ts",
+    "connections": [
+      "helpers.ts",
+      "selectRiderApp()",
+      "sessionData"
+    ],
+    "community": 117
+  },
+  "admin-flow.spec.ts": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "approveBtn",
+      "dialog",
+      "gotoAdminPanel()",
+      "helpers.ts",
+      "kycBtn",
+      "kycRow",
+      "pendingRow",
+      "pendingTab",
+      "pendingTxTab",
+      "txBtn"
+    ],
+    "community": 143
+  },
+  "kycBtn": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "pendingTab": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "kycRow": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "txBtn": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "pendingTxTab": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "pendingRow": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "dialog": {
+    "file": "e2e/admin-flow.spec.ts",
+    "connections": [
+      "admin-flow.spec.ts"
+    ],
+    "community": 143
+  },
+  "edge-cases.spec.ts": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "fileInputs",
+      "helpers.ts",
+      "loginAsRider()",
+      "loginAsRiderWithSession()",
+      "otpInput",
+      "returnBtn",
+      "riderBtn",
+      "session",
+      "store"
+    ],
+    "community": 238
+  },
+  "riderBtn": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "returnBtn": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "otpInput": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "session": {
+    "file": "e2e/edge-cases.spec.ts",
+    "connections": [
+      "edge-cases.spec.ts"
+    ],
+    "community": 238
+  },
+  "package:voltfleet_rider/main.dart": {
+    "file": "flutter/integration_test/app_test.dart",
+    "connections": [
+      "app_test.dart",
+      "diagnostic_test.dart"
+    ],
+    "community": 17
+  }
+}

@@ -16,7 +16,7 @@ class OfflineStorageService {
     if (_initialized) return;
     final dbPath = await getDatabasesPath();
     _db = await openDatabase(
-      join(dbPath, 'voltium_offline.db'),
+      join(dbPath, 'volt_offline.db'),
       version: 1,
       onCreate: _onCreate,
     );

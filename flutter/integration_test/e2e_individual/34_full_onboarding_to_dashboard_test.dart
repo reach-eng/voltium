@@ -190,6 +190,9 @@ void main() {
       kycStatus: KycStatus.VERIFIED,
       kycDone: true,
       depositDone: true,
+      currentPlan: '',
+      planDone: false,
+      pickupDone: false,
     ));
     await settle(tester);
     // Allow preDashboard to rebuild with new state
@@ -342,17 +345,10 @@ void main() {
         await tester.pump(const Duration(seconds: 1));
         await settle(tester);
       }
-    } else {
-      print('Phase 6b: Hub cards not loaded (401) — navigating back');
+      print('Phase 6b: Hub cards not loaded (401) — skipping manual pickup');
     }
 
-    // Go back to preDashboard regardless
-    await goBack(tester);
-    await settle(tester);
-    await tester.pump(const Duration(seconds: 1));
-    await settle(tester);
-
-    // Set pickupDone = true to reach dashboard
+    // Set pickupDone = true to reach dashboard directly from PickupHubScreen
     final rp3 = getRiderProvider(tester);
     rp3.updateRider((rp3.rider ?? currentRider).copyWith(
       pickupDone: true,

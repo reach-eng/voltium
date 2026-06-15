@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_admin_description">Enables Voltium to secure this device for vehicle rental compliance, including remote lock and safety wipes.</string>
+</resources>
