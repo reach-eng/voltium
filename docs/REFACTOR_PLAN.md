@@ -490,8 +490,8 @@ Permission denied events
 | Env | Database | Storage | Credentials |
 |-----|----------|---------|-------------|
 | local | SQLite/PostgreSQL | Local | Dev keys |
-| staging | PostgreSQL | GCS bucket | Test keys |
-| production | PostgreSQL | GCS bucket | Live keys |
+| staging | PostgreSQL | Local | Test keys |
+| production | PostgreSQL | Local | Live keys |
 
 ### CI/CD Gates
 

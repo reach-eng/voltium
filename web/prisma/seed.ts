@@ -30,7 +30,7 @@ async function main() {
       email: 'admin@voltium.in',
       password: hashedAdminPw,
       name: 'Rajesh Kumar',
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       isActive: true,
     },
   });
@@ -42,7 +42,7 @@ async function main() {
       email: 'ops@voltium.in',
       password: hashedAdminPw,
       name: 'Priya Singh',
-      role: 'ADMIN',
+      role: 'OPERATIONS_ADMIN',
       isActive: true,
     },
   });

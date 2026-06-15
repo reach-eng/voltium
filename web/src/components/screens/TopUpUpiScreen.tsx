@@ -11,15 +11,15 @@ import {
   X,
   CheckCircle2,
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload';
 import { useAppStore } from '@/store/app';
 import { useTransactions } from '@/hooks/useRiderData';
-import { useRiderSession } from '@/store/riderSession';
 
 export default function TopUpUpiScreen() {
   const setScreen = useAppStore((s) => s.setScreen);
   const goBack = useAppStore((s) => s.goBack);
   const topUpState = useAppStore((s) => s.topUpState);
-  const { riderId } = useRiderSession();
+
   const { requestTopUp, isRequesting } = useTransactions();
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,22 +43,9 @@ export default function TopUpUpiScreen() {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'TOPUP_PROOF');
 
       try {
-        const uploadUrl = riderId ? `/api/upload?riderId=${riderId}` : '/api/upload';
-        const res = await fetch(uploadUrl, {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload failed');
-
-        const url = data.data?.url;
-        if (!url) throw new Error('Upload failed: no URL returned');
-
+        const url = await uploadFile(file, 'TOPUP_PROOF');
         setScreenshot(url);
         useAppStore.getState().showToast('Photo uploaded successfully');
       } catch (err: any) {

@@ -15,9 +15,9 @@ Voltium is an electric vehicle rental and fleet management platform with three p
 | Admin Panel | Next.js App Router (React, Tailwind, shadcn/ui)       | Fleet operations command center |
 | API Layer   | Next.js API routes → Use-cases → Repositories → Prisma | Backend services               |
 
-**Database**: Prisma ORM → PostgreSQL (all environments via managed service)
+**Database**: Prisma ORM → PostgreSQL (local PostgreSQL on laptop)
 
-> **Note**: Voltium does not use Docker. All services use managed infrastructure or native Node.js process commands.
+> **Note**: Voltium does not use Docker. All services run as native Node.js processes on a local workstation. Cloudflare Tunnel is used only for public routing — no app data is stored in the cloud.
 
 ---
 
@@ -220,9 +220,9 @@ Outbox pattern guarantees at-least-once delivery for important events.
 
 | Environment | Infrastructure                                              | URL                           |
 |-------------|-------------------------------------------------------------|-------------------------------|
-| Local       | Managed PostgreSQL + Next.js dev server + Node worker       | `http://localhost:8081`       |
-| Staging     | Managed PG + Web service + Worker service (Render/Railway)  | `https://staging.voltium.app` |
-| Production  | Managed PG + Web service + Worker service + Caddy/Reverse proxy | `https://voltium.example.com` |
+| Local       | Local PostgreSQL + Next.js dev server + Node worker         | `http://localhost:8081`       |
+| Staging     | Local PostgreSQL + PM2 (web + worker) + Cloudflare Tunnel   | `https://staging.voltium.app` |
+| Production  | Local PostgreSQL + PM2 (web + worker) + Cloudflare Tunnel   | `https://voltium.example.com` |
 
 CI/CD: GitHub Actions with lint → typecheck → build → test → deploy gates.
 

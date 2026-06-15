@@ -264,7 +264,7 @@ export default function OfferManagement() {
       setCouponForm({
         code: '',
         description: '',
-        discountType: 'percentage',
+        discountType: 'PERCENTAGE',
         discountValue: '',
         minAmount: '',
         maxUses: '',
@@ -536,7 +536,7 @@ export default function OfferManagement() {
                         <TableCell className="max-w-[200px] truncate">{c.description}</TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {c.discountType === 'percentage'
+                            {c.discountType === 'PERCENTAGE'
                               ? `${c.discountValue}%`
                               : `₹${c.discountValue}`}
                           </Badge>
@@ -685,8 +685,8 @@ export default function OfferManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    <SelectItem value="fixed">Fixed (₹)</SelectItem>
+                    <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
+                    <SelectItem value="FIXED">Fixed (₹)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 export const syncDeviceStateSchema = z.object({
   riderId: z.string(),
-  permissions: z.record(z.boolean()),
+  permissions: z.record(z.string(), z.boolean()),
 });
 
 export const reportViolationSchema = z.object({

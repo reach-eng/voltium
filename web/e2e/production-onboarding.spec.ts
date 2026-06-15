@@ -55,11 +55,24 @@ test.describe('Production Onboarding Flow Walkthrough', () => {
         }),
       });
     });
-    await page.route('**/api/upload', async (route) => {
+    await page.route('**/api/files/request-upload', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { url: 'https://example.com/dummy.png' } }),
+        body: JSON.stringify({
+          success: true,
+          data: { uploadUrl: '/api/files/direct-upload?key=test-key', fileRecordId: 'rec-1', storageKey: 'test-key' },
+        }),
+      });
+    });
+    await page.route('**/api/files/direct-upload*', async (route) => {
+      await route.fulfill({ status: 200, body: JSON.stringify({ status: 'ok' }) });
+    });
+    await page.route('**/api/files/confirm-upload', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { status: 'uploaded' } }),
       });
     });
     await page.route('**/api/rider/guarantor', async (route) => {

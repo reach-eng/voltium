@@ -17,6 +17,7 @@ export interface SignedUrlResponse {
   uploadUrl: string;
   fileRecordId: string;
   storageKey: string;
+  uploadToken: string;
   expiresIn: number;
 }
 

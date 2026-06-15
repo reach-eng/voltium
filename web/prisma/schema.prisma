@@ -44,6 +44,14 @@ enum KycStatus {
   EXPIRED
 }
 
+enum VehicleReturnStatus {
+  SUBMITTED
+  INSPECTION_PENDING
+  APPROVED
+  REJECTED
+  CLOSED
+}
+
 enum GuarantorStatus {
   PENDING
   DRAFT
@@ -124,7 +132,6 @@ enum SupportTicketStatus {
 }
 
 enum AdminRole {
-  ADMIN
   SUPER_ADMIN
   OPERATIONS_ADMIN
   KYC_REVIEWER
@@ -132,6 +139,7 @@ enum AdminRole {
   SUPPORT_AGENT
   HUB_MANAGER
   FLEET_MANAGER
+  TEAM_LEADER
   READ_ONLY
 }
 
@@ -189,6 +197,187 @@ enum OutboxEventStatus {
   FAILED
 }
 
+enum BreakdownType {
+  CHARGE
+  TAX
+  DISCOUNT
+  PENALTY
+  ADJUSTMENT
+
+  @@map("breakdown_type")
+}
+
+enum TicketCategory {
+  TECHNICAL
+  PAYMENT
+  VEHICLE
+  GENERAL
+  TROUBLESHOOTER
+  BATTERY
+
+  @@map("ticket_category")
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("ticket_priority")
+}
+
+enum NotificationType {
+  INFO
+  ALERT
+  PROMOTION
+  PAYMENT
+  VEHICLE
+  SOS
+  SYSTEM
+
+  @@map("notification_type")
+}
+
+enum NotificationPriority {
+  NORMAL
+  LOW
+  HIGH
+  CRITICAL
+
+  @@map("notification_priority")
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+
+  @@map("notification_delivery_status")
+}
+
+enum ActorType {
+  ADMIN
+  SYSTEM
+  RIDER
+
+  @@map("actor_type")
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+
+  @@map("http_method")
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCING
+  COMPLETED
+  FAILED
+
+  @@map("sync_status")
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+  ARCHIVED
+
+  @@map("announcement_status")
+}
+
+enum AnnouncementDeliveryStatus {
+  PENDING
+  DELIVERED
+  READ
+  FAILED
+
+  @@map("announcement_delivery_status")
+}
+
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("incident_severity")
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  CLOSED
+
+  @@map("incident_status")
+}
+
+enum IncidentType {
+  ACCIDENT
+  THEFT
+  DAMAGE
+  BREAKDOWN
+  OTHER
+
+  @@map("incident_type")
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("risk_level")
+}
+
+enum FineStatus {
+  PENDING
+  PAID
+  DISPUTED
+  OVERDUE
+  WAIVED
+
+  @@map("fine_status")
+}
+
+enum ViolationStatus {
+  ACTIVE
+  RESOLVED
+
+  @@map("violation_status")
+}
+
+enum RentalPlanType {
+  DAILY
+  WEEKLY
+  MONTHLY
+
+  @@map("rental_plan_type")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+
+  @@map("discount_type")
+}
+
+enum SenderType {
+  RIDER
+  ADMIN
+
+  @@map("sender_type")
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Models
 // ═══════════════════════════════════════════════════════════════════════════
@@ -200,13 +389,14 @@ model Admin {
   email       String    @unique
   password    String
   name        String
-  role        AdminRole @default(ADMIN)
+  role        AdminRole @default(OPERATIONS_ADMIN)
   isActive    Boolean   @default(true)
   lastLoginAt DateTime?
   permissions String    @default("[]")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   sessions    AdminSession[]
+  backupJobs  BackupJob[]
 
   @@index([role])
   @@index([email])
@@ -292,7 +482,7 @@ model Shift {
 model RentalPlan {
   id           String         @id @default(cuid())
   name         String
-  type         String
+  type         RentalPlanType
   price        Int
   durationDays Int
   description  String?
@@ -317,16 +507,14 @@ model Rider {
   currentAddress   String?
   
   intent           String?
-  state            String          @default("ONBOARDING")
+  lifecycleStatus  RiderLifecycleStatus @default(NEW)
   vehicleId        String?
   deliveryId       String?
   assignedVehicle  String?
   pickupHub        String?
-  planStatus       String          @default("NONE")
   currentPlan      String?
   planStartDate    DateTime?
   planEndDate      DateTime?
-  rentalStatus     String          @default("NONE")
   preferredShift   String?
   teamLeader       String?
   emergencyContact String?
@@ -339,17 +527,11 @@ model Rider {
   micGranted       Boolean         @default(false)
   cameraGranted    Boolean         @default(false)
   phoneGranted     Boolean         @default(false)
-  registrationDone Boolean         @default(false)
-  depositDone      Boolean         @default(false)
-  kycDone          Boolean         @default(false)
-  planDone         Boolean         @default(false)
-  pickupDone       Boolean         @default(false)
   pickedUpAt       DateTime?
   registrationDoneAt DateTime?
   depositDoneAt      DateTime?
   kycDoneAt          DateTime?
   planDoneAt         DateTime?
-  accountStatus    String          @default("PRE_ACTIVE")
   fcmToken         String?
   isAdminLocked    Boolean         @default(false)
   lockPassword     String?
@@ -394,22 +576,20 @@ model Rider {
   walletLedger     WalletLedger[]
   depositRecord    DepositRecord?
 
-  @@index([state])
+  @@index([lifecycleStatus])
   @@index([phone])
   @@index([riderId])
   @@index([referralCode])
   @@index([referredBy])
   @@index([teamLeader])
-  @@index([accountStatus])
-  @@index([state, accountStatus])
-  @@index([phone, state])
+  @@index([phone, lifecycleStatus])
 }
 
 model VehicleReturn {
   id               String   @id @default(cuid())
   riderId          String
   vehicleId        String
-  status          KycStatus   @default(PENDING)
+  status          VehicleReturnStatus   @default(SUBMITTED)
   photoFront       String?
   photoBack        String?
   photoLeft        String?
@@ -491,7 +671,7 @@ model Wallet {
   riderId         String   @unique
   balanceInPaise  Int      @default(0)
   securityDeposit Int      @default(0)
-  depositStatus   String   @default("PENDING")
+  depositStatus   DepositStatus   @default(NOT_SUBMITTED)
   paymentStreak   Int      @default(0)
   version         Int      @default(1)
   createdAt       DateTime @default(now())
@@ -627,7 +807,7 @@ model TransactionBreakdown {
   transactionId String
   label         String
   amount        Int
-  type          String      @default("CHARGE")
+  type          BreakdownType      @default(CHARGE)
   sortOrder     Int         @default(0)
   createdAt     DateTime    @default(now())
   transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
@@ -640,8 +820,8 @@ model SupportTicket {
   ticketId         String          @unique
   riderId          String
   vehicleId        String?
-  category         String
-  priority         String          @default("MEDIUM")
+  category         TicketCategory
+  priority         TicketPriority          @default(MEDIUM)
   subject          String
   message          String
   status           SupportTicketStatus @default(OPEN)
@@ -666,7 +846,7 @@ model TicketMessage {
   id          String        @id @default(cuid())
   ticketId    String
   senderId    String
-  senderType  String
+  senderType  SenderType
   message     String
   attachments String?
   createdAt   DateTime      @default(now())
@@ -683,8 +863,8 @@ model Notification {
   riderId   String
   title     String
   message   String
-  type      String
-  priority  String   @default("NORMAL")
+  type      NotificationType
+  priority  NotificationPriority   @default(NORMAL)
   deepLink  String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -702,7 +882,7 @@ model NotificationDelivery {
   notificationId String
   riderId        String
   channel        String   // PUSH | SMS | EMAIL | IN_APP
-  status         String   @default("PENDING") // PENDING | SENT | DELIVERED | FAILED
+  status         NotificationDeliveryStatus   @default(PENDING)
   sentAt         DateTime?
   deliveredAt    DateTime?
   error          String?
@@ -718,7 +898,7 @@ model NotificationDelivery {
 model AuditLog {
   id        String   @id @default(cuid())
   actorId   String
-  actorType String   @default("admin")
+  actorType ActorType   @default(ADMIN)
   action    AuditActionType
   entity    String
   entityId  String?
@@ -745,8 +925,8 @@ model SyncQueue {
   actionType String
   payload    String
   endpoint   String
-  method     String    @default("POST")
-  status     String    @default("PENDING")
+  method     HttpMethod    @default(POST)
+  status     SyncStatus    @default(PENDING)
   retryCount Int       @default(0)
   createdAt  DateTime  @default(now())
   syncedAt   DateTime?
@@ -810,7 +990,7 @@ model Coupon {
   id            String   @id @default(cuid())
   code          String   @unique
   description   String
-  discountType  String
+  discountType  DiscountType
   discountValue Int
   minAmount     Int?
   maxUses       Int?
@@ -896,7 +1076,7 @@ model Announcement {
   targetIds       String   @default("[]")
   scheduledAt     DateTime?
   sentAt          DateTime?
-  status          String   @default("DRAFT")
+  status          AnnouncementStatus   @default(DRAFT)
   totalRecipients Int      @default(0)
   deliveredCount  Int      @default(0)
   readCount       Int      @default(0)
@@ -910,7 +1090,7 @@ model AnnouncementDelivery {
   id             String   @id @default(cuid())
   announcementId String
   riderId        String
-  status         String   @default("PENDING")
+  status         AnnouncementDeliveryStatus   @default(PENDING)
   deliveredAt    DateTime?
   readAt         DateTime?
   createdAt      DateTime @default(now())
@@ -929,15 +1109,15 @@ model Incident {
   incidentId          String   @unique
   riderId             String?
   vehicleId           String?
-  type                String
-  severity            String   @default("MEDIUM")
+  type                IncidentType
+  severity            IncidentSeverity   @default(MEDIUM)
   title               String
   description         String
   location            String?
   latitude            Float?
   longitude           Float?
   photos              String   @default("[]")
-  status              String   @default("OPEN")
+  status              IncidentStatus   @default(OPEN)
   assignedTo          String?
   resolution          String?
   resolvedAt          DateTime?
@@ -989,7 +1169,7 @@ model RiderScore {
   activityScore   Float    @default(0)
   supportScore    Float    @default(0)
   compositeScore  Float    @default(0)
-  riskLevel       String   @default("LOW")
+  riskLevel       RiskLevel   @default(LOW)
   lastCalculated DateTime @default(now())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1011,7 +1191,7 @@ model TrafficFine {
   violationType   String
   violationDate   DateTime
   dueDate         DateTime
-  status          String   @default("PENDING")
+  status          FineStatus   @default(PENDING)
   paymentProofUrl String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -1028,7 +1208,7 @@ model DeviceViolation {
   id           String   @id @default(cuid())
   riderId      String
   permissionId String
-  status       String   @default("ACTIVE")
+  status       ViolationStatus   @default(ACTIVE)
   reportedAt   DateTime @default(now())
   resolvedAt   DateTime?
   rider        Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
@@ -1117,5 +1297,83 @@ model ReconciliationReport {
   createdAt       DateTime @default(now())
 
   @@index([reportDate])
+  @@index([createdAt])
+}
+
+// ── Data Management — Backups & Restore ──────────────────────────────────
+
+model BackupSchedule {
+  id                String    @id @default(cuid())
+  enabled           Boolean   @default(true)
+  frequency         String    @default("DAILY")       // DAILY, WEEKLY, MONTHLY
+  timeOfDay         String    @default("02:00")       // HH:mm
+  timezone          String    @default("Asia/Kolkata")
+  dayOfWeek         Int?                              // 0-6, Sunday=0, for weekly
+  dayOfMonth        Int?                              // 1-28, for monthly
+  includeDatabase   Boolean   @default(true)
+  includeUploads    Boolean   @default(true)
+  includeLogs       Boolean   @default(false)
+  primaryBackupRoot String
+  secondaryBackupRoot String?
+  keepDaily         Int       @default(7)
+  keepWeekly        Int       @default(4)
+  keepMonthly       Int       @default(6)
+  keepManual        Int?                              // null = unlimited
+  minimumFreeDiskGb Int       @default(20)
+  lastRunAt         DateTime?
+  nextRunAt         DateTime?
+  lastStatus        String?
+  lastError         String?
+  updatedByAdminId  String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([enabled])
+  @@index([nextRunAt])
+}
+
+model BackupJob {
+  id               String    @id @default(cuid())
+  type             String    // MANUAL, SCHEDULED, PRE_RESTORE
+  scheduleType     String?   // DAILY, WEEKLY, MONTHLY — set when type=SCHEDULED
+  status           String    // QUEUED, RUNNING, COMPLETED, FAILED
+  backupPath       String?
+  databasePath     String?
+  filesPath        String?
+  manifestPath     String?
+  checksumPath     String?
+  sizeBytes        BigInt?
+  fileCount        Int?
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdByAdminId String?
+  createdAt        DateTime  @default(now())
+
+  createdByAdmin   Admin?    @relation(fields: [createdByAdminId], references: [id])
+  restoreJobs      RestoreJob[]
+
+  @@index([status])
+  @@index([type])
+  @@index([scheduleType])
+  @@index([createdAt])
+  @@index([createdByAdminId])
+}
+
+model RestoreJob {
+  id                 String   @id @default(cuid())
+  backupJobId        String
+  status             String   // QUEUED, VALIDATING, READY, RUNNING, COMPLETED, FAILED
+  requestedByAdminId String
+  approvedByAdminId  String?
+  errorMessage       String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime @default(now())
+
+  backupJob          BackupJob @relation(fields: [backupJobId], references: [id])
+
+  @@index([backupJobId])
+  @@index([status])
   @@index([createdAt])
 }

@@ -5,5 +5,6 @@
  * All modules should import from here instead of @/lib/api-error directly.
  */
 
-export { errors } from '@/lib/api-error';
-export type { ApiErrorResponse } from '@/lib/api-response';
+export { ApiError } from '@/lib/api-error';
+export type { ApiResponse } from '@/lib/api-response';
+export { errors } from '@/lib/api-response';

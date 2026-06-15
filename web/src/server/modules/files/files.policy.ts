@@ -15,11 +15,11 @@ export const filePolicy = {
 
     if (actor.role === 'admin') {
       const permissionMap: Record<string, string> = {
-        kyc_document: 'files.view_kyc',
-        profile_photo: 'files.view_kyc',
-        vehicle_photo: 'files.view_kyc',
-        payment_proof: 'files.view_payment_proof',
-        support_attachment: 'files.view_support_attachment',
+        kyc_document: 'files_view_kyc',
+        profile_photo: 'files_view_kyc',
+        vehicle_photo: 'files_view_kyc',
+        payment_proof: 'files_view_payment_proof',
+        support_attachment: 'files_view_support_attachment',
       };
       const required = permissionMap[fileRecord.purpose];
       if (!required) return true;

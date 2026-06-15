@@ -13,11 +13,28 @@ on:
 
 env:
   FLUTTER_VERSION: '3.24.0'
+  DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+  JWT_SECRET: ci-test-secret-key-32-chars-long
 
 jobs:
   smoke-test:
     name: Critical Path Smoke Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -34,10 +51,10 @@ jobs:
       - name: Setup database
         run: |
           npx prisma generate
-          npx prisma db push --accept-data-loss
+          npx prisma migrate deploy
         working-directory: ./web
         env:
-          DATABASE_URL: 'file:./dev.db'
+          DATABASE_URL: ${{ env.DATABASE_URL }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -55,7 +72,6 @@ jobs:
         working-directory: ./web
         env:
           NODE_ENV: development
-          JWT_SECRET: ci-test-secret-key-32-chars-long
           TEST_MODE: true
 
       - name: Run Smoke Tests

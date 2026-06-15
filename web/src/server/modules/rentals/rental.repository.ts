@@ -26,7 +26,7 @@ export const rentalRepository = {
       where: { id: riderDbId },
       select: {
         id: true,
-        rentalStatus: true,
+        lifecycleStatus: true,
         currentPlan: true,
         assignedVehicle: true,
         pickupHub: true,
@@ -39,18 +39,17 @@ export const rentalRepository = {
   async selectPlan(riderDbId: string, planId: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { rentalStatus: true },
+      select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.rentalStatus as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'PLAN_SELECTED');
 
     return db.rider.update({
       where: { id: riderDbId },
       data: {
         currentPlan: planId,
-        planStatus: 'ACTIVE',
-        rentalStatus: 'PLAN_SELECTED',
+        lifecycleStatus: 'PLAN_SELECTED',
       },
     });
   },
@@ -58,16 +57,16 @@ export const rentalRepository = {
   async startRental(riderDbId: string, vehicleId: string, hubId: string, teamLeader: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { rentalStatus: true },
+      select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.rentalStatus as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'ACTIVE');
 
     return db.rider.update({
       where: { id: riderDbId },
       data: {
-        rentalStatus: 'ACTIVE',
+        lifecycleStatus: 'ACTIVE',
         vehicleId,
         pickupHub: hubId,
         teamLeader,
@@ -79,16 +78,16 @@ export const rentalRepository = {
   async endRental(riderDbId: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { rentalStatus: true },
+      select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.rentalStatus as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'RETURN_PENDING');
 
     return db.rider.update({
       where: { id: riderDbId },
       data: {
-        rentalStatus: 'RETURN_PENDING',
+        lifecycleStatus: 'RETURN_PENDING',
       },
     });
   },

@@ -117,30 +117,75 @@ export function canTransition(
   }
 }
 
+type PrismaTransaction = any;
+
+const ALLOWED_INITIAL_STATUSES: RiderLifecycleStatus[] = ['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED'];
+
+export function isValidInitialStatus(status: RiderLifecycleStatus): boolean {
+  return ALLOWED_INITIAL_STATUSES.includes(status);
+}
+
 /**
- * Attempts to transition a rider's lifecycle status in the database.
- * Validates the transition before applying it. Returns the updated rider.
+ * Attempts to transition a rider's lifecycle status.
+ * Fetches the current status internally, validates, then updates.
+ * Accepts an optional `tx` for use inside Prisma transactions.
  *
  * This is the primary function to use in use-cases/repositories.
+ *
+ * For rider creation (no existing rider), use `setInitialStatus()` instead.
  */
 export async function transitionRiderStatus(
   riderDbId: string,
-  currentStatus: RiderLifecycleStatus,
-  targetStatus: RiderLifecycleStatus
+  targetStatus: RiderLifecycleStatus,
+  tx?: PrismaTransaction
 ) {
-  validateTransition(currentStatus, targetStatus);
-
-  const rider = await db.rider.update({
+  const rider = await (tx || db).rider.findUnique({
     where: { id: riderDbId },
-    data: { state: targetStatus },
-    select: { id: true, riderId: true, state: true },
+    select: { id: true, riderId: true, lifecycleStatus: true },
+  });
+  if (!rider) throw new Error(`Rider not found: ${riderDbId}`);
+
+  validateTransition(rider.lifecycleStatus, targetStatus);
+
+  const updated = await (tx || db).rider.update({
+    where: { id: riderDbId },
+    data: { lifecycleStatus: targetStatus },
+    select: { id: true, riderId: true, lifecycleStatus: true },
   });
 
   logger.info('[RiderLifecycle] Status transitioned', {
     riderId: rider.riderId,
-    from: currentStatus,
+    from: rider.lifecycleStatus,
     to: targetStatus,
   });
 
-  return rider;
+  return updated;
+}
+
+/**
+ * Validates and sets initial lifecycleStatus for a newly created rider.
+ * Use this instead of transitionRiderStatus for rider creation.
+ * Accepts an optional `tx` for use inside Prisma transactions.
+ */
+export async function setInitialStatus(
+  riderDbId: string,
+  initialStatus: RiderLifecycleStatus,
+  tx?: PrismaTransaction
+) {
+  const allowedInitial: RiderLifecycleStatus[] = ['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED'];
+  if (!allowedInitial.includes(initialStatus)) {
+    throw new RiderLifecycleError(
+      `Invalid initial status "${initialStatus}". Allowed: ${allowedInitial.join(', ')}.`,
+      'NEW' as RiderLifecycleStatus,
+      initialStatus
+    );
+  }
+
+  const updated = await (tx || db).rider.update({
+    where: { id: riderDbId },
+    data: { lifecycleStatus: initialStatus },
+    select: { id: true, riderId: true, lifecycleStatus: true },
+  });
+
+  return updated;
 }

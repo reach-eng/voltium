@@ -418,12 +418,12 @@ ACTIVE → RETURN_PENDING → CLOSED
 | 1 | Flutter | Select file from camera/gallery |
 | 2 | Flutter | Compress image (max 1024x1024, quality 80) |
 | 3 | Flutter | Upload to API endpoint |
-| 4 | API | Store file (local/GCS) |
+| 4 | API | Store file (local) |
 | 5 | API | Return file URL |
 | 6 | Flutter | Display confirmation |
 
 **File Types**: KYC documents, profile photos, vehicle photos, payment proofs, support attachments
-**Current Storage**: Local filesystem / GCS
+**Current Storage**: Local filesystem
 **Security Concern**: Public KYC URLs — must move to signed URLs
 
 ---

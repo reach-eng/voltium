@@ -67,7 +67,6 @@ export const guarantorRepository = {
       where: { riderId: riderDbId },
       data: {
         status: 'REJECTED',
-        rejectionReason: reason,
       },
     });
   },
@@ -83,14 +82,16 @@ export const guarantorRepository = {
 
     return db.guarantor.update({
       where: { riderId: riderDbId },
-      data: { status: 'INFO_REQUIRED' },
+      data: {
+        status: 'INFO_REQUIRED',
+      },
     });
   },
 
   async autoVerifyTestGuarantor(riderDbId: string) {
     return db.guarantor.update({
       where: { riderId: riderDbId },
-      data: { status: 'VERIFIED' },
+      data: { status: 'APPROVED' }, // Changed VERIFIED to APPROVED to match KycStatus/GuarantorStatus schema enum
     });
   },
 

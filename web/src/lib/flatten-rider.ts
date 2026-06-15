@@ -37,8 +37,33 @@ type RiderPartial = Prisma.RiderGetPayload<{
 export function flattenRider(rider: RiderWithRelations) {
   const { kycProfile, wallet, guarantor, ...rest } = rider;
 
+  const lifecycleStatus = rider.lifecycleStatus || 'NEW';
+  const lifecycleRank: Record<string, number> = {
+    NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+    KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+    DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+    PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+    RETURN_PENDING: 13, CLOSED: 14,
+  };
+  const rank = lifecycleRank[lifecycleStatus] ?? 0;
+  const registrationDone = rank >= 2;
+  const kycDone = rank >= 4;
+  const depositDone = rank >= 8;
+  const planDone = rank >= 9;
+  const pickupDone = rank >= 10;
+
   return {
     ...rest,
+    lifecycleStatus,
+    state: lifecycleStatus,
+    accountStatus: rank >= 11 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
+    rentalStatus: rank >= 11 ? 'ACTIVE' : 'NONE',
+    planStatus: rank >= 9 ? 'ACTIVE' : 'NONE',
+    registrationDone,
+    kycDone,
+    depositDone,
+    planDone,
+    pickupDone,
     name: rider.fullName ?? '', // Compatibility alias
 
     // --- KYC Profile fields ---
@@ -80,20 +105,18 @@ export function flattenRider(rider: RiderWithRelations) {
     guarantorAddress: guarantor?.address ?? null,
     guarantorPhoto: guarantor?.photo ?? null,
 
-    // --- Plan & Status fields (Explicitly mapped to prevent loss) ---
+    // --- Plan & Status fields (computed from lifecycleStatus above) ---
     currentPlan: rider.currentPlan ?? null,
     currentPlanPrice: rider.currentPlanPrice ?? null,
-    planStatus: rider.planStatus || 'NONE',
-    rentalStatus: rider.rentalStatus || 'NONE',
     assignedVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
     planStartDate: rider.planStartDate ? new Date(rider.planStartDate as Date).toISOString() : null,
     planEndDate: rider.planEndDate ? new Date(rider.planEndDate as Date).toISOString() : null,
 
     // --- Rental Return fields ---
-    returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'PENDING') ?? false,
+    returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'SUBMITTED') ?? false,
     ...(() => {
-      const pendingReturn = rider.vehicleReturns?.find((v: any) => v.status === 'PENDING');
+      const pendingReturn = rider.vehicleReturns?.find((v: any) => v.status === 'SUBMITTED');
       if (!pendingReturn) return {};
       return {
         photoFront: pendingReturn.photoFront,
@@ -119,8 +142,27 @@ export function flattenRider(rider: RiderWithRelations) {
  * For routes that include a partial set of relations (e.g. only kycProfile).
  */
 export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown>) {
+  const lifecycleStatus = (rider.lifecycleStatus as string) || 'NEW';
+  const lifecycleRank: Record<string, number> = {
+    NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+    KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+    DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+    PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+    RETURN_PENDING: 13, CLOSED: 14,
+  };
+  const rank = lifecycleRank[lifecycleStatus] ?? 0;
   const result: Record<string, unknown> = {
     ...rider,
+    lifecycleStatus,
+    state: lifecycleStatus,
+    accountStatus: rank >= 11 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
+    rentalStatus: rank >= 11 ? 'ACTIVE' : 'NONE',
+    planStatus: rank >= 9 ? 'ACTIVE' : 'NONE',
+    registrationDone: rank >= 2,
+    kycDone: rank >= 4,
+    depositDone: rank >= 8,
+    planDone: rank >= 9,
+    pickupDone: rank >= 10,
     name: rider.fullName ?? '', // Compatibility alias
   };
 
@@ -174,11 +216,10 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
 
   // Explicitly map Plan fields
   result.currentPlan = 'currentPlan' in rider ? rider.currentPlan : result.currentPlan || null;
-  result.planStatus = 'planStatus' in rider ? rider.planStatus : result.planStatus || 'NONE';
 
   if (rider.vehicleReturns) {
     const vr = rider.vehicleReturns as any[];
-    const pendingReturn = vr.find((v) => v.status === 'PENDING');
+    const pendingReturn = vr.find((v) => v.status === 'SUBMITTED');
     result.returnPending = !!pendingReturn;
     if (pendingReturn) {
       result.photoFront = pendingReturn.photoFront;

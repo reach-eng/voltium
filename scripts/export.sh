@@ -37,17 +37,33 @@ EXCLUDES=(
   "--exclude=.env.*"
   "--exclude=*.db"
   "--exclude=*.sqlite"
+  "--exclude=*.sqlite3"
+  "--exclude=*.sql"
+  "--exclude=upload"
   "--exclude=download"
   "--exclude=backups"
   "--exclude=.kilo"
   "--exclude=.opencode"
   "--exclude=.qodo"
+  "--exclude=graphify-out"
+  "--exclude=screenshots"
+  "--exclude=flutter/screenshots"
+  "--exclude=flutter/logs"
+  "--exclude=flutter/reports"
   "--exclude=flutter/pubspec.lock"
   "--exclude=flutter/.flutter-plugins*"
   # Docker files should never be in exports
   "--exclude=*Dockerfile*"
   "--exclude=*docker-compose*"
   "--exclude=.dockerignore"
+  "--exclude=scripts/legacy"
+  # Debug / test artifacts
+  "--exclude=flutter/artifacts"
+  "--exclude=flutter/debug"
+  "--exclude=playwright-report"
+  "--exclude=test-results"
+  "--exclude=web/dist"
+  "--exclude=*.tsbuildinfo"
 )
 
 if [ "$FORMAT" = "zip" ]; then
@@ -55,7 +71,25 @@ if [ "$FORMAT" = "zip" ]; then
   if command -v 7z &>/dev/null; then
     7z a -tzip "${OUTPUT_NAME}.zip" . "${EXCLUDES[@]}" -xr!".DS_Store" -xr!"*.log"
   elif command -v zip &>/dev/null; then
-    zip -r "${OUTPUT_NAME}.zip" . -x "*.git*" "node_modules/*" ".dart_tool/*" "build/*" ".next/*"
+    # zip -x patterns — keep in sync with EXCLUDES array above
+    zip -r "${OUTPUT_NAME}.zip" . \
+      -x ".git/*" ".gitignore" ".gitattributes" \
+      -x "node_modules/*" \
+      -x ".dart_tool/*" \
+      -x "build/*" ".next/*" "flutter/build/*" "flutter/.dart_tool/*" "flutter/android/.gradle/*" "flutter/ios/build/*" \
+      -x "reports/*" "logs/*" "scratch/*" \
+      -x ".env" ".env.*" "!.env.example" "!.env.local.example" "!.env.staging.example" "!.env.production.example" \
+      -x "*.db" "*.sqlite" "*.sqlite3" "*.sql" \
+      -x "upload/*" \
+      -x "download/*" "backups/*" ".kilo/*" ".opencode/*" ".qodo/*" \
+      -x "flutter/pubspec.lock" "flutter/.flutter-plugins*" \
+      -x "*Dockerfile*" "*docker-compose*" ".dockerignore" \
+      -x ".DS_Store" "*.log" \
+      -x "graphify-out/*" "flutter/screenshots/*" "flutter/logs/*" "flutter/reports/*" \
+      -x "screenshots/*" \
+      -x "scripts/legacy/*" \
+      -x "flutter/artifacts/*" "flutter/debug/*" "playwright-report/*" \
+      -x "test-results/*" "web/dist/*" "*.tsbuildinfo"
   else
     echo "❌ No ZIP tool found. Install 7z or zip."
     exit 1

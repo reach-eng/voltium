@@ -27,7 +27,7 @@ export const guarantorUseCases = {
   async submitGuarantor(riderDbId: string, input: GuarantorSubmission) {
     // TODO: Validate phone format, required document uploads
     // TODO: If current status is REJECTED, call replaceGuarantor first
-    return guarantorRepository.submitGuarantor(riderDbId, input);
+    return guarantorRepository.submitGuarantor(riderDbId, input as any);
   },
 
   async reviewGuarantor(riderDbId: string, reviewerId: string, review: GuarantorReview) {

@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { flattenRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { logger } from '@/lib/logger';
+import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
 
@@ -70,8 +71,7 @@ export const riderUseCases = {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       select: {
-        id: true, riderId: true, fullName: true, phone: true, state: true,
-        accountStatus: true, rentalStatus: true, planStatus: true, currentPlan: true,
+        id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true, currentPlan: true,
         planStartDate: true, planEndDate: true, referralCode: true, pickupHub: true,
         teamLeader: true, emergencyContact: true,
         pickupPhotoFront: true, pickupPhotoBack: true, pickupPhotoLeft: true,
@@ -95,7 +95,7 @@ export const riderUseCases = {
     }
 
     let planDaysRemaining: number | null = null;
-    if (rider.planStatus === 'ACTIVE' && rider.planEndDate) {
+    if ((rider.lifecycleStatus === 'ACTIVE' || rider.lifecycleStatus === 'PLAN_SELECTED' || rider.lifecycleStatus === 'PICKUP_SCHEDULED') && rider.planEndDate) {
       const diffMs = rider.planEndDate.getTime() - Date.now();
       planDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     }
@@ -240,7 +240,7 @@ export const riderUseCases = {
         data: {
           riderId: riderDbId,
           vehicleId,
-          status: 'PENDING',
+          status: 'SUBMITTED',
           photoLeft: photos[0],
           photoRight: photos[1],
           photoFront: photos[2],
@@ -251,10 +251,7 @@ export const riderUseCases = {
         },
       });
 
-      await db.rider.update({
-        where: { id: riderDbId },
-        data: { rentalStatus: 'PENDING_RETURN' },
-      });
+      await transitionRiderStatus(riderDbId, 'RETURN_PENDING');
     }
 
     // Update KYC profile

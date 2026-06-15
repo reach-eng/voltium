@@ -21,7 +21,7 @@ export const notificationRepository = {
         riderId: riderDbId,
         title,
         message,
-        type,
+        type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
         isRead: false,
       },
     });

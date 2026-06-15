@@ -1,17 +1,13 @@
 /**
- * Data Migration Script: SQLite → PostgreSQL
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  LEGACY — SQLite-era script. Not part of current PostgreSQL/no-Docker ops.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *  Kept for historical reference only. Do not use for new development.
+ *  Current stack: PostgreSQL on Neon/Supabase/Railway, no Docker.
+ *  See docs/DATABASE.md for current database workflow.
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Run this after switching prisma/schema.prisma to PostgreSQL provider:
- *   1. Update DATABASE_URL to PostgreSQL
- *   2. npx prisma db push
- *   3. npx tsx scripts/migrate-data.ts
- *
- * This script copies data from SQLite to PostgreSQL using the Prisma client.
- * It reads from the SQLite DB file and writes to the PostgreSQL connection
- * defined in DATABASE_URL.
- *
- * IMPORTANT: This is a one-time migration. After running, switch all
- * environments to PostgreSQL permanently.
+ * Original purpose: Copy data from SQLite to PostgreSQL via Prisma client.
  */
 
 import { PrismaClient } from '@prisma/client';

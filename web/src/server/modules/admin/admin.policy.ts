@@ -131,7 +131,7 @@ export async function logAdminAction(params: {
 }): Promise<void> {
   await createAuditLog({
     actorId: params.actorId,
-    actorType: 'admin',
+    actorType: 'ADMIN',
     action: params.action,
     entity: params.entity,
     entityId: params.entityId,

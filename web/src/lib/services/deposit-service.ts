@@ -17,6 +17,7 @@ import {
   creditWallet,
 } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
+import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -115,10 +116,10 @@ export async function approveDeposit(params: {
       });
     }
 
-    // Mark rider depositDone
+    // Mark rider deposit approved via lifecycleStatus
     await tx.rider.update({
       where: { id: riderId },
-      data: { depositDone: true, depositDoneAt: new Date() },
+      data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
     });
 
     // Update DepositRecord

@@ -8,6 +8,7 @@
 import { db } from '@/lib/db';
 import { paiseToRupees } from '@/lib/flatten-rider';
 import { signRiderUrls } from '@/lib/sign-rider';
+import { TransactionStatus } from '@prisma/client';
 import type { TransactionFilter, TransactionListResult } from './transaction.types';
 
 export const transactionRepository = {
@@ -131,12 +132,12 @@ export const transactionRepository = {
     return db.transaction.deleteMany({ where: { riderId: riderDbId } });
   },
 
-  async updateStatus(id: string, status: string, approvedBy?: string, rejectionReason?: string) {
+  async updateStatus(id: string, status: TransactionStatus, approvedBy?: string, rejectionReason?: string) {
     return db.transaction.update({
       where: { id },
       data: {
         status,
-        approvedAt: ['APPROVED', 'REJECTED', 'REVERSED'].includes(status) ? new Date() : undefined,
+        approvedAt: ([TransactionStatus.APPROVED, TransactionStatus.REJECTED, TransactionStatus.REVERSED] as string[]).includes(status) ? new Date() : undefined,
         approvedBy: approvedBy || undefined,
         rejectionReason: rejectionReason || undefined,
       },

@@ -47,7 +47,12 @@ export async function POST_review(request: NextRequest) {
   const result = await kycUseCases.reviewKyc(
     validation.data.riderId,
     admin.adminId || admin.riderDbId,
-    validation.data
+    {
+      reviewerId: admin.adminId || admin.riderDbId,
+      action: validation.data.action,
+      rejectionReason: validation.data.rejectionReason,
+      infoRequest: validation.data.infoRequest,
+    }
   );
   return success(result, `KYC ${validation.data.action.toLowerCase()}d`);
 }

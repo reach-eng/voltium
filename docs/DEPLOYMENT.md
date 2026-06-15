@@ -1,19 +1,21 @@
 # Voltium Deployment Guide
 
-> Deployment instructions for local development, staging, and production environments.
-> **Voltium does not use Docker.** All services use managed infrastructure or native Node.js process commands.
+> Deployment instructions for the Voltium platform.
+> **Voltium runs entirely on a local workstation.** Database, files, and backups stay on local disk.
+> Public access is provided via Cloudflare Tunnel (routing only — no data storage).
 
 ---
 
 ## Environment Overview
 
-| Environment    | Database               | Storage         | Purpose                  |
-| -------------- | ---------------------- | --------------- | ------------------------ |
-| **local**      | Managed PostgreSQL     | Local files     | Development & testing    |
-| **staging**    | Managed PostgreSQL     | Local + GCS     | Integration testing      |
-| **production** | Managed PostgreSQL     | GCS bucket      | Live operations          |
+| Environment    | Database           | Storage         | Public Access                     |
+| -------------- | ------------------ | --------------- | --------------------------------- |
+| **local**      | Local PostgreSQL   | Local disk      | Cloudflare Tunnel (optional)      |
+| **staging**    | Local PostgreSQL   | Local disk      | Cloudflare Tunnel                 |
+| **production** | Local PostgreSQL   | Local disk      | Cloudflare Tunnel                 |
 
-Recommended managed databases: [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway PostgreSQL](https://railway.app).
+All data stays on the laptop. Cloudflare Tunnel provides HTTPS routing without storing app data.
+Optional external USB drive for backup redundancy.
 
 ---
 
@@ -22,14 +24,14 @@ Recommended managed databases: [Neon](https://neon.tech), [Supabase](https://sup
 ### Prerequisites
 - Node.js 20+
 - npm or Bun
-- Managed PostgreSQL database (Neon / Supabase / Railway free tier)
+- PostgreSQL installed locally (default port 5432)
 
 ### Setup
 
 ```bash
 cd web
 cp ../.env.local.example .env.local
-# Edit .env.local — set DATABASE_URL to your managed PostgreSQL connection string
+# Edit .env.local — set DATABASE_URL to your local PostgreSQL connection string
 # Set JWT_SECRET to a random string (min 32 chars)
 
 npm install
@@ -56,96 +58,70 @@ npm run test:contracts   # Contract consistency tests
 
 ---
 
-## 2. Staging Environment
+## 2. Staging & Production (Laptop Mode)
 
 ### Prerequisites
-- Managed PostgreSQL staging database (separate from production)
-- Staging secrets configured on your hosting platform
+- PostgreSQL running locally on the laptop
+- Cloudflare Tunnel (`cloudflared`) installed for public access
 
 ### Environment Variables
 
 ```bash
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
-DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
-APP_ENV="staging"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voltium"
+APP_ENV="production"
 NODE_ENV="production"
 JWT_SECRET="<secure-random-64-char-string>"
 CRON_SECRET="<secure-random-32-char-string>"
 SMS_PROVIDER="mock"
-STORAGE_PROVIDER="local"
+# Local storage (data management)
+DATA_MANAGEMENT_ENABLED=true
+BACKUP_ROOT="D:/VoltiumServer/data/backups"
+BACKUP_SECONDARY_ROOT="E:/VoltiumBackups"
 ```
 
-### Deploy to Render (Recommended)
+### Run with PM2 (Recommended)
 
-**Web service:**
-```
-Build command: cd web && npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
-Start command: cd web && npm run start
+```bash
+# Start both web server and worker using PM2
+npm install -g pm2
+pm2 start npm --name "voltium-web" -- run start
+pm2 start npm --name "voltium-worker" -- run worker:start
+pm2 save
+pm2 startup  # auto-start on boot
 ```
 
-**Worker service:**
-```
-Build command: cd web && npm ci && npx prisma generate && npm run worker:build
-Start command: cd web && npm run worker:start
+### Set Up Cloudflare Tunnel
+
+```bash
+# Install cloudflared
+# Download from: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+
+# Authenticate and create tunnel
+cloudflared tunnel login
+cloudflared tunnel create voltium
+
+# Configure tunnel (edit ~/.cloudflared/config.yml)
+# tunnel: <tunnel-uuid>
+# credentials-file: /root/.cloudflared/<tunnel-uuid>.json
+# ingress:
+#   - hostname: voltium.example.com
+#     service: http://localhost:8081
+#   - service: http_status:404
+
+# Start tunnel
+cloudflared tunnel run voltium
+
+# Configure DNS
+cloudflared tunnel route dns voltium voltium.example.com
 ```
 
 ### Verify Health
 
 ```bash
-curl https://your-staging-url/api/health
-curl https://your-staging-url/api/health/db
-curl https://your-staging-url/api/health/worker
-curl https://your-staging-url/api/health/storage
-```
-
----
-
-## 3. Production Environment
-
-### Prerequisites
-- Managed PostgreSQL production database
-- Production secrets configured in your hosting platform
-- Domain name with DNS configured
-
-### Required Secrets
-
-```bash
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
-DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
-APP_ENV="production"
-NODE_ENV="production"
-JWT_SECRET="<strong-random-64-char-hex-string>"
-CRON_SECRET="<strong-random-32-char-string>"
-SENTRY_DSN="<sentry-dsn>"          # Optional but recommended
-SMS_PROVIDER="msg91"               # Or your SMS provider
-STORAGE_PROVIDER="gcs"             # Or 'local' for file storage
-GCS_BUCKET_NAME="voltium-uploads"
-NEXT_PUBLIC_APP_URL="https://voltium.example.com"
-```
-
-### Deploy to Render / Railway
-
-**Web service:**
-```
-Build command: cd web && npm ci && npx prisma generate && npx prisma migrate deploy && npm run build
-Start command: cd web && npm run start
-```
-
-**Worker service (separate service):**
-```
-Build command: cd web && npm ci && npx prisma generate && npm run worker:build
-Start command: cd web && npm run worker:start
-```
-
-> Both services share the same `DATABASE_URL` environment variable pointing to your managed PostgreSQL.
-
-### Deploy to Vercel (Web only)
-
-Vercel handles the web/API process. For the background worker, use a separate Render or Railway service.
-
-```bash
-# Deploy via Vercel CLI
-vercel --prod
+curl http://localhost:8081/api/health
+curl http://localhost:8081/api/health/db
+curl http://localhost:8081/api/health/worker
+curl http://localhost:8081/api/health/storage
 ```
 
 ### Database Migrations (Production)
@@ -205,20 +181,25 @@ Push to main/develop
 │ Tests               │ ← unit tests (vitest) + contract tests
 └─────────────────────┘
     │
-    ├──► (PR) Deploy Preview  → Vercel preview URL
-    │
-    └──► (main) Deploy Production → Vercel/Render production
+    ▼
+┌──────────────────────────────────────────────────┐
+│ Manual Deploy (on laptop)                        │
+│ git pull → npm ci → npm run build → pm2 restart  │
+│ Verify: cloudflared tunnel list                  │
+└──────────────────────────────────────────────────┘
 ```
 
 ### GitHub Actions Workflows
 
 | Workflow File | Trigger | Purpose |
 |--------------|---------|---------|
-| `ci-cd.yml` | Push to main/develop, PRs | Lint, typecheck, build, test, deploy |
+| `ci-cd.yml` | Push to main/develop, PRs | Lint, typecheck, build, test |
 | `daily-smoke-tests.yml` | Daily schedule | Smoke tests on production |
 | `e2e-windows.yml` | Push, PRs | Playwright E2E tests on Windows |
 | `flutter-ci-cd.yml` | Push to main | Flutter analyze + test |
 | `flutter-e2e-manual.yml` | Manual trigger | Flutter E2E on emulator |
+
+Deployment is done manually on the laptop: pull latest, build, restart PM2 processes, and verify the Cloudflare Tunnel is active.
 
 ---
 
@@ -258,9 +239,10 @@ npx prisma validate
 
 ### Backup Strategy
 
-- **Daily**: Automated backups via your managed PostgreSQL provider (Neon / Supabase auto-backup)
-- **Pre-deployment**: Use your provider's point-in-time restore or `pg_dump` before any production deploy
-- **PostgreSQL**: `pg_dump <DATABASE_URL> > backup.sql`
+- **Daily**: `pg_dump DATABASE_URL > backups/voltium_$(date +%Y-%m-%d).sql`
+- **External drive**: Optionally copy backups to external USB drive for redundancy
+- **Retention**: Keep 7 daily backups locally, 30 daily on external drive
+- **Pre-deployment**: Always backup before running migrations
 
 ---
 
@@ -298,16 +280,14 @@ npx prisma validate
 ### Pre-Production Checklist
 
 - [ ] All secrets set (JWT_SECRET, CRON_SECRET, DB passwords)
-- [ ] Sentry DSN configured
-- [ ] Managed PostgreSQL provisioned (not SQLite, not Docker)
-- [ ] `prisma migrate deploy` run against production database
+- [ ] Sentry DSN configured (optional)
+- [ ] Local PostgreSQL running
+- [ ] `prisma migrate deploy` run against database
 - [ ] SMS provider configured (not mock)
-- [ ] Storage provider configured (not local)
-- [ ] CORS/middleware configured for production domain
+- [ ] PM2 processes running (web + worker)
+- [ ] Cloudflare Tunnel configured and verified
 - [ ] `VOLTIUM_DEV_BYPASS_RATELIMIT` NOT set
 - [ ] `LOG_LEVEL` set to `info` (not `debug`)
-- [ ] SSL certificates in place (managed by Caddy or your hosting platform)
+- [ ] Caddy/TLS in place for local HTTPS
 - [ ] Database backed up
-- [ ] Worker service running separately (not inside the Next.js process)
-- [ ] Cron jobs configured for reconciliation and cleanup
-- [ ] No Docker files or commands present (`bash scripts/check-no-docker.sh`)
+- [ ] Optional external USB drive mounted for backup redundancy

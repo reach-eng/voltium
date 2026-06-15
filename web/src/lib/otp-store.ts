@@ -12,7 +12,6 @@
 
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
-import { Redis } from '@upstash/redis';
 
 interface OtpEntry {
   code: string;
@@ -26,18 +25,7 @@ const MAX_ATTEMPTS = 3;
 const RESEND_COOLDOWN_MS = 30 * 1000; // 30 seconds between resends
 const MAX_RESENDS = 5; // max 5 resend attempts per phone per window
 
-// ─── Redis Setup ─────────────────────────────────────────────────────────
-
-let redis: Redis | null = null;
-if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
-  logger.info('[OTP] Initialized Redis store');
-}
-
-// ─── In-Memory Fallback ──────────────────────────────────────────────────
+// ─── In-Memory Store ──────────────────────────────────────────────────────
 
 const memoryStore = new Map<string, OtpEntry>();
 
@@ -98,11 +86,7 @@ export async function generateOtp(phone: string): Promise<string> {
     verified: false,
   };
 
-  if (redis) {
-    await redis.set(`otp:${phone}`, JSON.stringify(entry), { px: OTP_EXPIRY_MS });
-  } else {
-    memoryStore.set(phone, entry);
-  }
+  memoryStore.set(phone, entry);
 
   logger.debug('[OTP] Generated', { phone: phone.slice(-4) });
   return code;
@@ -116,14 +100,7 @@ export async function verifyOtp(
   const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
   if (isDev && code === '111111') return { valid: true };
 
-  let entry: OtpEntry | null = null;
-
-  if (redis) {
-    const raw = await redis.get(`otp:${phone}`);
-    entry = typeof raw === 'string' ? JSON.parse(raw) : (raw as OtpEntry) || null;
-  } else {
-    entry = memoryStore.get(phone) || null;
-  }
+  const entry: OtpEntry | null = memoryStore.get(phone) || null;
 
   if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
   if (entry.verified) return { valid: false, error: 'OTP already used.' };
@@ -132,17 +109,12 @@ export async function verifyOtp(
   entry.attempts += 1;
 
   if (entry.attempts > MAX_ATTEMPTS) {
-    if (redis) await redis.del(`otp:${phone}`);
-    else memoryStore.delete(phone);
+    memoryStore.delete(phone);
     return { valid: false, error: 'Too many failed attempts.' };
   }
 
   // Verification
   if (code !== entry.code) {
-    if (redis)
-      await redis.set(`otp:${phone}`, JSON.stringify(entry), {
-        ex: Math.ceil((entry.expiresAt - Date.now()) / 1000),
-      });
     return {
       valid: false,
       error: `Invalid OTP. ${MAX_ATTEMPTS - entry.attempts} attempts remaining.`,
@@ -151,18 +123,9 @@ export async function verifyOtp(
 
   // Success
   entry.verified = true;
-  if (redis)
-    await redis.set(`otp:${phone}`, JSON.stringify(entry), {
-      ex: Math.ceil((entry.expiresAt - Date.now()) / 1000),
-    });
   return { valid: true };
 }
 
 export async function clearOtpStore(): Promise<void> {
-  if (redis) {
-    const keys = await redis.keys('otp:*');
-    if (keys.length > 0) await redis.del(...keys);
-  } else {
-    memoryStore.clear();
-  }
+  memoryStore.clear();
 }

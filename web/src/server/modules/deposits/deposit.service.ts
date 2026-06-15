@@ -96,7 +96,7 @@ export const depositService = {
   }): Promise<void> {
     await createAuditLog({
       actorId: params.adminId,
-      actorType: 'admin',
+      actorType: 'ADMIN',
       action: params.action,
       entity: 'depositRecord',
       entityId: params.riderId,

@@ -67,9 +67,8 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}): UseOfflineS
         walletBalance: rider.walletBalance ?? 0,
         currentPlan: rider.currentPlan ?? '',
         assignedVehicle: rider.assignedVehicle ?? '',
-        accountStatus: rider.accountStatus ?? '',
+        lifecycleStatus: rider.lifecycleStatus ?? 'NEW',
         kycStatus: rider.kycStatus ?? '',
-        rentalStatus: rider.rentalStatus ?? '',
         cachedAt: Date.now(),
       });
     };
@@ -173,9 +172,8 @@ export function useCachedRiderLoad(): {
         walletBalance: cached.walletBalance,
         currentPlan: cached.currentPlan,
         assignedVehicle: cached.assignedVehicle,
-        accountStatus: cached.accountStatus,
+        lifecycleStatus: cached.lifecycleStatus,
         kycStatus: cached.kycStatus,
-        rentalStatus: cached.rentalStatus,
       } as Partial<RiderData>);
     }
   }, [rider.riderId, setRider]);

@@ -31,7 +31,7 @@ export interface TicketResponse {
 export interface TicketMessageResponse {
   id: string;
   senderId: string;
-  senderType: 'rider' | 'admin';
+  senderType: 'RIDER' | 'ADMIN';
   message: string;
   attachments?: string;
   createdAt: string;

@@ -118,7 +118,7 @@ export const rentalUseCases = {
 
       await tx.vehicle.update({
         where: { id: vehicleId },
-        data: { status: 'RENTED' },
+        data: { status: 'ACTIVE_RENTAL' },
       });
 
       return newLease;
@@ -213,10 +213,8 @@ export const rentalUseCases = {
       return tx.rider.update({
         where: { id: riderDbId },
         data: {
-          pickupDone: true,
           pickedUpAt: new Date(),
-          rentalStatus: 'ACTIVE',
-          accountStatus: 'ACTIVE',
+          lifecycleStatus: 'ACTIVE',
           vehicleId: vehicle.id,
           assignedVehicle: vehicle.vehicleId,
           pickupHub: resolvedHubName,

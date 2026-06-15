@@ -75,6 +75,7 @@ interface ActiveRental {
   name: string | null;
   phone: string;
   rentalStatus: string;
+  lifecycleStatus: string;
   currentPlan: string | null;
   assignedVehicle: string | null;
   vehicleId: string | null;
@@ -142,7 +143,7 @@ export default function RentalManagement() {
         const rentalsJson = await rentalsRes.json();
         const allRiders = rentalsJson.data?.riders || [];
         const active = allRiders.filter(
-          (r: ActiveRental) => r.rentalStatus === 'ACTIVE' && !r.returnPending
+          (r: ActiveRental) => r.lifecycleStatus === 'ACTIVE' && !r.returnPending
         );
         const pending = allRiders.filter((r: ActiveRental) => r.returnPending === true);
         setActiveRentals(active);

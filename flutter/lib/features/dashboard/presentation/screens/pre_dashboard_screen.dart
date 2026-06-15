@@ -39,14 +39,19 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
     }
 
     final walletMinTopup = appProvider.walletMinTopup;
-    final kycDone = rider.kycDone;
+    final kycDone = rider.kycDone ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 4);
     final kycVerified = rider.kycStatus == KycStatus.VERIFIED || rider.kycDone;
     final kycRejected = rider.kycStatus == KycStatus.REJECTED;
     final kycSubmitted = rider.kycStatus == KycStatus.SUBMITTED;
-    final depositDone = rider.depositDone;
-    final planDone = rider.planDone || (rider.currentPlan?.isNotEmpty ?? false);
-    final pickupDone =
-        rider.pickupDone || (rider.assignedVehicle?.isNotEmpty ?? false);
+    final depositDone = rider.depositDone ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 8);
+    final planDone = rider.planDone ||
+        (rider.currentPlan?.isNotEmpty ?? false) ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 9);
+    final pickupDone = rider.pickupDone ||
+        (rider.assignedVehicle?.isNotEmpty ?? false) ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 10);
 
     // Redirect to full dashboard (Screen 5) when vehicle is picked up
     if (pickupDone && !_redirected) {
@@ -410,6 +415,17 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
         ),
       ),
     );
+  }
+
+  int _lifecycleRank(RiderModel rider) {
+    const rank = <String, int>{
+      'NEW': 0, 'PHONE_VERIFIED': 1, 'PROFILE_SUBMITTED': 2,
+      'KYC_SUBMITTED': 3, 'KYC_APPROVED': 4, 'GUARANTOR_SUBMITTED': 5,
+      'GUARANTOR_APPROVED': 6, 'DEPOSIT_PENDING': 7, 'DEPOSIT_APPROVED': 8,
+      'PLAN_SELECTED': 9, 'PICKUP_SCHEDULED': 10, 'ACTIVE': 11,
+      'SUSPENDED': 12, 'RETURN_PENDING': 13, 'CLOSED': 14,
+    };
+    return rank[rider.lifecycleStatus] ?? 0;
   }
 
   Widget _buildMainContentCard(

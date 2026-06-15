@@ -147,6 +147,7 @@ const defaultRider: RiderData = {
   kycDone: false,
   planDone: false,
   pickupDone: false,
+  lifecycleStatus: 'NEW',
   accountStatus: 'PRE_ACTIVE',
   pickupHubId: null,
   pickupVehicleId: null,

@@ -12,8 +12,6 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { JobQueue } from '@/lib/job-queue';
-import { getQueueForJob } from './queues';
 
 export type OutboxEventStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
@@ -89,99 +87,10 @@ export const OutboxService = {
   },
 
   /**
-   * Process pending outbox events.
-   * Reads events up to `batchSize`, processes each in sequence, and marks
-   * them COMPLETED or FAILED.
+   * Note: Job processing is now handled by workers/index.ts via
+   * JobQueue.processJobs() which reads directly from the OutboxEvent table.
+   * This method is intentionally omitted — use the worker loop instead.
    */
-  async processPendingEvents(batchSize = 50): Promise<number> {
-    const pending = (await db.outboxEvent.findMany({
-      where: {
-        status: 'PENDING',
-        attempts: { lt: 3 }, // max 3 attempts per event's maxAttempts field
-        // Only retry events that were created more than 30 seconds ago
-        // (to give the queue time to settle)
-        createdAt: { lte: new Date(Date.now() - 30_000) },
-      },
-      orderBy: { createdAt: 'asc' },
-      take: batchSize,
-    })) as unknown as OutboxEventData[];
-
-    if (pending.length === 0) return 0;
-
-    let processed = 0;
-
-    for (const event of pending) {
-      try {
-        // Mark as PROCESSING
-        await db.outboxEvent.update({
-          where: { id: event.id },
-          data: { status: 'PROCESSING' },
-        });
-
-        // Enqueue the job in the appropriate queue
-        const jobType = this.mapEventTypeToJobType(event.eventType);
-        const queueName = getQueueForJob(jobType);
-
-        await JobQueue.enqueue(jobType, event.payload);
-
-        // Mark as COMPLETED
-        await db.outboxEvent.update({
-          where: { id: event.id },
-          data: {
-            status: 'COMPLETED',
-            processedAt: new Date(),
-            attempts: { increment: 1 },
-          },
-        });
-
-        processed++;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-
-        // Update attempt count
-        await db.outboxEvent.update({
-          where: { id: event.id },
-          data: {
-            attempts: { increment: 1 },
-            error: errorMessage,
-            status: event.attempts + 1 >= (event.maxAttempts || 3) ? 'FAILED' : 'PENDING',
-          },
-        });
-
-        logger.error('[Outbox] Failed to process event', {
-          eventId: event.id,
-          eventType: event.eventType,
-          error: errorMessage,
-          attempt: event.attempts + 1,
-        });
-      }
-    }
-
-    return processed;
-  },
-
-  /**
-   * Map an OutboxEventType to a JobType for queue routing.
-   */
-  mapEventTypeToJobType(eventType: string): string {
-    const mapping: Record<string, string> = {
-      [OutboxEventTypes.WALLET_TOPUP_REQUESTED]: 'wallet_reconciliation',
-      [OutboxEventTypes.WALLET_TOPUP_APPROVED]: 'wallet_reconciliation',
-      [OutboxEventTypes.WALLET_TOPUP_REJECTED]: 'wallet_reconciliation',
-      [OutboxEventTypes.DEPOSIT_APPROVED]: 'wallet_reconciliation',
-      [OutboxEventTypes.DEPOSIT_REJECTED]: 'wallet_reconciliation',
-      [OutboxEventTypes.DEPOSIT_REFUNDED]: 'wallet_reconciliation',
-      [OutboxEventTypes.NOTIFICATION_SEND]: 'announcement_dispatch',
-      [OutboxEventTypes.SMS_SEND]: 'send_sms',
-      [OutboxEventTypes.REFERRAL_SIGNUP]: 'referral_reward_process',
-      [OutboxEventTypes.REFERRAL_REWARD]: 'referral_reward_process',
-      [OutboxEventTypes.RENT_DUE]: 'rent_due_check',
-      [OutboxEventTypes.RENT_OVERDUE]: 'overdue_escalation',
-      [OutboxEventTypes.RENT_PAID]: 'rent_due_check',
-      [OutboxEventTypes.DEVICE_VIOLATION]: 'device_violation_scan',
-    };
-    return mapping[eventType] || 'notification';
-  },
 
   /**
    * Get outbox stats — counts of PENDING, PROCESSING, COMPLETED, FAILED events.

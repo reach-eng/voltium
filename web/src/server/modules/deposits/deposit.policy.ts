@@ -11,11 +11,11 @@ export const depositPolicy = {
     return sessionRiderId === riderDbId;
   },
 
-  canReviewDeposit(adminRole: string): boolean {
+  canReviewDeposit(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 
-  canIssueRefund(adminRole: string): boolean {
+  canIssueRefund(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 };

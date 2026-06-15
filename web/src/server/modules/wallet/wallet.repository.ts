@@ -6,6 +6,7 @@
  */
 
 import { db } from '@/lib/db';
+import { TransactionType, TransactionPurpose, TransactionStatus } from '@prisma/client';
 
 export const walletRepository = {
   async findByRiderId(riderDbId: string) {
@@ -15,6 +16,14 @@ export const walletRepository = {
   async getBalance(riderDbId: string) {
     const wallet = await db.wallet.findUnique({ where: { riderId: riderDbId } });
     return wallet?.balanceInPaise || 0;
+  },
+
+  async updateBalance(riderDbId: string, balanceInPaise: number) {
+    return db.wallet.upsert({
+      where: { riderId: riderDbId },
+      create: { riderId: riderDbId, balanceInPaise },
+      update: { balanceInPaise },
+    });
   },
 
   async getTransactions(riderDbId: string, limit = 20) {
@@ -35,11 +44,11 @@ export const walletRepository = {
 
   async createTransaction(data: {
     riderId: string;
-    type: string;
+    type: TransactionType;
     amount: number;
-    purpose: string;
+    purpose: TransactionPurpose;
     method?: string;
-    status?: string;
+    status?: TransactionStatus;
     proofUrl?: string;
     upiRef?: string;
     idempotencyKey?: string;
@@ -52,7 +61,7 @@ export const walletRepository = {
         amount: data.amount,
         purpose: data.purpose,
         method: data.method || null,
-        status: data.status || 'PENDING',
+        status: data.status || TransactionStatus.PENDING,
         proofUrl: data.proofUrl || null,
         upiRef: data.upiRef || null,
         idempotencyKey: data.idempotencyKey || null,
@@ -69,12 +78,12 @@ export const walletRepository = {
     return db.transaction.findUnique({ where: { idempotencyKey } });
   },
 
-  async updateTransactionStatus(txnId: string, status: string, approvedBy?: string) {
+  async updateTransactionStatus(txnId: string, status: TransactionStatus, approvedBy?: string) {
     return db.transaction.update({
       where: { id: txnId },
       data: {
         status,
-        approvedAt: ['APPROVED', 'REJECTED'].includes(status) ? new Date() : undefined,
+        approvedAt: [TransactionStatus.APPROVED as string, TransactionStatus.REJECTED as string].includes(status as string) ? new Date() : undefined,
         approvedBy: approvedBy || undefined,
       },
     });

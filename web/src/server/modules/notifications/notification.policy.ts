@@ -9,11 +9,11 @@ export const notificationPolicy = {
     return sessionRiderId === riderDbId;
   },
 
-  canSendNotifications(adminRole: string): boolean {
+  canSendNotifications(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 
-  canBroadcast(adminRole: string): boolean {
+  canBroadcast(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 };

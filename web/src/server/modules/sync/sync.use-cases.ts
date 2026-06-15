@@ -20,7 +20,7 @@ export const syncUseCases = {
       }
 
       await db.syncQueue.create({
-        data: { riderId: riderDbId, actionType, payload: JSON.stringify(payload ?? {}), endpoint: endpoint || '', method: (method || 'POST').toUpperCase(), status: 'PENDING' },
+        data: { riderId: riderDbId, actionType, payload: JSON.stringify(payload ?? {}), endpoint: endpoint || '', method: ((method || 'POST').toUpperCase()) as 'GET' | 'POST' | 'PUT' | 'DELETE', status: 'PENDING' as 'PENDING' | 'SYNCING' | 'COMPLETED' | 'FAILED' },
       });
       results.push({ actionType, status: 'QUEUED' });
     }

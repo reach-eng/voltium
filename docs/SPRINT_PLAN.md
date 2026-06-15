@@ -30,8 +30,8 @@
 | Add Prisma enums for all major status fields (RiderLifecycle, KycStatus, GuarantorStatus, etc.) | ⬜ |
 | Add missing production tables (AdminSession, RolePermission, NotificationDelivery) | ⬜ |
 | Add comprehensive indexes | ⬜ |
-| Add `docker-compose.postgres.yml` for local Postgres | ⬜ |
-| Update `docker-compose.yml` to use PostgreSQL instead of SQLite | ⬜ |
+| Add `docker-compose.postgres.yml` for local Postgres | 🚫 Decided against Docker |
+| Update `docker-compose.yml` to use PostgreSQL instead of SQLite | 🚫 Decided against Docker |
 | Update seed script for PostgreSQL compatibility | ⬜ |
 | Update `.env.example` and `env.ts` to reflect PostgreSQL defaults | ✅ Done |
 | Update `prisma/seed.ts` to produce realistic demo data | ⬜ |
@@ -202,7 +202,7 @@
 | Create job handlers: wallet reconciliation, payment reconciliation, file cleanup | ⬜ |
 | Add BullMQ (or compatible) queue integration | ⬜ |
 | Add retry + dead-letter queue | ⬜ |
-| Fix worker Docker build | ⬜ |
+| Fix worker Docker build | 🚫 Decided against Docker |
 
 ### Phase 12 — Testing Architecture
 

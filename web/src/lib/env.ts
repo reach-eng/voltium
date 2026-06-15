@@ -13,19 +13,24 @@ const envSchema = z.object({
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
 
-  // Infrastructure
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-
   // Integrations
   SMS_PROVIDER: z.enum(['mock', 'msg91']).default('mock'),
   MSG91_AUTH_KEY: z.string().optional(),
   MSG91_TEMPLATE_ID: z.string().optional(),
 
-  // Cloud Storage
-  STORAGE_PROVIDER: z.enum(['local', 'gcs']).default('local'),
-  GCS_BUCKET_NAME: z.string().optional(),
-  GCS_PROJECT_ID: z.string().optional(),
+  // Data mode — 'default' (any) or 'local_laptop' (all data stays on laptop)
+  DATA_MODE: z.enum(['default', 'local_laptop']).default('default'),
+
+  // Storage — local only
+  LOCAL_STORAGE_ROOT: z.string().optional(),
+
+  // Data Management (laptop/local mode)
+  DATA_MANAGEMENT_ENABLED: z.string().default('false').transform(v => v === 'true'),
+  BACKUP_ROOT: z.string().optional(),
+  BACKUP_SECONDARY_ROOT: z.string().optional(),
+  BACKUP_ENCRYPTION_ENABLED: z.string().default('false').transform(v => v === 'true'),
+  BACKUP_ENCRYPTION_KEY: z.string().optional(),
+  MAINTENANCE_MODE: z.string().default('false').transform(v => v === 'true'),
 
   // Monitoring
   SENTRY_DSN: z.string().url().optional(),

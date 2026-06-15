@@ -75,8 +75,7 @@ export const depositUseCases = {
       throw new Error(`Cannot forfeit deposit in status ${deposit.status}`);
     }
 
-    const { forfeitDeposit } = await import('@/lib/services/deposit-service');
-    await forfeitDeposit({ riderId: riderDbId, adminId, reason });
+    await depositLedgerService.forfeit({ riderId: riderDbId, adminId, reason });
 
     logger.info('[DepositUseCases] Deposit forfeited', { riderId: riderDbId, reason });
     return depositRepository.findByRiderId(riderDbId);

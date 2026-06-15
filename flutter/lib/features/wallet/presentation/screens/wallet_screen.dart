@@ -4,10 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
-import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'top_up_flow.dart';
 import 'package:voltium_rider/features/wallet/presentation/widgets/wallet_widgets.dart';
@@ -100,7 +98,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       // Balance card.
                       FadeUpWidget(
                         delay: 100,
-                        child: _buildBalanceCard(context, rider, l10n),
+                        child: WalletBalanceCard(rider: rider, l10n: l10n),
                       ),
                       const SizedBox(height: 12),
 
@@ -114,15 +112,27 @@ class _WalletScreenState extends State<WalletScreen> {
                       // Action buttons: Top Up & History.
                       FadeUpWidget(
                         delay: 300,
-                        child: _buildActionButtons(context, l10n),
+                        child: WalletActionButtons(
+                          l10n: l10n,
+                          onTopUp: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const TopUpFlow())),
+                          onHistory: () {},
+                        ),
                       ),
                       const SizedBox(height: 24),
 
                       // Recent transactions with filters.
                       FadeUpWidget(
                         delay: 400,
-                        child: _buildRecentTransactions(
-                            context, l10n, provider.transactions, provider),
+                        child: TransactionHistorySection(
+                          transactions: provider.transactions,
+                          l10n: l10n,
+                          selectedFilter: _selectedFilter,
+                          onFilterChanged: (f) =>
+                              setState(() => _selectedFilter = f),
+                          onDeleteHistory: () =>
+                              _confirmDeleteHistory(context, provider),
+                        ),
                       ),
                     ],
                   ),
@@ -130,474 +140,6 @@ class _WalletScreenState extends State<WalletScreen> {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  // ── Widget builders ───────────────────────────────────────────────────────
-
-  Widget _buildCacheIndicator(AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.amber.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.shade200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.cloud_off, size: 14, color: Colors.amber.shade700),
-          const SizedBox(width: 6),
-          Text(
-            l10n.common_fromCache,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.amber.shade700,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionRequiredBanner(rider) {
-    if (rider == null) return const SizedBox.shrink();
-    bool isLowBalance = rider.walletBalance <
-        (rider.activeRentalPlanPrice * AppConstants.lowBalanceThresholdRatio);
-
-    if (!isLowBalance) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB), // amber-50
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)), // amber-200
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFF59E0B), size: 20),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Action Required',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF92400E), // amber-800
-                  ),
-                ),
-                Text(
-                  'Low Wallet Balance',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFD97706), // amber-600
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7), // amber-100
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              '1',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFB45309), // amber-700
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBalanceCard(BuildContext context, rider, AppLocalizations l10n) {
-    final balance = rider?.walletBalance ?? 0.0;
-    final int streak = rider?.paymentStreak ?? 0;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Decorative circles
-          Positioned(
-            right: -40,
-            top: -40,
-            child: Container(
-              height: 160,
-              width: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: -20,
-            child: Container(
-              height: 96,
-              width: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
-              ),
-            ),
-          ),
-
-          // Content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.account_balance_wallet,
-                      color: Colors.white.withOpacity(0.7), size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.wallet_availableBalance,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    '\u20B9',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatCurrency(balance),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Internal Streak Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.wallet_paymentStreak,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    l10n.wallet_streakOf(streak),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: List.generate(5, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 10,
-                      margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
-                      decoration: BoxDecoration(
-                        color: index < streak
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-              if (streak > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '$streak day streak! Keep going to unlock premium tiers.',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context, AppLocalizations l10n) {
-    return Row(
-      children: [
-        // Top Up.
-        Expanded(
-          child: InkWell(
-            key: const Key('topUpButton'),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TopUpFlow())),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFDCFCE7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.add,
-                        color: Color(0xFF16A34A), size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.wallet_topUp,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF191C1E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // History.
-        Expanded(
-          child: InkWell(
-            key: const Key('historyButton'),
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.download,
-                        color: Color(0xFF0053C1), size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.wallet_history,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF191C1E),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentTransactions(BuildContext context, AppLocalizations l10n,
-      List<TransactionModel> transactions, AppProvider provider) {
-    // Apply local filters based on selected category
-    final filtered = transactions.where((tx) {
-      if (_selectedFilter == 'All') return true;
-      if (_selectedFilter == 'Approved')
-        return tx.status == TransactionStatus.success;
-      if (_selectedFilter == 'Rejected')
-        return tx.status == TransactionStatus.failed;
-      if (_selectedFilter == 'Damage')
-        return (tx.purpose ?? '').toUpperCase() == 'DAMAGE';
-      if (_selectedFilter == 'Cash') return tx.remark?.toUpperCase() == 'CASH';
-      if (_selectedFilter == 'UPI') return tx.upiRef != null;
-      if (_selectedFilter == 'Rent')
-        return tx.purpose?.toUpperCase() == 'RENTAL';
-      if (_selectedFilter == 'Security')
-        return tx.purpose?.toUpperCase() == 'SECURITY_DEPOSIT';
-      return true;
-    }).toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section header.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.wallet_recentTransactions,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF191C1E),
-                ),
-              ),
-              IconButton(
-                onPressed: () => _confirmDeleteHistory(context, provider),
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.redAccent, size: 20),
-                tooltip: 'Delete History',
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Filters row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                'All',
-                'Approved',
-                'Rejected',
-                'Rent',
-                'Security'
-              ].map((f) {
-                final isSelected = _selectedFilter == f;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    key: Key('filter${f}Chip'),
-                    onTap: () => setState(() => _selectedFilter = f),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1B60DA) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.white : const Color(0xFF64748B),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Transaction list.
-          if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  _selectedFilter == 'All'
-                      ? 'No transactions yet'
-                      : 'No transactions matching filter',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade400,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
-            )
-          else
-            ...filtered.take(10).map(
-                  (tx) => TransactionListTile(tx: tx, l10n: l10n),
-                ),
         ],
       ),
     );
@@ -625,14 +167,6 @@ class _WalletScreenState extends State<WalletScreen> {
         ],
       ),
     );
-  }
-
-  // ── Formatting helpers ────────────────────────────────────────────────────
-
-  String _formatCurrency(double amount) {
-    return amount
-        .abs()
-        .toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2);
   }
 
   void _showTopUpDialog(BuildContext context) {

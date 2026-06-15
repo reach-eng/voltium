@@ -136,7 +136,7 @@ npm install
 
 # Setup environment
 cp ../.env.local.example .env.local
-# Edit .env.local — set DATABASE_URL to your managed PostgreSQL connection string
+# Edit .env.local — set DATABASE_URL to your local PostgreSQL connection string
 # Set JWT_SECRET to a random string (min 32 chars)
 
 # Initialize database
@@ -151,8 +151,8 @@ npm run dev
 ### Environment Variables
 
 ```env
-# Database (managed PostgreSQL — Neon / Supabase / Railway)
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
+# Database (local PostgreSQL)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voltium_dev"
 
 # Firebase Auth
 FIREBASE_PROJECT_ID="your-project"
@@ -170,9 +170,8 @@ JWT_SECRET="your-jwt-secret-min-32-chars"
 UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
 UPSTASH_REDIS_REST_TOKEN="your-token"
 
-# Storage (optional)
-GCS_BUCKET_NAME="voltium-uploads"
-GCS_PROJECT_ID="your-gcp-project"
+# Storage
+# No cloud storage configured. Uses local filesystem.
 
 # Feature Flags
 NEXT_PUBLIC_ENABLE_REFERRAL="true"
@@ -422,7 +421,7 @@ voltfleet/
 # 1. Start backend
 cd web
 cp ../.env.local.example .env.local
-# Edit .env.local with your managed PostgreSQL DATABASE_URL
+# Edit .env.local with your local PostgreSQL DATABASE_URL
 npm install
 npm run db:generate
 npm run db:migrate
@@ -481,7 +480,7 @@ Default admin credentials (set in `.env`):
 
 ## 🚀 Deployment
 
-### Backend (Vercel / Node)
+### Backend (PM2 / Node)
 
 ```bash
 # Build
@@ -501,11 +500,11 @@ flutter build apk --release
 
 ### Environment Setup
 
-| Environment | Database              | Rate Limit | OTP      |
-| ----------- | --------------------- | ---------- | -------- |
-| Development | Managed PostgreSQL    | In-memory  | `111111` |
-| Staging     | Managed PostgreSQL    | Redis      | Real SMS |
-| Production  | Managed PostgreSQL    | Redis      | Real SMS |
+| Environment | Database           | Rate Limit | OTP      |
+| ----------- | ------------------ | ---------- | -------- |
+| Development | Local PostgreSQL   | In-memory  | `111111` |
+| Staging     | Local PostgreSQL   | Redis      | Real SMS |
+| Production  | Local PostgreSQL   | Redis      | Real SMS |
 
 ---
 

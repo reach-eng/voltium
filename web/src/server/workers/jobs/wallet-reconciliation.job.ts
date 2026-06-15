@@ -15,6 +15,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { verifyLedgerIntegrity } from '@/lib/services/wallet-service';
+import { createAuditLog } from '@/lib/audit-log';
 
 export async function checkReconciliationToday(today: string) {
   return db.reconciliationReport.findUnique({ where: { reportDate: today } });
@@ -77,21 +78,15 @@ export async function runWalletReconciliation(): Promise<ReconciliationResult> {
   return result;
 }
 
-/**
- * Creates a reconciliation report entry in the database.
- */
 export async function recordReconciliation(result: ReconciliationResult): Promise<void> {
   try {
-    await db.auditLog.create({
-      data: {
-        actorId: 'system',
-        actorType: 'system',
-        action: 'finance.reconciliation',
-        entity: 'wallet',
-        entityId: 'all',
-        details: JSON.stringify(result),
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      },
+    await createAuditLog({
+      actorId: 'system',
+      actorType: 'SYSTEM',
+      action: 'reconciliation.run',
+      entity: 'wallet',
+      entityId: 'all',
+      details: result as any,
     });
     logger.info('[Reconciliation] Report recorded in audit log');
   } catch (err) {

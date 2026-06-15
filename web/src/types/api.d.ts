@@ -8,6 +8,7 @@ export type KycStatus = 'PENDING' | 'SUBMITTED' | 'VERIFIED' | 'APPROVED' | 'REJ
 export type AccountStatus = 'PRE_ACTIVE' | 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
 export type PlanStatus = 'NONE' | 'SELECTED' | 'ACTIVE' | 'EXPIRED';
 export type RentalStatus = 'NONE' | 'PICKUP_PENDING' | 'ACTIVE' | 'RETURN_REQUIRED' | 'PENDING_RETURN' | 'RETURNED';
+export type RiderLifecycleStatus = 'NEW' | 'KYC_SUBMITTED' | 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
 export type TransactionType = 'CREDIT' | 'DEBIT';
 export type TransactionPurpose =
   | 'TOP_UP'
@@ -49,6 +50,7 @@ export interface FlatRider {
   currentAddress: string | null;
 
   intent: string | null;
+  lifecycleStatus: string;
   state: RiderState;
   accountStatus: AccountStatus;
 

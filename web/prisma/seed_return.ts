@@ -18,12 +18,12 @@ async function main() {
   // 2. Create a Vehicle
   const vehicle = await prisma.vehicle.upsert({
     where: { vehicleId: 'V-001' },
-    update: { status: 'ACTIVE' },
+    update: { status: 'ACTIVE_RENTAL' },
     create: {
       vehicleId: 'V-001',
       vehicleNumber: 'DL 1S AB 1234',
       model: 'Voltium S1',
-      status: 'ACTIVE',
+      status: 'ACTIVE_RENTAL',
       hubId: hub.id,
     },
   });
@@ -32,7 +32,7 @@ async function main() {
   const rider = await prisma.rider.upsert({
     where: { phone: '9876543210' },
     update: {
-      rentalStatus: 'ACTIVE',
+      lifecycleStatus: 'ACTIVE',
       vehicleId: vehicle.id,
       assignedVehicle: 'V-001',
       currentPlan: 'Monthly Pro',
@@ -42,7 +42,7 @@ async function main() {
       phone: '9876543210',
       fullName: 'Test Rider',
       referralCode: 'TESTREF',
-      rentalStatus: 'ACTIVE',
+      lifecycleStatus: 'ACTIVE',
       vehicleId: vehicle.id,
       assignedVehicle: 'V-001',
       currentPlan: 'Monthly Pro',
@@ -54,7 +54,7 @@ async function main() {
     data: {
       riderId: rider.id,
       vehicleId: vehicle.id,
-      status: 'PENDING',
+      status: 'SUBMITTED',
       photoFront:
         'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&auto=format&fit=crop&q=60',
       photoBack:

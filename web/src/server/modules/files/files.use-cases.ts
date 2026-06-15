@@ -1,11 +1,30 @@
+import { createHmac } from 'crypto';
 import { fileRepository } from './files.repository';
 import { filePolicy } from './files.policy';
 import { fileService } from './files.service';
 import { logger } from '@/lib/logger';
-import type { SignedUrlRequest, SignedUrlResponse, FileOwnerType } from './files.types';
-import { FILE_UPLOAD_RULES } from './files.types';
+import { env } from '@/lib/env';
+import type { SignedUrlRequest, SignedUrlResponse } from './files.types';
+import { FILE_UPLOAD_RULES, FileOwnerType } from './files.types';
 
 export const fileUseCases = {
+  /** Generate a one-time upload token tied to a fileRecordId */
+  _generateUploadToken(fileRecordId: string): string {
+    const secret = process.env.JWT_SECRET || env.JWT_SECRET || 'fallback-secret';
+    return createHmac('sha256', secret).update(fileRecordId).digest('hex');
+  },
+
+  _verifyUploadToken(fileRecordId: string, token: string): boolean {
+    const expected = this._generateUploadToken(fileRecordId);
+    // Constant-time comparison to prevent timing attacks
+    if (token.length !== expected.length) return false;
+    let result = 0;
+    for (let i = 0; i < token.length; i++) {
+      result |= token.charCodeAt(i) ^ expected.charCodeAt(i);
+    }
+    return result === 0;
+  },
+
   async requestUploadUrl(
     input: SignedUrlRequest,
     actor: { role: string; riderDbId?: string; adminId?: string }
@@ -21,7 +40,7 @@ export const fileUseCases = {
     }
 
     const ownerId = actor.riderDbId || actor.adminId || 'unknown';
-    const ownerType: FileOwnerType = actor.role === 'admin' ? 'ADMIN' : 'RIDER';
+    const ownerType: FileOwnerType = actor.role === 'admin' ? FileOwnerType.ADMIN : FileOwnerType.RIDER;
     const storageKey = fileService.generateStorageKey(ownerId, input.category, input.fileName);
 
     const record = await fileService.createFileRecord({
@@ -35,12 +54,25 @@ export const fileUseCases = {
       metadata: JSON.stringify({ requestedBy: actor.adminId || actor.riderDbId }),
     });
 
-    const uploadUrl = await fileService.getSignedUploadUrl(storageKey, input.mimeType);
+    // Generate a one-time upload token for local_laptop mode
+    const uploadToken = fileUseCases._generateUploadToken(record.id);
+
+    // In local_laptop mode, use the secure local-upload endpoint
+    let uploadUrl: string;
+    if (
+      env.DATA_MODE === 'local_laptop'
+    ) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL || 'http://localhost:8081';
+      uploadUrl = `${baseUrl}/api/files/local-upload/${record.id}?token=${uploadToken}`;
+    } else {
+      uploadUrl = await fileService.getSignedUploadUrl(storageKey, input.mimeType);
+    }
 
     return {
       uploadUrl,
       fileRecordId: record.id,
       storageKey,
+      uploadToken,
       expiresIn: 3600,
     };
   },

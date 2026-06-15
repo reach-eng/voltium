@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Database Sync Script for Voltium
-# Handles backup and restore of the local development SQLite database.
+# ═══════════════════════════════════════════════════════════════════════════════
+#  LEGACY — SQLite-era script. Not part of current PostgreSQL/no-Docker ops.
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Kept for historical reference only. Do not use for new development.
+#  Current stack: PostgreSQL on Neon/Supabase/Railway, no Docker.
+#  See docs/DATABASE.md for current database workflow.
+# ═══════════════════════════════════════════════════════════════════════════════
 
 set -e
 

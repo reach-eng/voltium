@@ -69,7 +69,7 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
       await createAuditLog({
         actorId: actorId || 'SYSTEM',
-        actorType: actorType || 'system',
+        actorType: actorType || 'SYSTEM',
         action: `security.${type}`,
         entity: 'securityEvent',
         entityId: undefined,
@@ -106,7 +106,7 @@ export async function logAdminLogin(params: {
     type: 'admin.login',
     severity: params.success ? 'info' : 'warning',
     actorId: params.adminId,
-    actorType: 'admin',
+    actorType: 'ADMIN',
     details: {
       email: params.email,
       success: params.success,
@@ -130,7 +130,7 @@ export async function logPermissionDenied(params: {
     type: 'admin.permission_denied',
     severity: 'warning',
     actorId: params.adminId,
-    actorType: 'admin',
+    actorType: 'ADMIN',
     details: {
       permission: params.permission,
       route: params.route,
@@ -151,7 +151,7 @@ export async function logKycDocumentView(params: {
     type: 'kyc.document_view',
     severity: 'info',
     actorId: params.adminId,
-    actorType: 'admin',
+    actorType: 'ADMIN',
     details: {
       riderId: params.riderId,
       documentType: params.documentType,
@@ -199,7 +199,7 @@ export async function logWalletChange(params: {
     type: 'wallet.balance_change',
     severity: isHighValue ? 'warning' : 'info',
     actorId: params.actorId,
-    actorType: params.actorId ? 'admin' : 'system',
+    actorType: params.actorId ? 'ADMIN' : 'SYSTEM',
     details: {
       riderId: params.riderId,
       amountInPaise: params.amountInPaise,
@@ -221,7 +221,7 @@ export async function logAccountSuspension(params: {
     type: 'rider.suspended',
     severity: 'critical',
     actorId: params.adminId,
-    actorType: 'admin',
+    actorType: 'ADMIN',
     details: {
       riderId: params.riderId,
       reason: params.reason,

@@ -14,11 +14,11 @@ export const supportPolicy = {
     return true; // Any authenticated rider can create tickets
   },
 
-  canManageTickets(adminRole: string): boolean {
+  canManageTickets(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.TEAM_LEADER].includes(adminRole);
   },
 
-  canResolveTicket(adminRole: string): boolean {
+  canResolveTicket(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.TEAM_LEADER].includes(adminRole);
   },
 };

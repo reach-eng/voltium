@@ -71,7 +71,7 @@ export default function AdminUserManagement() {
     name: '',
     email: '',
     password: '',
-    role: 'ADMIN',
+    role: 'OPERATIONS_ADMIN',
     permissions: [] as string[],
   });
   const [search, setSearch] = useState('');
@@ -125,7 +125,7 @@ export default function AdminUserManagement() {
       if (res.ok) {
         setDialogOpen(false);
         setEditingId(null);
-        setForm({ name: '', email: '', password: '', role: 'ADMIN', permissions: [] });
+        setForm({ name: '', email: '', password: '', role: 'OPERATIONS_ADMIN', permissions: [] });
         fetchAdmins();
       }
     } catch {
@@ -386,7 +386,7 @@ export default function AdminUserManagement() {
           setDialogOpen(open);
           if (!open) {
             setEditingId(null);
-            setForm({ name: '', email: '', password: '', role: 'ADMIN', permissions: [] });
+            setForm({ name: '', email: '', password: '', role: 'OPERATIONS_ADMIN', permissions: [] });
           }
         }}
       >
@@ -434,11 +434,15 @@ export default function AdminUserManagement() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
                       <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
+                      <SelectItem value="OPERATIONS_ADMIN">Operations Admin</SelectItem>
+                      <SelectItem value="KYC_REVIEWER">KYC Reviewer</SelectItem>
+                      <SelectItem value="FINANCE_ADMIN">Finance Admin</SelectItem>
+                      <SelectItem value="SUPPORT_AGENT">Support Agent</SelectItem>
+                      <SelectItem value="HUB_MANAGER">Hub Manager</SelectItem>
                       <SelectItem value="FLEET_MANAGER">Fleet Manager</SelectItem>
                       <SelectItem value="TEAM_LEADER">Team Leader</SelectItem>
+                      <SelectItem value="READ_ONLY">Read Only</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

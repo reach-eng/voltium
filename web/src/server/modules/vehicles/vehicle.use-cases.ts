@@ -1,16 +1,11 @@
-/**
- * Vehicles module - Use cases.
- *
- * Orchestrates vehicle inventory management, assignment, and status changes.
- */
-
 import { vehicleRepository } from './vehicle.repository';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { VehicleStatus, Prisma } from '@prisma/client';
 
 export const vehicleUseCases = {
-  async listVehicles(params?: { hubId?: string; status?: string }) {
+  async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
     return vehicleRepository.findAll(params);
   },
 
@@ -22,11 +17,11 @@ export const vehicleUseCases = {
     return vehicleRepository.findByHubId(hubId);
   },
 
-  async createVehicle(input: Record<string, unknown>) {
+  async createVehicle(input: Prisma.VehicleCreateInput) {
     return vehicleRepository.create(input);
   },
 
-  async updateVehicle(vehicleId: string, input: Record<string, unknown>) {
+  async updateVehicle(vehicleId: string, input: Prisma.VehicleUpdateInput) {
     return vehicleRepository.update(vehicleId, input);
   },
 
@@ -135,7 +130,7 @@ export const vehicleUseCases = {
   },
 
   async verifyPickupVehicle(query: string, hubId: string) {
-    const vehicle = await db.vehicle.findFirst({
+    const vehicle = (await db.vehicle.findFirst({
       where: {
         OR: [
           { id: query },
@@ -147,9 +142,17 @@ export const vehicleUseCases = {
         hubId,
       },
       include: { hub: { select: { id: true, name: true } } },
-    });
+    })) as any;
     if (!vehicle) throw new Error('Vehicle not found at this hub');
-    return { id: vehicle.id, vehicleId: vehicle.vehicleId, vehicleNumber: vehicle.vehicleNumber, model: vehicle.model, status: vehicle.status, hub: vehicle.hub };
+    return {
+      id: vehicle.id,
+      vehicleId: vehicle.vehicleId,
+      vehicleNumber: vehicle.vehicleNumber,
+      model: vehicle.model,
+      status: vehicle.status,
+      hubId: vehicle.hubId,
+      hub: vehicle.hub as any,
+    };
   },
 
   async getVehicleHistory(vehicleId: string) {
@@ -163,15 +166,23 @@ export const vehicleUseCases = {
     switch (action) {
       case 'changeStatus': {
         if (!value) throw new Error('Status value is required');
-        const result = await vehicleRepository.bulkUpdateStatus(ids, { status: value });
+        const result = await vehicleRepository.bulkUpdateStatus(ids, { status: value as VehicleStatus });
         updatedCount = result.count;
         auditAction = 'vehicle.bulk_change_status';
         break;
       }
       case 'reassignHub': {
         if (!value) throw new Error('Hub ID is required');
-        const result = await vehicleRepository.bulkUpdateStatus(ids, { hubId: value });
-        updatedCount = result.count;
+        // Update individually because hubId is not allowed in updateMany mutation input
+        await db.$transaction(
+          ids.map(id =>
+            db.vehicle.update({
+              where: { id },
+              data: { hubId: value },
+            })
+          )
+        );
+        updatedCount = ids.length;
         auditAction = 'vehicle.bulk_reassign_hub';
         break;
       }

@@ -40,7 +40,7 @@ export default function SplashScreen() {
       // Only auto-redirect if we are still on the splash screen.
       // If we rehydrated into a deeper screen (e.g. from a reload), don't override it.
       if (store.screen === 'splash') {
-        if (store.otpVerified && store.rider.registrationDone) {
+        if (store.otpVerified && store.rider.lifecycleStatus && store.rider.lifecycleStatus !== 'NEW') {
           setScreen('active_dashboard');
         } else {
           setScreen('permissions');

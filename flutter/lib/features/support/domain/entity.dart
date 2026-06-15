@@ -74,7 +74,7 @@ class TicketMessageEntity {
   const TicketMessageEntity({
     required this.id,
     this.senderId = '',
-    this.senderType = 'rider',
+    this.senderType = 'RIDER',
     required this.message,
     required this.createdAt,
   });
@@ -83,7 +83,7 @@ class TicketMessageEntity {
     return TicketMessageEntity(
       id: json['id'] as String,
       senderId: json['senderId'] as String? ?? '',
-      senderType: json['senderType'] as String? ?? 'rider',
+      senderType: json['senderType'] as String? ?? 'RIDER',
       message: json['message'] as String? ?? '',
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
     );

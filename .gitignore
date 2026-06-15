@@ -85,3 +85,20 @@ local-*
 /upload/
 /download/
 /public/uploads/
+
+# generated artifacts and reports
+graphify-out/
+.kilo/
+.opencode/
+reports/
+logs/
+scratch/
+screenshots/
+flutter/screenshots/
+flutter/logs/
+flutter/reports/
+flutter/artifacts/
+flutter/debug/
+
+# worker build output
+/web/dist/

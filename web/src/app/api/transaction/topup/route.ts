@@ -36,7 +36,11 @@ export async function POST(request: NextRequest) {
       amountInPaise,
       purpose || '',
       method || 'UPI',
-      { upiRef, proofUrl, idempotencyKey: request.headers.get('x-idempotency-key') || undefined }
+      {
+        upiRef: upiRef || undefined,
+        proofUrl: proofUrl || undefined,
+        idempotencyKey: request.headers.get('x-idempotency-key') || undefined
+      }
     );
 
     return success(

@@ -33,16 +33,18 @@ export const notificationsJob = {
     }
 
     // 2. Payment Reminders
-    const ridersToRemind = await db.rider.findMany({
-      where: { wallet: { balanceInPaise: { lt: 0 } }, accountStatus: 'ACTIVE' },
-      select: { id: true, wallet: { select: { balanceInPaise: true } } },
-    });
+    const ridersToRemind = (await db.rider.findMany({
+      where: { lifecycleStatus: 'ACTIVE', wallet: { balanceInPaise: { lt: 0 } } },
+      include: { wallet: true },
+    })) as any;
 
     for (const rider of ridersToRemind) {
-      await notificationService
-        .notifyPaymentReminder(rider.id, Math.abs(rider.wallet?.balanceInPaise ?? 0), 'overdue')
-        .catch((err: Error) => logger.error('[NotificationsJob] Payment reminder failed', { riderId: rider.id, err }));
-      results.paymentReminders++;
+      if (rider.wallet) {
+        await notificationService
+          .notifyPaymentReminder(rider.id, Math.abs(rider.wallet.balanceInPaise), 'overdue')
+          .catch((err: Error) => logger.error('[NotificationsJob] Payment reminder failed', { riderId: rider.id, err }));
+        results.paymentReminders++;
+      }
     }
 
     // 3. Referral Leaderboard

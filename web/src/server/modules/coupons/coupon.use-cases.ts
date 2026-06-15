@@ -17,7 +17,7 @@ export const couponUseCases = {
   }, actorId: string) {
     const coupon = await db.coupon.create({
       data: {
-        code: data.code.toUpperCase(), description: data.description, discountType: data.discountType,
+        code: data.code.toUpperCase(), description: data.description, discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
         discountValue: data.discountValue, minAmount: data.minAmount ?? null, maxUses: data.maxUses ?? null,
         validFrom: new Date(data.validFrom), validUntil: new Date(data.validUntil), isActive: data.isActive,
       },

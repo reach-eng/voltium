@@ -63,9 +63,7 @@ export async function POST_requestReturn(request: NextRequest) {
   if (!validation.success) return errors.validation(validation.error);
 
   const result = await rentalUseCases.requestReturn(
-    session.riderDbId,
-    validation.data.returnPhotos,
-    validation.data.returnReason
+    session.riderDbId
   );
   return success(result, 'Return requested');
 }

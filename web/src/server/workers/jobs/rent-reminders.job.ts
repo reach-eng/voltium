@@ -27,12 +27,12 @@ export const rentRemindersJob = {
     // Uses the RentalLease model to find active riders with active leases
     const today = new Date().toISOString().split('T')[0];
 
-    const activeLeases = await db.rentalLease.findMany({
+    const activeLeases = (await db.rentalLease.findMany({
       where: {
         status: 'BOOKED',
         leaseDate: { lte: today },
         rider: {
-          rentalStatus: 'ACTIVE',
+          lifecycleStatus: 'ACTIVE',
           wallet: { balanceInPaise: { gte: 0 } },
         },
       },
@@ -41,13 +41,12 @@ export const rentRemindersJob = {
         riderId: true,
         finalPrice: true,
         rider: {
-          select: {
-            id: true,
-            wallet: { select: { id: true, balanceInPaise: true } },
+          include: {
+            wallet: true,
           },
         },
       },
-    });
+    })) as any;
 
     result.checkedRentals = activeLeases.length;
 

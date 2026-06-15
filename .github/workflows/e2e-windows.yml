@@ -9,11 +9,29 @@ on:
 
 env:
   FLUTTER_VERSION: '3.24.0'
+  DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+  JWT_SECRET: ci-test-secret-key-32-chars-long
 
 jobs:
   playwright-e2e:
     name: Playwright E2E Tests (Windows)
     runs-on: windows-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,9 +46,7 @@ jobs:
       - name: Setup Prisma Database
         run: |
           npx prisma generate
-          npx prisma db push --accept-data-loss
-        env:
-          DATABASE_URL: 'file:./dev.db'
+          npx prisma migrate deploy
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
@@ -38,7 +54,6 @@ jobs:
       - name: Run Playwright Tests
         run: npx playwright test
         env:
-          DATABASE_URL: 'file:./dev.db'
           JWT_SECRET: ci-test-secret-key-32-chars-long
 
       - name: Upload Playwright Report
@@ -52,6 +67,22 @@ jobs:
   flutter-e2e:
     name: Flutter Android E2E Tests (Windows)
     runs-on: windows-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -60,6 +91,21 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install backend dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Setup database
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -71,6 +117,13 @@ jobs:
         run: |
           cd flutter
           flutter pub get
+
+      - name: Start backend dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:8081 --timeout 30000
+        env:
+          NODE_ENV: development
 
       - name: Run E2E on Windows Android Emulator
         uses: reactivecircus/android-emulator-runner@v2

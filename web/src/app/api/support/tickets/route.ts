@@ -43,11 +43,12 @@ export async function POST(request: NextRequest) {
     const { category, priority, subject, message, attachments } = validation.data;
 
     const ticket = await supportUseCases.createTicket(riderDbId, {
+      riderId: riderDbId,
       category: category || 'GENERAL',
       priority: priority || 'MEDIUM',
       subject: subject || '',
       message,
-      attachments: attachments || null,
+      attachments: attachments || undefined,
     });
 
     return success(ticket, 'Ticket created successfully');

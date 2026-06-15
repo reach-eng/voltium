@@ -1,4 +1,5 @@
 import { getStorageProvider } from '@/lib/storage';
+import { env } from '@/lib/env';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { fileRepository } from './files.repository';
@@ -62,6 +63,13 @@ export const fileService = {
   },
 
   async getSignedUploadUrl(storageKey: string, contentType: string): Promise<string> {
+    // Local storage requires LOCAL_STORAGE_ROOT to be set
+    if (!env.LOCAL_STORAGE_ROOT) {
+      throw new Error(
+        '[FileService] Local storage requires LOCAL_STORAGE_ROOT to be set. ' +
+        'Set LOCAL_STORAGE_ROOT to the absolute path for file storage.'
+      );
+    }
     const storage = await getStorageProvider();
     return storage.getSignedUploadUrl(storageKey, contentType);
   },
@@ -79,7 +87,7 @@ export const fileService = {
   async logAdminFileView(adminId: string, fileRecordId: string, filePurpose: string, ownerId: string): Promise<void> {
     await createAuditLog({
       actorId: adminId,
-      actorType: 'admin',
+      actorType: 'ADMIN',
       action: 'file.admin_view',
       entity: 'fileRecord',
       entityId: fileRecordId,

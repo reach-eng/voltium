@@ -4,4 +4,5 @@
  * Re-exports file storage utilities.
  */
 
-export { storage } from '@/lib/storage';
+export { getStorageProvider } from '@/lib/storage';
+export type { StorageProvider } from '@/lib/storage';

@@ -1,18 +1,19 @@
-/**
- * Support module - Repository.
- *
- * Data access for support tickets, messages, and FAQ entries.
- */
-
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const supportRepository = {
-  async create(riderDbId: string, data: Record<string, unknown>) {
+  async create(riderDbId: string, data: any) {
     return db.supportTicket.create({
       data: {
-        ...data,
+        ticketId: data.ticketId,
+        category: data.category,
+        subject: data.subject,
+        message: data.message,
+        priority: data.priority || 'MEDIUM',
         riderId: riderDbId,
         status: 'OPEN',
+        vehicleId: data.vehicleId || null,
+        attachments: data.attachments || null,
       },
     });
   },
@@ -40,19 +41,19 @@ export const supportRepository = {
 
     const skip = (page - 1) * limit;
     return db.supportTicket.findMany({
-      where,
+      where: where as any,
       orderBy: { updatedAt: 'desc' },
       skip,
       take: limit,
     });
   },
 
-  async update(ticketId: string, data: Record<string, unknown>) {
+  async update(ticketId: string, data: Prisma.SupportTicketUpdateInput) {
     return db.supportTicket.update({ where: { id: ticketId }, data });
   },
 
-  async addMessage(ticketId: string, senderId: string, senderType: string, message: string, attachments?: string) {
-    return db.supportTicketMessage.create({
+  async addMessage(ticketId: string, senderId: string, senderType: 'RIDER' | 'ADMIN', message: string, attachments?: string) {
+    return db.ticketMessage.create({
       data: { ticketId, senderId, senderType, message, attachments },
     });
   },

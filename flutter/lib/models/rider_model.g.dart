@@ -72,6 +72,7 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'planDone': instance.planDone,
       'pickupDone': instance.pickupDone,
       'accountStatus': _$AccountStatusEnumMap[instance.accountStatus]!,
+      'lifecycleStatus': instance.lifecycleStatus,
       'referralCode': instance.referralCode,
       'totalRewardPoints': instance.totalRewardPoints,
       'createdAt': instance.createdAt?.toIso8601String(),
@@ -80,23 +81,36 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
 
 const _$KycStatusEnumMap = {
   KycStatus.PENDING: 'PENDING',
+  KycStatus.DRAFT: 'DRAFT',
   KycStatus.SUBMITTED: 'SUBMITTED',
   KycStatus.VERIFIED: 'VERIFIED',
+  KycStatus.APPROVED: 'APPROVED',
   KycStatus.REJECTED: 'REJECTED',
+  KycStatus.INFO_REQUIRED: 'INFO_REQUIRED',
+  KycStatus.EXPIRED: 'EXPIRED',
 };
 
 const _$GuarantorStatusEnumMap = {
   GuarantorStatus.PENDING: 'PENDING',
+  GuarantorStatus.DRAFT: 'DRAFT',
   GuarantorStatus.SUBMITTED: 'SUBMITTED',
   GuarantorStatus.VERIFIED: 'VERIFIED',
+  GuarantorStatus.APPROVED: 'APPROVED',
   GuarantorStatus.REJECTED: 'REJECTED',
+  GuarantorStatus.INFO_REQUIRED: 'INFO_REQUIRED',
+  GuarantorStatus.REPLACED: 'REPLACED',
 };
 
 const _$DepositStatusEnumMap = {
   DepositStatus.PENDING: 'PENDING',
-  DepositStatus.COMPLETED: 'COMPLETED',
+  DepositStatus.NOT_SUBMITTED: 'NOT_SUBMITTED',
+  DepositStatus.PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  DepositStatus.APPROVED: 'APPROVED',
+  DepositStatus.REJECTED: 'REJECTED',
+  DepositStatus.REFUND_REQUESTED: 'REFUND_REQUESTED',
   DepositStatus.REFUNDED: 'REFUNDED',
-  DepositStatus.FAILED: 'FAILED',
+  DepositStatus.FORFEITED: 'FORFEITED',
+  DepositStatus.PARTIALLY_REFUNDED: 'PARTIALLY_REFUNDED',
 };
 
 const _$AccountStatusEnumMap = {
@@ -104,4 +118,5 @@ const _$AccountStatusEnumMap = {
   AccountStatus.ACTIVE: 'ACTIVE',
   AccountStatus.SUSPENDED: 'SUSPENDED',
   AccountStatus.TERMINATED: 'TERMINATED',
+  AccountStatus.INACTIVE: 'INACTIVE',
 };

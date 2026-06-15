@@ -12,7 +12,7 @@ import { validateBody, updateProfileSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
-import { RiderStateError } from '@/server/modules/riders/rider-lifecycle.service';
+import { RiderLifecycleError } from '@/server/modules/riders/rider-lifecycle.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
     const result = await riderUseCases.updateProfile(riderDbId, updateData);
     return success(result, 'Profile updated');
   } catch (err) {
-    if (err instanceof RiderStateError) return errors.conflict(err.message);
+    if (err instanceof RiderLifecycleError) return errors.conflict(err.message);
     logger.error('[PUT /api/rider/profile]', err);
     return errors.internal('Failed to update profile');
   }

@@ -51,5 +51,5 @@ export const CreateAuditLogSchema = z.object({
   action: z.string().min(1),
   entity: z.string().min(1),
   entityId: z.string().optional(),
-  details: z.record(z.unknown()).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
 });

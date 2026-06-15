@@ -18,6 +18,7 @@ import {
   Play,
   Trash2,
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload';
 import { DatePicker } from '@/components/ui/date-picker';
 import { parse, format as formatDateFns } from 'date-fns';
 
@@ -221,8 +222,6 @@ export default function GuarantorScreen() {
 
   const handleFileChange = async (type: string, file: File) => {
     setIsUploading(type);
-    const formData = new FormData();
-    formData.append('file', file);
     const apiType =
       {
         aadhaarFront: 'GUARANTOR_AADHAAR_FRONT',
@@ -232,16 +231,8 @@ export default function GuarantorScreen() {
         video: 'GUARANTOR_VIDEO',
       }[type] || type;
 
-    formData.append('type', apiType);
-
     try {
-      const uploadUrl = riderId ? `/api/upload?riderId=${riderId}` : '/api/upload';
-      const res = await fetch(uploadUrl, { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
-
-      const url = data.data?.url;
-      if (!url) throw new Error('Upload failed: no URL returned');
+      const url = await uploadFile(file, apiType);
 
       if (type === 'aadhaarFront') setAadhaarFrontUrl(url);
       else if (type === 'aadhaarBack') setAadhaarBackUrl(url);

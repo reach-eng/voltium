@@ -12,9 +12,9 @@ export async function GET() {
     // Check migration status via Prisma
     let pendingMigrations = 0;
     try {
-      const result = await db.$queryRawUnsafe<{ count: bigint }[]>(
+      const result = (await db.$queryRawUnsafe(
         `SELECT COUNT(*) as count FROM _prisma_migrations WHERE finished_at IS NULL`
-      );
+      )) as any;
       pendingMigrations = Number(result[0]?.count ?? 0);
     } catch {
       // _prisma_migrations table may not exist yet
@@ -23,9 +23,9 @@ export async function GET() {
     // Check table count as a basic schema health indicator
     let tableCount = 0;
     try {
-      const result = await db.$queryRawUnsafe<{ count: bigint }[]>(
+      const result = (await db.$queryRawUnsafe(
         `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public'`
-      );
+      )) as any;
       tableCount = Number(result[0]?.count ?? 0);
     } catch {
       // Fallback if information_schema is unavailable

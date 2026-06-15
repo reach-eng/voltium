@@ -139,6 +139,10 @@ export const PERMISSION_DESCRIPTORS = [
   { key: 'kyc_view', label: 'View KYC', category: 'Riders' },
   { key: 'kyc_approve', label: 'Approve KYC', category: 'Riders' },
   { key: 'kyc_reject', label: 'Reject KYC', category: 'Riders' },
+  { key: 'kyc_add_field_note', label: 'Add KYC Field Notes', category: 'Riders' },
+  { key: 'kyc_view_limited', label: 'View KYC (Limited)', category: 'Riders' },
+
+  { key: 'guarantor_view_limited', label: 'View Guarantor (Limited)', category: 'Riders' },
 
   { key: 'vehicles_view', label: 'View Vehicles', category: 'Vehicles' },
   { key: 'vehicles_create', label: 'Create Vehicles', category: 'Vehicles' },
@@ -166,13 +170,28 @@ export const PERMISSION_DESCRIPTORS = [
   { key: 'referrals_view', label: 'View Referrals', category: 'Marketing' },
   { key: 'rewards_manage', label: 'Manage Rewards', category: 'Marketing' },
   { key: 'offers_manage', label: 'Manage Offers/Coupons', category: 'Marketing' },
-  { key: 'device_tracking_view', label: 'View Device Tracking (Calls/GPS)', category: 'Security' },
-  {
-    key: 'device_remote_control',
+  { key: 'device_tracking_view', label: 'View Device Tracking (Calls/GPS)', category: 'Security' },  { key: 'device_remote_control',
     label: 'Remote Device Control (Lock/Wipe)',
     category: 'Security',
   },
+
+  { key: 'rentals_pickup_inspection', label: 'Pickup Inspection', category: 'Rentals' },
+  { key: 'rentals_return_inspection', label: 'Return Inspection', category: 'Rentals' },
+  { key: 'vehicles_inspect', label: 'Inspect Vehicles', category: 'Vehicles' },
+
+  { key: 'files_view_kyc', label: 'View KYC Files', category: 'Files' },
+  { key: 'files_view_payment_proof', label: 'View Payment Proof Files', category: 'Files' },
+  { key: 'files_view_support_attachment', label: 'View Support Attachments', category: 'Files' },
+
+  { key: 'data_management_view', label: 'View Data Management', category: 'Data' },
+  { key: 'data_management_backup', label: 'Create & Manage Backups', category: 'Data' },
+  { key: 'data_management_restore', label: 'Restore Backups', category: 'Data' },
+  { key: 'data_management_schedule', label: 'Manage Backup Schedule', category: 'Data' },
+  { key: 'data_management_download', label: 'Download Backups', category: 'Data' },
+  { key: 'data_management_test', label: 'Test Backup Settings', category: 'Data' },
 ] as const;
+
+
 
 // Permissions mapping (expanded for new roles)
 type PermissionList = AdminRole[];
@@ -180,15 +199,20 @@ type PermissionList = AdminRole[];
 // Properly-typed permissions mapping
 const PERMISSIONS_MAP: Record<string, PermissionList> = {
   // Riders
-  riders_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER'],
-  riders_create: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+  riders_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  riders_create: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'TEAM_LEADER'],
   riders_update: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FLEET_MANAGER'],
   riders_delete: ['SUPER_ADMIN'],
 
-  // KYC
-  kyc_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER'],
+  // KYC — final approval only for reviewers and admins
+  kyc_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'TEAM_LEADER'],
   kyc_approve: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER'],
   kyc_reject: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER'],
+  kyc_add_field_note: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'TEAM_LEADER'],
+  kyc_view_limited: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'TEAM_LEADER'],
+
+  // Guarantor
+  guarantor_view_limited: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'TEAM_LEADER'],
 
   // Vehicles
   vehicles_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
@@ -203,9 +227,9 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   transactions_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
 
   // Tickets
-  tickets_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
-  tickets_resolve: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
-  tickets_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
+  tickets_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'TEAM_LEADER'],
+  tickets_resolve: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'TEAM_LEADER'],
+  tickets_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'TEAM_LEADER'],
 
   // Analytics
   analytics_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
@@ -221,6 +245,13 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   legal_manage: ['SUPER_ADMIN'],
   faq_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
 
+  // Rentals — field operations for Team Leaders
+  rentals_pickup_inspection: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  rentals_return_inspection: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+
+  // Vehicles — inspections for field staff
+  vehicles_inspect: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+
   // Hubs
   hubs_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER'],
 
@@ -229,6 +260,19 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   rewards_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
   device_tracking_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FLEET_MANAGER'],
   device_remote_control: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
+
+  // Files
+  files_view_kyc: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER'],
+  files_view_payment_proof: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FINANCE_ADMIN'],
+  files_view_support_attachment: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
+
+  // Data Management
+  data_management_view: ['SUPER_ADMIN', 'READ_ONLY'],
+  data_management_backup: ['SUPER_ADMIN'],
+  data_management_restore: ['SUPER_ADMIN'],
+  data_management_schedule: ['SUPER_ADMIN'],
+  data_management_download: ['SUPER_ADMIN'],
+  data_management_test: ['SUPER_ADMIN'],
 } as const;
 
 // Export as readonly for immutability

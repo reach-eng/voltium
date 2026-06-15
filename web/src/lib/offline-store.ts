@@ -29,9 +29,8 @@ export interface RiderCache {
   walletBalance?: number;
   currentPlan?: string;
   assignedVehicle?: string;
-  accountStatus?: string;
+  lifecycleStatus?: string;
   kycStatus?: string;
-  rentalStatus?: string;
 }
 
 export function subscribeToSync(callback: (state: unknown) => void): () => void {

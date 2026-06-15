@@ -40,8 +40,12 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'Registration',
         status: _getStepStatus(
-          rider.registrationDone || rider.name.isNotEmpty,
-          !(rider.registrationDone || rider.name.isNotEmpty),
+          rider.registrationDone ||
+              rider.name.isNotEmpty ||
+              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 2),
+          !(rider.registrationDone ||
+              rider.name.isNotEmpty ||
+              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 2)),
           false,
         ),
         icon: Icons.person_add_outlined,
@@ -49,9 +53,15 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'Deposit',
         status: _getStepStatus(
-          rider.depositDone,
-          (rider.registrationDone || rider.name.isNotEmpty) &&
-              !rider.depositDone,
+          rider.depositDone ||
+              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 8),
+          (rider.registrationDone ||
+                      rider.name.isNotEmpty ||
+                      (rider.lifecycleStatus.isNotEmpty &&
+                          _lifecycleRank(rider) >= 2)) &&
+                  !rider.depositDone &&
+                  !(rider.lifecycleStatus.isNotEmpty &&
+                      _lifecycleRank(rider) >= 8),
           false,
         ),
         icon: Icons.account_balance_outlined,
@@ -60,7 +70,9 @@ class ApprovalMatrixWidget extends StatelessWidget {
         label: 'KYC',
         status: _getStepStatus(
           kycStatus == StepStatus.completed,
-          rider.depositDone &&
+          (rider.depositDone ||
+                  (rider.lifecycleStatus.isNotEmpty &&
+                      _lifecycleRank(rider) >= 8)) &&
               kycStatus != StepStatus.completed &&
               kycStatus != StepStatus.rejected,
           kycStatus == StepStatus.rejected,
@@ -71,10 +83,15 @@ class ApprovalMatrixWidget extends StatelessWidget {
               _StepData(
           label: 'Rental Plan',
           status: _getStepStatus(
-            rider.planDone,
+            rider.planDone ||
+                (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 9),
             kycStatus == StepStatus.completed &&
-                rider.depositDone &&
-                !rider.planDone,
+                (rider.depositDone ||
+                    (rider.lifecycleStatus.isNotEmpty &&
+                        _lifecycleRank(rider) >= 8)) &&
+                !(rider.planDone ||
+                    (rider.lifecycleStatus.isNotEmpty &&
+                        _lifecycleRank(rider) >= 9)),
             false,
           ),
           icon: Icons.event_repeat_outlined,
@@ -82,11 +99,18 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'Pickup',
         status: _getStepStatus(
-          rider.pickupDone,
-          rider.planDone &&
+          rider.pickupDone ||
+              (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 10),
+          (rider.planDone ||
+                  (rider.lifecycleStatus.isNotEmpty &&
+                      _lifecycleRank(rider) >= 9)) &&
               kycStatus == StepStatus.completed &&
-              rider.depositDone &&
-              !rider.pickupDone,
+              (rider.depositDone ||
+                  (rider.lifecycleStatus.isNotEmpty &&
+                      _lifecycleRank(rider) >= 8)) &&
+              !(rider.pickupDone ||
+                  (rider.lifecycleStatus.isNotEmpty &&
+                      _lifecycleRank(rider) >= 10)),
           false,
         ),
         icon: Icons.electric_scooter_outlined,
@@ -138,7 +162,10 @@ class ApprovalMatrixWidget extends StatelessWidget {
   StepStatus _kycStepStatus() {
     if (rider.kycStatus == KycStatus.VERIFIED) return StepStatus.completed;
     if (rider.kycStatus == KycStatus.REJECTED) return StepStatus.rejected;
-    if (rider.kycDone) return StepStatus.completed;
+    if (rider.kycDone ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 4)) {
+      return StepStatus.completed;
+    }
     return StepStatus.pending;
   }
 
@@ -249,4 +276,15 @@ class ApprovalMatrixWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+int _lifecycleRank(RiderModel rider) {
+  const rank = <String, int>{
+    'NEW': 0, 'PHONE_VERIFIED': 1, 'PROFILE_SUBMITTED': 2,
+    'KYC_SUBMITTED': 3, 'KYC_APPROVED': 4, 'GUARANTOR_SUBMITTED': 5,
+    'GUARANTOR_APPROVED': 6, 'DEPOSIT_PENDING': 7, 'DEPOSIT_APPROVED': 8,
+    'PLAN_SELECTED': 9, 'PICKUP_SCHEDULED': 10, 'ACTIVE': 11,
+    'SUSPENDED': 12, 'RETURN_PENDING': 13, 'CLOSED': 14,
+  };
+  return rank[rider.lifecycleStatus] ?? 0;
 }

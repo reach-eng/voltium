@@ -41,7 +41,7 @@ export const announcementUseCases = {
     } else if (data.targetAudience === 'BY_HUB') {
       recipients = await db.rider.findMany({ where: { pickupHub: { in: data.targetIds } }, select: { id: true } });
     } else if (data.targetAudience === 'BY_STATUS') {
-      recipients = await db.rider.findMany({ where: { state: { in: data.targetIds } }, select: { id: true } });
+      recipients = await db.rider.findMany({ where: { lifecycleStatus: { in: data.targetIds as any } }, select: { id: true } });
     } else if (data.targetAudience === 'BY_PLAN') {
       recipients = await db.rider.findMany({ where: { currentPlan: { in: data.targetIds } }, select: { id: true } });
     }

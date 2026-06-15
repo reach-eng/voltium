@@ -5,11 +5,11 @@
  */
 import { AdminRole } from '../admin/admin.types';
 export const hubPolicy = {
-  canManageHubs(adminRole: string): boolean {
+  canManageHubs(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 
-  canManageTeamLeaders(adminRole: string): boolean {
+  canManageTeamLeaders(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN].includes(adminRole);
   },
 

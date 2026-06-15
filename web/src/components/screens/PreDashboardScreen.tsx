@@ -50,6 +50,7 @@ export default function PreDashboardScreen() {
         securityDeposit: 0,
         depositStatus: 'PENDING',
         paymentStreak: 0,
+        lifecycleStatus: 'NEW',
         planStatus: 'NONE',
         rentalStatus: 'NONE',
         registrationDone: true,

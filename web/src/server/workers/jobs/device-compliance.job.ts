@@ -20,7 +20,7 @@ export const deviceComplianceJob = {
 
     // Check active riders for device compliance issues
     const activeRiders = await db.rider.findMany({
-      where: { accountStatus: 'ACTIVE' },
+      where: { lifecycleStatus: 'ACTIVE' },
       select: {
         id: true,
         isLocationMandatory: true,

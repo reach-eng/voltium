@@ -88,7 +88,7 @@ export const notificationUseCases = {
     const rider = await db.rider.findUnique({ where: { id: riderId } });
     if (!rider) throw new Error('Rider not found');
 
-    const notification = await db.notification.create({ data: { riderId, title, message, type } });
+    const notification = await db.notification.create({ data: { riderId, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' } });
 
     createAuditLog({ actorId, action: 'notification.send', entity: 'notification', entityId: notification.id, details: { title, type, riderId } }).catch((e) => logger.error('Audit log failed', e));
     return notification;
@@ -104,7 +104,7 @@ export const notificationUseCases = {
     while (true) {
       const batch = await db.rider.findMany({ select: { id: true }, skip, take: BATCH_SIZE });
       if (batch.length === 0) break;
-      await db.notification.createMany({ data: batch.map((r) => ({ riderId: r.id, title, message, type })) });
+      await db.notification.createMany({ data: batch.map((r) => ({ riderId: r.id, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' })) });
       totalSent += batch.length;
       skip += BATCH_SIZE;
     }
@@ -117,7 +117,7 @@ export const notificationUseCases = {
    * Send notification to specific riders.
    */
   async sendToSpecificRiders(riderIds: string[], title: string, message: string, type: string, actorId: string) {
-    await db.notification.createMany({ data: riderIds.map((riderId) => ({ riderId, title, message, type })) });
+    await db.notification.createMany({ data: riderIds.map((riderId) => ({ riderId, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' })) });
     createAuditLog({ actorId, action: 'notification.send_batch', entity: 'notification', details: { title, type, count: riderIds.length } }).catch((e) => logger.error('Audit log failed', e));
     return { count: riderIds.length };
   },
@@ -142,18 +142,20 @@ export const notificationUseCases = {
     }
 
     // 2. Payment Reminders
-    const ridersToRemind = await db.rider.findMany({
-      where: { wallet: { balanceInPaise: { lt: 0 } }, accountStatus: 'ACTIVE' },
-      select: { id: true, wallet: { select: { balanceInPaise: true } } },
-    });
+    const ridersToRemind = (await db.rider.findMany({
+      where: { lifecycleStatus: 'ACTIVE', wallet: { balanceInPaise: { lt: 0 } } },
+      include: { wallet: true },
+    })) as any;
 
     for (const rider of ridersToRemind) {
-      await notificationService.notifyPaymentReminder(
-        rider.id,
-        Math.abs(rider.wallet?.balanceInPaise ?? 0),
-        'overdue',
-      );
-      results.paymentReminders++;
+      if (rider.wallet) {
+        await notificationService.notifyPaymentReminder(
+          rider.id,
+          Math.abs(rider.wallet.balanceInPaise),
+          'overdue',
+        );
+        results.paymentReminders++;
+      }
     }
 
     // 3. Referral Leaderboard Update

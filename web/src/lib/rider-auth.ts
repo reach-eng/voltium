@@ -19,7 +19,7 @@ export async function requireRiderSession(
     if (riderId) {
       createAuditLog({
         actorId: adminSession.adminId || adminSession.riderDbId,
-        actorType: 'admin',
+        actorType: 'ADMIN',
         action: 'IMPERSONATE_RIDER',
         entity: 'rider',
         entityId: riderId,

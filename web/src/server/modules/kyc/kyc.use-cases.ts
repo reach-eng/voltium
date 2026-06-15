@@ -14,7 +14,7 @@ export const kycUseCases = {
 
   async submitKyc(riderDbId: string, input: KycSubmission) {
     // Map frontend field names to Prisma model field names
-    const prismaData = mapKycFieldsToPrisma(input);
+    const prismaData = mapKycFieldsToPrisma(input as any);
 
     // Progressive upload support:
     // Only transition to SUBMITTED if all critical docs are present

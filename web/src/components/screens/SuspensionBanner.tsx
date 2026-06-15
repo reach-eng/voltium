@@ -52,12 +52,12 @@ export default function SuspensionBanner() {
   const setScreen = useAppStore((s) => s.setScreen);
   const showToast = useAppStore((s) => s.showToast);
   const riderForCheck = {
-    accountStatus: rider?.accountStatus || 'INACTIVE',
+    accountStatus: rider?.lifecycleStatus || 'NEW',
     walletBalance: rider?.walletBalance ?? 0,
     kycStatus: rider?.kycStatus || 'PENDING',
     depositStatus: rider?.depositStatus || 'PENDING',
-    planStatus: rider?.planStatus || 'INACTIVE',
-    rentalStatus: rider?.rentalStatus || 'NONE',
+    planStatus: rider?.lifecycleStatus || 'NEW',
+    rentalStatus: rider?.lifecycleStatus || 'NEW',
     securityDeposit: rider?.securityDeposit ?? 0,
   };
   const reasons = getSuspensionReasons(riderForCheck);

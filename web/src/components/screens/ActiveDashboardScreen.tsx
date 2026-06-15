@@ -94,8 +94,8 @@ export default function ActiveDashboardScreen() {
     showToast('Referral code copied!');
   };
 
-  const isActive = r.accountStatus === 'ACTIVE';
-  const isSuspended = r.accountStatus === 'SUSPENDED';
+  const isActive = r.lifecycleStatus === 'ACTIVE';
+  const isSuspended = r.lifecycleStatus === 'SUSPENDED';
   // Use a fallback or the correct field name for plan price
   const planPrice = (r.currentPlanPrice as number) || 500;
   const isLowBalance = ((r.walletBalance as number) || 0) < planPrice * 0.3;

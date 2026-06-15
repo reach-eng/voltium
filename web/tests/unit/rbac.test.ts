@@ -53,14 +53,13 @@ describe('RBAC — Super Admin', () => {
   });
 });
 
-describe('RBAC — Admin', () => {
-  const role = 'ADMIN';
+describe('RBAC — Operations Admin', () => {
+  const role = 'OPERATIONS_ADMIN';
 
   it('has core operational permissions', () => {
     expect(hasPermission(role, 'riders_view')).toBe(true);
     expect(hasPermission(role, 'riders_create')).toBe(true);
     expect(hasPermission(role, 'riders_update')).toBe(true);
-    expect(hasPermission(role, 'riders_delete')).toBe(true);
 
     expect(hasPermission(role, 'kyc_view')).toBe(true);
     expect(hasPermission(role, 'kyc_approve')).toBe(true);
@@ -71,44 +70,38 @@ describe('RBAC — Admin', () => {
     expect(hasPermission(role, 'transactions_reject')).toBe(true);
     expect(hasPermission(role, 'transactions_manage')).toBe(true);
 
-    expect(hasPermission(role, 'admins_manage')).toBe(true);
-    expect(hasPermission(role, 'settings_manage')).toBe(true);
+    expect(hasPermission(role, 'tl_manage')).toBe(true);
+    expect(hasPermission(role, 'notifications_manage')).toBe(true);
     expect(hasPermission(role, 'offers_manage')).toBe(true);
     expect(hasPermission(role, 'device_remote_control')).toBe(true);
   });
+
+  it('lacks super admin operations', () => {
+    expect(hasPermission(role, 'riders_delete')).toBe(false);
+    expect(hasPermission(role, 'admins_manage')).toBe(false);
+    expect(hasPermission(role, 'settings_manage')).toBe(false);
+  });
 });
 
-describe('RBAC — Manager', () => {
-  const role = 'MANAGER';
+describe('RBAC — Hub Manager', () => {
+  const role = 'HUB_MANAGER';
 
-  it('has view permissions and basic operations', () => {
+  it('has hub operations and rider view permissions', () => {
     expect(hasPermission(role, 'riders_view')).toBe(true);
-    expect(hasPermission(role, 'riders_create')).toBe(true);
-    expect(hasPermission(role, 'riders_update')).toBe(true);
-
-    expect(hasPermission(role, 'kyc_view')).toBe(true);
     expect(hasPermission(role, 'vehicles_view')).toBe(true);
-    expect(hasPermission(role, 'vehicles_create')).toBe(true);
-
-    expect(hasPermission(role, 'transactions_view')).toBe(true);
-    expect(hasPermission(role, 'tickets_view')).toBe(true);
-    expect(hasPermission(role, 'tickets_resolve')).toBe(true);
-    expect(hasPermission(role, 'tickets_manage')).toBe(true);
-
+    expect(hasPermission(role, 'hubs_manage')).toBe(true);
     expect(hasPermission(role, 'analytics_view')).toBe(true);
-    expect(hasPermission(role, 'referrals_view')).toBe(true);
-    expect(hasPermission(role, 'device_tracking_view')).toBe(true);
   });
 
-  it('lacks finance admin operations', () => {
-    expect(hasPermission(role, 'transactions_approve')).toBe(false);
-    expect(hasPermission(role, 'transactions_reject')).toBe(false);
-    expect(hasPermission(role, 'transactions_manage')).toBe(false);
-  });
-
-  it('lacks system admin operations', () => {
+  it('lacks admin and sensitive operations', () => {
+    expect(hasPermission(role, 'kyc_view')).toBe(false);
+    expect(hasPermission(role, 'tickets_view')).toBe(false);
+    expect(hasPermission(role, 'referrals_view')).toBe(false);
+    expect(hasPermission(role, 'riders_create')).toBe(false);
     expect(hasPermission(role, 'riders_delete')).toBe(false);
     expect(hasPermission(role, 'vehicles_delete')).toBe(false);
+    expect(hasPermission(role, 'transactions_view')).toBe(false);
+    expect(hasPermission(role, 'transactions_approve')).toBe(false);
     expect(hasPermission(role, 'admins_manage')).toBe(false);
     expect(hasPermission(role, 'settings_manage')).toBe(false);
     expect(hasPermission(role, 'offers_manage')).toBe(false);
@@ -126,12 +119,12 @@ describe('RBAC — Fleet Manager', () => {
     expect(hasPermission(role, 'vehicles_view')).toBe(true);
     expect(hasPermission(role, 'vehicles_create')).toBe(true);
     expect(hasPermission(role, 'vehicles_update')).toBe(true);
-    expect(hasPermission(role, 'hubs_manage')).toBe(true);
 
     expect(hasPermission(role, 'analytics_view')).toBe(true);
   });
 
-  it('lacks finance and support permissions', () => {
+  it('lacks hub management and sensitive permissions', () => {
+    expect(hasPermission(role, 'hubs_manage')).toBe(false);
     expect(hasPermission(role, 'transactions_approve')).toBe(false);
     expect(hasPermission(role, 'transactions_reject')).toBe(false);
     expect(hasPermission(role, 'tickets_manage')).toBe(false);
@@ -143,20 +136,26 @@ describe('RBAC — Fleet Manager', () => {
 describe('RBAC — Team Leader', () => {
   const role = 'TEAM_LEADER';
 
-  it('has KYC review and rider view permissions', () => {
+  it('has rider view, field ops, and ticket permissions', () => {
     expect(hasPermission(role, 'riders_view')).toBe(true);
     expect(hasPermission(role, 'riders_create')).toBe(true);
 
     expect(hasPermission(role, 'kyc_view')).toBe(true);
-    expect(hasPermission(role, 'kyc_approve')).toBe(true);
-    expect(hasPermission(role, 'kyc_reject')).toBe(true);
+    expect(hasPermission(role, 'kyc_add_field_note')).toBe(true);
+    expect(hasPermission(role, 'kyc_view_limited')).toBe(true);
+
+    expect(hasPermission(role, 'rentals_pickup_inspection')).toBe(true);
+    expect(hasPermission(role, 'rentals_return_inspection')).toBe(true);
+    expect(hasPermission(role, 'vehicles_inspect')).toBe(true);
 
     expect(hasPermission(role, 'tickets_view')).toBe(true);
     expect(hasPermission(role, 'tickets_resolve')).toBe(true);
     expect(hasPermission(role, 'tickets_manage')).toBe(true);
   });
 
-  it('lacks sensitive operations', () => {
+  it('lacks approve/reject and sensitive operations', () => {
+    expect(hasPermission(role, 'kyc_approve')).toBe(false);
+    expect(hasPermission(role, 'kyc_reject')).toBe(false);
     expect(hasPermission(role, 'transactions_view')).toBe(false);
     expect(hasPermission(role, 'transactions_approve')).toBe(false);
     expect(hasPermission(role, 'riders_delete')).toBe(false);

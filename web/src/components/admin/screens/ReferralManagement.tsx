@@ -43,6 +43,7 @@ interface Referral {
   referrerCode: string;
   earningForReferrer: number;
   refereePlanStatus?: string;
+  refereeLifecycleStatus?: string;
   refereeRentalStatus?: string;
 }
 
@@ -227,8 +228,8 @@ export default function ReferralManagement() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Referrals</SelectItem>
-            <SelectItem value="ONBOARDING">Onboarding</SelectItem>
-            <SelectItem value="PRE_ACTIVE">Pre Active</SelectItem>
+            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="KYC_SUBMITTED">KYC Submitted</SelectItem>
             <SelectItem value="ACTIVE">Verified Active</SelectItem>
             <SelectItem value="SUSPENDED">Suspended</SelectItem>
           </SelectContent>
@@ -307,9 +308,9 @@ export default function ReferralManagement() {
                   <TableCell>
                     <div className="flex flex-col">
                       <span
-                        className={`text-[11px] font-black uppercase tracking-tight ${r.refereePlanStatus === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-600'}`}
+                        className={`text-[11px] font-black uppercase tracking-tight ${r.refereeLifecycleStatus === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-600'}`}
                       >
-                        {r.refereePlanStatus === 'ACTIVE' ? 'Paid & Active' : 'No Active Plan'}
+                        {r.refereeLifecycleStatus === 'ACTIVE' ? 'Paid & Active' : 'No Active Plan'}
                       </span>
                       {r.refereeRentalStatus && (
                         <span className="text-[9px] font-medium text-muted-foreground">

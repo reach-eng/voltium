@@ -35,14 +35,14 @@ export const planUseCases = {
         data: { riderId: riderDbId, type: 'DEBIT', amount: plan.price, purpose: 'RENT_PAYMENT', status: 'APPROVED', description: `Plan subscription: ${plan.name}` },
       });
       await walletLedgerService.debit({ riderId: riderDbId, amountInPaise: plan.price, category: 'RENT_PAYMENT', txnId: txn.id, idempotencyKey: `plan:${riderDbId}:${plan.id}:${txn.id}`, note: `Plan: ${plan.name}` }, tx);
-      await tx.rider.update({ where: { id: riderDbId }, data: { planStatus: 'ACTIVE', currentPlan: plan.name, currentPlanPrice: plan.price, planStartDate: now, planEndDate: endDate, planDone: true, planDoneAt: new Date() } });
+      await tx.rider.update({ where: { id: riderDbId }, data: { lifecycleStatus: 'PLAN_SELECTED', currentPlan: plan.name, currentPlanPrice: plan.price, planStartDate: now, planEndDate: endDate, planDoneAt: new Date() } });
     });
     return { planId: plan.id, planName: plan.name, startDate: now.toISOString(), endDate: endDate.toISOString(), durationDays: plan.durationDays, price: paiseToRupees(plan.price) };
   },
 
   async create(data: { name: string; type: string; price: number; durationDays: number; description?: string }, actorId: string) {
     const plan = await db.rentalPlan.create({
-      data: { name: data.name, type: data.type, price: rupeesToPaise(Number(data.price)), durationDays: data.durationDays, description: data.description || null, isActive: true },
+      data: { name: data.name, type: data.type as 'DAILY' | 'WEEKLY' | 'MONTHLY', price: rupeesToPaise(Number(data.price)), durationDays: data.durationDays, description: data.description || null, isActive: true },
     });
     createAuditLog({ actorId, action: 'plan.create', entity: 'plan', entityId: plan.id, details: { name: data.name, type: data.type } }).catch(() => {});
     return { ...plan, price: paiseToRupees(plan.price) };

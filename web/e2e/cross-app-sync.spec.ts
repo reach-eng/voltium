@@ -72,7 +72,7 @@ test.describe('Cross-App Sync & Operations (Phase 6)', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { role: 'ADMIN', email: 'admin@voltium.in' } }),
+        body: JSON.stringify({ success: true, data: { role: 'OPERATIONS_ADMIN', email: 'admin@voltium.in' } }),
       });
     });
     await page.route('**/api/admin/auth/login', async (route) => {

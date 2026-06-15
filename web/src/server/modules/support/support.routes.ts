@@ -49,7 +49,7 @@ export async function POST_reply(request: NextRequest, { params }: { params: { i
   const validation = validateBody(ticketReplySchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const message = await supportUseCases.replyToTicket(params.id, session.riderDbId, 'rider', validation.data);
+  const message = await supportUseCases.replyToTicket(params.id, session.riderDbId, 'RIDER', validation.data);
   return success(message, 'Reply sent');
 }
 

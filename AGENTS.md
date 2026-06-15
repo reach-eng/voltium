@@ -11,7 +11,7 @@ This file contains context for AI assistants working on this codebase.
 | `npm run typecheck` | TypeScript validation         |
 | `npm run test:unit` | Unit tests only               |
 | `npm run lint`      | ESLint                        |
-| `npm run db:push`   | Update database schema        |
+| `npm run db:deploy` | Apply database migrations     |
 
 ## Important Libraries
 

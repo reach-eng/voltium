@@ -32,8 +32,12 @@ describe('Phase 1: Auth Contract Testing (JWT & RBAC)', () => {
   test('should correctly check admin permissions', () => {
     expect(hasPermission('SUPER_ADMIN', 'riders_delete')).toBe(true);
     expect(hasPermission('TEAM_LEADER', 'riders_delete')).toBe(false);
-    expect(hasPermission('MANAGER', 'transactions_view')).toBe(true);
-    expect(hasPermission('TEAM_LEADER', 'kyc_approve')).toBe(true);
+    expect(hasPermission('OPERATIONS_ADMIN', 'transactions_view')).toBe(true);
+    expect(hasPermission('TEAM_LEADER', 'kyc_approve')).toBe(false);
+    expect(hasPermission('TEAM_LEADER', 'kyc_view')).toBe(true);
+    expect(hasPermission('TEAM_LEADER', 'kyc_add_field_note')).toBe(true);
+    expect(hasPermission('TEAM_LEADER', 'rentals_pickup_inspection')).toBe(true);
+    expect(hasPermission('TEAM_LEADER', 'vehicles_inspect')).toBe(true);
   });
 
   test('should fail for unknown permissions', () => {

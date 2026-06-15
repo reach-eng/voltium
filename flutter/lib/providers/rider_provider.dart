@@ -12,6 +12,7 @@ import '../services/performance_service.dart';
 import '../services/fcm_service.dart';
 
 import '../app/router.dart';
+import '../features/auth/presentation/rider_lifecycle_gate.dart';
 
 export 'rider_provider.dart' show DataState;
 
@@ -68,7 +69,21 @@ class RiderProvider extends ChangeNotifier {
 
   bool get isPlanActive => _rider?.rentalStatus == RentalStatus.ACTIVE;
   bool get isKycDone => _rider?.kycStatus == KycStatus.APPROVED;
-  bool get isActuallyActive => _rider?.accountStatus == AccountStatus.ACTIVE;
+  bool get isActuallyActive =>
+      _rider?.accountStatus == AccountStatus.ACTIVE ||
+      (_rider?.lifecycleStatus.isNotEmpty == true && _lifecycleRank(_rider) >= 11);
+
+  static int _lifecycleRank(RiderModel? rider) {
+    if (rider == null) return 0;
+    const rank = <String, int>{
+      'NEW': 0, 'PHONE_VERIFIED': 1, 'PROFILE_SUBMITTED': 2,
+      'KYC_SUBMITTED': 3, 'KYC_APPROVED': 4, 'GUARANTOR_SUBMITTED': 5,
+      'GUARANTOR_APPROVED': 6, 'DEPOSIT_PENDING': 7, 'DEPOSIT_APPROVED': 8,
+      'PLAN_SELECTED': 9, 'PICKUP_SCHEDULED': 10, 'ACTIVE': 11,
+      'SUSPENDED': 12, 'RETURN_PENDING': 13, 'CLOSED': 14,
+    };
+    return rank[rider.lifecycleStatus] ?? 0;
+  }
 
   Future<void> init() async {
     PerformanceService().startTrace('RiderProvider_Init');
@@ -109,7 +124,8 @@ class RiderProvider extends ChangeNotifier {
         _dataState = DataState.fresh;
         _errorMessage = null;
 
-        if (_rider!.accountStatus == AccountStatus.ACTIVE) {
+        if (_rider!.accountStatus == AccountStatus.ACTIVE ||
+            (_rider!.lifecycleStatus.isNotEmpty && _lifecycleRank(_rider) >= 11)) {
           _startDeviceDataSync();
         }
         if (_rider!.id != null) {
@@ -281,19 +297,19 @@ class RiderProvider extends ChangeNotifier {
     await refreshFromApi();
   }
 
+  /// Delegate lifecycle routing to RiderLifecycleGate.
+  /// Deprecated: use RiderLifecycleGate.redirect() directly.
   AuthState routeAfterLogin(RiderModel r) {
-    if (r.pickupDone) {
-      return AuthState.dashboard;
+    final target = RiderLifecycleGate.redirect(r);
+    switch (target) {
+      case LifecycleTarget.intent: return AuthState.intent;
+      case LifecycleTarget.kycForm: return AuthState.userForm;
+      case LifecycleTarget.guarantorForm: return AuthState.guarantorForm;
+      case LifecycleTarget.preDashboard: return AuthState.preDashboard;
+      case LifecycleTarget.dashboard: return AuthState.dashboard;
+      case LifecycleTarget.suspended:
+      case LifecycleTarget.terminated: return AuthState.preDashboard;
+      case LifecycleTarget.unknown: return AuthState.login;
     }
-    if (r.intent == null || r.intent!.isEmpty || !r.registrationDone) {
-      return AuthState.intent;
-    }
-    if (!r.kycDone) {
-      return AuthState.userForm;
-    }
-    if (r.guarantorStatus == GuarantorStatus.PENDING) {
-      return AuthState.guarantorForm;
-    }
-    return AuthState.preDashboard;
   }
 }

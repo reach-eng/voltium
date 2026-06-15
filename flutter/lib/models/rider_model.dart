@@ -4,13 +4,13 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'rider_model.g.dart';
 
-enum KycStatus { PENDING, SUBMITTED, VERIFIED, APPROVED, REJECTED, INFO_REQUIRED }
+enum KycStatus { PENDING, DRAFT, SUBMITTED, VERIFIED, APPROVED, REJECTED, INFO_REQUIRED, EXPIRED }
 
-enum GuarantorStatus { PENDING, SUBMITTED, VERIFIED, APPROVED, REJECTED, INFO_REQUIRED }
+enum GuarantorStatus { PENDING, DRAFT, SUBMITTED, VERIFIED, APPROVED, REJECTED, INFO_REQUIRED, REPLACED }
 
-enum AccountStatus { PRE_ACTIVE, ACTIVE, SUSPENDED, TERMINATED }
+enum AccountStatus { PRE_ACTIVE, ACTIVE, SUSPENDED, TERMINATED, INACTIVE }
 
-enum DepositStatus { PENDING, PAID, PARTIAL, COMPLETED, REFUNDED, FAILED }
+enum DepositStatus { PENDING, NOT_SUBMITTED, PENDING_VERIFICATION, APPROVED, REJECTED, REFUND_REQUESTED, REFUNDED, FORFEITED, PARTIALLY_REFUNDED }
 
 /// Rider model matching the Prisma Rider schema.
 /// Extends Equatable pattern manually (no external equatable package).
@@ -102,6 +102,7 @@ class RiderModel {
 
   // ── Account ─────────────────────────────────────────────────────────────
   final AccountStatus accountStatus;
+  final String lifecycleStatus;
 
   // ── Referral & Rewards ───────────────────────────────────────────────────
   final String? referralCode;
@@ -163,6 +164,7 @@ class RiderModel {
     this.planDone = false,
     this.pickupDone = false,
     this.accountStatus = AccountStatus.PRE_ACTIVE,
+    this.lifecycleStatus = 'NEW',
     this.referralCode,
     this.totalRewardPoints = 0,
     this.createdAt,
@@ -253,6 +255,7 @@ class RiderModel {
     bool? planDone,
     bool? pickupDone,
     AccountStatus? accountStatus,
+    String? lifecycleStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? intent,
@@ -316,6 +319,7 @@ class RiderModel {
       planDone: planDone ?? this.planDone,
       pickupDone: pickupDone ?? this.pickupDone,
       accountStatus: accountStatus ?? this.accountStatus,
+      lifecycleStatus: lifecycleStatus ?? this.lifecycleStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       intent: intent ?? this.intent,
@@ -412,6 +416,7 @@ class RiderModel {
       planDone: json['planDone'] as bool? ?? false,
       pickupDone: json['pickupDone'] as bool? ?? false,
       accountStatus: _parseAccountStatus(json['accountStatus']),
+      lifecycleStatus: json['lifecycleStatus'] as String? ?? 'NEW',
       referralCode: json['referralCode'] as String?,
       totalRewardPoints: json['totalRewardPoints'] as int? ?? 0,
       createdAt: json['createdAt'] != null
@@ -450,6 +455,7 @@ class RiderModel {
       'currentPlan': currentPlan,
       'assignedVehicle': assignedVehicle,
       'accountStatus': accountStatus.name,
+      'lifecycleStatus': lifecycleStatus,
       'kycStatus': kycStatus.name,
       'rentalStatus': rentalStatus,
       'name': name,
@@ -477,6 +483,7 @@ class RiderModel {
       currentPlan: cache['currentPlan'] as String?,
       assignedVehicle: cache['assignedVehicle'] as String?,
       accountStatus: _parseAccountStatus(cache['accountStatus']),
+      lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',
       kycStatus: _parseKycStatus(cache['kycStatus']),
       rentalStatus: cache['rentalStatus'] as String? ?? 'NONE',
       returnPending: _toBool(cache['returnPending']) ?? false,

@@ -58,7 +58,7 @@ export const incidentUseCases = {
     const incident = await db.incident.create({
       data: {
         incidentId, riderId: data.riderId ?? null, vehicleId: data.vehicleId ?? null,
-        type: data.type, severity: data.severity, title: data.title, description: data.description ?? null,
+        type: data.type as 'ACCIDENT' | 'THEFT' | 'DAMAGE' | 'BREAKDOWN' | 'OTHER', severity: data.severity as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL', title: data.title, description: data.description ?? null,
         location: data.location ?? null, latitude: data.latitude ?? null, longitude: data.longitude ?? null,
         photos: JSON.stringify(data.photos ?? []), insuranceClaim: data.insuranceClaim ?? false,
         insuranceClaimNumber: data.insuranceClaimNumber || null,

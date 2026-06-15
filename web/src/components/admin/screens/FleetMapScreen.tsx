@@ -43,6 +43,7 @@ interface FleetRider {
   phone: string;
   state: string;
   accountStatus: string;
+  lifecycleStatus: string;
   pickupHub: string | null;
   teamLeader: string | null;
   currentPlan: string | null;
@@ -84,10 +85,10 @@ function getBatteryColor(level: number | null) {
 }
 
 function getRiderStatus(rider: FleetRider) {
-  if (rider.accountStatus === 'SUSPENDED' || rider.accountStatus === 'BLACKLISTED')
+  if (rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED')
     return 'offline';
-  if (rider.state === 'POST_ACTIVE') return 'active';
-  if (rider.state === 'PRE_ACTIVE') return 'idle';
+  if (rider.lifecycleStatus === 'ACTIVE') return 'active';
+  if (rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED') return 'idle';
   return 'offline';
 }
 

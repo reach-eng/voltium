@@ -35,7 +35,7 @@ export async function calculateRiderScore(riderId: string) {
       activityScore,
       supportScore,
       compositeScore,
-      riskLevel,
+      riskLevel: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
       lastCalculated: new Date(),
     },
     create: {
@@ -45,7 +45,7 @@ export async function calculateRiderScore(riderId: string) {
       activityScore,
       supportScore,
       compositeScore,
-      riskLevel,
+      riskLevel: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
     },
   });
 
@@ -59,8 +59,8 @@ function calculatePaymentScore(rider: any): number {
   const depositStatus = rider.wallet.depositStatus || 'PENDING';
 
   let score = 0;
-  if (depositStatus === 'PAID') score += 40;
-  else if (depositStatus === 'PARTIAL') score += 20;
+  if (depositStatus === 'APPROVED') score += 40;
+  else if (depositStatus === 'PARTIALLY_REFUNDED') score += 20;
 
   score += Math.min(streak * 5, 60);
 
@@ -109,8 +109,16 @@ function calculateActivityScore(rider: any): number {
   const activeLeases = rider.leases?.filter((l: any) => l.status === 'ACTIVE').length || 0;
   if (activeLeases > 0) score += 40;
 
-  if (rider.accountStatus === 'POST_ACTIVE') score += 30;
-  else if (rider.accountStatus === 'PRE_ACTIVE') score += 15;
+  const lifecycleRank: Record<string, number> = {
+    NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+    KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+    DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+    PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+    RETURN_PENDING: 13, CLOSED: 14,
+  };
+  const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
+  if (rank >= 11) score += 30;
+  else if (rank >= 2) score += 15;
 
   return Math.min(Math.round(score * 100) / 100, 100);
 }

@@ -100,10 +100,10 @@ export default function OtpScreen() {
 
       // Intelligent Routing: Existing users go to dashboard, active go to active_dashboard, new go to intent
       const isActuallyActive =
-        data.data.accountStatus === 'ACTIVE' || data.data.pickupDone === true;
+        data.data.lifecycleStatus === 'ACTIVE' || data.data.pickupDone === true;
       const isOnboarded = data.data.kycStatus === 'APPROVED' || data.data.kycDone === true;
 
-      if (data.data.accountStatus === 'BLOCKED') {
+      if (data.data.lifecycleStatus === 'CLOSED') {
         showToast('Your account is blocked. Please contact support.');
       } else if (isActuallyActive) {
         setScreen('active_dashboard');

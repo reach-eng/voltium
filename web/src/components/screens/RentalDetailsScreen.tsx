@@ -89,7 +89,7 @@ export default function RentalDetailsScreen() {
   const planEndStr = (r.planEndDate as string) || null;
   const planStartStr = (r.planStartDate as string) || null;
   const daysRemaining = planEndStr ? calcDaysRemaining(planEndStr) : null;
-  const isActive = r.rentalStatus === 'ACTIVE' || r.planStatus === 'ACTIVE';
+  const isActive = r.lifecycleStatus === 'ACTIVE';
 
   const infoItems = [
     {

@@ -13,11 +13,15 @@ export const authRepository = {
   },
 
   async createRider(phone: string, referralCode?: string) {
+    const generatedReferralCode = referralCode || `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const generatedRiderId = `RIDER-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     return db.rider.create({
       data: {
+        riderId: generatedRiderId,
         phone,
         fullName: '',
         referredBy: referralCode || null,
+        referralCode: generatedReferralCode,
       },
     });
   },

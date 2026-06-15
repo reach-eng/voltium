@@ -238,7 +238,7 @@ class VoltiumApiClient {
       const hasPathParams = parameters.some((p: any) => p.in === 'path');
       const requestBody = operation.requestBody;
 
-      let methodArgs: string[] = [];
+      const methodArgs: string[] = [];
       let queryParamsMap = '';
 
       if (hasPathParams) {

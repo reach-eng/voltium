@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { Redis } from '@upstash/redis';
 import { execSync } from 'child_process';
 
 const VERSION = process.env.npm_package_version ?? '0.2.0';
-const REDIS_CONFIGURED = !!(
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-);
-
-let redis: import('@upstash/redis').Redis | null = null;
-if (REDIS_CONFIGURED) {
-  redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  });
-}
 
 function getDiskUsage(): { totalMB: number; freeMB: number; usedMB: number; usagePercent: number } {
   try {
@@ -54,28 +42,6 @@ async function checkDatabase(): Promise<{
   }
 }
 
-async function checkRedis(): Promise<{
-  status: 'healthy' | 'unhealthy' | 'skipped';
-  latencyMs: number;
-  error?: string;
-}> {
-  if (!redis) {
-    return { status: 'skipped', latencyMs: 0 };
-  }
-  const start = Date.now();
-  try {
-    await redis.ping();
-    return { status: 'healthy', latencyMs: Date.now() - start };
-  } catch (err: any) {
-    logger.error('[Health] Redis check failed', { error: err?.message });
-    return {
-      status: 'unhealthy',
-      latencyMs: Date.now() - start,
-      error: err?.message ?? 'Unknown error',
-    };
-  }
-}
-
 function checkDisk(): {
   status: 'healthy' | 'degraded' | 'unhealthy';
   usagePercent: number;
@@ -97,13 +63,12 @@ function checkDisk(): {
 export async function GET(request: NextRequest) {
   const detailed = request.nextUrl.searchParams.get('detailed') === 'true';
 
-  const [database, redisCheck] = await Promise.all([checkDatabase(), checkRedis()]);
+  const database = await checkDatabase();
   const disk = checkDisk();
   const uptime = process.uptime();
 
   const checks = {
     database,
-    redis: redisCheck,
     disk,
     uptime: { status: 'healthy' as const, seconds: Math.round(uptime) },
   };
@@ -124,7 +89,6 @@ export async function GET(request: NextRequest) {
   if (!detailed) {
     body.checks = {
       database: { status: checks.database.status },
-      redis: { status: checks.redis.status },
       disk: { status: checks.disk.status },
       uptime: { status: checks.uptime.status },
     };

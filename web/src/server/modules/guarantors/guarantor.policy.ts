@@ -1,8 +1,4 @@
-/**
- * Guarantors module - Policy.
- *
- * Authorization rules for guarantor operations.
- */
+import { AdminRole } from '../admin/admin.types';
 
 export const guarantorPolicy = {
   canSubmitGuarantor(riderDbId: string, sessionRiderId: string): boolean {
@@ -14,8 +10,8 @@ export const guarantorPolicy = {
     return sessionRiderId === targetRiderId;
   },
 
-  canReviewGuarantor(adminRole: string): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.TEAM_LEADER].includes(adminRole);
+  canReviewGuarantor(adminRole: AdminRole): boolean {
+    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.KYC_REVIEWER].includes(adminRole);
   },
 
   canReplaceGuarantor(riderDbId: string, sessionRiderId: string): boolean {

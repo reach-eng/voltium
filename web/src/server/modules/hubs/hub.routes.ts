@@ -24,7 +24,7 @@ export async function POST_create(request: NextRequest) {
   const validation = validateBody(createHubSchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const hub = await hubUseCases.createHub(validation.data);
+  const hub = await hubUseCases.createHub(validation.data, admin.adminId || 'unknown');
   return success(hub, 'Hub created');
 }
 
@@ -36,7 +36,7 @@ export async function PUT_update(request: NextRequest) {
   const validation = validateBody(updateHubSchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const hub = await hubUseCases.updateHub(validation.data.id, validation.data);
+  const hub = await hubUseCases.updateHub(validation.data.id || '', validation.data, admin.adminId || 'unknown');
   return success(hub, 'Hub updated');
 }
 

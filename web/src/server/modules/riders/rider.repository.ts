@@ -26,11 +26,11 @@ export const riderRepository = {
     return db.rider.findUnique({
       where: { id: riderDbId },
       include: {
-        kyc: true,
+        kycProfile: true,
         guarantor: true,
         transactions: { orderBy: { createdAt: 'desc' }, take: 10 },
         wallet: true,
-        rental: true,
+        leases: true,
       },
     });
   },

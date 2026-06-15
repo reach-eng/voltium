@@ -58,6 +58,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   incidents: loadAdminScreen('IncidentManagementScreen'),
   shifts: loadAdminScreen('ShiftManagement'),
   earnings: loadAdminScreen('EarningsManagement'),
+  'data-management': loadAdminScreen('DataManagementScreen'),
 };
 
 function PlaceholderSection({ name }: { name: string }) {
@@ -97,6 +98,7 @@ const sectionLabels: Record<string, string> = {
   incidents: 'Incidents',
   shifts: 'Shift Management',
   earnings: 'Rider Earnings',
+  'data-management': 'Data Management',
 };
 
 // Number keys → section shortcuts

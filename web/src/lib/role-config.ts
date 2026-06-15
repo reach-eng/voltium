@@ -42,6 +42,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'incidents', label: 'Incidents', icon: 'AlertTriangle', permission: 'tickets_view' },
   { id: 'shifts', label: 'Shifts', icon: 'Clock', permission: 'settings_manage' },
   { id: 'earnings', label: 'Rider Earnings', icon: 'IndianRupee', permission: 'riders_view' },
+  { id: 'data-management', label: 'Data Management', icon: 'ShieldCheck', permission: 'data_management_view' },
 ];
 
 export function getVisibleNavItems(roleOrSession: string | SessionPayload): NavItem[] {
@@ -57,6 +58,7 @@ export const ROLE_LABELS: Record<string, string> = {
   SUPPORT_AGENT: 'Support Agent',
   HUB_MANAGER: 'Hub Manager',
   FLEET_MANAGER: 'Fleet Manager',
+  TEAM_LEADER: 'Team Leader',
   READ_ONLY: 'Read Only',
 };
 
@@ -68,5 +70,6 @@ export const ROLE_COLORS: Record<string, string> = {
   SUPPORT_AGENT: 'bg-pink-100 text-pink-700 border-pink-200',
   HUB_MANAGER: 'bg-amber-100 text-amber-700 border-amber-200',
   FLEET_MANAGER: 'bg-orange-100 text-orange-700 border-orange-200',
+  TEAM_LEADER: 'bg-cyan-100 text-cyan-700 border-cyan-200',
   READ_ONLY: 'bg-gray-100 text-gray-700 border-gray-200',
 };

@@ -5,6 +5,7 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const hubRepository = {
   async findAll(includeInactive = false) {
@@ -18,20 +19,20 @@ export const hubRepository = {
     return db.hub.findUnique({ where: { id: hubId } });
   },
 
-  async create(data: Record<string, unknown>) {
+  async create(data: Prisma.HubCreateInput) {
     return db.hub.create({ data });
   },
 
-  async update(hubId: string, data: Record<string, unknown>) {
+  async update(hubId: string, data: Prisma.HubUpdateInput) {
     return db.hub.update({ where: { id: hubId }, data });
   },
 
   async getTeamLeaders(hubId?: string) {
-    const where = hubId ? { hubId } : {};
-    return db.teamLeader.findMany({ where, orderBy: { name: 'asc' } });
+    // teamLeader table in schema does not have hubId link
+    return db.teamLeader.findMany({ orderBy: { name: 'asc' } });
   },
 
-  async createTeamLeader(data: Record<string, unknown>) {
+  async createTeamLeader(data: Prisma.TeamLeaderCreateInput) {
     return db.teamLeader.create({ data });
   },
 

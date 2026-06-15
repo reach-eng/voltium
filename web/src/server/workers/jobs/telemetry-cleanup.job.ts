@@ -20,9 +20,9 @@ export const telemetryCleanupJob = {
     ]);
 
     const result: TelemetryCleanupResult = {
-      locations: locationsDeleted.count,
-      callLogs: callLogsDeleted.count,
-      contacts: contactsDeleted.count,
+      locationsDeleted: locationsDeleted.count,
+      callLogsDeleted: callLogsDeleted.count,
+      contactsDeleted: contactsDeleted.count,
     };
 
     logger.info('[TelemetryCleanupJob] Complete', result);

@@ -30,6 +30,7 @@ export const ADMIN_ROLE_LABELS: Record<AdminRole, string> = {
   [AdminRole.HUB_MANAGER]: 'Hub Manager',
   [AdminRole.FLEET_MANAGER]: 'Fleet Manager',
   [AdminRole.TEAM_LEADER]: 'Team Leader',
+  [AdminRole.READ_ONLY]: 'Read Only',
 };
 
 export const ADMIN_ROLE_DESCRIPTIONS: Record<AdminRole, string> = {
@@ -123,6 +124,24 @@ export const AUDIT_ACTIONS = {
   // System
   RECONCILIATION_RUN: 'reconciliation.run',
   SYSTEM_CONFIG_CHANGE: 'system.config_change',
+
+  // Data Management / Backups
+  BACKUP_CREATED: 'backup.created',
+  BACKUP_FAILED: 'backup.failed',
+  BACKUP_DOWNLOADED: 'backup.downloaded',
+  RESTORE_REQUESTED: 'restore.requested',
+  RESTORE_VALIDATED: 'restore.validated',
+  RESTORE_STARTED: 'restore.started',
+  RESTORE_COMPLETED: 'restore.completed',
+  RESTORE_FAILED: 'restore.failed',
+  BACKUP_SCHEDULE_UPDATED: 'backup.schedule_updated',
+  BACKUP_SCHEDULE_VIEWED: 'backup.schedule_viewed',
+  BACKUP_SCHEDULE_DISABLED: 'backup.schedule_disabled',
+  BACKUP_SCHEDULE_TESTED: 'backup.schedule_tested',
+  SCHEDULED_BACKUP_STARTED: 'backup.scheduled_started',
+  SCHEDULED_BACKUP_COMPLETED: 'backup.scheduled_completed',
+  SCHEDULED_BACKUP_FAILED: 'backup.scheduled_failed',
+  BACKUP_RETENTION_APPLIED: 'backup.retention_applied',
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];

@@ -9,11 +9,11 @@ export const rentalPolicy = {
     return sessionRiderId === riderDbId;
   },
 
-  canStartPickup(adminRole: string): boolean {
+  canStartPickup(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.FLEET_MANAGER].includes(adminRole);
   },
 
-  canApproveReturn(adminRole: string): boolean {
+  canApproveReturn(adminRole: AdminRole): boolean {
     return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER].includes(adminRole);
   },
 

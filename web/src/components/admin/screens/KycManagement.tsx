@@ -110,6 +110,7 @@ interface KycRider {
   fullName: string | null;
   kycStatus: string;
   state: string;
+  lifecycleStatus: string;
   profilePhoto: string | null;
   riderPhoto: string | null;
   aadhaarFront: string | null;
@@ -1118,7 +1119,7 @@ export default function KycManagement() {
                         variant="outline"
                         className="text-[10px] mt-2 border-primary/20 text-primary bg-primary/5 dark:bg-primary/10 uppercase"
                       >
-                        {selectedRider.state}
+                        {selectedRider.lifecycleStatus}
                       </Badge>
                     </div>
                   </div>

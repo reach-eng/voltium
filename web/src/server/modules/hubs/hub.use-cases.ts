@@ -1,6 +1,7 @@
 import { hubRepository } from './hub.repository';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { Prisma } from '@prisma/client';
 
 export const hubUseCases = {
   async listHubs() {
@@ -28,15 +29,15 @@ export const hubUseCases = {
     return hubRepository.findById(hubId);
   },
 
-  async createHub(input: Record<string, unknown>, actorId: string) {
+  async createHub(input: Prisma.HubCreateInput, actorId: string) {
     const hub = await hubRepository.create(input);
     createAuditLog({ actorId, action: 'hub.create', entity: 'hub', entityId: hub.id, details: { name: input.name } }).catch(() => {});
     return hub;
   },
 
-  async updateHub(hubId: string, input: Record<string, unknown>, actorId: string) {
+  async updateHub(hubId: string, input: Prisma.HubUpdateInput, actorId: string) {
     const hub = await hubRepository.update(hubId, input);
-    createAuditLog({ actorId, action: 'hub.update', entity: 'hub', entityId: hubId, details: input as Record<string, unknown> }).catch(() => {});
+    createAuditLog({ actorId, action: 'hub.update', entity: 'hub', entityId: hubId, details: input as any }).catch(() => {});
     return hub;
   },
 
@@ -54,7 +55,7 @@ export const hubUseCases = {
   },
 
   async createTeamLeader(input: Record<string, unknown>) {
-    return hubRepository.createTeamLeader(input);
+    return hubRepository.createTeamLeader(input as any);
   },
 
   async bulkActivate(ids: string[], actorId: string) {

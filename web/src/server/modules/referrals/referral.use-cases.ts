@@ -15,7 +15,7 @@ interface RefereeRow {
   riderId: string;
   fullName: string | null;
   phone: string;
-  state: string;
+  lifecycleStatus: string;
   createdAt: Date;
   referredBy: string | null;
 }
@@ -43,7 +43,7 @@ export const referralUseCases = {
 
     // Check if already rewarded (idempotency)
     const existingReward = await db.transaction.findFirst({
-      where: { riderId: referrer.id, purpose: 'REFERRAL_REWARD', description: { contains: referee.id } },
+      where: { riderId: referrer.id, purpose: 'REWARD', description: { contains: referee.id } },
     });
     if (existingReward) {
       logger.info('[Referral] Reward already processed', { referrerId: referrer.id, refereeId });
@@ -127,8 +127,8 @@ export const referralUseCases = {
     const referrals = await db.rider.findMany({
       where: { referredBy: rider.referralCode },
       select: {
-        id: true, riderId: true, fullName: true, phone: true, state: true,
-        planStatus: true, rentalStatus: true, createdAt: true,
+        id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true,
+        createdAt: true,
         kycProfile: { select: { profilePhoto: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -136,11 +136,19 @@ export const referralUseCases = {
 
     const { maskPhone } = await import('@/lib/pii');
     const detailedReferrals = referrals.map((ref: any) => {
-      const isActive = ref.state === 'ACTIVE' || ref.state === 'POST_ACTIVE';
+      const lifecycleRank: Record<string, number> = {
+        NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+        KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+        DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+        PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+        RETURN_PENDING: 13, CLOSED: 14,
+      };
+      const rank = lifecycleRank[ref.lifecycleStatus] ?? 0;
+      const isActive = rank >= 11;
       return {
         id: ref.id, riderId: ref.riderId, name: ref.fullName || 'Unknown Rider',
-        phone: maskPhone(ref.phone), status: ref.state, planStatus: ref.planStatus,
-        rentalStatus: ref.rentalStatus, paymentStatus: ref.planStatus === 'ACTIVE' ? 'Paid & Active' : 'Payment Pending',
+        phone: maskPhone(ref.phone), status: ref.lifecycleStatus, planStatus: rank >= 9 ? 'ACTIVE' : 'NONE',
+        rentalStatus: rank >= 10 ? 'ACTIVE' : 'NONE', paymentStatus: rank >= 9 ? 'Paid & Active' : 'Payment Pending',
         photo: ref.kycProfile?.profilePhoto || null, earned: isActive ? REWARD_PER_REFERRAL : 0,
         potential: !isActive ? REWARD_PER_REFERRAL : 0, joinedAt: ref.createdAt,
       };
@@ -164,7 +172,7 @@ export const referralUseCases = {
     if (!rider) throw new Error('Rider not found');
     const referredUsers = await db.rider.findMany({
       where: { referredBy: rider.referralCode },
-      select: { fullName: true, phone: true, accountStatus: true, createdAt: true, kycProfile: { select: { status: true } } },
+      select: { fullName: true, phone: true, lifecycleStatus: true, createdAt: true, kycProfile: { select: { status: true } } },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
@@ -190,7 +198,7 @@ export const referralUseCases = {
 
     const where: Record<string, unknown> = { referredBy: { not: null } };
     if (status && status !== 'all') {
-      where.state = status;
+      where.lifecycleStatus = status;
     }
     if (search) {
       (where as Record<string, unknown>).OR = [
@@ -208,7 +216,7 @@ export const referralUseCases = {
         riderId: true,
         fullName: true,
         phone: true,
-        state: true,
+        lifecycleStatus: true,
         createdAt: true,
         referredBy: true,
       },
@@ -244,12 +252,20 @@ export const referralUseCases = {
 
     const data = referees.map((referee) => {
       const referrer = referee.referredBy ? referrerMap.get(referee.referredBy) : undefined;
-      const isActive = referee.state === 'ACTIVE' || referee.state === 'POST_ACTIVE';
+      const lifecycleRank: Record<string, number> = {
+        NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+        KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+        DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+        PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+        RETURN_PENDING: 13, CLOSED: 14,
+      };
+      const rank = lifecycleRank[referee.lifecycleStatus] ?? 0;
+      const isActive = rank >= 11;
       return {
         refereeId: referee.riderId,
         refereeName: referee.fullName || 'Unknown',
         refereePhone: referee.phone,
-        refereeState: referee.state,
+        refereeState: referee.lifecycleStatus,
         referredAt: referee.createdAt,
         referrerName: referrer ? referrer.fullName || 'Unknown' : 'Unknown Referrer',
         referrerCode: referrer?.referralCode || referee.referredBy || '',
@@ -264,7 +280,7 @@ export const referralUseCases = {
       db.rider.count({
         where: {
           referredBy: { not: null },
-          state: { in: ['ACTIVE', 'POST_ACTIVE'] },
+          lifecycleStatus: 'ACTIVE',
         },
       }),
     ]);

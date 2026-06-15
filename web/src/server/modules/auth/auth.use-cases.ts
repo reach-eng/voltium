@@ -12,7 +12,7 @@ import { createSessionToken, SESSION_COOKIE_OPTIONS } from '@/lib/auth';
 import { generateOtp, verifyOtp as verifyOtpStore } from '@/lib/otp-store';
 import { checkRateLimit, AUTH_RATE_LIMIT } from '@/lib/rate-limit';
 import { auth as firebaseAuth } from '@/lib/firebase-admin';
-import { JobQueue, JobTypes } from '@/lib/job-queue';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { flattenRider } from '@/lib/flatten-rider';
 import { logger } from '@/lib/logger';
 import { getFeatureFlags } from '@/lib/feature-flags';
@@ -50,7 +50,7 @@ export const authUseCases = {
     const flags = await getFeatureFlags();
     const message = `Your Ryd verification code is: ${otp}. Do not share this code with anyone.`;
 
-    await JobQueue.enqueue(JobTypes.SEND_SMS, {
+    await OutboxService.emit(OutboxEventTypes.SMS_SEND, {
       phone,
       message,
       channel: flags.enablePushNotifications ? 'push' : 'sms',
@@ -99,8 +99,7 @@ export const authUseCases = {
             phone,
             riderId,
             fullName: '',
-            accountStatus: 'PRE_ACTIVE',
-            registrationDone: true,
+            lifecycleStatus: 'PROFILE_SUBMITTED',
             registrationDoneAt: new Date(),
             referralCode,
             referredBy: incomingReferralCode || null,

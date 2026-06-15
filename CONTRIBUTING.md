@@ -56,7 +56,7 @@ Types:
 ## Database Changes
 
 1. Modify `prisma/schema.prisma`
-2. Run `npm run db:push` locally to test
+2. Run `npm run db:deploy` locally to test
 3. Create a migration: `npm run db:migrate`
 4. Include migration files in PR
 

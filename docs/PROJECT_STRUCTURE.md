@@ -1,7 +1,7 @@
 # Voltium — Project Structure
 
-> **Note**: Voltium does not use Docker for local development, CI, staging, or production.
-> All services use managed infrastructure (Neon/Supabase PostgreSQL) or native Node.js process commands.
+> **Note**: Voltium does not use Docker. All services run as native Node.js processes.
+> Database, files, and backups stay on local disk. Cloudflare Tunnel for public routing only.
 
 ## Repository Layout
 
@@ -75,7 +75,7 @@ Two separate processes are needed:
 | Web/API | `npm run start` | Next.js server (admin dashboard + API routes) |
 | Worker  | `npm run worker:start` | Background job processor (outbox events, notifications) |
 
-Both processes connect to the same managed PostgreSQL database.
+Both processes connect to the same local PostgreSQL database.
 
 ## Key Separations
 

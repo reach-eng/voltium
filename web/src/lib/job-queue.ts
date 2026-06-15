@@ -1,14 +1,13 @@
-import { Redis } from '@upstash/redis';
+/**
+ * PostgreSQL-backed Job Queue
+ *
+ * Uses the OutboxEvent table as a reliable job queue — no Redis dependency.
+ * enqueue() writes an event; processJobs() polls pending events, processes
+ * them, and marks COMPLETED or FAILED.
+ */
+
+import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-
-// Guard: only initialize Redis if credentials are present (same pattern as rate-limit.ts)
-const REDIS_URL = process.env.REDIS_URL || process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.REDIS_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-const redis = REDIS_URL && REDIS_TOKEN ? new Redis({ url: REDIS_URL, token: REDIS_TOKEN }) : null;
-
-const QUEUE_PREFIX = 'voltium:queue';
-const JOB_TTL = 86400;
 
 export interface QueueJob {
   id: string;
@@ -21,58 +20,25 @@ export interface QueueJob {
   error?: string;
 }
 
-function createJob(type: string, payload: Record<string, unknown>): QueueJob {
-  return {
-    id: crypto.randomUUID(),
-    type,
-    payload,
-    status: 'pending',
-    attempts: 0,
-    createdAt: Date.now(),
-  };
-}
-
 export const JobQueue = {
-  async enqueue(type: string, payload: Record<string, unknown>, delayMs = 0): Promise<string> {
-    if (!redis) {
-      logger.warn('[JobQueue] Redis not configured — job not enqueued', { type });
-      return createJob(type, payload).id;
-    }
-    const job = createJob(type, payload);
-    job.createdAt = Date.now() + delayMs;
-
-    await redis.zadd(`${QUEUE_PREFIX}:${type}`, {
-      score: job.createdAt,
-      member: JSON.stringify(job),
-    });
-
-    return job.id;
-  },
-
-  async enqueueBulk(
-    jobs: Array<{ type: string; payload: Record<string, unknown> }>
-  ): Promise<string[]> {
-    if (!redis) {
-      logger.warn('[JobQueue] Redis not configured — bulk jobs not enqueued');
-      return jobs.map((j) => createJob(j.type, j.payload).id);
-    }
-    const jobIds: string[] = [];
-    const now = Date.now();
-    const pipeline = redis.pipeline();
-
-    for (const job of jobs) {
-      const jobData = createJob(job.type, job.payload);
-      jobData.createdAt = now;
-
-      pipeline.zadd(`${QUEUE_PREFIX}:${job.type}`, {
-        score: now,
-        member: JSON.stringify(jobData),
+  async enqueue(type: string, payload: Record<string, unknown>, _delayMs = 0, maxAttempts = 3): Promise<string> {
+    try {
+      const event = await db.outboxEvent.create({
+        data: {
+          eventType: type,
+          payload: JSON.stringify(payload),
+          status: 'PENDING',
+          maxAttempts,
+        },
+        select: { id: true },
       });
-      jobIds.push(jobData.id);
-    }
 
-    await pipeline.exec();
-    return jobIds;
+      logger.debug('[JobQueue] Job enqueued', { type, jobId: event.id });
+      return event.id;
+    } catch (err) {
+      logger.error('[JobQueue] Failed to enqueue job', { type, err });
+      throw err;
+    }
   },
 
   async processJobs(
@@ -80,114 +46,98 @@ export const JobQueue = {
     processor: (job: QueueJob) => Promise<void>,
     concurrency = 5
   ): Promise<void> {
-    if (!redis) {
-      logger.warn('[JobQueue] Redis not configured — cannot process jobs');
-      return;
-    }
-    const processed: string[] = [];
+    const pending = await db.outboxEvent.findMany({
+      where: {
+        eventType: type,
+        status: 'PENDING',
+        attempts: { lt: 3 },
+        createdAt: { lte: new Date(Date.now() - 5_000) }, // 5s settle time
+      },
+      orderBy: { createdAt: 'asc' },
+      take: concurrency,
+    });
 
-    for (let i = 0; i < concurrency; i++) {
-      const result = await redis.zpopmin(`${QUEUE_PREFIX}:${type}`);
-      if (!result || result.length === 0) break;
+    if (pending.length === 0) return;
 
-      const [jobJson, rawScore] = result as [string, string];
-      const job: QueueJob = JSON.parse(jobJson);
-
-      if (job.createdAt > Date.now()) {
-        await redis.zadd(`${QUEUE_PREFIX}:${type}`, {
-          score: job.createdAt,
-          member: jobJson,
-        });
-        continue;
-      }
-
-      job.status = 'processing';
-      job.processedAt = Date.now();
-
+    for (const event of pending) {
       try {
-        await processor(job);
-        job.status = 'completed';
-      } catch (error) {
-        job.attempts++;
-        job.status = job.attempts >= 3 ? 'failed' : 'pending';
-        job.error = error instanceof Error ? error.message : 'Unknown error';
-      }
-
-      if (job.status === 'completed') {
-        await redis.set(`${QUEUE_PREFIX}:job:${job.id}`, JSON.stringify(job), { ex: JOB_TTL });
-        processed.push(job.id);
-      } else if (job.status === 'pending') {
-        await redis.zadd(`${QUEUE_PREFIX}:${type}`, {
-          score: Date.now() + job.attempts * 60000,
-          member: JSON.stringify(job),
+        // Mark as PROCESSING
+        await db.outboxEvent.update({
+          where: { id: event.id },
+          data: { status: 'PROCESSING' },
         });
-      } else {
-        await redis.set(`${QUEUE_PREFIX}:dead:${job.id}`, JSON.stringify(job), { ex: JOB_TTL * 7 });
+
+        const job: QueueJob = {
+          id: event.id,
+          type: event.eventType,
+          payload: JSON.parse(event.payload),
+          status: 'pending',
+          attempts: event.attempts,
+          createdAt: event.createdAt.getTime(),
+        };
+
+        await processor(job);
+
+        // Mark as COMPLETED
+        await db.outboxEvent.update({
+          where: { id: event.id },
+          data: {
+            status: 'COMPLETED',
+            processedAt: new Date(),
+            attempts: { increment: 1 },
+          },
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const eventData = event as any;
+
+        await db.outboxEvent.update({
+          where: { id: event.id },
+          data: {
+            attempts: { increment: 1 },
+            error: errorMessage,
+            status: (eventData.attempts ?? 0) + 1 >= (eventData.maxAttempts ?? 3) ? 'FAILED' : 'PENDING',
+          },
+        });
+
+        logger.error('[JobQueue] Failed to process job', {
+          jobId: event.id,
+          type,
+          error: errorMessage,
+        });
       }
     }
   },
 
-  async getJobStatus(jobId: string): Promise<QueueJob | null> {
-    if (!redis) return null;
-    const job = await redis.get(`${QUEUE_PREFIX}:job:${jobId}`);
-    return job ? JSON.parse(job as string) : null;
-  },
-
-  async getQueueStats(
-    type: string
-  ): Promise<{ pending: number; processing: number; failed: number }> {
-    if (!redis) return { pending: 0, processing: 0, failed: 0 };
-    const jobs = await redis.zrange(`${QUEUE_PREFIX}:${type}`, 0, -1);
-
-    let pending = 0;
-    let processing = 0;
-    let failed = 0;
-
-    for (const jobJson of jobs) {
-      const job: QueueJob = JSON.parse(jobJson as string);
-      if (job.status === 'pending') pending++;
-      else if (job.status === 'processing') processing++;
-      else if (job.status === 'failed') failed++;
-    }
-
+  async getQueueStats(type: string): Promise<{ pending: number; processing: number; failed: number }> {
+    const [pending, processing, failed] = await Promise.all([
+      db.outboxEvent.count({ where: { eventType: type, status: 'PENDING' } }),
+      db.outboxEvent.count({ where: { eventType: type, status: 'PROCESSING' } }),
+      db.outboxEvent.count({ where: { eventType: type, status: 'FAILED' } }),
+    ]);
     return { pending, processing, failed };
   },
 
   async retryFailedJobs(type: string): Promise<number> {
-    if (!redis) return 0;
-    const jobs = await redis.zrange(`${QUEUE_PREFIX}:${type}`, 0, -1);
-    let retried = 0;
-
-    for (const jobJson of jobs) {
-      const job: QueueJob = JSON.parse(jobJson as string);
-      if (job.status === 'failed') {
-        job.status = 'pending';
-        job.attempts = 0;
-        job.error = undefined;
-
-        await redis.zrem(`${QUEUE_PREFIX}:${type}`, jobJson);
-        await redis.zadd(`${QUEUE_PREFIX}:${type}`, {
-          score: Date.now(),
-          member: JSON.stringify(job),
-        });
-        retried++;
-      }
-    }
-
-    return retried;
+    const result = await db.outboxEvent.updateMany({
+      where: { eventType: type, status: 'FAILED' },
+      data: { status: 'PENDING', attempts: 0, error: null },
+    });
+    return result.count;
   },
 
   async clearQueue(type: string): Promise<void> {
-    if (!redis) return;
-    await redis.del(`${QUEUE_PREFIX}:${type}`);
+    await db.outboxEvent.deleteMany({
+      where: { eventType: type, status: { in: ['PENDING', 'PROCESSING'] } },
+    });
   },
 };
 
 export const JobTypes = {
-  SEND_SMS: 'send_sms',
+  SEND_SMS: 'sms.send',
   SEND_EMAIL: 'send_email',
-  NOTIFICATION: 'notification',
+  NOTIFICATION: 'notification.send',
   RIDE_REMINDER: 'ride_reminder',
-  REFERRAL_REWARD: 'referral_reward',
+  REFERRAL_REWARD: 'referral.reward',
   REFUND_PROCESSING: 'refund_processing',
 };

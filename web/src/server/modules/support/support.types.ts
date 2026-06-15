@@ -28,7 +28,7 @@ export interface TicketMessage {
   id: string;
   ticketId: string;
   senderId: string;
-  senderType: 'rider' | 'admin';
+  senderType: 'RIDER' | 'ADMIN';
   message: string;
   createdAt: Date;
 }

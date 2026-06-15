@@ -2,8 +2,7 @@
 
 ## Provider
 
-**PostgreSQL only** — all environments (local, staging, production).
-**Voltium does not use Docker for the database.** Use a managed PostgreSQL service.
+**PostgreSQL** — local instance on the laptop.
 
 ```prisma
 datasource db {
@@ -11,15 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 ```
-
-## Recommended Managed PostgreSQL
-
-| Environment | Provider                                              |
-|-------------|-------------------------------------------------------|
-| Local dev   | [Neon](https://neon.tech) free tier (serverless PG)   |
-| Staging     | Separate Neon / Supabase / Railway project            |
-| Production  | Separate Neon / Supabase / Railway project            |
-| CI tests    | GitHub Actions `services: postgres` (built-in)        |
 
 ## Schema Location
 
@@ -32,21 +22,10 @@ web/prisma/schema.prisma
 ## Environment Variables
 
 ```env
-# .env.local (development)
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
-DIRECT_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_dev?sslmode=require"
+# .env (development / production)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/voltium"
 APP_ENV="local"
 NODE_ENV="development"
-
-# .env.staging
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_staging?sslmode=require"
-APP_ENV="staging"
-NODE_ENV="production"
-
-# .env.production
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/voltium_prod?sslmode=require"
-APP_ENV="production"
-NODE_ENV="production"
 ```
 
 > **Important**: Do not use `NODE_ENV=staging`. Use `APP_ENV=staging` with `NODE_ENV=production`.
@@ -92,13 +71,13 @@ npx prisma generate
 ## Local Development Setup
 
 ```bash
-# 1. Sign up for a free Neon or Supabase account
-# 2. Create a new PostgreSQL project
-# 3. Copy the connection string
+# Ensure PostgreSQL is running locally on default port 5432
+# Create the database:
+createdb voltium
 
 cd web
 cp ../.env.local.example .env.local
-# Edit .env.local — paste your DATABASE_URL
+# Edit .env.local — set DATABASE_URL if needed
 
 npm install
 npx prisma generate

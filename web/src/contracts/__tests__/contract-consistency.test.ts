@@ -31,7 +31,7 @@ describe('Auth Contract', () => {
   });
 
   it('VerifyOtpRequest accepts Firebase token auth', () => {
-    const request = { idToken: 'firebase-token' };
+    const request: any = { idToken: 'firebase-token' };
     expect(request.idToken).toBeDefined();
     expect(request.phone).toBeUndefined(); // Optional
   });
@@ -196,7 +196,7 @@ describe('Wallet State Machine Consistency', () => {
   });
 
   it('Cannot debit more than available balance', () => {
-    let balance = 10000;
+    const balance = 10000;
     const debitAmount = 15000;
     expect(balance >= debitAmount).toBe(false);
     // This should fail — the service layer would throw INSUFFICIENT_BALANCE

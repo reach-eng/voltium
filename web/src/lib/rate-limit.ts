@@ -1,12 +1,10 @@
-import { Redis } from '@upstash/redis';
 import { logger } from '@/lib/logger';
 
 /**
- * Ryd Production Rate Limiter
+ * In-Memory Rate Limiter
  *
- * Supports:
- * 1. In-Memory (for dev/single-instance)
- * 2. Upstash Redis (for multi-instance/serverless production)
+ * Single-instance rate limiting using an in-memory map.
+ * No Redis dependency — suitable for laptop-local deployment.
  */
 
 interface RateLimitConfig {
@@ -19,16 +17,6 @@ interface RateLimitResult {
   remaining: number;
   resetAt: number;
 }
-
-// ─── Environment Configuration ─────────────────────────────────────────────
-const UPSTASH_REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-// Initialize Redis if credentials exist
-const redis =
-  UPSTASH_REDIS_URL && UPSTASH_REDIS_TOKEN
-    ? new Redis({ url: UPSTASH_REDIS_URL, token: UPSTASH_REDIS_TOKEN })
-    : null;
 
 // ─── In-Memory Store Cleanup ───────────────────────────────────────────────
 interface RateLimitEntry {
@@ -71,31 +59,7 @@ export async function checkRateLimit(
   const key = `ratelimit:${identifier}`;
   const now = Date.now();
 
-  // Mode 1: Upstash Redis (Production-ready)
-  if (redis) {
-    try {
-      const windowInSeconds = Math.floor(config.windowMs / 1000);
-
-      // Increment and set expiry in one go
-      const count = await redis.incr(key);
-      if (count === 1) {
-        await redis.expire(key, windowInSeconds);
-      }
-
-      const ttl = await redis.ttl(key);
-      const resetAt = now + (ttl > 0 ? ttl * 1000 : config.windowMs);
-
-      return {
-        allowed: count <= config.maxRequests,
-        remaining: Math.max(0, config.maxRequests - count),
-        resetAt,
-      };
-    } catch (err) {
-      logger.error('[RateLimit] Redis error, falling back to memory:', err);
-    }
-  }
-
-  // Mode 2: In-Memory (Dev/Fallback)
+  // In-Memory rate limiting
   const existing = memoryStore.get(identifier);
   if (existing && existing.resetAt <= now) {
     memoryStore.delete(identifier);

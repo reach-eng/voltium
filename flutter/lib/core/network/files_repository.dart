@@ -67,10 +67,8 @@ class FilesRepository {
 
       return uploadUrl;
     } catch (e) {
-      debugPrint('[FilesRepository] Signed URL upload failed, falling back to legacy: $e');
-      final legacyType = _mapCategoryToLegacyType(category);
-      final response = await _client.uploadFile('/api/upload', file, fieldName: 'file');
-      return response['url'] as String? ?? response['data']?['url'] as String? ?? '';
+      debugPrint('[FilesRepository] Signed URL upload failed: $e');
+      throw Exception('File upload failed: $e');
     }
   }
 
@@ -82,16 +80,6 @@ class FilesRepository {
       case 'jpeg': return 'image/jpeg';
       case 'pdf': return 'application/pdf';
       default: return 'application/octet-stream';
-    }
-  }
-
-  String _mapCategoryToLegacyType(String category) {
-    switch (category) {
-      case 'KYC_AADHAAR_FRONT': return 'aadhaar_front';
-      case 'KYC_AADHAAR_BACK': return 'aadhaar_back';
-      case 'KYC_PAN': return 'pan_card';
-      case 'TOPUP_PROOF': return 'topup_receipt';
-      default: return 'general';
     }
   }
 }

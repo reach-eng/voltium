@@ -6,14 +6,14 @@ export interface CreateAdminParams {
   email: string;
   password: string;
   name: string;
-  role: string;
+  role: AdminRole;
   permissions?: string[];
 }
 
 export interface UpdateAdminParams {
   email?: string;
   name?: string;
-  role?: string;
+  role?: AdminRole;
   password?: string;
   permissions?: string[];
   isActive?: boolean;

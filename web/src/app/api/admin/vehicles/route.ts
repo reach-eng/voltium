@@ -47,10 +47,14 @@ export async function POST(req: NextRequest) {
     const vehicleId = await vehicleUseCases.getNextId();
 
     const vehicle = await vehicleUseCases.createVehicle({
-      vehicleNumber: validation.data.vehicleNumber, vehicleId, model: validation.data.model,
-      batteryPartner: validation.data.batteryPartner || null, licensePlate: validation.data.licensePlate || null,
-      hubId: validation.data.hubId, status: validation.data.status || 'AVAILABLE',
-    });
+      vehicleNumber: validation.data.vehicleNumber,
+      vehicleId,
+      model: validation.data.model,
+      batteryPartner: validation.data.batteryPartner || null,
+      licensePlate: validation.data.licensePlate || null,
+      status: validation.data.status || 'AVAILABLE',
+      hub: { connect: { id: validation.data.hubId } },
+    } as any);
 
     await createAuditLog({ actorId: session.adminId || session.riderDbId || 'system', action: 'vehicle.create', entity: 'vehicle', entityId: vehicle.id, details: { vehicleNumber: validation.data.vehicleNumber, vehicleId } }).catch(() => {});
 
@@ -94,7 +98,7 @@ export async function DELETE(req: NextRequest) {
 
     const vehicle = await vehicleUseCases.getVehicle(id);
     if (vehicle) {
-      await vehicleUseCases.updateVehicle(id, { status: 'DECOMMISSIONED' });
+      await vehicleUseCases.updateVehicle(id, { status: 'RETIRED' });
       await createAuditLog({ actorId: session.adminId || session.riderDbId || 'system', action: 'vehicle.delete', entity: 'vehicle', entityId: id, details: { vehicleNumber: vehicle.vehicleNumber, vehicleId: vehicle.vehicleId } }).catch(() => {});
     }
 

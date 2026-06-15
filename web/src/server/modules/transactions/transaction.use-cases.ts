@@ -61,11 +61,19 @@ export const transactionUseCases = {
 
     const rider = await db.rider.findUnique({
       where: { id: txn.riderId },
-      select: { id: true, depositDone: true },
+      select: { id: true, lifecycleStatus: true },
     });
     if (!rider) throw new Error('Rider not found');
 
-    const finalPurpose = !rider.depositDone ? 'SECURITY_DEPOSIT' : txn.purpose;
+    const lifecycleRank: Record<string, number> = {
+      NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+      KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+      DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+      PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+      RETURN_PENDING: 13, CLOSED: 14,
+    };
+    const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
+    const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : txn.purpose;
 
     if (finalPurpose === 'SECURITY_DEPOSIT') {
       // Delegate deposit approval to the deposit module

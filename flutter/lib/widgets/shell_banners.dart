@@ -113,7 +113,10 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
     final List<_Reason> reasons = [];
     final status = rider.accountStatus;
 
-    if (status == AccountStatus.ACTIVE) return const SizedBox.shrink();
+    if (status == AccountStatus.ACTIVE &&
+        (rider.lifecycleStatus.isEmpty || _lifecycleRank(rider) < 12)) {
+      return const SizedBox.shrink();
+    }
 
     if (rider.walletBalance < 0) {
       reasons.add(const _Reason(
@@ -139,7 +142,8 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
       ));
     }
 
-    if (rider.planStatus == 'EXPIRED') {
+    if (rider.planStatus == 'EXPIRED' ||
+        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 13)) {
       reasons.add(const _Reason(
         title: 'Subscription Expired',
         description: 'Select a new plan to continue.',
@@ -287,4 +291,15 @@ class _Reason {
   final _Severity severity;
   const _Reason(
       {required this.title, required this.description, required this.severity});
+}
+
+int _lifecycleRank(RiderModel rider) {
+  const rank = <String, int>{
+    'NEW': 0, 'PHONE_VERIFIED': 1, 'PROFILE_SUBMITTED': 2,
+    'KYC_SUBMITTED': 3, 'KYC_APPROVED': 4, 'GUARANTOR_SUBMITTED': 5,
+    'GUARANTOR_APPROVED': 6, 'DEPOSIT_PENDING': 7, 'DEPOSIT_APPROVED': 8,
+    'PLAN_SELECTED': 9, 'PICKUP_SCHEDULED': 10, 'ACTIVE': 11,
+    'SUSPENDED': 12, 'RETURN_PENDING': 13, 'CLOSED': 14,
+  };
+  return rank[rider.lifecycleStatus] ?? 0;
 }

@@ -9,10 +9,9 @@ import {
   type CompressOptions,
   type CompressResult,
 } from '@/lib/image-compress';
+import { uploadFile } from '@/lib/upload';
 
 interface UseImageUploadOptions extends CompressOptions {
-  /** Upload endpoint. Default: '/api/upload' */
-  uploadEndpoint?: string;
   /** Callback when upload succeeds */
   onSuccess?: (url: string, result: CompressResult) => void;
   /** Callback when upload fails */
@@ -41,7 +40,7 @@ interface UseImageUploadReturn {
 }
 
 export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUploadReturn {
-  const { uploadEndpoint = '/api/upload', onSuccess, onError, ...compressOptions } = options;
+  const { onSuccess, onError, ...compressOptions } = options;
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -115,46 +114,17 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       setProgress(10);
 
       try {
-        // Create FormData
-        const formData = new FormData();
         const ext = currentBlob.type === 'image/jpeg' ? 'jpg' : 'webp';
-        const file = blobToFile(currentBlob, `voltium-${Date.now()}.${ext}`);
-        formData.append('file', file);
-        formData.append('type', uploadType);
+        const fileName = `voltium-${Date.now()}.${ext}`;
 
         setProgress(30);
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const fileObj = blobToFile(currentBlob, fileName);
+        const url = await uploadFile(fileObj, uploadType);
 
-        // Upload
-        const response = await fetch(uploadEndpoint, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-
-        setProgress(90);
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          const msg = data?.error?.message || `Upload failed: HTTP ${response.status}`;
-          onError?.(msg);
-          return null;
-        }
-
-        const data = await response.json();
         setProgress(100);
-
-        if (data.success && data.data?.url) {
-          onSuccess?.(data.data.url, lastResult!);
-          return data.data.url;
-        }
-
-        onError?.('Upload returned unexpected response');
-        return null;
+        onSuccess?.(url, lastResult!);
+        return url;
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Upload failed';
         onError?.(msg);
@@ -163,7 +133,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
         setIsUploading(false);
       }
     },
-    [currentBlob, uploadEndpoint, onSuccess, onError, lastResult]
+    [currentBlob, onSuccess, onError, lastResult]
   );
 
   const pickCompressAndUpload = useCallback(

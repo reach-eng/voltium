@@ -16,7 +16,7 @@ export const scoreUseCases = {
     const [scores, total] = await Promise.all([
       db.riderScore.findMany({
         where, orderBy: { compositeScore: 'asc' },
-        include: { rider: { select: { fullName: true, riderId: true, phone: true, state: true, accountStatus: true, pickupHub: true } } },
+        include: { rider: { select: { fullName: true, riderId: true, phone: true, lifecycleStatus: true, pickupHub: true } } },
         skip: (page - 1) * limit, take: limit,
       }),
       db.riderScore.count({ where }),
@@ -24,7 +24,7 @@ export const scoreUseCases = {
 
     const formatted = (scores as any[]).map((s) => ({
       id: s.id, riderId: s.riderId, fullName: s.rider?.fullName || s.rider?.phone, phone: s.rider?.phone,
-      riderState: s.rider?.state, riderAccountStatus: s.rider?.accountStatus, pickupHub: s.rider?.pickupHub,
+      riderState: s.rider?.lifecycleStatus, riderAccountStatus: s.rider?.lifecycleStatus, pickupHub: s.rider?.pickupHub,
       paymentScore: s.paymentScore, complianceScore: s.kycScore, engagementScore: s.activityScore,
       supportScore: s.supportScore, vehicleScore: 0, locationScore: 0,
       compositeScore: s.compositeScore, riskLevel: s.riskLevel, lastCalculated: s.lastCalculated,

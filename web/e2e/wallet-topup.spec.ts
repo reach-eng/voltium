@@ -64,9 +64,22 @@ test.describe('Wallet Top-up Flow', () => {
       }
       return r.fulfill({ body: JSON.stringify({ success: true, data: { transactions: [] } }) });
     });
-    await page.route('**/api/upload', (r) =>
+    await page.route('**/api/files/request-upload', (r) =>
       r.fulfill({
-        body: JSON.stringify({ success: true, data: { url: 'https://example.com/dummy.png' } }),
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: { uploadUrl: '/api/files/direct-upload?key=test-key', fileRecordId: 'rec-1', storageKey: 'test-key' },
+        }),
+      })
+    );
+    await page.route('**/api/files/direct-upload*', (r) =>
+      r.fulfill({ status: 200, body: JSON.stringify({ status: 'ok' }) })
+    );
+    await page.route('**/api/files/confirm-upload', (r) =>
+      r.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { status: 'uploaded' } }),
       })
     );
 

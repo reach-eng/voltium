@@ -21,13 +21,13 @@ import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.servi
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
   'fullName', 'email', 'fatherName', 'motherName', 'dob', 'currentAddress',
-  'emergencyContact', 'accountStatus', 'pickupHub', 'teamLeader',
+  'emergencyContact', 'pickupHub', 'teamLeader',
   'planStartDate', 'planEndDate', 'intent', 'referralCode', 'phone',
   'preferredShift', 'referredBy', 'assignedVehicle',
 ]);
 
 const KYC_FIELDS = new Set([
-  'kycStatus', 'kycDone', 'profilePhoto', 'riderPhoto', 'signature',
+  'kycStatus', 'profilePhoto', 'riderPhoto', 'signature',
   'aadhaarFront', 'aadhaarBack', 'aadhaarNumber', 'panCard', 'panNumber',
   'bankAccount', 'bankIfsc', 'bankName', 'accountNumber', 'ifscCode', 'rejectionReason',
 ]);
@@ -73,7 +73,7 @@ export const adminRiderUseCases = {
         { phone: { contains: search } },
       ];
     }
-    if (state && state !== 'ALL') where.state = state;
+    if (state && state !== 'ALL') where.lifecycleStatus = state;
     if (kycStatus) {
       where.kycProfile = { status: kycStatus };
     }
@@ -83,7 +83,7 @@ export const adminRiderUseCases = {
       if (endDate) (where.createdAt as any).lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
-    const validSortFields = new Set(['createdAt', 'fullName', 'phone', 'state', 'kycStatus']);
+    const validSortFields = new Set(['createdAt', 'fullName', 'phone', 'lifecycleStatus', 'kycStatus']);
     const orderByField = validSortFields.has(sortBy) ? sortBy : 'createdAt';
     const orderByDir = sortDir === 'asc' ? 'asc' : 'desc';
 
@@ -92,10 +92,10 @@ export const adminRiderUseCases = {
         where,
         select: {
           id: true, riderId: true, fullName: true, phone: true, email: true,
-          state: true, accountStatus: true, pickupHub: true,
+          lifecycleStatus: true, pickupHub: true,
           pickedUpAt: true, registrationDoneAt: true, depositDoneAt: true,
           kycDoneAt: true, planDoneAt: true, teamLeader: true,
-          planStartDate: true, planEndDate: true, rentalStatus: true, planStatus: true,
+          planStartDate: true, planEndDate: true,
           currentPlan: true, currentPlanPrice: true, assignedVehicle: true,
           vehicleId: true, intent: true, referralCode: true,
           fatherName: true, motherName: true, dob: true, currentAddress: true,
@@ -105,14 +105,12 @@ export const adminRiderUseCases = {
           deliveryId: true, locationGranted: true, batteryGranted: true,
           contactsGranted: true, callLogsGranted: true, micGranted: true,
           cameraGranted: true, phoneGranted: true,
-          registrationDone: true, depositDone: true, kycDone: true,
-          planDone: true, pickupDone: true,
           emergencyContact: true, preferredShift: true, referredBy: true,
           kycProfile: { select: { id: true, status: true, profilePhoto: true, riderPhoto: true, signature: true, aadhaarFront: true, aadhaarBack: true, aadhaarNumber: true, panCard: true, panNumber: true, bankName: true, accountNumber: true, ifscCode: true, rejectionReason: true, updatedAt: true } },
           wallet: { select: { id: true, balanceInPaise: true, securityDeposit: true, depositStatus: true, paymentStreak: true } },
           guarantor: { select: { id: true, status: true, name: true, relation: true, dob: true, phone: true, aadhaarFront: true, aadhaarBack: true, pan: true, video: true, signature: true, fatherName: true, motherName: true, address: true, photo: true } },
           leases: { where: { status: 'ACTIVE' }, take: 1, select: { createdAt: true, vehicle: { select: { vehicleNumber: true, model: true } } } },
-          vehicleReturns: { where: { status: 'PENDING' }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, status: true, photoFront: true, photoBack: true, photoLeft: true, photoRight: true, photoSpeedometer: true, createdAt: true } },
+          vehicleReturns: { where: { status: 'SUBMITTED' }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, status: true, photoFront: true, photoBack: true, photoLeft: true, photoRight: true, photoSpeedometer: true, createdAt: true } },
         },
         orderBy: orderByField === 'kycStatus' ? { kycProfile: { status: orderByDir } } : { [orderByField]: orderByDir },
         skip: (page - 1) * limit,
@@ -232,14 +230,14 @@ export const adminRiderUseCases = {
       }
     }
 
-    // Sync kycDone flag with KycProfile status
+    // Sync lifecycleStatus with KycProfile status
     if (kycData.status === 'APPROVED') {
-      riderData.kycDone = true;
+      riderData.lifecycleStatus = 'KYC_APPROVED';
       riderData.kycDoneAt = new Date();
       guarantorData.status = 'APPROVED';
     }
     if (kycData.status === 'REJECTED' || kycData.status === 'INFO_REQUIRED') {
-      riderData.kycDone = false;
+      riderData.lifecycleStatus = kycData.status === 'REJECTED' ? 'SUSPENDED' : 'KYC_SUBMITTED';
       guarantorData.status = kycData.status === 'REJECTED' ? 'REJECTED' : 'INFO_REQUIRED';
     }
 
@@ -254,25 +252,31 @@ export const adminRiderUseCases = {
           create: { riderId: id, ...kycData },
         });
       }
-      if (Object.keys(walletData).length > 0) {
-        const wallet = (await tx.wallet.findUnique({ where: { riderId: id }, select: { id: true, balanceInPaise: true } }))
-          ?? await tx.wallet.create({ data: { riderId: id }, select: { id: true, balanceInPaise: true } });
-
-        if ('balanceInPaise' in walletData) {
-          const targetBalance = walletData.balanceInPaise as number;
-          const currentBalance = wallet.balanceInPaise;
-          const diff = targetBalance - currentBalance;
-          if (diff > 0) {
-            await walletLedgerService.credit({ riderId: id, amountInPaise: diff, category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}` }, tx);
-          } else if (diff < 0) {
-            await walletLedgerService.debit({ riderId: id, amountInPaise: Math.abs(diff), category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`, allowNegative: true }, tx);
-          }
-          delete walletData.balanceInPaise;
-        }
         if (Object.keys(walletData).length > 0) {
-          await tx.wallet.update({ where: { id: wallet.id }, data: walletData });
+          const wallet = (await tx.wallet.findUnique({ where: { riderId: id }, select: { id: true, balanceInPaise: true } }))
+            ?? await tx.wallet.create({ data: { riderId: id }, select: { id: true, balanceInPaise: true } });
+
+          if ('balanceInPaise' in walletData) {
+            const targetBalance = walletData.balanceInPaise as number;
+            const currentBalance = wallet.balanceInPaise;
+            const diff = targetBalance - currentBalance;
+            if (diff > 0) {
+              await walletLedgerService.credit({ riderId: id, amountInPaise: diff, category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}` }, tx);
+            } else if (diff < 0) {
+              await walletLedgerService.debit({ riderId: id, amountInPaise: Math.abs(diff), category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`, allowNegative: true }, tx);
+            }
+            delete walletData.balanceInPaise;
+          }
+
+          // Block direct securityDeposit/depositStatus mutations — must use Deposits API
+          if ('securityDeposit' in walletData || 'depositStatus' in walletData) {
+            throw new Error('Use the Deposits API to modify security deposit or deposit status');
+          }
+
+          if (Object.keys(walletData).length > 0) {
+            await tx.wallet.update({ where: { id: wallet.id }, data: walletData });
+          }
         }
-      }
       if (Object.keys(guarantorData).length > 0) {
         await tx.guarantor.upsert({ where: { riderId: id }, update: guarantorData, create: { riderId: id, ...guarantorData } });
       }
@@ -281,7 +285,7 @@ export const adminRiderUseCases = {
 
     // Audit log for KYC actions
     if (kycData.status && ['APPROVED', 'REJECTED', 'INFO_REQUIRED'].includes(kycData.status)) {
-      createAuditLog({ actorId, actorType: 'admin', action: `kyc_${kycData.status.toLowerCase()}`, entity: 'rider', entityId: id, details: JSON.stringify({ kycStatus: kycData.status, rejectionReason: kycData.rejectionReason || null }) }).catch(() => {});
+      createAuditLog({ actorId, actorType: 'ADMIN', action: `kyc_${kycData.status.toLowerCase()}`, entity: 'rider', entityId: id, details: JSON.stringify({ kycStatus: kycData.status, rejectionReason: kycData.rejectionReason || null }) }).catch(() => {});
       notificationService.notifyKycStatusChange(id, kycData.status, kycData.rejectionReason).catch((e) => logger.error('Failed to notify KYC change', e));
     }
 
@@ -309,9 +313,10 @@ export const adminRiderUseCases = {
     const endDate = new Date(now);
     endDate.setDate(endDate.getDate() + plan.durationDays);
 
+    await transitionRiderStatus(riderId, 'PLAN_SELECTED');
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { planStatus: 'ACTIVE', currentPlan: plan.name, currentPlanPrice: plan.price, planStartDate: now, planEndDate: endDate, planDone: true, planDoneAt: new Date() },
+      data: { currentPlan: plan.name, currentPlanPrice: plan.price, planStartDate: now, planEndDate: endDate, planDoneAt: new Date() },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
@@ -332,9 +337,10 @@ export const adminRiderUseCases = {
       assignedTl = activeTl ? activeTl.name : 'Amit Sharma';
     }
 
+    await transitionRiderStatus(riderId, 'ACTIVE');
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { pickupDone: true, pickedUpAt: new Date(), rentalStatus: 'ACTIVE', accountStatus: 'ACTIVE', assignedVehicle: data.vehicleId || 'VF-ASSIGNED-BY-ADMIN', pickupHub: data.hubId || 'Central Hub', teamLeader: assignedTl, state: 'POST_ACTIVE' },
+      data: { pickedUpAt: new Date(), assignedVehicle: data.vehicleId || 'VF-ASSIGNED-BY-ADMIN', pickupHub: data.hubId || 'Central Hub', teamLeader: assignedTl },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
@@ -349,7 +355,7 @@ export const adminRiderUseCases = {
     const rider = await db.rider.findUnique({ where: { id: riderId }, select: { assignedVehicle: true } });
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { rentalStatus: 'NONE', assignedVehicle: null, pickupDone: false, pickedUpAt: null, state: 'PRE_ACTIVE' },
+      data: { assignedVehicle: null, pickedUpAt: null },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
@@ -381,12 +387,15 @@ export const adminRiderUseCases = {
     return results;
   },
 
-  /**
-   * Update rider security flags for device control (FCM actions).
-   */
   async updateSecurityFlags(riderId: string, data: Record<string, unknown>, actorId: string) {
     await db.rider.update({ where: { id: riderId }, data });
-    await db.auditLog.create({ data: { action: 'device_security_update', entityId: riderId, entity: 'RIDER', actorId, details: JSON.stringify(data) } });
+    await createAuditLog({
+      action: 'system.config_change',
+      entityId: riderId,
+      entity: 'rider',
+      actorId,
+      details: data,
+    });
   },
 
   /**
@@ -414,13 +423,13 @@ export const adminRiderUseCases = {
 
     if (status && status !== 'ALL') {
       if (status === 'active') {
-        where.state = 'POST_ACTIVE';
+        where.lifecycleStatus = 'ACTIVE';
       } else if (status === 'idle') {
-        where.state = 'PRE_ACTIVE';
+        where.lifecycleStatus = 'PROFILE_SUBMITTED';
       } else if (status === 'offline') {
         where.OR = [
-          { accountStatus: { in: ['SUSPENDED', 'BLACKLISTED'] } },
-          { state: { notIn: ['POST_ACTIVE', 'PRE_ACTIVE'] } },
+          { lifecycleStatus: 'SUSPENDED' },
+          { lifecycleStatus: { notIn: ['ACTIVE', 'PROFILE_SUBMITTED'] } },
         ];
       }
     }
@@ -445,8 +454,7 @@ export const adminRiderUseCases = {
         riderId: true,
         fullName: true,
         phone: true,
-        state: true,
-        accountStatus: true,
+        lifecycleStatus: true,
         pickupHub: true,
         teamLeader: true,
         currentPlan: true,
@@ -483,8 +491,7 @@ export const adminRiderUseCases = {
         riderId: r.riderId,
         fullName: r.fullName,
         phone: r.phone,
-        state: r.state,
-        accountStatus: r.accountStatus,
+        lifecycleStatus: r.lifecycleStatus,
         pickupHub: r.pickupHub,
         teamLeader: r.teamLeader,
         currentPlan: r.currentPlan,

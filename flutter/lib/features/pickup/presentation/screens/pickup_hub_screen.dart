@@ -10,6 +10,7 @@ import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/widgets/pickup_vehicle_search_sheet.dart';
+import 'package:voltium_rider/features/pickup/presentation/widgets/pickup_widgets.dart';
 
 class PickupHubScreen extends StatefulWidget {
   final Function(
@@ -54,25 +55,13 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
   bool _isVerifyingOtp = false;
 
   // Photo uploads
-  String? _frontImagePath;
-  String? _frontPhotoUrl;
-  bool _isUploadingFront = false;
-
-  String? _backImagePath;
-  String? _backPhotoUrl;
-  bool _isUploadingBack = false;
-
-  String? _leftImagePath;
-  String? _leftPhotoUrl;
-  bool _isUploadingLeft = false;
-
-  String? _rightImagePath;
-  String? _rightPhotoUrl;
-  bool _isUploadingRight = false;
-
-  String? _withVehicleImagePath;
-  String? _withVehiclePhotoUrl;
-  bool _isUploadingWithVehicle = false;
+  final Map<String, PhotoUploadEntry> _photos = {
+    'front': PhotoUploadEntry(),
+    'back': PhotoUploadEntry(),
+    'left': PhotoUploadEntry(),
+    'right': PhotoUploadEntry(),
+    'with_vehicle': PhotoUploadEntry(),
+  };
 
   @override
   void dispose() {
@@ -309,29 +298,10 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
 
       if (compressed == null || !mounted) return;
 
+      final entry = _photos[type]!;
       setState(() {
-        switch (type) {
-          case 'front':
-            _frontImagePath = compressed.path;
-            _isUploadingFront = true;
-            break;
-          case 'back':
-            _backImagePath = compressed.path;
-            _isUploadingBack = true;
-            break;
-          case 'left':
-            _leftImagePath = compressed.path;
-            _isUploadingLeft = true;
-            break;
-          case 'right':
-            _rightImagePath = compressed.path;
-            _isUploadingRight = true;
-            break;
-          case 'with_vehicle':
-            _withVehicleImagePath = compressed.path;
-            _isUploadingWithVehicle = true;
-            break;
-        }
+        entry.imagePath = compressed.path;
+        entry.isUploading = true;
       });
 
       final url = await ApiService()
@@ -343,55 +313,16 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       }
 
       setState(() {
-        switch (type) {
-          case 'front':
-            _frontPhotoUrl = url;
-            _isUploadingFront = false;
-            break;
-          case 'back':
-            _backPhotoUrl = url;
-            _isUploadingBack = false;
-            break;
-          case 'left':
-            _leftPhotoUrl = url;
-            _isUploadingLeft = false;
-            break;
-          case 'right':
-            _rightPhotoUrl = url;
-            _isUploadingRight = false;
-            break;
-          case 'with_vehicle':
-            _withVehiclePhotoUrl = url;
-            _isUploadingWithVehicle = false;
-            break;
-        }
+        entry.photoUrl = url;
+        entry.isUploading = false;
       });
       _showSuccess('Photo uploaded successfully');
     } catch (e) {
       if (mounted) {
+        final entry = _photos[type]!;
         setState(() {
-          switch (type) {
-            case 'front':
-              _frontImagePath = null;
-              _isUploadingFront = false;
-              break;
-            case 'back':
-              _backImagePath = null;
-              _isUploadingBack = false;
-              break;
-            case 'left':
-              _leftImagePath = null;
-              _isUploadingLeft = false;
-              break;
-            case 'right':
-              _rightImagePath = null;
-              _isUploadingRight = false;
-              break;
-            case 'with_vehicle':
-              _withVehicleImagePath = null;
-              _isUploadingWithVehicle = false;
-              break;
-          }
+          entry.imagePath = null;
+          entry.isUploading = false;
         });
         _showError('Upload failed. Please check your connection and try again.');
       }
@@ -403,11 +334,7 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
         _selectedTeamLeader != null &&
         _selectedVehicleId != null &&
         _isOtpVerified &&
-        _frontPhotoUrl != null &&
-        _backPhotoUrl != null &&
-        _leftPhotoUrl != null &&
-        _rightPhotoUrl != null &&
-        _withVehiclePhotoUrl != null;
+        _photos.values.every((p) => p.photoUrl != null);
   }
 
   void _submitForm() {
@@ -417,286 +344,11 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       _selectedVehicleId!,
       _selectedTeamLeader,
       _emergencyContactController.text.replaceAll(RegExp(r'\\D'), ''),
-      _frontPhotoUrl,
-      _backPhotoUrl,
-      _leftPhotoUrl,
-      _rightPhotoUrl,
-      _withVehiclePhotoUrl,
-    );
-  }
-
-  // ── Card Wrappers ──────────────────────────────────────────────────────────
-
-  Widget _buildCard1() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: kSurfaceContainer,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'ASSIGNMENT DETAILS',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: kOutlineColor,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          buildInputLabel('SELECT HUB'),
-          const SizedBox(height: 8),
-          buildHubDropdown(
-            _selectedHubId,
-            _hubs,
-            (val) {
-              setState(() {
-                _selectedHubId = val;
-                _selectedVehicleId = null;
-                _selectedVehicleLabel = null;
-              });
-              if (val != null) _fetchVehicles(val);
-            },
-          ),
-          const SizedBox(height: 20),
-          buildInputLabel('TEAM LEADER'),
-          const SizedBox(height: 8),
-          buildTeamLeaderDropdown(
-            _selectedTeamLeader,
-            (val) => setState(() => _selectedTeamLeader = val),
-          ),
-          const SizedBox(height: 20),
-          buildInputLabel('VEHICLE NUMBER'),
-          const SizedBox(height: 8),
-          buildVehicleDropdown(
-            hubSelected: _selectedHubId != null,
-            isLoadingVehicles: _isLoadingVehicles,
-            vehicleSelected: _selectedVehicleId != null,
-            selectedVehicleLabel: _selectedVehicleLabel,
-            vehicleCount: _vehicles.length,
-            onTap: _showVehicleSearchSheet,
-          ),
-          const SizedBox(height: 20),
-          buildInputLabel('EMERGENCY CONTACT'),
-          const SizedBox(height: 8),
-          EmergencyContactField(
-            controller: _emergencyContactController,
-            isOtpVerified: _isOtpVerified,
-            isOtpSent: _isOtpSent,
-            isSendingOtp: _isSendingOtp,
-            onSendOtp: _sendEmergencyOtp,
-            onChanged: (val) {
-              if (_isOtpSent) setState(() => _isOtpSent = false);
-              if (_isOtpVerified) setState(() => _isOtpVerified = false);
-            },
-          ),
-          if (_isOtpSent && !_isOtpVerified) ...[
-            const SizedBox(height: 20),
-            buildInputLabel('ENTER 6-DIGIT OTP'),
-            const SizedBox(height: 8),
-            OtpGrid(controller: _otpController),
-            const SizedBox(height: 16),
-            buildVerifyOtpButton(
-              isVerifying: _isVerifyingOtp,
-              onPressed: _verifyEmergencyOtp,
-            ),
-          ],
-          if (_isOtpVerified) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: kSuccessColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.check_circle, color: kSuccessColor, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Emergency contact verified successfully',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: kSuccessColor,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCard2() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: kSurfaceContainer,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.camera_alt_outlined, color: kPrimaryColor, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Vehicle Condition',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: kOnSurfaceColor,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'MANDATORY',
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFEF4444),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Upload high-quality pictures from the requested angles',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: kOutlineColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Photo grid: 2x2
-          Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: PhotoUploadCard(
-                      type: 'front',
-                      label: 'Front Profile',
-                      imagePath: _frontImagePath,
-                      photoUrl: _frontPhotoUrl,
-                      isUploading: _isUploadingFront,
-                      onTap: () => showImageSourceDialog(
-                          context, 'front', _uploadImage),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: PhotoUploadCard(
-                      type: 'back',
-                      label: 'Back Profile',
-                      imagePath: _backImagePath,
-                      photoUrl: _backPhotoUrl,
-                      isUploading: _isUploadingBack,
-                      onTap: () => showImageSourceDialog(
-                          context, 'back', _uploadImage),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: PhotoUploadCard(
-                      type: 'left',
-                      label: 'Left Profile',
-                      imagePath: _leftImagePath,
-                      photoUrl: _leftPhotoUrl,
-                      isUploading: _isUploadingLeft,
-                      onTap: () => showImageSourceDialog(
-                          context, 'left', _uploadImage),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: PhotoUploadCard(
-                      type: 'right',
-                      label: 'Right Profile',
-                      imagePath: _rightImagePath,
-                      photoUrl: _rightPhotoUrl,
-                      isUploading: _isUploadingRight,
-                      onTap: () => showImageSourceDialog(
-                          context, 'right', _uploadImage),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Photo with Vehicle',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: kOnSurfaceColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Take a selfie next to the vehicle before riding',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              color: kOutlineColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          PhotoUploadCard(
-            type: 'with_vehicle',
-            label: 'Photo with Vehicle',
-            imagePath: _withVehicleImagePath,
-            photoUrl: _withVehiclePhotoUrl,
-            isUploading: _isUploadingWithVehicle,
-            onTap: () => showImageSourceDialog(
-                context, 'with_vehicle', _uploadImage),
-          ),
-        ],
-      ),
+      _photos['front']!.photoUrl,
+      _photos['back']!.photoUrl,
+      _photos['left']!.photoUrl,
+      _photos['right']!.photoUrl,
+      _photos['with_vehicle']!.photoUrl,
     );
   }
 
@@ -785,9 +437,66 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         children: [
-                          _buildCard1(),
+                          AssignmentDetailsCard(
+                            selectedHubId: _selectedHubId,
+                            hubs: _hubs,
+                            onHubChanged: (val) {
+                              setState(() {
+                                _selectedHubId = val;
+                                _selectedVehicleId = null;
+                                _selectedVehicleLabel = null;
+                              });
+                              if (val != null) _fetchVehicles(val);
+                            },
+                            selectedTeamLeader: _selectedTeamLeader,
+                            onTeamLeaderChanged: (val) =>
+                                setState(() => _selectedTeamLeader = val),
+                            isHubSelected: _selectedHubId != null,
+                            selectedVehicleId: _selectedVehicleId,
+                            selectedVehicleLabel: _selectedVehicleLabel,
+                            isLoadingVehicles: _isLoadingVehicles,
+                            vehicleCount: _vehicles.length,
+                            onVehicleTap: _showVehicleSearchSheet,
+                            emergencyContactController:
+                                _emergencyContactController,
+                            isOtpSent: _isOtpSent,
+                            isOtpVerified: _isOtpVerified,
+                            isSendingOtp: _isSendingOtp,
+                            onSendOtp: _sendEmergencyOtp,
+                            onEmergencyContactChanged: (val) {
+                              if (_isOtpSent) {
+                                setState(() => _isOtpSent = false);
+                              }
+                              if (_isOtpVerified) {
+                                setState(() => _isOtpVerified = false);
+                              }
+                            },
+                            otpController: _otpController,
+                            isVerifyingOtp: _isVerifyingOtp,
+                            onVerifyOtp: _verifyEmergencyOtp,
+                          ),
                           const SizedBox(height: 24),
-                          _buildCard2(),
+                          VehicleConditionCard(
+                            frontImagePath: _photos['front']!.imagePath,
+                            frontPhotoUrl: _photos['front']!.photoUrl,
+                            isUploadingFront: _photos['front']!.isUploading,
+                            backImagePath: _photos['back']!.imagePath,
+                            backPhotoUrl: _photos['back']!.photoUrl,
+                            isUploadingBack: _photos['back']!.isUploading,
+                            leftImagePath: _photos['left']!.imagePath,
+                            leftPhotoUrl: _photos['left']!.photoUrl,
+                            isUploadingLeft: _photos['left']!.isUploading,
+                            rightImagePath: _photos['right']!.imagePath,
+                            rightPhotoUrl: _photos['right']!.photoUrl,
+                            isUploadingRight: _photos['right']!.isUploading,
+                            withVehicleImagePath:
+                                _photos['with_vehicle']!.imagePath,
+                            withVehiclePhotoUrl:
+                                _photos['with_vehicle']!.photoUrl,
+                            isUploadingWithVehicle:
+                                _photos['with_vehicle']!.isUploading,
+                            onUploadImage: _uploadImage,
+                          ),
                           const SizedBox(height: 140),
                         ],
                       ),

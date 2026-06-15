@@ -24,7 +24,7 @@ export const notificationService = {
           riderId,
           title,
           message,
-          type,
+          type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
         },
       });
 

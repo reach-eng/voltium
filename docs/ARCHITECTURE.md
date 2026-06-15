@@ -14,9 +14,9 @@ Voltium is an electric vehicle rental and fleet management platform with three p
 | Admin Panel | Next.js App Router (React, Tailwind, shadcn/ui)      | Fleet operations command center |
 | API Layer   | Next.js API routes (Prisma, Zod, JWT)                 | Backend services                |
 
-**Database**: Prisma ORM → PostgreSQL (all environments via managed service — Neon / Supabase / Railway)
+**Database**: Prisma ORM → PostgreSQL (local PostgreSQL on laptop)
 
-> **Note**: Voltium does not use Docker for local development, CI, staging, or production. All services use managed infrastructure or native Node.js process commands.
+> **Note**: Voltium does not use Docker. All services run as native Node.js processes on a local workstation. Cloudflare Tunnel is used only for public routing — no app data is stored in the cloud.
 
 ---
 
@@ -341,11 +341,11 @@ Each workflow is complete when it has:
 
 ## 8. Environment Strategy
 
-| Environment | Database               | Storage         | Purpose           |
-| ----------- | ---------------------- | --------------- | ----------------- |
-| local       | Managed PostgreSQL     | Local files     | Development       |
-| staging     | Managed PostgreSQL     | GCS bucket      | Integration tests |
-| production  | Managed PostgreSQL     | GCS bucket      | Live operations   |
+| Environment | Database           | Storage         | Purpose           |
+| ----------- | ------------------ | --------------- | ----------------- |
+| local       | Local PostgreSQL   | Local disk      | Development       |
+| staging     | Local PostgreSQL   | Local disk      | Integration tests |
+| production  | Local PostgreSQL   | Local disk      | Live operations   |
 
-All environments use PostgreSQL via a managed provider (Neon / Supabase / Railway).
-No Docker containers are used in any environment.
+All environments run on a local workstation. Database, files, and backups stay on local disk.
+Public access via Cloudflare Tunnel (routing only — no data storage).

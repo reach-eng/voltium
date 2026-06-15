@@ -96,6 +96,7 @@ interface Rider {
   email: string | null;
   kycStatus: string;
   state: string;
+  lifecycleStatus: string;
   walletBalance: number;
   securityDeposit: number;
   depositStatus: string;
@@ -172,7 +173,7 @@ interface Rider {
   assignedTlPhone: string | null;
 }
 
-const STATE_FILTERS = ['ALL', 'ONBOARDING', 'PRE_ACTIVE', 'POST_ACTIVE', 'SUSPENDED'];
+const STATE_FILTERS = ['ALL', 'NEW', 'KYC_SUBMITTED', 'ACTIVE', 'SUSPENDED', 'CLOSED'];
 
 function getStateBadge(state: string) {
   const styles: Record<string, string> = {
@@ -1044,11 +1045,9 @@ export default function RiderManagement() {
                     </TableRow>
                   ) : (
                     riders.map((rider) => {
-                      const isActive =
-                        rider.accountStatus === 'ACTIVE' || rider.state === 'POST_ACTIVE';
-                      const isRed =
-                        rider.accountStatus === 'BLACKLISTED' || rider.state === 'SUSPENDED';
-                      const isOrange = rider.state === 'INACTIVE' || rider.state === 'RETURNED';
+                      const isActive = rider.lifecycleStatus === 'ACTIVE';
+                      const isRed = rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED';
+                      const isOrange = rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED';
                       const nameColor = isRed
                         ? 'text-rose-600'
                         : isActive
@@ -1459,13 +1458,13 @@ export default function RiderManagement() {
                         onEdit={(v) => setEditForm({ ...editForm, emergencyContact: v })}
                       />
                       <DetailGroup
-                        label="State"
-                        value={isEditing ? editForm.state : selectedRider.state}
+                        label="Lifecycle Status"
+                        value={isEditing ? editForm.lifecycleStatus : selectedRider.lifecycleStatus}
                         isEditing={isEditing}
-                        field="state"
+                        field="lifecycleStatus"
                         type="select"
                         options={STATE_FILTERS}
-                        onEdit={(v) => setEditForm({ ...editForm, state: v })}
+                        onEdit={(v) => setEditForm({ ...editForm, lifecycleStatus: v })}
                       />
                     </div>
 
@@ -1953,22 +1952,13 @@ export default function RiderManagement() {
                         </h4>
                         <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10 space-y-8">
                           <DetailGroup
-                            label="Account Status"
-                            value={isEditing ? editForm.accountStatus : selectedRider.accountStatus}
+                            label="Lifecycle Status"
+                            value={isEditing ? editForm.lifecycleStatus : selectedRider.lifecycleStatus}
                             isEditing={isEditing}
-                            field="accountStatus"
+                            field="lifecycleStatus"
                             type="select"
-                            options={['PRE_ACTIVE', 'ACTIVE', 'INACTIVE', 'BLACKLISTED']}
-                            onEdit={(v) => setEditForm({ ...editForm, accountStatus: v })}
-                          />
-                          <DetailGroup
-                            label="Onboarding State"
-                            value={isEditing ? editForm.state : selectedRider.state}
-                            isEditing={isEditing}
-                            field="state"
-                            type="select"
-                            options={['ONBOARDING', 'PRE_ACTIVE', 'POST_ACTIVE', 'SUSPENDED']}
-                            onEdit={(v) => setEditForm({ ...editForm, state: v })}
+                            options={['NEW', 'KYC_SUBMITTED', 'ACTIVE', 'SUSPENDED', 'CLOSED']}
+                            onEdit={(v) => setEditForm({ ...editForm, lifecycleStatus: v })}
                           />
                         </div>
                       </div>

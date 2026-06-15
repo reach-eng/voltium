@@ -14,11 +14,11 @@ export const shiftUseCases = {
     const hubVehicles = await db.vehicle.findMany({ where: { hubId }, select: { id: true } });
     const hubVehicleIds = hubVehicles.map((v) => v.id);
     const bookingCounts = hubVehicleIds.length > 0
-      ? await db.rentalLease.groupBy({
+      ? (await db.rentalLease.groupBy({
           by: ['shiftId'],
           where: { vehicleId: { in: hubVehicleIds }, leaseDate, status: { in: ['BOOKED', 'ACTIVE'] } },
           _count: { id: true },
-        })
+        })) as unknown as Array<{ shiftId: string; _count: { id: number } }>
       : [];
     const countMap = new Map<string, number>();
     for (const bc of bookingCounts) {
@@ -36,22 +36,22 @@ export const shiftUseCases = {
   },
 
   async listShifts(search?: string, activeOnly?: boolean) {
-    const where: Record<string, unknown> = {};
+    const where: any = {};
     if (activeOnly) where.isActive = true;
     if (search) {
-      (where as Record<string, unknown>).OR = [{ name: { contains: search, mode: 'insensitive' as const } }];
+      where.OR = [{ name: { contains: search, mode: 'insensitive' as const } }];
     }
     return db.shift.findMany({ where, orderBy: { startTime: 'asc' }, include: { _count: { select: { leases: true } } } });
   },
 
-  async createShift(data: Record<string, unknown>, actorId: string) {
-    const shift = await db.shift.create({ data });
+  async createShift(data: any, actorId: string) {
+    const shift = await db.shift.create({ data: data as any });
     createAuditLog({ actorId, action: 'shift.create', entity: 'shift', entityId: shift.id, details: { name: data.name } }).catch(() => {});
     return shift;
   },
 
-  async updateShift(id: string, data: Record<string, unknown>, actorId: string) {
-    const shift = await db.shift.update({ where: { id }, data });
+  async updateShift(id: string, data: any, actorId: string) {
+    const shift = await db.shift.update({ where: { id }, data: data as any });
     createAuditLog({ actorId, action: 'shift.update', entity: 'shift', entityId: id, details: data as Record<string, unknown> }).catch(() => {});
     return shift;
   },

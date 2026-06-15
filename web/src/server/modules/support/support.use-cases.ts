@@ -38,7 +38,7 @@ export const supportUseCases = {
     return supportRepository.update(ticketId, input);
   },
 
-  async replyToTicket(ticketId: string, senderId: string, senderType: 'rider' | 'admin', input: TicketReplyDto) {
+  async replyToTicket(ticketId: string, senderId: string, senderType: 'RIDER' | 'ADMIN', input: TicketReplyDto) {
     const ticket = await supportRepository.findById(ticketId);
     if (!ticket) throw new Error('Ticket not found');
 
@@ -46,7 +46,7 @@ export const supportUseCases = {
 
     await supportRepository.update(ticketId, { updatedAt: new Date() });
 
-    if (senderType === 'admin') {
+    if (senderType === 'ADMIN') {
       notificationService.notifySupportReply(ticket.riderId, ticket.id, ticket.subject).catch(
         (e: unknown) => logger.error('Failed to send notification', e),
       );

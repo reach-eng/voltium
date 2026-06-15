@@ -27,11 +27,29 @@ on:
 
 env:
   FLUTTER_VERSION: '3.24.0'
+  DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+  JWT_SECRET: ci-test-secret-key-32-chars-long
 
 jobs:
   e2e:
     name: Run Flutter E2E Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -47,9 +65,9 @@ jobs:
       - name: Setup database
         run: |
           npx prisma generate
-          npx prisma db push --accept-data-loss
+          npx prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./dev.db' }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
 
       # ─── Setup Flutter ───────────────────────────────────────────────────
       - uses: subosito/flutter-action@v2
@@ -76,7 +94,6 @@ jobs:
           npx wait-on http://localhost:8081 --timeout 30000
         env:
           NODE_ENV: development
-          JWT_SECRET: ci-test-secret-key-32-chars-long
 
       # ─── Run E2E tests on Android emulator ───────────────────────────────
       - name: Run Flutter integration tests

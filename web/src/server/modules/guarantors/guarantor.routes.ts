@@ -49,8 +49,11 @@ export async function POST_review(request: NextRequest) {
 
   const result = await guarantorUseCases.reviewGuarantor(
     validation.data.riderId,
-    admin.adminId || admin.riderDbId,
-    validation.data
+    admin.adminId || admin.riderDbId || 'unknown',
+    {
+      ...validation.data,
+      reviewerId: admin.adminId || admin.riderDbId || 'unknown',
+    }
   );
   return success(result, `Guarantor ${validation.data.action.toLowerCase()}d`);
 }

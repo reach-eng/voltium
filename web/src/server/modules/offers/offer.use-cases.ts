@@ -16,7 +16,7 @@ export const offerUseCases = {
     isSponsored: boolean; isActive: boolean; icon?: string;
   }, actorId: string) {
     const offer = await db.offer.create({
-      data: { title: data.title, description: data.description, validFrom: new Date(data.validFrom), validUntil: new Date(data.validUntil), isSponsored: data.isSponsored, isActive: data.isActive, icon: data.icon ?? null },
+      data: { title: data.title, description: data.description || '', validFrom: new Date(data.validFrom), validUntil: new Date(data.validUntil), isSponsored: data.isSponsored, isActive: data.isActive, icon: data.icon ?? null },
     });
     createAuditLog({ actorId, action: 'offer.create', entity: 'offer', entityId: offer.id, details: { title: data.title } }).catch((e) => logger.error('Audit log failed', e));
     return offer;

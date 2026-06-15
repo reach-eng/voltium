@@ -12,9 +12,9 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type PrismaTransaction = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const txDb = db as any;
 import {
   creditWallet as libCreditWallet,

@@ -1,18 +1,17 @@
 /**
  * Worker Orchestrator for Voltium background jobs.
  *
- * Processes jobs from Redis-backed queues. Designed to be run as:
- *   npx tsx src/server/workers/index.ts
+ * Polls the OutboxEvent table (PostgreSQL) for pending jobs.
+ * No Redis dependency — all job state lives in the database.
  *
- * Environment:
- *   - REDIS_URL / UPSTASH_REDIS_REST_URL must be set for queue processing
- *   - CRON_SECRET must be set for webhook-triggered cron replacements
- *   - NODE_ENV determines log level and fallback behavior
+ * Designed to be run as:
+ *   npx tsx src/server/workers/index.ts
  */
 
-import { JobQueue } from '@/lib/job-queue';
+import { JobQueue, JobTypes } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
-import { QUEUE_CONFIGS, QUEUE_NAMES, JOB_TYPES, type QueueName } from './queues';
+import { JOB_TYPES } from './queues';
+import { sendSms } from '@/lib/sms-provider';
 
 // Import job processors
 import { reconciliationJob } from './jobs/reconciliation.job';
@@ -24,69 +23,77 @@ import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
 
 // ---------------------------------------------------------------------------
-// Worker registry — maps QueueName to a processor function
+// Worker registry — maps JobType to a processor function
 // ---------------------------------------------------------------------------
 
-type JobProcessor = (job: any) => Promise<void>;
+type JobProcessor = (job: any) => Promise<any>;
 
 interface WorkerDefinition {
-  queueName: QueueName;
+  jobType: string;
   processor: JobProcessor;
-  config: (typeof QUEUE_CONFIGS)[keyof typeof QUEUE_CONFIGS];
+  concurrency: number;
 }
 
 const WORKERS: WorkerDefinition[] = [
   {
-    queueName: QUEUE_NAMES.RECONCILIATION,
+    jobType: JOB_TYPES.WALLET_RECONCILIATION,
     processor: reconciliationJob.process,
-    config: QUEUE_CONFIGS.reconciliation,
+    concurrency: 1,
   },
   {
-    queueName: QUEUE_NAMES.NOTIFICATIONS,
+    jobType: JOB_TYPES.ANNOUNCEMENT_DISPATCH,
     processor: notificationsJob.process,
-    config: QUEUE_CONFIGS.notifications,
+    concurrency: 3,
   },
   {
-    queueName: QUEUE_NAMES.RENT_REMINDERS,
+    jobType: JOB_TYPES.RENT_DUE_CHECK,
     processor: rentRemindersJob.process,
-    config: QUEUE_CONFIGS.rentReminders,
+    concurrency: 2,
   },
   {
-    queueName: QUEUE_NAMES.DEVICE_COMPLIANCE,
+    jobType: JOB_TYPES.DEVICE_VIOLATION_SCAN,
     processor: deviceComplianceJob.process,
-    config: QUEUE_CONFIGS.deviceCompliance,
+    concurrency: 2,
   },
   {
-    queueName: QUEUE_NAMES.REFERRAL_REWARDS,
+    jobType: JOB_TYPES.REFERRAL_REWARD_PROCESS,
     processor: referralRewardJob.process,
-    config: QUEUE_CONFIGS.referralRewards,
+    concurrency: 3,
   },
   {
-    queueName: QUEUE_NAMES.AUDIT_CLEANUP,
+    jobType: JOB_TYPES.AUDIT_LOG_CLEANUP,
     processor: auditCleanupJob.process,
-    config: QUEUE_CONFIGS.auditCleanup,
+    concurrency: 1,
   },
   {
-    queueName: QUEUE_NAMES.TELEMETRY_CLEANUP,
+    jobType: JOB_TYPES.TELEMETRY_DATA_CLEANUP,
     processor: telemetryCleanupJob.process,
-    config: QUEUE_CONFIGS.telemetryCleanup,
+    concurrency: 1,
+  },
+  {
+    jobType: JobTypes.SEND_SMS,
+    processor: async (job: any) => {
+      const { phone, message } = job.payload as { phone: string; message: string };
+      await sendSms(phone, message);
+    },
+    concurrency: 5,
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Outbox pattern — processes pending outbox events
+// Scheduled tasks
 // ---------------------------------------------------------------------------
 
-import { OutboxService } from './outbox';
+import { scheduledBackupJob } from './jobs/scheduled-backup.job';
 
-async function processOutboxEvents(): Promise<void> {
+async function checkScheduledBackups(): Promise<void> {
   try {
-    const processed = await OutboxService.processPendingEvents();
-    if (processed > 0) {
-      logger.info('[Workers] Processed outbox events', { count: processed });
+    const result = await scheduledBackupJob.checkAndRun();
+    if (result.ran) {
+      logger.info('[Workers] Scheduled backup ran successfully');
     }
   } catch (err) {
-    logger.error('[Workers] Outbox processing error', err);
+    logger.error('[Workers] Scheduled backup check error', err);
   }
 }
 
@@ -105,42 +112,38 @@ export async function startWorkers(): Promise<void> {
   running = true;
   logger.info('[Workers] Starting all workers', {
     workerCount: WORKERS.length,
-    queues: WORKERS.map((w) => w.queueName),
+    jobTypes: WORKERS.map((w) => w.jobType),
   });
 
-  // Start each worker in its own processing loop
+  // Start each worker in its own polling loop
   const promises = WORKERS.map((worker) => runWorkerLoop(worker));
 
-  // Also process outbox events every 30 seconds
-  promises.push(runOutboxLoop());
+  // Check scheduled backups every 5 minutes
+  promises.push(runScheduledBackupLoop());
 
   await Promise.all(promises);
 }
 
 async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
-  const { queueName, processor, config } = worker;
+  const { jobType, processor, concurrency } = worker;
 
-  logger.info(`[Worker] Starting loop for ${queueName}`, {
-    concurrency: config.concurrency,
-    maxRetries: config.maxRetries,
-  });
+  logger.info(`[Worker] Starting loop for ${jobType}`, { concurrency });
 
   while (running) {
     try {
       await JobQueue.processJobs(
-        getJobTypeFromQueue(queueName),
+        jobType,
         async (job) => {
           logger.info(`[Worker] Processing job`, {
-            queueName,
+            jobType,
             jobId: job.id,
-            type: job.type,
           });
           await processor(job);
         },
-        config.concurrency
+        concurrency
       );
     } catch (err) {
-      logger.error(`[Worker] Error in ${queueName} loop`, err);
+      logger.error(`[Worker] Error in ${jobType} loop`, err);
     }
 
     // Poll interval — check every 5 seconds
@@ -148,25 +151,11 @@ async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
   }
 }
 
-async function runOutboxLoop(): Promise<void> {
+async function runScheduledBackupLoop(): Promise<void> {
   while (running) {
-    await processOutboxEvents();
-    await sleep(30_000);
+    await checkScheduledBackups();
+    await sleep(300_000); // Check every 5 minutes
   }
-}
-
-function getJobTypeFromQueue(queueName: QueueName): string {
-  const mapping: Record<string, string> = {
-    [QUEUE_NAMES.RECONCILIATION]: JOB_TYPES.WALLET_RECONCILIATION,
-    [QUEUE_NAMES.NOTIFICATIONS]: JOB_TYPES.BIRTHDAY_WISHES,
-    [QUEUE_NAMES.RENT_REMINDERS]: JOB_TYPES.RENT_DUE_CHECK,
-    [QUEUE_NAMES.DEVICE_COMPLIANCE]: JOB_TYPES.DEVICE_VIOLATION_SCAN,
-    [QUEUE_NAMES.REFERRAL_REWARDS]: JOB_TYPES.REFERRAL_REWARD_PROCESS,
-    [QUEUE_NAMES.AUDIT_CLEANUP]: JOB_TYPES.AUDIT_LOG_CLEANUP,
-    [QUEUE_NAMES.TELEMETRY_CLEANUP]: JOB_TYPES.TELEMETRY_DATA_CLEANUP,
-    [QUEUE_NAMES.SMS_DISPATCH]: JOB_TYPES.SEND_SMS,
-  };
-  return mapping[queueName] || 'unknown';
 }
 
 export function stopWorkers(): void {

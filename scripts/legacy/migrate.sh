@@ -1,14 +1,11 @@
 #!/bin/bash
-# =============================================================================
-# Voltium Database Migration Helper
-# =============================================================================
-# Usage:
-#   bash scripts/migrate.sh backup     — Backup current SQLite database
-#   bash scripts/migrate.sh restore    — Restore SQLite database from backup
-#   bash scripts/migrate.sh to-pg      — Migrate SQLite data to PostgreSQL
-#   bash scripts/migrate.sh status     — Check migration status
-#   bash scripts/migrate.sh postgres   — Generate PostgreSQL migration SQL
-# =============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
+#  LEGACY — SQLite-era script. Not part of current PostgreSQL/no-Docker ops.
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Kept for historical reference only. Do not use for new development.
+#  Current stack: PostgreSQL on Neon/Supabase/Railway, no Docker.
+#  See docs/DATABASE.md for current database workflow.
+# ═══════════════════════════════════════════════════════════════════════════════
 
 set -euo pipefail
 

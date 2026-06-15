@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       return errors.badRequest('Vehicle ID/Number is required');
     }
 
-    const vehicle = await vehicleUseCases.verifyPickupVehicle(query, hubId);
+    const vehicle = await vehicleUseCases.verifyPickupVehicle(query, hubId) as any;
     return success({
       id: vehicle.id,
       vehicleId: vehicle.vehicleId,

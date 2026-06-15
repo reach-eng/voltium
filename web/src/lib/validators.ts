@@ -136,7 +136,7 @@ export const createRiderSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   email: z.string().email().optional().or(z.literal('')),
   intent: z.enum(['deliver', 'personal']).optional(),
-  state: z.enum(['ONBOARDING', 'PRE_ACTIVE', 'POST_ACTIVE', 'SUSPENDED']).optional(),
+  lifecycleStatus: z.enum(['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED', 'KYC_SUBMITTED', 'KYC_APPROVED', 'GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 'DEPOSIT_PENDING', 'DEPOSIT_APPROVED', 'PLAN_SELECTED', 'PICKUP_SCHEDULED', 'ACTIVE', 'SUSPENDED', 'RETURN_PENDING', 'CLOSED']).optional(),
 });
 
 // ==================== ADMIN - PLANS ====================
@@ -164,7 +164,7 @@ export const createVehicleSchema = z.object({
   licensePlate: z.string().max(20).optional(),
   hubId: z.string().min(1),
   status: z
-    .enum(['AVAILABLE', 'RENTED', 'ASSIGNED', 'MAINTENANCE', 'OUT_OF_SERVICE', 'RETIRED'])
+    .enum(['AVAILABLE', 'RESERVED', 'ASSIGNED', 'ACTIVE_RENTAL', 'RETURN_PENDING', 'MAINTENANCE', 'RETIRED', 'LOST'])
     .optional(),
 });
 
@@ -176,7 +176,7 @@ export const updateVehicleSchema = z.object({
   licensePlate: z.string().max(20).optional().nullable(),
   hubId: z.string().min(1).optional(),
   status: z
-    .enum(['AVAILABLE', 'RENTED', 'ASSIGNED', 'MAINTENANCE', 'OUT_OF_SERVICE', 'RETIRED'])
+    .enum(['AVAILABLE', 'RESERVED', 'ASSIGNED', 'ACTIVE_RENTAL', 'RETURN_PENDING', 'MAINTENANCE', 'RETIRED', 'LOST'])
     .optional(),
 });
 
@@ -204,7 +204,7 @@ export const createOfferSchema = z.object({
 export const createCouponSchema = z.object({
   code: z.string().min(2, 'Code is required').max(50),
   description: z.string().min(2, 'Description is required').max(500),
-  discountType: z.enum(['percentage', 'fixed'], 'discountType must be "percentage" or "fixed"'),
+  discountType: z.enum(['PERCENTAGE', 'FIXED'], 'discountType must be "PERCENTAGE" or "FIXED"'),
   discountValue: z.number().positive('discountValue must be positive'),
   minAmount: z.number().min(0).optional(),
   maxUses: z.number().int().positive().optional(),
@@ -217,7 +217,7 @@ export const updateCouponSchema = z.object({
   id: z.string().min(1, 'id is required'),
   code: z.string().min(2).max(50).optional(),
   description: z.string().min(2).max(500).optional(),
-  discountType: z.enum(['percentage', 'fixed']).optional(),
+  discountType: z.enum(['PERCENTAGE', 'FIXED']).optional(),
   discountValue: z.number().positive().optional(),
   minAmount: z.number().min(0).optional(),
   maxUses: z.number().int().positive().optional(),
