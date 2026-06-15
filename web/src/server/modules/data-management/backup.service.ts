@@ -194,6 +194,14 @@ export const backupService = {
     const backupId = `backup_${new Date().toISOString().replace(/[:.]/g, '').slice(0, 15)}`;
     const backupDir = join(getBackupRoot(), params.type.toLowerCase(), backupId);
 
+    const isPreRestore = params.type === 'PRE_RESTORE';
+    if (!isPreRestore) {
+      const acquired = await this.acquireLock('BACKUP_RUNNING', params.adminId || 'SYSTEM');
+      if (!acquired) {
+        throw new Error('Another backup or restore operation is currently running');
+      }
+    }
+
     // Create backup job record
     const job = await backupRepository.createBackupJob({
       type: params.type,
@@ -207,7 +215,7 @@ export const backupService = {
       mkdirSync(backupDir, { recursive: true });
 
       const databaseFile = join(backupDir, 'database.sql');
-      const uploadsFile = join(backupDir, 'uploads.tar.gz');
+      const uploadsFile = join(backupDir, 'uploads.zip');
       const manifestFile = join(backupDir, 'manifest.json');
       const checksumFile = join(backupDir, 'checksums.sha256');
 
@@ -249,7 +257,7 @@ export const backupService = {
 
       const checksumLines = [
         `${dbHash}  database.sql`,
-        `${uploadsHash}  uploads.tar.gz`,
+        `${uploadsHash}  uploads.zip`,
       ];
       writeFileSync(checksumFile, checksumLines.join('\n') + '\n');
 
@@ -317,6 +325,10 @@ export const backupService = {
 
       logger.error('[BackupService] Backup failed', { backupId, error: err.message });
       throw err;
+    } finally {
+      if (!isPreRestore) {
+        await this.releaseLock();
+      }
     }
   },
 
@@ -396,34 +408,104 @@ export const backupService = {
     await backupRepository.deleteBackupJob(backupJobId);
   },
 
-  /**
-   * Set or release the backup lock.
-   * When set to RESTORE_RUNNING, scheduled backups will skip execution.
-   */
-  async setBackupLock(locked: boolean): Promise<void> {
-    if (locked) {
-      await db.setting.upsert({
-        where: { key: BACKUP_LOCK_KEY },
-        update: { value: BACKUP_LOCK_VALUE },
-        create: { key: BACKUP_LOCK_KEY, value: BACKUP_LOCK_VALUE },
+  async acquireLock(status: 'BACKUP_RUNNING' | 'RESTORE_RUNNING', owner: string): Promise<boolean> {
+    try {
+      return await db.$transaction(async (tx) => {
+        const lockStatus = await tx.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
+        const currentStatus = lockStatus?.value || 'NONE';
+
+        if (currentStatus !== 'NONE') {
+          logger.warn('[BackupService] Failed to acquire lock — lock already held', {
+            currentStatus,
+            owner,
+          });
+          return false;
+        }
+
+        await Promise.all([
+          tx.setting.upsert({
+            where: { key: 'BACKUP_LOCK_STATUS' },
+            update: { value: status },
+            create: { key: 'BACKUP_LOCK_STATUS', value: status },
+          }),
+          tx.setting.upsert({
+            where: { key: 'BACKUP_LOCK_STARTED_AT' },
+            update: { value: new Date().toISOString() },
+            create: { key: 'BACKUP_LOCK_STARTED_AT', value: new Date().toISOString() },
+          }),
+          tx.setting.upsert({
+            where: { key: 'BACKUP_LOCK_OWNER' },
+            update: { value: owner },
+            create: { key: 'BACKUP_LOCK_OWNER', value: owner },
+          }),
+        ]);
+
+        logger.info('[BackupService] Lock acquired successfully', { status, owner });
+        return true;
       });
-      logger.info('[BackupService] Backup lock acquired — scheduled backups paused');
-    } else {
-      await db.setting.deleteMany({ where: { key: BACKUP_LOCK_KEY } });
-      logger.info('[BackupService] Backup lock released — scheduled backups resumed');
+    } catch (err: any) {
+      logger.error('[BackupService] Error acquiring lock', err);
+      return false;
     }
   },
 
-  /**
-   * Check if the backup lock is currently set.
-   */
-  async isBackupLocked(): Promise<boolean> {
+  async releaseLock(): Promise<void> {
     try {
-      const lock = await db.setting.findUnique({ where: { key: BACKUP_LOCK_KEY } });
-      return lock?.value === BACKUP_LOCK_VALUE;
-    } catch {
-      return false;
+      await Promise.all([
+        db.setting.upsert({
+          where: { key: 'BACKUP_LOCK_STATUS' },
+          update: { value: 'NONE' },
+          create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
+        }),
+        db.setting.upsert({
+          where: { key: 'BACKUP_LOCK_STARTED_AT' },
+          update: { value: '' },
+          create: { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
+        }),
+        db.setting.upsert({
+          where: { key: 'BACKUP_LOCK_OWNER' },
+          update: { value: '' },
+          create: { key: 'BACKUP_LOCK_OWNER', value: '' },
+        }),
+      ]);
+      logger.info('[BackupService] Lock released successfully');
+    } catch (err: any) {
+      logger.error('[BackupService] Error releasing lock', err);
     }
+  },
+
+  async getLockStatus(): Promise<{ status: string; startedAt: string; owner: string }> {
+    try {
+      const [statusSetting, startedSetting, ownerSetting] = await Promise.all([
+        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } }),
+        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STARTED_AT' } }),
+        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_OWNER' } }),
+      ]);
+
+      return {
+        status: statusSetting?.value || 'NONE',
+        startedAt: startedSetting?.value || '',
+        owner: ownerSetting?.value || '',
+      };
+    } catch {
+      return { status: 'NONE', startedAt: '', owner: '' };
+    }
+  },
+
+  async setBackupLock(locked: boolean): Promise<void> {
+    if (locked) {
+      const success = await this.acquireLock('RESTORE_RUNNING', 'RESTORE_SERVICE');
+      if (!success) {
+        throw new Error('Failed to acquire restore lock — a backup or restore is already running');
+      }
+    } else {
+      await this.releaseLock();
+    }
+  },
+
+  async isBackupLocked(): Promise<boolean> {
+    const lock = await this.getLockStatus();
+    return lock.status !== 'NONE';
   },
 
   async getStorageOverview() {

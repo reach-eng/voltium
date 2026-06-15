@@ -108,13 +108,15 @@ export const walletUseCases = {
 
     if (!isTestRider && finalPurpose === 'SECURITY_DEPOSIT') {
       const { upsertDepositRecord } = await import('@/lib/services/deposit-service');
-      await upsertDepositRecord({
-        riderId: riderDbId,
-        transactionId: transaction.id,
-        amountInPaise: amountPaise,
-      }).catch((err: unknown) => {
+      try {
+        await upsertDepositRecord({
+          riderId: riderDbId,
+          transactionId: transaction.id,
+          amountInPaise: amountPaise,
+        });
+      } catch (err: unknown) {
         logger.error('[WalletUseCases] Failed to upsert deposit record', err);
-      });
+      }
     }
 
     logger.info('[WalletUseCases] Topup requested', {

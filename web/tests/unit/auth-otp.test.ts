@@ -86,6 +86,7 @@ function setupMocks(overrides?: {
   mockVerifyOtp.mockResolvedValue({ valid: otpValid, error: otpValid ? undefined : 'Invalid OTP' });
   mockGetFeatureFlags.mockResolvedValue({ enablePushNotifications: false });
   mockJobQueueEnqueue.mockResolvedValue(undefined);
+  mockDb.outboxEvent.create.mockResolvedValue({ id: 'event-123' });
 
   const mockRider = {
     id: 'rider-db-id-123',
@@ -138,8 +139,10 @@ describe('Auth — OTP Send', () => {
     expect(result.exists).toBe(false);
     expect(result.otp).toBeDefined();
     expect(mockGenerateOtp).toHaveBeenCalledWith('9876543210');
-    expect(mockJobQueueEnqueue).toHaveBeenCalledWith('SEND_SMS', expect.objectContaining({
-      phone: '9876543210',
+    expect(mockDb.outboxEvent.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        eventType: 'sms.send',
+      }),
     }));
     process.env.NODE_ENV = originalEnv;
   });

@@ -25,16 +25,16 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     }
 
     // Create a downloadable archive from the backup folder
-    const tempFile = join(tmpdir(), `backup-download-${params.id.slice(0, 8)}.tar.gz`);
+    const tempFile = join(tmpdir(), `backup-download-${params.id.slice(0, 8)}.zip`);
     try {
       createArchive(job.backupPath, tempFile);
 
       const fileBuffer = readFileSync(tempFile);
-      const fileName = `backup-${job.type?.toLowerCase() || 'unknown'}-${params.id.slice(0, 8)}.tar.gz`;
+      const fileName = `backup-${job.type?.toLowerCase() || 'unknown'}-${params.id.slice(0, 8)}.zip`;
 
       return new NextResponse(fileBuffer, {
         headers: {
-          'Content-Type': 'application/gzip',
+          'Content-Type': 'application/zip',
           'Content-Disposition': `attachment; filename="${fileName}"`,
           'Content-Length': String(fileBuffer.length),
         },

@@ -142,21 +142,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-debug]
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: voltium_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     strategy:
       matrix:
         api-level: [33]
@@ -166,6 +151,13 @@ jobs:
         working-directory: ./flutter
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL Service
+        run: |
+          sudo systemctl start postgresql.service
+          until pg_isready; do sleep 1; done
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
 
       - uses: actions/setup-node@v4
         with:

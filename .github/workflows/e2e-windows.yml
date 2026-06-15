@@ -17,23 +17,25 @@ jobs:
     name: Playwright E2E Tests (Windows)
     runs-on: windows-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: voltium_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL Service
+        shell: pwsh
+        run: |
+          $service = Get-Service -Name postgresql* -ErrorAction SilentlyContinue
+          if ($service) {
+              Start-Service $service.Name
+              Start-Sleep -Seconds 5
+              $pgBin = Get-ChildItem "C:\Program Files\PostgreSQL\*\bin" -ErrorAction SilentlyContinue | Select-Object -First 1
+              if ($pgBin) {
+                  $env:PATH += ";$($pgBin.FullName)"
+              }
+              # Configure user and db
+              $env:PGPASSWORD = "postgres"
+              psql -U postgres -c "ALTER USER postgres PASSWORD 'postgres';" -ErrorAction SilentlyContinue
+              psql -U postgres -c "CREATE DATABASE voltium_test;" -ErrorAction SilentlyContinue
+          }
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

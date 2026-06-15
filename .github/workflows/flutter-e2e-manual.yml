@@ -35,23 +35,15 @@ jobs:
     name: Run Flutter E2E Tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: voltium_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL Service
+        run: |
+          sudo systemctl start postgresql.service
+          until pg_isready; do sleep 1; done
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
 
       # ─── Setup Node.js backend ───────────────────────────────────────────
       - uses: actions/setup-node@v4

@@ -64,6 +64,8 @@ EXCLUDES=(
   "--exclude=test-results"
   "--exclude=web/dist"
   "--exclude=*.tsbuildinfo"
+  "--exclude=*.zip"
+  "--exclude=scratch_*"
 )
 
 if [ "$FORMAT" = "zip" ]; then

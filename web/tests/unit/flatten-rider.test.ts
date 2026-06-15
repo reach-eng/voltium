@@ -74,7 +74,7 @@ describe('Phase 1: API Contract Testing (flattenRider)', () => {
   test('should detect pending returns correctly', () => {
     const riderWithReturn: any = {
       ...mockRider,
-      vehicleReturns: [{ status: 'PENDING' }],
+      vehicleReturns: [{ status: 'SUBMITTED' }],
     };
     const flat = flattenRider(riderWithReturn);
     expect(flat.returnPending).toBe(true);

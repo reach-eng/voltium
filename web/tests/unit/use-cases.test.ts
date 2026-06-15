@@ -318,7 +318,7 @@ describe('Wallet — Top-up', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('creates PENDING transaction for rider', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210' });
+    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210', lifecycleStatus: 'DEPOSIT_APPROVED' });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
     mockWalletRepository.createTransaction.mockResolvedValue({
       id: 'txn-1', status: 'PENDING', riderId: 'rider-123', amount: 50000,
@@ -336,7 +336,7 @@ describe('Wallet — Top-up', () => {
   });
 
   it('returns existing transaction for idempotent replay', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210' });
+    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210', lifecycleStatus: 'DEPOSIT_APPROVED' });
     const existingTxn = { id: 'txn-existing', status: 'PENDING' };
     mockWalletRepository.findTransactionByKey.mockResolvedValue(existingTxn);
 
@@ -347,7 +347,7 @@ describe('Wallet — Top-up', () => {
   });
 
   it('forces SECURITY_DEPOSIT purpose when rider has not deposited', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: false, phone: '9876543210' });
+    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: false, phone: '9876543210', lifecycleStatus: 'DEPOSIT_PENDING' });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
     mockWalletRepository.createTransaction.mockResolvedValue({
       id: 'txn-deposit', status: 'PENDING', purpose: 'SECURITY_DEPOSIT',
@@ -507,13 +507,13 @@ describe('Rental — Book Rental', () => {
     expect(result.lease.status).toBe('BOOKED');
     expect(mockTx.vehicle.update).toHaveBeenCalledWith({
       where: { id: 'v-1' },
-      data: { status: 'RENTED' },
+      data: { status: 'ACTIVE_RENTAL' },
     });
   });
 
   it('throws when vehicle not available', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue({
-      ...mockVehicle, status: 'RENTED',
+      ...mockVehicle, status: 'ACTIVE_RENTAL',
     });
 
     await expect(
@@ -577,9 +577,8 @@ describe('Rental — Sync Pickup', () => {
     expect(mockTx.rider.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: 'rider-123' },
       data: expect.objectContaining({
-        pickupDone: true,
-        accountStatus: 'ACTIVE',
-        rentalStatus: 'ACTIVE',
+        lifecycleStatus: 'ACTIVE',
+        vehicleId: 'v-1',
       }),
     }));
   });
@@ -621,6 +620,7 @@ describe('Support — Ticket Flow', () => {
   });
 
   it('adds message to ticket', async () => {
+    mockSupportRepository.findById.mockResolvedValue({ id: 'ticket-1', status: 'OPEN' });
     mockSupportRepository.addMessage.mockResolvedValue({ id: 'msg-1', ticketId: 'ticket-1' });
 
     await supportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {

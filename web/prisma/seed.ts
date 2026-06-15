@@ -128,7 +128,7 @@ async function main() {
       vehicleNumber: 'DL 04 CD 5679',
       model: 'Ather 450X Gen3',
       batteryPartner: 'Mooving',
-      status: 'RENTED',
+      status: 'ACTIVE_RENTAL',
       hubId: 'hub-delhi-east',
     },
     {
@@ -974,11 +974,132 @@ async function main() {
     { key: 'emailNotifications', value: 'true' },
     { key: 'smsNotifications', value: 'true' },
     { key: 'gracePeriodHours', value: '24' },
+    { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
+    { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
+    { key: 'BACKUP_LOCK_OWNER', value: '' },
   ];
   for (const s of settings) {
     await db.setting.upsert({ where: { key: s.key }, update: {}, create: s });
   }
   console.log('Created settings');
+
+  // ==================== SYSTEM SETTINGS ====================
+  const systemSettings = [
+    {
+      key: 'APP_PUBLIC_URL',
+      value: 'http://localhost:8081',
+      valueType: 'URL',
+      category: 'APP_URLS',
+      description: 'Public URL of the rider application website.',
+    },
+    {
+      key: 'API_BASE_URL',
+      value: 'http://localhost:8081/api',
+      valueType: 'URL',
+      category: 'APP_URLS',
+      description: 'Base endpoint URL of the backend service APIs.',
+    },
+    {
+      key: 'LOCAL_STORAGE_ROOT',
+      value: 'D:/VoltiumServer/data/uploads',
+      valueType: 'PATH',
+      category: 'STORAGE',
+      description: 'Local directory root path where rider uploaded files are stored.',
+    },
+    {
+      key: 'BACKUP_ROOT',
+      value: 'D:/VoltiumServer/data/backups',
+      valueType: 'PATH',
+      category: 'BACKUP',
+      description: 'Local directory path where database and uploads backups are stored.',
+    },
+    {
+      key: 'BACKUP_SECONDARY_ROOT',
+      value: '',
+      valueType: 'PATH',
+      category: 'BACKUP',
+      description: 'Optional secondary destination path (e.g. USB flash drive) for backups.',
+    },
+    {
+      key: 'BACKUP_FREQUENCY',
+      value: 'DAILY',
+      valueType: 'STRING',
+      category: 'BACKUP',
+      description: 'How often scheduled automatic backups are triggered (DAILY, WEEKLY, MONTHLY, MANUAL).',
+    },
+    {
+      key: 'BACKUP_TIME_OF_DAY',
+      value: '02:00',
+      valueType: 'STRING',
+      category: 'BACKUP',
+      description: 'Hour and minute (HH:MM) in 24hr format when the backup triggers.',
+    },
+    {
+      key: 'BACKUP_TIMEZONE',
+      value: 'Asia/Kolkata',
+      valueType: 'STRING',
+      category: 'BACKUP',
+      description: 'Timezone context to resolve the trigger time of day.',
+    },
+    {
+      key: 'BACKUP_KEEP_DAILY',
+      value: '7',
+      valueType: 'NUMBER',
+      category: 'BACKUP',
+      description: 'Number of daily backups to preserve under retention policy.',
+    },
+    {
+      key: 'BACKUP_KEEP_WEEKLY',
+      value: '4',
+      valueType: 'NUMBER',
+      category: 'BACKUP',
+      description: 'Number of weekly backups to preserve under retention policy.',
+    },
+    {
+      key: 'BACKUP_KEEP_MONTHLY',
+      value: '3',
+      valueType: 'NUMBER',
+      category: 'BACKUP',
+      description: 'Number of monthly backups to preserve under retention policy.',
+    },
+    {
+      key: 'BACKUP_KEEP_MANUAL',
+      value: '10',
+      valueType: 'NUMBER',
+      category: 'BACKUP',
+      description: 'Max limit of manual backups to retain before pruning.',
+    },
+    {
+      key: 'BACKUP_MINIMUM_FREE_DISK_GB',
+      value: '10',
+      valueType: 'NUMBER',
+      category: 'BACKUP',
+      description: 'Minimum remaining disk space in GB required to trigger a backup.',
+    },
+    {
+      key: 'MAINTENANCE_MODE',
+      value: 'false',
+      valueType: 'BOOLEAN',
+      category: 'SERVER',
+      description: 'Whether the application is currently in maintenance mode blocking rider operations.',
+    },
+    {
+      key: 'MAINTENANCE_MESSAGE',
+      value: 'System is currently under maintenance. Please check back later.',
+      valueType: 'STRING',
+      category: 'SERVER',
+      description: 'Banner message shown to riders when maintenance mode is active.',
+    },
+  ];
+
+  for (const s of systemSettings) {
+    await db.systemSetting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: s,
+    });
+  }
+  console.log('Created system settings');
 
   // ==================== LEGAL DOCUMENTS ====================
   const legalDocs = [

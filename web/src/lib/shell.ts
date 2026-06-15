@@ -23,48 +23,21 @@ const IS_WIN = platform() === 'win32';
  * On Windows uses PowerShell Compress-Archive; on Unix uses tar.
  */
 export function createArchive(sourceDir: string, outputFile: string): void {
-  if (IS_WIN) {
-    // PowerShell: Compress-Archive -Path sourceDir\* -DestinationPath outputFile -CompressionLevel Optimal
-    const psScript = [
-      'powershell.exe',
-      '-NoProfile',
-      '-Command',
-      `Compress-Archive -Path "${sourceDir}\\*" -DestinationPath "${outputFile}" -CompressionLevel Optimal -Force`,
-    ];
-    execFileSync(psScript[0], psScript.slice(1), {
-      timeout: 300_000,
-      stdio: 'pipe',
-    });
-  } else {
-    execFileSync('tar', ['-czf', outputFile, '-C', sourceDir, '.'], {
-      timeout: 300_000,
-      stdio: 'pipe',
-    });
-  }
+  execFileSync('tar', ['-czf', outputFile, '-C', sourceDir, '.'], {
+    timeout: 300_000,
+    stdio: 'pipe',
+  });
 }
 
 /**
  * Extract a compressed archive into a directory.
- * On Windows uses PowerShell Expand-Archive; on Unix uses tar.
+ * Uses native tar.
  */
 export function extractArchive(archiveFile: string, outputDir: string): void {
-  if (IS_WIN) {
-    const psScript = [
-      'powershell.exe',
-      '-NoProfile',
-      '-Command',
-      `Expand-Archive -Path "${archiveFile}" -DestinationPath "${outputDir}" -Force`,
-    ];
-    execFileSync(psScript[0], psScript.slice(1), {
-      timeout: 300_000,
-      stdio: 'pipe',
-    });
-  } else {
-    execFileSync('tar', ['-xzf', archiveFile, '-C', outputDir], {
-      timeout: 300_000,
-      stdio: 'pipe',
-    });
-  }
+  execFileSync('tar', ['-xzf', archiveFile, '-C', outputDir], {
+    timeout: 300_000,
+    stdio: 'pipe',
+  });
 }
 
 // ─── Database Helpers ───────────────────────────────────────────────────

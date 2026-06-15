@@ -47,8 +47,7 @@ export async function PUT(request: NextRequest) {
     await mkdir(dir, { recursive: true });
     await writeFile(fullPath, buffer);
 
-    const fileRecord = await fileService.getFileRecordById(storageKey);
-    const recordId = fileRecord?.id || storageKey;
+    const recordId = record?.id || storageKey;
 
     return NextResponse.json({ status: 'ok', fileRecordId: recordId });
   } catch (err) {

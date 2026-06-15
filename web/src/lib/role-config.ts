@@ -29,6 +29,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'admin-users', label: 'Admin Users', icon: 'Users2', permission: 'admins_manage' },
   { id: 'roles-permissions', label: 'Roles & Permissions', icon: 'Key', permission: 'admins_manage' },
   { id: 'audit-logs', label: 'Audit Logs', icon: 'History', permission: 'admins_manage' },
+  { id: 'business-settings', label: 'Business Settings', icon: 'Settings2', permission: 'settings_manage' },
   { id: 'settings', label: 'System Settings', icon: 'Settings', permission: 'settings_manage' },
   { id: 'server-health', label: 'Server Health', icon: 'HeartHandshake', permission: 'settings_manage' },
   { id: 'data-management', label: 'Data Management', icon: 'Database', permission: 'data_management_view' },

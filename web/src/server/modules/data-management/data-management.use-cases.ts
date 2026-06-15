@@ -328,17 +328,14 @@ export const dataManagementUseCases = {
     }
 
     // Check maintenance mode and backup lock
-    const [maintenanceSetting, backupLockSetting] = await Promise.all([
-      db.setting.findUnique({ where: { key: 'maintenanceMode' } }),
-      db.setting.findUnique({ where: { key: 'backupLock' } }),
-    ]);
-
+    const maintenanceSetting = await db.setting.findUnique({ where: { key: 'maintenanceMode' } });
     if (maintenanceSetting?.value === 'true') {
       throw new Error('Cannot run backup while maintenance mode is active');
     }
 
-    if (backupLockSetting?.value === 'RESTORE_RUNNING') {
-      throw new Error('Cannot run backup while a restore operation is in progress');
+    const lock = await backupService.getLockStatus();
+    if (lock.status !== 'NONE') {
+      throw new Error(`Cannot run backup while lock is active (${lock.status} held by ${lock.owner})`);
     }
 
     await createAuditLog({

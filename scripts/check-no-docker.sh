@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Voltium — No-Docker Enforcement Check
+# Voltium ï¿½ No-Docker Enforcement Check
 # =============================================================================
 # Fails if any Docker files or Docker commands are found in the project.
 # Run this in CI to prevent Docker from being re-introduced.

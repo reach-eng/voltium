@@ -23,10 +23,10 @@ export async function GET() {
       failedCount = Number(failed[0]?.count ?? 0);
 
       const oldest = (await db.$queryRawUnsafe(
-        `SELECT EXTRACT(EPOCH FROM (NOW() - created_at))::int as age_seconds
+        `SELECT EXTRACT(EPOCH FROM (NOW() - "createdAt"))::int as age_seconds
          FROM "OutboxEvent"
          WHERE status = 'PENDING'
-         ORDER BY created_at ASC
+         ORDER BY "createdAt" ASC
          LIMIT 1`
       )) as any;
       oldestPendingAge = oldest[0]?.age_seconds ?? null;
@@ -34,13 +34,13 @@ export async function GET() {
       // OutboxEvent table may not exist
     }
 
-    // Check if there are any stuck processing events (> 5 minutes)
+    // Check if there are any stuck pending events (> 15 minutes)
     let stuckCount = 0;
     try {
       const stuck = (await db.$queryRawUnsafe(
         `SELECT COUNT(*) as count FROM "OutboxEvent"
-         WHERE status = 'PROCESSING'
-         AND updated_at < NOW() - INTERVAL '5 minutes'`
+         WHERE status = 'PENDING'
+         AND "createdAt" < NOW() - INTERVAL '15 minutes'`
       )) as any;
       stuckCount = Number(stuck[0]?.count ?? 0);
     } catch {

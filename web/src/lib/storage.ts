@@ -9,12 +9,20 @@ export interface StorageProvider {
 }
 
 class LocalStorageProvider implements StorageProvider {
-  private baseDir = process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+  private async getBaseDir(): Promise<string> {
+    try {
+      const { db } = await import('@/lib/db');
+      const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
+      if (setting?.value) return setting.value;
+    } catch {}
+    return process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+  }
 
   async upload(buffer: Buffer, filename: string): Promise<string> {
     const { writeFile, mkdir } = await import('fs/promises');
-    const fullPath = join(this.baseDir, filename);
-    const dir = join(this.baseDir, filename.split('/').slice(0, -1).join('/'));
+    const baseDir = await this.getBaseDir();
+    const fullPath = join(baseDir, filename);
+    const dir = join(baseDir, filename.split('/').slice(0, -1).join('/'));
 
     await mkdir(dir, { recursive: true });
     await writeFile(fullPath, buffer);
@@ -24,7 +32,8 @@ class LocalStorageProvider implements StorageProvider {
   async delete(storageKey: string): Promise<void> {
     const { unlink } = await import('fs/promises');
     try {
-      await unlink(join(this.baseDir, storageKey));
+      const baseDir = await this.getBaseDir();
+      await unlink(join(baseDir, storageKey));
     } catch {}
   }
 
@@ -44,7 +53,8 @@ class LocalStorageProvider implements StorageProvider {
   async verifyUpload(storageKey: string): Promise<boolean> {
     const { access } = await import('fs/promises');
     try {
-      await access(join(this.baseDir, storageKey));
+      const baseDir = await this.getBaseDir();
+      await access(join(baseDir, storageKey));
       return true;
     } catch {
       return false;

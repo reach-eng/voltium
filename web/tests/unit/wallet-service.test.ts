@@ -9,7 +9,8 @@
  * These tests are pure logic tests (no database). They validate isolated service functions.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('@/lib/db', () => ({ db: {} }));
 import { WalletServiceError } from '@/lib/services/wallet-service';
 
 // ---------------------------------------------------------------------------
@@ -160,7 +161,7 @@ describe('File Service — ownership policy', () => {
   it('allows admin with view_kyc to view KYC documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
     expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files.view_kyc'] },
+      { role: 'admin', permissions: ['files_view_kyc'] },
       riderRecord
     )).toBe(true);
   });
@@ -176,7 +177,7 @@ describe('File Service — ownership policy', () => {
   it('allows admin with view_payment_proof to view payment documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
     expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files.view_payment_proof'] },
+      { role: 'admin', permissions: ['files_view_payment_proof'] },
       paymentRecord
     )).toBe(true);
   });
@@ -184,7 +185,7 @@ describe('File Service — ownership policy', () => {
   it('blocks admin without correct permission from viewing payment documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
     expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files.view_kyc'] },
+      { role: 'admin', permissions: ['files_view_kyc'] },
       paymentRecord
     )).toBe(false);
   });
