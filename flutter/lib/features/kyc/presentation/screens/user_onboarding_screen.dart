@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'dart:ui' as ui;
-import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/features/kyc/presentation/widgets/user_onboarding_widgets.dart';
 import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
+import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 
 class UserOnboardingScreen extends StatefulWidget {
   final VoidCallback? onNext;
@@ -360,14 +358,16 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildAppBar(),
+            UserOnboardingAppBar(
+              onBack: () => widget.onBack?.call(),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
+                    const UserOnboardingHeader(),
                     const SizedBox(height: 20),
                     PersonalDetailsCard(
                       nameController: _nameController,
@@ -428,378 +428,18 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
                 ),
               ),
             ),
-            _buildBottomButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-            onPressed: () => widget.onBack?.call(),
-          ),
-          const Expanded(
-            child: Text(
-              'Onboarding',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Step',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                Text('1/2',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 6,
-          decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
-              borderRadius: BorderRadius.circular(3)),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: MediaQuery.of(context).size.width * 0.45,
-                child: Container(
-                    decoration: BoxDecoration(
-                        color: const Color(0xFF10B981),
-                        borderRadius: BorderRadius.circular(3))),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: MediaQuery.of(context).size.width * 0.45,
-                child: Container(
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(3))),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        const Text('Almost there!',
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111827))),
-        const SizedBox(height: 6),
-        const Text(
-            'We need a few more details to set up your fleet profile securely.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
-      ],
-    );
-  }
-
-  Widget _buildBottomButton() {
-    final bool canProceed =
-        const String.fromEnvironment('TEST_MODE') == 'true' || _isFormComplete;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE5E7EB)))),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          key: const Key('nextOnboardingButton'),
-          onPressed: canProceed && !_isUploading ? _handleNext : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canProceed ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
-            disabledBackgroundColor: const Color(0xFF9CA3AF),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: _isUploading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2))
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                        canProceed
-                            ? 'NEXT: ADD GUARANTOR'
-                            : 'COMPLETE ALL FIELDS',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward,
-                        color: Colors.white, size: 18),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  void _showBankDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Bank Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              _buildDialogField(
-                  'Bank Name', 'e.g. State Bank of India', _bankNameController),
-              const SizedBox(height: 12),
-              _buildDialogField(
-                  'Account Number', 'e.g. 30291038472', _bankAccountController),
-              const SizedBox(height: 12),
-              _buildDialogField(
-                  'IFSC Code', 'e.g. SBIN0001234', _bankIfscController),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  if (_bankNameController.text.isEmpty) {
-                    _showError('Please enter bank name');
-                    return;
-                  }
-                  if (_bankAccountController.text.length < 9 ||
-                      _bankAccountController.text.length > 18) {
-                    _showError('Account number should be 9-18 digits');
-                    return;
-                  }
-      if (_bankIfscController.text.trim().isEmpty) {
-        _showError('Enter a valid IFSC code');
-        return;
-      }
-                  Navigator.pop(context);
-                  setState(() {});
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                    minimumSize: const Size(double.infinity, 48)),
-                child:
-                    const Text('Save', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDialogField(
-      String label, String hint, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF2563EB))),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class SignaturePadScreen extends StatefulWidget {
-  const SignaturePadScreen({super.key});
-
-  @override
-  State<SignaturePadScreen> createState() => _SignaturePadScreenState();
-}
-
-class _SignaturePadScreenState extends State<SignaturePadScreen> {
-  final GlobalKey _boundaryKey = GlobalKey();
-  final List<Offset?> _points = [];
-
-  void _clear() => setState(() => _points.clear());
-
-  void _addPoint(Offset point) {
-    setState(() {
-      _points.add(point);
-    });
-  }
-
-  void _endStroke() {
-    setState(() {
-      _points.add(null);
-    });
-  }
-
-  Future<void> _save() async {
-    if (_points.isEmpty) {
-      Navigator.of(context).pop();
-      return;
-    }
-
-    try {
-      final boundary = _boundaryKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
-      if (boundary == null) return;
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
-
-      final bytes = byteData.buffer.asUint8List();
-      final directory = await getTemporaryDirectory();
-      final path =
-          '${directory.path}/signature_${DateTime.now().millisecondsSinceEpoch}.png';
-      final file = File(path);
-      await file.writeAsBytes(bytes);
-
-      if (mounted) Navigator.of(context).pop(path);
-    } catch (e) {
-      debugPrint('Error saving signature: $e');
-      if (mounted) Navigator.of(context).pop();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context)),
-        title: const Text('Draw Signature',
-            style: TextStyle(
-                color: Color(0xFF111827), fontWeight: FontWeight.w600)),
-        actions: [
-          TextButton(
-              onPressed: _clear,
-              child: const Text('Clear',
-                  style: TextStyle(color: Color(0xFF2563EB)))),
-          TextButton(
-              onPressed: _save,
-              child: const Text('Save',
-                  style: TextStyle(
-                      color: Color(0xFF2563EB), fontWeight: FontWeight.w600))),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Expanded(
-              child: RepaintBoundary(
-                key: _boundaryKey,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Stack(
-                    children: [
-                      SizedBox.expand(),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onPanStart: (details) =>
-                            _addPoint(details.localPosition),
-                        onPanUpdate: (details) =>
-                            _addPoint(details.localPosition),
-                        onPanEnd: (_) => _endStroke(),
-                        child: CustomPaint(
-                          painter: _SignaturePainter(_points),
-                          size: Size.infinite,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            UserOnboardingBottomButton(
+              canProceed: const String.fromEnvironment('TEST_MODE') == 'true' || _isFormComplete,
+              isUploading: _isUploading,
+              onNext: _handleNext,
             ),
           ],
         ),
       ),
     );
   }
+
+}
 }
 
-class _SignaturePainter extends CustomPainter {
-  final List<Offset?> points;
-  _SignaturePainter(this.points);
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF111827)
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 3;
-    for (int i = 0; i < points.length - 1; i++) {
-      if (points[i] != null && points[i + 1] != null)
-        canvas.drawLine(points[i]!, points[i + 1]!, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SignaturePainter old) => true;
-}

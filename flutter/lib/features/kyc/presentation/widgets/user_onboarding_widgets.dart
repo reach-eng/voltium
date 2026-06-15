@@ -582,3 +582,213 @@ class SignatureCard extends StatelessWidget {
     );
   }
 }
+
+class UserOnboardingAppBar extends StatelessWidget {
+  final VoidCallback? onBack;
+
+  const UserOnboardingAppBar({super.key, this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
+            onPressed: onBack,
+          ),
+          const Expanded(
+            child: Text(
+              'Onboarding',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: Color(0xFF111827),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Step',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                Text('1/2',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF111827))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UserOnboardingHeader extends StatelessWidget {
+  const UserOnboardingHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 6,
+          decoration: BoxDecoration(
+              color: const Color(0xFFE5E7EB),
+              borderRadius: BorderRadius.circular(3)),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: screenWidth * 0.45,
+                child: Container(
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        borderRadius: BorderRadius.circular(3))),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: screenWidth * 0.45,
+                child: Container(
+                    decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(3))),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text('Almost there!',
+            style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827))),
+        const SizedBox(height: 6),
+        const Text(
+            'We need a few more details to set up your fleet profile securely.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280))),
+      ],
+    );
+  }
+}
+
+class UserOnboardingBottomButton extends StatelessWidget {
+  final bool canProceed;
+  final bool isUploading;
+  final VoidCallback? onNext;
+
+  const UserOnboardingBottomButton({
+    super.key,
+    required this.canProceed,
+    required this.isUploading,
+    this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFE5E7EB)))),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          key: const Key('nextOnboardingButton'),
+          onPressed: canProceed && !isUploading ? onNext : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                canProceed ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
+            disabledBackgroundColor: const Color(0xFF9CA3AF),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+          ),
+          child: isUploading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                        canProceed
+                            ? 'NEXT: ADD GUARANTOR'
+                            : 'COMPLETE ALL FIELDS',
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward,
+                        color: Colors.white, size: 18),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class UserOnboardingDialogField extends StatelessWidget {
+  final String label;
+  final String hint;
+  final TextEditingController controller;
+
+  const UserOnboardingDialogField({
+    super.key,
+    required this.label,
+    required this.hint,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        const SizedBox(height: 4),
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF2563EB))),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
