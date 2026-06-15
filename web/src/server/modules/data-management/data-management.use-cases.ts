@@ -409,5 +409,45 @@ export const dataManagementUseCases = {
 
     return backupRepository.listRestoreJobs();
   },
+
+  async getStorage(adminRole: AdminRole) {
+    if (!backupPolicy.canViewBackups(adminRole)) {
+      throw new Error('Unauthorized');
+    }
+
+    const overview = await backupService.getStorageOverview();
+
+    // Get largest file categories from upload records
+    let largestFileCategories: { category: string; sizeBytes: number }[] = [];
+    try {
+      const categories: { purpose: string; _sum: { sizeBytes: number | null } }[] =
+        await db.fileRecord.groupBy({
+          by: ['purpose'],
+          _sum: { sizeBytes: true },
+          orderBy: { _sum: { sizeBytes: 'desc' as const } },
+          take: 10,
+        }) as any;
+      largestFileCategories = categories
+        .filter(c => c._sum.sizeBytes !== null)
+        .map(c => ({ category: c.purpose, sizeBytes: Number(c._sum.sizeBytes) }));
+    } catch {}
+
+    // Get database size from PostgreSQL
+    let databaseSizeBytes = 0;
+    try {
+      const result = await db.$queryRaw<{ size: bigint }[]>`
+        SELECT pg_database_size(current_database()) as size
+      `;
+      if (result.length > 0) {
+        databaseSizeBytes = Number(result[0].size);
+      }
+    } catch {}
+
+    return {
+      ...overview,
+      databaseSizeBytes,
+      largestFileCategories,
+    };
+  },
 };
 

@@ -6,16 +6,12 @@ import type { AdminRole } from '@/server/modules/admin/admin.types';
 export async function GET() {
   try {
     const session = await getAdminSession();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const result = await dataManagementUseCases.getOverview(session.role as AdminRole);
-    return NextResponse.json({
-      success: true,
-      data: {
-        storage: result.storage,
-        maintenanceMode: result.maintenanceMode,
-      },
-    });
+    const storage = await dataManagementUseCases.getStorage(session.role as AdminRole);
+    return NextResponse.json({ success: true, data: storage });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message },

@@ -1028,6 +1028,27 @@ model Setting {
   @@map("settings")
 }
 
+/// Admin-editable system settings with metadata.
+/// Use this for app configuration that should not require file edits (APP_PUBLIC_URL, etc.).
+/// The older Setting model is kept for internal KV pairs (maintenance mode, backup locks).
+model SystemSetting {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  value            String
+  valueType        String   @default("STRING") // STRING, BOOLEAN, NUMBER, JSON, PATH, URL
+  category         String   // APP_URLS, STORAGE, BACKUP, SECURITY, SERVER
+  isSecret         Boolean  @default(false)
+  isEditable       Boolean  @default(true)
+  description      String?
+  updatedByAdminId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("system_settings")
+  @@index([category])
+  @@index([key])
+}
+
 model LegalDocument {
   id        String   @id @default(cuid())
   type      String   @unique
