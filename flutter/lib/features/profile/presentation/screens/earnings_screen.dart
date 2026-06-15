@@ -11,6 +11,7 @@ import 'package:voltium_rider/widgets/earnings_chart.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/earnings_widgets.dart';
 import 'package:voltium_rider/widgets/earnings_add_sheet.dart';
+import '../widgets/earnings_widgets.dart';
 
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
@@ -182,6 +183,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
   Widget build(BuildContext context) {
     final weekTotal = _getWeekTotal();
     final weekTrips = _getWeekTrips();
+    final weekHours = _getWeekHours();
     final dailyEarnings = _getDailyEarnings();
     final bestDay = dailyEarnings.reduce(
         (a, b) => (a['amount'] as double) > (b['amount'] as double) ? a : b);
@@ -211,12 +213,24 @@ class _EarningsScreenState extends State<EarningsScreen> {
                             children: [
                               FadeUpWidget(
                                 delay: 0,
-                                child: _buildWeekSelector(),
+                                child: WeekSelectorBar(
+                                  weekStart: _weekStart,
+                                  onPrev: () => setState(() =>
+                                      _weekStart = _weekStart.subtract(const Duration(days: 7))),
+                                  onNext: _weekStart.add(const Duration(days: 7)).isAfter(DateTime.now())
+                                      ? null
+                                      : () => setState(() =>
+                                          _weekStart = _weekStart.add(const Duration(days: 7))),
+                                ),
                               ),
                               const SizedBox(height: 16),
                               FadeUpWidget(
                                 delay: 100,
-                                child: _buildTotalCard(weekTotal),
+                                child: TotalEarningsCard(
+                                  total: weekTotal,
+                                  trips: weekTrips,
+                                  hours: weekHours,
+                                ),
                               ),
                               const SizedBox(height: 16),
                               FadeUpWidget(
@@ -235,7 +249,11 @@ class _EarningsScreenState extends State<EarningsScreen> {
                                 final day = entry.value;
                                 return FadeUpWidget(
                                   delay: 300 + (index * 50),
-                                  child: _buildDayCard(day),
+                                  child: DayEarningsCard(
+                                    day: day,
+                                    onAddEntry: () => _showAddEntrySheet(
+                                        defaultDate: day['date'] as DateTime),
+                                  ),
                                 );
                               }),
                               if (dailyEarnings
@@ -243,8 +261,13 @@ class _EarningsScreenState extends State<EarningsScreen> {
                                 const SizedBox(height: 16),
                                 FadeUpWidget(
                                   delay: 700,
-                                  child: _buildSummaryCard(
-                                      weekTotal, weekTrips, avgPerDay, bestDay),
+                                  child: WeeklySummaryCard(
+                                    total: weekTotal,
+                                    trips: weekTrips,
+                                    avgPerDay: avgPerDay,
+                                    bestDate: bestDay['date'] as DateTime,
+                                    bestAmount: bestDay['amount'] as double,
+                                  ),
                                 ),
                               ],
                               if (!dailyEarnings
@@ -322,561 +345,6 @@ class _EarningsScreenState extends State<EarningsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildWeekSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          InkWell(
-            onTap: () => setState(() =>
-                _weekStart = _weekStart.subtract(const Duration(days: 7))),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.chevron_left,
-                  size: 20, color: Color(0xFF1E293B)),
-            ),
-          ),
-          Column(
-            children: [
-              const Text(
-                'WEEKLY EARNINGS',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _getWeekRange(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-          InkWell(
-            onTap: () {
-              final next = _weekStart.add(const Duration(days: 7));
-              if (!next.isAfter(DateTime.now())) {
-                setState(() => _weekStart = next);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: _weekStart
-                        .add(const Duration(days: 7))
-                        .isAfter(DateTime.now())
-                    ? const Color(0xFFCBD5E1)
-                    : const Color(0xFF1E293B),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotalCard(double total) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x260053C1),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'THIS WEEK',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  letterSpacing: 1.5,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.trending_up,
-                        color: Color(0xFF4ADE80), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '+12%',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4ADE80),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                '\u20B9',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                total.toStringAsFixed(0),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TRIPS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_getWeekTrips()}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'HOURS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.7),
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_getWeekHours().toStringAsFixed(1)}h',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDayCard(Map<String, dynamic> day) {
-    final date = day['date'] as DateTime;
-    final amount = day['amount'] as double;
-    final trips = day['trips'] as int;
-    final hours = day['hours'] as double;
-    final platforms = day['platforms'] as Set<GigPlatform>;
-    final hasEntries = day['hasEntries'] as bool;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: hasEntries ? null : Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: hasEntries
-            ? const [
-                BoxShadow(
-                  color: Color(0x0A0F172A),
-                  blurRadius: 48,
-                  offset: Offset(0, 24),
-                ),
-              ]
-            : null,
-      ),
-      child: hasEntries
-          ? Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DateHelpers.dayName(date),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF64748B),
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            DateHelpers.formatFullDate(date),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          ...platforms.map((p) => Padding(
-                                padding: const EdgeInsets.only(right: 4),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: _platformColor(p)
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    _platformLabel(p),
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: _platformColor(p),
-                                    ),
-                                  ),
-                                ),
-                              )),
-                          const SizedBox(width: 8),
-                          Text(
-                            '\u20B9${amount.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF16A34A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _buildDayStat(Icons.directions_bike, '$trips trips'),
-                      const SizedBox(width: 16),
-                      _buildDayStat(Icons.schedule,
-                          '${hours.toStringAsFixed(1)}h online'),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () => _showAddEntrySheet(defaultDate: date),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add,
-                                  size: 14, color: Color(0xFF0053C1)),
-                              SizedBox(width: 4),
-                              Text(
-                                'Add',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0053C1),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        DateHelpers.dayName(date),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF94A3B8),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        DateHelpers.formatFullDate(date),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  InkWell(
-                    onTap: () => _showAddEntrySheet(defaultDate: date),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add, size: 14, color: Color(0xFF64748B)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Add Entry',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildDayStat(IconData icon, String label) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: const Color(0xFF64748B)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF64748B),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryCard(
-      double total, int trips, double avgPerDay, Map<String, dynamic> bestDay) {
-    final bestDate = bestDay['date'] as DateTime;
-    final bestAmount = bestDay['amount'] as double;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppGradients.success,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x2610B981),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'WEEKLY SUMMARY',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryStat(
-                    'Total Earnings', '\u20B9${total.toStringAsFixed(0)}'),
-              ),
-              Expanded(
-                child: _buildSummaryStat('Total Trips', '$trips'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryStat(
-                    'Avg/Day', '\u20B9${avgPerDay.toStringAsFixed(0)}'),
-              ),
-              Expanded(
-                child: _buildSummaryStat('Best Day',
-                    '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lightbulb, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'You earned \u20B9${total.toStringAsFixed(0)} this week. ${bestAmount > 0 ? 'Your best day was ${DateHelpers.dayName(bestDate)} with \u20B9${bestAmount.toStringAsFixed(0)}!' : 'Start logging to see insights!'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: Colors.white.withValues(alpha: 0.7),
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 

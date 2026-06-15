@@ -6,6 +6,8 @@ import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/api_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
+import '../widgets/edit_profile_widgets.dart';
+
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -286,39 +288,74 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildSectionHeader('PERSONAL INFORMATION'),
-                              _buildTextField('Full Name', _nameController,
-                                  Icons.person_outline,
-                                  key: const Key('editFullNameField')),
+                              const EditProfileSectionHeader(title: 'PERSONAL INFORMATION'),
+                              EditProfileTextField(
+                                key: const Key('editFullNameField'),
+                                label: 'Full Name',
+                                controller: _nameController,
+                                icon: Icons.person_outline,
+                              ),
                               const SizedBox(height: 16),
-                              _buildTextField('Phone Number', _phoneController,
-                                  Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone,
-                                  key: const Key('editPhoneField')),
+                              EditProfileTextField(
+                                key: const Key('editPhoneField'),
+                                label: 'Phone Number',
+                                controller: _phoneController,
+                                icon: Icons.phone_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
                               const SizedBox(height: 16),
-                              _buildTextField('Email Address', _emailController,
-                                  Icons.email_outlined,
-                                  keyboardType: TextInputType.emailAddress,
-                                  key: const Key('editEmailField')),
+                              EditProfileTextField(
+                                key: const Key('editEmailField'),
+                                label: 'Email Address',
+                                controller: _emailController,
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
                               const SizedBox(height: 16),
-                              _buildTextField(
-                                  'Father\'s Name',
-                                  _fatherNameController,
-                                  Icons.family_restroom_outlined,
-                                  key: const Key('editFatherNameField')),
+                              EditProfileTextField(
+                                key: const Key('editFatherNameField'),
+                                label: 'Father\'s Name',
+                                controller: _fatherNameController,
+                                icon: Icons.family_restroom_outlined,
+                              ),
                               const SizedBox(height: 16),
-                              _buildTextField(
-                                  'Mother\'s Name',
-                                  _motherNameController,
-                                  Icons.family_restroom_outlined,
-                                  key: const Key('editMotherNameField')),
+                              EditProfileTextField(
+                                key: const Key('editMotherNameField'),
+                                label: 'Mother\'s Name',
+                                controller: _motherNameController,
+                                icon: Icons.family_restroom_outlined,
+                              ),
                               const SizedBox(height: 16),
-                              _buildDateField('Date of Birth', _dobController,
-                                  key: const Key('editDobField')),
+                              EditProfileDateField(
+                                key: const Key('editDobField'),
+                                label: 'Date of Birth',
+                                controller: _dobController,
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _dobController.text.isNotEmpty
+                                        ? DateTime.tryParse(_dobController.text)
+                                        : DateTime(2000, 1, 1),
+                                    firstDate: DateTime(1940),
+                                    lastDate: DateTime.now().subtract(
+                                      const Duration(days: 18 * 365),
+                                    ),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _dobController.text =
+                                          '${picked.year}-${_twoDigits(picked.month)}-${_twoDigits(picked.day)}';
+                                    });
+                                  }
+                                },
+                              ),
                               const SizedBox(height: 16),
-                              _buildTextField('Current Address',
-                                  _addressController, Icons.home_outlined,
-                                  key: const Key('editAddressField')),
+                              EditProfileTextField(
+                                key: const Key('editAddressField'),
+                                label: 'Current Address',
+                                controller: _addressController,
+                                icon: Icons.home_outlined,
+                              ),
                             ],
                           ),
                         ),
@@ -328,21 +365,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _buildSectionHeader('GUARANTOR DETAILS'),
-                              _buildTextField('Guarantor Name',
-                                  _gNameController, Icons.shield_outlined,
-                                  key: const Key('editGuarantorNameField')),
+                              const EditProfileSectionHeader(title: 'GUARANTOR DETAILS'),
+                              EditProfileTextField(
+                                key: const Key('editGuarantorNameField'),
+                                label: 'Guarantor Name',
+                                controller: _gNameController,
+                                icon: Icons.shield_outlined,
+                              ),
                               const SizedBox(height: 16),
                               _buildGuarantorPhoneField(),
                               const SizedBox(height: 16),
-                              _buildTextField('Guarantor Address',
-                                  _gAddressController, Icons.home_outlined,
-                                  key: const Key('editGuarantorAddressField')),
+                              EditProfileTextField(
+                                key: const Key('editGuarantorAddressField'),
+                                label: 'Guarantor Address',
+                                controller: _gAddressController,
+                                icon: Icons.home_outlined,
+                              ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 32),
-                        FadeUpWidget(delay: 500, child: _buildAdminNote()),
+                        const FadeUpWidget(delay: 500, child: EditProfileAdminNote()),
                         const SizedBox(height: 32),
                         FadeUpWidget(
                           delay: 600,
@@ -425,47 +468,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1E293B))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF64748B),
-            letterSpacing: 1.2),
-      ),
-    );
-  }
-
-  Widget _buildAdminNote() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.info_outline, color: Color(0xFFD97706), size: 22),
-          SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Profile changes require admin approval before becoming active.',
-              style: TextStyle(
-                  color: Color(0xFF9A3412),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.4),
-            ),
-          ),
         ],
       ),
     );
@@ -702,111 +704,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildTextField(
-      String label, TextEditingController controller, IconData icon,
-      {TextInputType keyboardType = TextInputType.text, Key? key}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF64748B))),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ]),
-          child: TextField(
-            key: key,
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B)),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: const Color(0xFF94A3B8), size: 18),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDateField(String label, TextEditingController controller,
-      {Key? key}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4),
-          child: Text(label,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF64748B))),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ]),
-          child: TextField(
-            key: key,
-            controller: controller,
-            readOnly: true,
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B)),
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.calendar_today_outlined,
-                  color: Color(0xFF94A3B8), size: 18),
-              suffixIcon: const Icon(Icons.edit_calendar_outlined,
-                  color: Color(0xFF0053C1), size: 18),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              hintText: 'YYYY-MM-DD',
-            ),
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: controller.text.isNotEmpty
-                    ? DateTime.tryParse(controller.text)
-                    : DateTime(2000, 1, 1),
-                firstDate: DateTime(1940),
-                lastDate:
-                    DateTime.now().subtract(const Duration(days: 18 * 365)),
-              );
-              if (picked != null) {
-                controller.text =
-                    '${picked.year}-${_twoDigits(picked.month)}-${_twoDigits(picked.day)}';
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
 }
