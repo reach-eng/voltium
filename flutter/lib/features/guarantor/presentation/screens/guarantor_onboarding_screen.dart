@@ -9,7 +9,7 @@ import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
-import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_screen.dart' show SignaturePadScreen;
+import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/features/guarantor/presentation/widgets/guarantor_onboarding_widgets.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
@@ -506,12 +506,14 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            GuarantorOnboardingHeader(
+              onBack: () => widget.onBack?.call(),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    _buildProgressSection(),
+                    const GuarantorOnboardingProgressSection(),
                     const SizedBox(height: 24),
                     GuarantorDetailsCard(
                       nameController: _nameController,
@@ -527,7 +529,18 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
                       onSendOtp: _sendOtp,
                       onVerifyOtp: _verifyOtp,
                       onSelectDob: _selectDob,
-                      otpBoxes: _buildOtpBoxes(),
+                      otpBoxes: GuarantorOnboardingOtpBoxes(
+                        otpControllers: _otpControllers,
+                        otpFocusNodes: _otpFocusNodes,
+                        onChanged: (i, v) {
+                          if (v.length == 1 && i < 5) {
+                            FocusScope.of(context).requestFocus(_otpFocusNodes[i + 1]);
+                          } else if (v.isEmpty && i > 0) {
+                            FocusScope.of(context).requestFocus(_otpFocusNodes[i - 1]);
+                          }
+                          setState(() {});
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
                     GuarantorIdentityVerificationCard(
@@ -556,46 +569,10 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
                 ),
               ),
             ),
-            _buildBottomButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Header ────────────────────────────────────────────────────────────────
-
-  Widget _buildHeader() {
-    return Container(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => widget.onBack?.call(),
-            ),
-            const Expanded(
-              child: Text(
-                'Onboarding',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
-                  Text('Step',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                  Text('2/2',
-                      style:
-                          TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-                ],
-              ),
+            GuarantorOnboardingBottomButton(
+              canProceed: const String.fromEnvironment('TEST_MODE') == 'true' || _isFormComplete,
+              isUploading: _isUploading,
+              onSubmit: _handleSubmit,
             ),
           ],
         ),
@@ -603,159 +580,5 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     );
   }
 
-  // ── Progress Section ──────────────────────────────────────────────────────
 
-  Widget _buildProgressSection() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 1.0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text('One more step',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          const Text(
-            'We need a few more details to set up your fleet profile securely.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtpBoxes() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(6, (i) {
-        return SizedBox(
-          width: 40,
-          height: 48,
-          child: TextFormField(
-            controller: _otpControllers[i],
-            focusNode: _otpFocusNodes[i],
-            keyboardType: TextInputType.number,
-            maxLength: 1,
-            textAlign: TextAlign.center,
-            textInputAction:
-                i < 5 ? TextInputAction.next : TextInputAction.done,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              counterText: '',
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: EdgeInsets.zero,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide:
-                    const BorderSide(color: Color(0xFF2563EB), width: 2),
-              ),
-            ),
-            onChanged: (v) {
-              if (v.length == 1 && i < 5) {
-                FocusScope.of(context).requestFocus(_otpFocusNodes[i + 1]);
-              } else if (v.isEmpty && i > 0) {
-                FocusScope.of(context).requestFocus(_otpFocusNodes[i - 1]);
-              }
-              setState(() {});
-            },
-          ),
-        );
-      }),
-    );
-  }
-
-  // ── Bottom Button ─────────────────────────────────────────────────────────
-
-  Widget _buildBottomButton() {
-    final bool canProceed =
-        const String.fromEnvironment('TEST_MODE') == 'true' || _isFormComplete;
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          key: const Key('completeOnboardingButton'),
-          onPressed: canProceed && !_isUploading ? _handleSubmit : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canProceed ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
-            disabledBackgroundColor: const Color(0xFF9CA3AF),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: _isUploading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text('FINISH SETUP',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                    SizedBox(width: 8),
-                    Icon(Icons.check, color: Colors.white, size: 18),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-}          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: _isUploading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text('FINISH SETUP',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                    SizedBox(width: 8),
-                    Icon(Icons.check, color: Colors.white, size: 18),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
 }
