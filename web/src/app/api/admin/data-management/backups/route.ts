@@ -58,11 +58,15 @@ export async function POST(request: NextRequest) {
       adminRole: session.role as AdminRole,
     });
 
-    return NextResponse.json({ success: true, data: serializeBackupJob(result) }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      data: serializeBackupJob(result),
+      expiresIn: 900,
+    }, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: err.message,
+    }, { status: err.message === 'Unauthorized' ? 403 : 500 });
   }
 }

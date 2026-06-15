@@ -108,7 +108,15 @@ export const restoreService = {
       // 5. Restore uploaded files
       if (job.filesPath && existsSync(job.filesPath)) {
         logger.info('[RestoreService] Restoring uploaded files');
-        const uploadsRoot = process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+        // Read uploads root from SystemSetting DB first, then env, then default
+        let uploadsRoot: string;
+        try {
+          const { db: dbInner } = await import('@/lib/db');
+          const setting = await dbInner.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
+          uploadsRoot = setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+        } catch {
+          uploadsRoot = process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+        }
 
         // Move current uploads to temp
         const tempDir = join(process.env.BACKUP_ROOT || '', 'restore-temp', Date.now().toString());

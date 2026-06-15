@@ -117,8 +117,25 @@ export async function PUT(
       const { db: storageDb } = await import('@/lib/db');
       const storageSetting = await storageDb.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
       const baseDir = storageSetting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
-      const fullPath = join(baseDir, record.storageKey);
-      const dir = join(baseDir, record.storageKey.split('/').slice(0, -1).join('/'));
+      const resolvedBase = resolve(baseDir);
+      const fullPath = resolve(join(baseDir, record.storageKey));
+
+      // Path traversal protection on storageKey
+      if (!fullPath.startsWith(resolvedBase + (fullPath === resolvedBase ? '' : '/'))) {
+        logger.warn('[LocalUploadCatchAll] Path traversal attempt blocked', { storageKey: record.storageKey });
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
+      }
+
+      // Additional: reject storageKey containing traversal markers
+      const normalizedKey = record.storageKey.replace(/\\/g, '/');
+      if (normalizedKey.includes('..') || normalizedKey.includes('~') || normalizedKey.startsWith('/')) {
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
+      }
+
+      const dir = resolve(join(baseDir, record.storageKey.split('/').slice(0, -1).join('/')));
+      if (!dir.startsWith(resolvedBase)) {
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
+      }
 
       await mkdir(dir, { recursive: true });
       await writeFile(fullPath, buffer);

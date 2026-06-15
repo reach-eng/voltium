@@ -43,15 +43,37 @@ DOCKER_REFS=$(grep -RIn \
   --exclude-dir=build \
   --exclude-dir=.dart_tool \
   --exclude="check-no-docker.sh" \
+DOCKER_REFS=$(grep -RIn \
+  --exclude-dir=node_modules \
+  --exclude-dir=.git \
+  --exclude-dir=.next \
+  --exclude-dir=build \
+  --exclude-dir=.dart_tool \
+  --exclude="check-no-docker.sh" \
   -E "docker build|docker compose|docker-compose up|docker-compose down|docker-compose build|docker run |docker ps|docker logs|docker pull" \
   "$PROJECT_DIR" 2>/dev/null || true)
 
-if [ -n "$DOCKER_REFS" ]; then
-  echo "FAIL: Docker command references found:"
-  echo "$DOCKER_REFS"
+POSTGRES_IMAGE_REFS=$(grep -RIn \
+  --exclude-dir=node_modules \
+  --exclude-dir=.git \
+  --exclude-dir=.next \
+  --exclude-dir=build \
+  --exclude-dir=.dart_tool \
+  --exclude="check-no-docker.sh" \
+  -E "image:\s*postgres" \
+  "$PROJECT_DIR" 2>/dev/null || true)
+
+if [ -n "$DOCKER_REFS" ] || [ -n "$POSTGRES_IMAGE_REFS" ]; then
+  echo "FAIL: Docker command or image references found:"
+  if [ -n "$DOCKER_REFS" ]; then
+    echo "$DOCKER_REFS"
+  fi
+  if [ -n "$POSTGRES_IMAGE_REFS" ]; then
+    echo "$POSTGRES_IMAGE_REFS"
+  fi
   FOUND=1
 else
-  echo "PASS: No Docker command references found"
+  echo "PASS: No Docker command or image references found"
 fi
 
 echo ""

@@ -1,3 +1,20 @@
+/**
+ * Runtime guard: SESSION_SECRET must be set and at least 32 characters.
+ * The Zod schema in env.ts already validates this, but this guard provides
+ * an extra fail-fast check if env.ts is ever bypassed or overridden.
+ *
+ * Runs at module-load time on the server only.
+ */
+if (typeof window === 'undefined') {
+  const _secret = process.env.SESSION_SECRET;
+  if (!_secret || _secret.length < 32) {
+    throw new Error(
+      '[Voltium] SESSION_SECRET must be set to a string of at least 32 characters. ' +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
+  }
+}
+
 export const APP_CONFIG = Object.freeze({
   // Splash screen animation
   SPLASH_PROGRESS_INTERVAL_MS: 40,

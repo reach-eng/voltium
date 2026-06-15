@@ -8,6 +8,7 @@ const envSchema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000'),
 
   // App
@@ -58,6 +59,8 @@ if (process.env.NODE_ENV === 'test') {
   process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/voltium-test?schema=public';
   process.env.JWT_SECRET =
     process.env.JWT_SECRET || 'voltium-dev-secret-key-INSECURE-DO-NOT-PROD-32-CHARS';
+  process.env.SESSION_SECRET =
+    process.env.SESSION_SECRET || 'voltium-dev-session-key-INSECURE-DO-NOT-PROD-32-CHARS';
 }
 
 const isServer = typeof window === 'undefined';
@@ -74,6 +77,7 @@ const parseTarget = isServer
       NEXT_PUBLIC_ENABLE_REFERRAL: process.env.NEXT_PUBLIC_ENABLE_REFERRAL,
       DATABASE_URL: 'http://localhost',
       JWT_SECRET: 'dummy-secret-key-for-client-side-bundle-validation-32-chars',
+      SESSION_SECRET: 'dummy-secret-key-for-client-side-bundle-validation-32-chars',
     };
 
 // Validate target

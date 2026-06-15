@@ -1,0 +1,39 @@
+# Caddyfile.prod — Production reverse proxy for Voltium
+# Usage: caddy run --config Caddyfile.prod
+#
+# Requirements:
+#   - Replace "you@example.com" with your actual email for Let's Encrypt TLS.
+#   - DNS for voltium.com must point to this server before running.
+#   - Port 80/443 must be open. Caddy handles ACME challenges automatically.
+#
+# HTTP is automatically redirected to HTTPS by Caddy (default behaviour).
+
+voltium.com, www.voltium.com {
+	# TLS via Let's Encrypt (automatic certificate provisioning)
+	tls you@example.com
+
+	# Proxy all traffic to the Next.js server
+	reverse_proxy localhost:8081 {
+		header_up Host {host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Real-IP {remote_host}
+
+		# Health check so Caddy can detect unhealthy upstreams
+		health_uri     /api/health
+		health_interval 15s
+		health_timeout  5s
+	}
+
+	# Security headers
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+	}
+
+	# Compress responses
+	encode gzip
+}

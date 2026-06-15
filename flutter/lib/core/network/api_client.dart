@@ -25,8 +25,11 @@ class ApiClient {
         _baseUrl = baseUrl ?? _defaultBaseUrl;
 
   static String get _defaultBaseUrl {
+    // API_URL can be injected at build time via --dart-define=API_URL=https://...
+    const envUrl = String.fromEnvironment('API_URL');
+    if (envUrl.isNotEmpty) return envUrl;
     if (kReleaseMode) {
-      return 'https://api.voltium.app';
+      return 'https://api.voltium.com';
     }
     return 'http://localhost:8081';
   }

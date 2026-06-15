@@ -23,10 +23,16 @@ const IS_WIN = platform() === 'win32';
  * On Windows uses PowerShell Compress-Archive; on Unix uses tar.
  */
 export function createArchive(sourceDir: string, outputFile: string): void {
-  execFileSync('tar', ['-czf', outputFile, '-C', sourceDir, '.'], {
-    timeout: 300_000,
-    stdio: 'pipe',
-  });
+  if (IS_WIN) {
+    // Use PowerShell Compress-Archive for Windows
+    execFileSync('powershell.exe', ['-Command', `Compress-Archive -Path "${sourceDir}\*" -DestinationPath "${outputFile}" -Force`], {
+      timeout: 300_000,
+      stdio: 'pipe',
+    });
+  } else {
+    // Use zip on Unix/Linux/macOS
+    execFileSync('zip', ['-r', '-q', outputFile, '.'], { cwd: sourceDir, timeout: 300_000, stdio: 'pipe' });
+  }
 }
 
 /**

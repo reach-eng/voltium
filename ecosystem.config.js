@@ -14,8 +14,9 @@ module.exports = {
       script: 'npm',
       args: 'run start',
       interpreter: 'bash',
-      instances: 1,
-      exec_mode: 'fork',
+      // Production: cluster mode with all available CPU cores
+      instances: 'max',
+      exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
         APP_ENV: 'production',

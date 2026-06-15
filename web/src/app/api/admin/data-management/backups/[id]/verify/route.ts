@@ -11,9 +11,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const result = await dataManagementUseCases.verifyBackup(params.id, session.role as AdminRole);
     return NextResponse.json({ success: true, data: result });
   } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.message === 'Unauthorized' ? 403 : 500 }
-    );
+    return NextResponse.json({ success: false, error: err.message }, { status: err.message === 'Unauthorized' ? 403 : 500 });
   }
 }

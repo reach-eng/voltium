@@ -7,6 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TransactionType, TransactionPurpose } from '@prisma/client';
 
 // ===========================================================================
 // Mocks — Repositories

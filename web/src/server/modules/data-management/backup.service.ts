@@ -25,8 +25,23 @@ function getSecondaryRoot(): string | null {
   return process.env.BACKUP_SECONDARY_ROOT || null;
 }
 
+/**
+ * Returns the uploads root path, reading from SystemSetting DB first.
+ * Falls back to env var, then default path.
+ * Note: synchronous callers use the env var path; async callers should
+ * await getUploadsRootAsync() if DB-backed config is needed.
+ */
 function getUploadsRoot(): string {
   return process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+}
+
+async function getUploadsRootAsync(): Promise<string> {
+  try {
+    const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
+    return setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+  } catch {
+    return process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+  }
 }
 
 export const backupService = {
@@ -231,8 +246,9 @@ export const backupService = {
 
       // 2. Archive uploaded files (cross-platform: tar on Unix, PowerShell on Windows)
       logger.info('[BackupService] Archiving uploads', { backupId });
+      const uploadsRoot = await getUploadsRootAsync();
       try {
-        createArchive(getUploadsRoot(), uploadsFile);
+        createArchive(uploadsRoot, uploadsFile);
       } catch (fileErr: any) {
         throw new Error(`Uploads archive failed: ${fileErr.message}`);
       }
@@ -509,7 +525,7 @@ export const backupService = {
   },
 
   async getStorageOverview() {
-    const uploadsRoot = getUploadsRoot();
+    const uploadsRoot = await getUploadsRootAsync();
     const backupRoot = getBackupRoot();
 
     let uploadsSize = 0;

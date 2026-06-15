@@ -8,21 +8,39 @@ import type { SignedUrlRequest, SignedUrlResponse } from './files.types';
 import { FILE_UPLOAD_RULES, FileOwnerType } from './files.types';
 
 export const fileUseCases = {
-  /** Generate a one-time upload token tied to a fileRecordId */
+  /** Token TTL: 15 minutes (in seconds) */
+  UPLOAD_TOKEN_TTL_SECONDS: 15 * 60,
+
+  /** Generate an upload token tied to a fileRecordId with a 15-minute expiry.
+   *  Token format: `<expiry_epoch_ms>.<hmac>` */
   _generateUploadToken(fileRecordId: string): string {
     const secret = process.env.JWT_SECRET || env.JWT_SECRET || 'fallback-secret';
-    return createHmac('sha256', secret).update(fileRecordId).digest('hex');
+    const expiresAt = Date.now() + this.UPLOAD_TOKEN_TTL_SECONDS * 1000;
+    const payload = `${fileRecordId}:${expiresAt}`;
+    const hmac = createHmac('sha256', secret).update(payload).digest('hex');
+    return `${expiresAt}.${hmac}`;
   },
 
   _verifyUploadToken(fileRecordId: string, token: string): boolean {
-    const expected = this._generateUploadToken(fileRecordId);
-    // Constant-time comparison to prevent timing attacks
-    if (token.length !== expected.length) return false;
-    let result = 0;
-    for (let i = 0; i < token.length; i++) {
-      result |= token.charCodeAt(i) ^ expected.charCodeAt(i);
+    try {
+      const dotIndex = token.indexOf('.');
+      if (dotIndex === -1) return false;
+      const expiresAt = parseInt(token.slice(0, dotIndex), 10);
+      const providedHmac = token.slice(dotIndex + 1);
+      if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
+      const secret = process.env.JWT_SECRET || env.JWT_SECRET || 'fallback-secret';
+      const payload = `${fileRecordId}:${expiresAt}`;
+      const expected = createHmac('sha256', secret).update(payload).digest('hex');
+      // Constant-time comparison to prevent timing attacks
+      if (providedHmac.length !== expected.length) return false;
+      let result = 0;
+      for (let i = 0; i < providedHmac.length; i++) {
+        result |= providedHmac.charCodeAt(i) ^ expected.charCodeAt(i);
+      }
+      return result === 0;
+    } catch {
+      return false;
     }
-    return result === 0;
   },
 
   async requestUploadUrl(
@@ -65,7 +83,7 @@ export const fileUseCases = {
       fileRecordId: record.id,
       storageKey,
       uploadToken,
-      expiresIn: 3600,
+      expiresIn: 900,
     };
   },
 
