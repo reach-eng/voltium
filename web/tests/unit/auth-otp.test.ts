@@ -22,6 +22,9 @@ const mockDb = {
   reward: {
     create: vi.fn(),
   },
+  outboxEvent: {
+    create: vi.fn().mockResolvedValue({ id: 'event-123' }),
+  },
 };
 
 const mockGenerateOtp = vi.fn();
@@ -31,7 +34,7 @@ const mockCreateSessionToken = vi.fn();
 const mockFlattenRider = vi.fn();
 const mockGetFeatureFlags = vi.fn();
 const mockJobQueueEnqueue = vi.fn();
-const mockLogger = { info: vi.fn(), error: vi.fn(), debug: vi.fn() };
+const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 vi.mock('@/lib/otp-store', () => ({

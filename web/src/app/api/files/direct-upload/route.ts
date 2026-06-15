@@ -8,11 +8,6 @@ import { fileRepository } from '@/server/modules/files/files.repository';
 import { fileUseCases } from '@/server/modules/files/files.use-cases';
 
 export async function PUT(request: NextRequest) {
-  // Gate: block in staging/production unless local_laptop mode is active
-  if ((env.APP_ENV === 'staging' || env.APP_ENV === 'production') && env.DATA_MODE !== 'local_laptop') {
-    return NextResponse.json({ error: 'Direct upload disabled in ' + env.APP_ENV }, { status: 403 });
-  }
-
   try {
     const storageKey = request.nextUrl.searchParams.get('key');
     if (!storageKey) {

@@ -108,17 +108,19 @@ class ApiClient {
 
     final error = body['error'] as Map<String, dynamic>?;
     final message = error?['message'] as String? ?? 'Unknown error';
-    throw ApiException(message, response.statusCode, body);
+    final code = error?['code'] as String? ?? body['code'] as String?;
+    throw ApiException(message, response.statusCode, code: code, response: body);
   }
 }
 
 class ApiException implements Exception {
   final String message;
   final int statusCode;
+  final String? code;
   final Map<String, dynamic>? response;
 
-  ApiException(this.message, this.statusCode, [this.response]);
+  ApiException(this.message, this.statusCode, {this.code, this.response});
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => 'ApiException($statusCode, $code): $message';
 }

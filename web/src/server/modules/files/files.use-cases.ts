@@ -57,16 +57,8 @@ export const fileUseCases = {
     // Generate a one-time upload token for local_laptop mode
     const uploadToken = fileUseCases._generateUploadToken(record.id);
 
-    // In local_laptop mode, use the secure local-upload endpoint
-    let uploadUrl: string;
-    if (
-      env.DATA_MODE === 'local_laptop'
-    ) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL || 'http://localhost:8081';
-      uploadUrl = `${baseUrl}/api/files/local-upload/${record.id}?token=${uploadToken}`;
-    } else {
-      uploadUrl = await fileService.getSignedUploadUrl(storageKey, input.mimeType);
-    }
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL || 'http://localhost:8081';
+    const uploadUrl = `${baseUrl}/api/files/local-upload/${record.id}?token=${uploadToken}`;
 
     return {
       uploadUrl,

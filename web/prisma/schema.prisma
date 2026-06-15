@@ -454,6 +454,7 @@ model Vehicle {
   assignedAt     DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
   hub            Hub           @relation(fields: [hubId], references: [id])
   riders         Rider[]
   leases         RentalLease[]    @relation("VehicleLeases")
@@ -476,6 +477,7 @@ model Shift {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
   leases      RentalLease[]
 }
 
@@ -489,6 +491,7 @@ model RentalPlan {
   isActive     Boolean        @default(true)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
 
   @@map("rental_plans")
 }
@@ -544,6 +547,7 @@ model Rider {
   deviceViolationCount    Int      @default(0)
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
   currentPlanPrice Int?
   pickupPhotoFront     String?
   pickupPhotoBack      String?
@@ -656,6 +660,7 @@ model Guarantor {
   photo        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
   fatherName   String?
   motherName   String?
   rider        Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
@@ -830,6 +835,7 @@ model SupportTicket {
   resolvedAt       DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
   attachments      String?
   rider            Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
   vehicle          Vehicle?         @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Cascade)

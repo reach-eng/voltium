@@ -31,7 +31,7 @@ const createPrismaClient = () => {
     }
   }
 
-  const prisma = new PrismaClient({
+  const client = new PrismaClient({
     log: isDev ? (showQueries ? ['query', 'error', 'warn'] : ['error', 'warn']) : ['error'],
     datasources: dbUrl
       ? {
@@ -40,7 +40,52 @@ const createPrismaClient = () => {
           },
         }
       : undefined,
-  }).$extends(withAccelerate());
+  });
+
+  const prisma = client
+    .$extends(withAccelerate())
+    .$extends({
+      query: {
+        $allModels: {
+          async $allOperations({ model, operation, args, query }: { model: string; operation: string; args: any; query: (args: any) => Promise<any> }): Promise<any> {
+            const softDeleteModels = ['Rider', 'Vehicle', 'RentalPlan', 'Shift', 'Guarantor', 'SupportTicket'];
+            if (softDeleteModels.includes(model)) {
+              const modelKey = model.charAt(0).toLowerCase() + model.slice(1);
+              if (operation === 'delete') {
+                return (client as any)[modelKey].update({
+                  where: args.where,
+                  data: { deletedAt: new Date() },
+                });
+              }
+              if (operation === 'deleteMany') {
+                return (client as any)[modelKey].updateMany({
+                  where: args.where || {},
+                  data: { deletedAt: new Date() },
+                });
+              }
+              if (['findFirst', 'findMany', 'count'].includes(operation)) {
+                args.where = args.where || {};
+                if (args.where.deletedAt === undefined) {
+                  args.where.deletedAt = null;
+                }
+              }
+              if (operation === 'findUnique' || operation === 'findUniqueOrThrow') {
+                const newOp = operation === 'findUniqueOrThrow' ? 'findFirstOrThrow' : 'findFirst';
+                args.where = { ...args.where, deletedAt: null };
+                return (client as any)[modelKey][newOp](args);
+              }
+              if (['update', 'updateMany', 'upsert'].includes(operation)) {
+                args.where = args.where || {};
+                if (args.where.deletedAt === undefined) {
+                  args.where.deletedAt = null;
+                }
+              }
+            }
+            return query(args);
+          },
+        },
+      },
+    });
 
   return prisma;
 };

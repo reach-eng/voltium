@@ -63,13 +63,6 @@ export const fileService = {
   },
 
   async getSignedUploadUrl(storageKey: string, contentType: string): Promise<string> {
-    // Local storage requires LOCAL_STORAGE_ROOT to be set
-    if (!env.LOCAL_STORAGE_ROOT) {
-      throw new Error(
-        '[FileService] Local storage requires LOCAL_STORAGE_ROOT to be set. ' +
-        'Set LOCAL_STORAGE_ROOT to the absolute path for file storage.'
-      );
-    }
     const storage = await getStorageProvider();
     return storage.getSignedUploadUrl(storageKey, contentType);
   },

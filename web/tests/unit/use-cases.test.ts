@@ -83,7 +83,7 @@ const mockDb = {
   supportTicket: { count: vi.fn() },
 };
 
-const mockLogger = { info: vi.fn(), error: vi.fn() };
+const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() };
 
 // ===========================================================================
 // Mock registrations

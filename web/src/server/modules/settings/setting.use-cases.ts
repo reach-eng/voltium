@@ -43,6 +43,7 @@ export const settingUseCases = {
     const settings = await db.setting.findMany({ where: { key: { in: PUBLIC_SETTINGS } } });
     const settingsMap: Record<string, number> = {};
     for (const s of settings) settingsMap[s.key] = paiseToRupees(Number(s.value));
-    return { settings: settingsMap };
+    const flags = await getFeatureFlags();
+    return { settings: settingsMap, featureFlags: flags };
   },
 };

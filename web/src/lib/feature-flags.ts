@@ -27,24 +27,6 @@ const defaultFlags: FeatureFlags = {
   maxUploadSizeMb: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '10'),
 };
 
-const env = process.env.NODE_ENV || 'development';
-
-const productionOverrides: Partial<FeatureFlags> =
-  env === 'production'
-    ? {
-        enableReferralSystem: true,
-        enableRewardsSystem: true,
-        enableVehicleAssignment: true,
-        enableKYCVerification: true,
-        enableGuarantorRequirement: false,
-        enableDynamicPricing: true,
-        enableOfflineMode: true,
-        enableChatSupport: true,
-        enablePushNotifications: true,
-        maxUploadSizeMb: 10,
-      }
-    : {};
-
 let cachedFlags: FeatureFlags | null = null;
 let cacheExpiry = 0;
 let pendingPromise: Promise<FeatureFlags> | null = null;
@@ -90,7 +72,6 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
 
       cachedFlags = {
         ...defaultFlags,
-        ...productionOverrides,
         ...dbFlags,
       };
       cacheExpiry = now + CACHE_TTL_MS;

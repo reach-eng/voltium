@@ -11,6 +11,8 @@ import { Menu, Search, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { hasPermission } from '@/lib/auth';
+import { ALL_NAV_ITEMS } from '@/lib/role-config';
 
 // Screen placeholder with shimmer animation
 function ScreenLoader() {
@@ -37,29 +39,28 @@ const sectionMap: Record<string, React.ComponentType> = {
   overview: loadAdminScreen('DashboardOverview'),
   riders: loadAdminScreen('RiderManagement'),
   kyc: loadAdminScreen('KycManagement'),
+  guarantors: loadAdminScreen('GuarantorManagement'),
+  rentals: loadAdminScreen('RentalManagement'),
   vehicles: loadAdminScreen('VehicleManagement'),
   hubs: loadAdminScreen('HubManagement'),
-  rentals: loadAdminScreen('RentalManagement'),
+  plans: loadAdminScreen('PlanManagement'),
+  'wallet-deposits': loadAdminScreen('WalletDepositManagement'),
   transactions: loadAdminScreen('TransactionManagement'),
+  'pickup-return': loadAdminScreen('PickupReturnBoard'),
   tickets: loadAdminScreen('TicketManagement'),
-  offers: loadAdminScreen('OfferManagement'),
-  rewards: loadAdminScreen('RewardManagement'),
-  referrals: loadAdminScreen('ReferralManagement'),
-  notifications: loadAdminScreen('NotificationManagement'),
-  'team-leaders': loadAdminScreen('TeamLeaderManagement'),
-  faqs: loadAdminScreen('FaqManagement'),
-  legal: loadAdminScreen('LegalManagement'),
-  settings: loadAdminScreen('SettingsManagement'),
-  'admin-users': loadAdminScreen('AdminUserManagement'),
-  'fleet-map': loadAdminScreen('FleetMapScreen'),
-  analytics: loadAdminScreen('AnalyticsDashboard'),
-  'bulk-messaging': loadAdminScreen('BulkMessagingScreen'),
-  'rider-scores': loadAdminScreen('RiderScoringScreen'),
   incidents: loadAdminScreen('IncidentManagementScreen'),
-  shifts: loadAdminScreen('ShiftManagement'),
-  earnings: loadAdminScreen('EarningsManagement'),
+  'team-leaders': loadAdminScreen('TeamLeaderManagement'),
+  operations: loadAdminScreen('OperationsBoard'),
+  notifications: loadAdminScreen('NotificationManagement'),
+  rewards: loadAdminScreen('RewardManagement'),
+  analytics: loadAdminScreen('AnalyticsDashboard'),
+  'admin-users': loadAdminScreen('AdminUserManagement'),
+  'roles-permissions': loadAdminScreen('RolePermissionManagement'),
+  'audit-logs': loadAdminScreen('AuditLogScreen'),
+  settings: loadAdminScreen('SettingsManagement'),
+  'server-health': loadAdminScreen('ServerHealthScreen'),
   'data-management': loadAdminScreen('DataManagementScreen'),
-  'system-settings': loadAdminScreen('SystemSettingsScreen'),
+  'maintenance-mode': loadAdminScreen('MaintenanceModeScreen'),
 };
 
 function PlaceholderSection({ name }: { name: string }) {
@@ -75,32 +76,31 @@ function PlaceholderSection({ name }: { name: string }) {
 }
 
 const sectionLabels: Record<string, string> = {
-  overview: 'Overview',
+  overview: 'Dashboard',
   riders: 'Riders',
   kyc: 'KYC Management',
+  guarantors: 'Guarantors',
+  rentals: 'Rentals',
   vehicles: 'Vehicles',
   hubs: 'Hubs',
-  rentals: 'Rentals & Plans',
-  transactions: 'Transactions',
-  tickets: 'Support Tickets',
-  offers: 'Offers & Coupons',
-  rewards: 'Rewards',
-  referrals: 'Referrals',
-  notifications: 'Notifications',
+  plans: 'Plans & Pricing',
+  'wallet-deposits': 'Wallet & Deposits',
+  transactions: 'Payments / Top-ups',
+  'pickup-return': 'Pickup & Return',
+  tickets: 'Support',
+  incidents: 'Incidents & Fines',
   'team-leaders': 'Team Leaders',
-  faqs: 'FAQs',
-  legal: 'Legal Documents',
-  settings: 'Settings',
+  operations: 'Operations',
+  notifications: 'Notifications',
+  rewards: 'Rewards & Referrals',
+  analytics: 'Reports & Analytics',
   'admin-users': 'Admin Users',
-  'fleet-map': 'Fleet Map',
-  analytics: 'Analytics',
-  'bulk-messaging': 'Bulk Messaging',
-  'rider-scores': 'Rider Scores',
-  incidents: 'Incidents',
-  shifts: 'Shift Management',
-  earnings: 'Rider Earnings',
+  'roles-permissions': 'Roles & Permissions',
+  'audit-logs': 'Audit Logs',
+  settings: 'System Settings',
+  'server-health': 'Server Health',
   'data-management': 'Data Management',
-  'system-settings': 'System Settings',
+  'maintenance-mode': 'Maintenance Mode',
 };
 
 // Number keys → section shortcuts
@@ -116,7 +116,25 @@ const numberToSection = [
   'rewards',
 ];
 
-function AdminSectionRenderer({ section }: { section: string }) {
+function AdminSectionRenderer({ section, session }: { section: string; session: any }) {
+  const item = ALL_NAV_ITEMS.find((i) => i.id === section);
+  if (item && session) {
+    const hasPerm = hasPermission(session, item.permission);
+    if (!hasPerm) {
+      return (
+        <div className="flex flex-col items-center justify-center h-96 text-muted-foreground p-6 text-center">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4 text-destructive">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Access Denied</h2>
+          <p className="text-sm max-w-sm">
+            You do not have the required permissions ({item.permission}) to access the {item.label || section} section.
+          </p>
+        </div>
+      );
+    }
+  }
+
   const Component = sectionMap[section];
   if (Component) {
     return <Component />;
@@ -132,6 +150,7 @@ export default function AdminLayout() {
   const setCommandPaletteOpen = useAdminStore((s) => s.setCommandPaletteOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [session, setSession] = useState<any>(null);
   const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
@@ -140,6 +159,7 @@ export default function AdminLayout() {
       .then((data) => {
         if (data?.success && data?.data?.role) {
           setIsAuthorized(true);
+          setSession(data.data);
         } else {
           setIsAuthorized(false);
         }
@@ -314,7 +334,7 @@ export default function AdminLayout() {
         {/* Page Content */}
         <ScrollArea className="flex-1 h-full min-h-0" data-admin-scroll="true">
           <div className="p-6">
-            <AdminSectionRenderer section={activeSection} />
+            <AdminSectionRenderer section={activeSection} session={session} />
           </div>
         </ScrollArea>
       </main>
