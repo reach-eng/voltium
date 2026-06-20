@@ -1,0 +1,25 @@
+# Voltium Flutter Analyze Waiver File
+# ==================================
+# This file lists and waives accepted static analyzer issues for the public beta release.
+
+[STYLE / FORMATTING]
+- rule: require_trailing_commas
+  rationale: Formatting suggestions only. Do not affect program logic or safety.
+
+- rule: prefer_const_constructors
+  rationale: Performance optimization suggestions. Non-blocking for the public beta release.
+
+- rule: file_names
+  rationale: Integration test files (e.g., 00_diagnostic_test.dart) use numeric prefixes to explicitly control execution sequence order during integration testing.
+
+[TEST CODE ONLY]
+- rule: avoid_print
+  rationale: Diagnostic prints used in integration test files (under integration_test/) and helpers to trace test stages. Fully safe as they do not run in standard production paths.
+
+- rule: unused_import
+- rule: unused_local_variable
+  rationale: Local variables and imports in test files (e.g. testOtp, hasKycIndicator, binding) kept for development testing convenience.
+
+[EXCEPTIONS]
+- rule: depend_on_referenced_packages (flutter_driver)
+  rationale: 'flutter_driver' is imported conditionally in lib/main.dart to support driver extensions for integration testing. It is defined in dev_dependencies and marked with an ignore comment to suppress the warning.

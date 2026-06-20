@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "e2e-testing": {
+      "source": "ai-dashboad/flutter-skill",
+      "sourceType": "github",
+      "skillPath": "skills/e2e-testing/SKILL.md",
+      "computedHash": "da6b675e31890b044bcb2bc2d131144a1c9f4e97056fa9554f912f0f98794f83"
+    }
+  }
+}

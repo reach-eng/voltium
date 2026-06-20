@@ -1,0 +1,26 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - lib/gen/**
+    - lib/**/*.g.dart
+    - integration_test/**
+    - test/**
+  errors:
+    deprecated_member_use: ignore
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    avoid_print: true
+    curly_braces_in_flow_control_structures: false
+    file_names: false
+    non_constant_identifier_names: false
+    # Disabled: AppColors.X are runtime-resolved and cannot be const.
+    # Re-evaluate after full const-color migration.
+    prefer_const_constructors: false
+    prefer_const_declarations: false
+    require_trailing_commas: false
+    # Re-enabled: Async BuildContext misuse should be caught at analysis time.
+    # use_build_context_synchronously: false  <- removed

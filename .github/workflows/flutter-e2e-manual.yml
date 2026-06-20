@@ -1,0 +1,125 @@
+name: Flutter E2E Tests (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api-level:
+        description: 'Android API level for emulator'
+        required: true
+        default: '33'
+        type: choice
+        options:
+          - '29'
+          - '30'
+          - '31'
+          - '32'
+          - '33'
+          - '34'
+      test-file:
+        description: 'Test file to run'
+        required: true
+        default: 'integration_test/app_test.dart'
+        type: choice
+        options:
+          - 'integration_test/app_test.dart'
+          - 'integration_test/onboarding_flow_test.dart'
+          - 'integration_test/diagnostic_test.dart'
+
+env:
+  FLUTTER_VERSION: '3.41.4'
+  DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+  JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+
+jobs:
+  e2e:
+    name: Run Flutter E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL Service
+        run: |
+          sudo systemctl start postgresql.service
+          until pg_isready; do sleep 1; done
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
+
+      # ─── Setup Node.js backend ───────────────────────────────────────────
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: ./web
+
+      - name: Setup database
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+        working-directory: ./web
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      # ─── Setup Flutter ───────────────────────────────────────────────────
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+        working-directory: ./flutter
+
+      # ─── Start dev server ────────────────────────────────────────────────
+      - name: Start backend dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:8081 --timeout 30000
+        working-directory: ./web
+        env:
+          NODE_ENV: development
+
+      # ─── Run E2E tests on Android emulator ───────────────────────────────
+      - name: Run Flutter integration tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ github.event.inputs.api-level }}
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: ./flutter
+          script: |
+            adb reverse tcp:8081 tcp:8081
+            flutter test ${{ github.event.inputs.test-file }} \
+              --dart-define=API_URL=http://localhost:8081 \
+              --timeout=none
+
+      # ─── Upload artifacts ────────────────────────────────────────────────
+      - name: Upload test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-screenshots
+          path: flutter/screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: flutter/test-results/
+          if-no-files-found: ignore

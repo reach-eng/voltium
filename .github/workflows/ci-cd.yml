@@ -1,0 +1,211 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+defaults:
+  run:
+    working-directory: ./web
+
+env:
+  NODE_VERSION: '20'
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  # ─── Secret Scanning ─────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─── No-Docker Check ──────────────────────────────────────────────────────────
+  no-docker-check:
+    name: No-Docker Enforcement
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check no Docker files or commands
+        run: bash scripts/check-no-docker.sh
+
+  # ─── Regression Gates Check ───────────────────────────────────────────────
+  regression-gates-check:
+    name: Regression Gates Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run CI regression-prevention gates
+        run: bash scripts/check-regression-gates.sh
+
+  # ─── Lint & TypeScript ────────────────────────────────────────────────────────
+  lint-and-typecheck:
+    name: Lint & TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier Check
+        run: npm run format:check
+
+      - name: TypeScript Check
+        run: npm run typecheck
+
+  # ─── Prisma Validate & Migration Status ───────────────────────────────────
+  prisma-check:
+    name: Prisma Validate & Migration Status
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Check migration status
+        run: npx prisma migrate status
+
+  # ─── OpenAPI Staleness Check ──────────────────────────────────────────────
+  openapi-check:
+    name: OpenAPI Spec Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate OpenAPI spec
+        run: npm run generate:openapi
+
+      - name: Check for uncommitted OpenAPI changes
+        run: |
+          if ! git diff --exit-code src/contracts/openapi.json; then
+            echo "::error::OpenAPI spec is stale. Run 'npm run generate:openapi' and commit the updated src/contracts/openapi.json"
+            exit 1
+          fi
+
+  # ─── Build ────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, prisma-check, openapi-check, no-docker-check, regression-gates-check]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Build worker bundle
+        run: npm run worker:build
+
+  # ─── Tests ────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: voltium_test
+          POSTGRES_PASSWORD: voltium_test
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
+      DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      - name: Check migration status
+        run: npx prisma migrate status
+
+      - name: Run unit tests
+        run: npm test -- --run tests/unit
+
+      - name: Run contract tests
+        run: npm run test:contracts
+
+  # ─── Deploy (laptop mode — manual via PM2 + Cloudflare Tunnel) ────────
+  # Deployment is done manually on the local laptop:
+  #   1. git pull && npm ci && npm run build
+  #   2. pm2 restart all
+  #   3. Verify Cloudflare Tunnel is running: cloudflared tunnel list
+  #   4. Verify: pm2 status

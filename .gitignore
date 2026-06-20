@@ -1,0 +1,134 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/web/.next/
+/web/out/
+
+# production
+/web/build
+/web/.next/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files — allow opt-in via !.env.example
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.staging.example
+!.env.production.example
+
+# database files
+*.db
+*.sqlite
+*.sqlite3
+
+# web directory dependencies
+/web/node_modules
+
+# uploaded assets (local storage only)
+/data/uploads/
+/public/uploads/
+/uploads/
+/storage/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+local-*
+.claude
+.z-ai-config
+
+# logs, pids, and generated reports
+*.log
+*.pid
+*_output.txt
+*_report.txt
+*_verification.txt
+*_verification_report.txt
+
+# Skills directory
+/skills/
+
+# Secret rotation artifacts
+/secrets/
+
+# playwright
+/playwright-report/
+/test-results/
+
+# uploads
+/upload/
+/download/
+/public/uploads/
+
+# generated artifacts and reports
+graphify-out/
+.kilo/
+.opencode/
+reports/
+logs/
+scratch/
+screenshots/
+flutter/screenshots/
+flutter/logs/
+flutter/reports/
+flutter/artifacts/
+flutter/debug/
+
+# worker build output
+/web/dist/
+# Voltium laptop production exclusions
+.env
+.env.*
+!.env.example
+!.env.local.example
+!.env.production.example
+!.env.staging.example
+web/.env
+web/.env.*
+web/dist/
+web/.next/
+web/tsconfig.tsbuildinfo
+data/uploads/
+data/backups/
+backups/
+logs/
+playwright-report/
+test-results/
+reports/
+.kilo/
+.opencode/
+flutter/reports/
+flutter/screenshots/
+flutter/artifacts/
+flutter/debug/
+*.jks
+*.keystore
+**/key.properties
+*.zip
+

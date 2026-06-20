@@ -1,0 +1,136 @@
+import { db } from '@/lib/db';
+
+export async function calculateRiderScore(riderId: string) {
+  const rider = await db.rider.findUnique({
+    where: { id: riderId },
+    include: {
+      wallet: true,
+      kycProfile: true,
+      leases: { take: 50, orderBy: { createdAt: 'desc' } },
+      tickets: { take: 50, orderBy: { createdAt: 'desc' } },
+      transactions: { take: 50, orderBy: { createdAt: 'desc' } },
+    },
+  });
+
+  if (!rider) throw new Error('Rider not found');
+
+  const paymentScore = calculatePaymentScore(rider);
+  const kycScore = calculateKycScore(rider);
+  const activityScore = calculateActivityScore(rider);
+  const supportScore = calculateSupportScore(rider);
+
+  const compositeScore =
+    paymentScore * 0.3 + kycScore * 0.25 + activityScore * 0.25 + supportScore * 0.2;
+
+  let riskLevel = 'LOW';
+  if (compositeScore < 30) riskLevel = 'CRITICAL';
+  else if (compositeScore < 50) riskLevel = 'HIGH';
+  else if (compositeScore < 70) riskLevel = 'MEDIUM';
+
+  const score = await db.riderScore.upsert({
+    where: { riderId },
+    update: {
+      paymentScore,
+      kycScore,
+      activityScore,
+      supportScore,
+      compositeScore,
+      riskLevel: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+      lastCalculated: new Date(),
+    },
+    create: {
+      riderId,
+      paymentScore,
+      kycScore,
+      activityScore,
+      supportScore,
+      compositeScore,
+      riskLevel: riskLevel as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    },
+  });
+
+  return score;
+}
+
+function calculatePaymentScore(rider: any): number {
+  if (!rider.wallet) return 0;
+
+  const streak = rider.wallet.paymentStreak || 0;
+  const depositStatus = rider.wallet.depositStatus || 'PENDING';
+
+  let score = 0;
+  if (depositStatus === 'APPROVED') score += 40;
+  else if (depositStatus === 'PARTIALLY_REFUNDED') score += 20;
+
+  score += Math.min(streak * 5, 60);
+
+  const completedTx = rider.transactions?.filter((t: any) => t.status === 'COMPLETED').length || 0;
+  const failedTx = rider.transactions?.filter((t: any) => t.status === 'FAILED').length || 0;
+  const totalTx = completedTx + failedTx;
+
+  if (totalTx > 0) {
+    const successRate = completedTx / totalTx;
+    score += successRate * 20;
+  }
+
+  return Math.min(Math.round(score * 100) / 100, 100);
+}
+
+function calculateKycScore(rider: any): number {
+  if (!rider.kycProfile) return 0;
+
+  const kyc = rider.kycProfile;
+  let score = 0;
+
+  if (kyc.status === 'APPROVED') score = 100;
+  else if (kyc.status === 'PENDING') score = 50;
+  else if (kyc.status === 'REJECTED') score = 20;
+  else if (kyc.status === 'INFO_REQUIRED') score = 30;
+
+  if (kyc.aadhaarFront && kyc.aadhaarBack) score = Math.min(score + 10, 100);
+  if (kyc.panCard) score = Math.min(score + 5, 100);
+  if (kyc.profilePhoto) score = Math.min(score + 5, 100);
+
+  return Math.round(score * 100) / 100;
+}
+
+function calculateActivityScore(rider: any): number {
+  let score = 0;
+
+  const accountAge = Date.now() - new Date(rider.createdAt).getTime();
+  const daysActive = accountAge / (1000 * 60 * 60 * 24);
+
+  if (daysActive > 365) score += 30;
+  else if (daysActive > 180) score += 25;
+  else if (daysActive > 90) score += 20;
+  else if (daysActive > 30) score += 15;
+  else score += 10;
+
+  const activeLeases = rider.leases?.filter((l: any) => l.status === 'ACTIVE').length || 0;
+  if (activeLeases > 0) score += 40;
+
+  const lifecycleRank: Record<string, number> = {
+    NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
+    KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
+    DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
+    PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
+    RETURN_PENDING: 13, CLOSED: 14,
+  };
+  const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
+  if (rank >= 11) score += 30;
+  else if (rank >= 2) score += 15;
+
+  return Math.min(Math.round(score * 100) / 100, 100);
+}
+
+function calculateSupportScore(rider: any): number {
+  const totalTickets = rider.tickets?.length || 0;
+  const openTickets = rider.tickets?.filter((t: any) => t.status === 'OPEN').length || 0;
+
+  let score = 100;
+
+  score -= totalTickets * 5;
+  score -= openTickets * 10;
+
+  return Math.max(Math.min(Math.round(score * 100) / 100, 100), 0);
+}

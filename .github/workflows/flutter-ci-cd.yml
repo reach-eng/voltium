@@ -1,0 +1,290 @@
+name: Flutter CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'flutter/**'
+      - 'web/src/contracts/**'
+      - 'web/prisma/**'
+      - '.github/workflows/flutter-ci-cd.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'flutter/**'
+      - 'web/src/contracts/**'
+      - 'web/prisma/**'
+      - '.github/workflows/flutter-ci-cd.yml'
+  workflow_dispatch:
+    inputs:
+      api-level:
+        description: 'Android API level for emulator'
+        required: true
+        default: '33'
+        type: choice
+        options:
+          - '29'
+          - '30'
+          - '31'
+          - '32'
+          - '33'
+          - '34'
+
+env:
+  FLUTTER_VERSION: '3.41.4'
+
+jobs:
+  analyze:
+    name: Flutter Analyze
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Regenerate Flutter API client
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Check for generated code drift
+        run: |
+          if ! git diff --exit-code -- '*.dart'; then
+            echo "::error::Generated Flutter code is out of date. Run 'dart run build_runner build --delete-conflicting-outputs' and commit the changes."
+            exit 1
+          fi
+
+      - name: Run Flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+  test:
+    name: Flutter Tests
+    runs-on: ubuntu-latest
+    needs: [analyze]
+    defaults:
+      run:
+        working-directory: ./flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+  build-debug:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    needs: [analyze]
+    defaults:
+      run:
+        working-directory: ./flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --debug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: voltium-debug.apk
+          path: flutter/build/app/outputs/flutter-apk/app-debug.apk
+
+  e2e-test:
+    name: Flutter E2E Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-debug]
+
+    strategy:
+      matrix:
+        api-level: [33]
+        target: [google_apis]
+    defaults:
+      run:
+        working-directory: ./flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start PostgreSQL Service
+        run: |
+          sudo systemctl start postgresql.service
+          until pg_isready; do sleep 1; done
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: ./web
+
+      - name: Setup database
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+        working-directory: ./web
+        env:
+          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Start backend dev server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:8081 --timeout 30000
+        working-directory: ./web
+        env:
+          NODE_ENV: development
+          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
+          JWT_SECRET: ${{ secrets.CI_JWT_SECRET }}
+
+      - name: Run Flutter integration tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          working-directory: ./flutter
+          script: |
+            adb reverse tcp:8081 tcp:8081
+            flutter test integration_test/app_test.dart \
+              --dart-define=API_URL=http://localhost:8081 \
+              --timeout=none
+
+      - name: Upload test screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-screenshots
+          path: flutter/screenshots/
+          if-no-files-found: ignore
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-logs
+          path: flutter/test-results/
+          if-no-files-found: ignore
+
+  build-release:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+    needs: [build-debug, e2e-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: ./flutter
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: flutter/.dart_tool
+          key: ${{ runner.os }}-flutter-${{ hashFiles('flutter/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Prepare Android release signing
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_ALIAS"
+          test -n "$KEY_PASSWORD"
+          printf "%s" "$KEYSTORE_BASE64" | base64 --decode > android/app/voltium-release.jks
+          cat > android/app/key.properties <<EOF
+          storeFile=voltium-release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: voltium-release.apk
+          path: flutter/build/app/outputs/flutter-apk/app-release.apk

@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+dist
+flutter
+package-lock.json
+*.db
+*.log
+public/uploads
+graphify-out
+backups
