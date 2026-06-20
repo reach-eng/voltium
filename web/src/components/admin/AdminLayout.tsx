@@ -266,7 +266,7 @@ export default function AdminLayout() {
           <Button
             variant="ghost"
             className="text-muted-foreground"
-            onClick={() => (window.location.href = '/rider-app/')}
+            onClick={() => (window.location.href = '/rider-app')}
           >
             Return to Rider App
           </Button>

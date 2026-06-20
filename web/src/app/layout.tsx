@@ -1,15 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from './providers';
 import { SITE_TITLE, META_DESCRIPTION, FAVICON_PATH } from '@/lib/branding';
-
-const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-});
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -68,7 +61,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={`${inter.variable} antialiased`} suppressHydrationWarning>
+      <body className="antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
         <Toaster />
       </body>

@@ -47,6 +47,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/rider-app',
+        destination: '/rider-app/index.html',
+      },
+      {
+        source: '/rider-app/',
+        destination: '/rider-app/index.html',
+      },
+    ];
+  },
   reactStrictMode: process.env.NODE_ENV === 'production',
 };
 

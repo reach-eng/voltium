@@ -11,7 +11,7 @@ import '../core/platform/platform_info.dart';
 
 // Conditional imports for mobile-only packages
 // ignore: unused_import
-import 'package:flutter_contacts/flutter_contacts.dart' hide PermissionStatus;
+import 'package:flutter_contacts/flutter_contacts.dart';
 // ignore: unused_import
 import 'package:call_log/call_log.dart' show CallLog;
 
