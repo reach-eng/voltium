@@ -86,6 +86,11 @@ function rejectCsrf(message: string): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
+  // Bypass middleware for the Flutter web portal static files
+  if (request.nextUrl.pathname.startsWith('/rider-app')) {
+    return NextResponse.next();
+  }
+
   // Enforce schema validations on API endpoints before hitting DB/services
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const contentType = request.headers.get('content-type');
