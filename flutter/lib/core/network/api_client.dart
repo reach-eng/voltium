@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../services/secure_storage_service.dart';
+import '../platform/platform_info.dart';
 
 /// Voltium API Client
 ///
@@ -47,12 +48,13 @@ class ApiClient {
     required SecureStorageService storage,
     required String baseUrl,
   })  : _client = client,
-        _storage = storage,
-        _baseUrl = baseUrl;
+         _storage = storage,
+         _baseUrl = baseUrl;
 
   static const configuredApiUrl = String.fromEnvironment('API_URL');
 
   static String get _defaultBaseUrl {
+    if (PlatformInfo.isWeb) return ''; // Relative URLs for same-origin routing
     if (configuredApiUrl.isNotEmpty) return configuredApiUrl;
     if (kReleaseMode) {
       throw Exception('API_URL must be provided for release builds');
@@ -62,6 +64,12 @@ class ApiClient {
 
   /// Get auth headers with session token
   Future<Map<String, String>> _getHeaders() async {
+    if (PlatformInfo.isWeb) {
+      return {
+        'Content-Type': 'application/json',
+        'x-correlation-id': _newCorrelationId(),
+      };
+    }
     final token = await _storage.getSessionToken();
     return {
       'Content-Type': 'application/json',

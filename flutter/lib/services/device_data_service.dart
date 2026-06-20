@@ -7,10 +7,11 @@ import 'package:geolocator/geolocator.dart';
 import 'voltium_api_service.dart';
 import 'consent_service.dart';
 import 'monitoring_service.dart';
+import '../core/platform/platform_info.dart';
 
 // Conditional imports for mobile-only packages
 // ignore: unused_import
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_contacts/flutter_contacts.dart' hide PermissionStatus;
 // ignore: unused_import
 import 'package:call_log/call_log.dart' show CallLog;
 
@@ -22,6 +23,17 @@ class DeviceDataService {
   bool get _isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   Future<Map<String, bool>> getPermissionState() async {
+    if (PlatformInfo.isWeb) {
+      return {
+        'locationGranted': false,
+        'batteryGranted': false,
+        'contactsGranted': false,
+        'callLogsGranted': false,
+        'micGranted': false,
+        'cameraGranted': false,
+        'phoneGranted': false,
+      };
+    }
     return {
       'locationGranted':
           await Permission.location.status == PermissionStatus.granted,
@@ -37,6 +49,7 @@ class DeviceDataService {
   }
 
   Future<void> syncPermissionState(String riderId) async {
+    if (PlatformInfo.isWeb) return;
     try {
       final permissions = await getPermissionState();
       await VoltiumApiService()
@@ -49,6 +62,7 @@ class DeviceDataService {
   }
 
   Future<void> syncLocation(String riderId) async {
+    if (PlatformInfo.isWeb) return;
     if (!_isMobile) return;
     if (!await ConsentService().hasConsent(ConsentType.location)) return;
 

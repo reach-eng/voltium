@@ -43,7 +43,8 @@
     "check:screen-workflows": "bash ../scripts/check-screen-workflow-coverage.sh",
     "check:backend-workflows": "bash ../scripts/check-backend-workflows.sh",
     "check:branding": "bash ../scripts/check-voltium-branding.sh",
-    "verify:env": "tsx scripts/verify-env.ts"
+    "verify:env": "tsx scripts/verify-env.ts",
+    "build:rider-web": "cd ../flutter && flutter build web --release --base-href \"/rider-app/\" && bash ../web/scripts/copy-flutter-web.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

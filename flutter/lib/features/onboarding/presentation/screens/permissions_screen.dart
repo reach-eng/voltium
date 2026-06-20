@@ -6,6 +6,8 @@ import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
+import '../../../../core/platform/platform_info.dart';
+
 class _PermissionItem {
   final String id;
   final String name;
@@ -58,6 +60,12 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   @override
   void initState() {
     super.initState();
+    if (PlatformInfo.isWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (widget.onNext != null) widget.onNext!();
+      });
+      return;
+    }
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),

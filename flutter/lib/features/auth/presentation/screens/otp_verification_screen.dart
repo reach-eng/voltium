@@ -10,6 +10,7 @@ import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/core/platform/platform_info.dart';
 
 /// Matches web OtpScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -140,7 +141,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           final token = response['data']?['token'] ??
               response['token'] ??
               response['accessToken'] as String?;
-          if (token != null) {
+          if (token != null && !PlatformInfo.isWeb) {
             await SecureStorageService().setToken(token);
           }
           if (!mounted) return;

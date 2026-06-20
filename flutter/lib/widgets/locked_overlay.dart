@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../services/voltium_api_service.dart';
+import '../core/platform/platform_info.dart';
 
 class LockedOverlay extends StatefulWidget {
   const LockedOverlay({super.key});
@@ -108,6 +109,34 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     final isLocked = context.select<AppProvider, bool>((p) => p.lockedByAdmin);
     if (!isLocked) return const SizedBox.shrink();
+
+    if (PlatformInfo.isWeb) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_person_rounded, size: 64, color: Colors.amber),
+                const SizedBox(height: 16),
+                const Text(
+                  'Your account has been locked by Voltium.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Please contact support to unlock.',
+                  style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return PopScope(
       canPop: false,

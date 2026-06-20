@@ -1,11 +1,12 @@
 import 'dart:developer';
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/voltium_api_service.dart';
 import '../services/secure_storage_service.dart';
+import '../core/platform/platform_info.dart';
 
 class DevicePolicyProvider extends ChangeNotifier {
   static const _platform =
@@ -41,6 +42,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   String? _riderId;
 
   Future<void> _selfCheck() async {
+    if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
       await _platform.invokeMethod('isDeviceAdminActive');
@@ -50,6 +52,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   Future<void> _initLockState() async {
+    if (PlatformInfo.isWeb) return;
     try {
       _lockedByAdmin = await SecureStorageService().getDeviceLocked();
       if (_lockedByAdmin && Platform.isAndroid) {
@@ -72,7 +75,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   void setLockedByAdmin(bool locked) {
     _lockedByAdmin = locked;
     SecureStorageService().setDeviceLocked(locked);
-    if (Platform.isAndroid) {
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
       if (locked) {
         _platform.invokeMethod('startLockTaskMode').catchError((e) {
           log('Failed to startLockTaskMode: $e');
@@ -87,6 +90,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   Future<void> checkSystemPermissions() async {
+    if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
       _isAdminActive =
@@ -98,6 +102,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   Future<void> requestDeviceAdmin() async {
+    if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
       await _platform.invokeMethod('requestDeviceAdmin');
@@ -128,6 +133,15 @@ class DevicePolicyProvider extends ChangeNotifier {
       final locationMandatory = data['isLocationMandatory'] as bool?;
       final appsControlRestricted = data['isAppsControlRestricted'] as bool?;
       final adminLocked = data['isAdminLocked'] as bool?;
+
+      if (PlatformInfo.isWeb) {
+        if (adminLocked == true) {
+          setLockedByAdmin(true);
+        } else if (adminLocked == false && _lockedByAdmin) {
+          setLockedByAdmin(false);
+        }
+        return;
+      }
 
       if (uninstallBlocked != null) {
         await _platform
@@ -170,6 +184,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   Future<void> _performIntegrityCheck() async {
+    if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid || _riderId == null) return;
 
     try {

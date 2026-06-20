@@ -25,6 +25,7 @@ import 'services/offline_storage_service.dart';
 import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
+import 'core/platform/platform_info.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -144,7 +145,7 @@ Future<void> main() async {
       final appProvider = AppProvider();
       final themeProvider = ThemeProvider();
 
-      if (!kIsWeb) {
+      if (PlatformInfo.supportsFCM) {
         try {
           await Firebase.initializeApp(
             options: DefaultFirebaseOptions.currentPlatform,

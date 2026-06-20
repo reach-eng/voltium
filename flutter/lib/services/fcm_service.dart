@@ -9,6 +9,7 @@ import '../providers/wallet_provider.dart';
 import '../providers/support_provider.dart';
 import '../providers/rider_provider.dart';
 import 'secure_storage_service.dart';
+import '../core/platform/platform_info.dart';
 
 class FCMService {
   static const _channel =
@@ -153,6 +154,12 @@ class FCMService {
     _wallet = wallet;
     _support = support;
     _rider = rider;
+
+    if (PlatformInfo.isWeb) {
+      developer.log('FCM: Initialization skipped on web');
+      return;
+    }
+
     final messaging = FirebaseMessaging.instance;
 
     // Request permissions
