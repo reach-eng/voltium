@@ -31,7 +31,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { password } = validation.data;
-    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const clientIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
 
     // Rate limit: 5 attempts per minute
     const rateLimit = await checkRateLimit(`verify-lock:${riderDbId}`, {

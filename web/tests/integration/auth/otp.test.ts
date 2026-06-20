@@ -50,7 +50,7 @@ describe('Rider OTP/Auth Integration Workflow', () => {
       method: 'POST',
       json: { phone },
     });
-    
+
     // We test verify-otp with a fake/expired behavior
     const verifyRes = await api('/api/auth/verify-otp', {
       method: 'POST',
@@ -100,7 +100,7 @@ describe('Rider OTP/Auth Integration Workflow', () => {
   // 7. Resend limit blocks repeated OTP requests
   it('7. Resend limit blocks repeated OTP requests', async () => {
     const phone = generateRandomPhone();
-    
+
     // First request
     const res1 = await api('/api/auth/send-otp', {
       method: 'POST',
@@ -140,7 +140,7 @@ describe('Rider OTP/Auth Integration Workflow', () => {
   // 9. Successful verification reuses existing rider if found
   it('9. Successful verification reuses existing rider if found', async () => {
     const phone = generateRandomPhone();
-    
+
     // First login (creates rider)
     const sendRes1 = await api('/api/auth/send-otp', {
       method: 'POST',

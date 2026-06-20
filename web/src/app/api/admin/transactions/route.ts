@@ -13,7 +13,10 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { validateBody } from '@/lib/validators';
 import { approveTransactionSchema } from '@/server/modules/transactions/transaction.schemas';
-import { transactionUseCases, TransactionError } from '@/server/modules/transactions/transaction.use-cases';
+import {
+  transactionUseCases,
+  TransactionError,
+} from '@/server/modules/transactions/transaction.use-cases';
 import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
 import { WalletServiceError } from '@/lib/services/wallet-service';
 import { DepositStateError } from '@/lib/services/deposit-service';
@@ -35,7 +38,13 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
     const result = await transactionUseCases.list({
-      status, type, search, startDate, endDate, page, limit,
+      status,
+      type,
+      search,
+      startDate,
+      endDate,
+      page,
+      limit,
     });
 
     return success(result.transactions, undefined, 200, result.pagination);

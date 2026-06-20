@@ -63,7 +63,8 @@ export const PERMISSION_DESCRIPTORS = [
   { key: 'rewards_manage', label: 'Manage Rewards', category: 'Marketing' },
   { key: 'offers_manage', label: 'Manage Offers/Coupons', category: 'Marketing' },
   { key: 'device_tracking_view', label: 'View Device Tracking (Calls/GPS)', category: 'Security' },
-  { key: 'device_remote_control',
+  {
+    key: 'device_remote_control',
     label: 'Remote Device Control (Lock/Wipe)',
     category: 'Security',
   },
@@ -92,7 +93,16 @@ type PermissionList = AdminRole[];
 
 const PERMISSIONS_MAP: Record<string, PermissionList> = {
   // Riders
-  riders_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  riders_view: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'KYC_REVIEWER',
+    'FINANCE_ADMIN',
+    'SUPPORT_AGENT',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+    'TEAM_LEADER',
+  ],
   riders_create: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'TEAM_LEADER'],
   riders_update: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FLEET_MANAGER'],
   riders_delete: ['SUPER_ADMIN'],
@@ -125,7 +135,13 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   tickets_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'TEAM_LEADER'],
 
   // Analytics
-  analytics_view: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'FINANCE_ADMIN', 'FLEET_MANAGER', 'HUB_MANAGER'],
+  analytics_view: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'FINANCE_ADMIN',
+    'FLEET_MANAGER',
+    'HUB_MANAGER',
+  ],
 
   // Admin operations
   admins_manage: ['SUPER_ADMIN'],
@@ -139,11 +155,29 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   faq_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT'],
 
   // Rentals
-  rentals_pickup_inspection: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
-  rentals_return_inspection: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  rentals_pickup_inspection: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+    'TEAM_LEADER',
+  ],
+  rentals_return_inspection: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+    'TEAM_LEADER',
+  ],
 
   // Vehicles
-  vehicles_inspect: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  vehicles_inspect: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+    'TEAM_LEADER',
+  ],
 
   // Hubs
   hubs_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER'],
@@ -166,8 +200,22 @@ const PERMISSIONS_MAP: Record<string, PermissionList> = {
   data_management_schedule: ['SUPER_ADMIN'],
   data_management_download: ['SUPER_ADMIN'],
   data_management_test: ['SUPER_ADMIN'],
-  incidents_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER'],
-  riders_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER'],
+  incidents_manage: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'SUPPORT_AGENT',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+  ],
+  riders_manage: [
+    'SUPER_ADMIN',
+    'OPERATIONS_ADMIN',
+    'KYC_REVIEWER',
+    'SUPPORT_AGENT',
+    'HUB_MANAGER',
+    'FLEET_MANAGER',
+    'TEAM_LEADER',
+  ],
   fleet_manage: ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'HUB_MANAGER', 'FLEET_MANAGER'],
   impersonate_riders: ['SUPER_ADMIN', 'OPERATIONS_ADMIN'],
 } as const;

@@ -17,7 +17,7 @@ function mapType(prop: any): { typeStr: string; isPrimitive: boolean } {
     const className = prop.$ref.split('/').pop()!;
     return { typeStr: className, isPrimitive: false };
   }
-  
+
   const type = prop.type;
   if (type === 'string') {
     return { typeStr: 'String', isPrimitive: true };
@@ -43,7 +43,7 @@ function mapType(prop: any): { typeStr: string; isPrimitive: boolean } {
 
 function getFromJsonExpr(propName: string, prop: any, isReq: boolean): string {
   const cast = isReq ? '' : '?';
-  
+
   if (prop.$ref) {
     const className = prop.$ref.split('/').pop()!;
     if (isReq) {
@@ -52,7 +52,7 @@ function getFromJsonExpr(propName: string, prop: any, isReq: boolean): string {
       return `json['${propName}'] != null ? ${className}.fromJson(json['${propName}'] as Map<String, dynamic>) : null`;
     }
   }
-  
+
   const type = prop.type;
   if (type === 'string') {
     return `json['${propName}'] as String${cast}`;
@@ -103,7 +103,9 @@ function getToJsonExpr(propName: string, prop: any, isReq: boolean): string {
   if (type === 'array') {
     const items = prop.items;
     if (items.$ref) {
-      return isReq ? `${propName}.map((e) => e.toJson()).toList()` : `${propName}?.map((e) => e.toJson()).toList()`;
+      return isReq
+        ? `${propName}.map((e) => e.toJson()).toList()`
+        : `${propName}?.map((e) => e.toJson()).toList()`;
     }
   }
   return propName;
@@ -145,7 +147,7 @@ function run() {
     for (const [propName, prop] of Object.entries(props)) {
       const isReq = required.includes(propName);
       const typeInfo = mapType(prop);
-      
+
       modelsContent += `  final ${typeInfo.typeStr}${isReq ? '' : '?'} ${propName};\n`;
     }
 
@@ -206,19 +208,30 @@ class VoltiumApiClient {
     for (const [method, operation] of Object.entries(pathObj) as [string, any][]) {
       const tags = operation.tags || [];
       // Skip admin paths not consumed by Flutter client
-      if (tags.includes('Admin') && ![
-        '/api/admin/kyc',
-        '/api/admin/deposits',
-        '/api/admin/transactions',
-        '/api/admin/riders',
-        '/api/admin/reconciliation',
-        '/api/admin/hubs',
-      ].includes(pathStr)) {
+      if (
+        tags.includes('Admin') &&
+        ![
+          '/api/admin/kyc',
+          '/api/admin/deposits',
+          '/api/admin/transactions',
+          '/api/admin/riders',
+          '/api/admin/reconciliation',
+          '/api/admin/hubs',
+        ].includes(pathStr)
+      ) {
         continue;
       }
 
       const summary = operation.summary || '';
-      const operationId = operation.operationId || method + pathStr.replace(/\/api\//, '/').replace(/\/$/, '').replace(/[\/|-]([a-z])/g, (g) => g[1].toUpperCase()).replace(/[\/|-]/g, '').replace(/[{}]/g, '');
+      const operationId =
+        operation.operationId ||
+        method +
+          pathStr
+            .replace(/\/api\//, '/')
+            .replace(/\/$/, '')
+            .replace(/[\/|-]([a-z])/g, (g) => g[1].toUpperCase())
+            .replace(/[\/|-]/g, '')
+            .replace(/[{}]/g, '');
 
       // Clean operation name
       let cleanName = operationId.charAt(0).toLowerCase() + operationId.slice(1);
@@ -262,7 +275,9 @@ class VoltiumApiClient {
         queryParamsMap = '    final queryParams = <String, String>{\n';
         for (const p of parameters.filter((param: any) => param.in === 'query')) {
           const isReq = p.required === true;
-          methodArgs.push(`${p.schema?.type === 'integer' ? 'int' : 'String'}${isReq ? '' : '?'} ${p.name}`);
+          methodArgs.push(
+            `${p.schema?.type === 'integer' ? 'int' : 'String'}${isReq ? '' : '?'} ${p.name}`
+          );
           queryParamsMap += `      if (${p.name} != null) '${p.name}': ${p.name}.toString(),\n`;
         }
         queryParamsMap += '    };\n';
@@ -300,9 +315,11 @@ class VoltiumApiClient {
       if (hasQueryParams) {
         clientContent += queryParamsMap;
       }
-      
+
       const queryParamArg = hasQueryParams ? ', queryParams: queryParams' : '';
-      const bodyArg = requestBody ? `, body: ${methodArgs.some(a => a.startsWith('Map<String, dynamic>')) ? 'request' : 'request.toJson()'}` : '';
+      const bodyArg = requestBody
+        ? `, body: ${methodArgs.some((a) => a.startsWith('Map<String, dynamic>')) ? 'request' : 'request.toJson()'}`
+        : '';
 
       clientContent += `    final response = await _client.${method}(${urlStr}${queryParamArg}${bodyArg});\n`;
       clientContent += mapper ? `${mapper}\n` : '    return response;\n';

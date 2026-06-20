@@ -36,7 +36,11 @@ export async function PUT_update(request: NextRequest) {
   const validation = validateBody(updateHubSchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const hub = await hubUseCases.updateHub(validation.data.id || '', validation.data, admin.adminId || 'unknown');
+  const hub = await hubUseCases.updateHub(
+    validation.data.id || '',
+    validation.data,
+    admin.adminId || 'unknown'
+  );
   return success(hub, 'Hub updated');
 }
 

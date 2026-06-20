@@ -84,7 +84,9 @@ export async function generateOtp(phone: string): Promise<string> {
   if (shouldUseDatabaseStore()) {
     const now = new Date();
     const existing = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
-    const withinWindow = existing ? Date.now() - existing.lastSentAt.getTime() <= RESEND_WINDOW_MS : false;
+    const withinWindow = existing
+      ? Date.now() - existing.lastSentAt.getTime() <= RESEND_WINDOW_MS
+      : false;
     const salt = crypto.randomBytes(16).toString('hex');
     await db.otpCode.upsert({
       where: { phone },
@@ -108,7 +110,9 @@ export async function generateOtp(phone: string): Promise<string> {
         lastSentAt: now,
       },
     });
-    await db.otpCode.deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }).catch(() => {});
+    await db.otpCode
+      .deleteMany({ where: { expiresAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } })
+      .catch(() => {});
     logger.debug('[OTP] Generated in PostgreSQL store', { phone: phone.slice(-4) });
     return code;
   }
@@ -119,12 +123,20 @@ export async function generateOtp(phone: string): Promise<string> {
     if (Date.now() - val.lastSentAt > RESEND_WINDOW_MS) resendStore.delete(key);
   }
 
-  memoryStore.set(phone, { code, expiresAt: Date.now() + OTP_EXPIRY_MS, attempts: 0, verified: false });
+  memoryStore.set(phone, {
+    code,
+    expiresAt: Date.now() + OTP_EXPIRY_MS,
+    attempts: 0,
+    verified: false,
+  });
   logger.debug('[OTP] Generated in memory store', { phone: phone.slice(-4) });
   return code;
 }
 
-export async function verifyOtp(phone: string, code: string): Promise<{ valid: boolean; error?: string }> {
+export async function verifyOtp(
+  phone: string,
+  code: string
+): Promise<{ valid: boolean; error?: string }> {
   const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
   if (isDev && code === '111111') return { valid: true };
 
@@ -140,11 +152,20 @@ export async function verifyOtp(phone: string, code: string): Promise<{ valid: b
 
     const valid = hashOtp(code, entry.salt) === entry.codeHash;
     if (!valid) {
-      const updated = await db.otpCode.update({ where: { phone }, data: { attempts: { increment: 1 } } });
-      return { valid: false, error: `Invalid OTP. ${Math.max(0, MAX_ATTEMPTS - updated.attempts)} attempts remaining.` };
+      const updated = await db.otpCode.update({
+        where: { phone },
+        data: { attempts: { increment: 1 } },
+      });
+      return {
+        valid: false,
+        error: `Invalid OTP. ${Math.max(0, MAX_ATTEMPTS - updated.attempts)} attempts remaining.`,
+      };
     }
 
-    await db.otpCode.update({ where: { phone }, data: { verified: true, attempts: { increment: 1 } } });
+    await db.otpCode.update({
+      where: { phone },
+      data: { verified: true, attempts: { increment: 1 } },
+    });
     return { valid: true };
   }
 
@@ -158,7 +179,11 @@ export async function verifyOtp(phone: string, code: string): Promise<{ valid: b
     memoryStore.delete(phone);
     return { valid: false, error: 'Too many failed attempts.' };
   }
-  if (code !== entry.code) return { valid: false, error: `Invalid OTP. ${MAX_ATTEMPTS - entry.attempts} attempts remaining.` };
+  if (code !== entry.code)
+    return {
+      valid: false,
+      error: `Invalid OTP. ${MAX_ATTEMPTS - entry.attempts} attempts remaining.`,
+    };
   entry.verified = true;
   return { valid: true };
 }

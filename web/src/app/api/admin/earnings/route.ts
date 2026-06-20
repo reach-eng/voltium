@@ -19,7 +19,14 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.max(1, Math.min(100, parseInt(url.searchParams.get('limit') || '20')));
 
-    const result = await earningUseCases.list({ search, platform, startDate, endDate, page, limit });
+    const result = await earningUseCases.list({
+      search,
+      platform,
+      startDate,
+      endDate,
+      page,
+      limit,
+    });
     return success(result);
   } catch (error) {
     logger.error('GET /api/admin/earnings error:', error);

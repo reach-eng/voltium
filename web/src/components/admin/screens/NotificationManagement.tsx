@@ -494,15 +494,25 @@ export default function NotificationManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold tracking-tight">Messaging</h2>
-        <p className="text-muted-foreground text-sm">Send individual notifications or targeted broadcast announcements to riders.</p>
+        <p className="text-muted-foreground text-sm">
+          Send individual notifications or targeted broadcast announcements to riders.
+        </p>
       </div>
       <Tabs defaultValue="notifications" className="space-y-6">
         <TabsList className="bg-muted/40 p-1 h-10">
-          <TabsTrigger value="notifications" className="text-xs px-5 font-semibold">Notifications</TabsTrigger>
-          <TabsTrigger value="bulk" className="text-xs px-5 font-semibold">Bulk Messaging</TabsTrigger>
+          <TabsTrigger value="notifications" className="text-xs px-5 font-semibold">
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="bulk" className="text-xs px-5 font-semibold">
+            Bulk Messaging
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="notifications"><NotificationsTab /></TabsContent>
-        <TabsContent value="bulk"><BulkMessagingScreen /></TabsContent>
+        <TabsContent value="notifications">
+          <NotificationsTab />
+        </TabsContent>
+        <TabsContent value="bulk">
+          <BulkMessagingScreen />
+        </TabsContent>
       </Tabs>
     </div>
   );

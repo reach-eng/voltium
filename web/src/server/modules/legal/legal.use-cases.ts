@@ -12,7 +12,13 @@ export const legalUseCases = {
       update: { title: data.title || data.type, content: data.content },
       create: { type: data.type, title: data.title || data.type, content: data.content },
     });
-    createAuditLog({ actorId, action: 'legal.update', entity: 'legal', entityId: doc.id, details: { type: doc.type } }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'legal.update',
+      entity: 'legal',
+      entityId: doc.id,
+      details: { type: doc.type },
+    }).catch(() => {});
     return doc;
   },
 };

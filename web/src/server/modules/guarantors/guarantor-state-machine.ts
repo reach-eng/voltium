@@ -8,8 +8,13 @@
  * See docs/STATE_MACHINES.md for full transition map.
  */
 
-
-export type GuarantorStatus = 'DRAFT' | 'SUBMITTED' | 'INFO_REQUIRED' | 'APPROVED' | 'REJECTED' | 'REPLACED';
+export type GuarantorStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'INFO_REQUIRED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'REPLACED';
 
 type TransitionMap = Record<GuarantorStatus, GuarantorStatus[]>;
 
@@ -33,7 +38,10 @@ export class GuarantorStateError extends Error {
   }
 }
 
-export function validateGuarantorTransition(current: GuarantorStatus, target: GuarantorStatus): void {
+export function validateGuarantorTransition(
+  current: GuarantorStatus,
+  target: GuarantorStatus
+): void {
   if (current === target) return;
 
   const allowed = VALID_TRANSITIONS[current];

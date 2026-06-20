@@ -83,7 +83,12 @@ export const walletRepository = {
       where: { id: txnId },
       data: {
         status,
-        approvedAt: [TransactionStatus.APPROVED as string, TransactionStatus.REJECTED as string].includes(status as string) ? new Date() : undefined,
+        approvedAt: [
+          TransactionStatus.APPROVED as string,
+          TransactionStatus.REJECTED as string,
+        ].includes(status as string)
+          ? new Date()
+          : undefined,
         approvedBy: approvedBy || undefined,
       },
     });

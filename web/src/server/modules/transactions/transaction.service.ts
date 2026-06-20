@@ -29,7 +29,10 @@ export const transactionService = {
    * Validates a transaction status transition.
    */
   validateTransition(currentStatus: string, targetStatus: string) {
-    validateTransactionTransition(currentStatus as TransactionStatus, targetStatus as TransactionStatus);
+    validateTransactionTransition(
+      currentStatus as TransactionStatus,
+      targetStatus as TransactionStatus
+    );
   },
 
   /**

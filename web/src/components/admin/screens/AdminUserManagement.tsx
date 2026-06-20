@@ -389,7 +389,13 @@ function AdminUsersTab() {
           setDialogOpen(open);
           if (!open) {
             setEditingId(null);
-            setForm({ name: '', email: '', password: '', role: 'OPERATIONS_ADMIN', permissions: [] });
+            setForm({
+              name: '',
+              email: '',
+              password: '',
+              role: 'OPERATIONS_ADMIN',
+              permissions: [],
+            });
           }
         }}
       >
@@ -520,17 +526,31 @@ export default function AdminUserManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold tracking-tight">Admin Access</h2>
-        <p className="text-muted-foreground text-sm">Manage admin accounts, role permissions, and review the audit trail.</p>
+        <p className="text-muted-foreground text-sm">
+          Manage admin accounts, role permissions, and review the audit trail.
+        </p>
       </div>
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList className="bg-muted/40 p-1 h-10">
-          <TabsTrigger value="users" className="text-xs px-5 font-semibold">Admin Users</TabsTrigger>
-          <TabsTrigger value="roles" className="text-xs px-5 font-semibold">Roles &amp; Permissions</TabsTrigger>
-          <TabsTrigger value="audit" className="text-xs px-5 font-semibold">Audit Logs</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs px-5 font-semibold">
+            Admin Users
+          </TabsTrigger>
+          <TabsTrigger value="roles" className="text-xs px-5 font-semibold">
+            Roles &amp; Permissions
+          </TabsTrigger>
+          <TabsTrigger value="audit" className="text-xs px-5 font-semibold">
+            Audit Logs
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="users"><AdminUsersTab /></TabsContent>
-        <TabsContent value="roles"><RolePermissionManagement /></TabsContent>
-        <TabsContent value="audit"><AuditLogScreen /></TabsContent>
+        <TabsContent value="users">
+          <AdminUsersTab />
+        </TabsContent>
+        <TabsContent value="roles">
+          <RolePermissionManagement />
+        </TabsContent>
+        <TabsContent value="audit">
+          <AuditLogScreen />
+        </TabsContent>
       </Tabs>
     </div>
   );

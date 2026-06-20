@@ -89,7 +89,14 @@ describe('KYC State Machine', () => {
 
   it('validates all legal transitions are covered', () => {
     const legalFrom = Object.keys(KYC_TRANSITIONS);
-    expect(legalFrom).toEqual(['DRAFT', 'SUBMITTED', 'REJECTED', 'INFO_REQUIRED', 'APPROVED', 'EXPIRED']);
+    expect(legalFrom).toEqual([
+      'DRAFT',
+      'SUBMITTED',
+      'REJECTED',
+      'INFO_REQUIRED',
+      'APPROVED',
+      'EXPIRED',
+    ]);
   });
 });
 

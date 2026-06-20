@@ -22,7 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    const result = await fileUseCases.confirmUpload(data.fileRecordId, data.sizeBytes, data.checksum);
+    const result = await fileUseCases.confirmUpload(
+      data.fileRecordId,
+      data.sizeBytes,
+      data.checksum
+    );
 
     return success(result, 'File upload confirmed');
   } catch (err: any) {

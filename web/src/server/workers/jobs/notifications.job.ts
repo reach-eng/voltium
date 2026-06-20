@@ -12,7 +12,11 @@ export const notificationsJob = {
   async process(job: any): Promise<NotificationsResult> {
     logger.info('[NotificationsJob] Starting', { jobId: job.id });
 
-    const results: NotificationsResult = { birthdays: 0, paymentReminders: 0, referralLeaderboard: 0 };
+    const results: NotificationsResult = {
+      birthdays: 0,
+      paymentReminders: 0,
+      referralLeaderboard: 0,
+    };
 
     // 1. Birthday Wishes
     const today = new Date();
@@ -28,7 +32,9 @@ export const notificationsJob = {
     for (const rider of birthdayRiders) {
       await notificationService
         .notifyBirthdayWish(rider.id, rider.fullName || 'Rider')
-        .catch((err: Error) => logger.error('[NotificationsJob] Birthday wish failed', { riderId: rider.id, err }));
+        .catch((err: Error) =>
+          logger.error('[NotificationsJob] Birthday wish failed', { riderId: rider.id, err })
+        );
       results.birthdays++;
     }
 
@@ -42,15 +48,17 @@ export const notificationsJob = {
       if (rider.wallet) {
         await notificationService
           .notifyPaymentReminder(rider.id, Math.abs(rider.wallet.balanceInPaise), 'overdue')
-          .catch((err: Error) => logger.error('[NotificationsJob] Payment reminder failed', { riderId: rider.id, err }));
+          .catch((err: Error) =>
+            logger.error('[NotificationsJob] Payment reminder failed', { riderId: rider.id, err })
+          );
         results.paymentReminders++;
       }
     }
 
     // 3. Referral Leaderboard
-    await notificationService.notifyReferralUpdate().catch((err: Error) =>
-      logger.error('[NotificationsJob] Referral update failed', { err })
-    );
+    await notificationService
+      .notifyReferralUpdate()
+      .catch((err: Error) => logger.error('[NotificationsJob] Referral update failed', { err }));
     results.referralLeaderboard = 1;
 
     logger.info('[NotificationsJob] Complete', results);

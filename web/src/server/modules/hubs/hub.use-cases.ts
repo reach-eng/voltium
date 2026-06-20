@@ -11,7 +11,13 @@ export const hubUseCases = {
   async listAdminHubs(page: number, limit: number) {
     const { hubs, total } = await hubRepository.findAllPaginated(page, limit);
     const hubsWithBreakdown = hubs.map((hub: any) => {
-      const breakdown = { available: 0, assigned: 0, maintenance: 0, retired: 0, total: hub.vehicles?.length || 0 };
+      const breakdown = {
+        available: 0,
+        assigned: 0,
+        maintenance: 0,
+        retired: 0,
+        total: hub.vehicles?.length || 0,
+      };
       hub.vehicles.forEach((v: any) => {
         const s = v.status.toUpperCase();
         if (s === 'AVAILABLE') breakdown.available++;
@@ -22,7 +28,10 @@ export const hubUseCases = {
       const { vehicles, ...rest } = hub;
       return { ...rest, _count: { vehicles: breakdown.total }, vehicleBreakdown: breakdown };
     });
-    return { hubs: hubsWithBreakdown, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      hubs: hubsWithBreakdown,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   async getHub(hubId: string) {
@@ -31,23 +40,39 @@ export const hubUseCases = {
 
   async createHub(input: Prisma.HubCreateInput, actorId: string) {
     const hub = await hubRepository.create(input);
-    createAuditLog({ actorId, action: 'hub.create', entity: 'hub', entityId: hub.id, details: { name: input.name } }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'hub.create',
+      entity: 'hub',
+      entityId: hub.id,
+      details: { name: input.name },
+    }).catch(() => {});
     return hub;
   },
 
   async updateHub(hubId: string, input: Prisma.HubUpdateInput, actorId: string) {
     const hub = await hubRepository.update(hubId, input);
-    createAuditLog({ actorId, action: 'hub.update', entity: 'hub', entityId: hubId, details: input as any }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'hub.update',
+      entity: 'hub',
+      entityId: hubId,
+      details: input as any,
+    }).catch(() => {});
     return hub;
   },
 
   async deleteHub(hubId: string, actorId: string) {
     const vehicleCount = await hubRepository.getVehicleCount(hubId);
     if (vehicleCount > 0) {
-      throw new Error(`Cannot delete hub: ${vehicleCount} vehicle(s) still assigned. Reassign them first.`);
+      throw new Error(
+        `Cannot delete hub: ${vehicleCount} vehicle(s) still assigned. Reassign them first.`
+      );
     }
     await hubRepository.hardDelete(hubId);
-    createAuditLog({ actorId, action: 'hub.delete', entity: 'hub', entityId: hubId }).catch(() => {});
+    createAuditLog({ actorId, action: 'hub.delete', entity: 'hub', entityId: hubId }).catch(
+      () => {}
+    );
   },
 
   async listTeamLeaders(hubId?: string) {
@@ -61,7 +86,9 @@ export const hubUseCases = {
   async bulkActivate(ids: string[], actorId: string) {
     const result = await hubRepository.bulkActivate(ids);
     for (const id of ids) {
-      createAuditLog({ actorId, action: 'hub.activate', entity: 'hub', entityId: id }).catch(() => {});
+      createAuditLog({ actorId, action: 'hub.activate', entity: 'hub', entityId: id }).catch(
+        () => {}
+      );
     }
     return { count: result.count };
   },
@@ -69,19 +96,28 @@ export const hubUseCases = {
   async bulkDeactivate(ids: string[], actorId: string) {
     const result = await hubRepository.bulkDeactivate(ids);
     for (const id of ids) {
-      createAuditLog({ actorId, action: 'hub.deactivate', entity: 'hub', entityId: id }).catch(() => {});
+      createAuditLog({ actorId, action: 'hub.deactivate', entity: 'hub', entityId: id }).catch(
+        () => {}
+      );
     }
     return { count: result.count };
   },
 
   async bulkDelete(ids: string[], actorId: string) {
-    const hubsWithVehicles = await db.hub.findMany({ where: { id: { in: ids }, vehicles: { some: {} } }, select: { id: true } });
+    const hubsWithVehicles = await db.hub.findMany({
+      where: { id: { in: ids }, vehicles: { some: {} } },
+      select: { id: true },
+    });
     if (hubsWithVehicles.length > 0) {
-      throw new Error(`Cannot delete ${hubsWithVehicles.length} hub(s) with vehicles still assigned. Reassign them first.`);
+      throw new Error(
+        `Cannot delete ${hubsWithVehicles.length} hub(s) with vehicles still assigned. Reassign them first.`
+      );
     }
     const result = await hubRepository.bulkDelete(ids);
     for (const id of ids) {
-      createAuditLog({ actorId, action: 'hub.delete', entity: 'hub', entityId: id }).catch(() => {});
+      createAuditLog({ actorId, action: 'hub.delete', entity: 'hub', entityId: id }).catch(
+        () => {}
+      );
     }
     return { count: result.count };
   },

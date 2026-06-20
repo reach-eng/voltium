@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       {
         upiRef: upiRef || undefined,
         proofUrl: proofUrl || undefined,
-        idempotencyKey: request.headers.get('x-idempotency-key') || undefined
+        idempotencyKey: request.headers.get('x-idempotency-key') || undefined,
       }
     );
 

@@ -97,7 +97,12 @@ describe('Return Workflow Integration', () => {
       method: 'POST',
       token,
       json: {
-        returnPhotos: ['uploads/front.jpg', 'uploads/rear.jpg', 'uploads/left.jpg', 'uploads/right.jpg'],
+        returnPhotos: [
+          'uploads/front.jpg',
+          'uploads/rear.jpg',
+          'uploads/left.jpg',
+          'uploads/right.jpg',
+        ],
         latitude: 12.9716,
         longitude: 77.5946,
         reason: 'Completed rental',

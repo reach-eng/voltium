@@ -23,7 +23,7 @@ function getEncryptionKey(): Buffer {
   if (keyBuf.length >= 32) {
     return keyBuf.subarray(0, 32);
   }
-  
+
   // Pad if too short
   return Buffer.concat([keyBuf, Buffer.alloc(32 - keyBuf.length)]);
 }
@@ -36,12 +36,12 @@ export function encryptPii(text: string | null | undefined): string | null | und
     const key = getEncryptionKey();
     const iv = crypto.randomBytes(IV_LENGTH);
     const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-    
+
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const authTag = cipher.getAuthTag();
-    
+
     // Format: iv:authTag:encrypted
     return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
   } catch (e) {
@@ -65,13 +65,13 @@ export function decryptPii(cipherText: string | null | undefined): string | null
     const iv = Buffer.from(parts[0], 'hex');
     const authTag = Buffer.from(parts[1], 'hex');
     const encryptedText = Buffer.from(parts[2], 'hex');
-    
+
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(authTag);
-    
+
     let decrypted = decipher.update(encryptedText);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
-    
+
     return decrypted.toString('utf8');
   } catch (err) {
     // Return original cipher text if decryption fails (useful for local fallback or development schema mismatches)

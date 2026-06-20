@@ -118,7 +118,10 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
   }, []);
 
   const adminRole = session?.role || 'ADMIN';
-  const visibleItems = useMemo(() => getVisibleNavItems(session || adminRole), [session, adminRole]);
+  const visibleItems = useMemo(
+    () => getVisibleNavItems(session || adminRole),
+    [session, adminRole]
+  );
 
   return (
     <div

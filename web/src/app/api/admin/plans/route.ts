@@ -1,14 +1,27 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { validateBody, createPlanSchema, updatePlanSchema, deletePlanSchema } from '@/lib/validators';
+import {
+  validateBody,
+  createPlanSchema,
+  updatePlanSchema,
+  deletePlanSchema,
+} from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
 import { hasPermission, type Permission } from '@/lib/auth';
 import { planUseCases } from '@/server/modules/plans/plan.use-cases';
 
-const PERM_MAP: Record<string, Permission> = { view: 'analytics_view', create: 'plans_manage', update: 'plans_manage', delete: 'plans_manage' };
+const PERM_MAP: Record<string, Permission> = {
+  view: 'analytics_view',
+  create: 'plans_manage',
+  update: 'plans_manage',
+  delete: 'plans_manage',
+};
 
-function checkPlansPermission(session: any, action: 'view' | 'create' | 'update' | 'delete'): boolean {
+function checkPlansPermission(
+  session: any,
+  action: 'view' | 'create' | 'update' | 'delete'
+): boolean {
   return hasPermission(session.adminRole || '', PERM_MAP[action]);
 }
 

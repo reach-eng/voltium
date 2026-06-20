@@ -20,7 +20,13 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
-    const result = await adminUseCases.listAdmins({ role, isActive: isActive !== null && isActive !== '' ? isActive === 'true' : undefined, search, page, limit });
+    const result = await adminUseCases.listAdmins({
+      role,
+      isActive: isActive !== null && isActive !== '' ? isActive === 'true' : undefined,
+      search,
+      page,
+      limit,
+    });
     return success(result.admins, undefined, 200, result.pagination);
   } catch (error) {
     logger.error('GET /api/admin/admins error:', error);
@@ -37,10 +43,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, password, role } = body;
 
-    if (!name || !email || !password) return errors.badRequest('name, email, password are required');
+    if (!name || !email || !password)
+      return errors.badRequest('name, email, password are required');
     if (password.length < 8) return errors.badRequest('Password must be at least 8 characters');
 
-    const result = await adminUseCases.createAdmin({ name, email, password, role: role || 'SUPER_ADMIN', permissions: body.permissions }, req.headers.get('x-admin-id') || 'system');
+    const result = await adminUseCases.createAdmin(
+      { name, email, password, role: role || 'SUPER_ADMIN', permissions: body.permissions },
+      req.headers.get('x-admin-id') || 'system'
+    );
 
     return success(result, 'Admin created', 201);
   } catch (error: unknown) {
@@ -68,7 +78,11 @@ export async function PUT(req: NextRequest) {
       updateData.password = await hashPassword(password);
     }
 
-    const admin = await adminUseCases.updateAdmin(id, updateData, req.headers.get('x-admin-id') || 'system');
+    const admin = await adminUseCases.updateAdmin(
+      id,
+      updateData,
+      req.headers.get('x-admin-id') || 'system'
+    );
     return success(admin);
   } catch (error) {
     logger.error('PUT /api/admin/admins error:', error);

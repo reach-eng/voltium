@@ -45,7 +45,12 @@ export const depositLedgerService = {
   /**
    * Refunds a deposit — credits the refund amount back to wallet balance.
    */
-  async refund(params: { riderId: string; adminId: string; refundAmountInPaise?: number; note?: string }) {
+  async refund(params: {
+    riderId: string;
+    adminId: string;
+    refundAmountInPaise?: number;
+    note?: string;
+  }) {
     return libRefundDeposit(params);
   },
 

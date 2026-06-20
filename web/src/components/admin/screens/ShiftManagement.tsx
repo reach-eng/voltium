@@ -99,7 +99,7 @@ export default function ShiftManagement() {
       if (shift.parts && shift.parts.length > 0) {
         setForm({
           name: shift.name,
-          parts: shift.parts.map(p => ({ ...p })),
+          parts: shift.parts.map((p) => ({ ...p })),
           maxBookings: shift.maxBookings,
           isActive: shift.isActive,
         });
@@ -114,7 +114,12 @@ export default function ShiftManagement() {
       }
     } else {
       setEditShift(null);
-      setForm({ name: '', parts: [{ startTime: '', endTime: '' }], maxBookings: 5, isActive: true });
+      setForm({
+        name: '',
+        parts: [{ startTime: '', endTime: '' }],
+        maxBookings: 5,
+        isActive: true,
+      });
     }
     setDialogOpen(true);
   }
@@ -135,15 +140,26 @@ export default function ShiftManagement() {
 
   const saveShift = async () => {
     if (!form.name.trim()) return;
-    const validParts = form.parts.filter(p => p.startTime && p.endTime);
+    const validParts = form.parts.filter((p) => p.startTime && p.endTime);
     if (validParts.length === 0) return;
     setSaving(true);
     setError(null);
     try {
       const method = editShift?.id ? 'PUT' : 'POST';
       const body = editShift?.id
-        ? { id: editShift.id, name: form.name, parts: validParts, maxBookings: form.maxBookings, isActive: form.isActive }
-        : { name: form.name, parts: validParts, maxBookings: form.maxBookings, isActive: form.isActive };
+        ? {
+            id: editShift.id,
+            name: form.name,
+            parts: validParts,
+            maxBookings: form.maxBookings,
+            isActive: form.isActive,
+          }
+        : {
+            name: form.name,
+            parts: validParts,
+            maxBookings: form.maxBookings,
+            isActive: form.isActive,
+          };
 
       const res = await fetch('/api/admin/shifts', {
         method,
@@ -160,7 +176,12 @@ export default function ShiftManagement() {
       }
 
       setDialogOpen(false);
-      setForm({ name: '', parts: [{ startTime: '', endTime: '' }], maxBookings: 5, isActive: true });
+      setForm({
+        name: '',
+        parts: [{ startTime: '', endTime: '' }],
+        maxBookings: 5,
+        isActive: true,
+      });
       setEditShift(null);
       fetchShifts();
     } catch (e: unknown) {
@@ -220,7 +241,9 @@ export default function ShiftManagement() {
           {shift.parts.map((part, i) => (
             <div key={i} className="flex items-center gap-1.5 text-xs">
               <span className="text-muted-foreground">Part {i + 1}:</span>
-              <span className="font-medium">{part.startTime} → {part.endTime}</span>
+              <span className="font-medium">
+                {part.startTime} → {part.endTime}
+              </span>
             </div>
           ))}
         </div>
@@ -397,9 +420,7 @@ export default function ShiftManagement() {
               {form.parts.map((part, index) => (
                 <div key={index} className="flex items-end gap-2">
                   <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Part {index + 1} Start
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">Part {index + 1} Start</Label>
                     <Input
                       type="time"
                       value={part.startTime}
@@ -407,9 +428,7 @@ export default function ShiftManagement() {
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Part {index + 1} End
-                    </Label>
+                    <Label className="text-xs text-muted-foreground">Part {index + 1} End</Label>
                     <Input
                       type="time"
                       value={part.endTime}
@@ -455,7 +474,11 @@ export default function ShiftManagement() {
             </Button>
             <Button
               onClick={saveShift}
-              disabled={!form.name || form.parts.filter(p => p.startTime && p.endTime).length === 0 || saving}
+              disabled={
+                !form.name ||
+                form.parts.filter((p) => p.startTime && p.endTime).length === 0 ||
+                saving
+              }
             >
               {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
               {saving ? 'Saving...' : 'Save'}

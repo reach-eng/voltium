@@ -241,7 +241,10 @@ interface AutoRefreshConnectionStatusProps {
   onReconnect?: () => void;
 }
 
-export function AutoRefreshConnectionStatus({ isUpdating, onReconnect }: AutoRefreshConnectionStatusProps) {
+export function AutoRefreshConnectionStatus({
+  isUpdating,
+  onReconnect,
+}: AutoRefreshConnectionStatusProps) {
   return (
     <div className="flex items-center gap-2">
       <span className={cn('h-2 w-2 rounded-full', isUpdating ? 'bg-green-500' : 'bg-red-500')} />

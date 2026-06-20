@@ -27,16 +27,46 @@ export const ALL_NAV_ITEMS: NavItem[] = [
   { id: 'offers', label: 'Offers & Coupons', icon: 'Sparkles', permission: 'offers_manage' },
   { id: 'rewards', label: 'Rewards', icon: 'Award', permission: 'rewards_manage' },
 
-  { id: 'analytics', label: 'Reports & Analytics', icon: 'BarChart3', permission: 'analytics_view' },
+  {
+    id: 'analytics',
+    label: 'Reports & Analytics',
+    icon: 'BarChart3',
+    permission: 'analytics_view',
+  },
   { id: 'admin-users', label: 'Admin Access', icon: 'Users2', permission: 'admins_manage' },
   { id: 'faq', label: 'FAQ Management', icon: 'HelpCircle', permission: 'faq_manage' },
   { id: 'legal', label: 'Legal Documents', icon: 'FileText', permission: 'legal_manage' },
-  { id: 'device-tracking', label: 'Device Tracking', icon: 'Radar', permission: 'device_tracking_view' },
-  { id: 'workflow-coverage', label: 'Workflow Coverage', icon: 'ListChecks', permission: 'analytics_view' },
-  { id: 'business-settings', label: 'Configuration', icon: 'Settings2', permission: 'settings_manage' },
+  {
+    id: 'device-tracking',
+    label: 'Device Tracking',
+    icon: 'Radar',
+    permission: 'device_tracking_view',
+  },
+  {
+    id: 'workflow-coverage',
+    label: 'Workflow Coverage',
+    icon: 'ListChecks',
+    permission: 'analytics_view',
+  },
+  {
+    id: 'business-settings',
+    label: 'Configuration',
+    icon: 'Settings2',
+    permission: 'settings_manage',
+  },
   { id: 'settings', label: 'System Settings', icon: 'Settings', permission: 'settings_manage' },
-  { id: 'server-health', label: 'Server Health', icon: 'HeartHandshake', permission: 'settings_manage' },
-  { id: 'data-management', label: 'Data Management', icon: 'Database', permission: 'data_management_view' },
+  {
+    id: 'server-health',
+    label: 'Server Health',
+    icon: 'HeartHandshake',
+    permission: 'settings_manage',
+  },
+  {
+    id: 'data-management',
+    label: 'Data Management',
+    icon: 'Database',
+    permission: 'data_management_view',
+  },
 ];
 
 export function getVisibleNavItems(roleOrSession: string | SessionPayload): NavItem[] {

@@ -1073,7 +1073,8 @@ async function main() {
       value: 'DAILY',
       valueType: 'STRING',
       category: 'BACKUP',
-      description: 'How often scheduled automatic backups are triggered (DAILY, WEEKLY, MONTHLY, MANUAL).',
+      description:
+        'How often scheduled automatic backups are triggered (DAILY, WEEKLY, MONTHLY, MANUAL).',
     },
     {
       key: 'BACKUP_TIME_OF_DAY',
@@ -1129,7 +1130,8 @@ async function main() {
       value: 'false',
       valueType: 'BOOLEAN',
       category: 'SERVER',
-      description: 'Whether the application is currently in maintenance mode blocking rider operations.',
+      description:
+        'Whether the application is currently in maintenance mode blocking rider operations.',
     },
     {
       key: 'MAINTENANCE_MESSAGE',

@@ -132,12 +132,25 @@ export const transactionRepository = {
     return db.transaction.deleteMany({ where: { riderId: riderDbId } });
   },
 
-  async updateStatus(id: string, status: TransactionStatus, approvedBy?: string, rejectionReason?: string) {
+  async updateStatus(
+    id: string,
+    status: TransactionStatus,
+    approvedBy?: string,
+    rejectionReason?: string
+  ) {
     return db.transaction.update({
       where: { id },
       data: {
         status,
-        approvedAt: ([TransactionStatus.APPROVED, TransactionStatus.REJECTED, TransactionStatus.REVERSED] as string[]).includes(status) ? new Date() : undefined,
+        approvedAt: (
+          [
+            TransactionStatus.APPROVED,
+            TransactionStatus.REJECTED,
+            TransactionStatus.REVERSED,
+          ] as string[]
+        ).includes(status)
+          ? new Date()
+          : undefined,
         approvedBy: approvedBy || undefined,
         rejectionReason: rejectionReason || undefined,
       },

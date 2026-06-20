@@ -119,7 +119,11 @@ export function canTransition(
 
 type PrismaTransaction = any;
 
-const ALLOWED_INITIAL_STATUSES: RiderLifecycleStatus[] = ['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED'];
+const ALLOWED_INITIAL_STATUSES: RiderLifecycleStatus[] = [
+  'NEW',
+  'PHONE_VERIFIED',
+  'PROFILE_SUBMITTED',
+];
 
 export function isValidInitialStatus(status: RiderLifecycleStatus): boolean {
   return ALLOWED_INITIAL_STATUSES.includes(status);

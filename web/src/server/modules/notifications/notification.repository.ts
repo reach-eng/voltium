@@ -28,7 +28,14 @@ export const notificationRepository = {
   },
 
   async sendToAll(title: string, message: string, type: string = 'INFO') {
-    const notificationType = type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM';
+    const notificationType = type as
+      | 'INFO'
+      | 'ALERT'
+      | 'PROMOTION'
+      | 'PAYMENT'
+      | 'VEHICLE'
+      | 'SOS'
+      | 'SYSTEM';
     const batchSize = 500;
     let skip = 0;
     let count = 0;

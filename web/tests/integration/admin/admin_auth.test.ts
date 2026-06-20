@@ -45,7 +45,7 @@ describe('Admin Authentication Integration Tests', () => {
     expect(status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.role).toBeDefined();
-    
+
     const setCookie = headers.get('set-cookie');
     expect(setCookie).toBeDefined();
     expect(setCookie).toContain('voltium-admin-session');
@@ -106,7 +106,7 @@ describe('Admin Authentication Integration Tests', () => {
 
     expect(status).toBe(200);
     expect(body.success).toBe(true);
-    
+
     const setCookie = headers.get('set-cookie');
     expect(setCookie).toBeDefined();
     expect(setCookie?.toLowerCase()).toContain('max-age=0'); // Expire immediately

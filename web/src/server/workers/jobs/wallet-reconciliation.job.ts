@@ -26,7 +26,12 @@ export interface ReconciliationResult {
   healthy: number;
   drifted: number;
   totalDrift: number;
-  driftedRiders: Array<{ riderId: string; drift: number; walletBalance: number; ledgerSum: number }>;
+  driftedRiders: Array<{
+    riderId: string;
+    drift: number;
+    walletBalance: number;
+    ledgerSum: number;
+  }>;
 }
 
 export async function runWalletReconciliation(): Promise<ReconciliationResult> {

@@ -20,11 +20,7 @@ import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '
 import type { WalletBalance } from './wallet.types';
 
 // Server-derived idempotency key (5-minute bucket, no client change required)
-function deriveIdempotencyKey(
-  riderId: string,
-  purpose: string,
-  amountInPaise: number
-): string {
+function deriveIdempotencyKey(riderId: string, purpose: string, amountInPaise: number): string {
   const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
   return `topup:${riderId}:${purpose}:${amountInPaise}:${bucket}`;
 }
@@ -38,7 +34,10 @@ export const walletUseCases = {
 
     const pendingTxns = await walletRepository.getTransactions(riderDbId, 100);
     const pendingTopups = pendingTxns
-      .filter((t: { status: string; type: string; amount: number }) => t.status === 'PENDING' && t.type === 'CREDIT')
+      .filter(
+        (t: { status: string; type: string; amount: number }) =>
+          t.status === 'PENDING' && t.type === 'CREDIT'
+      )
       .reduce((sum: number, t: { amount: number }) => sum + t.amount, 0);
 
     return {
@@ -49,11 +48,17 @@ export const walletUseCases = {
     };
   },
 
-  async requestTopup(riderDbId: string, amountPaise: number, purpose: string, method: string, metadata?: {
-    proofUrl?: string;
-    upiRef?: string;
-    idempotencyKey?: string;
-  }) {
+  async requestTopup(
+    riderDbId: string,
+    amountPaise: number,
+    purpose: string,
+    method: string,
+    metadata?: {
+      proofUrl?: string;
+      upiRef?: string;
+      idempotencyKey?: string;
+    }
+  ) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       select: { id: true, lifecycleStatus: true, phone: true },
@@ -61,14 +66,24 @@ export const walletUseCases = {
     if (!rider) throw new Error('Rider not found');
 
     const lifecycleRank: Record<string, number> = {
-      NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
-      RETURN_PENDING: 13, CLOSED: 14,
+      NEW: 0,
+      PHONE_VERIFIED: 1,
+      PROFILE_SUBMITTED: 2,
+      KYC_SUBMITTED: 3,
+      KYC_APPROVED: 4,
+      GUARANTOR_SUBMITTED: 5,
+      GUARANTOR_APPROVED: 6,
+      DEPOSIT_PENDING: 7,
+      DEPOSIT_APPROVED: 8,
+      PLAN_SELECTED: 9,
+      PICKUP_SCHEDULED: 10,
+      ACTIVE: 11,
+      SUSPENDED: 12,
+      RETURN_PENDING: 13,
+      CLOSED: 14,
     };
     const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
-    const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : (purpose || 'TOP_UP');
+    const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
 
     const serverKey = deriveIdempotencyKey(riderDbId, finalPurpose, amountPaise);
     const idempotencyKey = metadata?.idempotencyKey || serverKey;
@@ -133,9 +148,17 @@ export const walletUseCases = {
     return transaction;
   },
 
-  async _autoApproveTestTopup(riderDbId: string, transactionId: string, amountPaise: number, purpose: string) {
+  async _autoApproveTestTopup(
+    riderDbId: string,
+    transactionId: string,
+    amountPaise: number,
+    purpose: string
+  ) {
     await db.$transaction(async (tx: any) => {
-      let wallet = await tx.wallet.findUnique({ where: { riderId: riderDbId }, select: { id: true } });
+      let wallet = await tx.wallet.findUnique({
+        where: { riderId: riderDbId },
+        select: { id: true },
+      });
       if (!wallet) {
         wallet = await tx.wallet.create({
           data: { riderId: riderDbId },
@@ -144,33 +167,42 @@ export const walletUseCases = {
       }
 
       if (purpose === 'SECURITY_DEPOSIT') {
-        await walletLedgerService.creditSecurityDeposit({
-          riderId: riderDbId,
-          amountInPaise: amountPaise,
-          txnId: transactionId,
-          note: 'Test mode: auto-approved security deposit',
-        }, tx);
-        await walletLedgerService.credit({
-          riderId: riderDbId,
-          amountInPaise: 800000,
-          category: 'ADMIN_ADJUSTMENT',
-          txnId: transactionId,
-          idempotencyKey: `test:${transactionId}:opening`,
-          note: 'Test mode: opening balance',
-        }, tx);
+        await walletLedgerService.creditSecurityDeposit(
+          {
+            riderId: riderDbId,
+            amountInPaise: amountPaise,
+            txnId: transactionId,
+            note: 'Test mode: auto-approved security deposit',
+          },
+          tx
+        );
+        await walletLedgerService.credit(
+          {
+            riderId: riderDbId,
+            amountInPaise: 800000,
+            category: 'ADMIN_ADJUSTMENT',
+            txnId: transactionId,
+            idempotencyKey: `test:${transactionId}:opening`,
+            note: 'Test mode: opening balance',
+          },
+          tx
+        );
         await tx.rider.update({
           where: { id: riderDbId },
           data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
         });
       } else {
-        await walletLedgerService.credit({
-          riderId: riderDbId,
-          amountInPaise: amountPaise,
-          category: 'TOP_UP',
-          txnId: transactionId,
-          idempotencyKey: `test:${transactionId}:topup`,
-          note: 'Test mode: auto-approved top-up',
-        }, tx);
+        await walletLedgerService.credit(
+          {
+            riderId: riderDbId,
+            amountInPaise: amountPaise,
+            category: 'TOP_UP',
+            txnId: transactionId,
+            idempotencyKey: `test:${transactionId}:topup`,
+            note: 'Test mode: auto-approved top-up',
+          },
+          tx
+        );
       }
     });
   },
@@ -185,15 +217,18 @@ export const walletUseCases = {
     const idempotencyKey = `approve:${transactionId}`;
 
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      await walletLedgerService.credit({
-        riderId: txn.riderId,
-        amountInPaise: txn.amount,
-        category: txn.purpose === 'SECURITY_DEPOSIT' ? 'SECURITY_DEPOSIT' : 'TOP_UP',
-        txnId: txn.id,
-        idempotencyKey,
-        actorId: adminId,
-        note: `Admin approved ${txn.purpose.toLowerCase()}`,
-      }, tx);
+      await walletLedgerService.credit(
+        {
+          riderId: txn.riderId,
+          amountInPaise: txn.amount,
+          category: txn.purpose === 'SECURITY_DEPOSIT' ? 'SECURITY_DEPOSIT' : 'TOP_UP',
+          txnId: txn.id,
+          idempotencyKey,
+          actorId: adminId,
+          note: `Admin approved ${txn.purpose.toLowerCase()}`,
+        },
+        tx
+      );
 
       await tx.transaction.update({
         where: { id: transactionId },
@@ -213,7 +248,11 @@ export const walletUseCases = {
       details: { riderId: txn.riderId, amountPaise: txn.amount },
     });
 
-    logger.info('[WalletUseCases] Topup approved', { transactionId, adminId, amountPaise: txn.amount });
+    logger.info('[WalletUseCases] Topup approved', {
+      transactionId,
+      adminId,
+      amountPaise: txn.amount,
+    });
   },
 
   async rejectTopup(transactionId: string, adminId: string, reason: string) {

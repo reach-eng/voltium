@@ -53,7 +53,7 @@ export default function AuditLogScreen() {
           entityId: 'backup-456',
           details: JSON.stringify({ sizeBytes: 1024345 }),
           createdAt: new Date(Date.now() - 3600000).toISOString(),
-        }
+        },
       ]);
       setLoading(false);
     }, 500);
@@ -71,7 +71,9 @@ export default function AuditLogScreen() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Audit Logs</h2>
-          <p className="text-muted-foreground">Browse chronological history of sensitive administrative actions.</p>
+          <p className="text-muted-foreground">
+            Browse chronological history of sensitive administrative actions.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-64">
@@ -106,14 +108,22 @@ export default function AuditLogScreen() {
                 <tbody className="divide-y">
                   {[...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      <td className="py-3"><Skeleton className="h-4 w-28" /></td>
-                      <td className="py-3"><Skeleton className="h-4 w-20" /></td>
+                      <td className="py-3">
+                        <Skeleton className="h-4 w-28" />
+                      </td>
+                      <td className="py-3">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
                       <td className="py-3">
                         <Skeleton className="h-4 w-16 mb-1" />
                         <Skeleton className="h-3 w-24" />
                       </td>
-                      <td className="py-3"><Skeleton className="h-3 w-32" /></td>
-                      <td className="py-3 text-right"><Skeleton className="h-4 w-24 ml-auto" /></td>
+                      <td className="py-3">
+                        <Skeleton className="h-3 w-32" />
+                      </td>
+                      <td className="py-3 text-right">
+                        <Skeleton className="h-4 w-24 ml-auto" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>

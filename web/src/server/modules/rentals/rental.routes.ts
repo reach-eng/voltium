@@ -62,8 +62,6 @@ export async function POST_requestReturn(request: NextRequest) {
   const validation = validateBody(endRentalSchema, { ...body, riderId: session.riderDbId });
   if (!validation.success) return errors.validation(validation.error);
 
-  const result = await rentalUseCases.requestReturn(
-    session.riderDbId
-  );
+  const result = await rentalUseCases.requestReturn(session.riderDbId);
   return success(result, 'Return requested');
 }

@@ -59,19 +59,22 @@ export const backupRepository = {
     return db.backupJob.create({ data });
   },
 
-  async updateBackupJob(id: string, data: {
-    status?: string;
-    backupPath?: string;
-    databasePath?: string;
-    filesPath?: string;
-    manifestPath?: string;
-    checksumPath?: string;
-    sizeBytes?: bigint;
-    fileCount?: number;
-    errorMessage?: string;
-    startedAt?: Date;
-    completedAt?: Date;
-  }) {
+  async updateBackupJob(
+    id: string,
+    data: {
+      status?: string;
+      backupPath?: string;
+      databasePath?: string;
+      filesPath?: string;
+      manifestPath?: string;
+      checksumPath?: string;
+      sizeBytes?: bigint;
+      fileCount?: number;
+      errorMessage?: string;
+      startedAt?: Date;
+      completedAt?: Date;
+    }
+  ) {
     return db.backupJob.update({ where: { id }, data });
   },
 
@@ -82,12 +85,7 @@ export const backupRepository = {
     });
   },
 
-  async listBackupJobs(params: {
-    page: number;
-    limit: number;
-    type?: string;
-    status?: string;
-  }) {
+  async listBackupJobs(params: { page: number; limit: number; type?: string; status?: string }) {
     const where: any = {};
     if (params.type) where.type = params.type;
     if (params.status) where.status = params.status;
@@ -137,13 +135,16 @@ export const backupRepository = {
     return db.restoreJob.create({ data });
   },
 
-  async updateRestoreJob(id: string, data: {
-    status?: string;
-    approvedByAdminId?: string;
-    errorMessage?: string;
-    startedAt?: Date;
-    completedAt?: Date;
-  }) {
+  async updateRestoreJob(
+    id: string,
+    data: {
+      status?: string;
+      approvedByAdminId?: string;
+      errorMessage?: string;
+      startedAt?: Date;
+      completedAt?: Date;
+    }
+  ) {
     return db.restoreJob.update({ where: { id }, data });
   },
 

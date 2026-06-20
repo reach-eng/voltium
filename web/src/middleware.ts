@@ -25,31 +25,33 @@ const VALIDATION_MAP: Record<string, Record<string, any>> = {
   '/api/admin/vehicles': { POST: createVehicleSchema },
 };
 
-const getDevCsp = (nonce: string) => [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
-  "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
-  "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-  "connect-src 'self' http://localhost:* https://api.voltium.app ws://localhost:* wss://localhost:* https://*.googleapis.com https://*.google.com",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-].join('; ');
+const getDevCsp = (nonce: string) =>
+  [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
+    "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
+    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
+    "connect-src 'self' http://localhost:* https://api.voltium.app ws://localhost:* wss://localhost:* https://*.googleapis.com https://*.google.com",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+  ].join('; ');
 
-const getProdCsp = (nonce: string) => [
-  "default-src 'self'",
-  `script-src 'self' 'nonce-${nonce}' https://*.google.com https://*.googleapis.com`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
-  "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
-  "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-  "connect-src 'self' https://api.voltium.app https://*.googleapis.com https://*.google.com",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-].join('; ');
+const getProdCsp = (nonce: string) =>
+  [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' https://*.google.com https://*.googleapis.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
+    "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
+    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
+    "connect-src 'self' https://api.voltium.app https://*.googleapis.com https://*.google.com",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+  ].join('; ');
 
 function getSecurityHeaders(nonce: string): Record<string, string> {
   const headers: Record<string, string> = {

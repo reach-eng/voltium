@@ -63,7 +63,9 @@ export async function createAuditLog(params: {
   } catch (err: any) {
     logger.error('[AuditLog] Failed to create entry:', err);
     if (CRITICAL_ACTIONS.has(params.action)) {
-      throw new Error(`Audit log write failed for critical action ${params.action}: ${err?.message || err}`);
+      throw new Error(
+        `Audit log write failed for critical action ${params.action}: ${err?.message || err}`
+      );
     }
     console.error('[AUDIT_FAILED]', JSON.stringify(params), err?.message || err);
   }

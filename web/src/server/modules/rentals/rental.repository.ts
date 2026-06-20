@@ -44,7 +44,8 @@ export const rentalRepository = {
       select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus =
+      (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'PLAN_SELECTED');
 
     const result = await db.rider.updateMany({
@@ -72,7 +73,8 @@ export const rentalRepository = {
       select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus =
+      (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'ACTIVE');
 
     const result = await db.rider.updateMany({
@@ -103,7 +105,8 @@ export const rentalRepository = {
       select: { lifecycleStatus: true },
     });
 
-    const currentStatus: RentalStatus = (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
+    const currentStatus: RentalStatus =
+      (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
     validateRentalTransition(currentStatus, 'RETURN_PENDING');
 
     const result = await db.rider.updateMany({
@@ -145,26 +148,59 @@ export const rentalRepository = {
 
       if (action === 'START' || action === 'PICKUP_COMPLETE') {
         validateRiderTransition(currentStatus, 'ACTIVE');
-        await tx.vehicle.update({ where: { id: lease.vehicleId }, data: { status: 'ACTIVE_RENTAL', assignedAt: new Date() } });
-        await tx.rider.update({ where: { id: lease.riderId }, data: { lifecycleStatus: 'ACTIVE', vehicleId: lease.vehicleId, assignedVehicle: lease.vehicle.vehicleId, pickedUpAt: new Date() } });
+        await tx.vehicle.update({
+          where: { id: lease.vehicleId },
+          data: { status: 'ACTIVE_RENTAL', assignedAt: new Date() },
+        });
+        await tx.rider.update({
+          where: { id: lease.riderId },
+          data: {
+            lifecycleStatus: 'ACTIVE',
+            vehicleId: lease.vehicleId,
+            assignedVehicle: lease.vehicle.vehicleId,
+            pickedUpAt: new Date(),
+          },
+        });
         return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'ACTIVE' } });
       }
-      if (action === 'MARK_OVERDUE') return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'OVERDUE' } });
+      if (action === 'MARK_OVERDUE')
+        return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'OVERDUE' } });
       if (action === 'REQUEST_RETURN') {
         validateRiderTransition(currentStatus, 'RETURN_PENDING');
-        await tx.vehicle.update({ where: { id: lease.vehicleId }, data: { status: 'RETURN_PENDING' } });
-        await tx.rider.update({ where: { id: lease.riderId }, data: { lifecycleStatus: 'RETURN_PENDING' } });
-        return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'RETURN_PENDING' } });
+        await tx.vehicle.update({
+          where: { id: lease.vehicleId },
+          data: { status: 'RETURN_PENDING' },
+        });
+        await tx.rider.update({
+          where: { id: lease.riderId },
+          data: { lifecycleStatus: 'RETURN_PENDING' },
+        });
+        return tx.rentalLease.update({
+          where: { id: lease.id },
+          data: { status: 'RETURN_PENDING' },
+        });
       }
       if (action === 'APPROVE_RETURN' || action === 'CLOSE') {
         validateRiderTransition(currentStatus, 'CLOSED');
-        await tx.vehicle.update({ where: { id: lease.vehicleId }, data: { status: 'AVAILABLE', assignedAt: null } });
-        await tx.rider.update({ where: { id: lease.riderId }, data: { lifecycleStatus: 'CLOSED', vehicleId: null, assignedVehicle: null } });
-        return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'CLOSED', endTime: new Date().toTimeString().slice(0, 5) } });
+        await tx.vehicle.update({
+          where: { id: lease.vehicleId },
+          data: { status: 'AVAILABLE', assignedAt: null },
+        });
+        await tx.rider.update({
+          where: { id: lease.riderId },
+          data: { lifecycleStatus: 'CLOSED', vehicleId: null, assignedVehicle: null },
+        });
+        return tx.rentalLease.update({
+          where: { id: lease.id },
+          data: { status: 'CLOSED', endTime: new Date().toTimeString().slice(0, 5) },
+        });
       }
       if (action === 'SUSPEND') {
         validateRiderTransition(currentStatus, 'SUSPENDED');
-        await tx.rider.update({ where: { id: lease.riderId }, data: { lifecycleStatus: 'SUSPENDED' } });
+        await tx.rider.update({
+          where: { id: lease.riderId },
+          data: { lifecycleStatus: 'SUSPENDED' },
+        });
         return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'SUSPENDED' } });
       }
       throw new Error(`Unsupported rental action: ${action}`);

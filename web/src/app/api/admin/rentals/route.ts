@@ -31,8 +31,12 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     rentalRepository.findManyLeases({
       where,
       include: {
-        rider: { select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true } },
-        vehicle: { select: { id: true, vehicleId: true, vehicleNumber: true, model: true, status: true } },
+        rider: {
+          select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
+        },
+        vehicle: {
+          select: { id: true, vehicleId: true, vehicleNumber: true, model: true, status: true },
+        },
         shift: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -42,7 +46,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     rentalRepository.countLeases({ where }),
   ]);
 
-  return success({ records, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  return success({
+    records,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
 });
 
 export const PUT = withApiHandler(async (request: NextRequest) => {
@@ -54,7 +61,10 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   const leaseId = body.leaseId || body.id;
   if (!leaseId || !action) return errors.badRequest('leaseId and action are required');
 
-  const permission = action.includes('RETURN') || action === 'CLOSE' ? 'rentals_return_inspection' : 'rentals_pickup_inspection';
+  const permission =
+    action.includes('RETURN') || action === 'CLOSE'
+      ? 'rentals_return_inspection'
+      : 'rentals_pickup_inspection';
   if (!hasPermission(session.adminRole || '', permission as any)) return adminForbidden();
 
   const lease = await rentalRepository.findLeaseById(leaseId);

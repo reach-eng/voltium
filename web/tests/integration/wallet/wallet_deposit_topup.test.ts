@@ -195,7 +195,11 @@ describe('Wallet, Deposit, and Top-up Workflow Integration', () => {
     const { id } = await riderLogin(phone);
 
     // Approve deposit
-    await api('/api/admin/deposits', { method: 'POST', cookie, json: { riderId: id, action: 'APPROVE' } });
+    await api('/api/admin/deposits', {
+      method: 'POST',
+      cookie,
+      json: { riderId: id, action: 'APPROVE' },
+    });
 
     // Refund deposit
     const { status, body } = await api('/api/admin/deposits', {

@@ -22,27 +22,65 @@ import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.s
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
-  'fullName', 'email', 'fatherName', 'motherName', 'dob', 'currentAddress',
-  'emergencyContact', 'pickupHub', 'teamLeader',
-  'planStartDate', 'planEndDate', 'intent', 'referralCode', 'phone',
-  'preferredShift', 'referredBy', 'assignedVehicle',
+  'fullName',
+  'email',
+  'fatherName',
+  'motherName',
+  'dob',
+  'currentAddress',
+  'emergencyContact',
+  'pickupHub',
+  'teamLeader',
+  'planStartDate',
+  'planEndDate',
+  'intent',
+  'referralCode',
+  'phone',
+  'preferredShift',
+  'referredBy',
+  'assignedVehicle',
 ]);
 
 const KYC_FIELDS = new Set([
-  'kycStatus', 'profilePhoto', 'riderPhoto', 'signature',
-  'aadhaarFront', 'aadhaarBack', 'aadhaarNumber', 'panCard', 'panNumber',
-  'bankAccount', 'bankIfsc', 'bankName', 'accountNumber', 'ifscCode', 'rejectionReason',
+  'kycStatus',
+  'profilePhoto',
+  'riderPhoto',
+  'signature',
+  'aadhaarFront',
+  'aadhaarBack',
+  'aadhaarNumber',
+  'panCard',
+  'panNumber',
+  'bankAccount',
+  'bankIfsc',
+  'bankName',
+  'accountNumber',
+  'ifscCode',
+  'rejectionReason',
 ]);
 
 const WALLET_FIELDS = new Set([
-  'walletBalance', 'securityDeposit', 'balanceInPaise', 'depositStatus',
+  'walletBalance',
+  'securityDeposit',
+  'balanceInPaise',
+  'depositStatus',
 ]);
 
 const GUARANTOR_FIELDS = new Set([
-  'guarantorStatus', 'guarantorName', 'guarantorRelation', 'guarantorPhone',
-  'guarantorDob', 'guarantorAadhaarFront', 'guarantorAadhaarBack', 'guarantorPan',
-  'guarantorVideo', 'guarantorSignature', 'guarantorFatherName', 'guarantorMotherName',
-  'guarantorAddress', 'guarantorPhoto',
+  'guarantorStatus',
+  'guarantorName',
+  'guarantorRelation',
+  'guarantorPhone',
+  'guarantorDob',
+  'guarantorAadhaarFront',
+  'guarantorAadhaarBack',
+  'guarantorPan',
+  'guarantorVideo',
+  'guarantorSignature',
+  'guarantorFatherName',
+  'guarantorMotherName',
+  'guarantorAddress',
+  'guarantorPhoto',
 ]);
 
 export const adminRiderUseCases = {
@@ -61,7 +99,17 @@ export const adminRiderUseCases = {
     sortDir?: string;
   }) {
     const flags = await getFeatureFlags();
-    const { search, state, kycStatus, startDate, endDate, page = 1, limit = 20, sortBy = 'createdAt', sortDir = 'desc' } = filters;
+    const {
+      search,
+      state,
+      kycStatus,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortDir = 'desc',
+    } = filters;
 
     if (kycStatus && !flags.enableKYCVerification) {
       throw new Error('KYC verification is currently disabled');
@@ -85,7 +133,13 @@ export const adminRiderUseCases = {
       if (endDate) (where.createdAt as any).lte = new Date(`${endDate}T23:59:59.999Z`);
     }
 
-    const validSortFields = new Set(['createdAt', 'fullName', 'phone', 'lifecycleStatus', 'kycStatus']);
+    const validSortFields = new Set([
+      'createdAt',
+      'fullName',
+      'phone',
+      'lifecycleStatus',
+      'kycStatus',
+    ]);
     const orderByField = validSortFields.has(sortBy) ? sortBy : 'createdAt';
     const orderByDir = sortDir === 'asc' ? 'asc' : 'desc';
 
@@ -93,28 +147,121 @@ export const adminRiderUseCases = {
       db.rider.findMany({
         where,
         select: {
-          id: true, riderId: true, fullName: true, phone: true, email: true,
-          lifecycleStatus: true, pickupHub: true,
-          pickedUpAt: true, registrationDoneAt: true, depositDoneAt: true,
-          kycDoneAt: true, planDoneAt: true, teamLeader: true,
-          planStartDate: true, planEndDate: true,
-          currentPlan: true, currentPlanPrice: true, assignedVehicle: true,
-          vehicleId: true, intent: true, referralCode: true,
-          fatherName: true, motherName: true, dob: true, currentAddress: true,
-          createdAt: true, updatedAt: true,
-          pickupPhotoFront: true, pickupPhotoBack: true, pickupPhotoLeft: true,
-          pickupPhotoRight: true, pickupPhotoWithVehicle: true,
-          deliveryId: true, locationGranted: true, batteryGranted: true,
-          contactsGranted: true, callLogsGranted: true, micGranted: true,
-          cameraGranted: true, phoneGranted: true,
-          emergencyContact: true, preferredShift: true, referredBy: true,
-          kycProfile: { select: { id: true, status: true, profilePhoto: true, riderPhoto: true, signature: true, aadhaarFront: true, aadhaarBack: true, aadhaarNumber: true, panCard: true, panNumber: true, bankName: true, accountNumber: true, ifscCode: true, rejectionReason: true, updatedAt: true } },
-          wallet: { select: { id: true, balanceInPaise: true, securityDeposit: true, depositStatus: true, paymentStreak: true } },
-          guarantor: { select: { id: true, status: true, name: true, relation: true, dob: true, phone: true, aadhaarFront: true, aadhaarBack: true, pan: true, video: true, signature: true, fatherName: true, motherName: true, address: true, photo: true } },
-          leases: { where: { status: 'ACTIVE' }, take: 1, select: { createdAt: true, vehicle: { select: { vehicleNumber: true, model: true } } } },
-          vehicleReturns: { where: { status: 'SUBMITTED' }, orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, status: true, photoFront: true, photoBack: true, photoLeft: true, photoRight: true, photoSpeedometer: true, createdAt: true } },
+          id: true,
+          riderId: true,
+          fullName: true,
+          phone: true,
+          email: true,
+          lifecycleStatus: true,
+          pickupHub: true,
+          pickedUpAt: true,
+          registrationDoneAt: true,
+          depositDoneAt: true,
+          kycDoneAt: true,
+          planDoneAt: true,
+          teamLeader: true,
+          planStartDate: true,
+          planEndDate: true,
+          currentPlan: true,
+          currentPlanPrice: true,
+          assignedVehicle: true,
+          vehicleId: true,
+          intent: true,
+          referralCode: true,
+          fatherName: true,
+          motherName: true,
+          dob: true,
+          currentAddress: true,
+          createdAt: true,
+          updatedAt: true,
+          pickupPhotoFront: true,
+          pickupPhotoBack: true,
+          pickupPhotoLeft: true,
+          pickupPhotoRight: true,
+          pickupPhotoWithVehicle: true,
+          deliveryId: true,
+          locationGranted: true,
+          batteryGranted: true,
+          contactsGranted: true,
+          callLogsGranted: true,
+          micGranted: true,
+          cameraGranted: true,
+          phoneGranted: true,
+          emergencyContact: true,
+          preferredShift: true,
+          referredBy: true,
+          kycProfile: {
+            select: {
+              id: true,
+              status: true,
+              profilePhoto: true,
+              riderPhoto: true,
+              signature: true,
+              aadhaarFront: true,
+              aadhaarBack: true,
+              aadhaarNumber: true,
+              panCard: true,
+              panNumber: true,
+              bankName: true,
+              accountNumber: true,
+              ifscCode: true,
+              rejectionReason: true,
+              updatedAt: true,
+            },
+          },
+          wallet: {
+            select: {
+              id: true,
+              balanceInPaise: true,
+              securityDeposit: true,
+              depositStatus: true,
+              paymentStreak: true,
+            },
+          },
+          guarantor: {
+            select: {
+              id: true,
+              status: true,
+              name: true,
+              relation: true,
+              dob: true,
+              phone: true,
+              aadhaarFront: true,
+              aadhaarBack: true,
+              pan: true,
+              video: true,
+              signature: true,
+              fatherName: true,
+              motherName: true,
+              address: true,
+              photo: true,
+            },
+          },
+          leases: {
+            where: { status: 'ACTIVE' },
+            take: 1,
+            select: { createdAt: true, vehicle: { select: { vehicleNumber: true, model: true } } },
+          },
+          vehicleReturns: {
+            where: { status: 'SUBMITTED' },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              status: true,
+              photoFront: true,
+              photoBack: true,
+              photoLeft: true,
+              photoRight: true,
+              photoSpeedometer: true,
+              createdAt: true,
+            },
+          },
         },
-        orderBy: orderByField === 'kycStatus' ? { kycProfile: { status: orderByDir } } : { [orderByField]: orderByDir },
+        orderBy:
+          orderByField === 'kycStatus'
+            ? { kycProfile: { status: orderByDir } }
+            : { [orderByField]: orderByDir },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -147,12 +294,17 @@ export const adminRiderUseCases = {
 
     const { getStorageProvider } = await import('@/lib/storage');
     const storage = await getStorageProvider();
-    const signed = await Promise.all(flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage)));
+    const signed = await Promise.all(
+      flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage))
+    );
 
     return {
       riders: signed,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      flags: { enableKYCVerification: flags.enableKYCVerification, enableGuarantorRequirement: flags.enableGuarantorRequirement },
+      flags: {
+        enableKYCVerification: flags.enableKYCVerification,
+        enableGuarantorRequirement: flags.enableGuarantorRequirement,
+      },
     };
   },
 
@@ -195,7 +347,11 @@ export const adminRiderUseCases = {
    * Handles safe rider fields, KYC fields, wallet fields (with ledger-backed mutations),
    * guarantor fields, KYC status notifications, and audit logging.
    */
-  async update(id: string, data: Record<string, unknown>, context: { actorId: string; actorRole: string }) {
+  async update(
+    id: string,
+    data: Record<string, unknown>,
+    context: { actorId: string; actorRole: string }
+  ) {
     const { actorId, actorRole } = context;
 
     const riderData: any = {};
@@ -209,12 +365,15 @@ export const adminRiderUseCases = {
         else kycData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (WALLET_FIELDS.has(key)) {
         if (key === 'walletBalance') walletData.balanceInPaise = Math.round(Number(value) * 100);
-        else if (key === 'securityDeposit') walletData.securityDeposit = Math.round(Number(value) * 100);
+        else if (key === 'securityDeposit')
+          walletData.securityDeposit = Math.round(Number(value) * 100);
         else walletData[key] = value;
       } else if (GUARANTOR_FIELDS.has(key)) {
         if (key === 'guarantorStatus') guarantorData.status = value;
-        else if (key === 'guarantorName') guarantorData.name = typeof value === 'string' ? sanitizeText(value) : value;
-        else if (key === 'guarantorRelation') guarantorData.relation = typeof value === 'string' ? sanitizeText(value) : value;
+        else if (key === 'guarantorName')
+          guarantorData.name = typeof value === 'string' ? sanitizeText(value) : value;
+        else if (key === 'guarantorRelation')
+          guarantorData.relation = typeof value === 'string' ? sanitizeText(value) : value;
         else if (key === 'guarantorPhone') guarantorData.phone = value;
         else if (key === 'guarantorDob') guarantorData.dob = value;
         else if (key === 'guarantorAadhaarFront') guarantorData.aadhaarFront = value;
@@ -222,9 +381,12 @@ export const adminRiderUseCases = {
         else if (key === 'guarantorPan') guarantorData.pan = value;
         else if (key === 'guarantorVideo') guarantorData.video = value;
         else if (key === 'guarantorSignature') guarantorData.signature = value;
-        else if (key === 'guarantorFatherName') guarantorData.fatherName = typeof value === 'string' ? sanitizeText(value) : value;
-        else if (key === 'guarantorMotherName') guarantorData.motherName = typeof value === 'string' ? sanitizeText(value) : value;
-        else if (key === 'guarantorAddress') guarantorData.address = typeof value === 'string' ? sanitizeText(value) : value;
+        else if (key === 'guarantorFatherName')
+          guarantorData.fatherName = typeof value === 'string' ? sanitizeText(value) : value;
+        else if (key === 'guarantorMotherName')
+          guarantorData.motherName = typeof value === 'string' ? sanitizeText(value) : value;
+        else if (key === 'guarantorAddress')
+          guarantorData.address = typeof value === 'string' ? sanitizeText(value) : value;
         else if (key === 'guarantorPhoto') guarantorData.photo = value;
         else guarantorData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (SAFE_RIDER_FIELDS.has(key)) {
@@ -254,41 +416,88 @@ export const adminRiderUseCases = {
           create: { riderId: id, ...kycData },
         });
       }
-        if (Object.keys(walletData).length > 0) {
-          const wallet = (await tx.wallet.findUnique({ where: { riderId: id }, select: { id: true, balanceInPaise: true } }))
-            ?? await tx.wallet.create({ data: { riderId: id }, select: { id: true, balanceInPaise: true } });
+      if (Object.keys(walletData).length > 0) {
+        const wallet =
+          (await tx.wallet.findUnique({
+            where: { riderId: id },
+            select: { id: true, balanceInPaise: true },
+          })) ??
+          (await tx.wallet.create({
+            data: { riderId: id },
+            select: { id: true, balanceInPaise: true },
+          }));
 
-          if ('balanceInPaise' in walletData) {
-            const targetBalance = walletData.balanceInPaise as number;
-            const currentBalance = wallet.balanceInPaise;
-            const diff = targetBalance - currentBalance;
-            if (diff > 0) {
-              await walletLedgerService.credit({ riderId: id, amountInPaise: diff, category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}` }, tx);
-            } else if (diff < 0) {
-              await walletLedgerService.debit({ riderId: id, amountInPaise: Math.abs(diff), category: 'ADMIN_ADJUSTMENT', actorId, idempotencyKey: `admin:${id}:balance:${targetBalance}`, note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`, allowNegative: true }, tx);
-            }
-            delete walletData.balanceInPaise;
+        if ('balanceInPaise' in walletData) {
+          const targetBalance = walletData.balanceInPaise as number;
+          const currentBalance = wallet.balanceInPaise;
+          const diff = targetBalance - currentBalance;
+          if (diff > 0) {
+            await walletLedgerService.credit(
+              {
+                riderId: id,
+                amountInPaise: diff,
+                category: 'ADMIN_ADJUSTMENT',
+                actorId,
+                idempotencyKey: `admin:${id}:balance:${targetBalance}`,
+                note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`,
+              },
+              tx
+            );
+          } else if (diff < 0) {
+            await walletLedgerService.debit(
+              {
+                riderId: id,
+                amountInPaise: Math.abs(diff),
+                category: 'ADMIN_ADJUSTMENT',
+                actorId,
+                idempotencyKey: `admin:${id}:balance:${targetBalance}`,
+                note: `Admin set balance to ₹${(targetBalance / 100).toFixed(2)}`,
+                allowNegative: true,
+              },
+              tx
+            );
           }
-
-          // Block direct securityDeposit/depositStatus mutations — must use Deposits API
-          if ('securityDeposit' in walletData || 'depositStatus' in walletData) {
-            throw new Error('Use the Deposits API to modify security deposit or deposit status');
-          }
-
-          if (Object.keys(walletData).length > 0) {
-            await tx.wallet.update({ where: { id: wallet.id }, data: walletData });
-          }
+          delete walletData.balanceInPaise;
         }
-      if (Object.keys(guarantorData).length > 0) {
-        await tx.guarantor.upsert({ where: { riderId: id }, update: guarantorData, create: { riderId: id, ...guarantorData } });
+
+        // Block direct securityDeposit/depositStatus mutations — must use Deposits API
+        if ('securityDeposit' in walletData || 'depositStatus' in walletData) {
+          throw new Error('Use the Deposits API to modify security deposit or deposit status');
+        }
+
+        if (Object.keys(walletData).length > 0) {
+          await tx.wallet.update({ where: { id: wallet.id }, data: walletData });
+        }
       }
-      return tx.rider.findUnique({ where: { id }, include: { kycProfile: true, wallet: true, guarantor: true } });
+      if (Object.keys(guarantorData).length > 0) {
+        await tx.guarantor.upsert({
+          where: { riderId: id },
+          update: guarantorData,
+          create: { riderId: id, ...guarantorData },
+        });
+      }
+      return tx.rider.findUnique({
+        where: { id },
+        include: { kycProfile: true, wallet: true, guarantor: true },
+      });
     });
 
     // Audit log for KYC actions
     if (kycData.status && ['APPROVED', 'REJECTED', 'INFO_REQUIRED'].includes(kycData.status)) {
-      createAuditLog({ actorId, actorType: 'ADMIN', action: `kyc_${kycData.status.toLowerCase()}`, entity: 'rider', entityId: id, details: JSON.stringify({ kycStatus: kycData.status, rejectionReason: kycData.rejectionReason || null }) }).catch(() => {});
-      notificationService.notifyKycStatusChange(id, kycData.status, kycData.rejectionReason).catch((e) => logger.error('Failed to notify KYC change', e));
+      createAuditLog({
+        actorId,
+        actorType: 'ADMIN',
+        action: `kyc_${kycData.status.toLowerCase()}`,
+        entity: 'rider',
+        entityId: id,
+        details: JSON.stringify({
+          kycStatus: kycData.status,
+          rejectionReason: kycData.rejectionReason || null,
+        }),
+      }).catch(() => {});
+      notificationService
+        .notifyKycStatusChange(id, kycData.status, kycData.rejectionReason)
+        .catch((e) => logger.error('Failed to notify KYC change', e));
     }
 
     return sharedFlattenRider(result as any);
@@ -307,7 +516,13 @@ export const adminRiderUseCases = {
   /**
    * Assign a plan to a rider with override audit logging.
    */
-  async assignPlan(riderId: string, planId: string, planName: string, actorId: string, actorRole: string) {
+  async assignPlan(
+    riderId: string,
+    planId: string,
+    planName: string,
+    actorId: string,
+    actorRole: string
+  ) {
     const plan = await db.rentalPlan.findUnique({ where: { id: planId } });
     if (!plan) throw new Error('Plan not found');
 
@@ -318,18 +533,35 @@ export const adminRiderUseCases = {
     await transitionRiderStatus(riderId, 'PLAN_SELECTED');
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { currentPlan: plan.name, currentPlanPrice: plan.price, planStartDate: now, planEndDate: endDate, planDoneAt: new Date() },
+      data: {
+        currentPlan: plan.name,
+        currentPlanPrice: plan.price,
+        planStartDate: now,
+        planEndDate: endDate,
+        planDoneAt: new Date(),
+      },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
-    await createAuditLog({ actorId, action: 'rider.assign_plan', entity: 'Rider', entityId: riderId, details: { planId, planName, override: true } }).catch(() => {});
+    await createAuditLog({
+      actorId,
+      action: 'rider.assign_plan',
+      entity: 'Rider',
+      entityId: riderId,
+      details: { planId, planName, override: true },
+    }).catch(() => {});
     return result;
   },
 
   /**
    * Complete pickup for a rider — assigns vehicle, activates account.
    */
-  async completePickup(riderId: string, data: { vehicleId?: string; hubId?: string; teamLeader?: string }, actorId: string, actorRole: string) {
+  async completePickup(
+    riderId: string,
+    data: { vehicleId?: string; hubId?: string; teamLeader?: string },
+    actorId: string,
+    actorRole: string
+  ) {
     const rider = await db.rider.findUnique({ where: { id: riderId } });
     if (!rider) throw new Error('Rider not found');
 
@@ -342,11 +574,22 @@ export const adminRiderUseCases = {
     await transitionRiderStatus(riderId, 'ACTIVE');
     const result = await db.rider.update({
       where: { id: riderId },
-      data: { pickedUpAt: new Date(), assignedVehicle: data.vehicleId || 'VF-ASSIGNED-BY-ADMIN', pickupHub: data.hubId || 'Central Hub', teamLeader: assignedTl },
+      data: {
+        pickedUpAt: new Date(),
+        assignedVehicle: data.vehicleId || 'VF-ASSIGNED-BY-ADMIN',
+        pickupHub: data.hubId || 'Central Hub',
+        teamLeader: assignedTl,
+      },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
-    await createAuditLog({ actorId, action: 'rider.complete_pickup', entity: 'Rider', entityId: riderId, details: { vehicleId: data.vehicleId, hubId: data.hubId, manual: true } }).catch(() => {});
+    await createAuditLog({
+      actorId,
+      action: 'rider.complete_pickup',
+      entity: 'Rider',
+      entityId: riderId,
+      details: { vehicleId: data.vehicleId, hubId: data.hubId, manual: true },
+    }).catch(() => {});
     return result;
   },
 
@@ -354,14 +597,23 @@ export const adminRiderUseCases = {
    * End rental for a rider — resets rental state.
    */
   async endRental(riderId: string, actorId: string) {
-    const rider = await db.rider.findUnique({ where: { id: riderId }, select: { assignedVehicle: true } });
+    const rider = await db.rider.findUnique({
+      where: { id: riderId },
+      select: { assignedVehicle: true },
+    });
     const result = await db.rider.update({
       where: { id: riderId },
       data: { assignedVehicle: null, pickedUpAt: null },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
-    await createAuditLog({ actorId, action: 'rider.end_rental', entity: 'Rider', entityId: riderId, details: { previousVehicle: rider?.assignedVehicle } }).catch(() => {});
+    await createAuditLog({
+      actorId,
+      action: 'rider.end_rental',
+      entity: 'Rider',
+      entityId: riderId,
+      details: { previousVehicle: rider?.assignedVehicle },
+    }).catch(() => {});
     return result;
   },
 
@@ -371,19 +623,36 @@ export const adminRiderUseCases = {
   async getDeviceData(riderId: string, type: string = 'all') {
     const rider = await db.rider.findUnique({
       where: { id: riderId },
-      select: { isAdminLocked: true, lockPassword: true, isUninstallBlocked: true, isLocationMandatory: true, isAppsControlRestricted: true },
+      select: {
+        isAdminLocked: true,
+        lockPassword: true,
+        isUninstallBlocked: true,
+        isLocationMandatory: true,
+        isAppsControlRestricted: true,
+      },
     });
 
     const results: any = { rider };
 
     if (type === 'CONTACTS' || type === 'all') {
-      results.contacts = await db.userContact.findMany({ where: { riderId }, orderBy: { name: 'asc' } });
+      results.contacts = await db.userContact.findMany({
+        where: { riderId },
+        orderBy: { name: 'asc' },
+      });
     }
     if (type === 'CALL_LOGS' || type === 'all') {
-      results.callLogs = await db.userCallLog.findMany({ where: { riderId }, orderBy: { timestamp: 'desc' }, take: 50 });
+      results.callLogs = await db.userCallLog.findMany({
+        where: { riderId },
+        orderBy: { timestamp: 'desc' },
+        take: 50,
+      });
     }
     if (type === 'LOCATION' || type === 'all') {
-      results.locations = await db.userLocation.findMany({ where: { riderId }, orderBy: { timestamp: 'desc' }, take: 100 });
+      results.locations = await db.userLocation.findMany({
+        where: { riderId },
+        orderBy: { timestamp: 'desc' },
+        take: 100,
+      });
     }
 
     return results;

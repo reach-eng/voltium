@@ -7,7 +7,11 @@ import type { FileCategory, FileOwnerType } from './files.types';
 import { FILE_UPLOAD_RULES } from './files.types';
 
 export const fileService = {
-  async validateUpload(category: FileCategory, mimeType: string, fileSize: number): Promise<{ valid: boolean; error?: string }> {
+  async validateUpload(
+    category: FileCategory,
+    mimeType: string,
+    fileSize: number
+  ): Promise<{ valid: boolean; error?: string }> {
     return fileRepository.validateUpload(mimeType, fileSize, category, FILE_UPLOAD_RULES);
   },
 
@@ -76,7 +80,12 @@ export const fileService = {
     return storage.verifyUpload(storageKey);
   },
 
-  async logAdminFileView(adminId: string, fileRecordId: string, filePurpose: string, ownerId: string): Promise<void> {
+  async logAdminFileView(
+    adminId: string,
+    fileRecordId: string,
+    filePurpose: string,
+    ownerId: string
+  ): Promise<void> {
     await createAuditLog({
       actorId: adminId,
       actorType: 'ADMIN',
@@ -87,7 +96,10 @@ export const fileService = {
     });
   },
 
-  canViewFile(actor: { role: string; permissions?: string[]; riderDbId?: string }, fileRecord: { ownerId: string; purpose: string; visibility: string }): boolean {
+  canViewFile(
+    actor: { role: string; permissions?: string[]; riderDbId?: string },
+    fileRecord: { ownerId: string; purpose: string; visibility: string }
+  ): boolean {
     return filePolicy.canViewFile(actor, fileRecord);
   },
 };

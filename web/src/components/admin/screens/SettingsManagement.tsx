@@ -133,9 +133,13 @@ function BusinessSettingsTab() {
           {saving ? (
             'Saving...'
           ) : isDirty ? (
-            <><Save className="h-4 w-4 mr-1" /> Save Changes</>
+            <>
+              <Save className="h-4 w-4 mr-1" /> Save Changes
+            </>
           ) : (
-            <><CheckCircle2 className="h-4 w-4 mr-1" /> All Saved</>
+            <>
+              <CheckCircle2 className="h-4 w-4 mr-1" /> All Saved
+            </>
           )}
         </Button>
       </div>
@@ -150,20 +154,50 @@ function BusinessSettingsTab() {
               </div>
               <div>
                 <CardTitle className="text-base">Pricing</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Rental rates and fee structure</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Rental rates and fee structure
+                </p>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
-                { key: 'dailyRent' as const, label: 'Daily Rent', help: 'Base price for daily rental plan' },
-                { key: 'weeklyRent' as const, label: 'Weekly Rent', help: 'Base price for weekly rental plan' },
-                { key: 'monthlyRent' as const, label: 'Monthly Rent', help: 'Base price for monthly rental plan' },
-                { key: 'securityDeposit' as const, label: 'Security Deposit', help: 'One-time refundable deposit' },
-                { key: 'walletMinTopup' as const, label: 'Wallet Min Top-up', help: 'Minimum wallet balance to proceed' },
-                { key: 'lateFee' as const, label: 'Late Fee / Day', help: 'Fee charged per day for late returns' },
-                { key: 'referralBonus' as const, label: 'Referral Bonus', help: 'Reward for successful referrals' },
+                {
+                  key: 'dailyRent' as const,
+                  label: 'Daily Rent',
+                  help: 'Base price for daily rental plan',
+                },
+                {
+                  key: 'weeklyRent' as const,
+                  label: 'Weekly Rent',
+                  help: 'Base price for weekly rental plan',
+                },
+                {
+                  key: 'monthlyRent' as const,
+                  label: 'Monthly Rent',
+                  help: 'Base price for monthly rental plan',
+                },
+                {
+                  key: 'securityDeposit' as const,
+                  label: 'Security Deposit',
+                  help: 'One-time refundable deposit',
+                },
+                {
+                  key: 'walletMinTopup' as const,
+                  label: 'Wallet Min Top-up',
+                  help: 'Minimum wallet balance to proceed',
+                },
+                {
+                  key: 'lateFee' as const,
+                  label: 'Late Fee / Day',
+                  help: 'Fee charged per day for late returns',
+                },
+                {
+                  key: 'referralBonus' as const,
+                  label: 'Referral Bonus',
+                  help: 'Reward for successful referrals',
+                },
               ].map(({ key, label, help }) => (
                 <div key={key} className="space-y-2">
                   <Label htmlFor={key}>{label}</Label>
@@ -195,7 +229,9 @@ function BusinessSettingsTab() {
               </div>
               <div>
                 <CardTitle className="text-base">Automation</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Workflow automation and grace windows</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Workflow automation and grace windows
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -238,7 +274,9 @@ function BusinessSettingsTab() {
               </div>
               <div>
                 <CardTitle className="text-base">Limits &amp; Policies</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Rental caps, penalty thresholds and rewards rate</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Rental caps, penalty thresholds and rewards rate
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -307,7 +345,9 @@ function BusinessSettingsTab() {
               </div>
               <div>
                 <CardTitle className="text-base">Notifications</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Delivery channels for system alerts</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Delivery channels for system alerts
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -349,7 +389,9 @@ function BusinessSettingsTab() {
               </div>
               <div>
                 <CardTitle className="text-base">Support Contact</CardTitle>
-                <p className="text-xs text-muted-foreground mt-0.5">Displayed to riders inside the app</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Displayed to riders inside the app
+                </p>
               </div>
             </div>
           </CardHeader>
@@ -364,7 +406,9 @@ function BusinessSettingsTab() {
                   onChange={(e) => updateSetting('supportEmail', e.target.value)}
                   placeholder="support@example.com"
                 />
-                <p className="text-xs text-muted-foreground">Riders use this for email support queries</p>
+                <p className="text-xs text-muted-foreground">
+                  Riders use this for email support queries
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="supportPhone">Support Phone</Label>
@@ -385,24 +429,36 @@ function BusinessSettingsTab() {
   );
 }
 
-
-
 export default function SettingsManagement() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold tracking-tight">Configuration</h2>
-        <p className="text-muted-foreground text-sm">Business rules, feature toggles, and maintenance controls.</p>
+        <p className="text-muted-foreground text-sm">
+          Business rules, feature toggles, and maintenance controls.
+        </p>
       </div>
       <Tabs defaultValue="business" className="space-y-6">
         <TabsList className="bg-muted/40 p-1 h-10">
-          <TabsTrigger value="business" className="text-xs px-5 font-semibold">Business Settings</TabsTrigger>
-          <TabsTrigger value="flags" className="text-xs px-5 font-semibold">Feature Flags</TabsTrigger>
-          <TabsTrigger value="maintenance" className="text-xs px-5 font-semibold">Maintenance Mode</TabsTrigger>
+          <TabsTrigger value="business" className="text-xs px-5 font-semibold">
+            Business Settings
+          </TabsTrigger>
+          <TabsTrigger value="flags" className="text-xs px-5 font-semibold">
+            Feature Flags
+          </TabsTrigger>
+          <TabsTrigger value="maintenance" className="text-xs px-5 font-semibold">
+            Maintenance Mode
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="business"><BusinessSettingsTab /></TabsContent>
-        <TabsContent value="flags"><FeatureFlagsScreen /></TabsContent>
-        <TabsContent value="maintenance"><MaintenanceModeScreen /></TabsContent>
+        <TabsContent value="business">
+          <BusinessSettingsTab />
+        </TabsContent>
+        <TabsContent value="flags">
+          <FeatureFlagsScreen />
+        </TabsContent>
+        <TabsContent value="maintenance">
+          <MaintenanceModeScreen />
+        </TabsContent>
       </Tabs>
     </div>
   );

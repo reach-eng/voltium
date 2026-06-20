@@ -34,7 +34,18 @@ test.describe('Return Workflow Admin', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { totalRiders: 5, activeRiders: 3, totalVehicles: 10, availableVehicles: 8, pendingTransactions: 0, openTickets: 0, activeRentals: 1 } }),
+        body: JSON.stringify({
+          success: true,
+          data: {
+            totalRiders: 5,
+            activeRiders: 3,
+            totalVehicles: 10,
+            availableVehicles: 8,
+            pendingTransactions: 0,
+            openTickets: 0,
+            activeRentals: 1,
+          },
+        }),
       })
     );
 
@@ -60,7 +71,13 @@ test.describe('Return Workflow Admin', () => {
   test('admin incidents creation requires auth', async ({ page }) => {
     test.setTimeout(15_000);
     const response = await page.request.post('/api/admin/incidents', {
-      data: { vehicleId: 'veh-1', riderId: 'rider-1', type: 'DAMAGE', description: 'Test', fineAmount: 1000 },
+      data: {
+        vehicleId: 'veh-1',
+        riderId: 'rider-1',
+        type: 'DAMAGE',
+        description: 'Test',
+        fineAmount: 1000,
+      },
     });
     expect([401, 403]).toContain(response.status());
   });

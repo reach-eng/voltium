@@ -59,8 +59,10 @@ export async function PUT_update(request: NextRequest) {
   const updateData: any = {};
   if (validation.data.vehicleNumber) updateData.vehicleNumber = validation.data.vehicleNumber;
   if (validation.data.model) updateData.model = validation.data.model;
-  if (validation.data.batteryPartner !== undefined) updateData.batteryPartner = validation.data.batteryPartner;
-  if (validation.data.licensePlate !== undefined) updateData.licensePlate = validation.data.licensePlate;
+  if (validation.data.batteryPartner !== undefined)
+    updateData.batteryPartner = validation.data.batteryPartner;
+  if (validation.data.licensePlate !== undefined)
+    updateData.licensePlate = validation.data.licensePlate;
   if (validation.data.hubId) updateData.hubId = validation.data.hubId;
   if (validation.data.status) updateData.status = validation.data.status as VehicleStatus;
 

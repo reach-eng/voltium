@@ -112,29 +112,40 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     try {
       if (decoded.role === 'admin') {
         const adminId = decoded.adminId || decoded.riderDbId;
-        currentVersion = await getOrSetResponse(`token_version:admin:${adminId}`, async () => {
-          const admin = await db.admin.findUnique({
-            where: { id: adminId },
-            select: { tokenVersion: true },
-          });
-          return admin?.tokenVersion ?? 1;
-        }, 30);
+        currentVersion = await getOrSetResponse(
+          `token_version:admin:${adminId}`,
+          async () => {
+            const admin = await db.admin.findUnique({
+              where: { id: adminId },
+              select: { tokenVersion: true },
+            });
+            return admin?.tokenVersion ?? 1;
+          },
+          30
+        );
       } else {
         const riderDbId = decoded.riderDbId;
-        currentVersion = await getOrSetResponse(`token_version:rider:${riderDbId}`, async () => {
-          const rider = await db.rider.findUnique({
-            where: { id: riderDbId },
-            select: { tokenVersion: true },
-          });
-          return rider?.tokenVersion ?? 1;
-        }, 30);
+        currentVersion = await getOrSetResponse(
+          `token_version:rider:${riderDbId}`,
+          async () => {
+            const rider = await db.rider.findUnique({
+              where: { id: riderDbId },
+              select: { tokenVersion: true },
+            });
+            return rider?.tokenVersion ?? 1;
+          },
+          30
+        );
       }
     } catch (err) {
       logger.error('[Auth] Failed to verify tokenVersion against database:', err);
     }
 
     if (currentVersion !== null && tokenVersion !== currentVersion) {
-      logger.info('[Auth] Token version mismatch. Token is revoked.', { tokenVersion, currentVersion });
+      logger.info('[Auth] Token version mismatch. Token is revoked.', {
+        tokenVersion,
+        currentVersion,
+      });
       return null;
     }
 

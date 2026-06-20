@@ -61,7 +61,7 @@ export default function GuarantorManagement() {
           aadhaarFront: null,
           aadhaarBack: null,
           pan: null,
-        }
+        },
       ]);
       setLoading(false);
     }, 500);
@@ -71,11 +71,9 @@ export default function GuarantorManagement() {
     setActionLoading(true);
     // Simulate API call
     setTimeout(() => {
-      setGuarantors((prev) =>
-        prev.map((g) => (g.id === id ? { ...g, status: newStatus } : g))
-      );
+      setGuarantors((prev) => prev.map((g) => (g.id === id ? { ...g, status: newStatus } : g)));
       if (selectedGuarantor && selectedGuarantor.id === id) {
-        setSelectedGuarantor((prev) => prev ? { ...prev, status: newStatus } : null);
+        setSelectedGuarantor((prev) => (prev ? { ...prev, status: newStatus } : null));
       }
       toast.success(`Guarantor status updated to ${newStatus}`);
       setActionLoading(false);
@@ -93,7 +91,9 @@ export default function GuarantorManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Guarantors</h2>
-          <p className="text-muted-foreground">Verify and review guarantors for rider onboarding.</p>
+          <p className="text-muted-foreground">
+            Verify and review guarantors for rider onboarding.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-64">
@@ -116,29 +116,39 @@ export default function GuarantorManagement() {
           <CardHeader>
             <CardTitle>Verification Queue</CardTitle>
           </CardHeader>
-          <CardContent>            {loading ? (
+          <CardContent>
+            {' '}
+            {loading ? (
               <div className="overflow-x-auto animate-in fade-in duration-500">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
                       {['Name', 'Relationship', 'Rider', 'Status', 'Actions'].map((h) => (
-                      <th key={h} className="pb-3 text-left">
-                        <Skeleton className="h-4 w-16" />
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+                        <th key={h} className="pb-3 text-left">
+                          <Skeleton className="h-4 w-16" />
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
                     {[...Array(4)].map((_, i) => (
                       <tr key={i}>
-                        <td className="py-3"><Skeleton className="h-4 w-24" /></td>
-                        <td className="py-3"><Skeleton className="h-4 w-20" /></td>
+                        <td className="py-3">
+                          <Skeleton className="h-4 w-24" />
+                        </td>
+                        <td className="py-3">
+                          <Skeleton className="h-4 w-20" />
+                        </td>
                         <td className="py-3">
                           <Skeleton className="h-4 w-20 mb-1" />
                           <Skeleton className="h-3 w-16" />
                         </td>
-                        <td className="py-3"><Skeleton className="h-5 w-20 rounded-full" /></td>
-                        <td className="py-3 text-right"><Skeleton className="h-8 w-16 rounded-md ml-auto" /></td>
+                        <td className="py-3">
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                        </td>
+                        <td className="py-3 text-right">
+                          <Skeleton className="h-8 w-16 rounded-md ml-auto" />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -173,8 +183,8 @@ export default function GuarantorManagement() {
                               g.status === 'APPROVED'
                                 ? 'default'
                                 : g.status === 'PENDING'
-                                ? 'secondary'
-                                : 'destructive'
+                                  ? 'secondary'
+                                  : 'destructive'
                             }
                           >
                             {g.status}
@@ -216,7 +226,9 @@ export default function GuarantorManagement() {
                 <h4 className="font-semibold text-sm">Rider Details</h4>
                 <div className="text-sm mt-1">
                   <div>Rider: {selectedGuarantor.riderName}</div>
-                  <div className="text-xs text-muted-foreground">ID: {selectedGuarantor.riderId}</div>
+                  <div className="text-xs text-muted-foreground">
+                    ID: {selectedGuarantor.riderId}
+                  </div>
                 </div>
               </div>
 
@@ -266,7 +278,9 @@ export default function GuarantorManagement() {
         ) : (
           <Card className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
             <Shield className="h-10 w-10 mb-4 text-muted" />
-            <p className="text-sm">Select a guarantor from the verification queue to begin review.</p>
+            <p className="text-sm">
+              Select a guarantor from the verification queue to begin review.
+            </p>
           </Card>
         )}
       </div>

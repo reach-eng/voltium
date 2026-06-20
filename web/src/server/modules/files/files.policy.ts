@@ -8,7 +8,10 @@ export const filePolicy = {
     return actorRiderId === targetRiderId;
   },
 
-  canViewFile(actor: { role: string; permissions?: string[]; riderDbId?: string }, fileRecord: { ownerId: string; purpose: string; visibility: string }): boolean {
+  canViewFile(
+    actor: { role: string; permissions?: string[]; riderDbId?: string },
+    fileRecord: { ownerId: string; purpose: string; visibility: string }
+  ): boolean {
     if (actor.role === 'rider') {
       return actor.riderDbId === fileRecord.ownerId;
     }

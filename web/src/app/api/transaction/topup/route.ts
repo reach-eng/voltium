@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
     const riderDbId = auth.riderDbId;
 
     let body;
-    try { body = await request.json(); } catch {
+    try {
+      body = await request.json();
+    } catch {
       return errors.badRequest('Invalid request body');
     }
 
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
       {
         upiRef: upiRef || undefined,
         proofUrl: proofUrl || undefined,
-        idempotencyKey: request.headers.get('x-idempotency-key') || undefined
+        idempotencyKey: request.headers.get('x-idempotency-key') || undefined,
       }
     );
 

@@ -12,7 +12,12 @@ import type { LedgerEntryType, LedgerDirection } from './wallet.types';
 import type { LedgerCategory } from './wallet-ledger.service';
 
 export const walletService = {
-  async creditBalance(riderDbId: string, amountPaise: number, type: LedgerEntryType, metadata?: Record<string, unknown>) {
+  async creditBalance(
+    riderDbId: string,
+    amountPaise: number,
+    type: LedgerEntryType,
+    metadata?: Record<string, unknown>
+  ) {
     // Delegate to wallet-ledger.service which creates ledger entry + updates balance atomically
     const result = await walletLedgerService.credit({
       riderId: riderDbId,
@@ -26,7 +31,12 @@ export const walletService = {
     return result.newBalance;
   },
 
-  async debitBalance(riderDbId: string, amountPaise: number, type: LedgerEntryType, metadata?: Record<string, unknown>) {
+  async debitBalance(
+    riderDbId: string,
+    amountPaise: number,
+    type: LedgerEntryType,
+    metadata?: Record<string, unknown>
+  ) {
     const result = await walletLedgerService.debit({
       riderId: riderDbId,
       amountInPaise: amountPaise,

@@ -58,21 +58,39 @@ export const analyticsUseCases = {
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
     twelveMonthsAgo.setDate(1);
 
-    const [totalRiders, activeRiders, currentMonthTransactions, lastMonthTransactions, monthlyTrend, cohortData] = await Promise.all([
+    const [
+      totalRiders,
+      activeRiders,
+      currentMonthTransactions,
+      lastMonthTransactions,
+      monthlyTrend,
+      cohortData,
+    ] = await Promise.all([
       db.rider.count(),
       db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
-      db.transaction.aggregate({ where: { status: 'APPROVED', createdAt: { gte: startOfMonth } }, _sum: { amount: true } }),
-      db.transaction.aggregate({ where: { status: 'APPROVED', createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { amount: true } }),
+      db.transaction.aggregate({
+        where: { status: 'APPROVED', createdAt: { gte: startOfMonth } },
+        _sum: { amount: true },
+      }),
+      db.transaction.aggregate({
+        where: { status: 'APPROVED', createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        _sum: { amount: true },
+      }),
       getMonthlyTrend(twelveMonthsAgo),
       getCohortData(),
     ]);
 
-    const currentMRR = ((currentMonthTransactions._sum as { amount: number | null }).amount ?? 0) / 100;
+    const currentMRR =
+      ((currentMonthTransactions._sum as { amount: number | null }).amount ?? 0) / 100;
     const lastMRR = ((lastMonthTransactions._sum as { amount: number | null }).amount ?? 0) / 100;
     const mrrGrowth = lastMRR > 0 ? ((currentMRR - lastMRR) / lastMRR) * 100 : 0;
 
-    const lastMonthActiveRiders = await db.rider.count({ where: { lifecycleStatus: 'ACTIVE', createdAt: { lt: startOfMonth } } });
-    const churnedRiders = await db.rider.count({ where: { lifecycleStatus: 'SUSPENDED', updatedAt: { gte: startOfMonth } } });
+    const lastMonthActiveRiders = await db.rider.count({
+      where: { lifecycleStatus: 'ACTIVE', createdAt: { lt: startOfMonth } },
+    });
+    const churnedRiders = await db.rider.count({
+      where: { lifecycleStatus: 'SUSPENDED', updatedAt: { gte: startOfMonth } },
+    });
     const churnRate = lastMonthActiveRiders > 0 ? (churnedRiders / lastMonthActiveRiders) * 100 : 0;
 
     const totalVehicles = await db.vehicle.count();
@@ -80,12 +98,17 @@ export const analyticsUseCases = {
 
     return {
       overview: {
-        totalRiders, activeRiders, currentMRR,
+        totalRiders,
+        activeRiders,
+        currentMRR,
         mrrGrowth: Math.round(mrrGrowth * 100) / 100,
-        avgRevenuePerRider: activeRiders > 0 ? Math.round((currentMRR / activeRiders) * 100) / 100 : 0,
+        avgRevenuePerRider:
+          activeRiders > 0 ? Math.round((currentMRR / activeRiders) * 100) / 100 : 0,
         churnRate: Math.round(churnRate * 100) / 100,
-        collectionEfficiency: activeVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 10000) / 100 : 0,
-        totalVehicles, activeVehicles,
+        collectionEfficiency:
+          activeVehicles > 0 ? Math.round((activeVehicles / totalVehicles) * 10000) / 100 : 0,
+        totalVehicles,
+        activeVehicles,
       },
       trend: monthlyTrend,
       cohorts: cohortData,
@@ -106,11 +129,15 @@ async function getMonthlyTrend(startDate: Date) {
     monthlyData[key] = (monthlyData[key] || 0) + t.amount / 100;
   });
 
-  return Object.entries(monthlyData).sort(([a], [b]) => a.localeCompare(b)).map(([month, revenue]) => ({ month, revenue }));
+  return Object.entries(monthlyData)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, revenue]) => ({ month, revenue }));
 }
 
 async function getCohortData() {
-  const riders = await db.rider.findMany({ select: { id: true, createdAt: true, lifecycleStatus: true, updatedAt: true } });
+  const riders = await db.rider.findMany({
+    select: { id: true, createdAt: true, lifecycleStatus: true, updatedAt: true },
+  });
   const cohorts: Record<string, { total: number; active: number; suspended: number }> = {};
 
   riders.forEach((r: { id: string; createdAt: Date; lifecycleStatus: string; updatedAt: Date }) => {
@@ -121,8 +148,11 @@ async function getCohortData() {
     if (r.lifecycleStatus === 'SUSPENDED') cohorts[key].suspended++;
   });
 
-  return Object.entries(cohorts).sort(([a], [b]) => a.localeCompare(b)).map(([month, data]) => ({
-    month, ...data,
-    retentionRate: data.total > 0 ? Math.round((data.active / data.total) * 10000) / 100 : 0,
-  }));
+  return Object.entries(cohorts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, data]) => ({
+      month,
+      ...data,
+      retentionRate: data.total > 0 ? Math.round((data.active / data.total) * 10000) / 100 : 0,
+    }));
 }

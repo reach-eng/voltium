@@ -30,7 +30,10 @@ export async function PUT(req: NextRequest) {
     const validation = validateBody(updateLegalSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
 
-    const doc = await legalUseCases.upsert(validation.data, req.headers.get('x-admin-id') || 'system');
+    const doc = await legalUseCases.upsert(
+      validation.data,
+      req.headers.get('x-admin-id') || 'system'
+    );
     return success(doc);
   } catch (error) {
     logger.error('PUT /api/admin/legal error:', error);

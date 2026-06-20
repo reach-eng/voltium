@@ -57,7 +57,8 @@ export const fileUseCases = {
     }
 
     const ownerId = actor.riderDbId || actor.adminId || 'unknown';
-    const ownerType: FileOwnerType = actor.role === 'admin' ? FileOwnerType.ADMIN : FileOwnerType.RIDER;
+    const ownerType: FileOwnerType =
+      actor.role === 'admin' ? FileOwnerType.ADMIN : FileOwnerType.RIDER;
     const storageKey = fileService.generateStorageKey(ownerId, input.category, input.fileName);
 
     const record = await fileService.createFileRecord({
@@ -74,7 +75,8 @@ export const fileUseCases = {
     // Generate a one-time upload token for local_laptop mode
     const uploadToken = fileUseCases._generateUploadToken(record.id);
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL || 'http://localhost:8081';
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_APP_URL || 'http://localhost:8081';
     const uploadUrl = `${baseUrl}/api/files/local-upload/${record.id}?token=${uploadToken}`;
 
     return {
@@ -123,7 +125,12 @@ export const fileUseCases = {
     }
 
     if (actor.role === 'admin' && actor.adminId) {
-      await fileService.logAdminFileView(actor.adminId, fileRecordId, record.purpose, record.ownerId);
+      await fileService.logAdminFileView(
+        actor.adminId,
+        fileRecordId,
+        record.purpose,
+        record.ownerId
+      );
     }
 
     const readUrl = await fileService.getSignedReadUrl(record.storageKey, 15);

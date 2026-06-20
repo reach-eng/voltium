@@ -1,4 +1,8 @@
-import { adminRepository, type CreateAdminParams, type UpdateAdminParams } from './admin.repository';
+import {
+  adminRepository,
+  type CreateAdminParams,
+  type UpdateAdminParams,
+} from './admin.repository';
 import { AUDIT_ACTIONS } from './admin.types';
 import { logAdminAction } from './admin.policy';
 import { logger } from '@/lib/logger';
@@ -6,12 +10,21 @@ import { logger } from '@/lib/logger';
 const loginAttempts = new Map<string, number>();
 
 export const adminUseCases = {
-  async listAdmins(filters?: { role?: string; isActive?: boolean; search?: string; page?: number; limit?: number }) {
+  async listAdmins(filters?: {
+    role?: string;
+    isActive?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const { page = 1, limit = 20, ...rest } = filters || {};
     const result = await adminRepository.list(rest);
     const total = result.length;
     const paginated = result.slice((page - 1) * limit, page * limit);
-    return { admins: paginated, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      admins: paginated,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   async getAdmin(id: string) {

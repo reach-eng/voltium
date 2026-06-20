@@ -104,7 +104,10 @@ export const kycRepository = {
       });
 
       await tx.rider.updateMany({
-        where: { id: riderDbId, lifecycleStatus: { in: ['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED'] } },
+        where: {
+          id: riderDbId,
+          lifecycleStatus: { in: ['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED'] },
+        },
         data: { lifecycleStatus: 'KYC_SUBMITTED', kycDoneAt: new Date() },
       });
 
@@ -150,7 +153,10 @@ export const kycRepository = {
         where: { riderId: riderDbId },
         data: { status: 'REJECTED', rejectionReason: reason },
       });
-      await tx.rider.updateMany({ where: { id: riderDbId }, data: { lifecycleStatus: 'SUSPENDED' } });
+      await tx.rider.updateMany({
+        where: { id: riderDbId },
+        data: { lifecycleStatus: 'SUSPENDED' },
+      });
       return kyc;
     });
   },

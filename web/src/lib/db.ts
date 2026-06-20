@@ -10,11 +10,15 @@ let recoveryTimer: any = null;
 
 function startRecoveryCheck(client: any) {
   if (recoveryTimer || process.env.DATABASE_OFFLINE !== 'true') return;
-  logger.info('[Prisma Auto-Recovery] Database offline detected. Starting connection monitoring...');
+  logger.info(
+    '[Prisma Auto-Recovery] Database offline detected. Starting connection monitoring...'
+  );
   recoveryTimer = setInterval(async () => {
     try {
       await client.$queryRawUnsafe('SELECT 1');
-      logger.info('[Prisma Auto-Recovery] Database connection restored. Disabling offline mock fallback.');
+      logger.info(
+        '[Prisma Auto-Recovery] Database connection restored. Disabling offline mock fallback.'
+      );
       isDbOffline = false;
       if (recoveryTimer) {
         clearInterval(recoveryTimer);
@@ -32,23 +36,24 @@ function startRecoveryCheck(client: any) {
 const mockRiderPhoneMap = new Map<string, string>();
 
 const EXISTING_PHONES = new Set([
-  '9999900001', '+919999900001',
-  '9876543210', '+919876543210',
-  '9999999999', '+919999999999',
-  '8888888888', '+918888888888',
-  '7788888801', '+917788888801'
+  '9999900001',
+  '+919999900001',
+  '9876543210',
+  '+919876543210',
+  '9999999999',
+  '+919999999999',
+  '8888888888',
+  '+918888888888',
+  '7788888801',
+  '+917788888801',
 ]);
 
-const EXISTING_IDS = new Set([
-  'mock-rider-db-id',
-  'rider-1',
-  'rider-dev-id'
-]);
+const EXISTING_IDS = new Set(['mock-rider-db-id', 'rider-1', 'rider-dev-id']);
 
 function getMockFallback(operation: string, model?: string, args?: any) {
   if (operation === 'count') return 0;
   if (operation === 'findMany') return [];
-  
+
   if (operation === 'create' && model === 'Rider') {
     const id = args?.data?.id || args?.data?.riderId || `mock-rider-${Date.now()}`;
     const phone = args?.data?.phone || '9999900001';
@@ -59,24 +64,24 @@ function getMockFallback(operation: string, model?: string, args?: any) {
     if (model === 'Rider') {
       const id = args?.where?.id;
       const phone = args?.where?.phone;
-      
-      const isExisting = 
+
+      const isExisting =
         (phone && EXISTING_PHONES.has(phone)) ||
         (id && EXISTING_IDS.has(id)) ||
         (id && mockRiderPhoneMap.has(id)) ||
         (phone && Array.from(mockRiderPhoneMap.values()).includes(phone));
-        
+
       if (!isExisting) {
         return null;
       }
-      
+
       const resolvedPhone = phone || (id ? mockRiderPhoneMap.get(id) : undefined) || '9999900001';
       const resolvedId = id || 'mock-rider-db-id';
-      
+
       if (resolvedId && resolvedPhone) {
         mockRiderPhoneMap.set(resolvedId, resolvedPhone);
       }
-      
+
       return {
         id: resolvedId,
         riderId: 'VF-RD-MOCK',
@@ -138,12 +143,12 @@ function getMockFallback(operation: string, model?: string, args?: any) {
       _max: {},
     };
   }
-  
+
   if (operation === 'create' || operation === 'update' || operation === 'upsert') {
     const id = args?.data?.id || args?.data?.riderId || 'mock-id';
     return { id, ...args?.data };
   }
-  
+
   return null;
 }
 
@@ -199,7 +204,10 @@ const createPrismaClient = () => {
           if (process.env.DATABASE_OFFLINE === 'true') {
             isDbOffline = true;
             startRecoveryCheck(client);
-            logger.warn('[Prisma Offline Bypass] queryRaw failed, short-circuiting DB queries:', err.message);
+            logger.warn(
+              '[Prisma Offline Bypass] queryRaw failed, short-circuiting DB queries:',
+              err.message
+            );
             return [];
           }
           throw err;
@@ -215,19 +223,39 @@ const createPrismaClient = () => {
           if (process.env.DATABASE_OFFLINE === 'true') {
             isDbOffline = true;
             startRecoveryCheck(client);
-            logger.warn('[Prisma Offline Bypass] executeRaw failed, short-circuiting DB queries:', err.message);
+            logger.warn(
+              '[Prisma Offline Bypass] executeRaw failed, short-circuiting DB queries:',
+              err.message
+            );
             return 0;
           }
           throw err;
         }
       },
       $allModels: {
-        async $allOperations({ model, operation, args, query }: { model: string; operation: string; args: any; query: (args: any) => Promise<any> }): Promise<any> {
+        async $allOperations({
+          model,
+          operation,
+          args,
+          query,
+        }: {
+          model: string;
+          operation: string;
+          args: any;
+          query: (args: any) => Promise<any>;
+        }): Promise<any> {
           if (isDbOffline && process.env.DATABASE_OFFLINE === 'true') {
             return getMockFallback(operation, model, args);
           }
 
-          const softDeleteModels = ['Rider', 'Vehicle', 'RentalPlan', 'Shift', 'Guarantor', 'SupportTicket'];
+          const softDeleteModels = [
+            'Rider',
+            'Vehicle',
+            'RentalPlan',
+            'Shift',
+            'Guarantor',
+            'SupportTicket',
+          ];
           if (softDeleteModels.includes(model)) {
             const modelKey = model.charAt(0).toLowerCase() + model.slice(1);
             if (operation === 'delete') {
@@ -240,7 +268,9 @@ const createPrismaClient = () => {
                 if (process.env.DATABASE_OFFLINE === 'true') {
                   isDbOffline = true;
                   startRecoveryCheck(client);
-                  logger.warn(`[Prisma Offline Bypass] DB down. Soft-delete on ${model} failed: ${err.message}`);
+                  logger.warn(
+                    `[Prisma Offline Bypass] DB down. Soft-delete on ${model} failed: ${err.message}`
+                  );
                   return getMockFallback(operation, model, args);
                 }
                 throw err;
@@ -256,7 +286,9 @@ const createPrismaClient = () => {
                 if (process.env.DATABASE_OFFLINE === 'true') {
                   isDbOffline = true;
                   startRecoveryCheck(client);
-                  logger.warn(`[Prisma Offline Bypass] DB down. Soft-deleteMany on ${model} failed: ${err.message}`);
+                  logger.warn(
+                    `[Prisma Offline Bypass] DB down. Soft-deleteMany on ${model} failed: ${err.message}`
+                  );
                   return getMockFallback(operation, model, args);
                 }
                 throw err;
@@ -277,7 +309,9 @@ const createPrismaClient = () => {
                 if (process.env.DATABASE_OFFLINE === 'true') {
                   isDbOffline = true;
                   startRecoveryCheck(client);
-                  logger.warn(`[Prisma Offline Bypass] DB down. findUnique fallback on ${model} failed: ${err.message}`);
+                  logger.warn(
+                    `[Prisma Offline Bypass] DB down. findUnique fallback on ${model} failed: ${err.message}`
+                  );
                   return getMockFallback(operation, model, args);
                 }
                 throw err;
@@ -297,7 +331,9 @@ const createPrismaClient = () => {
             if (process.env.DATABASE_OFFLINE === 'true') {
               isDbOffline = true;
               startRecoveryCheck(client);
-              logger.warn(`[Prisma Offline Bypass] DB down. Fallback for ${operation} on ${model}: ${err.message}`);
+              logger.warn(
+                `[Prisma Offline Bypass] DB down. Fallback for ${operation} on ${model}: ${err.message}`
+              );
               return getMockFallback(operation, model, args);
             }
             throw err;

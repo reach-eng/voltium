@@ -27,7 +27,10 @@ const updateRiderSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   fatherName: z.string().max(100).optional(),
   motherName: z.string().max(100).optional(),
-  dob: z.string().regex(/^\d{2}-\d{2}-\d{4}$/).optional(),
+  dob: z
+    .string()
+    .regex(/^\d{2}-\d{2}-\d{4}$/)
+    .optional(),
   currentAddress: z.string().max(500).optional(),
   emergencyContact: z.string().max(20).optional(),
   pickupHub: z.string().max(100).optional(),
@@ -36,7 +39,10 @@ const updateRiderSchema = z.object({
   planEndDate: z.string().datetime().optional().or(z.literal('')),
   intent: z.enum(['deliver', 'personal']).optional(),
   referralCode: z.string().max(20).optional(),
-  phone: z.string().regex(/^\d{10}$/).optional(),
+  phone: z
+    .string()
+    .regex(/^\d{10}$/)
+    .optional(),
   preferredShift: z.string().max(50).optional(),
   referredBy: z.string().max(100).optional(),
   assignedVehicle: z.string().max(100).optional().nullable(),
@@ -59,11 +65,19 @@ const updateRiderSchema = z.object({
   // Wallet fields
   walletBalance: z.number().optional(),
   // Guarantor fields
-  guarantorStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']).optional(),
+  guarantorStatus: z
+    .enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'])
+    .optional(),
   guarantorName: z.string().max(100).optional(),
   guarantorRelation: z.string().max(50).optional(),
-  guarantorPhone: z.string().regex(/^\d{10}$/).optional(),
-  guarantorDob: z.string().regex(/^\d{2}-\d{2}-\d{4}$/).optional(),
+  guarantorPhone: z
+    .string()
+    .regex(/^\d{10}$/)
+    .optional(),
+  guarantorDob: z
+    .string()
+    .regex(/^\d{2}-\d{2}-\d{4}$/)
+    .optional(),
   guarantorAadhaarFront: z.string().url().optional().or(z.literal('')),
   guarantorAadhaarBack: z.string().url().optional().or(z.literal('')),
   guarantorPan: z.string().url().optional().or(z.literal('')),
@@ -96,7 +110,15 @@ export async function GET(req: NextRequest) {
     const sortDir = url.searchParams.get('sortDir') || 'desc';
 
     const result = await adminRiderUseCases.list({
-      search, state, kycStatus, startDate, endDate, page, limit, sortBy, sortDir,
+      search,
+      state,
+      kycStatus,
+      startDate,
+      endDate,
+      page,
+      limit,
+      sortBy,
+      sortDir,
     });
 
     return success(result);
@@ -141,7 +163,9 @@ export async function PUT(req: NextRequest) {
     const raw = await req.json();
     const parsed = updateRiderSchema.safeParse(raw);
     if (!parsed.success) {
-      return errors.badRequest(parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${e.message}`).join('; '));
+      return errors.badRequest(
+        parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${e.message}`).join('; ')
+      );
     }
     const { id, ...data } = parsed.data;
     if (!id) return errors.badRequest('Rider ID is required');

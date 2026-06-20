@@ -70,7 +70,9 @@ export async function adminLogin(): Promise<string> {
 /**
  * Rider login helper: performs send-otp -> verify-otp and returns the token
  */
-export async function riderLogin(phone: string): Promise<{ token: string; id: string; riderId: string }> {
+export async function riderLogin(
+  phone: string
+): Promise<{ token: string; id: string; riderId: string }> {
   // 1. Send OTP
   const sendRes = await api('/api/auth/send-otp', {
     method: 'POST',

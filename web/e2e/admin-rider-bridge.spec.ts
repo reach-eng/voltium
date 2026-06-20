@@ -91,7 +91,7 @@ test.describe('Admin and Flutter App Bridge E2E Test Flow', () => {
           }),
         });
       }
-      
+
       // Default GET request lists the pending rider
       return route.fulfill({
         status: 200,
@@ -119,9 +119,12 @@ test.describe('Admin and Flutter App Bridge E2E Test Flow', () => {
 
     // Navigate to KYC Management tab
     await page.locator('[data-nav-id="riders"]').first().click({ force: true });
-    
+
     // Switch to Pending KYC reviews tab
-    const pendingTab = page.locator('button, [role="tab"]').filter({ hasText: /Pending/i }).first();
+    const pendingTab = page
+      .locator('button, [role="tab"]')
+      .filter({ hasText: /Pending/i })
+      .first();
     await pendingTab.waitFor({ state: 'visible', timeout: 10_000 });
     await pendingTab.click({ force: true });
 
@@ -133,7 +136,10 @@ test.describe('Admin and Flutter App Bridge E2E Test Flow', () => {
     await approveBtn.click({ force: true });
 
     // Confirm inside the dialog
-    const confirmBtn = page.getByRole('dialog').getByRole('button', { name: /^Approve$/i }).first();
+    const confirmBtn = page
+      .getByRole('dialog')
+      .getByRole('button', { name: /^Approve$/i })
+      .first();
     await confirmBtn.click({ force: true });
 
     // --- PART 3: SIMULATE FLUTTER RE-VERIFICATION (APP UPDATE) ---
@@ -175,7 +181,7 @@ test.describe('Admin and Flutter App Bridge E2E Test Flow', () => {
 
     // Navigate to rider view again
     await page.goto('/?view=rider');
-    
+
     // Assert user dashboard is now Active (representing the app unlocking)
     await expect(page.getByText(/Available Balance/i).first()).toBeVisible({ timeout: 10_000 });
   });

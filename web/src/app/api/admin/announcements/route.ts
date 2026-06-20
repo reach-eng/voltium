@@ -38,7 +38,10 @@ export async function POST(req: NextRequest) {
 
     const { title, message, channel, targetAudience, targetIds, scheduledAt } = validation.data;
 
-    const result = await announcementUseCases.create({ title, message, channel, targetAudience, targetIds, scheduledAt }, session.adminId || '');
+    const result = await announcementUseCases.create(
+      { title, message, channel, targetAudience, targetIds, scheduledAt },
+      session.adminId || ''
+    );
 
     return success(result, scheduledAt ? 'Announcement scheduled' : 'Announcement sent', 201);
   } catch (error) {

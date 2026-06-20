@@ -1,7 +1,12 @@
 import { db } from '@/lib/db';
 
 export const teamLeaderRepository = {
-  async findAllPaginated(params: { search?: string | null; isActive?: string | null; page: number; limit: number }) {
+  async findAllPaginated(params: {
+    search?: string | null;
+    isActive?: string | null;
+    page: number;
+    limit: number;
+  }) {
     const { search, isActive, page, limit } = params;
     const where: any = {};
     if (isActive === 'ACTIVE') where.isActive = true;
@@ -15,7 +20,12 @@ export const teamLeaderRepository = {
     }
 
     const [leaders, total] = await Promise.all([
-      db.teamLeader.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      db.teamLeader.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
       db.teamLeader.count({ where }),
     ]);
 
@@ -54,12 +64,18 @@ export const teamLeaderRepository = {
   },
 
   async bulkActivate(ids: string[]) {
-    const result = await db.teamLeader.updateMany({ where: { id: { in: ids } }, data: { isActive: true } });
+    const result = await db.teamLeader.updateMany({
+      where: { id: { in: ids } },
+      data: { isActive: true },
+    });
     return result.count;
   },
 
   async bulkDeactivate(ids: string[]) {
-    const result = await db.teamLeader.updateMany({ where: { id: { in: ids } }, data: { isActive: false } });
+    const result = await db.teamLeader.updateMany({
+      where: { id: { in: ids } },
+      data: { isActive: false },
+    });
     return result.count;
   },
 

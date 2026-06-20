@@ -6,8 +6,13 @@
  * See docs/STATE_MACHINES.md for full transition map.
  */
 
-
-export type KycStatus = 'DRAFT' | 'SUBMITTED' | 'INFO_REQUIRED' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+export type KycStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'INFO_REQUIRED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'EXPIRED';
 
 type TransitionMap = Record<KycStatus, KycStatus[]>;
 

@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     if (!basePriceParam) return errors.validation('basePrice is required');
 
     const basePriceRupees = parseFloat(basePriceParam);
-    if (isNaN(basePriceRupees) || basePriceRupees <= 0) return errors.validation('basePrice must be a positive number');
+    if (isNaN(basePriceRupees) || basePriceRupees <= 0)
+      return errors.validation('basePrice must be a positive number');
 
     const result = await pricingUseCases.calculate(hubId, basePriceRupees);
     return success(result, 'Dynamic price calculated');

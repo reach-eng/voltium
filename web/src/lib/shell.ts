@@ -31,7 +31,7 @@ export function createArchive(sourceDir: string, outputFile: string): void {
       [
         '-NoProfile',
         '-Command',
-        `$ErrorActionPreference='Stop'; if (Test-Path -LiteralPath '${outputFile.replace(/'/g, "''")}') { Remove-Item -LiteralPath '${outputFile.replace(/'/g, "''")}' -Force }; Compress-Archive -Path '${sourceDir.replace(/'/g, "''").replace(/\\/g, '/') }/*' -DestinationPath '${outputFile.replace(/'/g, "''")}' -Force`,
+        `$ErrorActionPreference='Stop'; if (Test-Path -LiteralPath '${outputFile.replace(/'/g, "''")}') { Remove-Item -LiteralPath '${outputFile.replace(/'/g, "''")}' -Force }; Compress-Archive -Path '${sourceDir.replace(/'/g, "''").replace(/\\/g, '/')}/*' -DestinationPath '${outputFile.replace(/'/g, "''")}' -Force`,
       ],
       { timeout: 300_000, stdio: 'pipe' }
     );
@@ -79,16 +79,10 @@ export function dumpDatabase(dbUrl: string, outputFile: string): void {
     writeFileSync(outputFile, '-- Mock Database Dump\nSELECT 1;\n');
     return;
   }
-  execFileSync(
-    'pg_dump',
-    [
-      `--dbname=${dbUrl}`,
-      '-f', outputFile,
-      '--no-owner',
-      '--no-acl',
-    ],
-    { timeout: 300_000, stdio: 'pipe' }
-  );
+  execFileSync('pg_dump', [`--dbname=${dbUrl}`, '-f', outputFile, '--no-owner', '--no-acl'], {
+    timeout: 300_000,
+    stdio: 'pipe',
+  });
 }
 
 /**
@@ -99,14 +93,7 @@ export function restoreDatabase(dbUrl: string, inputFile: string): void {
   if (process.env.DATABASE_OFFLINE === 'true') {
     return;
   }
-  execFileSync(
-    'psql',
-    [
-      `--dbname=${dbUrl}`,
-      '-f', inputFile,
-    ],
-    { timeout: 600_000, stdio: 'pipe' }
-  );
+  execFileSync('psql', [`--dbname=${dbUrl}`, '-f', inputFile], { timeout: 600_000, stdio: 'pipe' });
 }
 
 // ─── Disk Space Helpers ─────────────────────────────────────────────────

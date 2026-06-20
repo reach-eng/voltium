@@ -28,23 +28,35 @@ vi.mock('@/lib/get-session', () => ({
 
 vi.mock('@/lib/api-response', () => ({
   errors: {
-    unauthorized: vi.fn((msg: string) =>
-      new Response(JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: msg } }), {
-        status: 401,
-        headers: { 'content-type': 'application/json' },
-      })
+    unauthorized: vi.fn(
+      (msg: string) =>
+        new Response(
+          JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: msg } }),
+          {
+            status: 401,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
     ),
-    forbidden: vi.fn((msg: string) =>
-      new Response(JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: msg } }), {
-        status: 403,
-        headers: { 'content-type': 'application/json' },
-      })
+    forbidden: vi.fn(
+      (msg: string) =>
+        new Response(
+          JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: msg } }),
+          {
+            status: 403,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
     ),
-    tooManyRequests: vi.fn((msg: string) =>
-      new Response(JSON.stringify({ success: false, error: { code: 'RATE_LIMITED', message: msg } }), {
-        status: 429,
-        headers: { 'content-type': 'application/json' },
-      })
+    tooManyRequests: vi.fn(
+      (msg: string) =>
+        new Response(
+          JSON.stringify({ success: false, error: { code: 'RATE_LIMITED', message: msg } }),
+          {
+            status: 429,
+            headers: { 'content-type': 'application/json' },
+          }
+        )
     ),
   },
 }));
@@ -235,10 +247,9 @@ describe('requireRiderSession', () => {
 
     // Source code does: searchParams.get('riderId') || headers.get('x-rider-id')
     // So query param takes priority
-    const request = createMockRequest(
-      'http://localhost:8081/api/admin/kyc?riderId=query-id',
-      { 'x-rider-id': 'header-id' }
-    );
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=query-id', {
+      'x-rider-id': 'header-id',
+    });
     const result = await requireRiderSession(request);
 
     // query param should take priority
@@ -310,9 +321,7 @@ describe('requireRiderSession', () => {
       // no adminRole set
     });
 
-    const request = createMockRequest(
-      'http://localhost:8081/api/admin/kyc?riderId=rider-xyz'
-    );
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz');
     const result = await requireRiderSession(request);
 
     expect(result).toEqual({ riderDbId: 'rider-xyz', phone: '0000000000' });
@@ -333,10 +342,7 @@ describe('requireRiderSession', () => {
       adminRole: 'SUPER_ADMIN',
     });
 
-    const request = createMockRequest(
-      'http://localhost:8081/api/admin/kyc?riderId=rider-xyz',
-      {}
-    );
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz', {});
     // Force method to POST
     Object.defineProperty(request, 'method', { value: 'POST' });
 
@@ -356,9 +362,7 @@ describe('requireRiderSession', () => {
       adminPermissions: [], // Explicitly no permissions overrides
     });
 
-    const request = createMockRequest(
-      'http://localhost:8081/api/admin/kyc?riderId=rider-xyz'
-    );
+    const request = createMockRequest('http://localhost:8081/api/admin/kyc?riderId=rider-xyz');
 
     const result = await requireRiderSession(request);
     expect(result).toBeInstanceOf(Response);

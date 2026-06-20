@@ -54,7 +54,7 @@ export default function WalletDepositManagement() {
           purpose: 'SECURITY_DEPOSIT',
           amount: 150000, // in paise: ₹1500
           createdAt: new Date(Date.now() - 86400000).toISOString(),
-        }
+        },
       ]);
       setLoading(false);
     }, 500);
@@ -75,7 +75,9 @@ export default function WalletDepositManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Wallet & Deposits</h2>
-          <p className="text-muted-foreground">Audit double-entry ledgers, security deposits, and adjustments.</p>
+          <p className="text-muted-foreground">
+            Audit double-entry ledgers, security deposits, and adjustments.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-64">
@@ -150,10 +152,18 @@ export default function WalletDepositManagement() {
                         <Skeleton className="h-4 w-28 mb-1" />
                         <Skeleton className="h-3 w-20" />
                       </td>
-                      <td className="py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                      <td className="py-3"><Skeleton className="h-4 w-24" /></td>
-                      <td className="py-3"><Skeleton className="h-4 w-16" /></td>
-                      <td className="py-3 text-right"><Skeleton className="h-4 w-20 ml-auto" /></td>
+                      <td className="py-3">
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </td>
+                      <td className="py-3">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-3">
+                        <Skeleton className="h-4 w-16" />
+                      </td>
+                      <td className="py-3 text-right">
+                        <Skeleton className="h-4 w-20 ml-auto" />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -189,9 +199,7 @@ export default function WalletDepositManagement() {
                         </Badge>
                       </td>
                       <td className="py-3 font-semibold">{l.purpose}</td>
-                      <td className="py-3">
-                        ₹{(l.amount / 100).toFixed(2)}
-                      </td>
+                      <td className="py-3">₹{(l.amount / 100).toFixed(2)}</td>
                       <td className="py-3 text-right text-muted-foreground">
                         {new Date(l.createdAt).toLocaleDateString()}
                       </td>

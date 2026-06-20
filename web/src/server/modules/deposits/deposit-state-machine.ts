@@ -12,7 +12,6 @@
  * See docs/STATE_MACHINES.md for full transition map.
  */
 
-
 export type DepositStatus =
   | 'NOT_SUBMITTED'
   | 'PENDING_VERIFICATION'

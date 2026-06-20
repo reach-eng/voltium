@@ -103,8 +103,18 @@ describe('Worker Jobs — Reconciliation', () => {
 
   it('reports all healthy when ledger matches balance', async () => {
     walletStore.push(
-      { id: 'w1', riderId: 'r1', balanceInPaise: 1000, entries: [{ entryType: 'CREDIT', amountInPaise: 1000 }] },
-      { id: 'w2', riderId: 'r2', balanceInPaise: 500, entries: [{ entryType: 'CREDIT', amountInPaise: 500 }] },
+      {
+        id: 'w1',
+        riderId: 'r1',
+        balanceInPaise: 1000,
+        entries: [{ entryType: 'CREDIT', amountInPaise: 1000 }],
+      },
+      {
+        id: 'w2',
+        riderId: 'r2',
+        balanceInPaise: 500,
+        entries: [{ entryType: 'CREDIT', amountInPaise: 500 }],
+      }
     );
 
     const result = await mockReconciliationJob.process();
@@ -116,9 +126,12 @@ describe('Worker Jobs — Reconciliation', () => {
   });
 
   it('detects drift when ledger does not match balance', async () => {
-    walletStore.push(
-      { id: 'w1', riderId: 'r1', balanceInPaise: 1500, entries: [{ entryType: 'CREDIT', amountInPaise: 1000 }] },
-    );
+    walletStore.push({
+      id: 'w1',
+      riderId: 'r1',
+      balanceInPaise: 1500,
+      entries: [{ entryType: 'CREDIT', amountInPaise: 1000 }],
+    });
 
     const result = await mockReconciliationJob.process();
     expect(result.totalWallets).toBe(1);
@@ -130,7 +143,9 @@ describe('Worker Jobs — Reconciliation', () => {
 
   it('handles debit entries correctly', async () => {
     walletStore.push({
-      id: 'w1', riderId: 'r1', balanceInPaise: 800,
+      id: 'w1',
+      riderId: 'r1',
+      balanceInPaise: 800,
       entries: [
         { entryType: 'CREDIT', amountInPaise: 1000 },
         { entryType: 'DEBIT', amountInPaise: 200 },
@@ -150,7 +165,12 @@ describe('Worker Jobs — Reconciliation', () => {
       mismatched: 0,
       drift: 0,
     });
-    walletStore.push({ id: 'w1', riderId: 'r1', balanceInPaise: 100, entries: [{ entryType: 'CREDIT', amountInPaise: 200 }] });
+    walletStore.push({
+      id: 'w1',
+      riderId: 'r1',
+      balanceInPaise: 100,
+      entries: [{ entryType: 'CREDIT', amountInPaise: 200 }],
+    });
 
     const result = await mockReconciliationJob.process();
     expect(result.totalWallets).toBe(5); // from cached report, not walletStore
@@ -178,7 +198,10 @@ interface MockNotificationResult {
 }
 
 const mockNotificationsJob = {
-  async process(birthdayRiders: string[], overdueRiders: string[]): Promise<MockNotificationResult> {
+  async process(
+    birthdayRiders: string[],
+    overdueRiders: string[]
+  ): Promise<MockNotificationResult> {
     let birthdays = 0;
     let paymentReminders = 0;
 
@@ -202,28 +225,19 @@ describe('Worker Jobs — Notifications', () => {
   });
 
   it('processes birthday wishes', async () => {
-    const result = await mockNotificationsJob.process(
-      ['rider-1', 'rider-2', 'rider-3'],
-      [],
-    );
+    const result = await mockNotificationsJob.process(['rider-1', 'rider-2', 'rider-3'], []);
     expect(result.birthdays).toBe(3);
     expect(result.paymentReminders).toBe(0);
   });
 
   it('processes payment reminders', async () => {
-    const result = await mockNotificationsJob.process(
-      [],
-      ['rider-4', 'rider-5'],
-    );
+    const result = await mockNotificationsJob.process([], ['rider-4', 'rider-5']);
     expect(result.birthdays).toBe(0);
     expect(result.paymentReminders).toBe(2);
   });
 
   it('handles both birthday and overdue riders', async () => {
-    const result = await mockNotificationsJob.process(
-      ['rider-1'],
-      ['rider-2', 'rider-3'],
-    );
+    const result = await mockNotificationsJob.process(['rider-1'], ['rider-2', 'rider-3']);
     expect(result.birthdays).toBe(1);
     expect(result.paymentReminders).toBe(2);
     expect(result.referralLeaderboard).toBe(1);
@@ -347,14 +361,60 @@ interface QueueConfig {
 }
 
 const QUEUE_CONFIGS: Record<string, QueueConfig> = {
-  reconciliation: { queueName: 'voltium:reconciliation', concurrency: 1, maxRetries: 2, schedule: '0 2 * * *', ttlSeconds: 86400 },
-  notifications: { queueName: 'voltium:notifications', concurrency: 3, maxRetries: 3, schedule: '0 8 * * *', ttlSeconds: 43200 },
-  rentReminders: { queueName: 'voltium:rent-reminders', concurrency: 2, maxRetries: 3, schedule: '0 6 * * *', ttlSeconds: 86400 },
-  deviceCompliance: { queueName: 'voltium:device-compliance', concurrency: 2, maxRetries: 2, schedule: '0 * * * *', ttlSeconds: 3600 },
-  referralRewards: { queueName: 'voltium:referral-rewards', concurrency: 3, maxRetries: 3, ttlSeconds: 86400 },
-  smsDispatch: { queueName: 'voltium:sms-dispatch', concurrency: 5, maxRetries: 3, ttlSeconds: 3600 },
-  auditCleanup: { queueName: 'voltium:audit-cleanup', concurrency: 1, maxRetries: 1, schedule: '0 3 * * 0', ttlSeconds: 86400 },
-  telemetryCleanup: { queueName: 'voltium:telemetry-cleanup', concurrency: 1, maxRetries: 1, schedule: '0 4 1 * *', ttlSeconds: 86400 },
+  reconciliation: {
+    queueName: 'voltium:reconciliation',
+    concurrency: 1,
+    maxRetries: 2,
+    schedule: '0 2 * * *',
+    ttlSeconds: 86400,
+  },
+  notifications: {
+    queueName: 'voltium:notifications',
+    concurrency: 3,
+    maxRetries: 3,
+    schedule: '0 8 * * *',
+    ttlSeconds: 43200,
+  },
+  rentReminders: {
+    queueName: 'voltium:rent-reminders',
+    concurrency: 2,
+    maxRetries: 3,
+    schedule: '0 6 * * *',
+    ttlSeconds: 86400,
+  },
+  deviceCompliance: {
+    queueName: 'voltium:device-compliance',
+    concurrency: 2,
+    maxRetries: 2,
+    schedule: '0 * * * *',
+    ttlSeconds: 3600,
+  },
+  referralRewards: {
+    queueName: 'voltium:referral-rewards',
+    concurrency: 3,
+    maxRetries: 3,
+    ttlSeconds: 86400,
+  },
+  smsDispatch: {
+    queueName: 'voltium:sms-dispatch',
+    concurrency: 5,
+    maxRetries: 3,
+    ttlSeconds: 3600,
+  },
+  auditCleanup: {
+    queueName: 'voltium:audit-cleanup',
+    concurrency: 1,
+    maxRetries: 1,
+    schedule: '0 3 * * 0',
+    ttlSeconds: 86400,
+  },
+  telemetryCleanup: {
+    queueName: 'voltium:telemetry-cleanup',
+    concurrency: 1,
+    maxRetries: 1,
+    schedule: '0 4 1 * *',
+    ttlSeconds: 86400,
+  },
 };
 
 describe('Worker Jobs — Schedule Configuration', () => {

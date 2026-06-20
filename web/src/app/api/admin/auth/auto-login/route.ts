@@ -5,7 +5,8 @@ import { logger } from '@/lib/logger';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 
 export async function POST(request: NextRequest) {
-  const isDev = process.env.NODE_ENV === 'development' || process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
+  const isDev =
+    process.env.NODE_ENV === 'development' || process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
   if (!isDev) {
     return errors.notFound('Not found');
   }

@@ -120,7 +120,7 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
 
     // 4th request — points (3) >= maxRequests (3) → blocked
     vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() =>
-      Promise.resolve({ key: 'ratelimit:user:burst', points: 3, resetAt: windowEnd }),
+      Promise.resolve({ key: 'ratelimit:user:burst', points: 3, resetAt: windowEnd })
     );
 
     const r4 = await checkRateLimit('user:burst', config);
@@ -135,7 +135,8 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
 
     vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
       if (points === 0) return Promise.resolve(null);
-      if (points >= 1) return Promise.resolve({ key: 'ratelimit:user:reset', points, resetAt: windowEnd });
+      if (points >= 1)
+        return Promise.resolve({ key: 'ratelimit:user:reset', points, resetAt: windowEnd });
       return Promise.resolve(null);
     });
     vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
@@ -404,15 +405,11 @@ describe('checkRateLimit — database error handling', () => {
 
   it('handles deleteMany rejection gracefully (cleanup)', async () => {
     const { db } = await import('@/lib/db');
-    vi.mocked(db.rateLimitBucket.deleteMany).mockImplementation(
-      () => Promise.reject(new Error('DB error')),
+    vi.mocked(db.rateLimitBucket.deleteMany).mockImplementation(() =>
+      Promise.reject(new Error('DB error'))
     );
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(
-      () => Promise.resolve(null),
-    );
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(
-      () => Promise.resolve(null),
-    );
+    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => Promise.resolve(null));
+    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => Promise.resolve(null));
 
     // deleteMany is called during cleanup inside checkRateLimit;
     // .catch(() => {}) should swallow the rejection.

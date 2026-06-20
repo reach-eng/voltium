@@ -32,7 +32,11 @@ export async function POST(request: NextRequest) {
     const riderDbId = auth.riderDbId;
 
     let body;
-    try { body = await request.json(); } catch { return errors.badRequest('Invalid request body'); }
+    try {
+      body = await request.json();
+    } catch {
+      return errors.badRequest('Invalid request body');
+    }
 
     const validation = reportViolationSchema.safeParse(body);
     if (!validation.success) return errors.validation(validation.error.message);

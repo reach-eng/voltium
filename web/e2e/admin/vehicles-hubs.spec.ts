@@ -81,7 +81,15 @@ test.describe('Vehicles & Hubs Admin', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { totalRiders: 5, activeRiders: 3, totalVehicles: 2, availableVehicles: 1, pendingTransactions: 0, openTickets: 0, activeRentals: 1 },
+          data: {
+            totalRiders: 5,
+            activeRiders: 3,
+            totalVehicles: 2,
+            availableVehicles: 1,
+            pendingTransactions: 0,
+            openTickets: 0,
+            activeRentals: 1,
+          },
         }),
       })
     );
@@ -105,9 +113,11 @@ test.describe('Vehicles & Hubs Admin', () => {
 
     // Vehicle data should be visible
     const vehicleEntry = page.getByText(/KA01AB1234|VEH-KA-001|Ather 450X/i).first();
-    await expect(vehicleEntry.or(page.locator('[data-testid="vehicle-list"]')).first()).toBeVisible({
-      timeout: 20_000,
-    });
+    await expect(vehicleEntry.or(page.locator('[data-testid="vehicle-list"]')).first()).toBeVisible(
+      {
+        timeout: 20_000,
+      }
+    );
   });
 
   test('vehicles API requires auth', async ({ page }) => {

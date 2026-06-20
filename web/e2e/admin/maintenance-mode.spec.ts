@@ -22,7 +22,10 @@ test.describe('Maintenance Mode', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: false,
-          error: { code: 'MAINTENANCE_MODE', message: 'System is under maintenance. Please try again later.' },
+          error: {
+            code: 'MAINTENANCE_MODE',
+            message: 'System is under maintenance. Please try again later.',
+          },
         }),
       })
     );
@@ -59,7 +62,18 @@ test.describe('Maintenance Mode', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { totalRiders: 5, activeRiders: 3, totalVehicles: 10, availableVehicles: 8, pendingTransactions: 0, openTickets: 0, activeRentals: 2 } }),
+        body: JSON.stringify({
+          success: true,
+          data: {
+            totalRiders: 5,
+            activeRiders: 3,
+            totalVehicles: 10,
+            availableVehicles: 8,
+            pendingTransactions: 0,
+            openTickets: 0,
+            activeRentals: 2,
+          },
+        }),
       })
     );
 

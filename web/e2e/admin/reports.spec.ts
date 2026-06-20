@@ -32,7 +32,15 @@ test.describe('Reports Admin', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { totalRiders: 150, activeRiders: 120, totalVehicles: 50, availableVehicles: 15, pendingTransactions: 3, openTickets: 1, activeRentals: 85 },
+          data: {
+            totalRiders: 150,
+            activeRiders: 120,
+            totalVehicles: 50,
+            availableVehicles: 15,
+            pendingTransactions: 3,
+            openTickets: 1,
+            activeRentals: 85,
+          },
         }),
       })
     );

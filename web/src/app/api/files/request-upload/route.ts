@@ -27,13 +27,16 @@ export async function POST(request: NextRequest) {
 
     const result = await fileUseCases.requestUploadUrl(validation.data, actor);
 
-    return success({
-      uploadUrl: result.uploadUrl,
-      fileRecordId: result.fileRecordId,
-      storageKey: result.storageKey,
-      uploadToken: result.uploadToken,
-      expiresIn: result.expiresIn,
-    }, 'Upload URL generated');
+    return success(
+      {
+        uploadUrl: result.uploadUrl,
+        fileRecordId: result.fileRecordId,
+        storageKey: result.storageKey,
+        uploadToken: result.uploadToken,
+        expiresIn: result.expiresIn,
+      },
+      'Upload URL generated'
+    );
   } catch (err: any) {
     if (err.message?.includes('Invalid file type') || err.message?.includes('File too large')) {
       return errors.badRequest(err.message);

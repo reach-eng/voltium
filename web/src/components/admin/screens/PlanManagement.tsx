@@ -54,16 +54,14 @@ export default function PlanManagement() {
           durationDays: 30,
           isActive: true,
           description: 'Best long-term pricing for full-time fleet drivers.',
-        }
+        },
       ]);
       setLoading(false);
     }, 500);
   }, []);
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
-    setPlans((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p))
-    );
+    setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p)));
     toast.success(`Plan ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
   };
 
@@ -76,7 +74,9 @@ export default function PlanManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Plans & Pricing</h2>
-          <p className="text-muted-foreground">Configure rental subscription plans and security deposit amounts.</p>
+          <p className="text-muted-foreground">
+            Configure rental subscription plans and security deposit amounts.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-64">
@@ -147,7 +147,9 @@ export default function PlanManagement() {
             </Card>
           </>
         ) : filteredPlans.length === 0 ? (
-          <div className="col-span-full py-8 text-center text-muted-foreground">No plans found.</div>
+          <div className="col-span-full py-8 text-center text-muted-foreground">
+            No plans found.
+          </div>
         ) : (
           filteredPlans.map((plan) => (
             <Card key={plan.id} className={!plan.isActive ? 'opacity-60' : ''}>
@@ -159,7 +161,10 @@ export default function PlanManagement() {
               </CardHeader>
               <CardContent className="space-y-4 pt-2">
                 <div className="text-2xl font-black">
-                  ₹{plan.price} <span className="text-xs font-normal text-muted-foreground">/ {plan.durationDays} day(s)</span>
+                  ₹{plan.price}{' '}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    / {plan.durationDays} day(s)
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 h-10">
                   {plan.description}

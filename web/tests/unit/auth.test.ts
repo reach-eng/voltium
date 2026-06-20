@@ -215,8 +215,19 @@ describe('verifySessionToken', () => {
 
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
     // Missing riderId
-    const payload = Buffer.from(JSON.stringify({ phone: '123', riderDbId: 'db-1', role: 'rider', iat: Date.now(), exp: Date.now() + 10000 })).toString('base64url');
-    const signature = crypto.createHmac('sha256', env.JWT_SECRET).update(`${header}.${payload}`).digest('base64url');
+    const payload = Buffer.from(
+      JSON.stringify({
+        phone: '123',
+        riderDbId: 'db-1',
+        role: 'rider',
+        iat: Date.now(),
+        exp: Date.now() + 10000,
+      })
+    ).toString('base64url');
+    const signature = crypto
+      .createHmac('sha256', env.JWT_SECRET)
+      .update(`${header}.${payload}`)
+      .digest('base64url');
 
     expect(await verifySessionToken(`${header}.${payload}.${signature}`)).toBeNull();
   });
@@ -274,7 +285,13 @@ describe('hasPermission (role-based)', () => {
 
 describe('hasPermission (session-based)', () => {
   it('SUPER_ADMIN via session returns true for any permission', () => {
-    const session = { adminRole: 'SUPER_ADMIN', role: 'admin', riderId: 'x', riderDbId: 'x', phone: 'x' };
+    const session = {
+      adminRole: 'SUPER_ADMIN',
+      role: 'admin',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
+    };
     expect(hasPermission(session, 'kyc_approve')).toBe(true);
     expect(hasPermission(session, 'admins_manage')).toBe(true);
     expect(hasPermission(session, 'settings_manage')).toBe(true);
@@ -285,10 +302,12 @@ describe('hasPermission (session-based)', () => {
       adminRole: 'KYC_REVIEWER',
       adminPermissions: ['kyc_view', 'kyc_approve', 'riders_view'],
       role: 'admin',
-      riderId: 'x', riderDbId: 'x', phone: 'x',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
     };
-    expect(hasPermission(session, 'kyc_approve')).toBe(true);   // in overrides
-    expect(hasPermission(session, 'kyc_view')).toBe(true);       // in overrides
+    expect(hasPermission(session, 'kyc_approve')).toBe(true); // in overrides
+    expect(hasPermission(session, 'kyc_view')).toBe(true); // in overrides
     expect(hasPermission(session, 'transactions_view')).toBe(false); // not in overrides
   });
 
@@ -297,9 +316,11 @@ describe('hasPermission (session-based)', () => {
       adminRole: 'KYC_REVIEWER',
       adminPermissions: [],
       role: 'admin',
-      riderId: 'x', riderDbId: 'x', phone: 'x',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
     };
-    expect(hasPermission(session, 'kyc_approve')).toBe(true);   // from role
+    expect(hasPermission(session, 'kyc_approve')).toBe(true); // from role
     expect(hasPermission(session, 'transactions_view')).toBe(false);
   });
 
@@ -307,7 +328,9 @@ describe('hasPermission (session-based)', () => {
     const session = {
       adminRole: 'SUPPORT_AGENT',
       role: 'admin',
-      riderId: 'x', riderDbId: 'x', phone: 'x',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
     };
     expect(hasPermission(session, 'tickets_resolve')).toBe(true);
     expect(hasPermission(session, 'kyc_approve')).toBe(false);
@@ -316,7 +339,9 @@ describe('hasPermission (session-based)', () => {
   it('uses session.role when adminRole is not set', () => {
     const session = {
       role: 'FINANCE_ADMIN',
-      riderId: 'x', riderDbId: 'x', phone: 'x',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
     };
     expect(hasPermission(session, 'transactions_view')).toBe(true);
     expect(hasPermission(session, 'hubs_manage')).toBe(false);
@@ -326,7 +351,9 @@ describe('hasPermission (session-based)', () => {
     const session = {
       role: 'rider',
       permissions: ['riders_view'],
-      riderId: 'x', riderDbId: 'x', phone: 'x',
+      riderId: 'x',
+      riderDbId: 'x',
+      phone: 'x',
     };
     expect(hasPermission(session, 'riders_view')).toBe(true);
     expect(hasPermission(session, 'kyc_view')).toBe(false);

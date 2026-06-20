@@ -42,7 +42,12 @@ function testTrackApiCall(endpoint: string, duration: number, success: boolean):
   testMetricsStore.push({ name: endpoint, duration, timestamp: Date.now(), success });
 }
 
-function testTrackPrismaQuery(model: string, operation: string, duration: number, success = true): void {
+function testTrackPrismaQuery(
+  model: string,
+  operation: string,
+  duration: number,
+  success = true
+): void {
   testMetricsStore.push({
     name: `prisma.${model}.${operation}`,
     duration,

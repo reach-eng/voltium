@@ -32,7 +32,12 @@ function localSupportReply(message: string): string {
     return 'This looks urgent. Please call local emergency services if anyone is in danger. I have flagged this message as critical for the Voltium support team. If safe, share your current location, vehicle number, and a short description of what happened.';
   }
 
-  if (text.includes('payment') || text.includes('deposit') || text.includes('top') || text.includes('wallet')) {
+  if (
+    text.includes('payment') ||
+    text.includes('deposit') ||
+    text.includes('top') ||
+    text.includes('wallet')
+  ) {
     return 'For payment, wallet, or deposit issues, please open a support ticket with the payment reference, amount, date/time, and a screenshot of the payment proof. The finance/admin team will review it from the local admin panel.';
   }
 
@@ -52,7 +57,8 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   if (auth instanceof Response) return auth;
   const riderDbId = auth.riderDbId;
 
-  const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const clientIp =
+    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
   const rateLimit = await checkRateLimit(`chat:${clientIp}`, CHAT_RATE_LIMIT);
   if (!rateLimit.allowed) {
     return errors.tooManyRequests(

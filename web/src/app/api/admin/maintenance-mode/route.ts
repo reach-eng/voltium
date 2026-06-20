@@ -19,7 +19,9 @@ export async function GET() {
       success: true,
       data: {
         enabled: modeSetting?.value === 'true',
-        message: messageSetting?.value ?? 'System is currently under maintenance. Please check back later.',
+        message:
+          messageSetting?.value ??
+          'System is currently under maintenance. Please check back later.',
       },
     });
   } catch (err: any) {
@@ -43,7 +45,10 @@ export async function PUT(request: NextRequest) {
     const { enabled, message } = body;
 
     if (enabled === undefined || message === undefined) {
-      return NextResponse.json({ error: 'enabled and message fields are required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'enabled and message fields are required' },
+        { status: 400 }
+      );
     }
 
     // Upsert key/value configs
@@ -56,7 +61,8 @@ export async function PUT(request: NextRequest) {
           value: String(enabled),
           valueType: 'BOOLEAN',
           category: 'SERVER',
-          description: 'Whether the application is currently in maintenance mode blocking rider operations.',
+          description:
+            'Whether the application is currently in maintenance mode blocking rider operations.',
           updatedByAdminId: session.adminId ?? session.riderDbId,
         },
       }),

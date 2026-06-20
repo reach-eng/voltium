@@ -35,12 +35,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       return errors.validation(validation.error!);
     }
 
-    const { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber } = validation.data;
+    const { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber } =
+      validation.data;
 
     const incident = await incidentUseCases.updateIncident(
       id,
       { status, assignedTo, resolution, insuranceClaim, insuranceClaimNumber },
-      session.adminId || '',
+      session.adminId || ''
     );
 
     return success(incident);

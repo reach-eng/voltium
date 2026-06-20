@@ -17,14 +17,31 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '50')), 100);
 
-    const result = await riderUseCases.listEarnings(riderId, { startDate, endDate, platform, page, limit });
+    const result = await riderUseCases.listEarnings(riderId, {
+      startDate,
+      endDate,
+      platform,
+      page,
+      limit,
+    });
 
     const formatted = result.earnings.map((e: any) => ({
-      id: e.id, date: e.date, platform: e.platform, amount: e.amount, trips: e.trips,
-      distance: e.distance, hoursOnline: e.hoursOnline, notes: e.notes, createdAt: e.createdAt,
+      id: e.id,
+      date: e.date,
+      platform: e.platform,
+      amount: e.amount,
+      trips: e.trips,
+      distance: e.distance,
+      hoursOnline: e.hoursOnline,
+      notes: e.notes,
+      createdAt: e.createdAt,
     }));
 
-    return success({ earnings: formatted, weeklySummary: result.weeklySummary, pagination: result.pagination }, undefined, 200);
+    return success(
+      { earnings: formatted, weeklySummary: result.weeklySummary, pagination: result.pagination },
+      undefined,
+      200
+    );
   } catch (error) {
     logger.error('GET /api/rider/earnings error:', error);
     return errors.internal('Failed to fetch earnings');

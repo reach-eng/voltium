@@ -32,11 +32,16 @@ export const rewardRepository = {
       createdAt: r.createdAt,
     }));
 
-    return { rewards: formatted, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      rewards: formatted,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   async getSummary() {
-    const allRewards = await db.reward.findMany({ select: { points: true, createdAt: true, riderId: true } });
+    const allRewards = await db.reward.findMany({
+      select: { points: true, createdAt: true, riderId: true },
+    });
     const totalPoints = allRewards.reduce((sum: number, r: any) => sum + r.points, 0);
     const uniqueRiders = new Set(allRewards.map((r: any) => r.riderId)).size;
     const now = new Date();

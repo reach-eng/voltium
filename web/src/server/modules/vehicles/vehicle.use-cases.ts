@@ -51,7 +51,9 @@ export const vehicleUseCases = {
       where: { vehicleId, status: 'ACTIVE' },
     });
     if (activeLease) {
-      throw new Error('Vehicle is currently on an active rental and cannot be marked for maintenance');
+      throw new Error(
+        'Vehicle is currently on an active rental and cannot be marked for maintenance'
+      );
     }
     return vehicleRepository.update(vehicleId, { status: 'MAINTENANCE' });
   },
@@ -59,7 +61,12 @@ export const vehicleUseCases = {
   /**
    * List vehicles with hub info, pagination, and active leases for admin panel.
    */
-  async listAdminVehicles(params: { status?: string; hubId?: string; page: number; limit: number }) {
+  async listAdminVehicles(params: {
+    status?: string;
+    hubId?: string;
+    page: number;
+    limit: number;
+  }) {
     const { status, hubId, page, limit } = params;
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
@@ -71,7 +78,11 @@ export const vehicleUseCases = {
         include: {
           hub: { select: { name: true, city: true } },
           returns: { orderBy: { createdAt: 'desc' }, take: 1 },
-          leases: { where: { status: 'ACTIVE' }, take: 1, include: { rider: { select: { fullName: true, riderId: true } } } },
+          leases: {
+            where: { status: 'ACTIVE' },
+            take: 1,
+            include: { rider: { select: { fullName: true, riderId: true } } },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -81,7 +92,11 @@ export const vehicleUseCases = {
       db.hub.findMany({ select: { id: true, name: true } }),
     ]);
 
-    return { vehicles, hubs, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      vehicles,
+      hubs,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   /**
@@ -103,7 +118,10 @@ export const vehicleUseCases = {
    * List vehicles at a hub with lease status for rider-facing view.
    */
   async getVehiclesAtHub(hubId: string) {
-    const hub = await db.hub.findUnique({ where: { id: hubId }, select: { id: true, name: true, isActive: true } });
+    const hub = await db.hub.findUnique({
+      where: { id: hubId },
+      select: { id: true, name: true, isActive: true },
+    });
     if (!hub) throw new Error('Hub not found');
 
     const vehicles = await db.vehicle.findMany({
@@ -131,15 +149,26 @@ export const vehicleUseCases = {
         licensePlate: vehicle.licensePlate,
         batteryLevel: vehicle.batteryLevel,
         status: vehicle.status,
-        currentLease: activeLease ? {
-          id: activeLease.id,
-          status: activeLease.status,
-          leaseDate: activeLease.leaseDate,
-          startTime: activeLease.startTime,
-          endTime: activeLease.endTime,
-          rider: { id: activeLease.rider.id, riderId: activeLease.rider.riderId, name: activeLease.rider.fullName },
-          shift: { id: activeLease.shift.id, name: activeLease.shift.name, startTime: activeLease.shift.startTime, endTime: activeLease.shift.endTime },
-        } : null,
+        currentLease: activeLease
+          ? {
+              id: activeLease.id,
+              status: activeLease.status,
+              leaseDate: activeLease.leaseDate,
+              startTime: activeLease.startTime,
+              endTime: activeLease.endTime,
+              rider: {
+                id: activeLease.rider.id,
+                riderId: activeLease.rider.riderId,
+                name: activeLease.rider.fullName,
+              },
+              shift: {
+                id: activeLease.shift.id,
+                name: activeLease.shift.name,
+                startTime: activeLease.shift.startTime,
+                endTime: activeLease.shift.endTime,
+              },
+            }
+          : null,
       };
     });
 
@@ -179,14 +208,21 @@ export const vehicleUseCases = {
     return vehicleRepository.findVehicleHistory(vehicleId);
   },
 
-  async bulkUpdateVehicles(ids: string[], action: string, value: string | undefined, actorId: string) {
+  async bulkUpdateVehicles(
+    ids: string[],
+    action: string,
+    value: string | undefined,
+    actorId: string
+  ) {
     let updatedCount = 0;
     let auditAction = '';
 
     switch (action) {
       case 'changeStatus': {
         if (!value) throw new Error('Status value is required');
-        const result = await vehicleRepository.bulkUpdateStatus(ids, { status: value as VehicleStatus });
+        const result = await vehicleRepository.bulkUpdateStatus(ids, {
+          status: value as VehicleStatus,
+        });
         updatedCount = result.count;
         auditAction = 'vehicle.bulk_change_status';
         break;
@@ -195,7 +231,7 @@ export const vehicleUseCases = {
         if (!value) throw new Error('Hub ID is required');
         // Update individually because hubId is not allowed in updateMany mutation input
         await db.$transaction(
-          ids.map(id =>
+          ids.map((id) =>
             db.vehicle.update({
               where: { id },
               data: { hubId: value },

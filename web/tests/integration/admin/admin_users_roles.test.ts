@@ -42,7 +42,7 @@ describe('Admin Users and Roles CRUD integration', () => {
     expect(status).toBe(201);
     expect(body.success).toBe(true);
     expect(body.data.id).toBeDefined();
-    
+
     createdAdminId = body.data.id;
   });
 

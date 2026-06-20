@@ -36,7 +36,11 @@ async function postHandler(req: NextRequest) {
       case 'updateStatus': {
         for (const id of ids) {
           try {
-            await adminRiderUseCases.update(id, { accountStatus: value }, { actorId: adminId, actorRole: session.adminRole || '' });
+            await adminRiderUseCases.update(
+              id,
+              { accountStatus: value },
+              { actorId: adminId, actorRole: session.adminRole || '' }
+            );
             updatedCount++;
           } catch (e) {
             failures.push({ id, error: e instanceof Error ? e.message : String(e) });
@@ -61,10 +65,14 @@ async function postHandler(req: NextRequest) {
         const kycStatus = value as 'APPROVED' | 'REJECTED' | 'INFO_REQUIRED';
         for (const id of ids) {
           try {
-            await adminRiderUseCases.update(id, {
-              kycStatus,
-              rejectionReason: kycStatus !== 'APPROVED' ? 'Bulk action' : undefined,
-            }, { actorId: adminId, actorRole: session.adminRole || '' });
+            await adminRiderUseCases.update(
+              id,
+              {
+                kycStatus,
+                rejectionReason: kycStatus !== 'APPROVED' ? 'Bulk action' : undefined,
+              },
+              { actorId: adminId, actorRole: session.adminRole || '' }
+            );
             updatedCount++;
           } catch (e) {
             failures.push({ id, error: e instanceof Error ? e.message : String(e) });

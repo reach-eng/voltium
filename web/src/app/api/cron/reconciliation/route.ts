@@ -2,7 +2,11 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireCronAuth } from '@/lib/cron-auth';
-import { runWalletReconciliation, recordReconciliation, checkReconciliationToday } from '@/server/workers/jobs/wallet-reconciliation.job';
+import {
+  runWalletReconciliation,
+  recordReconciliation,
+  checkReconciliationToday,
+} from '@/server/workers/jobs/wallet-reconciliation.job';
 
 export async function GET(req: NextRequest) {
   const authError = requireCronAuth(req);
@@ -21,11 +25,25 @@ export async function GET(req: NextRequest) {
     const result = await runWalletReconciliation();
     await recordReconciliation(result);
 
-    logger.info('[Reconciliation] Complete', { date: today, totalWallets: result.totalWallets, matched: result.healthy, mismatched: result.drifted });
+    logger.info('[Reconciliation] Complete', {
+      date: today,
+      totalWallets: result.totalWallets,
+      matched: result.healthy,
+      mismatched: result.drifted,
+    });
 
     return success(
-      { reportDate: today, totalWallets: result.totalWallets, matched: result.healthy, mismatched: result.drifted, drift: result.totalDrift, healthy: result.drifted === 0 },
-      result.drifted === 0 ? 'Reconciliation complete — all wallets balanced ✓' : `Reconciliation complete — ${result.drifted} wallet(s) have drift!`
+      {
+        reportDate: today,
+        totalWallets: result.totalWallets,
+        matched: result.healthy,
+        mismatched: result.drifted,
+        drift: result.totalDrift,
+        healthy: result.drifted === 0,
+      },
+      result.drifted === 0
+        ? 'Reconciliation complete — all wallets balanced ✓'
+        : `Reconciliation complete — ${result.drifted} wallet(s) have drift!`
     );
   } catch (err) {
     logger.error('[Reconciliation] Fatal error', err);

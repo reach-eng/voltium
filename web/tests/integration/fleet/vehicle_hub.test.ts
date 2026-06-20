@@ -25,7 +25,7 @@ describe('Vehicle and Hub Management (Fleet) Integration Tests', () => {
     expect(status).toBe(201);
     expect(body.success).toBe(true);
     expect(body.data.id).toBeDefined();
-    
+
     createdHubId = body.data.id;
   });
 
@@ -128,10 +128,13 @@ describe('Vehicle and Hub Management (Fleet) Integration Tests', () => {
 
   it('allows deleting a vehicle (marks as RETIRED)', async () => {
     const cookie = await adminLogin();
-    const { status, body } = await api(`/api/admin/vehicles?id=${createdVehicleId || 'mock-vehicle-id'}`, {
-      method: 'DELETE',
-      cookie,
-    });
+    const { status, body } = await api(
+      `/api/admin/vehicles?id=${createdVehicleId || 'mock-vehicle-id'}`,
+      {
+        method: 'DELETE',
+        cookie,
+      }
+    );
 
     expect(status).toBe(200);
     expect(body.success).toBe(true);

@@ -16,10 +16,13 @@ describe('Audit Log Integration Tests', () => {
 
   it('allows filtering audit logs by actorId and action', async () => {
     const cookie = await adminLogin();
-    const { status, body } = await api('/api/admin/audit-logs?actorId=admin-dev-id&action=LOGIN&limit=5', {
-      method: 'GET',
-      cookie,
-    });
+    const { status, body } = await api(
+      '/api/admin/audit-logs?actorId=admin-dev-id&action=LOGIN&limit=5',
+      {
+        method: 'GET',
+        cookie,
+      }
+    );
 
     expect(status).toBe(200);
     expect(body.success).toBe(true);

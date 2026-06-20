@@ -39,14 +39,10 @@ export function withTiming(handler: RouteHandler, routeName: string): RouteHandl
     } catch (err) {
       // Log the error
       const duration = performance.now() - startTime;
-      logRequestEnd(
-        req.method,
-        req.nextUrl.pathname,
-        500,
-        duration,
-        correlationId,
-        { routeName, error: err instanceof Error ? err.message : 'Unknown error' }
-      );
+      logRequestEnd(req.method, req.nextUrl.pathname, 500, duration, correlationId, {
+        routeName,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
 
       // Track as a failed API call
       trackApiCall(routeName, duration, false);
@@ -87,4 +83,3 @@ export function withTiming(handler: RouteHandler, routeName: string): RouteHandl
     return response;
   };
 }
-

@@ -21,7 +21,12 @@ export interface QueueJob {
 }
 
 export const JobQueue = {
-  async enqueue(type: string, payload: Record<string, unknown>, _delayMs = 0, maxAttempts = 3): Promise<string> {
+  async enqueue(
+    type: string,
+    payload: Record<string, unknown>,
+    _delayMs = 0,
+    maxAttempts = 3
+  ): Promise<string> {
     try {
       const event = await db.outboxEvent.create({
         data: {
@@ -47,15 +52,17 @@ export const JobQueue = {
     concurrency = 5
   ): Promise<void> {
     const settleTime = new Date(Date.now() - 5_000);
-    const pending = await db.$queryRaw<Array<{
-      id: string;
-      eventType: string;
-      payload: string;
-      status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-      attempts: number;
-      maxAttempts: number;
-      createdAt: Date;
-    }>>`
+    const pending = await db.$queryRaw<
+      Array<{
+        id: string;
+        eventType: string;
+        payload: string;
+        status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+        attempts: number;
+        maxAttempts: number;
+        createdAt: Date;
+      }>
+    >`
       UPDATE "OutboxEvent"
       SET status = 'PROCESSING'
       WHERE id IN (
@@ -105,7 +112,8 @@ export const JobQueue = {
           data: {
             attempts: { increment: 1 },
             error: errorMessage,
-            status: (eventData.attempts ?? 0) + 1 >= (eventData.maxAttempts ?? 3) ? 'FAILED' : 'PENDING',
+            status:
+              (eventData.attempts ?? 0) + 1 >= (eventData.maxAttempts ?? 3) ? 'FAILED' : 'PENDING',
           },
         });
 
@@ -118,7 +126,9 @@ export const JobQueue = {
     }
   },
 
-  async getQueueStats(type: string): Promise<{ pending: number; processing: number; failed: number }> {
+  async getQueueStats(
+    type: string
+  ): Promise<{ pending: number; processing: number; failed: number }> {
     const [pending, processing, failed] = await Promise.all([
       db.outboxEvent.count({ where: { eventType: type, status: 'PENDING' } }),
       db.outboxEvent.count({ where: { eventType: type, status: 'PROCESSING' } }),

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         failureCount: result.failureCount,
         errors: result.errors,
       },
-      `Recalculated scores for ${result.successCount} riders`,
+      `Recalculated scores for ${result.successCount} riders`
     );
   } catch (error) {
     return errors.internal('Failed to recalculate scores');

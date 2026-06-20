@@ -11,7 +11,15 @@ export interface VehicleResponse {
   vehicleId: string;
   registrationNumber: string;
   model: string;
-  status: 'AVAILABLE' | 'RESERVED' | 'ASSIGNED' | 'ACTIVE_RENTAL' | 'RETURN_PENDING' | 'MAINTENANCE' | 'RETIRED' | 'LOST';
+  status:
+    | 'AVAILABLE'
+    | 'RESERVED'
+    | 'ASSIGNED'
+    | 'ACTIVE_RENTAL'
+    | 'RETURN_PENDING'
+    | 'MAINTENANCE'
+    | 'RETIRED'
+    | 'LOST';
   batteryLevel: number;
   hubId: string;
   hubName?: string;

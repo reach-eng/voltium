@@ -53,7 +53,10 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(createOfferSchema.partial().extend({ id: z.string().min(1) }), body);
+    const validation = validateBody(
+      createOfferSchema.partial().extend({ id: z.string().min(1) }),
+      body
+    );
     if (!validation.success) return errors.validation(validation.error!);
 
     const { id, ...data } = validation.data;

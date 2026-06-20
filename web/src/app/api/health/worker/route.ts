@@ -51,15 +51,18 @@ export async function GET() {
     const latencyMs = Date.now() - start;
     const healthy = stuckCount === 0 && failedCount < 100;
 
-    return NextResponse.json({
-      status: healthy ? 'healthy' : 'degraded',
-      latencyMs,
-      pending: pendingCount,
-      failed: failedCount,
-      stuck: stuckCount,
-      oldestPendingAgeSeconds: oldestPendingAge,
-      timestamp: new Date().toISOString(),
-    }, { status: healthy ? 200 : 503 });
+    return NextResponse.json(
+      {
+        status: healthy ? 'healthy' : 'degraded',
+        latencyMs,
+        pending: pendingCount,
+        failed: failedCount,
+        stuck: stuckCount,
+        oldestPendingAgeSeconds: oldestPendingAge,
+        timestamp: new Date().toISOString(),
+      },
+      { status: healthy ? 200 : 503 }
+    );
   } catch (err: any) {
     logger.error('[Health/Worker] Worker check failed', { error: err?.message });
 

@@ -9,7 +9,6 @@
  * See docs/STATE_MACHINES.md for full transition map.
  */
 
-
 export type VehicleStatus =
   | 'AVAILABLE'
   | 'RESERVED'

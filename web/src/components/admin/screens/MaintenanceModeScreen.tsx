@@ -9,7 +9,9 @@ import { toast } from 'sonner';
 
 export default function MaintenanceModeScreen() {
   const [enabled, setEnabled] = useState(false);
-  const [message, setMessage] = useState('System is currently under maintenance. Please check back later.');
+  const [message, setMessage] = useState(
+    'System is currently under maintenance. Please check back later.'
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -94,14 +96,18 @@ export default function MaintenanceModeScreen() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Maintenance Mode</h2>
-        <p className="text-muted-foreground">Pause rider operations during server upgrades or database restore processes.</p>
+        <p className="text-muted-foreground">
+          Pause rider operations during server upgrades or database restore processes.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>System Maintenance Config</CardTitle>
-            <CardDescription>When enabled, riders will be blocked from API operations with a maintenance message.</CardDescription>
+            <CardDescription>
+              When enabled, riders will be blocked from API operations with a maintenance message.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
             <div className="flex items-center justify-between p-4 border rounded-xl bg-muted/30">
@@ -114,9 +120,7 @@ export default function MaintenanceModeScreen() {
                 disabled={saving}
                 onClick={handleToggle}
               >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 {enabled ? 'Disable Maintenance' : 'Enable Maintenance'}
               </Button>
             </div>

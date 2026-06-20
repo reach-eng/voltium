@@ -45,7 +45,11 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Failed to book rental';
 
     if (message.includes('not found')) return errors.notFound(message);
-    if (message.includes('not available') || message.includes('fully booked') || message.includes('already have')) {
+    if (
+      message.includes('not available') ||
+      message.includes('fully booked') ||
+      message.includes('already have')
+    ) {
       return errors.conflict(message);
     }
     if (message.includes('format') || message.includes('required') || message.includes('invalid')) {

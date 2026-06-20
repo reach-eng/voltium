@@ -36,7 +36,10 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { calculateNextRun } from '@/server/modules/data-management/backup.service';
-import { scheduleUpdateSchema, createBackupSchema } from '@/server/modules/data-management/backup.schemas';
+import {
+  scheduleUpdateSchema,
+  createBackupSchema,
+} from '@/server/modules/data-management/backup.schemas';
 
 describe('calculateNextRun', () => {
   describe('DAILY frequency', () => {

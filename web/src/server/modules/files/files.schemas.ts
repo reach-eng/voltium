@@ -3,8 +3,17 @@ import { z } from 'zod';
 export const requestUploadUrlSchema = z.object({
   fileName: z.string().min(1).max(255),
   mimeType: z.string().min(1),
-  category: z.enum(['kyc_document', 'profile_photo', 'vehicle_photo', 'payment_proof', 'support_attachment']),
-  fileSize: z.number().positive().max(10 * 1024 * 1024),
+  category: z.enum([
+    'kyc_document',
+    'profile_photo',
+    'vehicle_photo',
+    'payment_proof',
+    'support_attachment',
+  ]),
+  fileSize: z
+    .number()
+    .positive()
+    .max(10 * 1024 * 1024),
 });
 
 export const confirmUploadSchema = z.object({

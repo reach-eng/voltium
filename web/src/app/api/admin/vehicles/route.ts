@@ -7,8 +7,16 @@ import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
 import { vehicleUseCases } from '@/server/modules/vehicles/vehicle.use-cases';
 
-function checkVehiclePermission(session: any, action: 'view' | 'create' | 'update' | 'delete'): boolean {
-  const permMap: Record<string, string> = { view: 'vehicles_view', create: 'vehicles_create', update: 'vehicles_update', delete: 'vehicles_delete' };
+function checkVehiclePermission(
+  session: any,
+  action: 'view' | 'create' | 'update' | 'delete'
+): boolean {
+  const permMap: Record<string, string> = {
+    view: 'vehicles_view',
+    create: 'vehicles_create',
+    update: 'vehicles_update',
+    delete: 'vehicles_delete',
+  };
   return hasPermission(session.adminRole || '', permMap[action] as any);
 }
 
@@ -24,7 +32,12 @@ export async function GET(req: NextRequest) {
     const { page, limit } = parsePaginationParams(url);
 
     const result = await vehicleUseCases.listAdminVehicles({ status, hubId, page, limit });
-    return success({ vehicles: result.vehicles, hubs: result.hubs }, undefined, 200, result.pagination);
+    return success(
+      { vehicles: result.vehicles, hubs: result.hubs },
+      undefined,
+      200,
+      result.pagination
+    );
   } catch (error) {
     logger.error('Vehicles list error:', error);
     return errors.internal('Failed to fetch vehicles');
@@ -56,7 +69,13 @@ export async function POST(req: NextRequest) {
       hub: { connect: { id: validation.data.hubId } },
     } as any);
 
-    await createAuditLog({ actorId: session.adminId || session.riderDbId || 'system', action: 'vehicle.create', entity: 'vehicle', entityId: vehicle.id, details: { vehicleNumber: validation.data.vehicleNumber, vehicleId } }).catch(() => {});
+    await createAuditLog({
+      actorId: session.adminId || session.riderDbId || 'system',
+      action: 'vehicle.create',
+      entity: 'vehicle',
+      entityId: vehicle.id,
+      details: { vehicleNumber: validation.data.vehicleNumber, vehicleId },
+    }).catch(() => {});
 
     return success(vehicle, 'Vehicle created', 201);
   } catch (error) {
@@ -78,7 +97,13 @@ export async function PUT(req: NextRequest) {
     const { id, ...data } = validation.data;
     const vehicle = await vehicleUseCases.updateVehicle(id, data);
 
-    await createAuditLog({ actorId: session.adminId || session.riderDbId || 'system', action: 'vehicle.update', entity: 'vehicle', entityId: vehicle.id, details: { updatedFields: Object.keys(data) } }).catch(() => {});
+    await createAuditLog({
+      actorId: session.adminId || session.riderDbId || 'system',
+      action: 'vehicle.update',
+      entity: 'vehicle',
+      entityId: vehicle.id,
+      details: { updatedFields: Object.keys(data) },
+    }).catch(() => {});
 
     return success(vehicle);
   } catch (error) {
@@ -99,7 +124,13 @@ export async function DELETE(req: NextRequest) {
     const vehicle = await vehicleUseCases.getVehicle(id);
     if (vehicle) {
       await vehicleUseCases.updateVehicle(id, { status: 'RETIRED' });
-      await createAuditLog({ actorId: session.adminId || session.riderDbId || 'system', action: 'vehicle.delete', entity: 'vehicle', entityId: id, details: { vehicleNumber: vehicle.vehicleNumber, vehicleId: vehicle.vehicleId } }).catch(() => {});
+      await createAuditLog({
+        actorId: session.adminId || session.riderDbId || 'system',
+        action: 'vehicle.delete',
+        entity: 'vehicle',
+        entityId: id,
+        details: { vehicleNumber: vehicle.vehicleNumber, vehicleId: vehicle.vehicleId },
+      }).catch(() => {});
     }
 
     return success(null, 'Vehicle deleted');

@@ -43,7 +43,11 @@ export const kycUseCases = {
       case 'REJECT':
         return kycRepository.rejectKyc(riderDbId, reviewerId, review.rejectionReason || '');
       case 'REQUEST_INFO':
-        return kycRepository.requestInfo(riderDbId, reviewerId, review.infoRequest || 'Additional information required');
+        return kycRepository.requestInfo(
+          riderDbId,
+          reviewerId,
+          review.infoRequest || 'Additional information required'
+        );
     }
   },
 };

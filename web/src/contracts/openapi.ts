@@ -27,7 +27,8 @@ function buildSpec(): OpenApiSpec {
     info: {
       title: 'Voltium Fleet API',
       version: '1.0.0',
-      description: 'REST API for the Voltium electric vehicle rental and fleet management platform.\n\n## Authentication\n\nSession-based JWT authentication. Tokens are set as httpOnly cookies on login and automatically sent with every request.\n\n## Money Safety\n\nAll wallet mutations go through a double-entry ledger system with idempotency keys. Deposit approvals are idempotent — double-clicking will not double-credit.\n\n## State Machines\n\nAll entity statuses are controlled by state machines defined in `docs/STATE_MACHINES.md`. Invalid transitions are rejected at the application layer.',
+      description:
+        'REST API for the Voltium electric vehicle rental and fleet management platform.\n\n## Authentication\n\nSession-based JWT authentication. Tokens are set as httpOnly cookies on login and automatically sent with every request.\n\n## Money Safety\n\nAll wallet mutations go through a double-entry ledger system with idempotency keys. Deposit approvals are idempotent — double-clicking will not double-credit.\n\n## State Machines\n\nAll entity statuses are controlled by state machines defined in `docs/STATE_MACHINES.md`. Invalid transitions are rejected at the application layer.',
     },
     servers: [
       { url: 'http://localhost:8081', description: 'Local development' },
@@ -57,10 +58,17 @@ function buildSpec(): OpenApiSpec {
           summary: 'Send OTP to phone number',
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/SendOtpRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/SendOtpRequest' } },
+            },
           },
           responses: {
-            '200': { description: 'OTP sent successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/SendOtpResponse' } } } },
+            '200': {
+              description: 'OTP sent successfully',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/SendOtpResponse' } },
+              },
+            },
             '429': { description: 'Rate limited — too many requests' },
           },
         },
@@ -71,10 +79,17 @@ function buildSpec(): OpenApiSpec {
           summary: 'Verify OTP and establish session',
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/VerifyOtpRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/VerifyOtpRequest' } },
+            },
           },
           responses: {
-            '200': { description: 'OTP verified, session cookie set', content: { 'application/json': { schema: { $ref: '#/components/schemas/VerifyOtpResponse' } } } },
+            '200': {
+              description: 'OTP verified, session cookie set',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/VerifyOtpResponse' } },
+              },
+            },
             '401': { description: 'Invalid OTP' },
           },
         },
@@ -86,7 +101,14 @@ function buildSpec(): OpenApiSpec {
           summary: 'Get rider profile with all related data',
           security: [{ riderSession: [] }],
           responses: {
-            '200': { description: 'Rider profile data', content: { 'application/json': { schema: { $ref: '#/components/schemas/RiderProfileResponse' } } } },
+            '200': {
+              description: 'Rider profile data',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/RiderProfileResponse' },
+                },
+              },
+            },
           },
         },
         put: {
@@ -95,7 +117,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateProfileRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/UpdateProfileRequest' } },
+            },
           },
           responses: {
             '200': { description: 'Profile updated' },
@@ -108,7 +132,12 @@ function buildSpec(): OpenApiSpec {
           summary: 'Get KYC submission status',
           security: [{ riderSession: [] }],
           responses: {
-            '200': { description: 'KYC status', content: { 'application/json': { schema: { $ref: '#/components/schemas/KycStatusResponse' } } } },
+            '200': {
+              description: 'KYC status',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/KycStatusResponse' } },
+              },
+            },
           },
         },
         post: {
@@ -117,10 +146,17 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/SubmitKycRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/SubmitKycRequest' } },
+            },
           },
           responses: {
-            '200': { description: 'KYC submitted', content: { 'application/json': { schema: { $ref: '#/components/schemas/SubmitKycResponse' } } } },
+            '200': {
+              description: 'KYC submitted',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/SubmitKycResponse' } },
+              },
+            },
             '409': { description: 'Invalid KYC state transition' },
           },
         },
@@ -140,7 +176,17 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { name: { type: 'string' }, relation: { type: 'string' }, phone: { type: 'string' } } } } },
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    name: { type: 'string' },
+                    relation: { type: 'string' },
+                    phone: { type: 'string' },
+                  },
+                },
+              },
+            },
           },
           responses: {
             '200': { description: 'Guarantor submitted' },
@@ -156,10 +202,17 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/TopupRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/TopupRequest' } },
+            },
           },
           responses: {
-            '200': { description: 'Payment submitted', content: { 'application/json': { schema: { $ref: '#/components/schemas/TopupResponse' } } } },
+            '200': {
+              description: 'Payment submitted',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/TopupResponse' } },
+              },
+            },
           },
         },
       },
@@ -185,10 +238,17 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/BookRentalRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/BookRentalRequest' } },
+            },
           },
           responses: {
-            '200': { description: 'Rental booked', content: { 'application/json': { schema: { $ref: '#/components/schemas/BookRentalResponse' } } } },
+            '200': {
+              description: 'Rental booked',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/BookRentalResponse' } },
+              },
+            },
           },
         },
       },
@@ -206,9 +266,18 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateTicketRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/CreateTicketRequest' } },
+            },
           },
-          responses: { '200': { description: 'Ticket created', content: { 'application/json': { schema: { $ref: '#/components/schemas/TicketResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Ticket created',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/TicketResponse' } },
+              },
+            },
+          },
         },
       },
       // ── Files ─────────────────────────────────────────────────────────────
@@ -219,10 +288,21 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }, { adminSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/RequestUploadUrlRequest' } } },
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RequestUploadUrlRequest' },
+              },
+            },
           },
           responses: {
-            '200': { description: 'Upload URL generated', content: { 'application/json': { schema: { $ref: '#/components/schemas/RequestUploadUrlResponse' } } } },
+            '200': {
+              description: 'Upload URL generated',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/RequestUploadUrlResponse' },
+                },
+              },
+            },
             '400': { description: 'Invalid file type or size' },
           },
         },
@@ -234,7 +314,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }, { adminSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/ConfirmUploadRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ConfirmUploadRequest' } },
+            },
           },
           responses: { '200': { description: 'Upload confirmed' } },
         },
@@ -244,9 +326,7 @@ function buildSpec(): OpenApiSpec {
           tags: ['Files'],
           summary: 'Serve a private file (proxied with auth check)',
           security: [{ riderSession: [] }, { adminSession: [] }],
-          parameters: [
-            { name: 'path', in: 'path', required: true, schema: { type: 'string' } },
-          ],
+          parameters: [{ name: 'path', in: 'path', required: true, schema: { type: 'string' } }],
           responses: {
             '200': { description: 'File content' },
             '401': { description: 'Unauthorized' },
@@ -262,7 +342,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ adminSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/ReviewKycRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ReviewKycRequest' } },
+            },
           },
           responses: { '200': { description: 'KYC review processed' } },
         },
@@ -274,7 +356,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ adminSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/ReviewDepositRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ReviewDepositRequest' } },
+            },
           },
           responses: { '200': { description: 'Deposit review processed' } },
         },
@@ -286,7 +370,11 @@ function buildSpec(): OpenApiSpec {
           security: [{ adminSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApproveTransactionRequest' } } },
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApproveTransactionRequest' },
+              },
+            },
           },
           responses: { '200': { description: 'Transaction action processed' } },
         },
@@ -297,7 +385,16 @@ function buildSpec(): OpenApiSpec {
           tags: ['Notifications'],
           summary: 'List rider notifications',
           security: [{ riderSession: [] }],
-          responses: { '200': { description: 'Notification list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ListNotificationsResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Notification list',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ListNotificationsResponse' },
+                },
+              },
+            },
+          },
         },
       },
       // ── Vehicles ───────────────────────────────────────────────────────────
@@ -307,7 +404,16 @@ function buildSpec(): OpenApiSpec {
           summary: 'List vehicles by hub',
           security: [{ riderSession: [] }],
           parameters: [{ name: 'hubId', in: 'query', required: true, schema: { type: 'string' } }],
-          responses: { '200': { description: 'Vehicle list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ListVehiclesResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Vehicle list',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ListVehiclesResponse' },
+                },
+              },
+            },
+          },
         },
       },
       // ── Hubs ───────────────────────────────────────────────────────────────
@@ -316,7 +422,14 @@ function buildSpec(): OpenApiSpec {
           tags: ['Hubs'],
           summary: 'List all hubs',
           security: [{ riderSession: [] }],
-          responses: { '200': { description: 'Hub list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ListHubsResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Hub list',
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/ListHubsResponse' } },
+              },
+            },
+          },
         },
       },
       // ── Admin ─────────────────────────────────────────────────────────────
@@ -349,9 +462,20 @@ function buildSpec(): OpenApiSpec {
           summary: 'Verify phone OTP',
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/VerifyPhoneRequest' } } },
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/VerifyPhoneRequest' } },
+            },
           },
-          responses: { '200': { description: 'Verified', content: { 'application/json': { schema: { $ref: '#/components/schemas/VerifyPhoneResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Verified',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/VerifyPhoneResponse' },
+                },
+              },
+            },
+          },
         },
       },
       '/api/files/request-read': {
@@ -361,9 +485,22 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/RequestReadUrlRequest' } } },
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RequestReadUrlRequest' },
+              },
+            },
           },
-          responses: { '200': { description: 'Read URL generated', content: { 'application/json': { schema: { $ref: '#/components/schemas/RequestReadUrlResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Read URL generated',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/RequestReadUrlResponse' },
+                },
+              },
+            },
+          },
         },
       },
       '/api/notification/list': {
@@ -371,7 +508,16 @@ function buildSpec(): OpenApiSpec {
           tags: ['Notifications'],
           summary: 'List notifications',
           security: [{ riderSession: [] }],
-          responses: { '200': { description: 'Notification list', content: { 'application/json': { schema: { $ref: '#/components/schemas/ListNotificationsResponse' } } } } },
+          responses: {
+            '200': {
+              description: 'Notification list',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/ListNotificationsResponse' },
+                },
+              },
+            },
+          },
         },
       },
       '/api/pricing': {
@@ -401,7 +547,11 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { token: { type: 'string' }, type: { type: 'string' } } } } },
+            content: {
+              'application/json': {
+                schema: { properties: { token: { type: 'string' }, type: { type: 'string' } } },
+              },
+            },
           },
           responses: { '200': { description: 'Token submitted' } },
         },
@@ -419,7 +569,13 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { amount: { type: 'number' }, taskName: { type: 'string' } } } } },
+            content: {
+              'application/json': {
+                schema: {
+                  properties: { amount: { type: 'number' }, taskName: { type: 'string' } },
+                },
+              },
+            },
           },
           responses: { '200': { description: 'Earning added' } },
         },
@@ -445,7 +601,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { planId: { type: 'string' } } } } },
+            content: {
+              'application/json': { schema: { properties: { planId: { type: 'string' } } } },
+            },
           },
           responses: { '200': { description: 'Subscribed' } },
         },
@@ -497,7 +655,11 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { type: { type: 'string' }, data: { type: 'object' } } } } },
+            content: {
+              'application/json': {
+                schema: { properties: { type: { type: 'string' }, data: { type: 'object' } } },
+              },
+            },
           },
           responses: { '200': { description: 'Synced' } },
         },
@@ -551,7 +713,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { token: { type: 'string' } } } } },
+            content: {
+              'application/json': { schema: { properties: { token: { type: 'string' } } } },
+            },
           },
           responses: { '200': { description: 'Token registered' } },
         },
@@ -563,7 +727,12 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           parameters: [
             { name: 'hubId', in: 'query', required: true, schema: { type: 'string' } },
-            { name: 'date', in: 'query', required: true, schema: { type: 'string', format: 'date' } },
+            {
+              name: 'date',
+              in: 'query',
+              required: true,
+              schema: { type: 'string', format: 'date' },
+            },
           ],
           responses: { '200': { description: 'Shifts list' } },
         },
@@ -581,7 +750,9 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { message: { type: 'string' } } } } },
+            content: {
+              'application/json': { schema: { properties: { message: { type: 'string' } } } },
+            },
           },
           responses: { '200': { description: 'Message sent' } },
         },
@@ -600,7 +771,11 @@ function buildSpec(): OpenApiSpec {
           security: [{ riderSession: [] }],
           requestBody: {
             required: true,
-            content: { 'application/json': { schema: { properties: { amount: { type: 'number' }, purpose: { type: 'string' } } } } },
+            content: {
+              'application/json': {
+                schema: { properties: { amount: { type: 'number' }, purpose: { type: 'string' } } },
+              },
+            },
           },
           responses: { '200': { description: 'Request created' } },
         },
@@ -620,12 +795,17 @@ function buildSpec(): OpenApiSpec {
         SendOtpRequest: {
           type: 'object',
           required: ['phone'],
-          properties: { phone: { type: 'string', description: '10-digit phone number', example: '9876543210' } },
+          properties: {
+            phone: { type: 'string', description: '10-digit phone number', example: '9876543210' },
+          },
         },
         SendOtpResponse: {
           type: 'object',
           properties: {
-            exists: { type: 'boolean', description: 'Whether a rider account exists for this phone' },
+            exists: {
+              type: 'boolean',
+              description: 'Whether a rider account exists for this phone',
+            },
             otp: { type: 'string', description: 'OTP value (development only)' },
           },
         },
@@ -729,7 +909,10 @@ function buildSpec(): OpenApiSpec {
           properties: {
             id: { type: 'string' },
             riderId: { type: 'string' },
-            kycStatus: { type: 'string', enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'] },
+            kycStatus: {
+              type: 'string',
+              enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED'],
+            },
           },
         },
         KycStatusResponse: {
@@ -822,11 +1005,34 @@ function buildSpec(): OpenApiSpec {
                 startTime: { type: 'string' },
                 basePrice: { type: 'number' },
                 finalPrice: { type: 'number' },
-                vehicle: { type: 'object', properties: { id: { type: 'string' }, vehicleId: { type: 'string' }, model: { type: 'string' } } },
-                shift: { type: 'object', properties: { id: { type: 'string' }, name: { type: 'string' }, startTime: { type: 'string' }, endTime: { type: 'string' } } },
+                vehicle: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    vehicleId: { type: 'string' },
+                    model: { type: 'string' },
+                  },
+                },
+                shift: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    startTime: { type: 'string' },
+                    endTime: { type: 'string' },
+                  },
+                },
               },
             },
-            pricing: { type: 'object', properties: { tier: { type: 'string' }, discount: { type: 'number' }, discountLabel: { type: 'string' }, hubAvailability: { type: 'object' } } },
+            pricing: {
+              type: 'object',
+              properties: {
+                tier: { type: 'string' },
+                discount: { type: 'number' },
+                discountLabel: { type: 'string' },
+                hubAvailability: { type: 'object' },
+              },
+            },
           },
         },
         // ── Support ────────────────────────────────────────────────────────
@@ -851,7 +1057,10 @@ function buildSpec(): OpenApiSpec {
             priority: { type: 'string' },
             subject: { type: 'string' },
             message: { type: 'string' },
-            status: { type: 'string', enum: ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] },
+            status: {
+              type: 'string',
+              enum: ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+            },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },
@@ -863,7 +1072,16 @@ function buildSpec(): OpenApiSpec {
           properties: {
             fileName: { type: 'string', maxLength: 255 },
             mimeType: { type: 'string' },
-            category: { type: 'string', enum: ['kyc_document', 'profile_photo', 'vehicle_photo', 'payment_proof', 'support_attachment'] },
+            category: {
+              type: 'string',
+              enum: [
+                'kyc_document',
+                'profile_photo',
+                'vehicle_photo',
+                'payment_proof',
+                'support_attachment',
+              ],
+            },
             fileSize: { type: 'number', maximum: 10485760 },
           },
         },
@@ -904,7 +1122,10 @@ function buildSpec(): OpenApiSpec {
         ListNotificationsResponse: {
           type: 'object',
           properties: {
-            notifications: { type: 'array', items: { $ref: '#/components/schemas/NotificationResponse' } },
+            notifications: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/NotificationResponse' },
+            },
             unreadCount: { type: 'integer' },
             total: { type: 'integer' },
           },
@@ -935,7 +1156,19 @@ function buildSpec(): OpenApiSpec {
             vehicleId: { type: 'string' },
             registrationNumber: { type: 'string' },
             model: { type: 'string' },
-            status: { type: 'string', enum: ['AVAILABLE', 'RESERVED', 'ASSIGNED', 'ACTIVE_RENTAL', 'RETURN_PENDING', 'MAINTENANCE', 'RETIRED', 'LOST'] },
+            status: {
+              type: 'string',
+              enum: [
+                'AVAILABLE',
+                'RESERVED',
+                'ASSIGNED',
+                'ACTIVE_RENTAL',
+                'RETURN_PENDING',
+                'MAINTENANCE',
+                'RETIRED',
+                'LOST',
+              ],
+            },
             batteryLevel: { type: 'number' },
             hubId: { type: 'string' },
           },
@@ -966,7 +1199,19 @@ function buildSpec(): OpenApiSpec {
           type: 'object',
           properties: {
             riderId: { type: 'string' },
-            status: { type: 'string', enum: ['NOT_SUBMITTED', 'PENDING_VERIFICATION', 'APPROVED', 'REJECTED', 'REFUND_REQUESTED', 'REFUNDED', 'FORFEITED', 'PARTIALLY_REFUNDED'] },
+            status: {
+              type: 'string',
+              enum: [
+                'NOT_SUBMITTED',
+                'PENDING_VERIFICATION',
+                'APPROVED',
+                'REJECTED',
+                'REFUND_REQUESTED',
+                'REFUNDED',
+                'FORFEITED',
+                'PARTIALLY_REFUNDED',
+              ],
+            },
             amountInPaise: { type: 'number' },
           },
         },
@@ -1011,7 +1256,10 @@ function buildSpec(): OpenApiSpec {
             success: { type: 'boolean', enum: [true] },
             data: { type: 'object' },
             message: { type: 'string' },
-            meta: { type: 'object', properties: { correlationId: { type: 'string' }, timestamp: { type: 'string' } } },
+            meta: {
+              type: 'object',
+              properties: { correlationId: { type: 'string' }, timestamp: { type: 'string' } },
+            },
           },
         },
       },
@@ -1037,7 +1285,7 @@ function buildSpec(): OpenApiSpec {
     if (key.endsWith('Schema')) {
       const name = key.replace('Schema', 'Request');
       const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-      const jsonSchema = zodToJsonSchema(schema as any, { target: "openApi3" });
+      const jsonSchema = zodToJsonSchema(schema as any, { target: 'openApi3' });
       spec.components.schemas[capitalizedName] = jsonSchema;
     }
   }

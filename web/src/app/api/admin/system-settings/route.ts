@@ -32,7 +32,17 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   });
 
   // Build editable settings map
-  const editable: Record<string, { value: string; valueType: string; category: string; isSecret: boolean; isEditable: boolean; description: string | null }> = {};
+  const editable: Record<
+    string,
+    {
+      value: string;
+      valueType: string;
+      category: string;
+      isSecret: boolean;
+      isEditable: boolean;
+      description: string | null;
+    }
+  > = {};
   for (const s of systemSettings) {
     editable[s.key] = {
       value: s.isSecret ? '[CONFIGURED]' : s.value,

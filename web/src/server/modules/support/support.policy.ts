@@ -15,10 +15,20 @@ export const supportPolicy = {
   },
 
   canManageTickets(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.TEAM_LEADER].includes(adminRole);
+    return [
+      AdminRole.SUPER_ADMIN,
+      AdminRole.OPERATIONS_ADMIN,
+      AdminRole.HUB_MANAGER,
+      AdminRole.TEAM_LEADER,
+    ].includes(adminRole);
   },
 
   canResolveTicket(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.TEAM_LEADER].includes(adminRole);
+    return [
+      AdminRole.SUPER_ADMIN,
+      AdminRole.OPERATIONS_ADMIN,
+      AdminRole.HUB_MANAGER,
+      AdminRole.TEAM_LEADER,
+    ].includes(adminRole);
   },
 };

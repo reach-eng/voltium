@@ -62,9 +62,7 @@ vi.mock('@/lib/feature-flags', () => ({ getFeatureFlags: mockGetFeatureFlags }))
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-const { authUseCases, RateLimitError } = await import(
-  '@/server/modules/auth/auth.use-cases'
-);
+const { authUseCases, RateLimitError } = await import('@/server/modules/auth/auth.use-cases');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,11 +73,7 @@ function setupMocks(overrides?: {
   otpValid?: boolean;
   rateLimitAllowed?: boolean;
 }) {
-  const {
-    existingRider = false,
-    otpValid = true,
-    rateLimitAllowed = true,
-  } = overrides || {};
+  const { existingRider = false, otpValid = true, rateLimitAllowed = true } = overrides || {};
 
   mockCheckRateLimit.mockResolvedValue({ allowed: rateLimitAllowed });
   mockGenerateOtp.mockResolvedValue('123456');
@@ -100,9 +94,7 @@ function setupMocks(overrides?: {
     mockDb.rider.findUnique.mockResolvedValue(mockRider);
   } else {
     // First call (sendOtp check) returns null, second call (verifyOtp) returns created rider
-    mockDb.rider.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(mockRider);
+    mockDb.rider.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(mockRider);
     mockDb.rider.create.mockResolvedValue(mockRider);
     mockDb.wallet.create.mockResolvedValue({ id: 'wallet-1' });
     mockDb.reward.create.mockResolvedValue({ id: 'reward-1' });
@@ -139,21 +131,20 @@ describe('Auth — OTP Send', () => {
     expect(result.exists).toBe(false);
     expect(result.otp).toBeDefined();
     expect(mockGenerateOtp).toHaveBeenCalledWith('9876543210');
-    expect(mockDb.outboxEvent.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        eventType: 'sms.send',
-      }),
-    }));
+    expect(mockDb.outboxEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          eventType: 'sms.send',
+        }),
+      })
+    );
     process.env.NODE_ENV = originalEnv;
   });
 
   it('returns exists=true for existing rider', async () => {
     setupMocks({ existingRider: true });
 
-    const result = await authUseCases.sendOtp(
-      { phone: '9876543210' },
-      { correlationId: 'test-2' }
-    );
+    const result = await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-2' });
 
     expect(result.exists).toBe(true);
   });
@@ -161,18 +152,15 @@ describe('Auth — OTP Send', () => {
   it('throws RateLimitError when IP rate limit exceeded', async () => {
     setupMocks({ rateLimitAllowed: false });
 
-    await expect(
-      authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })
-    ).rejects.toThrow(RateLimitError);
+    await expect(authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })).rejects.toThrow(
+      RateLimitError
+    );
   });
 
   it('prepends +91 to 10-digit phone numbers', async () => {
     setupMocks({ existingRider: false });
 
-    await authUseCases.sendOtp(
-      { phone: '9876543210' },
-      { correlationId: 'test-4' }
-    );
+    await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-4' });
 
     // findUnique is called with the full phone including +91
     expect(mockDb.rider.findUnique).toHaveBeenCalledWith({
@@ -185,10 +173,7 @@ describe('Auth — OTP Send', () => {
     process.env.NODE_ENV = 'development';
     setupMocks({ existingRider: false });
 
-    const result = await authUseCases.sendOtp(
-      { phone: '9876543210' },
-      { correlationId: 'test-5' }
-    );
+    const result = await authUseCases.sendOtp({ phone: '9876543210' }, { correlationId: 'test-5' });
 
     expect(result.otp).toBe('123456');
     process.env.NODE_ENV = originalEnv;
@@ -211,11 +196,13 @@ describe('Auth — OTP Verify', () => {
     expect(result.riderId).toBe('VF-RD-TEST1234');
     expect(mockDb.rider.create).toHaveBeenCalled();
     expect(mockDb.wallet.create).toHaveBeenCalled();
-    expect(mockCreateSessionToken).toHaveBeenCalledWith(expect.objectContaining({
-      riderId: 'VF-RD-TEST1234',
-      phone: '9876543210',
-      role: 'rider',
-    }));
+    expect(mockCreateSessionToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        riderId: 'VF-RD-TEST1234',
+        phone: '9876543210',
+        role: 'rider',
+      })
+    );
   });
 
   it('returns existing rider without creating wallet', async () => {
@@ -234,9 +221,9 @@ describe('Auth — OTP Verify', () => {
   it('throws on invalid OTP', async () => {
     setupMocks({ otpValid: false });
 
-    await expect(
-      authUseCases.verifyOtp({ phone: '9876543210', otp: '000000' })
-    ).rejects.toThrow('Invalid OTP');
+    await expect(authUseCases.verifyOtp({ phone: '9876543210', otp: '000000' })).rejects.toThrow(
+      'Invalid OTP'
+    );
   });
 
   it('awards referral reward when referral code is provided', async () => {
@@ -251,16 +238,24 @@ describe('Auth — OTP Verify', () => {
     mockDb.wallet.create.mockResolvedValue({ id: 'wallet-1' });
     mockDb.reward.create.mockResolvedValue({ id: 'reward-1' });
     mockDb.rider.create.mockResolvedValue({
-      id: 'rider-db-id-123', riderId: 'VF-RD-NEW12345', phone: '9876543210',
+      id: 'rider-db-id-123',
+      riderId: 'VF-RD-NEW12345',
+      phone: '9876543210',
     });
 
     // verifyOtp flow: phone lookup → create → wallet → referrer lookup → reward → relations fetch
     mockDb.rider.findUnique
       .mockResolvedValueOnce(null) // no existing rider by phone
       .mockResolvedValueOnce({ id: 'referrer-db-id', referralCode: 'CODE-ABCD' }) // referrer
-      .mockResolvedValueOnce({ // full rider with relations
-        id: 'rider-db-id-123', riderId: 'VF-RD-NEW12345', phone: '9876543210',
-        kycProfile: null, wallet: null, guarantor: null, vehicleReturns: [],
+      .mockResolvedValueOnce({
+        // full rider with relations
+        id: 'rider-db-id-123',
+        riderId: 'VF-RD-NEW12345',
+        phone: '9876543210',
+        kycProfile: null,
+        wallet: null,
+        guarantor: null,
+        vehicleReturns: [],
       });
 
     await authUseCases.verifyOtp({
@@ -279,9 +274,9 @@ describe('Auth — OTP Verify', () => {
   });
 
   it('throws when phone and OTP are both missing', async () => {
-    await expect(
-      authUseCases.verifyOtp({ phone: '', otp: '' })
-    ).rejects.toThrow('Phone and OTP are required');
+    await expect(authUseCases.verifyOtp({ phone: '', otp: '' })).rejects.toThrow(
+      'Phone and OTP are required'
+    );
   });
 });
 
@@ -291,18 +286,18 @@ describe('Auth — Rate Limiting', () => {
   it('blocks requests when IP rate limit exceeded', async () => {
     mockCheckRateLimit.mockResolvedValue({ allowed: false });
 
-    await expect(
-      authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })
-    ).rejects.toThrow(RateLimitError);
+    await expect(authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })).rejects.toThrow(
+      RateLimitError
+    );
   });
 
   it('checks phone rate limit separately', async () => {
     mockCheckRateLimit
-      .mockResolvedValueOnce({ allowed: true })  // IP check
+      .mockResolvedValueOnce({ allowed: true }) // IP check
       .mockResolvedValueOnce({ allowed: false }); // Phone check
 
-    await expect(
-      authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })
-    ).rejects.toThrow(RateLimitError);
+    await expect(authUseCases.sendOtp({ phone: '9876543210' }, { ip: '10.0.0.1' })).rejects.toThrow(
+      RateLimitError
+    );
   });
 });

@@ -196,13 +196,24 @@ describe('Security Events — logAdminLogin', () => {
   });
 
   it('marks failed login as warning', async () => {
-    await logAdminLogin({ adminId: 'admin-1', email: 'admin@test.com', success: false, failureReason: 'Invalid password' });
+    await logAdminLogin({
+      adminId: 'admin-1',
+      email: 'admin@test.com',
+      success: false,
+      failureReason: 'Invalid password',
+    });
     expect(loggedEvents[0].severity).toBe('warning');
     expect(loggedEvents[0].details.failureReason).toBe('Invalid password');
   });
 
   it('includes IP and user agent when provided', async () => {
-    await logAdminLogin({ adminId: 'admin-1', email: 'a@b.com', success: true, ip: '192.168.1.1', userAgent: 'Chrome' });
+    await logAdminLogin({
+      adminId: 'admin-1',
+      email: 'a@b.com',
+      success: true,
+      ip: '192.168.1.1',
+      userAgent: 'Chrome',
+    });
     expect(loggedEvents[0].ip).toBe('192.168.1.1');
     expect(loggedEvents[0].userAgent).toBe('Chrome');
   });
@@ -212,19 +223,32 @@ describe('Security Events — logPermissionDenied', () => {
   beforeEach(() => resetEvents());
 
   it('always severity = warning', async () => {
-    await logPermissionDenied({ adminId: 'admin-1', permission: 'riders_delete', route: '/api/admin/riders' });
+    await logPermissionDenied({
+      adminId: 'admin-1',
+      permission: 'riders_delete',
+      route: '/api/admin/riders',
+    });
     expect(loggedEvents[0].severity).toBe('warning');
     expect(loggedEvents[0].type).toBe('admin.permission_denied');
   });
 
   it('tracks permission and route', async () => {
-    await logPermissionDenied({ adminId: 'admin-1', permission: 'transactions_approve', route: '/api/admin/transactions' });
+    await logPermissionDenied({
+      adminId: 'admin-1',
+      permission: 'transactions_approve',
+      route: '/api/admin/transactions',
+    });
     expect(loggedEvents[0].details.permission).toBe('transactions_approve');
     expect(loggedEvents[0].details.route).toBe('/api/admin/transactions');
   });
 
   it('optionally includes IP', async () => {
-    await logPermissionDenied({ adminId: 'admin-1', permission: 'kyc_view', route: '/api/admin/kyc', ip: '10.0.0.1' });
+    await logPermissionDenied({
+      adminId: 'admin-1',
+      permission: 'kyc_view',
+      route: '/api/admin/kyc',
+      ip: '10.0.0.1',
+    });
     expect(loggedEvents[0].ip).toBe('10.0.0.1');
   });
 });
@@ -271,7 +295,12 @@ describe('Security Events — logFailedOtpAttempt', () => {
   });
 
   it('optionally includes IP', async () => {
-    await logFailedOtpAttempt({ phone: '+919999000001', attempts: 3, maxAttempts: 5, ip: '203.0.113.1' });
+    await logFailedOtpAttempt({
+      phone: '+919999000001',
+      attempts: 3,
+      maxAttempts: 5,
+      ip: '203.0.113.1',
+    });
     expect(loggedEvents[0].ip).toBe('203.0.113.1');
   });
 
@@ -285,28 +314,54 @@ describe('Security Events — logWalletChange', () => {
   beforeEach(() => resetEvents());
 
   it('marks small changes as info', async () => {
-    await logWalletChange({ riderId: 'rider-1', amountInPaise: 5000, balanceAfter: 15000, category: 'topup' });
+    await logWalletChange({
+      riderId: 'rider-1',
+      amountInPaise: 5000,
+      balanceAfter: 15000,
+      category: 'topup',
+    });
     expect(loggedEvents[0].severity).toBe('info');
   });
 
   it('marks high-value changes as warning', async () => {
-    await logWalletChange({ riderId: 'rider-1', amountInPaise: 100000, balanceAfter: 200000, category: 'topup' });
+    await logWalletChange({
+      riderId: 'rider-1',
+      amountInPaise: 100000,
+      balanceAfter: 200000,
+      category: 'topup',
+    });
     expect(loggedEvents[0].severity).toBe('warning');
   });
 
   it('marks changes at threshold boundary as warning', async () => {
-    await logWalletChange({ riderId: 'rider-1', amountInPaise: 100000, balanceAfter: 150000, category: 'deposit' });
+    await logWalletChange({
+      riderId: 'rider-1',
+      amountInPaise: 100000,
+      balanceAfter: 150000,
+      category: 'deposit',
+    });
     expect(loggedEvents[0].severity).toBe('warning');
   });
 
   it('marks system-initiated changes correctly', async () => {
-    await logWalletChange({ riderId: 'rider-1', amountInPaise: 5000, balanceAfter: 5000, category: 'topup' });
+    await logWalletChange({
+      riderId: 'rider-1',
+      amountInPaise: 5000,
+      balanceAfter: 5000,
+      category: 'topup',
+    });
     expect(loggedEvents[0].actorType).toBe('system');
     expect(loggedEvents[0].actorId).toBeUndefined();
   });
 
   it('marks admin-initiated changes correctly', async () => {
-    await logWalletChange({ riderId: 'rider-1', amountInPaise: 5000, balanceAfter: 5000, category: 'adjustment', actorId: 'admin-1' });
+    await logWalletChange({
+      riderId: 'rider-1',
+      amountInPaise: 5000,
+      balanceAfter: 5000,
+      category: 'adjustment',
+      actorId: 'admin-1',
+    });
     expect(loggedEvents[0].actorType).toBe('admin');
     expect(loggedEvents[0].actorId).toBe('admin-1');
   });
@@ -316,13 +371,21 @@ describe('Security Events — logAccountSuspension', () => {
   beforeEach(() => resetEvents());
 
   it('always severity = critical', async () => {
-    await logAccountSuspension({ riderId: 'rider-1', adminId: 'admin-1', reason: 'Payment default' });
+    await logAccountSuspension({
+      riderId: 'rider-1',
+      adminId: 'admin-1',
+      reason: 'Payment default',
+    });
     expect(loggedEvents[0].severity).toBe('critical');
     expect(loggedEvents[0].type).toBe('rider.suspended');
   });
 
   it('tracks reason and admin', async () => {
-    await logAccountSuspension({ riderId: 'rider-1', adminId: 'admin-1', reason: 'Policy violation' });
+    await logAccountSuspension({
+      riderId: 'rider-1',
+      adminId: 'admin-1',
+      reason: 'Policy violation',
+    });
     expect(loggedEvents[0].details.reason).toBe('Policy violation');
     expect(loggedEvents[0].actorId).toBe('admin-1');
   });
@@ -332,23 +395,43 @@ describe('Security Events — logReconciliationMismatch', () => {
   beforeEach(() => resetEvents());
 
   it('marks small drift as warning', async () => {
-    await logReconciliationMismatch({ riderId: 'rider-1', ledgerSum: 1000, walletBalance: 1100, drift: 100 });
+    await logReconciliationMismatch({
+      riderId: 'rider-1',
+      ledgerSum: 1000,
+      walletBalance: 1100,
+      drift: 100,
+    });
     expect(loggedEvents[0].severity).toBe('warning');
   });
 
   it('marks large drift as critical', async () => {
-    await logReconciliationMismatch({ riderId: 'rider-1', ledgerSum: 10000, walletBalance: 20000, drift: 10000 });
+    await logReconciliationMismatch({
+      riderId: 'rider-1',
+      ledgerSum: 10000,
+      walletBalance: 20000,
+      drift: 10000,
+    });
     expect(loggedEvents[0].severity).toBe('critical');
   });
 
   it('marks negative drift correctly', async () => {
-    await logReconciliationMismatch({ riderId: 'rider-1', ledgerSum: 10000, walletBalance: 5000, drift: -5000 });
+    await logReconciliationMismatch({
+      riderId: 'rider-1',
+      ledgerSum: 10000,
+      walletBalance: 5000,
+      drift: -5000,
+    });
     expect(loggedEvents[0].severity).toBe('warning');
     expect(loggedEvents[0].details.drift).toBe(-5000);
   });
 
   it('marks large negative drift as critical', async () => {
-    await logReconciliationMismatch({ riderId: 'rider-1', ledgerSum: 50000, walletBalance: 0, drift: -50000 });
+    await logReconciliationMismatch({
+      riderId: 'rider-1',
+      ledgerSum: 50000,
+      walletBalance: 0,
+      drift: -50000,
+    });
     expect(loggedEvents[0].severity).toBe('critical');
   });
 });

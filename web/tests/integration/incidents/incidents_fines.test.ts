@@ -22,7 +22,7 @@ describe('Incidents, Fines, and Dispute Workflows Integration Tests', () => {
 
   it('rejects creating an incident report with 403', async () => {
     const cookie = await adminLogin();
-    
+
     // We try to log in rider first, but we capture any error to see why it fails
     const phone = generateRandomPhone();
     try {
@@ -133,7 +133,8 @@ describe('Incidents, Fines, and Dispute Workflows Integration Tests', () => {
         category: 'PAYMENT',
         priority: 'HIGH',
         subject: 'Dispute: Incorrect damage fee deduction',
-        message: 'I want to dispute the front bumper scratch charge. The scratch was already there when I picked it up.',
+        message:
+          'I want to dispute the front bumper scratch charge. The scratch was already there when I picked it up.',
       },
     });
 

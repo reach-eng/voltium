@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
       hubName: hubPricing.hub.name,
       totalVehicles: hubPricing.totalVehicles,
       availableVehicles: hubPricing.availableVehicles,
-      availabilityRatio: hubPricing.totalVehicles > 0 ? hubPricing.availableVehicles / hubPricing.totalVehicles : 0,
+      availabilityRatio:
+        hubPricing.totalVehicles > 0 ? hubPricing.availableVehicles / hubPricing.totalVehicles : 0,
     };
 
     const planPricing = PLANS.map((plan: any) => {

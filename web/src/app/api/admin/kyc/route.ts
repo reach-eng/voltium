@@ -32,7 +32,11 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const [records, total] = await Promise.all([
     kycRepository.findMany({
       where,
-      include: { rider: { select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true } } },
+      include: {
+        rider: {
+          select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
+        },
+      },
       orderBy: { updatedAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
@@ -40,7 +44,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     kycRepository.count({ where }),
   ]);
 
-  return success({ records, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+  return success({
+    records,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {

@@ -47,11 +47,13 @@ async function setMaintenanceMode(enabled: boolean, message?: string): Promise<v
         description: 'Message shown while maintenance mode is active.',
       },
     }),
-    db.setting.upsert({
-      where: { key: 'maintenanceMode' },
-      update: { value: String(enabled) },
-      create: { key: 'maintenanceMode', value: String(enabled) },
-    }).catch(() => undefined),
+    db.setting
+      .upsert({
+        where: { key: 'maintenanceMode' },
+        update: { value: String(enabled) },
+        create: { key: 'maintenanceMode', value: String(enabled) },
+      })
+      .catch(() => undefined),
   ]);
 }
 
@@ -152,7 +154,10 @@ export const restoreService = {
         );
 
         // Move current uploads to temp
-        const backupRoot = await getSystemSettingValue('BACKUP_ROOT', process.env.BACKUP_ROOT || join(process.cwd(), 'data', 'backups'));
+        const backupRoot = await getSystemSettingValue(
+          'BACKUP_ROOT',
+          process.env.BACKUP_ROOT || join(process.cwd(), 'data', 'backups')
+        );
         const tempDir = join(backupRoot, 'restore-temp', Date.now().toString());
         if (existsSync(uploadsRoot)) {
           mkdirSync(tempDir, { recursive: true });
@@ -234,7 +239,10 @@ export const restoreService = {
         details: { backupId: backupJobId, error: err.message },
       });
 
-      logger.error('[RestoreService] Restore failed', { backupId: backupJobId, error: err.message });
+      logger.error('[RestoreService] Restore failed', {
+        backupId: backupJobId,
+        error: err.message,
+      });
       throw err;
     }
   },

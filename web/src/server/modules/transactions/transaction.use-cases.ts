@@ -41,12 +41,21 @@ export const transactionUseCases = {
     const txn = await transactionService.requireTransaction(transactionId);
 
     if (action === 'REVERSE') {
-      return this.reverseTransaction(transactionId, adminId, rejectionReason || 'Admin-initiated reversal');
+      return this.reverseTransaction(
+        transactionId,
+        adminId,
+        rejectionReason || 'Admin-initiated reversal'
+      );
     }
 
     if (action === 'REJECT') {
       transactionService.validateTransition(txn.status, 'REJECTED');
-      const result = await transactionRepository.updateStatus(transactionId, 'REJECTED', adminId, rejectionReason);
+      const result = await transactionRepository.updateStatus(
+        transactionId,
+        'REJECTED',
+        adminId,
+        rejectionReason
+      );
       await transactionService.logAction({
         actorId: adminId,
         action: 'transaction.reject',
@@ -66,11 +75,21 @@ export const transactionUseCases = {
     if (!rider) throw new Error('Rider not found');
 
     const lifecycleRank: Record<string, number> = {
-      NEW: 0, PHONE_VERIFIED: 1, PROFILE_SUBMITTED: 2, KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4, GUARANTOR_SUBMITTED: 5, GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7, DEPOSIT_APPROVED: 8, PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10, ACTIVE: 11, SUSPENDED: 12,
-      RETURN_PENDING: 13, CLOSED: 14,
+      NEW: 0,
+      PHONE_VERIFIED: 1,
+      PROFILE_SUBMITTED: 2,
+      KYC_SUBMITTED: 3,
+      KYC_APPROVED: 4,
+      GUARANTOR_SUBMITTED: 5,
+      GUARANTOR_APPROVED: 6,
+      DEPOSIT_PENDING: 7,
+      DEPOSIT_APPROVED: 8,
+      PLAN_SELECTED: 9,
+      PICKUP_SCHEDULED: 10,
+      ACTIVE: 11,
+      SUSPENDED: 12,
+      RETURN_PENDING: 13,
+      CLOSED: 14,
     };
     const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
     const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : txn.purpose;
@@ -128,7 +147,7 @@ export const transactionUseCases = {
     if (txn.purpose === 'SECURITY_DEPOSIT') {
       throw new TransactionError(
         'Security deposits must be reversed via the Deposits API (REFUND or FORFEIT actions).',
-        'DEPOSIT_REVERSION',
+        'DEPOSIT_REVERSION'
       );
     }
 

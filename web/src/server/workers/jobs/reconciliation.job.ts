@@ -79,7 +79,12 @@ export const reconciliationJob = {
         matched++;
       } else {
         mismatched++;
-        mismatchDetails.push({ riderId: wallet.riderId, ledgerSum, walletBalance: wallet.balanceInPaise, drift });
+        mismatchDetails.push({
+          riderId: wallet.riderId,
+          ledgerSum,
+          walletBalance: wallet.balanceInPaise,
+          drift,
+        });
       }
     }
 

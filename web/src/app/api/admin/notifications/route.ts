@@ -40,22 +40,43 @@ export async function POST(req: NextRequest) {
     const { title, message, type } = validation.data;
     const riderId = (body as Record<string, unknown>).riderId as string | undefined;
 
-    if (!riderId && (!validation.data.riderIds || validation.data.riderIds.length === 0) && !validation.data.sendToAll) {
+    if (
+      !riderId &&
+      (!validation.data.riderIds || validation.data.riderIds.length === 0) &&
+      !validation.data.sendToAll
+    ) {
       return errors.badRequest('riderId or riderIds or sendToAll is required');
     }
 
     if (riderId) {
-      const notification = await notificationUseCases.sendToSingleRider(riderId, title, message, type, session.adminId || '');
+      const notification = await notificationUseCases.sendToSingleRider(
+        riderId,
+        title,
+        message,
+        type,
+        session.adminId || ''
+      );
       return success(notification, 'Notification sent', 201);
     }
 
     if (validation.data.sendToAll) {
-      const result = await notificationUseCases.sendToAllRiders(title, message, type, session.adminId || '');
+      const result = await notificationUseCases.sendToAllRiders(
+        title,
+        message,
+        type,
+        session.adminId || ''
+      );
       return success(result, 'Notifications sent to all riders', 201);
     }
 
     if (validation.data.riderIds && validation.data.riderIds.length > 0) {
-      const result = await notificationUseCases.sendToSpecificRiders(validation.data.riderIds, title, message, type, session.adminId || '');
+      const result = await notificationUseCases.sendToSpecificRiders(
+        validation.data.riderIds,
+        title,
+        message,
+        type,
+        session.adminId || ''
+      );
       return success(result, 'Notifications sent', 201);
     }
 

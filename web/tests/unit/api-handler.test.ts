@@ -50,39 +50,66 @@ vi.mock('@/lib/logger', () => ({
 vi.mock('@/lib/api-response', () => ({
   errors: {
     unauthorized: vi.fn((msg: string) => {
-      lastResponse = { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: msg } } };
+      lastResponse = {
+        status: 401,
+        body: { success: false, error: { code: 'UNAUTHORIZED', message: msg } },
+      };
       return lastResponse;
     }),
     forbidden: vi.fn((msg: string) => {
-      lastResponse = { status: 403, body: { success: false, error: { code: 'FORBIDDEN', message: msg } } };
+      lastResponse = {
+        status: 403,
+        body: { success: false, error: { code: 'FORBIDDEN', message: msg } },
+      };
       return lastResponse;
     }),
     notFound: vi.fn((msg: string) => {
-      lastResponse = { status: 404, body: { success: false, error: { code: 'NOT_FOUND', message: msg } } };
+      lastResponse = {
+        status: 404,
+        body: { success: false, error: { code: 'NOT_FOUND', message: msg } },
+      };
       return lastResponse;
     }),
     badRequest: vi.fn((msg: string) => {
-      lastResponse = { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: msg } } };
+      lastResponse = {
+        status: 400,
+        body: { success: false, error: { code: 'BAD_REQUEST', message: msg } },
+      };
       return lastResponse;
     }),
     conflict: vi.fn((msg: string) => {
-      lastResponse = { status: 409, body: { success: false, error: { code: 'CONFLICT', message: msg } } };
+      lastResponse = {
+        status: 409,
+        body: { success: false, error: { code: 'CONFLICT', message: msg } },
+      };
       return lastResponse;
     }),
     validation: vi.fn((msg: string) => {
-      lastResponse = { status: 422, body: { success: false, error: { code: 'VALIDATION_ERROR', message: msg } } };
+      lastResponse = {
+        status: 422,
+        body: { success: false, error: { code: 'VALIDATION_ERROR', message: msg } },
+      };
       return lastResponse;
     }),
     tooManyRequests: vi.fn((msg: string) => {
-      lastResponse = { status: 429, body: { success: false, error: { code: 'RATE_LIMITED', message: msg } } };
+      lastResponse = {
+        status: 429,
+        body: { success: false, error: { code: 'RATE_LIMITED', message: msg } },
+      };
       return lastResponse;
     }),
     gone: vi.fn((msg: string) => {
-      lastResponse = { status: 410, body: { success: false, error: { code: 'GONE', message: msg } } };
+      lastResponse = {
+        status: 410,
+        body: { success: false, error: { code: 'GONE', message: msg } },
+      };
       return lastResponse;
     }),
     internal: vi.fn((msg: string) => {
-      lastResponse = { status: 500, body: { success: false, error: { code: 'SERVER_ERROR', message: msg } } };
+      lastResponse = {
+        status: 500,
+        body: { success: false, error: { code: 'SERVER_ERROR', message: msg } },
+      };
       return lastResponse;
     }),
   },
@@ -94,9 +121,13 @@ vi.mock('@/lib/api-response', () => ({
 
 import { withApiHandler } from '@/lib/api-handler';
 import {
-  ApiError, ERROR_CODES,
-  AuthError, ForbiddenError, NotFoundError,
-  ValidationError, ConflictError,
+  ApiError,
+  ERROR_CODES,
+  AuthError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+  ConflictError,
 } from '@/lib/api-error';
 
 // ---------------------------------------------------------------------------
@@ -125,7 +156,11 @@ describe('withApiHandler — success path', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('passes through the response when handler succeeds', async () => {
-    const successResponse = { status: 200, body: { success: true, data: { id: 1 } }, headers: new Headers() };
+    const successResponse = {
+      status: 200,
+      body: { success: true, data: { id: 1 } },
+      headers: new Headers(),
+    };
     const handler = vi.fn().mockResolvedValue(successResponse);
 
     const wrapped = withApiHandler(handler);
@@ -379,7 +414,13 @@ describe('withApiHandler — middleware integration', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('wraps a middleware-style handler chain correctly', async () => {
-    const innerHandler = vi.fn().mockResolvedValue({ status: 200, body: { success: true, data: 'ok' }, headers: new Headers() });
+    const innerHandler = vi
+      .fn()
+      .mockResolvedValue({
+        status: 200,
+        body: { success: true, data: 'ok' },
+        headers: new Headers(),
+      });
 
     const middleware = (req: any) => {
       if (!req.headers.get('authorization')) {
@@ -428,7 +469,13 @@ describe('withApiHandler — middleware integration', () => {
   });
 
   it('allows the success path through auth middleware + handler', async () => {
-    const handler = vi.fn().mockResolvedValue({ status: 200, body: { success: true, data: 'dashboard' }, headers: new Headers() });
+    const handler = vi
+      .fn()
+      .mockResolvedValue({
+        status: 200,
+        body: { success: true, data: 'dashboard' },
+        headers: new Headers(),
+      });
 
     const wrapped = withApiHandler(handler);
     const req = mockRequest('/api/rider/dashboard');

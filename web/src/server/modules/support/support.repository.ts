@@ -52,7 +52,13 @@ export const supportRepository = {
     return db.supportTicket.update({ where: { id: ticketId }, data });
   },
 
-  async addMessage(ticketId: string, senderId: string, senderType: 'RIDER' | 'ADMIN', message: string, attachments?: string) {
+  async addMessage(
+    ticketId: string,
+    senderId: string,
+    senderType: 'RIDER' | 'ADMIN',
+    message: string,
+    attachments?: string
+  ) {
     return db.ticketMessage.create({
       data: { ticketId, senderId, senderType, message, attachments },
     });
@@ -69,7 +75,14 @@ export const supportRepository = {
         rider: { select: { fullName: true, riderId: true, phone: true } },
         messages: {
           orderBy: { createdAt: 'asc' },
-          select: { id: true, senderId: true, senderType: true, message: true, attachments: true, createdAt: true },
+          select: {
+            id: true,
+            senderId: true,
+            senderType: true,
+            message: true,
+            attachments: true,
+            createdAt: true,
+          },
         },
       },
     });

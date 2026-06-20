@@ -34,7 +34,10 @@ export const depositUseCases = {
           adminId: reviewerId,
         });
         await db.rider.updateMany({
-          where: { id: riderDbId, lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] } },
+          where: {
+            id: riderDbId,
+            lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] },
+          },
           data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
         });
         break;
@@ -114,6 +117,9 @@ export const depositUseCases = {
       refundedAmount: r.refundedAmountInPaise ? paiseToRupees(r.refundedAmountInPaise) : null,
     }));
 
-    return { records: formatted, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      records: formatted,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 };

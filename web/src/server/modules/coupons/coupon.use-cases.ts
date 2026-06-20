@@ -11,18 +11,40 @@ export const couponUseCases = {
     return { coupons, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   },
 
-  async create(data: {
-    code: string; description: string; discountType: string; discountValue: number;
-    minAmount?: number; maxUses?: number; validFrom: string; validUntil: string; isActive: boolean;
-  }, actorId: string) {
+  async create(
+    data: {
+      code: string;
+      description: string;
+      discountType: string;
+      discountValue: number;
+      minAmount?: number;
+      maxUses?: number;
+      validFrom: string;
+      validUntil: string;
+      isActive: boolean;
+    },
+    actorId: string
+  ) {
     const coupon = await db.coupon.create({
       data: {
-        code: data.code.toUpperCase(), description: data.description, discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
-        discountValue: data.discountValue, minAmount: data.minAmount ?? null, maxUses: data.maxUses ?? null,
-        validFrom: new Date(data.validFrom), validUntil: new Date(data.validUntil), isActive: data.isActive,
+        code: data.code.toUpperCase(),
+        description: data.description,
+        discountType: data.discountType as 'PERCENTAGE' | 'FIXED',
+        discountValue: data.discountValue,
+        minAmount: data.minAmount ?? null,
+        maxUses: data.maxUses ?? null,
+        validFrom: new Date(data.validFrom),
+        validUntil: new Date(data.validUntil),
+        isActive: data.isActive,
       },
     });
-    createAuditLog({ actorId, action: 'coupon.create', entity: 'coupon', entityId: coupon.id, details: { code: coupon.code } }).catch((e) => logger.error('Audit log failed', e));
+    createAuditLog({
+      actorId,
+      action: 'coupon.create',
+      entity: 'coupon',
+      entityId: coupon.id,
+      details: { code: coupon.code },
+    }).catch((e) => logger.error('Audit log failed', e));
     return coupon;
   },
 
@@ -32,12 +54,20 @@ export const couponUseCases = {
     if (updateData.validUntil) updateData.validUntil = new Date(updateData.validUntil as string);
     if (updateData.code) updateData.code = (updateData.code as string).toUpperCase();
     const coupon = await db.coupon.update({ where: { id }, data: updateData });
-    createAuditLog({ actorId, action: 'coupon.update', entity: 'coupon', entityId: id, details: data }).catch((e) => logger.error('Audit log failed', e));
+    createAuditLog({
+      actorId,
+      action: 'coupon.update',
+      entity: 'coupon',
+      entityId: id,
+      details: data,
+    }).catch((e) => logger.error('Audit log failed', e));
     return coupon;
   },
 
   async delete(id: string, actorId: string) {
     await db.coupon.delete({ where: { id } });
-    createAuditLog({ actorId, action: 'coupon.delete', entity: 'coupon', entityId: id }).catch((e) => logger.error('Audit log failed', e));
+    createAuditLog({ actorId, action: 'coupon.delete', entity: 'coupon', entityId: id }).catch(
+      (e) => logger.error('Audit log failed', e)
+    );
   },
 };

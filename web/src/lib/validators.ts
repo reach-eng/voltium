@@ -136,7 +136,25 @@ export const createRiderSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   email: z.string().email().optional().or(z.literal('')),
   intent: z.enum(['deliver', 'personal']).optional(),
-  lifecycleStatus: z.enum(['NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED', 'KYC_SUBMITTED', 'KYC_APPROVED', 'GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 'DEPOSIT_PENDING', 'DEPOSIT_APPROVED', 'PLAN_SELECTED', 'PICKUP_SCHEDULED', 'ACTIVE', 'SUSPENDED', 'RETURN_PENDING', 'CLOSED']).optional(),
+  lifecycleStatus: z
+    .enum([
+      'NEW',
+      'PHONE_VERIFIED',
+      'PROFILE_SUBMITTED',
+      'KYC_SUBMITTED',
+      'KYC_APPROVED',
+      'GUARANTOR_SUBMITTED',
+      'GUARANTOR_APPROVED',
+      'DEPOSIT_PENDING',
+      'DEPOSIT_APPROVED',
+      'PLAN_SELECTED',
+      'PICKUP_SCHEDULED',
+      'ACTIVE',
+      'SUSPENDED',
+      'RETURN_PENDING',
+      'CLOSED',
+    ])
+    .optional(),
 });
 
 // ==================== ADMIN - PLANS ====================
@@ -164,7 +182,16 @@ export const createVehicleSchema = z.object({
   licensePlate: z.string().max(20).optional(),
   hubId: z.string().min(1),
   status: z
-    .enum(['AVAILABLE', 'RESERVED', 'ASSIGNED', 'ACTIVE_RENTAL', 'RETURN_PENDING', 'MAINTENANCE', 'RETIRED', 'LOST'])
+    .enum([
+      'AVAILABLE',
+      'RESERVED',
+      'ASSIGNED',
+      'ACTIVE_RENTAL',
+      'RETURN_PENDING',
+      'MAINTENANCE',
+      'RETIRED',
+      'LOST',
+    ])
     .optional(),
 });
 
@@ -176,7 +203,16 @@ export const updateVehicleSchema = z.object({
   licensePlate: z.string().max(20).optional().nullable(),
   hubId: z.string().min(1).optional(),
   status: z
-    .enum(['AVAILABLE', 'RESERVED', 'ASSIGNED', 'ACTIVE_RENTAL', 'RETURN_PENDING', 'MAINTENANCE', 'RETIRED', 'LOST'])
+    .enum([
+      'AVAILABLE',
+      'RESERVED',
+      'ASSIGNED',
+      'ACTIVE_RENTAL',
+      'RETURN_PENDING',
+      'MAINTENANCE',
+      'RETIRED',
+      'LOST',
+    ])
     .optional(),
 });
 

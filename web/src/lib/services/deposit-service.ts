@@ -325,11 +325,7 @@ export async function forfeitDeposit(params: {
 // Private helpers
 // ---------------------------------------------------------------------------
 
-async function _getAndValidate(
-  tx: any,
-  riderId: string,
-  action: DepositTransition
-) {
+async function _getAndValidate(tx: any, riderId: string, action: DepositTransition) {
   const record = await tx.depositRecord.findUnique({ where: { riderId } });
   if (!record) {
     throw new DepositStateError(`No deposit record found for rider ${riderId}`);

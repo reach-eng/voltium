@@ -8,7 +8,12 @@ import { NextRequest } from 'next/server';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { requirePermission } from '@/lib/rbac';
 import { supportUseCases } from './support.use-cases';
-import { createTicketSchema, updateTicketSchema, ticketReplySchema, supportQuerySchema } from './support.schemas';
+import {
+  createTicketSchema,
+  updateTicketSchema,
+  ticketReplySchema,
+  supportQuerySchema,
+} from './support.schemas';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 
@@ -49,7 +54,12 @@ export async function POST_reply(request: NextRequest, { params }: { params: { i
   const validation = validateBody(ticketReplySchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const message = await supportUseCases.replyToTicket(params.id, session.riderDbId, 'RIDER', validation.data);
+  const message = await supportUseCases.replyToTicket(
+    params.id,
+    session.riderDbId,
+    'RIDER',
+    validation.data
+  );
   return success(message, 'Reply sent');
 }
 

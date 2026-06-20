@@ -11,7 +11,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const result = await riderUseCases.updateProfile(session.riderDbId, {
       returnPending: true,
-      returnPhotos: body.returnPhotos || [body.photoLeft, body.photoRight, body.photoFront, body.photoSpeedometer].filter(Boolean),
+      returnPhotos:
+        body.returnPhotos ||
+        [body.photoLeft, body.photoRight, body.photoFront, body.photoSpeedometer].filter(Boolean),
       latitude: body.latitude,
       longitude: body.longitude,
       returnReason: body.reason || 'End of rental',
@@ -19,7 +21,8 @@ export async function POST(request: NextRequest) {
     return success(result, 'Return request submitted');
   } catch (error) {
     logger.error('[POST /api/rider/rental/return]', error);
-    if (error instanceof Error && error.message.includes('No vehicle')) return errors.badRequest(error.message);
+    if (error instanceof Error && error.message.includes('No vehicle'))
+      return errors.badRequest(error.message);
     return errors.internal('Failed to submit return request');
   }
 }

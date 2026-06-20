@@ -8,7 +8,15 @@ import type { ApiResponseSuccess } from '@/lib/api-response';
 
 export interface DepositStatusResponse {
   riderId: string;
-  status: 'NOT_SUBMITTED' | 'PENDING_VERIFICATION' | 'APPROVED' | 'REJECTED' | 'REFUND_REQUESTED' | 'REFUNDED' | 'FORFEITED' | 'PARTIALLY_REFUNDED';
+  status:
+    | 'NOT_SUBMITTED'
+    | 'PENDING_VERIFICATION'
+    | 'APPROVED'
+    | 'REJECTED'
+    | 'REFUND_REQUESTED'
+    | 'REFUNDED'
+    | 'FORFEITED'
+    | 'PARTIALLY_REFUNDED';
   amountInPaise: number;
   paidAt?: string;
   approvedAt?: string;

@@ -48,7 +48,12 @@ describe('Server Health Checks Integration Tests', () => {
   }, 20000);
 
   it('6. Health check outputs prevent database secrets or credentials leakage', async () => {
-    const endpoints = ['/api/health?detailed=true', '/api/health/db', '/api/health/storage', '/api/health/worker'];
+    const endpoints = [
+      '/api/health?detailed=true',
+      '/api/health/db',
+      '/api/health/storage',
+      '/api/health/worker',
+    ];
 
     for (const path of endpoints) {
       const res = await api(path);

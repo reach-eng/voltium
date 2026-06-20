@@ -104,7 +104,11 @@ describe('File Service — storage key generation', () => {
 
   it('sanitizes unsafe characters in filenames', async () => {
     const { fileService } = await import('@/server/modules/files/files.service');
-    const key = fileService.generateStorageKey('rider-123', 'kyc_document', '../../malicious<script>.pdf');
+    const key = fileService.generateStorageKey(
+      'rider-123',
+      'kyc_document',
+      '../../malicious<script>.pdf'
+    );
     expect(key).toMatch(/^rider-123\/kyc_document\/\d+-.._.._malicious_script_.pdf$/);
     expect(key).not.toContain('<');
     expect(key).not.toContain('>');
@@ -153,41 +157,38 @@ describe('File Service — ownership policy', () => {
     expect(filePolicy.canRiderAccess('rider-123', 'rider-123')).toBe(true);
   });
 
-  it('blocks rider from accessing another rider\'s files', async () => {
+  it("blocks rider from accessing another rider's files", async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
     expect(filePolicy.canRiderAccess('rider-123', 'rider-456')).toBe(false);
   });
 
   it('allows admin with view_kyc to view KYC documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
-    expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files_view_kyc'] },
-      riderRecord
-    )).toBe(true);
+    expect(
+      filePolicy.canViewFile({ role: 'admin', permissions: ['files_view_kyc'] }, riderRecord)
+    ).toBe(true);
   });
 
   it('blocks admin without view_kyc from viewing KYC documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
-    expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: [] },
-      riderRecord
-    )).toBe(false);
+    expect(filePolicy.canViewFile({ role: 'admin', permissions: [] }, riderRecord)).toBe(false);
   });
 
   it('allows admin with view_payment_proof to view payment documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
-    expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files_view_payment_proof'] },
-      paymentRecord
-    )).toBe(true);
+    expect(
+      filePolicy.canViewFile(
+        { role: 'admin', permissions: ['files_view_payment_proof'] },
+        paymentRecord
+      )
+    ).toBe(true);
   });
 
   it('blocks admin without correct permission from viewing payment documents', async () => {
     const { filePolicy } = await import('@/server/modules/files/files.policy');
-    expect(filePolicy.canViewFile(
-      { role: 'admin', permissions: ['files_view_kyc'] },
-      paymentRecord
-    )).toBe(false);
+    expect(
+      filePolicy.canViewFile({ role: 'admin', permissions: ['files_view_kyc'] }, paymentRecord)
+    ).toBe(false);
   });
 });
 
@@ -283,7 +284,9 @@ describe('Deposit State Machine — transition validation', () => {
   });
 
   it('allows NOT_SUBMITTED → PENDING_VERIFICATION', () => {
-    expect(() => mod.validateDepositTransition('NOT_SUBMITTED', 'PENDING_VERIFICATION')).not.toThrow();
+    expect(() =>
+      mod.validateDepositTransition('NOT_SUBMITTED', 'PENDING_VERIFICATION')
+    ).not.toThrow();
   });
 
   it('allows PENDING_VERIFICATION → APPROVED', () => {
@@ -311,7 +314,9 @@ describe('Deposit State Machine — transition validation', () => {
   });
 
   it('allows REFUND_REQUESTED → PARTIALLY_REFUNDED', () => {
-    expect(() => mod.validateDepositTransition('REFUND_REQUESTED', 'PARTIALLY_REFUNDED')).not.toThrow();
+    expect(() =>
+      mod.validateDepositTransition('REFUND_REQUESTED', 'PARTIALLY_REFUNDED')
+    ).not.toThrow();
   });
 
   it('allows same-state transition (no-op)', () => {
@@ -319,23 +324,33 @@ describe('Deposit State Machine — transition validation', () => {
   });
 
   it('throws on invalid PENDING_VERIFICATION → REFUNDED (skip approval)', () => {
-    expect(() => mod.validateDepositTransition('PENDING_VERIFICATION', 'REFUNDED')).toThrow(mod.DepositStateMachineError);
+    expect(() => mod.validateDepositTransition('PENDING_VERIFICATION', 'REFUNDED')).toThrow(
+      mod.DepositStateMachineError
+    );
   });
 
   it('throws on invalid APPROVED → PENDING_VERIFICATION (regress)', () => {
-    expect(() => mod.validateDepositTransition('APPROVED', 'PENDING_VERIFICATION')).toThrow(mod.DepositStateMachineError);
+    expect(() => mod.validateDepositTransition('APPROVED', 'PENDING_VERIFICATION')).toThrow(
+      mod.DepositStateMachineError
+    );
   });
 
   it('throws on invalid REJECTED → APPROVED (must resubmit first)', () => {
-    expect(() => mod.validateDepositTransition('REJECTED', 'APPROVED')).toThrow(mod.DepositStateMachineError);
+    expect(() => mod.validateDepositTransition('REJECTED', 'APPROVED')).toThrow(
+      mod.DepositStateMachineError
+    );
   });
 
   it('throws on invalid FORFEITED → any', () => {
-    expect(() => mod.validateDepositTransition('FORFEITED', 'REFUNDED')).toThrow(mod.DepositStateMachineError);
+    expect(() => mod.validateDepositTransition('FORFEITED', 'REFUNDED')).toThrow(
+      mod.DepositStateMachineError
+    );
   });
 
   it('throws on invalid REFUNDED → any', () => {
-    expect(() => mod.validateDepositTransition('REFUNDED', 'APPROVED')).toThrow(mod.DepositStateMachineError);
+    expect(() => mod.validateDepositTransition('REFUNDED', 'APPROVED')).toThrow(
+      mod.DepositStateMachineError
+    );
   });
 });
 
@@ -422,7 +437,11 @@ describe('Deposit State Machine — error class', () => {
   });
 
   it('creates DepositStateMachineError with status info', () => {
-    const err = new mod.DepositStateMachineError('bad transition', 'APPROVED', 'PENDING_VERIFICATION');
+    const err = new mod.DepositStateMachineError(
+      'bad transition',
+      'APPROVED',
+      'PENDING_VERIFICATION'
+    );
     expect(err.message).toBe('bad transition');
     expect(err.currentStatus).toBe('APPROVED');
     expect(err.targetStatus).toBe('PENDING_VERIFICATION');

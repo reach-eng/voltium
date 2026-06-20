@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
     if (err instanceof Error && err.message === 'Plan is not active') {
       return errors.badRequest('Plan is not active');
     }
-    if (err instanceof Error && (err.message === 'Rider not found' || err.message === 'Plan not found')) {
+    if (
+      err instanceof Error &&
+      (err.message === 'Rider not found' || err.message === 'Plan not found')
+    ) {
       return errors.notFound(err.message);
     }
     logger.error('[POST /api/rider/plans]', err);

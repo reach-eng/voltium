@@ -32,7 +32,7 @@ export class TransactionStateError extends Error {
   constructor(
     message: string,
     public readonly currentStatus: TransactionStatus,
-    public readonly targetStatus: TransactionStatus,
+    public readonly targetStatus: TransactionStatus
   ) {
     super(message);
     this.name = 'TransactionStateError';
@@ -41,7 +41,7 @@ export class TransactionStateError extends Error {
 
 export function validateTransactionTransition(
   current: TransactionStatus,
-  target: TransactionStatus,
+  target: TransactionStatus
 ): void {
   if (current === target) return;
 
@@ -51,14 +51,14 @@ export function validateTransactionTransition(
       `Invalid transaction transition: "${current}" → "${target}". ` +
         `Allowed: ${allowed?.join(', ') || 'none'}.`,
       current,
-      target,
+      target
     );
   }
 }
 
 export function canTransitionTransaction(
   current: TransactionStatus,
-  target: TransactionStatus,
+  target: TransactionStatus
 ): boolean {
   try {
     validateTransactionTransition(current, target);

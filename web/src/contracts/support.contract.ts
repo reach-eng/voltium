@@ -53,4 +53,6 @@ export interface UpdateTicketRequest {
 }
 
 export type CreateTicketApiResponse = ApiResponseSuccess<TicketResponse>;
-export type ListTicketsApiResponse = ApiResponseSuccess<TicketResponse[]> & { pagination: ApiPagination };
+export type ListTicketsApiResponse = ApiResponseSuccess<TicketResponse[]> & {
+  pagination: ApiPagination;
+};

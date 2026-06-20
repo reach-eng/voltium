@@ -365,14 +365,7 @@ export default function VehicleManagement() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [filtered, lastAction, bulkLoading]);
 
-  const STATUS_FILTERS = [
-    'ALL',
-    'AVAILABLE',
-    'ASSIGNED',
-    'MAINTENANCE',
-    'LOST',
-    'RETIRED',
-  ];
+  const STATUS_FILTERS = ['ALL', 'AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'LOST', 'RETIRED'];
 
   return (
     <AdminErrorBoundary>

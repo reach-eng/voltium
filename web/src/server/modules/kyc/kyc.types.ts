@@ -4,7 +4,13 @@
  * Know Your Customer document verification types.
  */
 
-export type KycStatus = 'DRAFT' | 'SUBMITTED' | 'INFO_REQUIRED' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
+export type KycStatus =
+  | 'DRAFT'
+  | 'SUBMITTED'
+  | 'INFO_REQUIRED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'EXPIRED';
 
 export interface KycSubmission {
   riderId: string;

@@ -23,12 +23,15 @@ export const rentalUseCases = {
   /**
    * Books a vehicle rental with availability check, dynamic pricing, and state transitions.
    */
-  async bookRental(riderDbId: string, input: {
-    vehicleId: string;
-    shiftId: string;
-    leaseDate: string;
-    startTime: string;
-  }) {
+  async bookRental(
+    riderDbId: string,
+    input: {
+      vehicleId: string;
+      shiftId: string;
+      leaseDate: string;
+      startTime: string;
+    }
+  ) {
     const { vehicleId, shiftId, leaseDate, startTime } = input;
 
     // Check vehicle exists and is AVAILABLE
@@ -40,14 +43,15 @@ export const rentalUseCases = {
     if (vehicle.status !== 'AVAILABLE') {
       throw new RentalBookError(
         `Vehicle is not available for booking (current status: ${vehicle.status})`,
-        'CONFLICT',
+        'CONFLICT'
       );
     }
 
     // Check shift exists and is active
     const shift = await db.shift.findUnique({ where: { id: shiftId } });
     if (!shift) throw new RentalBookError('Shift not found', 'NOT_FOUND');
-    if (!shift.isActive) throw new RentalBookError('This shift is not currently active', 'VALIDATION');
+    if (!shift.isActive)
+      throw new RentalBookError('This shift is not currently active', 'VALIDATION');
 
     // Double-booking check
     const currentBookings = await db.rentalLease.count({
@@ -61,7 +65,7 @@ export const rentalUseCases = {
     if (currentBookings >= shift.maxBookings) {
       throw new RentalBookError(
         `This shift is fully booked (${currentBookings}/${shift.maxBookings} slots taken). Please choose a different shift or date.`,
-        'CONFLICT',
+        'CONFLICT'
       );
     }
 
@@ -77,13 +81,15 @@ export const rentalUseCases = {
     if (riderExistingLease) {
       throw new RentalBookError(
         'You already have an active booking for this shift on this date',
-        'CONFLICT',
+        'CONFLICT'
       );
     }
 
     // Calculate dynamic pricing
     const totalVehicles = await db.vehicle.count({ where: { hubId: vehicle.hubId } });
-    const availableVehicles = await db.vehicle.count({ where: { hubId: vehicle.hubId, status: 'AVAILABLE' } });
+    const availableVehicles = await db.vehicle.count({
+      where: { hubId: vehicle.hubId, status: 'AVAILABLE' },
+    });
     const availabilityRatio = totalVehicles > 0 ? availableVehicles / totalVehicles : 0;
 
     const dailyRentSetting = await db.setting.findUnique({ where: { key: 'dailyRent' } });
@@ -123,7 +129,11 @@ export const rentalUseCases = {
 
       await tx.rider.updateMany({
         where: { id: riderDbId, lifecycleStatus: { in: ['PLAN_SELECTED', 'DEPOSIT_APPROVED'] } },
-        data: { lifecycleStatus: 'PICKUP_SCHEDULED', vehicleId, assignedVehicle: vehicle.vehicleId },
+        data: {
+          lifecycleStatus: 'PICKUP_SCHEDULED',
+          vehicleId,
+          assignedVehicle: vehicle.vehicleId,
+        },
       });
 
       return newLease;
@@ -160,19 +170,31 @@ export const rentalUseCases = {
   /**
    * Processes a vehicle pickup — assigns vehicle, updates rider state, activates account.
    */
-  async syncPickup(riderDbId: string, input: {
-    vehicleId: string;
-    hubId?: string;
-    teamLeader?: string;
-    emergencyContact?: string;
-    pickupPhotoFront?: string;
-    pickupPhotoBack?: string;
-    pickupPhotoLeft?: string;
-    pickupPhotoRight?: string;
-    pickupPhotoWithVehicle?: string;
-  }) {
-    const { vehicleId, hubId, teamLeader, emergencyContact,
-      pickupPhotoFront, pickupPhotoBack, pickupPhotoLeft, pickupPhotoRight, pickupPhotoWithVehicle } = input;
+  async syncPickup(
+    riderDbId: string,
+    input: {
+      vehicleId: string;
+      hubId?: string;
+      teamLeader?: string;
+      emergencyContact?: string;
+      pickupPhotoFront?: string;
+      pickupPhotoBack?: string;
+      pickupPhotoLeft?: string;
+      pickupPhotoRight?: string;
+      pickupPhotoWithVehicle?: string;
+    }
+  ) {
+    const {
+      vehicleId,
+      hubId,
+      teamLeader,
+      emergencyContact,
+      pickupPhotoFront,
+      pickupPhotoBack,
+      pickupPhotoLeft,
+      pickupPhotoRight,
+      pickupPhotoWithVehicle,
+    } = input;
 
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
@@ -216,7 +238,11 @@ export const rentalUseCases = {
       });
 
       await tx.rentalLease.updateMany({
-        where: { riderId: riderDbId, vehicleId: vehicle.id, status: { in: ['BOOKED', 'PICKUP_SCHEDULED' as any] } },
+        where: {
+          riderId: riderDbId,
+          vehicleId: vehicle.id,
+          status: { in: ['BOOKED', 'PICKUP_SCHEDULED' as any] },
+        },
         data: { status: 'ACTIVE', startTime: new Date().toTimeString().slice(0, 5) },
       });
 

@@ -39,9 +39,9 @@ export interface BackupScheduleConfig {
   id?: string;
   enabled: boolean;
   frequency: BackupScheduleFrequency;
-  timeOfDay: string;         // HH:mm
+  timeOfDay: string; // HH:mm
   timezone: string;
-  dayOfWeek: number | null;  // 0-6, Sunday=0
+  dayOfWeek: number | null; // 0-6, Sunday=0
   dayOfMonth: number | null; // 1-28
   includeDatabase: boolean;
   includeUploads: boolean;

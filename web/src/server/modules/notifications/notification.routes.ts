@@ -31,10 +31,19 @@ export async function POST_send(request: NextRequest) {
   if (!validation.success) return errors.validation(validation.error);
 
   if (validation.data.sendToAll) {
-    await notificationUseCases.sendToAll(validation.data.title, validation.data.message, validation.data.type);
+    await notificationUseCases.sendToAll(
+      validation.data.title,
+      validation.data.message,
+      validation.data.type
+    );
   } else if (validation.data.riderIds?.length) {
     for (const riderId of validation.data.riderIds) {
-      await notificationUseCases.sendToRider(riderId, validation.data.title, validation.data.message, validation.data.type);
+      await notificationUseCases.sendToRider(
+        riderId,
+        validation.data.title,
+        validation.data.message,
+        validation.data.type
+      );
     }
   }
 

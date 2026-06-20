@@ -24,10 +24,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   }
 
   const overview = await dataManagementUseCases.getOverview(session.adminRole as AdminRole);
-  
+
   // Count running jobs
   const runningBackups = await db.backupJob.count({
-    where: { status: { in: ['QUEUED', 'RUNNING'] } }
+    where: { status: { in: ['QUEUED', 'RUNNING'] } },
   });
 
   const data = {

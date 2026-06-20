@@ -12,10 +12,10 @@ const eslintConfig = [
   {
     rules: {
       // TypeScript rules — keep practical ones enabled
-      '@typescript-eslint/no-explicit-any': 'warn',          // too many legitimate uses
+      '@typescript-eslint/no-explicit-any': 'warn', // too many legitimate uses
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-non-null-assertion': 'off',     // pragmatic for API responses
-      '@typescript-eslint/ban-ts-comment': 'off',            // needed for edge cases
+      '@typescript-eslint/no-non-null-assertion': 'off', // pragmatic for API responses
+      '@typescript-eslint/ban-ts-comment': 'off', // needed for edge cases
       '@typescript-eslint/prefer-as-const': 'warn',
       // '@typescript-eslint/no-unused-disable-directives'(plural) in v8+
 
@@ -47,7 +47,7 @@ const eslintConfig = [
 
       // General JavaScript rules — these matter
       'prefer-const': 'warn',
-      'no-unused-vars': 'off',  // covered by @typescript-eslint/no-unused-vars
+      'no-unused-vars': 'off', // covered by @typescript-eslint/no-unused-vars
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-empty': 'warn',

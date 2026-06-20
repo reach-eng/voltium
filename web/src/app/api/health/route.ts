@@ -12,7 +12,13 @@ function getProbePath(): string {
   return process.env.LOCAL_STORAGE_ROOT || process.env.VOLTIUM_SERVER_ROOT || process.cwd();
 }
 
-function getDiskUsage(): { totalMB: number; freeMB: number; usedMB: number; usagePercent: number; source: string } {
+function getDiskUsage(): {
+  totalMB: number;
+  freeMB: number;
+  usedMB: number;
+  usagePercent: number;
+  source: string;
+} {
   const probePath = getProbePath();
 
   // Windows: use PowerShell/CIM for the drive containing the probe path.
@@ -21,7 +27,9 @@ function getDiskUsage(): { totalMB: number; freeMB: number; usedMB: number; usag
       const root = parse(probePath).root.replace(/\\$/, ''); // e.g. D:
       const deviceId = root.slice(0, 2); // e.g. D:
       const script = `$d = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='${deviceId}'"; if ($d) { [Console]::WriteLine(($d.Size).ToString() + ',' + ($d.FreeSpace).ToString()) }`;
-      const output = execFileSync('powershell', ['-NoProfile', '-Command', script], { encoding: 'utf8' }).trim();
+      const output = execFileSync('powershell', ['-NoProfile', '-Command', script], {
+        encoding: 'utf8',
+      }).trim();
       const [totalBytesRaw, freeBytesRaw] = output.split(',');
       const totalBytes = Number(totalBytesRaw || 0);
       const freeBytes = Number(freeBytesRaw || 0);
@@ -126,13 +134,15 @@ export async function GET(request: NextRequest) {
     database,
     disk,
     uploadPath: {
-      status: uploadPath.exists && uploadPath.writable ? 'healthy' as const : 'degraded' as const,
+      status:
+        uploadPath.exists && uploadPath.writable ? ('healthy' as const) : ('degraded' as const),
       path: uploadsRoot,
       exists: uploadPath.exists,
       writable: uploadPath.writable,
     },
     backupPath: {
-      status: backupPath.exists && backupPath.writable ? 'healthy' as const : 'degraded' as const,
+      status:
+        backupPath.exists && backupPath.writable ? ('healthy' as const) : ('degraded' as const),
       path: backupRoot,
       exists: backupPath.exists,
       writable: backupPath.writable,

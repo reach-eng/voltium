@@ -48,7 +48,7 @@ describe('Maintenance Mode Integration Tests', () => {
       cookie,
       json: { type: 'MANUAL' },
     });
-    
+
     expect([401, 403, 500]).toContain(backupRes.status);
   });
 });

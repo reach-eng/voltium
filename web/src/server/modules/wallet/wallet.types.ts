@@ -18,7 +18,13 @@ export type LedgerEntryType =
 
 export type LedgerDirection = 'CREDIT' | 'DEBIT';
 
-export type TransactionStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'FAILED' | 'REVERSED' | 'REFUNDED';
+export type TransactionStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'FAILED'
+  | 'REVERSED'
+  | 'REFUNDED';
 
 export interface LedgerEntry {
   id: string;

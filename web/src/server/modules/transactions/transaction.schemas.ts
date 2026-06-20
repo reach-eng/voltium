@@ -3,7 +3,12 @@
  */
 
 import { z } from 'zod';
-import { approveTransactionSchema, bulkActionSchema, topUpSchema, transactionBulkActionSchema } from '@/lib/validators';
+import {
+  approveTransactionSchema,
+  bulkActionSchema,
+  topUpSchema,
+  transactionBulkActionSchema,
+} from '@/lib/validators';
 
 export { approveTransactionSchema, bulkActionSchema, topUpSchema, transactionBulkActionSchema };
 

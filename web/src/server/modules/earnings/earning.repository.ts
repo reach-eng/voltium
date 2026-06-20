@@ -1,7 +1,14 @@
 import { db } from '@/lib/db';
 
 export const earningRepository = {
-  async findAllPaginated(params: { search?: string; platform?: string; startDate?: string; endDate?: string; page: number; limit: number }) {
+  async findAllPaginated(params: {
+    search?: string;
+    platform?: string;
+    startDate?: string;
+    endDate?: string;
+    page: number;
+    limit: number;
+  }) {
     const { search, platform, startDate, endDate, page, limit } = params;
     const where: Record<string, unknown> = {};
 
@@ -29,8 +36,15 @@ export const earningRepository = {
         skip: (page - 1) * limit,
         take: limit,
         select: {
-          id: true, date: true, platform: true, amount: true, trips: true,
-          distance: true, hoursOnline: true, notes: true, createdAt: true,
+          id: true,
+          date: true,
+          platform: true,
+          amount: true,
+          trips: true,
+          distance: true,
+          hoursOnline: true,
+          notes: true,
+          createdAt: true,
           rider: { select: { id: true, riderId: true, fullName: true, phone: true } },
         },
       }),

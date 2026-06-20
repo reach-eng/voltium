@@ -205,12 +205,11 @@ async function handleShutdown(signal: string) {
   if (activeJobs.size > 0) {
     logger.info(`[Workers] Waiting for ${activeJobs.size} in-flight jobs to complete...`);
     const shutdownTimeout = new Promise((resolve) => setTimeout(resolve, 30000));
-    await Promise.race([
-      Promise.all(Array.from(activeJobs)),
-      shutdownTimeout
-    ]);
+    await Promise.race([Promise.all(Array.from(activeJobs)), shutdownTimeout]);
     if (activeJobs.size > 0) {
-      logger.warn(`[Workers] Graceful shutdown timed out. ${activeJobs.size} jobs still in-flight.`);
+      logger.warn(
+        `[Workers] Graceful shutdown timed out. ${activeJobs.size} jobs still in-flight.`
+      );
     } else {
       logger.info('[Workers] All in-flight jobs completed successfully');
     }

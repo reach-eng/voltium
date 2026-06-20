@@ -53,7 +53,7 @@ export class RiderLifecycleError extends Error {
   constructor(
     message: string,
     public readonly currentStatus: RiderLifecycleStatus,
-    public readonly targetStatus: RiderLifecycleStatus,
+    public readonly targetStatus: RiderLifecycleStatus
   ) {
     super(message);
     this.name = 'RiderLifecycleError';
@@ -62,7 +62,7 @@ export class RiderLifecycleError extends Error {
 
 export function validateRiderTransition(
   current: RiderLifecycleStatus,
-  target: RiderLifecycleStatus,
+  target: RiderLifecycleStatus
 ): void {
   if (current === target) return;
 
@@ -72,14 +72,14 @@ export function validateRiderTransition(
       `Invalid rider transition: "${current}" → "${target}". ` +
         `Allowed: ${allowed?.join(', ') || 'none'}.`,
       current,
-      target,
+      target
     );
   }
 }
 
 export function canTransitionRider(
   current: RiderLifecycleStatus,
-  target: RiderLifecycleStatus,
+  target: RiderLifecycleStatus
 ): boolean {
   try {
     validateRiderTransition(current, target);
@@ -89,8 +89,6 @@ export function canTransitionRider(
   }
 }
 
-export function getValidNextRiderStates(
-  status: RiderLifecycleStatus,
-): RiderLifecycleStatus[] {
+export function getValidNextRiderStates(status: RiderLifecycleStatus): RiderLifecycleStatus[] {
   return VALID_TRANSITIONS[status] ?? [];
 }

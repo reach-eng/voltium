@@ -30,7 +30,10 @@ export async function PUT(req: NextRequest) {
     const validation = validateBody(updateSettingsSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
 
-    const results = await settingUseCases.update(validation.data, req.headers.get('x-admin-id') || 'system');
+    const results = await settingUseCases.update(
+      validation.data,
+      req.headers.get('x-admin-id') || 'system'
+    );
     return success(results, 'Settings updated');
   } catch (error) {
     logger.error('PUT /api/admin/settings error:', error);

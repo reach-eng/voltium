@@ -94,7 +94,11 @@ test.describe('Vehicle Onboarding (Phase 1E)', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { uploadUrl: '/api/files/direct-upload?key=test-key', fileRecordId: 'rec-1', storageKey: 'test-key' },
+          data: {
+            uploadUrl: '/api/files/direct-upload?key=test-key',
+            fileRecordId: 'rec-1',
+            storageKey: 'test-key',
+          },
         }),
       });
     });

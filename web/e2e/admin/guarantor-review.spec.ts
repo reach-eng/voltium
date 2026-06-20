@@ -41,7 +41,18 @@ test.describe('Guarantor Review Admin', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { totalRiders: 5, activeRiders: 3, totalVehicles: 10, availableVehicles: 8, pendingTransactions: 0, openTickets: 0, activeRentals: 2 } }),
+        body: JSON.stringify({
+          success: true,
+          data: {
+            totalRiders: 5,
+            activeRiders: 3,
+            totalVehicles: 10,
+            availableVehicles: 8,
+            pendingTransactions: 0,
+            openTickets: 0,
+            activeRentals: 2,
+          },
+        }),
       })
     );
 

@@ -7,8 +7,12 @@ for (const [key, schema] of Object.entries(validators)) {
   if (key.endsWith('Schema')) {
     const name = key.replace('Schema', 'Request');
     const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-    const jsonSchema = zodToJsonSchema(schema as any, { target: "openApi3", name: capitalizedName });
-    schemas[capitalizedName] = (jsonSchema as any).components?.schemas?.[capitalizedName] || jsonSchema;
+    const jsonSchema = zodToJsonSchema(schema as any, {
+      target: 'openApi3',
+      name: capitalizedName,
+    });
+    schemas[capitalizedName] =
+      (jsonSchema as any).components?.schemas?.[capitalizedName] || jsonSchema;
   }
 }
 

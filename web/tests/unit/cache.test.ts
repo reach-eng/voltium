@@ -171,9 +171,11 @@ describe('getOrSetResponse', () => {
   });
 
   it('deduplicates concurrent calls for the same key', async () => {
-    const fetcher = vi.fn().mockImplementation(
-      () => new Promise<string>((resolve) => setTimeout(() => resolve('data'), 50))
-    );
+    const fetcher = vi
+      .fn()
+      .mockImplementation(
+        () => new Promise<string>((resolve) => setTimeout(() => resolve('data'), 50))
+      );
 
     const [r1, r2, r3] = await Promise.all([
       cache.getOrSetResponse('concurrent', fetcher),
@@ -210,9 +212,7 @@ describe('getOrSetResponse', () => {
   });
 
   it('caches when fetcher returns a valid value after a previous null', async () => {
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce('data');
+    const fetcher = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('data');
 
     await cache.getOrSetResponse('eventual', fetcher);
     const result = await cache.getOrSetResponse('eventual', fetcher);
@@ -222,7 +222,8 @@ describe('getOrSetResponse', () => {
   });
 
   it('recovers when fetcher throws an error', async () => {
-    const fetcher = vi.fn()
+    const fetcher = vi
+      .fn()
       .mockRejectedValueOnce(new Error('Network error'))
       .mockResolvedValueOnce('recovered');
 
@@ -234,9 +235,7 @@ describe('getOrSetResponse', () => {
   });
 
   it('does not leave stale pending entry when fetcher throws', async () => {
-    const fetcher = vi.fn()
-      .mockRejectedValueOnce(new Error('Fail'))
-      .mockResolvedValueOnce('ok');
+    const fetcher = vi.fn().mockRejectedValueOnce(new Error('Fail')).mockResolvedValueOnce('ok');
 
     await expect(cache.getOrSetResponse('stale-key', fetcher)).rejects.toThrow('Fail');
 

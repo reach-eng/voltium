@@ -9,7 +9,10 @@ const envSchema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  FCM_COMMAND_HMAC_SECRET: z.string().min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters').default('fcm-command-hmac-secret-default-32-chars-long'),
+  FCM_COMMAND_HMAC_SECRET: z
+    .string()
+    .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters')
+    .default('fcm-command-hmac-secret-default-32-chars-long'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').optional(),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000'),
   CRON_SECRET: z.string().optional(),
@@ -32,14 +35,29 @@ const envSchema = z.object({
   LOCAL_STORAGE_ROOT: z.string().optional(),
 
   // Data Management (laptop/local mode)
-  DATA_MANAGEMENT_ENABLED: z.string().default('false').transform(v => v === 'true'),
+  DATA_MANAGEMENT_ENABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
   BACKUP_ROOT: z.string().optional(),
   BACKUP_SECONDARY_ROOT: z.string().optional(),
-  BACKUP_ENCRYPTION_ENABLED: z.string().default('false').transform(v => v === 'true'),
+  BACKUP_ENCRYPTION_ENABLED: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
   BACKUP_ENCRYPTION_KEY: z.string().optional(),
-  MAINTENANCE_MODE: z.string().default('false').transform(v => v === 'true'),
-  ENABLE_TEST_OTP: z.string().default('false').transform(v => v === 'true'),
-  ENABLE_DEV_ADMIN_LOGIN: z.string().default('false').transform(v => v === 'true'),
+  MAINTENANCE_MODE: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  ENABLE_TEST_OTP: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  ENABLE_DEV_ADMIN_LOGIN: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
 
   // Features
   NEXT_PUBLIC_ENABLE_KYC: z
@@ -61,7 +79,9 @@ const envSchema = z.object({
 });
 
 if (process.env.NODE_ENV === 'test') {
-  process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/voltium-test?schema=public';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL ||
+    'postgresql://postgres:postgres@localhost:5432/voltium-test?schema=public';
   process.env.JWT_SECRET =
     process.env.JWT_SECRET || 'voltium-dev-secret-key-INSECURE-DO-NOT-PROD-32-CHARS';
 }
@@ -99,14 +119,20 @@ const parsedEnv = _env.data;
 
 if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 'production')) {
   if (process.env.DATABASE_OFFLINE === 'true') {
-    throw new Error('Production architecture violation: DATABASE_OFFLINE mock fallback is not allowed in production.');
+    throw new Error(
+      'Production architecture violation: DATABASE_OFFLINE mock fallback is not allowed in production.'
+    );
   }
 
   if (!process.env.CRON_SECRET) {
-    throw new Error('Production architecture violation: CRON_SECRET environment variable is required.');
+    throw new Error(
+      'Production architecture violation: CRON_SECRET environment variable is required.'
+    );
   }
   if (!process.env.WORKER_SECRET) {
-    throw new Error('Production architecture violation: WORKER_SECRET environment variable is required.');
+    throw new Error(
+      'Production architecture violation: WORKER_SECRET environment variable is required.'
+    );
   }
 
   if (parsedEnv.DATA_MODE !== 'local_laptop') {
@@ -119,13 +145,17 @@ if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 
 
   const dbHost = new URL(parsedEnv.DATABASE_URL).hostname;
   if (!['localhost', '127.0.0.1', '::1'].includes(dbHost)) {
-    throw new Error('Production architecture violation: DATABASE_URL must point to local PostgreSQL.');
+    throw new Error(
+      'Production architecture violation: DATABASE_URL must point to local PostgreSQL.'
+    );
   }
 
   if (parsedEnv.DIRECT_URL) {
     const directHost = new URL(parsedEnv.DIRECT_URL).hostname;
     if (!['localhost', '127.0.0.1', '::1'].includes(directHost)) {
-      throw new Error('Production architecture violation: DIRECT_URL must point to local PostgreSQL.');
+      throw new Error(
+        'Production architecture violation: DIRECT_URL must point to local PostgreSQL.'
+      );
     }
   }
 
@@ -141,24 +171,30 @@ if (isServer) {
       'voltium-dev-secret-key-INSECURE-DO-NOT-PROD-32-CHARS',
       'YOUR_SECURE_JWT_SECRET',
       'YOUR_SECURE_JWT_SECRET_MIN_32_CHARS_LONG',
-      'placeholder'
+      'placeholder',
     ];
     const secretLower = parsedEnv.JWT_SECRET.toLowerCase();
     if (
-      insecurePlaceholders.some(p => secretLower.includes(p.toLowerCase())) ||
+      insecurePlaceholders.some((p) => secretLower.includes(p.toLowerCase())) ||
       parsedEnv.JWT_SECRET.length < 32
     ) {
-      throw new Error('Security violation: Leaked, insecure, or placeholder JWT_SECRET is not allowed.');
+      throw new Error(
+        'Security violation: Leaked, insecure, or placeholder JWT_SECRET is not allowed.'
+      );
     }
   }
 
   // Prevent dev admin login and test OTP bypasses on staging and production environments
   // Prevent dev admin login and test OTP bypasses on non-development environments
   if (parsedEnv.ENABLE_DEV_ADMIN_LOGIN && parsedEnv.APP_ENV !== 'development') {
-    throw new Error('Security violation: ENABLE_DEV_ADMIN_LOGIN must be false on non-development environments.');
+    throw new Error(
+      'Security violation: ENABLE_DEV_ADMIN_LOGIN must be false on non-development environments.'
+    );
   }
   if (parsedEnv.ENABLE_TEST_OTP && parsedEnv.APP_ENV !== 'development') {
-    throw new Error('Security violation: ENABLE_TEST_OTP must be false on non-development environments.');
+    throw new Error(
+      'Security violation: ENABLE_TEST_OTP must be false on non-development environments.'
+    );
   }
 }
 

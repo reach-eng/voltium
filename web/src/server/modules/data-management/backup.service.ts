@@ -10,13 +10,26 @@ import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit-log';
 import { backupRepository } from './backup.repository';
-import { existsSync, mkdirSync, writeFileSync, statSync, readdirSync, readFileSync, rmSync } from 'fs';
+import {
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  statSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+} from 'fs';
 
 const BACKUP_LOCK_KEY = 'backupLock';
 const BACKUP_LOCK_VALUE = 'RESTORE_RUNNING';
 import { join } from 'path';
 import { createHash, createCipheriv, randomBytes } from 'crypto';
-import { dumpDatabase, createArchive, getFreeDiskBytes as getFreeDiskBytesHelper, getDiskUsage } from '@/lib/shell';
+import {
+  dumpDatabase,
+  createArchive,
+  getFreeDiskBytes as getFreeDiskBytesHelper,
+  getDiskUsage,
+} from '@/lib/shell';
 import { env } from '@/lib/env';
 
 /**
@@ -78,7 +91,9 @@ function getUploadsRoot(): string {
 async function getUploadsRootAsync(): Promise<string> {
   try {
     const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
-    return setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+    return (
+      setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads')
+    );
   } catch {
     return process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
   }
@@ -112,21 +127,37 @@ export const backupService = {
     // Daily backups: keep N most recent, delete older
     const dailyCutoff = new Date(now);
     dailyCutoff.setDate(dailyCutoff.getDate() - policy.keepDaily * 2);
-    totalDeleted += await backupService.purgeOldBackupsByType('DAILY', dailyCutoff, policy.keepDaily);
+    totalDeleted += await backupService.purgeOldBackupsByType(
+      'DAILY',
+      dailyCutoff,
+      policy.keepDaily
+    );
 
     // Weekly backups: keep N most recent
     const weeklyCutoff = new Date(now);
     weeklyCutoff.setDate(weeklyCutoff.getDate() - policy.keepWeekly * 14);
-    totalDeleted += await backupService.purgeOldBackupsByType('WEEKLY', weeklyCutoff, policy.keepWeekly);
+    totalDeleted += await backupService.purgeOldBackupsByType(
+      'WEEKLY',
+      weeklyCutoff,
+      policy.keepWeekly
+    );
 
     // Monthly backups: keep N most recent
     const monthlyCutoff = new Date(now);
     monthlyCutoff.setMonth(monthlyCutoff.getMonth() - 12);
-    totalDeleted += await backupService.purgeOldBackupsByType('MONTHLY', monthlyCutoff, policy.keepMonthly);
+    totalDeleted += await backupService.purgeOldBackupsByType(
+      'MONTHLY',
+      monthlyCutoff,
+      policy.keepMonthly
+    );
 
     // Manual backups: if keepManual is set, keep only the most recent N
     if (policy.keepManual !== null) {
-      totalDeleted += await backupService.purgeOldBackupsByType('MANUAL', new Date(0), policy.keepManual);
+      totalDeleted += await backupService.purgeOldBackupsByType(
+        'MANUAL',
+        new Date(0),
+        policy.keepManual
+      );
     }
 
     if (totalDeleted > 0) {
@@ -221,7 +252,9 @@ export const backupService = {
     const freeBytes = await getFreeDiskBytes();
     const freeGb = freeBytes / (1024 * 1024 * 1024);
     if (freeGb < minimumFreeDiskGb) {
-      throw new Error(`Insufficient disk space: ${freeGb.toFixed(1)} GB free, need ${minimumFreeDiskGb} GB`);
+      throw new Error(
+        `Insufficient disk space: ${freeGb.toFixed(1)} GB free, need ${minimumFreeDiskGb} GB`
+      );
     }
 
     // Override backup root for this backup
@@ -355,10 +388,7 @@ export const backupService = {
       const dbHash = createHash('sha256').update(readFileSync(databaseFile)).digest('hex');
       const uploadsHash = createHash('sha256').update(readFileSync(uploadsFile)).digest('hex');
 
-      const checksumLines = [
-        `${dbHash}  database.sql`,
-        `${uploadsHash}  uploads.zip`,
-      ];
+      const checksumLines = [`${dbHash}  database.sql`, `${uploadsHash}  uploads.zip`];
       writeFileSync(checksumFile, checksumLines.join('\n') + '\n');
 
       // 5. Calculate size
@@ -405,7 +435,13 @@ export const backupService = {
 
       logger.info('[BackupService] Backup completed', { backupId, sizeBytes: Number(totalSize) });
 
-      return { id: job.id, backupId, status: 'COMPLETED', path: backupDir, sizeBytes: Number(totalSize) };
+      return {
+        id: job.id,
+        backupId,
+        status: 'COMPLETED',
+        path: backupDir,
+        sizeBytes: Number(totalSize),
+      };
     } catch (err: any) {
       // Mark job as failed
       await backupRepository.updateBackupJob(job.id, {
@@ -688,8 +724,8 @@ export function calculateNextRun(config: {
   const [hours, minutes] = config.timeOfDay.split(':').map(Number);
 
   const next = new Date(now);
-  const hoursVal = (hours !== undefined && !isNaN(hours)) ? hours : 2;
-  const minutesVal = (minutes !== undefined && !isNaN(minutes)) ? minutes : 0;
+  const hoursVal = hours !== undefined && !isNaN(hours) ? hours : 2;
+  const minutesVal = minutes !== undefined && !isNaN(minutes) ? minutes : 0;
   next.setHours(hoursVal, minutesVal, 0, 0);
 
   // If today's time has passed, move to next occurrence

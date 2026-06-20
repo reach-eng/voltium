@@ -20,7 +20,14 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
-    const result = await depositUseCases.listDeposits({ status, riderId, startDate, endDate, page, limit });
+    const result = await depositUseCases.listDeposits({
+      status,
+      riderId,
+      startDate,
+      endDate,
+      page,
+      limit,
+    });
 
     return success(result.records, undefined, 200, result.pagination);
   } catch (err) {
@@ -71,7 +78,7 @@ export async function PUT(req: NextRequest) {
         await depositUseCases.requestRefund(
           riderId,
           adminId,
-          refundAmount ? Math.round(refundAmount * 100) : undefined,
+          refundAmount ? Math.round(refundAmount * 100) : undefined
         );
         await logAdminAction({
           actorId: adminId,
@@ -95,7 +102,9 @@ export async function PUT(req: NextRequest) {
         return success({ riderId, status: 'FORFEITED' }, 'Deposit forfeited');
 
       default:
-        return errors.badRequest(`Unknown action: ${action}. Use APPROVE | REJECT | REFUND | FORFEIT`);
+        return errors.badRequest(
+          `Unknown action: ${action}. Use APPROVE | REJECT | REFUND | FORFEIT`
+        );
     }
   } catch (err) {
     if (err instanceof DepositStateError) return errors.conflict(err.message);

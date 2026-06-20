@@ -19,7 +19,13 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
-    const result = await scoreUseCases.list({ riskLevel, minScore: minScore ? parseFloat(minScore) : undefined, search, page, limit });
+    const result = await scoreUseCases.list({
+      riskLevel,
+      minScore: minScore ? parseFloat(minScore) : undefined,
+      search,
+      page,
+      limit,
+    });
     return success({ scores: result.scores, pagination: result.pagination }, undefined, 200);
   } catch (error) {
     logger.error('GET /api/admin/scores error:', error);

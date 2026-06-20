@@ -3,7 +3,12 @@ import type { ApiResponseSuccess } from '@/lib/api-response';
 export interface RequestUploadUrlRequest {
   fileName: string;
   mimeType: string;
-  category: 'kyc_document' | 'profile_photo' | 'vehicle_photo' | 'payment_proof' | 'support_attachment';
+  category:
+    | 'kyc_document'
+    | 'profile_photo'
+    | 'vehicle_photo'
+    | 'payment_proof'
+    | 'support_attachment';
   fileSize: number;
 }
 

@@ -68,7 +68,12 @@ export const guarantorUseCases = {
   },
 
   async autoVerifyIfTestMode(riderDbId: string) {
-    if (process.env.NODE_ENV !== 'development' || process.env.ENABLE_DEV_TOOLS !== 'true' || process.env.TEST_MODE !== 'true') return;
+    if (
+      process.env.NODE_ENV !== 'development' ||
+      process.env.ENABLE_DEV_TOOLS !== 'true' ||
+      process.env.TEST_MODE !== 'true'
+    )
+      return;
     const rider = await db.rider.findUnique({ where: { id: riderDbId }, select: { phone: true } });
     if (rider && TEST_PHONES.includes(rider.phone)) {
       return guarantorRepository.autoVerifyTestGuarantor(riderDbId);

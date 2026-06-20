@@ -24,7 +24,7 @@ function parseParts(partsJson: string | null | undefined): ShiftPart[] {
 function computeShiftTimes(
   parts: ShiftPart[] | undefined | null,
   startTime?: string,
-  endTime?: string,
+  endTime?: string
 ): { partsJson: string | null; startTime: string; endTime: string } {
   if (parts && parts.length > 0) {
     const sorted = [...parts].sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -60,19 +60,30 @@ export const shiftUseCases = {
     if (!leaseDate) {
       leaseDate = new Date().toISOString().split('T')[0];
     }
-    const hub = await db.hub.findUnique({ where: { id: hubId }, select: { id: true, name: true, isActive: true } });
+    const hub = await db.hub.findUnique({
+      where: { id: hubId },
+      select: { id: true, name: true, isActive: true },
+    });
     if (!hub) throw new Error('Hub not found');
     if (!hub.isActive) throw new Error('Hub is currently inactive');
-    const shifts = await db.shift.findMany({ where: { isActive: true }, orderBy: [{ startTime: 'asc' }] });
+    const shifts = await db.shift.findMany({
+      where: { isActive: true },
+      orderBy: [{ startTime: 'asc' }],
+    });
     const hubVehicles = await db.vehicle.findMany({ where: { hubId }, select: { id: true } });
     const hubVehicleIds = hubVehicles.map((v: { id: string }) => v.id);
-    const bookingCounts = hubVehicleIds.length > 0
-      ? (await db.rentalLease.groupBy({
-          by: ['shiftId'],
-          where: { vehicleId: { in: hubVehicleIds }, leaseDate, status: { in: ['BOOKED', 'ACTIVE'] } },
-          _count: { id: true },
-        })) as unknown as Array<{ shiftId: string; _count: { id: number } }>
-      : [];
+    const bookingCounts =
+      hubVehicleIds.length > 0
+        ? ((await db.rentalLease.groupBy({
+            by: ['shiftId'],
+            where: {
+              vehicleId: { in: hubVehicleIds },
+              leaseDate,
+              status: { in: ['BOOKED', 'ACTIVE'] },
+            },
+            _count: { id: true },
+          })) as unknown as Array<{ shiftId: string; _count: { id: number } }>)
+        : [];
     const countMap = new Map<string, number>();
     for (const bc of bookingCounts) {
       countMap.set(bc.shiftId, bc._count.id);
@@ -110,7 +121,11 @@ export const shiftUseCases = {
 
   async createShift(data: any, actorId: string) {
     const { parts: inputParts, ...rest } = data;
-    const { partsJson, startTime, endTime } = computeShiftTimes(inputParts, rest.startTime, rest.endTime);
+    const { partsJson, startTime, endTime } = computeShiftTimes(
+      inputParts,
+      rest.startTime,
+      rest.endTime
+    );
     const createData: any = {
       ...rest,
       startTime,
@@ -120,7 +135,13 @@ export const shiftUseCases = {
       createData.parts = partsJson;
     }
     const shift = await db.shift.create({ data: createData as any });
-    createAuditLog({ actorId, action: 'shift.create', entity: 'shift', entityId: shift.id, details: { name: data.name } }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'shift.create',
+      entity: 'shift',
+      entityId: shift.id,
+      details: { name: data.name },
+    }).catch(() => {});
     return attachParts(shift);
   },
 
@@ -129,23 +150,37 @@ export const shiftUseCases = {
     const updateData: any = { ...rest };
 
     if (inputParts !== undefined) {
-      const { partsJson, startTime, endTime } = computeShiftTimes(inputParts, rest.startTime, rest.endTime);
+      const { partsJson, startTime, endTime } = computeShiftTimes(
+        inputParts,
+        rest.startTime,
+        rest.endTime
+      );
       updateData.startTime = startTime;
       updateData.endTime = endTime;
       updateData.parts = partsJson;
     }
 
     const shift = await db.shift.update({ where: { id }, data: updateData as any });
-    createAuditLog({ actorId, action: 'shift.update', entity: 'shift', entityId: id, details: data as Record<string, unknown> }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'shift.update',
+      entity: 'shift',
+      entityId: id,
+      details: data as Record<string, unknown>,
+    }).catch(() => {});
     return attachParts(shift);
   },
 
   async deleteShift(id: string, actorId: string) {
     const leaseCount = await db.rentalLease.count({ where: { shiftId: id } });
     if (leaseCount > 0) {
-      throw new Error(`Cannot delete shift: ${leaseCount} lease(s) are using it. Remove them first.`);
+      throw new Error(
+        `Cannot delete shift: ${leaseCount} lease(s) are using it. Remove them first.`
+      );
     }
     await db.shift.delete({ where: { id } });
-    createAuditLog({ actorId, action: 'shift.delete', entity: 'shift', entityId: id }).catch(() => {});
+    createAuditLog({ actorId, action: 'shift.delete', entity: 'shift', entityId: id }).catch(
+      () => {}
+    );
   },
 };

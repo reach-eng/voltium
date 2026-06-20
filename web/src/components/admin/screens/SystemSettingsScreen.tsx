@@ -29,14 +29,17 @@ import {
 } from 'lucide-react';
 
 interface SystemSettingsData {
-  editable: Record<string, {
-    value: string;
-    valueType: string;
-    category: string;
-    isSecret: boolean;
-    isEditable: boolean;
-    description: string | null;
-  }>;
+  editable: Record<
+    string,
+    {
+      value: string;
+      valueType: string;
+      category: string;
+      isSecret: boolean;
+      isEditable: boolean;
+      description: string | null;
+    }
+  >;
   readOnly: Record<string, string>;
 }
 
@@ -57,9 +60,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 function formatKeyLabel(key: string): string {
-  return key
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function SystemSettingsScreen() {
@@ -73,7 +74,9 @@ export default function SystemSettingsScreen() {
   useEffect(() => {
     fetch('/api/admin/auth/me', { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.data?.role) setAdminRole(d.data.role); })
+      .then((d) => {
+        if (d?.data?.role) setAdminRole(d.data.role);
+      })
       .catch(() => {});
   }, []);
 
@@ -104,7 +107,9 @@ export default function SystemSettingsScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleSave = async (key: string) => {
     setSaving((prev) => ({ ...prev, [key]: true }));
@@ -152,7 +157,7 @@ export default function SystemSettingsScreen() {
   }
 
   // Group editable settings by category
-  const grouped: Record<string, [string, typeof data.editable[string]][]> = {};
+  const grouped: Record<string, [string, (typeof data.editable)[string]][]> = {};
   for (const [key, setting] of Object.entries(data.editable)) {
     const cat = setting.category || 'SERVER';
     if (!grouped[cat]) grouped[cat] = [];
@@ -181,11 +186,10 @@ export default function SystemSettingsScreen() {
         <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
           <AlertTriangle className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
-              View-only mode
-            </p>
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">View-only mode</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              You are logged in as <strong>{adminRole.replace(/_/g, ' ')}</strong>. Only Super Admins can modify system settings.
+              You are logged in as <strong>{adminRole.replace(/_/g, ' ')}</strong>. Only Super
+              Admins can modify system settings.
             </p>
           </div>
         </div>
@@ -199,9 +203,7 @@ export default function SystemSettingsScreen() {
               <div className="p-1.5 rounded-lg bg-primary/10">
                 {categoryIcons[category] || <Settings2 className="w-4 h-4 text-primary" />}
               </div>
-              <CardTitle className="text-base">
-                {categoryLabels[category] || category}
-              </CardTitle>
+              <CardTitle className="text-base">{categoryLabels[category] || category}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -211,7 +213,10 @@ export default function SystemSettingsScreen() {
                   <div className="flex items-center gap-2">
                     <Label className="text-sm font-medium">{formatKeyLabel(key)}</Label>
                     {setting.isSecret && (
-                      <Badge variant="outline" className="text-[8px] border-amber-500/30 text-amber-600">
+                      <Badge
+                        variant="outline"
+                        className="text-[8px] border-amber-500/30 text-amber-600"
+                      >
                         SECRET
                       </Badge>
                     )}
@@ -251,11 +256,9 @@ export default function SystemSettingsScreen() {
                     value={
                       setting.isSecret && !showSecrets[key]
                         ? '[CONFIGURED]'
-                        : editValues[key] ?? ''
+                        : (editValues[key] ?? '')
                     }
-                    onChange={(e) =>
-                      setEditValues((prev) => ({ ...prev, [key]: e.target.value }))
-                    }
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, [key]: e.target.value }))}
                     className="text-sm font-mono"
                     placeholder={`Enter ${formatKeyLabel(key).toLowerCase()}`}
                     type={
@@ -304,10 +307,20 @@ export default function SystemSettingsScreen() {
               let badgeVariant = 'outline';
 
               if (key.includes('CONFIGURED')) {
-                icon = isConfigured ? <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> : <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />;
-                badgeVariant = isConfigured ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600';
+                icon = isConfigured ? (
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                );
+                badgeVariant = isConfigured
+                  ? 'bg-emerald-500/10 text-emerald-600'
+                  : 'bg-rose-500/10 text-rose-600';
               } else if (key.includes('_OTP') || key.includes('_LOGIN')) {
-                icon = isEnabled ? <ShieldAlert className="w-3.5 h-3.5 text-amber-500" /> : <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />;
+                icon = isEnabled ? (
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
+                ) : (
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                );
               } else if (key === 'DATABASE_HOST') {
                 icon = <Database className="w-3.5 h-3.5" />;
               } else if (key.includes('SECRET') || key.includes('JWT')) {
@@ -315,17 +328,26 @@ export default function SystemSettingsScreen() {
               }
 
               return (
-                <div key={key} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border text-sm">
+                <div
+                  key={key}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border text-sm"
+                >
                   <div className="shrink-0">{icon}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium truncate">{formatKeyLabel(key)}</p>
-                    <p className={`text-xs mt-0.5 font-mono ${
-                      isConfigured ? 'text-emerald-600 dark:text-emerald-400' :
-                      isEnabled ? 'text-amber-600 dark:text-amber-400' :
-                      isDisabled ? 'text-muted-foreground' :
-                      isLocalhost ? 'text-blue-600 dark:text-blue-400' :
-                      'text-foreground'
-                    }`}>
+                    <p
+                      className={`text-xs mt-0.5 font-mono ${
+                        isConfigured
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : isEnabled
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : isDisabled
+                              ? 'text-muted-foreground'
+                              : isLocalhost
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-foreground'
+                      }`}
+                    >
                       {value}
                     </p>
                   </div>

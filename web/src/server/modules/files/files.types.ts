@@ -1,4 +1,9 @@
-export type FileCategory = 'kyc_document' | 'profile_photo' | 'vehicle_photo' | 'payment_proof' | 'support_attachment';
+export type FileCategory =
+  | 'kyc_document'
+  | 'profile_photo'
+  | 'vehicle_photo'
+  | 'payment_proof'
+  | 'support_attachment';
 
 export enum FileOwnerType {
   RIDER = 'RIDER',
@@ -37,7 +42,10 @@ export interface RequestReadUrlResponse {
   expiresIn: number;
 }
 
-export const FILE_UPLOAD_RULES: Record<FileCategory, { allowedMimeTypes: string[]; maxSizeBytes: number }> = {
+export const FILE_UPLOAD_RULES: Record<
+  FileCategory,
+  { allowedMimeTypes: string[]; maxSizeBytes: number }
+> = {
   kyc_document: {
     allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
     maxSizeBytes: 5 * 1024 * 1024,

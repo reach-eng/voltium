@@ -28,15 +28,18 @@ export const adminRepository = {
     return db.admin.findUnique({ where: { email } });
   },
 
-  async list(filters?: { role?: string; isActive?: boolean; search?: string; page?: number; limit?: number }) {
+  async list(filters?: {
+    role?: string;
+    isActive?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const where: any = {};
     if (filters?.role) where.role = filters.role;
     if (filters?.isActive !== undefined) where.isActive = filters.isActive;
     if (filters?.search) {
-      where.OR = [
-        { name: { contains: filters.search } },
-        { email: { contains: filters.search } },
-      ];
+      where.OR = [{ name: { contains: filters.search } }, { email: { contains: filters.search } }];
     }
     return db.admin.findMany({
       where,

@@ -20,19 +20,19 @@ import { fileService } from '@/server/modules/files/files.service';
 
 function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
   if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
-    return buffer.length >= 3 && buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+    return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   }
   if (mimeType === 'image/png') {
     return (
       buffer.length >= 8 &&
       buffer[0] === 0x89 &&
       buffer[1] === 0x50 &&
-      buffer[2] === 0x4E &&
+      buffer[2] === 0x4e &&
       buffer[3] === 0x47 &&
-      buffer[4] === 0x0D &&
-      buffer[5] === 0x0A &&
-      buffer[6] === 0x1A &&
-      buffer[7] === 0x0A
+      buffer[4] === 0x0d &&
+      buffer[5] === 0x0a &&
+      buffer[6] === 0x1a &&
+      buffer[7] === 0x0a
     );
   }
   if (mimeType === 'application/pdf') {
@@ -41,20 +41,29 @@ function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
       buffer[0] === 0x25 && // '%'
       buffer[1] === 0x50 && // 'P'
       buffer[2] === 0x44 && // 'D'
-      buffer[3] === 0x46    // 'F'
+      buffer[3] === 0x46 // 'F'
     );
   }
   if (mimeType === 'image/webp') {
     return (
       buffer.length >= 12 &&
-      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 && // 'RIFF'
-      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50   // 'WEBP'
+      buffer[0] === 0x52 &&
+      buffer[1] === 0x49 &&
+      buffer[2] === 0x46 &&
+      buffer[3] === 0x46 && // 'RIFF'
+      buffer[8] === 0x57 &&
+      buffer[9] === 0x45 &&
+      buffer[10] === 0x42 &&
+      buffer[11] === 0x50 // 'WEBP'
     );
   }
   if (mimeType === 'video/mp4') {
     return (
       buffer.length >= 8 &&
-      buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70 // 'ftyp'
+      buffer[4] === 0x66 &&
+      buffer[5] === 0x74 &&
+      buffer[6] === 0x79 &&
+      buffer[7] === 0x70 // 'ftyp'
     );
   }
   return true;
@@ -75,7 +84,8 @@ export async function GET(
     const { path } = await params;
     const { db } = await import('@/lib/db');
     const setting = await db.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
-    const baseDir = setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+    const baseDir =
+      setting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
     const relativePath = path.join('/');
     const fullPath = resolve(baseDir, relativePath);
 
@@ -119,9 +129,11 @@ export async function GET(
 
     // Log admin view if actor is admin
     if (actor.role === 'admin' && actor.riderDbId) {
-      await fileService.logAdminFileView(actor.riderDbId, record.id, record.purpose, record.ownerId).catch(err => {
-        logger.error('Failed to log admin file view', err);
-      });
+      await fileService
+        .logAdminFileView(actor.riderDbId, record.id, record.purpose, record.ownerId)
+        .catch((err) => {
+          logger.error('Failed to log admin file view', err);
+        });
     }
 
     try {
@@ -191,28 +203,36 @@ export async function PUT(
 
       // Re-validate file size against declared limit
       if (actualSize > record.sizeBytes) {
-        return NextResponse.json(
-          { error: 'Uploaded file exceeds declared size' },
-          { status: 413 }
-        );
+        return NextResponse.json({ error: 'Uploaded file exceeds declared size' }, { status: 413 });
       }
 
       // Write to local disk using the storage key path
       const { db: storageDb } = await import('@/lib/db');
-      const storageSetting = await storageDb.systemSetting.findUnique({ where: { key: 'LOCAL_STORAGE_ROOT' } });
-      const baseDir = storageSetting?.value || process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
+      const storageSetting = await storageDb.systemSetting.findUnique({
+        where: { key: 'LOCAL_STORAGE_ROOT' },
+      });
+      const baseDir =
+        storageSetting?.value ||
+        process.env.LOCAL_STORAGE_ROOT ||
+        join(process.cwd(), 'data', 'uploads');
       const resolvedBase = resolve(baseDir);
       const fullPath = resolve(join(baseDir, record.storageKey));
 
       // Path traversal protection on storageKey
       if (!fullPath.startsWith(resolvedBase + (fullPath === resolvedBase ? '' : '/'))) {
-        logger.warn('[LocalUploadCatchAll] Path traversal attempt blocked', { storageKey: record.storageKey });
+        logger.warn('[LocalUploadCatchAll] Path traversal attempt blocked', {
+          storageKey: record.storageKey,
+        });
         return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
       }
 
       // Additional: reject storageKey containing traversal markers
       const normalizedKey = record.storageKey.replace(/\\/g, '/');
-      if (normalizedKey.includes('..') || normalizedKey.includes('~') || normalizedKey.startsWith('/')) {
+      if (
+        normalizedKey.includes('..') ||
+        normalizedKey.includes('~') ||
+        normalizedKey.startsWith('/')
+      ) {
         return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
       }
 

@@ -51,12 +51,14 @@ export async function uploadFile(file: File, type: string): Promise<string> {
   if (!reqRes.ok) {
     const errBody = await reqRes.json().catch(() => ({}));
     throw new Error(
-      (errBody as any)?.error?.message || `Failed to request upload URL (HTTP ${reqRes.status})`,
+      (errBody as any)?.error?.message || `Failed to request upload URL (HTTP ${reqRes.status})`
     );
   }
 
-  const reqData: { success: boolean; data: { uploadUrl: string; fileRecordId: string; storageKey: string } } =
-    await reqRes.json();
+  const reqData: {
+    success: boolean;
+    data: { uploadUrl: string; fileRecordId: string; storageKey: string };
+  } = await reqRes.json();
 
   const { uploadUrl, storageKey } = reqData.data;
   if (!uploadUrl || !storageKey) {

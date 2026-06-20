@@ -24,7 +24,11 @@ export async function POST(request: NextRequest) {
     const permissions = adminSession ? (adminSession as any).permissions : undefined;
 
     const actor = adminSession
-      ? { role: 'admin' as const, adminId: adminSession.adminId || adminSession.riderDbId, permissions }
+      ? {
+          role: 'admin' as const,
+          adminId: adminSession.adminId || adminSession.riderDbId,
+          permissions,
+        }
       : { role: 'rider' as const, riderDbId: (riderSession as { riderDbId: string }).riderDbId };
 
     const result = await fileUseCases.requestReadUrl(validation.data.fileRecordId, actor);

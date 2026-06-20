@@ -41,7 +41,9 @@ export default function RolePermissionManagement() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Roles & Permissions</h2>
-          <p className="text-muted-foreground">Map system operations to roles instead of hardcoding validation rules.</p>
+          <p className="text-muted-foreground">
+            Map system operations to roles instead of hardcoding validation rules.
+          </p>
         </div>
         <Button className="bg-primary text-white" onClick={handleSave}>
           Save Permissions Matrix
@@ -65,7 +67,9 @@ export default function RolePermissionManagement() {
                 onClick={() => setSelectedRole(r.name)}
               >
                 <span>{r.name.replace('_', ' ')}</span>
-                <Badge variant="outline" className="text-[10px]">{r.count}</Badge>
+                <Badge variant="outline" className="text-[10px]">
+                  {r.count}
+                </Badge>
               </button>
             ))}
           </CardContent>
@@ -73,13 +77,17 @@ export default function RolePermissionManagement() {
 
         <Card className="md:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base font-bold">Permissions Allowed for {selectedRole.replace('_', ' ')}</CardTitle>
+            <CardTitle className="text-base font-bold">
+              Permissions Allowed for {selectedRole.replace('_', ' ')}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {selectedRole === 'SUPER_ADMIN' ? (
               <div className="flex items-center gap-3 p-4 border border-emerald-200 bg-emerald-500/5 text-emerald-950 text-xs rounded-xl">
                 <Key className="h-5 w-5 text-emerald-600 shrink-0" />
-                <span>SUPER ADMIN possesses bypass authority and has all permissions enabled implicitly.</span>
+                <span>
+                  SUPER ADMIN possesses bypass authority and has all permissions enabled implicitly.
+                </span>
               </div>
             ) : (
               <div className="divide-y text-xs">
@@ -87,7 +95,9 @@ export default function RolePermissionManagement() {
                   <div key={p.key} className="flex items-center justify-between py-3">
                     <div>
                       <div className="font-semibold text-sm">{p.label}</div>
-                      <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">{p.category}</div>
+                      <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider">
+                        {p.category}
+                      </div>
                     </div>
                     <div>
                       <input

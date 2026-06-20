@@ -19,20 +19,28 @@ interface RateLimitEntry {
 const memoryStore = new Map<string, RateLimitEntry>();
 
 function shouldUseDatabaseLimiter(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.RATE_LIMIT_STORE_PROVIDER === 'postgres';
+  return (
+    process.env.NODE_ENV === 'production' || process.env.RATE_LIMIT_STORE_PROVIDER === 'postgres'
+  );
 }
 
 if (typeof globalThis !== 'undefined' && !('$_rateLimitCleanup' in globalThis)) {
   (globalThis as any).$_rateLimitCleanup = true;
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of memoryStore) {
-      if (entry.resetAt <= now) memoryStore.delete(key);
-    }
-  }, 5 * 60 * 1000);
+  setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, entry] of memoryStore) {
+        if (entry.resetAt <= now) memoryStore.delete(key);
+      }
+    },
+    5 * 60 * 1000
+  );
 }
 
-export async function checkRateLimit(identifier: string, config: RateLimitConfig = API_RATE_LIMIT): Promise<RateLimitResult> {
+export async function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig = API_RATE_LIMIT
+): Promise<RateLimitResult> {
   if (process.env.NODE_ENV !== 'production') {
     return { allowed: true, remaining: 1000, resetAt: Date.now() + 1000 };
   }
@@ -42,7 +50,9 @@ export async function checkRateLimit(identifier: string, config: RateLimitConfig
 
   if (shouldUseDatabaseLimiter()) {
     const resetAt = new Date(now + config.windowMs);
-    await db.rateLimitBucket.deleteMany({ where: { resetAt: { lte: new Date(now - config.windowMs) } } }).catch(() => {});
+    await db.rateLimitBucket
+      .deleteMany({ where: { resetAt: { lte: new Date(now - config.windowMs) } } })
+      .catch(() => {});
 
     const existing = await db.rateLimitBucket.findUnique({ where: { key } }).catch(() => null);
     if (!existing || existing.resetAt.getTime() <= now) {
@@ -58,8 +68,15 @@ export async function checkRateLimit(identifier: string, config: RateLimitConfig
       return { allowed: false, remaining: 0, resetAt: existing.resetAt.getTime() };
     }
 
-    const updated = await db.rateLimitBucket.update({ where: { key }, data: { points: { increment: 1 } } });
-    return { allowed: true, remaining: Math.max(0, config.maxRequests - updated.points), resetAt: existing.resetAt.getTime() };
+    const updated = await db.rateLimitBucket.update({
+      where: { key },
+      data: { points: { increment: 1 } },
+    });
+    return {
+      allowed: true,
+      remaining: Math.max(0, config.maxRequests - updated.points),
+      resetAt: existing.resetAt.getTime(),
+    };
   }
 
   const existing = memoryStore.get(key);
@@ -70,7 +87,8 @@ export async function checkRateLimit(identifier: string, config: RateLimitConfig
     memoryStore.set(key, { count: 1, resetAt });
     return { allowed: true, remaining: config.maxRequests - 1, resetAt };
   }
-  if (entry.count >= config.maxRequests) return { allowed: false, remaining: 0, resetAt: entry.resetAt };
+  if (entry.count >= config.maxRequests)
+    return { allowed: false, remaining: 0, resetAt: entry.resetAt };
   entry.count += 1;
   return { allowed: true, remaining: config.maxRequests - entry.count, resetAt: entry.resetAt };
 }

@@ -31,7 +31,10 @@ export const restoreStartSchema = z.object({
 export const scheduleUpdateSchema = z.object({
   enabled: z.boolean(),
   frequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('DAILY'),
-  timeOfDay: z.string().regex(/^\d{2}:\d{2}$/, 'Must be in HH:mm format').default('02:00'),
+  timeOfDay: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, 'Must be in HH:mm format')
+    .default('02:00'),
   timezone: z.string().default('Asia/Kolkata'),
   dayOfWeek: z.number().int().min(0).max(6).nullable().default(null),
   dayOfMonth: z.number().int().min(1).max(28).nullable().default(null),
@@ -48,4 +51,3 @@ export const scheduleUpdateSchema = z.object({
 });
 
 export const scheduleTestSchema = z.object({});
-

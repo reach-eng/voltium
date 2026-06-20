@@ -1033,8 +1033,11 @@ export default function RiderManagement() {
                   ) : (
                     riders.map((rider) => {
                       const isActive = rider.lifecycleStatus === 'ACTIVE';
-                      const isRed = rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED';
-                      const isOrange = rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED';
+                      const isRed =
+                        rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED';
+                      const isOrange =
+                        rider.lifecycleStatus === 'KYC_SUBMITTED' ||
+                        rider.lifecycleStatus === 'PROFILE_SUBMITTED';
                       const nameColor = isRed
                         ? 'text-rose-600'
                         : isActive
@@ -1926,7 +1929,9 @@ export default function RiderManagement() {
                         <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10 space-y-8">
                           <DetailGroup
                             label="Lifecycle Status"
-                            value={isEditing ? editForm.lifecycleStatus : selectedRider.lifecycleStatus}
+                            value={
+                              isEditing ? editForm.lifecycleStatus : selectedRider.lifecycleStatus
+                            }
                             isEditing={isEditing}
                             field="lifecycleStatus"
                             type="select"

@@ -247,7 +247,9 @@ function OverviewTab() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -447,9 +449,21 @@ function OverviewTab() {
               />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
                 {[
-                  { label: 'Database', bytes: data.storage.databaseSizeBytes, color: 'bg-blue-500' },
-                  { label: 'Uploads', bytes: data.storage.uploadsSizeBytes, color: 'bg-purple-500' },
-                  { label: 'Backups', bytes: data.storage.backupsSizeBytes, color: 'bg-emerald-500' },
+                  {
+                    label: 'Database',
+                    bytes: data.storage.databaseSizeBytes,
+                    color: 'bg-blue-500',
+                  },
+                  {
+                    label: 'Uploads',
+                    bytes: data.storage.uploadsSizeBytes,
+                    color: 'bg-purple-500',
+                  },
+                  {
+                    label: 'Backups',
+                    bytes: data.storage.backupsSizeBytes,
+                    color: 'bg-emerald-500',
+                  },
                   { label: 'Free', bytes: data.storage.freeDiskBytes, color: 'bg-muted' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-2">
@@ -531,7 +545,9 @@ function BackupsTab() {
   const [creating, setCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [verifyResult, setVerifyResult] = useState<{ valid: boolean; message: string } | null>(null);
+  const [verifyResult, setVerifyResult] = useState<{ valid: boolean; message: string } | null>(
+    null
+  );
   const limit = 20;
 
   const fetchBackups = useCallback(async () => {
@@ -559,7 +575,9 @@ function BackupsTab() {
     }
   }, [page, typeFilter, statusFilter]);
 
-  useEffect(() => { fetchBackups(); }, [fetchBackups]);
+  useEffect(() => {
+    fetchBackups();
+  }, [fetchBackups]);
 
   const handleCreateBackup = async () => {
     setCreating(true);
@@ -593,7 +611,10 @@ function BackupsTab() {
       });
       const json = await res.json();
       if (json.success) {
-        setVerifyResult({ valid: true, message: 'Backup verified successfully — all files intact' });
+        setVerifyResult({
+          valid: true,
+          message: 'Backup verified successfully — all files intact',
+        });
         toast.success('Backup verified');
       } else {
         setVerifyResult({ valid: false, message: json.error || 'Verification failed' });
@@ -650,30 +671,60 @@ function BackupsTab() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Label className="text-xs text-muted-foreground whitespace-nowrap">Type:</Label>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
+            <Select
+              value={typeFilter}
+              onValueChange={(v) => {
+                setTypeFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="h-8 w-32 text-xs">
                 <SelectValue placeholder="All types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="" className="text-xs">All types</SelectItem>
-                <SelectItem value="MANUAL" className="text-xs">Manual</SelectItem>
-                <SelectItem value="SCHEDULED" className="text-xs">Scheduled</SelectItem>
-                <SelectItem value="PRE_RESTORE" className="text-xs">Pre-restore</SelectItem>
+                <SelectItem value="" className="text-xs">
+                  All types
+                </SelectItem>
+                <SelectItem value="MANUAL" className="text-xs">
+                  Manual
+                </SelectItem>
+                <SelectItem value="SCHEDULED" className="text-xs">
+                  Scheduled
+                </SelectItem>
+                <SelectItem value="PRE_RESTORE" className="text-xs">
+                  Pre-restore
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
             <Label className="text-xs text-muted-foreground whitespace-nowrap">Status:</Label>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
+            >
               <SelectTrigger className="h-8 w-32 text-xs">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="" className="text-xs">All statuses</SelectItem>
-                <SelectItem value="COMPLETED" className="text-xs">Completed</SelectItem>
-                <SelectItem value="FAILED" className="text-xs">Failed</SelectItem>
-                <SelectItem value="RUNNING" className="text-xs">Running</SelectItem>
-                <SelectItem value="QUEUED" className="text-xs">Queued</SelectItem>
+                <SelectItem value="" className="text-xs">
+                  All statuses
+                </SelectItem>
+                <SelectItem value="COMPLETED" className="text-xs">
+                  Completed
+                </SelectItem>
+                <SelectItem value="FAILED" className="text-xs">
+                  Failed
+                </SelectItem>
+                <SelectItem value="RUNNING" className="text-xs">
+                  Running
+                </SelectItem>
+                <SelectItem value="QUEUED" className="text-xs">
+                  Queued
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -682,7 +733,11 @@ function BackupsTab() {
               variant="ghost"
               size="sm"
               className="h-8 text-xs"
-              onClick={() => { setTypeFilter(''); setStatusFilter(''); setPage(1); }}
+              onClick={() => {
+                setTypeFilter('');
+                setStatusFilter('');
+                setPage(1);
+              }}
             >
               Clear filters
             </Button>
@@ -765,7 +820,10 @@ function BackupsTab() {
                 {backups.map((backup) => (
                   <TableRow key={backup.id}>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${getTypeBadge(backup.type)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${getTypeBadge(backup.type)}`}
+                      >
                         {backup.type}
                         {backup.scheduleType && ` (${backup.scheduleType})`}
                       </Badge>
@@ -891,8 +949,8 @@ function BackupsTab() {
               <Info className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
               <div className="text-muted-foreground">
                 <p className="text-xs">
-                  This will create a full backup of the database and uploaded files.
-                  The backup will be stored on the local disk.
+                  This will create a full backup of the database and uploaded files. The backup will
+                  be stored on the local disk.
                 </p>
               </div>
             </div>
@@ -922,8 +980,8 @@ function BackupsTab() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Backup</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this backup? This action cannot be undone.
-              The backup files will be permanently removed from disk.
+              Are you sure you want to delete this backup? This action cannot be undone. The backup
+              files will be permanently removed from disk.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1010,7 +1068,9 @@ function ScheduleTab() {
     }
   }, []);
 
-  useEffect(() => { fetchSchedule(); }, [fetchSchedule]);
+  useEffect(() => {
+    fetchSchedule();
+  }, [fetchSchedule]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -1177,10 +1237,7 @@ function ScheduleTab() {
                 Enable or disable scheduled automatic backups
               </p>
             </div>
-            <Switch
-              checked={config.enabled}
-              onCheckedChange={(v) => updateConfig('enabled', v)}
-            />
+            <Switch checked={config.enabled} onCheckedChange={(v) => updateConfig('enabled', v)} />
           </div>
 
           <Separator />
@@ -1189,10 +1246,7 @@ function ScheduleTab() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Frequency</Label>
-              <Select
-                value={config.frequency}
-                onValueChange={(v) => updateConfig('frequency', v)}
-              >
+              <Select value={config.frequency} onValueChange={(v) => updateConfig('frequency', v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1282,7 +1336,9 @@ function ScheduleTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Uploaded Files</Label>
-                  <p className="text-xs text-muted-foreground">Include rider KYC and other uploads</p>
+                  <p className="text-xs text-muted-foreground">
+                    Include rider KYC and other uploads
+                  </p>
                 </div>
                 <Switch
                   checked={config.includeUploads}
@@ -1387,10 +1443,7 @@ function ScheduleTab() {
                 min={0}
                 value={config.keepManual ?? ''}
                 onChange={(e) =>
-                  updateConfig(
-                    'keepManual',
-                    e.target.value ? parseInt(e.target.value) : null
-                  )
+                  updateConfig('keepManual', e.target.value ? parseInt(e.target.value) : null)
                 }
                 placeholder="Unlimited"
               />
@@ -1460,7 +1513,10 @@ function ScheduleTab() {
             {testResult.issues.length > 0 && (
               <div className="mt-2 space-y-1">
                 {testResult.issues.map((issue, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400"
+                  >
                     <ShieldX className="w-3 h-3 shrink-0" /> {issue}
                   </div>
                 ))}
@@ -1469,7 +1525,10 @@ function ScheduleTab() {
             {testResult.warnings.length > 0 && (
               <div className="mt-2 space-y-1">
                 {testResult.warnings.map((warn, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+                  >
                     <AlertTriangle className="w-3 h-3 shrink-0" /> {warn}
                   </div>
                 ))}
@@ -1503,11 +1562,7 @@ function ScheduleTab() {
             </>
           )}
         </Button>
-        <Button
-          variant="secondary"
-          onClick={handleRunNow}
-          disabled={runningNow}
-        >
+        <Button variant="secondary" onClick={handleRunNow} disabled={runningNow}>
           {runningNow ? (
             <>
               <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Starting...
@@ -1540,7 +1595,9 @@ function RestoreTab() {
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<any>(null);
   const [restoring, setRestoring] = useState(false);
-  const [restoreStep, setRestoreStep] = useState<'select' | 'validate' | 'confirm' | 'result'>('select');
+  const [restoreStep, setRestoreStep] = useState<'select' | 'validate' | 'confirm' | 'result'>(
+    'select'
+  );
   const [restoreResult, setRestoreResult] = useState<any>(null);
   const [restoreHistory, setRestoreHistory] = useState<any[]>([]);
 
@@ -1568,7 +1625,9 @@ function RestoreTab() {
         const json = await res.json();
         if (json.success) setRestoreHistory(json.data || []);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   useEffect(() => {
@@ -1651,12 +1710,16 @@ function RestoreTab() {
             </div>
             <span
               className={`text-xs ${
-                restoreStep === step
-                  ? 'font-medium text-foreground'
-                  : 'text-muted-foreground'
+                restoreStep === step ? 'font-medium text-foreground' : 'text-muted-foreground'
               }`}
             >
-              {step === 'select' ? 'Select Backup' : step === 'validate' ? 'Validate' : step === 'confirm' ? 'Confirm' : 'Restore'}
+              {step === 'select'
+                ? 'Select Backup'
+                : step === 'validate'
+                  ? 'Validate'
+                  : step === 'confirm'
+                    ? 'Confirm'
+                    : 'Restore'}
             </span>
             {i < 3 && <ChevronRight className="w-3 h-3 text-muted-foreground" />}
           </div>
@@ -1674,7 +1737,8 @@ function RestoreTab() {
               <CardTitle className="text-base">Select a Backup to Restore</CardTitle>
             </div>
             <CardDescription>
-              Choose a completed backup to restore from. A pre-restore backup will be created automatically.
+              Choose a completed backup to restore from. A pre-restore backup will be created
+              automatically.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -1702,7 +1766,10 @@ function RestoreTab() {
                     onClick={() => setSelectedId(backup.id)}
                   >
                     <div className="flex items-center gap-3">
-                      <Badge variant="outline" className={`text-[10px] ${getTypeBadge(backup.type)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${getTypeBadge(backup.type)}`}
+                      >
                         {backup.type}
                       </Badge>
                       <div>
@@ -1767,20 +1834,30 @@ function RestoreTab() {
             {selectedBackup && (
               <div className="p-3 rounded-lg bg-muted/30 border text-sm space-y-1">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={`text-[10px] ${getTypeBadge(selectedBackup.type)}`}>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${getTypeBadge(selectedBackup.type)}`}
+                  >
                     {selectedBackup.type}
                   </Badge>
                   <span className="font-medium">{formatBytes(selectedBackup.sizeBytes)}</span>
-                  <span className="text-muted-foreground">· {selectedBackup.fileCount ?? 0} files</span>
+                  <span className="text-muted-foreground">
+                    · {selectedBackup.fileCount ?? 0} files
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground">Created: {formatDate(selectedBackup.createdAt)}</p>
+                <p className="text-xs text-muted-foreground">
+                  Created: {formatDate(selectedBackup.createdAt)}
+                </p>
               </div>
             )}
 
             {validationResult.errors?.length > 0 && (
               <div className="space-y-1">
                 {validationResult.errors.map((err: string, i: number) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400">
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400"
+                  >
                     <ShieldX className="w-3 h-3 shrink-0" /> {err}
                   </div>
                 ))}
@@ -1790,7 +1867,10 @@ function RestoreTab() {
             {validationResult.warnings?.length > 0 && (
               <div className="space-y-1">
                 {validationResult.warnings.map((warn: string, i: number) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400"
+                  >
                     <AlertTriangle className="w-3 h-3 shrink-0" /> {warn}
                   </div>
                 ))}
@@ -1798,10 +1878,7 @@ function RestoreTab() {
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              <Button
-                onClick={() => setRestoreStep('confirm')}
-                disabled={!validationResult.valid}
-              >
+              <Button onClick={() => setRestoreStep('confirm')} disabled={!validationResult.valid}>
                 <ChevronRight className="w-4 h-4 mr-1" /> Continue to Restore
               </Button>
               <Button variant="outline" onClick={() => setRestoreStep('select')}>
@@ -1823,7 +1900,8 @@ function RestoreTab() {
               <CardTitle className="text-base">Confirm Restore</CardTitle>
             </div>
             <CardDescription>
-              This will replace the current database and files with the backup. A pre-restore backup will be created first.
+              This will replace the current database and files with the backup. A pre-restore backup
+              will be created first.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1833,7 +1911,8 @@ function RestoreTab() {
                 <div className="text-sm text-rose-700 dark:text-rose-400">
                   <p className="font-medium">Warning: This action is destructive</p>
                   <p className="text-xs mt-1">
-                    The current database will be replaced with the backup. All changes made after the backup was created will be lost.
+                    The current database will be replaced with the backup. All changes made after
+                    the backup was created will be lost.
                   </p>
                 </div>
               </div>
@@ -1841,7 +1920,10 @@ function RestoreTab() {
 
             <div className="p-3 rounded-lg bg-muted/30 border text-sm space-y-1">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`text-[10px] ${getTypeBadge(selectedBackup.type)}`}>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] ${getTypeBadge(selectedBackup.type)}`}
+                >
                   {selectedBackup.type}
                 </Badge>
                 <span className="font-medium">{formatBytes(selectedBackup.sizeBytes)}</span>
@@ -1888,7 +1970,8 @@ function RestoreTab() {
               <CardTitle className="text-base">Restore Initiated</CardTitle>
             </div>
             <CardDescription>
-              The restore process has started. The application may be in maintenance mode during the restore.
+              The restore process has started. The application may be in maintenance mode during the
+              restore.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -1902,9 +1985,7 @@ function RestoreTab() {
                 ))}
               </div>
             )}
-            <Button onClick={() => setRestoreStep('select')}>
-              Restore Another Backup
-            </Button>
+            <Button onClick={() => setRestoreStep('select')}>Restore Another Backup</Button>
           </CardContent>
         </Card>
       )}
@@ -1935,7 +2016,10 @@ function RestoreTab() {
                 {restoreHistory.slice(0, 10).map((job: any, i: number) => (
                   <TableRow key={job.id || i}>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] ${getStatusBadge(job.status)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${getStatusBadge(job.status)}`}
+                      >
                         {job.status}
                       </Badge>
                     </TableCell>
@@ -1983,7 +2067,9 @@ function StorageTab() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -2019,7 +2105,12 @@ function StorageTab() {
     { label: 'Uploads', bytes: data.uploadsSizeBytes, color: 'bg-purple-500', icon: Upload },
     { label: 'Backups', bytes: data.backupsSizeBytes, color: 'bg-emerald-500', icon: Archive },
     { label: 'Logs', bytes: data.logsSizeBytes, color: 'bg-amber-500', icon: FileText },
-    { label: 'Free Space', bytes: data.freeDiskBytes, color: 'bg-muted-foreground/20', icon: HardDrive },
+    {
+      label: 'Free Space',
+      bytes: data.freeDiskBytes,
+      color: 'bg-muted-foreground/20',
+      icon: HardDrive,
+    },
   ];
 
   return (
@@ -2067,12 +2158,11 @@ function StorageTab() {
               const pct = getStoragePercent(cat.bytes, total);
               const CatIcon = cat.icon;
               return (
-                <div
-                  key={cat.label}
-                  className="p-4 rounded-lg border border-border/50 bg-muted/20"
-                >
+                <div key={cat.label} className="p-4 rounded-lg border border-border/50 bg-muted/20">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`p-2 rounded-lg ${cat.color.replace('bg-', 'bg-').replace('bg-muted-foreground/20', 'bg-muted')}/10`}>
+                    <div
+                      className={`p-2 rounded-lg ${cat.color.replace('bg-', 'bg-').replace('bg-muted-foreground/20', 'bg-muted')}/10`}
+                    >
                       <CatIcon
                         className={`w-4 h-4 ${
                           cat.color === 'bg-muted-foreground/20'
@@ -2204,7 +2294,9 @@ function BackupLogsTab() {
     }
   }, [page, searchQuery, dateFrom, dateTo, actionFilter]);
 
-  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   const actionLabels: Record<string, string> = {
     'backup.created': 'Backup Created',
@@ -2245,22 +2337,39 @@ function BackupLogsTab() {
           <Input
             placeholder="Search logs..."
             value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             className="h-8 pl-8 text-xs"
           />
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-xs text-muted-foreground whitespace-nowrap">Action:</Label>
-          <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
+          <Select
+            value={actionFilter}
+            onValueChange={(v) => {
+              setActionFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="h-8 w-40 text-xs">
               <SelectValue placeholder="All actions" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="" className="text-xs">All actions</SelectItem>
-              <SelectItem value="backup." className="text-xs">All Backup</SelectItem>
-              <SelectItem value="restore." className="text-xs">All Restore</SelectItem>
+              <SelectItem value="" className="text-xs">
+                All actions
+              </SelectItem>
+              <SelectItem value="backup." className="text-xs">
+                All Backup
+              </SelectItem>
+              <SelectItem value="restore." className="text-xs">
+                All Restore
+              </SelectItem>
               {Object.keys(actionLabels).map((a) => (
-                <SelectItem key={a} value={a} className="text-xs">{actionLabels[a]}</SelectItem>
+                <SelectItem key={a} value={a} className="text-xs">
+                  {actionLabels[a]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -2270,7 +2379,10 @@ function BackupLogsTab() {
           <Input
             type="date"
             value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setDateFrom(e.target.value);
+              setPage(1);
+            }}
             className="h-8 w-36 text-xs"
           />
         </div>
@@ -2279,7 +2391,10 @@ function BackupLogsTab() {
           <Input
             type="date"
             value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setDateTo(e.target.value);
+              setPage(1);
+            }}
             className="h-8 w-36 text-xs"
           />
         </div>
@@ -2288,7 +2403,13 @@ function BackupLogsTab() {
             variant="ghost"
             size="sm"
             className="h-8 text-xs"
-            onClick={() => { setSearchQuery(''); setDateFrom(''); setDateTo(''); setActionFilter(''); setPage(1); }}
+            onClick={() => {
+              setSearchQuery('');
+              setDateFrom('');
+              setDateTo('');
+              setActionFilter('');
+              setPage(1);
+            }}
           >
             Clear filters
           </Button>
@@ -2347,7 +2468,9 @@ function BackupLogsTab() {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {log.actorType === 'SYSTEM' ? (
-                        <Badge variant="outline" className="text-[8px] border-muted">System</Badge>
+                        <Badge variant="outline" className="text-[8px] border-muted">
+                          System
+                        </Badge>
                       ) : (
                         log.actorId?.slice(0, 8) || '—'
                       )}
@@ -2369,7 +2492,10 @@ function BackupLogsTab() {
                             try {
                               const parsed = JSON.parse(log.details);
                               const entries = Object.entries(parsed);
-                              return entries.slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ');
+                              return entries
+                                .slice(0, 3)
+                                .map(([k, v]) => `${k}: ${v}`)
+                                .join(', ');
                             } catch {
                               return log.details.slice(0, 60);
                             }
@@ -2390,13 +2516,23 @@ function BackupLogsTab() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Previous
           </Button>
           <span className="text-xs text-muted-foreground">
             Page {page} of {totalPages}
           </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next
           </Button>
         </div>
@@ -2420,12 +2556,28 @@ function DisasterRecoveryTab() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [togglingMaintenance, setTogglingMaintenance] = useState(false);
   const [verifyingAll, setVerifyingAll] = useState(false);
-  const [verifyAllResult, setVerifyAllResult] = useState<{ verified: number; failed: number; total: number } | null>(null);
+  const [verifyAllResult, setVerifyAllResult] = useState<{
+    verified: number;
+    failed: number;
+    total: number;
+  } | null>(null);
 
   const drChecklist = [
-    { id: 'backup', label: 'Recent backup exists', check: () => overview?.stats?.lastBackupStatus === 'COMPLETED' },
-    { id: 'schedule', label: 'Automatic backup is enabled', check: () => overview?.scheduleStatus?.enabled === true },
-    { id: 'disk', label: 'Sufficient free disk space', check: () => overview?.storage?.freeDiskBytes > 10 * 1024 * 1024 * 1024 }, // 10 GB
+    {
+      id: 'backup',
+      label: 'Recent backup exists',
+      check: () => overview?.stats?.lastBackupStatus === 'COMPLETED',
+    },
+    {
+      id: 'schedule',
+      label: 'Automatic backup is enabled',
+      check: () => overview?.scheduleStatus?.enabled === true,
+    },
+    {
+      id: 'disk',
+      label: 'Sufficient free disk space',
+      check: () => overview?.storage?.freeDiskBytes > 10 * 1024 * 1024 * 1024,
+    }, // 10 GB
     { id: 'secondary', label: 'Secondary backup location configured', check: () => false }, // depends on schedule config
     { id: 'verify', label: 'Latest backup verified', check: () => false }, // requires separate verification check
     { id: 'maintenance', label: 'Maintenance mode not active', check: () => !maintenanceMode },
@@ -2471,9 +2623,15 @@ function DisasterRecoveryTab() {
         if (freeGb > 10) {
           checks.disk = { status: 'healthy', message: `${freeGb.toFixed(1)} GB free disk space` };
         } else if (freeGb > 2) {
-          checks.disk = { status: 'degraded', message: `Only ${freeGb.toFixed(1)} GB free — consider cleanup` };
+          checks.disk = {
+            status: 'degraded',
+            message: `Only ${freeGb.toFixed(1)} GB free — consider cleanup`,
+          };
         } else {
-          checks.disk = { status: 'unhealthy', message: `Critical: ${freeGb.toFixed(1)} GB free disk space` };
+          checks.disk = {
+            status: 'unhealthy',
+            message: `Critical: ${freeGb.toFixed(1)} GB free disk space`,
+          };
         }
       }
 
@@ -2482,9 +2640,15 @@ function DisasterRecoveryTab() {
       }
 
       if (json?.data?.stats?.lastBackupStatus === 'COMPLETED') {
-        checks.backup = { status: 'healthy', message: `Last backup completed: ${formatDate(json.data.stats.lastBackupAt)}` };
+        checks.backup = {
+          status: 'healthy',
+          message: `Last backup completed: ${formatDate(json.data.stats.lastBackupAt)}`,
+        };
       } else if (json?.data?.stats?.lastBackupStatus === 'FAILED') {
-        checks.backup = { status: 'unhealthy', message: 'Last backup failed — investigate immediately' };
+        checks.backup = {
+          status: 'unhealthy',
+          message: 'Last backup failed — investigate immediately',
+        };
       }
 
       setHealth(checks);
@@ -2495,7 +2659,9 @@ function DisasterRecoveryTab() {
     }
   }, []);
 
-  useEffect(() => { fetchHealth(); }, [fetchHealth]);
+  useEffect(() => {
+    fetchHealth();
+  }, [fetchHealth]);
 
   const handleToggleMaintenance = async () => {
     setTogglingMaintenance(true);
@@ -2524,7 +2690,10 @@ function DisasterRecoveryTab() {
     try {
       // Fetch all completed backups
       const res = await fetch('/api/admin/data-management/backups?limit=50&status=COMPLETED');
-      if (!res.ok) { toast.error('Failed to fetch backups'); return; }
+      if (!res.ok) {
+        toast.error('Failed to fetch backups');
+        return;
+      }
       const json = await res.json();
       const backups = json.data?.jobs || [];
 
@@ -2538,7 +2707,9 @@ function DisasterRecoveryTab() {
       let failed = 0;
       for (const backup of backups) {
         try {
-          const verifyRes = await fetch(`/api/admin/data-management/backups/${backup.id}/verify`, { method: 'POST' });
+          const verifyRes = await fetch(`/api/admin/data-management/backups/${backup.id}/verify`, {
+            method: 'POST',
+          });
           if (verifyRes.ok) verified++;
           else failed++;
         } catch {
@@ -2620,7 +2791,12 @@ function DisasterRecoveryTab() {
               ? `All ${verifyAllResult.total} backups verified successfully`
               : `${verifyAllResult.verified}/${verifyAllResult.total} verified, ${verifyAllResult.failed} failed`}
           </span>
-          <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => setVerifyAllResult(null)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-6 text-xs"
+            onClick={() => setVerifyAllResult(null)}
+          >
             Dismiss
           </Button>
         </div>
@@ -2740,17 +2916,23 @@ function DisasterRecoveryTab() {
               <p className="text-xs text-muted-foreground mb-2">
                 Create an immediate backup before making critical changes
               </p>
-              <Button size="sm" variant="outline" onClick={async () => {
-                try {
-                  const res = await fetch('/api/admin/data-management/backups', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'MANUAL' }),
-                  });
-                  if (res.ok) toast.success('Emergency backup started');
-                  else toast.error('Failed to start backup');
-                } catch { toast.error('Failed to start backup'); }
-              }}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/admin/data-management/backups', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ type: 'MANUAL' }),
+                    });
+                    if (res.ok) toast.success('Emergency backup started');
+                    else toast.error('Failed to start backup');
+                  } catch {
+                    toast.error('Failed to start backup');
+                  }
+                }}
+              >
                 <Play className="w-3 h-3 mr-1" /> Start Emergency Backup
               </Button>
             </div>
@@ -2772,7 +2954,8 @@ function DisasterRecoveryTab() {
         <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
-            Maintenance mode is <strong>enabled</strong>. Automatic backups are paused and restore operations may be active.
+            Maintenance mode is <strong>enabled</strong>. Automatic backups are paused and restore
+            operations may be active.
           </span>
         </div>
       )}
@@ -2785,68 +2968,68 @@ function DisasterRecoveryTab() {
 export default function DataManagementScreen() {
   return (
     <AdminErrorBoundary>
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Data Management</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Backup, restore, and manage data for your Voltium instance
-        </p>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Data Management</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Backup, restore, and manage data for your Voltium instance
+          </p>
+        </div>
+
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="w-full sm:w-auto flex-wrap h-auto sm:h-10">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">
+              <Server className="w-4 h-4 mr-1.5 hidden sm:inline" /> Overview
+            </TabsTrigger>
+            <TabsTrigger value="backups" className="text-xs sm:text-sm">
+              <Archive className="w-4 h-4 mr-1.5 hidden sm:inline" /> Backups
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="text-xs sm:text-sm">
+              <Calendar className="w-4 h-4 mr-1.5 hidden sm:inline" /> Schedule
+            </TabsTrigger>
+            <TabsTrigger value="restore" className="text-xs sm:text-sm">
+              <RotateCcw className="w-4 h-4 mr-1.5 hidden sm:inline" /> Restore
+            </TabsTrigger>
+            <TabsTrigger value="storage" className="text-xs sm:text-sm">
+              <HardDrive className="w-4 h-4 mr-1.5 hidden sm:inline" /> Storage
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="text-xs sm:text-sm">
+              <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" /> Logs
+            </TabsTrigger>
+            <TabsTrigger value="disaster-recovery" className="text-xs sm:text-sm">
+              <Shield className="w-4 h-4 mr-1.5 hidden sm:inline" /> DR
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <OverviewTab />
+          </TabsContent>
+
+          <TabsContent value="backups" className="mt-6">
+            <BackupsTab />
+          </TabsContent>
+
+          <TabsContent value="schedule" className="mt-6">
+            <ScheduleTab />
+          </TabsContent>
+
+          <TabsContent value="restore" className="mt-6">
+            <RestoreTab />
+          </TabsContent>
+
+          <TabsContent value="storage" className="mt-6">
+            <StorageTab />
+          </TabsContent>
+
+          <TabsContent value="logs" className="mt-6">
+            <BackupLogsTab />
+          </TabsContent>
+
+          <TabsContent value="disaster-recovery" className="mt-6">
+            <DisasterRecoveryTab />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="w-full sm:w-auto flex-wrap h-auto sm:h-10">
-          <TabsTrigger value="overview" className="text-xs sm:text-sm">
-            <Server className="w-4 h-4 mr-1.5 hidden sm:inline" /> Overview
-          </TabsTrigger>
-          <TabsTrigger value="backups" className="text-xs sm:text-sm">
-            <Archive className="w-4 h-4 mr-1.5 hidden sm:inline" /> Backups
-          </TabsTrigger>
-          <TabsTrigger value="schedule" className="text-xs sm:text-sm">
-            <Calendar className="w-4 h-4 mr-1.5 hidden sm:inline" /> Schedule
-          </TabsTrigger>
-          <TabsTrigger value="restore" className="text-xs sm:text-sm">
-            <RotateCcw className="w-4 h-4 mr-1.5 hidden sm:inline" /> Restore
-          </TabsTrigger>
-          <TabsTrigger value="storage" className="text-xs sm:text-sm">
-            <HardDrive className="w-4 h-4 mr-1.5 hidden sm:inline" /> Storage
-          </TabsTrigger>
-          <TabsTrigger value="logs" className="text-xs sm:text-sm">
-            <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" /> Logs
-          </TabsTrigger>
-          <TabsTrigger value="disaster-recovery" className="text-xs sm:text-sm">
-            <Shield className="w-4 h-4 mr-1.5 hidden sm:inline" /> DR
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-6">
-          <OverviewTab />
-        </TabsContent>
-
-        <TabsContent value="backups" className="mt-6">
-          <BackupsTab />
-        </TabsContent>
-
-        <TabsContent value="schedule" className="mt-6">
-          <ScheduleTab />
-        </TabsContent>
-
-        <TabsContent value="restore" className="mt-6">
-          <RestoreTab />
-        </TabsContent>
-
-        <TabsContent value="storage" className="mt-6">
-          <StorageTab />
-        </TabsContent>
-
-        <TabsContent value="logs" className="mt-6">
-          <BackupLogsTab />
-        </TabsContent>
-
-        <TabsContent value="disaster-recovery" className="mt-6">
-          <DisasterRecoveryTab />
-        </TabsContent>
-      </Tabs>
-    </div>
     </AdminErrorBoundary>
   );
 }

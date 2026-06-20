@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
     const validation = validateBody(createFaqSchema, body);
     if (!validation.success) return errors.validation(validation.error!);
 
-    const faq = await adminFaqUseCases.create(validation.data, req.headers.get('x-admin-id') || 'system');
+    const faq = await adminFaqUseCases.create(
+      validation.data,
+      req.headers.get('x-admin-id') || 'system'
+    );
     return success(faq, 'FAQ created', 201);
   } catch (error) {
     logger.error('POST /api/admin/faqs error:', error);
@@ -52,7 +55,10 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(createFaqSchema.partial().extend({ id: z.string().min(1) }), body);
+    const validation = validateBody(
+      createFaqSchema.partial().extend({ id: z.string().min(1) }),
+      body
+    );
     if (!validation.success) return errors.validation(validation.error!);
 
     const { id, ...data } = validation.data;

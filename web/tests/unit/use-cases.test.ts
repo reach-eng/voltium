@@ -90,11 +90,21 @@ const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn(
 // ===========================================================================
 
 vi.mock('@/server/modules/kyc/kyc.repository', () => ({ kycRepository: mockKycRepository }));
-vi.mock('@/server/modules/guarantors/guarantor.repository', () => ({ guarantorRepository: mockGuarantorRepository }));
-vi.mock('@/server/modules/wallet/wallet.repository', () => ({ walletRepository: mockWalletRepository }));
-vi.mock('@/server/modules/wallet/wallet-ledger.service', () => ({ walletLedgerService: mockWalletLedgerService }));
-vi.mock('@/server/modules/rentals/rental.repository', () => ({ rentalRepository: mockRentalRepository }));
-vi.mock('@/server/modules/support/support.repository', () => ({ supportRepository: mockSupportRepository }));
+vi.mock('@/server/modules/guarantors/guarantor.repository', () => ({
+  guarantorRepository: mockGuarantorRepository,
+}));
+vi.mock('@/server/modules/wallet/wallet.repository', () => ({
+  walletRepository: mockWalletRepository,
+}));
+vi.mock('@/server/modules/wallet/wallet-ledger.service', () => ({
+  walletLedgerService: mockWalletLedgerService,
+}));
+vi.mock('@/server/modules/rentals/rental.repository', () => ({
+  rentalRepository: mockRentalRepository,
+}));
+vi.mock('@/server/modules/support/support.repository', () => ({
+  supportRepository: mockSupportRepository,
+}));
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mockAuditLog.createAuditLog }));
 vi.mock('@/lib/logger', () => ({ logger: mockLogger }));
@@ -121,7 +131,8 @@ vi.mock('@/lib/services/deposit-service', () => ({
 const { kycUseCases } = await import('@/server/modules/kyc/kyc.use-cases');
 const { guarantorUseCases } = await import('@/server/modules/guarantors/guarantor.use-cases');
 const { walletUseCases } = await import('@/server/modules/wallet/wallet.use-cases');
-const { rentalUseCases, RentalBookError } = await import('@/server/modules/rentals/rental.use-cases');
+const { rentalUseCases, RentalBookError } =
+  await import('@/server/modules/rentals/rental.use-cases');
 const { supportUseCases } = await import('@/server/modules/support/support.use-cases');
 
 // ===========================================================================
@@ -142,12 +153,15 @@ describe('KYC — Submit', () => {
       profilePhoto: 'url-photo',
     });
 
-    expect(mockKycRepository.submitKyc).toHaveBeenCalledWith('rider-123', expect.objectContaining({
-      aadhaarFront: 'url-aadhaar-front',
-      aadhaarBack: 'url-aadhaar-back',
-      panCard: 'url-pan',
-      profilePhoto: 'url-photo',
-    }));
+    expect(mockKycRepository.submitKyc).toHaveBeenCalledWith(
+      'rider-123',
+      expect.objectContaining({
+        aadhaarFront: 'url-aadhaar-front',
+        aadhaarBack: 'url-aadhaar-back',
+        panCard: 'url-pan',
+        profilePhoto: 'url-photo',
+      })
+    );
     expect(result.status).toBe('SUBMITTED');
   });
 
@@ -178,9 +192,12 @@ describe('KYC — Submit', () => {
 
     // submitKyc is called with only the new prismaData (not merged)
     // The existing data is only used to decide submit vs partial
-    expect(mockKycRepository.submitKyc).toHaveBeenCalledWith('rider-123', expect.objectContaining({
-      aadhaarFront: 'new-aadhaar-front',
-    }));
+    expect(mockKycRepository.submitKyc).toHaveBeenCalledWith(
+      'rider-123',
+      expect.objectContaining({
+        aadhaarFront: 'new-aadhaar-front',
+      })
+    );
     expect(mockKycRepository.submitKyc).toHaveBeenCalled();
     expect(mockKycRepository.savePartialKyc).not.toHaveBeenCalled();
   });
@@ -194,10 +211,13 @@ describe('KYC — Submit', () => {
       bankIfsc: 'SBIN0001234',
     });
 
-    expect(mockKycRepository.savePartialKyc).toHaveBeenCalledWith('rider-123', expect.objectContaining({
-      accountNumber: '1234567890',
-      ifscCode: 'SBIN0001234',
-    }));
+    expect(mockKycRepository.savePartialKyc).toHaveBeenCalledWith(
+      'rider-123',
+      expect.objectContaining({
+        accountNumber: '1234567890',
+        ifscCode: 'SBIN0001234',
+      })
+    );
   });
 });
 
@@ -221,7 +241,11 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
       rejectionReason: 'Blurry document',
     });
 
-    expect(mockKycRepository.rejectKyc).toHaveBeenCalledWith('rider-123', 'admin-1', 'Blurry document');
+    expect(mockKycRepository.rejectKyc).toHaveBeenCalledWith(
+      'rider-123',
+      'admin-1',
+      'Blurry document'
+    );
   });
 
   it('requests additional info', async () => {
@@ -233,7 +257,9 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     });
 
     expect(mockKycRepository.requestInfo).toHaveBeenCalledWith(
-      'rider-123', 'admin-1', 'Please provide clear photo'
+      'rider-123',
+      'admin-1',
+      'Please provide clear photo'
     );
   });
 });
@@ -247,7 +273,8 @@ describe('Guarantor — Submit', () => {
 
   it('submits guarantor data', async () => {
     mockGuarantorRepository.submitGuarantor.mockResolvedValue({
-      id: 'g-1', status: 'SUBMITTED',
+      id: 'g-1',
+      status: 'SUBMITTED',
     });
 
     const result = await guarantorUseCases.submitGuarantor('rider-123', {
@@ -258,9 +285,12 @@ describe('Guarantor — Submit', () => {
       aadhaarBack: 'url-back',
     });
 
-    expect(mockGuarantorRepository.submitGuarantor).toHaveBeenCalledWith('rider-123', expect.objectContaining({
-      fullName: 'John Doe',
-    }));
+    expect(mockGuarantorRepository.submitGuarantor).toHaveBeenCalledWith(
+      'rider-123',
+      expect.objectContaining({
+        fullName: 'John Doe',
+      })
+    );
     expect(result.status).toBe('SUBMITTED');
   });
 });
@@ -270,10 +300,13 @@ describe('Guarantor — Review', () => {
 
   it('approves guarantor', async () => {
     mockGuarantorRepository.approveGuarantor.mockResolvedValue({
-      id: 'g-1', status: 'APPROVED',
+      id: 'g-1',
+      status: 'APPROVED',
     });
 
-    const result = await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', { action: 'APPROVE' });
+    const result = await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
+      action: 'APPROVE',
+    });
 
     expect(mockGuarantorRepository.approveGuarantor).toHaveBeenCalledWith('rider-123', 'admin-1');
     expect(result.status).toBe('APPROVED');
@@ -281,7 +314,8 @@ describe('Guarantor — Review', () => {
 
   it('rejects guarantor with reason', async () => {
     mockGuarantorRepository.rejectGuarantor.mockResolvedValue({
-      id: 'g-1', status: 'REJECTED',
+      id: 'g-1',
+      status: 'REJECTED',
     });
 
     await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
@@ -290,13 +324,16 @@ describe('Guarantor — Review', () => {
     });
 
     expect(mockGuarantorRepository.rejectGuarantor).toHaveBeenCalledWith(
-      'rider-123', 'admin-1', 'Invalid documents'
+      'rider-123',
+      'admin-1',
+      'Invalid documents'
     );
   });
 
   it('requests info from guarantor', async () => {
     mockGuarantorRepository.requestInfo.mockResolvedValue({
-      id: 'g-1', status: 'INFO_REQUIRED',
+      id: 'g-1',
+      status: 'INFO_REQUIRED',
     });
 
     await guarantorUseCases.reviewGuarantor('rider-123', 'admin-1', {
@@ -305,7 +342,9 @@ describe('Guarantor — Review', () => {
     });
 
     expect(mockGuarantorRepository.requestInfo).toHaveBeenCalledWith(
-      'rider-123', 'admin-1', 'Update phone number'
+      'rider-123',
+      'admin-1',
+      'Update phone number'
     );
   });
 });
@@ -318,25 +357,40 @@ describe('Wallet — Top-up', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('creates PENDING transaction for rider', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210', lifecycleStatus: 'DEPOSIT_APPROVED' });
+    mockDb.rider.findUnique.mockResolvedValue({
+      id: 'rider-123',
+      depositDone: true,
+      phone: '9876543210',
+      lifecycleStatus: 'DEPOSIT_APPROVED',
+    });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
     mockWalletRepository.createTransaction.mockResolvedValue({
-      id: 'txn-1', status: 'PENDING', riderId: 'rider-123', amount: 50000,
+      id: 'txn-1',
+      status: 'PENDING',
+      riderId: 'rider-123',
+      amount: 50000,
     });
 
     const result = await walletUseCases.requestTopup('rider-123', 50000, 'TOP_UP', 'upi');
 
-    expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(expect.objectContaining({
-      riderId: 'rider-123',
-      amount: 50000,
-      purpose: 'TOP_UP',
-      status: 'PENDING',
-    }));
+    expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        riderId: 'rider-123',
+        amount: 50000,
+        purpose: 'TOP_UP',
+        status: 'PENDING',
+      })
+    );
     expect(result.status).toBe('PENDING');
   });
 
   it('returns existing transaction for idempotent replay', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: true, phone: '9876543210', lifecycleStatus: 'DEPOSIT_APPROVED' });
+    mockDb.rider.findUnique.mockResolvedValue({
+      id: 'rider-123',
+      depositDone: true,
+      phone: '9876543210',
+      lifecycleStatus: 'DEPOSIT_APPROVED',
+    });
     const existingTxn = { id: 'txn-existing', status: 'PENDING' };
     mockWalletRepository.findTransactionByKey.mockResolvedValue(existingTxn);
 
@@ -347,17 +401,26 @@ describe('Wallet — Top-up', () => {
   });
 
   it('forces SECURITY_DEPOSIT purpose when rider has not deposited', async () => {
-    mockDb.rider.findUnique.mockResolvedValue({ id: 'rider-123', depositDone: false, phone: '9876543210', lifecycleStatus: 'DEPOSIT_PENDING' });
+    mockDb.rider.findUnique.mockResolvedValue({
+      id: 'rider-123',
+      depositDone: false,
+      phone: '9876543210',
+      lifecycleStatus: 'DEPOSIT_PENDING',
+    });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
     mockWalletRepository.createTransaction.mockResolvedValue({
-      id: 'txn-deposit', status: 'PENDING', purpose: 'SECURITY_DEPOSIT',
+      id: 'txn-deposit',
+      status: 'PENDING',
+      purpose: 'SECURITY_DEPOSIT',
     });
 
     await walletUseCases.requestTopup('rider-123', 500000, 'TOP_UP', 'upi');
 
-    expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(expect.objectContaining({
-      purpose: 'SECURITY_DEPOSIT',
-    }));
+    expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        purpose: 'SECURITY_DEPOSIT',
+      })
+    );
   });
 
   it('throws when rider not found', async () => {
@@ -374,7 +437,11 @@ describe('Wallet — Approval', () => {
 
   it('approves PENDING transaction and credits wallet', async () => {
     mockWalletRepository.findTransactionById.mockResolvedValue({
-      id: 'txn-1', status: 'PENDING', riderId: 'rider-123', amount: 50000, purpose: 'TOP_UP',
+      id: 'txn-1',
+      status: 'PENDING',
+      riderId: 'rider-123',
+      amount: 50000,
+      purpose: 'TOP_UP',
     });
     mockWalletLedgerService.credit.mockResolvedValue(undefined);
     mockWalletRepository.updateTransactionStatus.mockResolvedValue(undefined);
@@ -389,59 +456,79 @@ describe('Wallet — Approval', () => {
 
     await walletUseCases.approveTopup('txn-1', 'admin-1');
 
-    expect(mockWalletLedgerService.credit).toHaveBeenCalledWith(expect.objectContaining({
-      riderId: 'rider-123',
-      amountInPaise: 50000,
-      category: 'TOP_UP',
-    }), mockTx);
-    expect(mockTx.transaction.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'txn-1' },
-      data: expect.objectContaining({
-        status: 'APPROVED',
-        approvedBy: 'admin-1',
+    expect(mockWalletLedgerService.credit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        riderId: 'rider-123',
+        amountInPaise: 50000,
+        category: 'TOP_UP',
       }),
-    }));
-    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
-      actorId: 'admin-1',
-      action: 'wallet.approve_topup',
-      entityId: 'txn-1',
-    }));
+      mockTx
+    );
+    expect(mockTx.transaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'txn-1' },
+        data: expect.objectContaining({
+          status: 'APPROVED',
+          approvedBy: 'admin-1',
+        }),
+      })
+    );
+    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorId: 'admin-1',
+        action: 'wallet.approve_topup',
+        entityId: 'txn-1',
+      })
+    );
   });
 
   it('blocks double approval (already APPROVED)', async () => {
     mockWalletRepository.findTransactionById.mockResolvedValue({
-      id: 'txn-1', status: 'APPROVED', riderId: 'rider-123', amount: 50000,
+      id: 'txn-1',
+      status: 'APPROVED',
+      riderId: 'rider-123',
+      amount: 50000,
     });
 
-    await expect(
-      walletUseCases.approveTopup('txn-1', 'admin-1')
-    ).rejects.toThrow('already APPROVED');
+    await expect(walletUseCases.approveTopup('txn-1', 'admin-1')).rejects.toThrow(
+      'already APPROVED'
+    );
   });
 
   it('rejects transaction and logs audit', async () => {
     mockWalletRepository.findTransactionById.mockResolvedValue({
-      id: 'txn-1', status: 'PENDING', riderId: 'rider-123', amount: 50000,
+      id: 'txn-1',
+      status: 'PENDING',
+      riderId: 'rider-123',
+      amount: 50000,
     });
     mockWalletRepository.updateTransactionStatus.mockResolvedValue(undefined);
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
 
     await walletUseCases.rejectTopup('txn-1', 'admin-1', 'Suspicious');
 
-    expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith('txn-1', 'REJECTED', 'admin-1');
-    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'wallet.reject_topup',
-      details: expect.objectContaining({ reason: 'Suspicious' }),
-    }));
+    expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith(
+      'txn-1',
+      'REJECTED',
+      'admin-1'
+    );
+    expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'wallet.reject_topup',
+        details: expect.objectContaining({ reason: 'Suspicious' }),
+      })
+    );
   });
 
   it('blocks rejection of already-approved transaction', async () => {
     mockWalletRepository.findTransactionById.mockResolvedValue({
-      id: 'txn-1', status: 'APPROVED',
+      id: 'txn-1',
+      status: 'APPROVED',
     });
 
-    await expect(
-      walletUseCases.rejectTopup('txn-1', 'admin-1', 'reason')
-    ).rejects.toThrow('already APPROVED');
+    await expect(walletUseCases.rejectTopup('txn-1', 'admin-1', 'reason')).rejects.toThrow(
+      'already APPROVED'
+    );
   });
 });
 
@@ -450,7 +537,8 @@ describe('Wallet — Get Wallet', () => {
 
   it('returns wallet with pending top-ups', async () => {
     mockWalletRepository.findByRiderId.mockResolvedValue({
-      riderId: 'rider-123', balanceInPaise: 100000,
+      riderId: 'rider-123',
+      balanceInPaise: 100000,
     });
     mockWalletRepository.getTransactions.mockResolvedValue([
       { status: 'PENDING', type: 'CREDIT', amount: 50000 },
@@ -481,7 +569,9 @@ describe('Rental — Book Rental', () => {
   beforeEach(() => vi.resetAllMocks());
 
   const mockVehicle = {
-    id: 'v-1', status: 'AVAILABLE', hubId: 'hub-1',
+    id: 'v-1',
+    status: 'AVAILABLE',
+    hubId: 'hub-1',
     hub: { id: 'hub-1', name: 'Koramangala Hub' },
   };
 
@@ -498,8 +588,12 @@ describe('Rental — Book Rental', () => {
     const mockTx = {
       rentalLease: {
         create: vi.fn().mockResolvedValue({
-          id: 'lease-1', status: 'BOOKED', leaseDate: '2026-06-15',
-          startTime: '09:00', basePrice: 18000, finalPrice: 16000,
+          id: 'lease-1',
+          status: 'BOOKED',
+          leaseDate: '2026-06-15',
+          startTime: '09:00',
+          basePrice: 18000,
+          finalPrice: 16000,
           vehicle: { id: 'v-1', vehicleId: 'V001', model: 'EV-X' },
           shift: { id: 's-1', name: 'Morning', startTime: '09:00', endTime: '17:00' },
         }),
@@ -529,12 +623,16 @@ describe('Rental — Book Rental', () => {
 
   it('throws when vehicle not available', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue({
-      ...mockVehicle, status: 'ACTIVE_RENTAL',
+      ...mockVehicle,
+      status: 'ACTIVE_RENTAL',
     });
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
-        vehicleId: 'v-1', shiftId: 's-1', leaseDate: '2026-06-15', startTime: '09:00',
+        vehicleId: 'v-1',
+        shiftId: 's-1',
+        leaseDate: '2026-06-15',
+        startTime: '09:00',
       })
     ).rejects.toThrow(RentalBookError);
   });
@@ -546,7 +644,10 @@ describe('Rental — Book Rental', () => {
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
-        vehicleId: 'v-1', shiftId: 's-1', leaseDate: '2026-06-15', startTime: '09:00',
+        vehicleId: 'v-1',
+        shiftId: 's-1',
+        leaseDate: '2026-06-15',
+        startTime: '09:00',
       })
     ).rejects.toThrow('fully booked');
   });
@@ -559,7 +660,10 @@ describe('Rental — Book Rental', () => {
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
-        vehicleId: 'v-1', shiftId: 's-1', leaseDate: '2026-06-15', startTime: '09:00',
+        vehicleId: 'v-1',
+        shiftId: 's-1',
+        leaseDate: '2026-06-15',
+        startTime: '09:00',
       })
     ).rejects.toThrow('already have an active booking');
   });
@@ -570,17 +674,28 @@ describe('Rental — Sync Pickup', () => {
 
   it('completes pickup and activates account', async () => {
     mockDb.rider.findUnique.mockResolvedValue({
-      id: 'rider-123', vehicleId: null, kycProfile: {}, wallet: {}, guarantor: {}, vehicleReturns: [],
+      id: 'rider-123',
+      vehicleId: null,
+      kycProfile: {},
+      wallet: {},
+      guarantor: {},
+      vehicleReturns: [],
     });
     mockDb.vehicle.findFirst.mockResolvedValue({
-      id: 'v-1', vehicleId: 'V001', status: 'AVAILABLE', hub: { name: 'Koramangala Hub' },
+      id: 'v-1',
+      vehicleId: 'V001',
+      status: 'AVAILABLE',
+      hub: { name: 'Koramangala Hub' },
     });
 
     const mockTx = {
       vehicle: { update: vi.fn().mockResolvedValue(undefined) },
       rider: {
         update: vi.fn().mockResolvedValue({
-          id: 'rider-123', pickupDone: true, accountStatus: 'ACTIVE', rentalStatus: 'ACTIVE',
+          id: 'rider-123',
+          pickupDone: true,
+          accountStatus: 'ACTIVE',
+          rentalStatus: 'ACTIVE',
         }),
       },
       rentalLease: {
@@ -593,13 +708,15 @@ describe('Rental — Sync Pickup', () => {
       vehicleId: 'v-1',
     });
 
-    expect(mockTx.rider.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'rider-123' },
-      data: expect.objectContaining({
-        lifecycleStatus: 'ACTIVE',
-        vehicleId: 'v-1',
-      }),
-    }));
+    expect(mockTx.rider.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'rider-123' },
+        data: expect.objectContaining({
+          lifecycleStatus: 'ACTIVE',
+          vehicleId: 'v-1',
+        }),
+      })
+    );
   });
 
   it('throws when vehicle not found', async () => {
@@ -622,7 +739,9 @@ describe('Support — Ticket Flow', () => {
   it('creates ticket with generated ticket ID', async () => {
     mockDb.supportTicket.count.mockResolvedValue(42);
     mockSupportRepository.create.mockResolvedValue({
-      id: 'ticket-1', ticketId: '#0043-A1B2', status: 'OPEN',
+      id: 'ticket-1',
+      ticketId: '#0043-A1B2',
+      status: 'OPEN',
     });
 
     const result = await supportUseCases.createTicket('rider-123', {
@@ -633,9 +752,12 @@ describe('Support — Ticket Flow', () => {
     });
 
     expect(result.ticketId).toBe('#0043-A1B2');
-    expect(mockSupportRepository.create).toHaveBeenCalledWith('rider-123', expect.objectContaining({
-      status: 'OPEN',
-    }));
+    expect(mockSupportRepository.create).toHaveBeenCalledWith(
+      'rider-123',
+      expect.objectContaining({
+        status: 'OPEN',
+      })
+    );
   });
 
   it('adds message to ticket', async () => {
@@ -648,14 +770,16 @@ describe('Support — Ticket Flow', () => {
     });
 
     expect(mockSupportRepository.addMessage).toHaveBeenCalledWith(
-      'ticket-1', 'rider-123', 'rider', 'Still experiencing the issue', []
+      'ticket-1',
+      'rider-123',
+      'rider',
+      'Still experiencing the issue',
+      []
     );
   });
 
   it('retrieves rider tickets', async () => {
-    mockSupportRepository.findByRiderId.mockResolvedValue([
-      { id: 'ticket-1', status: 'OPEN' },
-    ]);
+    mockSupportRepository.findByRiderId.mockResolvedValue([{ id: 'ticket-1', status: 'OPEN' }]);
 
     const result = await supportUseCases.getTickets('rider-123');
 

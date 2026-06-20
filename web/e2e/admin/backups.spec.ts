@@ -68,7 +68,15 @@ test.describe('Backups & Restore Admin', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          data: { totalRiders: 5, activeRiders: 3, totalVehicles: 10, availableVehicles: 8, pendingTransactions: 0, openTickets: 0, activeRentals: 2 },
+          data: {
+            totalRiders: 5,
+            activeRiders: 3,
+            totalVehicles: 10,
+            availableVehicles: 8,
+            pendingTransactions: 0,
+            openTickets: 0,
+            activeRentals: 2,
+          },
         }),
       })
     );
@@ -111,7 +119,10 @@ test.describe('Backups & Restore Admin', () => {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ success: true, data: { jobId: 'job-new-456', status: 'RUNNING' } }),
+          body: JSON.stringify({
+            success: true,
+            data: { jobId: 'job-new-456', status: 'RUNNING' },
+          }),
         });
       }
       return route.fulfill({
@@ -134,7 +145,9 @@ test.describe('Backups & Restore Admin', () => {
       await page.waitForLoadState('networkidle').catch(() => {});
     }
 
-    const createBackupBtn = page.getByRole('button', { name: /create backup|backup now|new backup/i }).first();
+    const createBackupBtn = page
+      .getByRole('button', { name: /create backup|backup now|new backup/i })
+      .first();
     if (await createBackupBtn.isVisible({ timeout: 15_000 })) {
       await createBackupBtn.click();
       await page.waitForTimeout(1000);

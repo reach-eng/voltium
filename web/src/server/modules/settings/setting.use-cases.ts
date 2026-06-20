@@ -3,7 +3,15 @@ import { paiseToRupees, rupeesToPaise } from '@/lib/flatten-rider';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
 
-const MONETARY_KEYS = new Set(['dailyRent', 'weeklyRent', 'monthlyRent', 'securityDeposit', 'walletMinTopup', 'lateFee', 'referralBonus']);
+const MONETARY_KEYS = new Set([
+  'dailyRent',
+  'weeklyRent',
+  'monthlyRent',
+  'securityDeposit',
+  'walletMinTopup',
+  'lateFee',
+  'referralBonus',
+]);
 const PUBLIC_SETTINGS = ['securityDeposit', 'walletMinTopup', 'lateFee', 'referralBonus'];
 
 export const settingUseCases = {
@@ -11,9 +19,17 @@ export const settingUseCases = {
     const [flags, settings] = await Promise.all([getFeatureFlags(), db.setting.findMany()]);
 
     const DEFAULT_SETTINGS: Record<string, string> = {
-      dailyRent: '29900', weeklyRent: '149900', monthlyRent: '499900',
-      securityDeposit: '150000', walletMinTopup: '150000', lateFee: '10000', referralBonus: '20000',
-      autoApproveKYC: 'false', gracePeriodHours: '24', emailNotifications: 'true', smsNotifications: 'true',
+      dailyRent: '29900',
+      weeklyRent: '149900',
+      monthlyRent: '499900',
+      securityDeposit: '150000',
+      walletMinTopup: '150000',
+      lateFee: '10000',
+      referralBonus: '20000',
+      autoApproveKYC: 'false',
+      gracePeriodHours: '24',
+      emailNotifications: 'true',
+      smsNotifications: 'true',
     };
 
     const settingsMap: Record<string, string> = { ...DEFAULT_SETTINGS };
@@ -32,10 +48,20 @@ export const settingUseCases = {
     for (const [key, value] of Object.entries(data)) {
       let storedValue = String(value);
       if (MONETARY_KEYS.has(key)) storedValue = String(rupeesToPaise(Number(value)));
-      const result = await db.setting.upsert({ where: { key }, update: { value: storedValue }, create: { key, value: storedValue } });
+      const result = await db.setting.upsert({
+        where: { key },
+        update: { value: storedValue },
+        create: { key, value: storedValue },
+      });
       results.push(result);
     }
-    createAuditLog({ actorId, action: 'settings.update', entity: 'settings', entityId: 'global', details: { keys: Object.keys(data) } }).catch(() => {});
+    createAuditLog({
+      actorId,
+      action: 'settings.update',
+      entity: 'settings',
+      entityId: 'global',
+      details: { keys: Object.keys(data) },
+    }).catch(() => {});
     return results;
   },
 

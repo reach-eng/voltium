@@ -11,7 +11,11 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { backupRepository } from '@/server/modules/data-management/backup.repository';
-import { backupService, calculateNextRun, getFreeDiskBytes } from '@/server/modules/data-management/backup.service';
+import {
+  backupService,
+  calculateNextRun,
+  getFreeDiskBytes,
+} from '@/server/modules/data-management/backup.service';
 import { createAuditLog } from '@/lib/audit-log';
 import { fcmService } from '@/lib/fcm';
 
@@ -53,14 +57,20 @@ export const scheduledBackupJob = {
           freeGb: freeGb.toFixed(1),
           minimum: schedule.minimumFreeDiskGb,
         });
-        await backupRepository.markScheduleFailure(schedule.id, `Insufficient disk space: ${freeGb.toFixed(1)} GB free`);
+        await backupRepository.markScheduleFailure(
+          schedule.id,
+          `Insufficient disk space: ${freeGb.toFixed(1)} GB free`
+        );
         return { ran: false, reason: 'Insufficient disk space' };
       }
 
       // Check if backup is due
       const now = new Date();
       if (schedule.nextRunAt && now < schedule.nextRunAt) {
-        return { ran: false, reason: `Next backup scheduled at ${schedule.nextRunAt.toISOString()}` };
+        return {
+          ran: false,
+          reason: `Next backup scheduled at ${schedule.nextRunAt.toISOString()}`,
+        };
       }
 
       // It's due — run the backup
@@ -95,14 +105,20 @@ export const scheduledBackupJob = {
 
         // Calculate next run time
         const nextRunAt = calculateNextRun(schedule);
-        await backupRepository.markScheduleSuccess(schedule.id, new Date(), nextRunAt ?? new Date());
+        await backupRepository.markScheduleSuccess(
+          schedule.id,
+          new Date(),
+          nextRunAt ?? new Date()
+        );
 
         // Clear any previous failure alert
-        await db.setting.upsert({
-          where: { key: 'LAST_BACKUP_FAILURE' },
-          update: { value: '' },
-          create: { key: 'LAST_BACKUP_FAILURE', value: '' },
-        }).catch(() => {});
+        await db.setting
+          .upsert({
+            where: { key: 'LAST_BACKUP_FAILURE' },
+            update: { value: '' },
+            create: { key: 'LAST_BACKUP_FAILURE', value: '' },
+          })
+          .catch(() => {});
 
         await createAuditLog({
           actorId: 'SYSTEM',
@@ -124,11 +140,13 @@ export const scheduledBackupJob = {
           at: new Date().toISOString(),
           scheduleId: schedule.id,
         });
-        await db.setting.upsert({
-          where: { key: 'LAST_BACKUP_FAILURE' },
-          update: { value: failurePayload },
-          create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload },
-        }).catch(() => {});
+        await db.setting
+          .upsert({
+            where: { key: 'LAST_BACKUP_FAILURE' },
+            update: { value: failurePayload },
+            create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload },
+          })
+          .catch(() => {});
 
         await createAuditLog({
           actorId: 'SYSTEM',
@@ -140,13 +158,15 @@ export const scheduledBackupJob = {
         });
 
         // Send FCM alert notification to admins via a dedicated topic
-        await fcmService.sendPushNotification(
-          '/topics/admin_alerts',
-          'Backup Failed 🚨',
-          `Scheduled backup failed: ${err.message}`
-        ).catch((fcmErr) => {
-          logger.error('[ScheduledBackup] Failed to send FCM alert', { error: fcmErr.message });
-        });
+        await fcmService
+          .sendPushNotification(
+            '/topics/admin_alerts',
+            'Backup Failed 🚨',
+            `Scheduled backup failed: ${err.message}`
+          )
+          .catch((fcmErr) => {
+            logger.error('[ScheduledBackup] Failed to send FCM alert', { error: fcmErr.message });
+          });
 
         return { ran: false, reason: err.message };
       }
@@ -156,5 +176,3 @@ export const scheduledBackupJob = {
     }
   },
 };
-
-

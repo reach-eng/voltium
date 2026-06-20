@@ -2,8 +2,17 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
 export const syncUseCases = {
-  async queueActions(riderDbId: string, actions: Array<{ actionType: string; payload?: any; endpoint?: string; method?: string }>) {
-    const validActionTypes = new Set(['CREATE_TICKET', 'UPLOAD_INSPECTION', 'UPDATE_PROFILE', 'SUBMIT_KYC', 'SUBMIT_TOPUP']);
+  async queueActions(
+    riderDbId: string,
+    actions: Array<{ actionType: string; payload?: any; endpoint?: string; method?: string }>
+  ) {
+    const validActionTypes = new Set([
+      'CREATE_TICKET',
+      'UPLOAD_INSPECTION',
+      'UPDATE_PROFILE',
+      'SUBMIT_KYC',
+      'SUBMIT_TOPUP',
+    ]);
 
     const results: Array<{ actionType: string; status: 'QUEUED' | 'FAILED'; error?: string }> = [];
 
@@ -20,7 +29,14 @@ export const syncUseCases = {
       }
 
       await db.syncQueue.create({
-        data: { riderId: riderDbId, actionType, payload: JSON.stringify(payload ?? {}), endpoint: endpoint || '', method: ((method || 'POST').toUpperCase()) as 'GET' | 'POST' | 'PUT' | 'DELETE', status: 'PENDING' as 'PENDING' | 'SYNCING' | 'COMPLETED' | 'FAILED' },
+        data: {
+          riderId: riderDbId,
+          actionType,
+          payload: JSON.stringify(payload ?? {}),
+          endpoint: endpoint || '',
+          method: (method || 'POST').toUpperCase() as 'GET' | 'POST' | 'PUT' | 'DELETE',
+          status: 'PENDING' as 'PENDING' | 'SYNCING' | 'COMPLETED' | 'FAILED',
+        },
       });
       results.push({ actionType, status: 'QUEUED' });
     }
@@ -35,11 +51,29 @@ export const syncUseCases = {
       orderBy: { createdAt: 'asc' },
     });
 
-    const pending = queue.filter((q: { status: string }) => q.status === 'PENDING' || q.status === 'FAILED');
+    const pending = queue.filter(
+      (q: { status: string }) => q.status === 'PENDING' || q.status === 'FAILED'
+    );
     const syncing = queue.filter((q: { status: string }) => q.status === 'SYNCING');
 
     return {
-      pending: pending.map((q: { id: string; actionType: string; endpoint: string; method: string; retryCount: number; createdAt: Date }) => ({ id: q.id, actionType: q.actionType, endpoint: q.endpoint, method: q.method, retryCount: q.retryCount, createdAt: q.createdAt })),
+      pending: pending.map(
+        (q: {
+          id: string;
+          actionType: string;
+          endpoint: string;
+          method: string;
+          retryCount: number;
+          createdAt: Date;
+        }) => ({
+          id: q.id,
+          actionType: q.actionType,
+          endpoint: q.endpoint,
+          method: q.method,
+          retryCount: q.retryCount,
+          createdAt: q.createdAt,
+        })
+      ),
       syncing: syncing.length,
       totalPending: pending.length,
     };

@@ -18,7 +18,12 @@ export async function POST(req: NextRequest) {
     }
 
     const { ids, action, value } = validation.data;
-    const result = await vehicleUseCases.bulkUpdateVehicles(ids, action, value, session.adminId || '');
+    const result = await vehicleUseCases.bulkUpdateVehicles(
+      ids,
+      action,
+      value,
+      session.adminId || ''
+    );
 
     return success(result, 'Bulk action completed');
   } catch (error) {

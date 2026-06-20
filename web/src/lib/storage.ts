@@ -45,7 +45,9 @@ class LocalStorageProvider implements StorageProvider {
   }
 
   async getSignedUploadUrl(_storageKey: string, _contentType: string): Promise<string> {
-    throw new Error('Legacy storage-key upload is disabled. Use FileRecord request-upload/local-upload flow.');
+    throw new Error(
+      'Legacy storage-key upload is disabled. Use FileRecord request-upload/local-upload flow.'
+    );
   }
 
   async verifyUpload(storageKey: string): Promise<boolean> {

@@ -10,7 +10,9 @@ export const kycPolicy = {
   },
 
   canReviewKyc(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.KYC_REVIEWER].includes(adminRole);
+    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.KYC_REVIEWER].includes(
+      adminRole
+    );
   },
 
   canViewKyc(actorRole: string, targetRiderId: string, sessionRiderId?: string): boolean {

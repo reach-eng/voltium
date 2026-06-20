@@ -48,7 +48,10 @@ export async function PUT(req: NextRequest) {
   if (!hasPermission(session.adminRole || '', 'hubs_manage')) return adminForbidden();
   try {
     const body = await req.json();
-    const validation = validateBody(createHubSchema.partial().extend({ id: z.string().min(1) }), body);
+    const validation = validateBody(
+      createHubSchema.partial().extend({ id: z.string().min(1) }),
+      body
+    );
     if (!validation.success) return errors.validation(validation.error!);
     const { id, ...data } = validation.data;
     const hub = await hubUseCases.updateHub(id, data, session.adminId || '');

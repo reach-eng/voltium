@@ -9,7 +9,10 @@ export { updateProfileSchema };
 
 export const getRiderQuerySchema = z.object({
   riderId: z.string().optional(),
-  phone: z.string().regex(/^\d{10}$/).optional(),
+  phone: z
+    .string()
+    .regex(/^\d{10}$/)
+    .optional(),
 });
 
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

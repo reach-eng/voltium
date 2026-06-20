@@ -110,7 +110,10 @@ export const guarantorRepository = {
         where: { riderId: riderDbId },
         data: { status: 'REJECTED' },
       });
-      await tx.rider.updateMany({ where: { id: riderDbId }, data: { lifecycleStatus: 'SUSPENDED' } });
+      await tx.rider.updateMany({
+        where: { id: riderDbId },
+        data: { lifecycleStatus: 'SUSPENDED' },
+      });
       return decryptGuarantorData(guarantor);
     });
   },

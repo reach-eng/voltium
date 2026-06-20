@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
 
   try {
     let body;
-    try { body = await request.json(); } catch {
+    try {
+      body = await request.json();
+    } catch {
       return errors.badRequest('Invalid request body', { correlationId });
     }
 
@@ -41,13 +43,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone: inputPhone } = validation.data;
-    const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const clientIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
 
     const ipRateLimit = await checkRateLimit(`otp-verify-ip:${clientIp}`, OTP_VERIFY_IP_RATE_LIMIT);
     if (!ipRateLimit.allowed) {
       return errors.tooManyRequests(
         `Too many attempts from this IP. Try again in ${Math.ceil((ipRateLimit.resetAt - Date.now()) / 1000)}s`,
-        { correlationId, rateLimit: { limit: OTP_VERIFY_IP_RATE_LIMIT.maxRequests, remaining: 0, resetAt: ipRateLimit.resetAt } }
+        {
+          correlationId,
+          rateLimit: {
+            limit: OTP_VERIFY_IP_RATE_LIMIT.maxRequests,
+            remaining: 0,
+            resetAt: ipRateLimit.resetAt,
+          },
+        }
       );
     }
 
@@ -55,18 +65,42 @@ export async function POST(request: NextRequest) {
     if (!rateLimit.allowed) {
       return errors.tooManyRequests(
         `Too many attempts. Try again in ${Math.ceil((rateLimit.resetAt - Date.now()) / 1000)}s`,
-        { correlationId, rateLimit: { limit: OTP_VERIFY_RATE_LIMIT.maxRequests, remaining: 0, resetAt: rateLimit.resetAt } }
+        {
+          correlationId,
+          rateLimit: {
+            limit: OTP_VERIFY_RATE_LIMIT.maxRequests,
+            remaining: 0,
+            resetAt: rateLimit.resetAt,
+          },
+        }
       );
     }
 
     const result = await authUseCases.verifyOtp(validation.data);
 
-    if (process.env.NODE_ENV === 'development' && process.env.ENABLE_DEV_TOOLS === 'true' && process.env.TEST_MODE === 'true' && TEST_PHONES.includes(result.phone)) {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.ENABLE_DEV_TOOLS === 'true' &&
+      process.env.TEST_MODE === 'true' &&
+      TEST_PHONES.includes(result.phone)
+    ) {
       const rider = await onboardingUseCases.autoProvisionTestRider(result.riderDbId, result.phone);
       if (rider) {
         const flatRider = flattenRider(rider);
-        const sessionToken = createSessionToken({ riderId: rider.riderId, riderDbId: rider.id, phone: rider.phone, role: 'rider', tokenVersion: rider.tokenVersion });
-        const resp = success({ ...flatRider, token: sessionToken, fcmCommandSecret: result.fcmCommandSecret }, 'OTP verified successfully', 200, undefined, { correlationId });
+        const sessionToken = createSessionToken({
+          riderId: rider.riderId,
+          riderDbId: rider.id,
+          phone: rider.phone,
+          role: 'rider',
+          tokenVersion: rider.tokenVersion,
+        });
+        const resp = success(
+          { ...flatRider, token: sessionToken, fcmCommandSecret: result.fcmCommandSecret },
+          'OTP verified successfully',
+          200,
+          undefined,
+          { correlationId }
+        );
         resp.headers.set('Api-Version', API_VERSION);
         resp.cookies.set(SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
         return resp;
@@ -75,14 +109,20 @@ export async function POST(request: NextRequest) {
 
     const response = success(
       { ...result.riderData, token: result.token, fcmCommandSecret: result.fcmCommandSecret },
-      'OTP verified successfully', 200, undefined, { correlationId }
+      'OTP verified successfully',
+      200,
+      undefined,
+      { correlationId }
     );
     response.headers.set('Api-Version', API_VERSION);
     response.cookies.set(SESSION_COOKIE_NAME, result.token, SESSION_COOKIE_OPTIONS);
     return response;
   } catch (err: any) {
     logger.error(`[POST /api/auth/verify-otp] error: ${err?.stack || err?.message || err}`);
-    const response = errors.internal('Verification failed. Please check your connection or try again.', { correlationId });
+    const response = errors.internal(
+      'Verification failed. Please check your connection or try again.',
+      { correlationId }
+    );
     response.headers.set('Api-Version', API_VERSION);
     return response;
   }

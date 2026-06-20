@@ -418,15 +418,25 @@ export default function RewardManagement() {
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold tracking-tight">Rewards</h2>
-        <p className="text-muted-foreground text-sm">Manage loyalty points and track the referral program.</p>
+        <p className="text-muted-foreground text-sm">
+          Manage loyalty points and track the referral program.
+        </p>
       </div>
       <Tabs defaultValue="rewards" className="space-y-6">
         <TabsList className="bg-muted/40 p-1 h-10">
-          <TabsTrigger value="rewards" className="text-xs px-5 font-semibold">Loyalty Points</TabsTrigger>
-          <TabsTrigger value="referrals" className="text-xs px-5 font-semibold">Referral Program</TabsTrigger>
+          <TabsTrigger value="rewards" className="text-xs px-5 font-semibold">
+            Loyalty Points
+          </TabsTrigger>
+          <TabsTrigger value="referrals" className="text-xs px-5 font-semibold">
+            Referral Program
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="rewards"><RewardsTab /></TabsContent>
-        <TabsContent value="referrals"><ReferralManagement /></TabsContent>
+        <TabsContent value="rewards">
+          <RewardsTab />
+        </TabsContent>
+        <TabsContent value="referrals">
+          <ReferralManagement />
+        </TabsContent>
       </Tabs>
     </div>
   );

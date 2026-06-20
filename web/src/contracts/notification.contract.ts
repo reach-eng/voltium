@@ -65,5 +65,6 @@ export interface AnnouncementResponse {
 
 export type ListNotificationsApiResponse = ApiResponseSuccess<ListNotificationsResponse>;
 export type MarkAsReadApiResponse = ApiResponseSuccess<MarkAsReadResponse>;
-export type NotificationPreferencesApiResponse = ApiResponseSuccess<NotificationPreferencesResponse>;
+export type NotificationPreferencesApiResponse =
+  ApiResponseSuccess<NotificationPreferencesResponse>;
 export type CreateAnnouncementApiResponse = ApiResponseSuccess<AnnouncementResponse>;

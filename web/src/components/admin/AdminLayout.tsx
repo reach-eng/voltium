@@ -49,11 +49,11 @@ const sectionMap: Record<string, React.ComponentType> = {
   'team-leaders': loadAdminScreen('TeamLeaderManagement'),
   operations: loadAdminScreen('OperationsBoard'),
   'fleet-map': loadAdminScreen('FleetMapScreen'),
-  'shifts': loadAdminScreen('ShiftManagement'),
+  shifts: loadAdminScreen('ShiftManagement'),
   'rider-scoring': loadAdminScreen('RiderScoringScreen'),
-  'offers': loadAdminScreen('OfferManagement'),
-  'faq': loadAdminScreen('FaqManagement'),
-  'legal': loadAdminScreen('LegalManagement'),
+  offers: loadAdminScreen('OfferManagement'),
+  faq: loadAdminScreen('FaqManagement'),
+  legal: loadAdminScreen('LegalManagement'),
   'device-tracking': loadAdminScreen('DeviceTrackingView'),
   'workflow-coverage': loadAdminScreen('WorkflowCoverageScreen'),
   notifications: loadAdminScreen('NotificationManagement'),
@@ -91,11 +91,11 @@ const sectionLabels: Record<string, string> = {
   'team-leaders': 'Team Leaders',
   operations: 'Operations',
   'fleet-map': 'Fleet Map',
-  'shifts': 'Shifts',
+  shifts: 'Shifts',
   'rider-scoring': 'Rider Scoring',
-  'offers': 'Offers & Coupons',
-  'faq': 'FAQ Management',
-  'legal': 'Legal Documents',
+  offers: 'Offers & Coupons',
+  faq: 'FAQ Management',
+  legal: 'Legal Documents',
   'device-tracking': 'Device Tracking',
   'workflow-coverage': 'Workflow Coverage',
   notifications: 'Messaging',
@@ -133,7 +133,8 @@ function AdminSectionRenderer({ section, session }: { section: string; session: 
           </div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Access Denied</h2>
           <p className="text-sm max-w-sm">
-            You do not have the required permissions ({item.permission}) to access the {item.label || section} section.
+            You do not have the required permissions ({item.permission}) to access the{' '}
+            {item.label || section} section.
           </p>
         </div>
       );

@@ -11,7 +11,9 @@ export const guarantorPolicy = {
   },
 
   canReviewGuarantor(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.KYC_REVIEWER].includes(adminRole);
+    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.KYC_REVIEWER].includes(
+      adminRole
+    );
   },
 
   canReplaceGuarantor(riderDbId: string, sessionRiderId: string): boolean {

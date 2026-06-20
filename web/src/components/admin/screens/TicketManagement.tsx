@@ -900,7 +900,9 @@ export default function TicketManagement() {
                       <Button
                         size="sm"
                         onClick={handleSendReply}
-                        disabled={replyLoading || !replyMessage.trim() || selectedTicket.status === 'CLOSED'}
+                        disabled={
+                          replyLoading || !replyMessage.trim() || selectedTicket.status === 'CLOSED'
+                        }
                       >
                         {replyLoading ? (
                           <>

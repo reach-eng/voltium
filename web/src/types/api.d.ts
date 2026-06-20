@@ -7,7 +7,13 @@ export type RiderState = 'ONBOARDING' | 'PRE_ACTIVE' | 'POST_ACTIVE' | 'SUSPENDE
 export type KycStatus = 'PENDING' | 'SUBMITTED' | 'VERIFIED' | 'APPROVED' | 'REJECTED';
 export type AccountStatus = 'PRE_ACTIVE' | 'ACTIVE' | 'SUSPENDED' | 'TERMINATED';
 export type PlanStatus = 'NONE' | 'SELECTED' | 'ACTIVE' | 'EXPIRED';
-export type RentalStatus = 'NONE' | 'PICKUP_PENDING' | 'ACTIVE' | 'RETURN_REQUIRED' | 'PENDING_RETURN' | 'RETURNED';
+export type RentalStatus =
+  | 'NONE'
+  | 'PICKUP_PENDING'
+  | 'ACTIVE'
+  | 'RETURN_REQUIRED'
+  | 'PENDING_RETURN'
+  | 'RETURNED';
 export type RiderLifecycleStatus = 'NEW' | 'KYC_SUBMITTED' | 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
 export type TransactionType = 'CREDIT' | 'DEBIT';
 export type TransactionPurpose =

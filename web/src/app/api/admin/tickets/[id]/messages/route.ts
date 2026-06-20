@@ -18,7 +18,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return errors.validation(validation.error);
     }
 
-    const newMessage = await supportUseCases.replyToTicket(id, session.adminId || 'admin', 'ADMIN', validation.data);
+    const newMessage = await supportUseCases.replyToTicket(
+      id,
+      session.adminId || 'admin',
+      'ADMIN',
+      validation.data
+    );
 
     return success(newMessage, 'Reply sent successfully');
   } catch (error) {

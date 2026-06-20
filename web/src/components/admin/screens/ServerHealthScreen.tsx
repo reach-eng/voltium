@@ -27,15 +27,23 @@ export default function ServerHealthScreen() {
       const storage = resStorage.ok ? await resStorage.json() : null;
       const worker = resWorker.ok ? await resWorker.json() : null;
 
-      const freeGb = general?.checks?.disk?.freeMB ? Math.round(general.checks.disk.freeMB / 1024) : 128;
-      const totalGb = general?.checks?.disk?.totalMB ? Math.round(general.checks.disk.totalMB / 1024) : 512;
+      const freeGb = general?.checks?.disk?.freeMB
+        ? Math.round(general.checks.disk.freeMB / 1024)
+        : 128;
+      const totalGb = general?.checks?.disk?.totalMB
+        ? Math.round(general.checks.disk.totalMB / 1024)
+        : 512;
       const usagePercent = general?.checks?.disk?.usagePercent ?? 14;
 
       setHealth({
-        database: dbInfo?.status === 'healthy' ? `Connected (latency: ${dbInfo.latencyMs}ms, tables: ${dbInfo.tableCount})` : 'Disconnected/Error',
+        database:
+          dbInfo?.status === 'healthy'
+            ? `Connected (latency: ${dbInfo.latencyMs}ms, tables: ${dbInfo.tableCount})`
+            : 'Disconnected/Error',
         databaseStatus: dbInfo?.status === 'healthy' ? 'RUNNING' : 'DOWN',
         databasePool: `Migrations pending: ${dbInfo?.pendingMigrations ?? 0}`,
-        localStorage: storage?.status === 'healthy' ? `Writable (${storage.storageRoot})` : 'Not Writable',
+        localStorage:
+          storage?.status === 'healthy' ? `Writable (${storage.storageRoot})` : 'Not Writable',
         localStorageStatus: storage?.status === 'healthy' ? 'WRITABLE' : 'ERROR',
         backupStorage: 'Configured & Active',
         backupStorageStatus: 'WRITABLE',
@@ -44,8 +52,13 @@ export default function ServerHealthScreen() {
         freeDiskGb: freeGb,
         totalDiskGb: totalGb,
         cpuUsage: usagePercent ? `${usagePercent}% (Disk Usage)` : 'Disk Metrics unavailable',
-        ramUsage: general?.checks?.uptime?.seconds ? `Uptime: ${Math.round(general.checks.uptime.seconds / 60)} minutes` : 'Uptime metric unavailable',
-        pm2Status: worker?.status === 'healthy' ? `Online (pending: ${worker.pending}, failed: ${worker.failed}, stuck: ${worker.stuck})` : 'Offline or Degraded',
+        ramUsage: general?.checks?.uptime?.seconds
+          ? `Uptime: ${Math.round(general.checks.uptime.seconds / 60)} minutes`
+          : 'Uptime metric unavailable',
+        pm2Status:
+          worker?.status === 'healthy'
+            ? `Online (pending: ${worker.pending}, failed: ${worker.failed}, stuck: ${worker.stuck})`
+            : 'Offline or Degraded',
         pm2StatusBadge: worker?.status === 'healthy' ? 'ONLINE' : 'DEGRADED',
         caddyStatus: 'Active',
       });
@@ -65,7 +78,9 @@ export default function ServerHealthScreen() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Server Health</h2>
-          <p className="text-muted-foreground">Monitor local laptop service status, storage path permissions, and resource metrics.</p>
+          <p className="text-muted-foreground">
+            Monitor local laptop service status, storage path permissions, and resource metrics.
+          </p>
         </div>
         <Button variant="outline" onClick={fetchHealth} disabled={loading} className="gap-2">
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh Checks
@@ -125,7 +140,12 @@ export default function ServerHealthScreen() {
           </Card>
         </div>
       ) : !health ? (
-        <div className="py-8 text-center text-red-500">Failed to load health data. <Button variant="link" onClick={fetchHealth} className="p-0 h-auto text-xs">Retry</Button></div>
+        <div className="py-8 text-center text-red-500">
+          Failed to load health data.{' '}
+          <Button variant="link" onClick={fetchHealth} className="p-0 h-auto text-xs">
+            Retry
+          </Button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
@@ -136,7 +156,13 @@ export default function ServerHealthScreen() {
             <CardContent className="space-y-4 pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">PostgreSQL Database</span>
-                <Badge className={health?.databaseStatus === 'RUNNING' ? 'bg-emerald-600 text-white' : 'bg-destructive text-white'}>
+                <Badge
+                  className={
+                    health?.databaseStatus === 'RUNNING'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-destructive text-white'
+                  }
+                >
                   {health?.databaseStatus ?? '—'}
                 </Badge>
               </div>
@@ -144,7 +170,13 @@ export default function ServerHealthScreen() {
 
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm font-medium">PM2 Processes</span>
-                <Badge className={health?.pm2StatusBadge === 'ONLINE' ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}>
+                <Badge
+                  className={
+                    health?.pm2StatusBadge === 'ONLINE'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-amber-600 text-white'
+                  }
+                >
                   {health?.pm2StatusBadge ?? '—'}
                 </Badge>
               </div>
@@ -165,7 +197,13 @@ export default function ServerHealthScreen() {
             <CardContent className="space-y-4 pt-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Upload Directory</span>
-                <Badge className={health?.localStorageStatus === 'WRITABLE' ? 'bg-emerald-600 text-white' : 'bg-destructive text-white'}>
+                <Badge
+                  className={
+                    health?.localStorageStatus === 'WRITABLE'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-destructive text-white'
+                  }
+                >
                   {health?.localStorageStatus ?? '—'}
                 </Badge>
               </div>
@@ -173,7 +211,13 @@ export default function ServerHealthScreen() {
 
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm font-medium">Primary Backup Directory</span>
-                <Badge className={health?.backupStorageStatus === 'WRITABLE' ? 'bg-emerald-600 text-white' : 'bg-destructive text-white'}>
+                <Badge
+                  className={
+                    health?.backupStorageStatus === 'WRITABLE'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-destructive text-white'
+                  }
+                >
                   {health?.backupStorageStatus ?? '—'}
                 </Badge>
               </div>
@@ -181,7 +225,13 @@ export default function ServerHealthScreen() {
 
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm font-medium">Secondary USB Drive</span>
-                <Badge className={health?.secondaryBackupStatus === 'CONNECTED' ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'}>
+                <Badge
+                  className={
+                    health?.secondaryBackupStatus === 'CONNECTED'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-muted text-muted-foreground'
+                  }
+                >
                   {health?.secondaryBackupStatus ?? '—'}
                 </Badge>
               </div>
@@ -204,8 +254,15 @@ export default function ServerHealthScreen() {
                 <div className="text-2xl font-bold">{health?.ramUsage ?? '—'}</div>
               </div>
               <div className="space-y-1">
-                <div className="text-xs text-muted-foreground uppercase">Disk Space (Remaining)</div>
-                <div className="text-2xl font-bold">{health?.freeDiskGb ?? '—'} GB <span className="text-xs font-normal text-muted-foreground">/ {health?.totalDiskGb ?? '—'} GB</span></div>
+                <div className="text-xs text-muted-foreground uppercase">
+                  Disk Space (Remaining)
+                </div>
+                <div className="text-2xl font-bold">
+                  {health?.freeDiskGb ?? '—'} GB{' '}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    / {health?.totalDiskGb ?? '—'} GB
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

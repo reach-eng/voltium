@@ -93,10 +93,15 @@ export function normalizeApiResponse<T = unknown>(response: unknown): ApiRespons
     return success;
   }
 
-  const errObj = body.error && typeof body.error === 'object' ? (body.error as Record<string, unknown>) : null;
+  const errObj =
+    body.error && typeof body.error === 'object' ? (body.error as Record<string, unknown>) : null;
   const errorDetail: ApiErrorDetail = {
     code: (errObj?.code as string) ?? (body.code as string) ?? ERROR_CODES.SERVER_ERROR,
-    message: (errObj?.message as string) ?? (body.error as string) ?? (body.message as string) ?? 'Unknown error',
+    message:
+      (errObj?.message as string) ??
+      (body.error as string) ??
+      (body.message as string) ??
+      'Unknown error',
   };
 
   if (errObj && errObj.details !== undefined) {

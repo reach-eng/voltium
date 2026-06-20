@@ -28,7 +28,7 @@ describe('Support Ticket Workflows Integration Tests', () => {
     expect(status).toBe(200);
     expect(body.success).toBe(true);
     expect(body.data.id).toBeDefined();
-    
+
     // In mock DB, create might return the created ticket or mock structure
     createdTicketId = body.data.id;
   });

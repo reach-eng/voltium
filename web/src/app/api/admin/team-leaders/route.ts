@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const validation = validateBody(
       createTeamLeaderSchema.partial().extend({ id: z.string().min(1) }),
-      body,
+      body
     );
     if (!validation.success) return errors.validation(validation.error!);
 

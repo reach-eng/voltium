@@ -185,7 +185,10 @@ export const dataManagementUseCases = {
   },
 
   async updateSchedule(
-    config: Omit<BackupScheduleConfig, 'id' | 'lastRunAt' | 'nextRunAt' | 'lastStatus' | 'lastError'>,
+    config: Omit<
+      BackupScheduleConfig,
+      'id' | 'lastRunAt' | 'nextRunAt' | 'lastStatus' | 'lastError'
+    >,
     adminId: string,
     adminRole: AdminRole
   ) {
@@ -229,7 +232,11 @@ export const dataManagementUseCases = {
       action: 'backup.schedule_updated',
       entity: 'BackupSchedule',
       entityId: schedule.id,
-      details: { frequency: config.frequency, enabled: config.enabled, nextRunAt: nextRunAt?.toISOString() },
+      details: {
+        frequency: config.frequency,
+        enabled: config.enabled,
+        nextRunAt: nextRunAt?.toISOString(),
+      },
     });
 
     return schedule;
@@ -335,7 +342,9 @@ export const dataManagementUseCases = {
 
     const lock = await backupService.getLockStatus();
     if (lock.status !== 'NONE') {
-      throw new Error(`Cannot run backup while lock is active (${lock.status} held by ${lock.owner})`);
+      throw new Error(
+        `Cannot run backup while lock is active (${lock.status} held by ${lock.owner})`
+      );
     }
 
     await createAuditLog({
@@ -418,15 +427,15 @@ export const dataManagementUseCases = {
     let largestFileCategories: { category: string; sizeBytes: number }[] = [];
     try {
       const categories: { purpose: string; _sum: { sizeBytes: number | null } }[] =
-        await db.fileRecord.groupBy({
+        (await db.fileRecord.groupBy({
           by: ['purpose'],
           _sum: { sizeBytes: true },
           orderBy: { _sum: { sizeBytes: 'desc' as const } },
           take: 10,
-        }) as any;
+        })) as any;
       largestFileCategories = categories
-        .filter(c => c._sum.sizeBytes !== null)
-        .map(c => ({ category: c.purpose, sizeBytes: Number(c._sum.sizeBytes) }));
+        .filter((c) => c._sum.sizeBytes !== null)
+        .map((c) => ({ category: c.purpose, sizeBytes: Number(c._sum.sizeBytes) }));
     } catch {}
 
     // Get database size from PostgreSQL
@@ -447,4 +456,3 @@ export const dataManagementUseCases = {
     };
   },
 };
-

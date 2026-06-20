@@ -33,7 +33,11 @@ let eventStore: MockOutboxEvent[] = [];
 let nextId = 1;
 
 const MockOutboxService = {
-  emit: async (eventType: string, payload: Record<string, unknown>, maxAttempts = 3): Promise<string> => {
+  emit: async (
+    eventType: string,
+    payload: Record<string, unknown>,
+    maxAttempts = 3
+  ): Promise<string> => {
     const id = `evt-${nextId++}`;
     eventStore.push({
       id,

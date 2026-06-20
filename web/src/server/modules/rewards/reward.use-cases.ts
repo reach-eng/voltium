@@ -13,9 +13,21 @@ export const rewardUseCases = {
   },
 
   async award(data: { riderDbId: string; title: string; points: number }, actorId: string) {
-    const reward = await rewardRepository.create({ riderId: data.riderDbId, title: data.title, points: data.points });
-    createAuditLog({ actorId, action: 'reward.award_manual', entity: 'reward', entityId: reward.id, details: { riderDbId: data.riderDbId, title: data.title, points: data.points } }).catch(() => {});
-    notificationService.notifyRewardMilestone(data.riderDbId, data.points, data.title).catch((e) => logger.error('Failed to notify reward', e));
+    const reward = await rewardRepository.create({
+      riderId: data.riderDbId,
+      title: data.title,
+      points: data.points,
+    });
+    createAuditLog({
+      actorId,
+      action: 'reward.award_manual',
+      entity: 'reward',
+      entityId: reward.id,
+      details: { riderDbId: data.riderDbId, title: data.title, points: data.points },
+    }).catch(() => {});
+    notificationService
+      .notifyRewardMilestone(data.riderDbId, data.points, data.title)
+      .catch((e) => logger.error('Failed to notify reward', e));
     return reward;
   },
 };

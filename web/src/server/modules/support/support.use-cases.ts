@@ -38,18 +38,29 @@ export const supportUseCases = {
     return supportRepository.update(ticketId, input);
   },
 
-  async replyToTicket(ticketId: string, senderId: string, senderType: 'RIDER' | 'ADMIN', input: TicketReplyDto) {
+  async replyToTicket(
+    ticketId: string,
+    senderId: string,
+    senderType: 'RIDER' | 'ADMIN',
+    input: TicketReplyDto
+  ) {
     const ticket = await supportRepository.findById(ticketId);
     if (!ticket) throw new Error('Ticket not found');
 
-    const message = await supportRepository.addMessage(ticketId, senderId, senderType, input.message, input.attachments);
+    const message = await supportRepository.addMessage(
+      ticketId,
+      senderId,
+      senderType,
+      input.message,
+      input.attachments
+    );
 
     await supportRepository.update(ticketId, { updatedAt: new Date() });
 
     if (senderType === 'ADMIN') {
-      notificationService.notifySupportReply(ticket.riderId, ticket.id, ticket.subject).catch(
-        (e: unknown) => logger.error('Failed to send notification', e),
-      );
+      notificationService
+        .notifySupportReply(ticket.riderId, ticket.id, ticket.subject)
+        .catch((e: unknown) => logger.error('Failed to send notification', e));
     }
 
     return message;
@@ -125,11 +136,14 @@ export const supportUseCases = {
   /**
    * Creates an audit log entry for admin ticket actions.
    */
-  async logAdminAction(actorId: string, params: {
-    action: string;
-    ticketId: string;
-    details?: Record<string, unknown>;
-  }) {
+  async logAdminAction(
+    actorId: string,
+    params: {
+      action: string;
+      ticketId: string;
+      details?: Record<string, unknown>;
+    }
+  ) {
     await createAuditLog({
       actorId,
       action: params.action,
@@ -162,7 +176,12 @@ export const supportUseCases = {
     };
   },
 
-  async bulkUpdateTickets(ids: string[], action: string, value: string | undefined, actorId: string) {
+  async bulkUpdateTickets(
+    ids: string[],
+    action: string,
+    value: string | undefined,
+    actorId: string
+  ) {
     let updatedCount = 0;
     let auditAction = '';
 
@@ -179,14 +198,19 @@ export const supportUseCases = {
         break;
       }
       case 'revert': {
-        const result = await supportRepository.bulkUpdate(ids, { status: 'OPEN', resolvedAt: null });
+        const result = await supportRepository.bulkUpdate(ids, {
+          status: 'OPEN',
+          resolvedAt: null,
+        });
         updatedCount = result.count;
         auditAction = 'ticket.bulk_revert';
         break;
       }
       case 'assign': {
         if (!value) throw new Error('Admin ID is required');
-        const result = await supportRepository.bulkUpdate(ids, { assignedTo: value === '_none' ? null : value });
+        const result = await supportRepository.bulkUpdate(ids, {
+          assignedTo: value === '_none' ? null : value,
+        });
         updatedCount = result.count;
         auditAction = 'ticket.bulk_assign';
         break;

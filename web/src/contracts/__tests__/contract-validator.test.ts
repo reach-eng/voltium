@@ -90,7 +90,7 @@ describe('OpenAPI spec', () => {
     const path = resolve(__dirname, '../openapi.json');
     const spec = JSON.parse(readFileSync(path, 'utf-8'));
     const tagNames = spec.tags.map((t: any) => t.name);
-    
+
     expect(tagNames).toContain('Auth');
     expect(tagNames).toContain('Rider Profile');
     expect(tagNames).toContain('KYC');
@@ -240,4 +240,3 @@ describe('API Route Consistency Check', () => {
     }
   });
 });
-

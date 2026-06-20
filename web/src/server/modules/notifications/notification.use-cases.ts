@@ -25,7 +25,10 @@ export const notificationUseCases = {
 
   async markRead(notificationId: string, riderDbId?: string) {
     if (riderDbId) {
-      const notification = await db.notification.findUnique({ where: { id: notificationId }, select: { riderId: true } });
+      const notification = await db.notification.findUnique({
+        where: { id: notificationId },
+        select: { riderId: true },
+      });
       if (!notification || notification.riderId !== riderDbId) {
         throw new Error('NOTIFICATION_ACCESS_DENIED');
       }
@@ -48,7 +51,13 @@ export const notificationUseCases = {
   /**
    * List all notifications with pagination, search, and rider info (admin view).
    */
-  async listAllAdmin(params: { page?: number; limit?: number; search?: string; type?: string; status?: string }) {
+  async listAllAdmin(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    status?: string;
+  }) {
     const { page = 1, limit = 20, search, type, status } = params;
     const where: any = {};
     if (type && type !== 'ALL') where.type = type;
@@ -74,23 +83,51 @@ export const notificationUseCases = {
     ]);
 
     const formatted = (notifications as any[]).map((n: any) => ({
-      id: n.id, riderId: n.rider.riderId, riderName: n.rider.fullName || 'Unknown',
-      title: n.title, message: n.message, type: n.type, isRead: n.isRead, createdAt: n.createdAt,
+      id: n.id,
+      riderId: n.rider.riderId,
+      riderName: n.rider.fullName || 'Unknown',
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.isRead,
+      createdAt: n.createdAt,
     }));
 
-    return { notifications: formatted, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      notifications: formatted,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   },
 
   /**
    * Send notification to a single rider.
    */
-  async sendToSingleRider(riderId: string, title: string, message: string, type: string, actorId: string) {
+  async sendToSingleRider(
+    riderId: string,
+    title: string,
+    message: string,
+    type: string,
+    actorId: string
+  ) {
     const rider = await db.rider.findUnique({ where: { id: riderId } });
     if (!rider) throw new Error('Rider not found');
 
-    const notification = await db.notification.create({ data: { riderId, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' } });
+    const notification = await db.notification.create({
+      data: {
+        riderId,
+        title,
+        message,
+        type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+      },
+    });
 
-    createAuditLog({ actorId, action: 'notification.send', entity: 'notification', entityId: notification.id, details: { title, type, riderId } }).catch((e) => logger.error('Audit log failed', e));
+    createAuditLog({
+      actorId,
+      action: 'notification.send',
+      entity: 'notification',
+      entityId: notification.id,
+      details: { title, type, riderId },
+    }).catch((e) => logger.error('Audit log failed', e));
     return notification;
   },
 
@@ -104,21 +141,51 @@ export const notificationUseCases = {
     while (true) {
       const batch = await db.rider.findMany({ select: { id: true }, skip, take: BATCH_SIZE });
       if (batch.length === 0) break;
-      await db.notification.createMany({ data: batch.map((r: { id: string }) => ({ riderId: r.id, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' })) });
+      await db.notification.createMany({
+        data: batch.map((r: { id: string }) => ({
+          riderId: r.id,
+          title,
+          message,
+          type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+        })),
+      });
       totalSent += batch.length;
       skip += BATCH_SIZE;
     }
 
-    createAuditLog({ actorId, action: 'notification.send_all', entity: 'notification', details: { title, type, count: totalSent } }).catch((e) => logger.error('Audit log failed', e));
+    createAuditLog({
+      actorId,
+      action: 'notification.send_all',
+      entity: 'notification',
+      details: { title, type, count: totalSent },
+    }).catch((e) => logger.error('Audit log failed', e));
     return { count: totalSent };
   },
 
   /**
    * Send notification to specific riders.
    */
-  async sendToSpecificRiders(riderIds: string[], title: string, message: string, type: string, actorId: string) {
-    await db.notification.createMany({ data: riderIds.map((riderId) => ({ riderId, title, message, type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM' })) });
-    createAuditLog({ actorId, action: 'notification.send_batch', entity: 'notification', details: { title, type, count: riderIds.length } }).catch((e) => logger.error('Audit log failed', e));
+  async sendToSpecificRiders(
+    riderIds: string[],
+    title: string,
+    message: string,
+    type: string,
+    actorId: string
+  ) {
+    await db.notification.createMany({
+      data: riderIds.map((riderId) => ({
+        riderId,
+        title,
+        message,
+        type: type as 'INFO' | 'ALERT' | 'PROMOTION' | 'PAYMENT' | 'VEHICLE' | 'SOS' | 'SYSTEM',
+      })),
+    });
+    createAuditLog({
+      actorId,
+      action: 'notification.send_batch',
+      entity: 'notification',
+      details: { title, type, count: riderIds.length },
+    }).catch((e) => logger.error('Audit log failed', e));
     return { count: riderIds.length };
   },
 
@@ -152,7 +219,7 @@ export const notificationUseCases = {
         await notificationService.notifyPaymentReminder(
           rider.id,
           Math.abs(rider.wallet.balanceInPaise),
-          'overdue',
+          'overdue'
         );
         results.paymentReminders++;
       }

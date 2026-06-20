@@ -10,11 +10,18 @@ export const rentalPolicy = {
   },
 
   canStartPickup(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER, AdminRole.FLEET_MANAGER].includes(adminRole);
+    return [
+      AdminRole.SUPER_ADMIN,
+      AdminRole.OPERATIONS_ADMIN,
+      AdminRole.HUB_MANAGER,
+      AdminRole.FLEET_MANAGER,
+    ].includes(adminRole);
   },
 
   canApproveReturn(adminRole: AdminRole): boolean {
-    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER].includes(adminRole);
+    return [AdminRole.SUPER_ADMIN, AdminRole.OPERATIONS_ADMIN, AdminRole.HUB_MANAGER].includes(
+      adminRole
+    );
   },
 
   canViewRental(actorRole: string, targetRiderId: string, sessionRiderId?: string): boolean {

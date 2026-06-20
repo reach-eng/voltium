@@ -15,7 +15,10 @@ import { hasPermission, type Permission } from '@/lib/auth';
 import { errors } from '@/lib/api-response';
 
 export class AdminAuthError extends Error {
-  constructor(message: string, public statusCode: number = 401) {
+  constructor(
+    message: string,
+    public statusCode: number = 401
+  ) {
     super(message);
     this.name = 'AdminAuthError';
   }
@@ -44,10 +47,7 @@ export async function requireAdminSession(request?: NextRequest) {
  * Require admin authentication AND a specific permission.
  * Throws AdminForbiddenError if the admin lacks the required permission.
  */
-export async function requirePermission(
-  permission: Permission,
-  request?: NextRequest
-) {
+export async function requirePermission(permission: Permission, request?: NextRequest) {
   const session = await getAdminSession(request);
   if (!session) {
     throw new AdminAuthError('Admin authentication required');
@@ -61,9 +61,7 @@ export async function requirePermission(
   // Check the specific permission
   const role = session.adminRole || '';
   if (!hasPermission(role, permission)) {
-    throw new AdminForbiddenError(
-      `Insufficient permissions: requires '${permission}'`
-    );
+    throw new AdminForbiddenError(`Insufficient permissions: requires '${permission}'`);
   }
 
   return session;
@@ -100,9 +98,7 @@ export function withPermission(
 /**
  * Admin-only version (any active admin).
  */
-export function withAdmin(
-  handler: (req: NextRequest, session: any) => Promise<Response>
-) {
+export function withAdmin(handler: (req: NextRequest, session: any) => Promise<Response>) {
   return async (req: NextRequest) => {
     try {
       const session = await requireAdminSession(req);

@@ -85,10 +85,10 @@ function getBatteryColor(level: number | null) {
 }
 
 function getRiderStatus(rider: FleetRider) {
-  if (rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED')
-    return 'offline';
+  if (rider.lifecycleStatus === 'SUSPENDED' || rider.lifecycleStatus === 'CLOSED') return 'offline';
   if (rider.lifecycleStatus === 'ACTIVE') return 'active';
-  if (rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED') return 'idle';
+  if (rider.lifecycleStatus === 'KYC_SUBMITTED' || rider.lifecycleStatus === 'PROFILE_SUBMITTED')
+    return 'idle';
   return 'offline';
 }
 

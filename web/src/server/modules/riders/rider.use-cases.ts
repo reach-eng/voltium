@@ -16,22 +16,55 @@ import { riderRepository } from './rider.repository';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
-  'fullName', 'email', 'fatherName', 'motherName', 'dob', 'currentAddress',
-  'emergencyContact', 'intent', 'locationGranted', 'batteryGranted',
-  'contactsGranted', 'callLogsGranted', 'micGranted', 'cameraGranted', 'phoneGranted',
+  'fullName',
+  'email',
+  'fatherName',
+  'motherName',
+  'dob',
+  'currentAddress',
+  'emergencyContact',
+  'intent',
+  'locationGranted',
+  'batteryGranted',
+  'contactsGranted',
+  'callLogsGranted',
+  'micGranted',
+  'cameraGranted',
+  'phoneGranted',
 ]);
 
 const SAFE_KYC_FIELDS = new Set([
-  'profilePhoto', 'riderPhoto', 'signature', 'aadhaarFront', 'aadhaarBack',
-  'aadhaarNumber', 'panCard', 'panNumber', 'bankAccount', 'bankIfsc',
-  'bankName', 'accountNumber', 'ifscCode', 'selfie',
+  'profilePhoto',
+  'riderPhoto',
+  'signature',
+  'aadhaarFront',
+  'aadhaarBack',
+  'aadhaarNumber',
+  'panCard',
+  'panNumber',
+  'bankAccount',
+  'bankIfsc',
+  'bankName',
+  'accountNumber',
+  'ifscCode',
+  'selfie',
 ]);
 
 const SAFE_GUARANTOR_FIELDS = new Set([
-  'guarantorName', 'guarantorPhone', 'guarantorRelation', 'guarantorDob',
-  'guarantorFatherName', 'guarantorMotherName', 'guarantorAddress',
-  'guarantorAadhaarFront', 'guarantorAadhaarBack', 'guarantorPan',
-  'guarantorVideo', 'guarantorSignature', 'guarantorPhoto', 'guarantorStatus',
+  'guarantorName',
+  'guarantorPhone',
+  'guarantorRelation',
+  'guarantorDob',
+  'guarantorFatherName',
+  'guarantorMotherName',
+  'guarantorAddress',
+  'guarantorAadhaarFront',
+  'guarantorAadhaarBack',
+  'guarantorPan',
+  'guarantorVideo',
+  'guarantorSignature',
+  'guarantorPhoto',
+  'guarantorStatus',
 ]);
 
 export const riderUseCases = {
@@ -71,21 +104,75 @@ export const riderUseCases = {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       select: {
-        id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true, currentPlan: true,
-        planStartDate: true, planEndDate: true, referralCode: true, pickupHub: true,
-        teamLeader: true, emergencyContact: true,
-        pickupPhotoFront: true, pickupPhotoBack: true, pickupPhotoLeft: true,
-        pickupPhotoRight: true, pickupPhotoWithVehicle: true,
-        kycProfile: { select: { status: true, profilePhoto: true, riderPhoto: true, signature: true, aadhaarFront: true, aadhaarBack: true, aadhaarNumber: true, panCard: true, panNumber: true, bankName: true, accountNumber: true, ifscCode: true } },
-        wallet: { select: { balanceInPaise: true, securityDeposit: true, depositStatus: true, paymentStreak: true } },
-        guarantor: { select: { status: true, name: true, relation: true, dob: true, phone: true, signature: true } },
+        id: true,
+        riderId: true,
+        fullName: true,
+        phone: true,
+        lifecycleStatus: true,
+        currentPlan: true,
+        planStartDate: true,
+        planEndDate: true,
+        referralCode: true,
+        pickupHub: true,
+        teamLeader: true,
+        emergencyContact: true,
+        pickupPhotoFront: true,
+        pickupPhotoBack: true,
+        pickupPhotoLeft: true,
+        pickupPhotoRight: true,
+        pickupPhotoWithVehicle: true,
+        kycProfile: {
+          select: {
+            status: true,
+            profilePhoto: true,
+            riderPhoto: true,
+            signature: true,
+            aadhaarFront: true,
+            aadhaarBack: true,
+            aadhaarNumber: true,
+            panCard: true,
+            panNumber: true,
+            bankName: true,
+            accountNumber: true,
+            ifscCode: true,
+          },
+        },
+        wallet: {
+          select: {
+            balanceInPaise: true,
+            securityDeposit: true,
+            depositStatus: true,
+            paymentStreak: true,
+          },
+        },
+        guarantor: {
+          select: {
+            status: true,
+            name: true,
+            relation: true,
+            dob: true,
+            phone: true,
+            signature: true,
+          },
+        },
         vehicleReturns: { select: { id: true, status: true } },
-        vehicle: { select: { id: true, vehicleId: true, vehicleNumber: true, model: true, batteryLevel: true, hub: { select: { id: true, name: true, location: true } } } },
+        vehicle: {
+          select: {
+            id: true,
+            vehicleId: true,
+            vehicleNumber: true,
+            model: true,
+            batteryLevel: true,
+            hub: { select: { id: true, name: true, location: true } },
+          },
+        },
       },
     });
     if (!rider) return null;
 
-    const unreadNotifications = await db.notification.count({ where: { riderId: riderDbId, isRead: false } });
+    const unreadNotifications = await db.notification.count({
+      where: { riderId: riderDbId, isRead: false },
+    });
 
     let referralCode = rider.referralCode;
     if (!referralCode) {
@@ -95,7 +182,12 @@ export const riderUseCases = {
     }
 
     let planDaysRemaining: number | null = null;
-    if ((rider.lifecycleStatus === 'ACTIVE' || rider.lifecycleStatus === 'PLAN_SELECTED' || rider.lifecycleStatus === 'PICKUP_SCHEDULED') && rider.planEndDate) {
+    if (
+      (rider.lifecycleStatus === 'ACTIVE' ||
+        rider.lifecycleStatus === 'PLAN_SELECTED' ||
+        rider.lifecycleStatus === 'PICKUP_SCHEDULED') &&
+      rider.planEndDate
+    ) {
       const diffMs = rider.planEndDate.getTime() - Date.now();
       planDaysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     }
@@ -110,7 +202,9 @@ export const riderUseCases = {
     }
 
     return {
-      rider: signedRider, referralCode, unreadNotifications,
+      rider: signedRider,
+      referralCode,
+      unreadNotifications,
       todayStats: { distance: 0, power: 0, speed: 0, battery: 0 },
       planDaysRemaining,
     };
@@ -127,16 +221,31 @@ export const riderUseCases = {
     if (!rider) return null;
 
     const [rewards, aggregates] = await Promise.all([
-      db.reward.findMany({ where: { riderId: riderDbId }, orderBy: { createdAt: 'desc' }, take: 100, select: { id: true, title: true, points: true, createdAt: true } }),
+      db.reward.findMany({
+        where: { riderId: riderDbId },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: { id: true, title: true, points: true, createdAt: true },
+      }),
       db.reward.aggregate({ where: { riderId: riderDbId }, _sum: { points: true } }),
     ]);
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthRewards = rewards.filter((r: { createdAt: Date | string }) => new Date(r.createdAt) >= monthStart);
-    const thisMonthPoints = thisMonthRewards.reduce((sum: number, r: { points: number }) => sum + r.points, 0);
+    const thisMonthRewards = rewards.filter(
+      (r: { createdAt: Date | string }) => new Date(r.createdAt) >= monthStart
+    );
+    const thisMonthPoints = thisMonthRewards.reduce(
+      (sum: number, r: { points: number }) => sum + r.points,
+      0
+    );
 
-    return { rewards, totalPoints: aggregates._sum.points || 0, thisMonthPoints, currentStreak: rider.wallet?.paymentStreak ?? 0 };
+    return {
+      rewards,
+      totalPoints: aggregates._sum.points || 0,
+      thisMonthPoints,
+      currentStreak: rider.wallet?.paymentStreak ?? 0,
+    };
   },
 
   /**
@@ -151,7 +260,16 @@ export const riderUseCases = {
   /**
    * List earnings for a rider with pagination and filters.
    */
-  async listEarnings(riderId: string, filters: { startDate?: string; endDate?: string; platform?: string; page: number; limit: number }) {
+  async listEarnings(
+    riderId: string,
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      platform?: string;
+      page: number;
+      limit: number;
+    }
+  ) {
     const { startDate, endDate, platform, page, limit } = filters;
     const where: Record<string, unknown> = { riderId };
     if (startDate || endDate) {
@@ -162,7 +280,12 @@ export const riderUseCases = {
     if (platform) where.platform = platform;
 
     const [earnings, total] = await Promise.all([
-      db.riderEarning.findMany({ where, orderBy: { date: 'desc' }, skip: (page - 1) * limit, take: limit }),
+      db.riderEarning.findMany({
+        where,
+        orderBy: { date: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
       db.riderEarning.count({ where }),
     ]);
 
@@ -178,7 +301,8 @@ export const riderUseCases = {
     });
 
     return {
-      earnings, weeklySummary: {
+      earnings,
+      weeklySummary: {
         totalEarnings: weeklySummary._sum.amount ?? 0,
         totalTrips: weeklySummary._sum.trips ?? 0,
         totalDistance: weeklySummary._sum.distance ?? 0,
@@ -192,8 +316,30 @@ export const riderUseCases = {
   /**
    * Create an earning record for a rider.
    */
-  async createEarning(riderId: string, data: { date: string; platform?: string; amount: number; trips: number; distance?: number; hoursOnline?: number; notes?: string }) {
-    return db.riderEarning.create({ data: { riderId, date: new Date(data.date), platform: data.platform || null, amount: data.amount, trips: data.trips, distance: data.distance || null, hoursOnline: data.hoursOnline || null, notes: data.notes || null } });
+  async createEarning(
+    riderId: string,
+    data: {
+      date: string;
+      platform?: string;
+      amount: number;
+      trips: number;
+      distance?: number;
+      hoursOnline?: number;
+      notes?: string;
+    }
+  ) {
+    return db.riderEarning.create({
+      data: {
+        riderId,
+        date: new Date(data.date),
+        platform: data.platform || null,
+        amount: data.amount,
+        trips: data.trips,
+        distance: data.distance || null,
+        hoursOnline: data.hoursOnline || null,
+        notes: data.notes || null,
+      },
+    });
   },
 
   /**
@@ -228,15 +374,17 @@ export const riderUseCases = {
     }
 
     // Handle vehicle returns
-    if (
-      input.returnPending === true &&
-      (input.returnPhotos as string[] | undefined)?.length
-    ) {
+    if (input.returnPending === true && (input.returnPhotos as string[] | undefined)?.length) {
       const photos = input.returnPhotos as string[];
       let vehicleId = existing.vehicleId || null;
       if (!vehicleId && existing.assignedVehicle) {
         const vehicle = await db.vehicle.findFirst({
-          where: { OR: [{ vehicleId: existing.assignedVehicle }, { vehicleNumber: existing.assignedVehicle }] },
+          where: {
+            OR: [
+              { vehicleId: existing.assignedVehicle },
+              { vehicleNumber: existing.assignedVehicle },
+            ],
+          },
           select: { id: true },
         });
         vehicleId = vehicle?.id || null;
@@ -265,8 +413,8 @@ export const riderUseCases = {
     if (Object.keys(kycData).length > 0) {
       await db.kycProfile.upsert({
         where: { riderId: riderDbId },
-        create: { riderId: riderDbId, ...kycData as any, status: 'SUBMITTED' },
-        update: { ...kycData as any, status: 'SUBMITTED' },
+        create: { riderId: riderDbId, ...(kycData as any), status: 'SUBMITTED' },
+        update: { ...(kycData as any), status: 'SUBMITTED' },
       });
     }
 
@@ -280,10 +428,10 @@ export const riderUseCases = {
           name: (guarantorData.name as string) || 'N/A',
           relation: (guarantorData.relation as string) || 'Other',
           phone: (guarantorData.phone as string) || '0000000000',
-          ...guarantorData as any,
+          ...(guarantorData as any),
           status: 'SUBMITTED',
         },
-        update: { ...guarantorData as any, status: 'SUBMITTED' },
+        update: { ...(guarantorData as any), status: 'SUBMITTED' },
       });
     }
 
@@ -299,7 +447,9 @@ export const riderUseCases = {
     const rider = await riderRepository.getFullState(riderDbId);
     if (!rider) return null;
 
-    const activeLease = (rider.leases || []).find((lease: any) => ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING'].includes(lease.status));
+    const activeLease = (rider.leases || []).find((lease: any) =>
+      ['BOOKED', 'PICKUP_SCHEDULED', 'ACTIVE', 'OVERDUE', 'RETURN_PENDING'].includes(lease.status)
+    );
 
     return {
       riderId: rider.riderId,
@@ -310,7 +460,8 @@ export const riderUseCases = {
       kycStatus: rider.kycProfile?.status || 'PENDING',
       guarantorStatus: rider.guarantor?.status || 'PENDING',
       depositStatus: rider.wallet?.depositStatus || 'NOT_SUBMITTED',
-      rentalStatus: activeLease?.status || (rider.lifecycleStatus === 'ACTIVE' ? 'ACTIVE' : 'NO_RENTAL'),
+      rentalStatus:
+        activeLease?.status || (rider.lifecycleStatus === 'ACTIVE' ? 'ACTIVE' : 'NO_RENTAL'),
       activePlan: rider.currentPlan
         ? {
             id: rider.currentPlan,
@@ -318,9 +469,10 @@ export const riderUseCases = {
             endDate: rider.planEndDate,
           }
         : null,
-      assignedVehicle: rider.vehicleId || rider.assignedVehicle
-        ? { id: rider.vehicleId, vehicleId: rider.assignedVehicle }
-        : null,
+      assignedVehicle:
+        rider.vehicleId || rider.assignedVehicle
+          ? { id: rider.vehicleId, vehicleId: rider.assignedVehicle }
+          : null,
       walletBalance: rider.wallet?.balanceInPaise || 0,
     };
   },

@@ -62,7 +62,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'run-now') {
-      const result = await dataManagementUseCases.runScheduledBackupNow(session.adminId ?? '', session.adminRole as AdminRole);
+      const result = await dataManagementUseCases.runScheduledBackupNow(
+        session.adminId ?? '',
+        session.adminRole as AdminRole
+      );
       return NextResponse.json({ success: true, data: result });
     }
 

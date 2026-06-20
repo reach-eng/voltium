@@ -7,12 +7,7 @@
  * RESOLVED → CLOSED
  */
 
-export type TicketStatus =
-  | 'OPEN'
-  | 'IN_PROGRESS'
-  | 'WAITING_ON_RIDER'
-  | 'RESOLVED'
-  | 'CLOSED';
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_ON_RIDER' | 'RESOLVED' | 'CLOSED';
 
 type TransitionMap = Record<TicketStatus, TicketStatus[]>;
 
@@ -28,7 +23,7 @@ export class TicketStateError extends Error {
   constructor(
     message: string,
     public readonly currentStatus: TicketStatus,
-    public readonly targetStatus: TicketStatus,
+    public readonly targetStatus: TicketStatus
   ) {
     super(message);
     this.name = 'TicketStateError';
@@ -44,7 +39,7 @@ export function validateTicketTransition(current: TicketStatus, target: TicketSt
       `Invalid ticket transition: "${current}" → "${target}". ` +
         `Allowed: ${allowed?.join(', ') || 'none'}.`,
       current,
-      target,
+      target
     );
   }
 }
