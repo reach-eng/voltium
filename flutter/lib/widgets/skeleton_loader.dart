@@ -268,3 +268,220 @@ class SupportSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// Skeleton for pickup hub selection screen — card grid with search bar placeholder.
+class PickupHubSkeleton extends StatelessWidget {
+  const PickupHubSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Search bar
+          const ShimmerLoading(
+              width: double.infinity, height: 48, borderRadius: 24),
+          const SizedBox(height: 20),
+          // Hub cards grid
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: 6,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (_, __) => const ShimmerLoading(
+                  width: double.infinity,
+                  height: double.infinity,
+                  borderRadius: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton for pickup verification screen — photo capture + detail placeholders.
+class PickupVerificationSkeleton extends StatelessWidget {
+  const PickupVerificationSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        SizedBox(height: 24),
+        // Photo capture area
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: ShimmerLoading(
+              width: double.infinity, height: 200, borderRadius: 16),
+        ),
+        SizedBox(height: 16),
+        // Multiple photo thumbnails
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+              SizedBox(width: 8),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+              SizedBox(width: 8),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+            ],
+          ),
+        ),
+        SizedBox(height: 24),
+        // Detail field placeholders
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+              SizedBox(height: 12),
+              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+              SizedBox(height: 12),
+              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Skeleton for plan selection screen — plan cards with compare layout.
+class PlansSkeleton extends StatelessWidget {
+  const PlansSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Header
+          ShimmerLoading(width: 180, height: 28, borderRadius: 4),
+          SizedBox(height: 8),
+          ShimmerLoading(width: 240, height: 16, borderRadius: 4),
+          SizedBox(height: 24),
+          // Plan card 1
+          ShimmerLoading(width: double.infinity, height: 200, borderRadius: 20),
+          SizedBox(height: 16),
+          // Plan card 2
+          ShimmerLoading(width: double.infinity, height: 200, borderRadius: 20),
+          SizedBox(height: 16),
+          // Plan card 3
+          ShimmerLoading(width: double.infinity, height: 200, borderRadius: 20),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton for guarantor onboarding — form fields + upload area.
+class GuarantorSkeleton extends StatelessWidget {
+  const GuarantorSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ShimmerLoading(width: 160, height: 24, borderRadius: 4),
+          SizedBox(height: 16),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 12),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 12),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 24),
+          ShimmerLoading(width: 140, height: 24, borderRadius: 4),
+          SizedBox(height: 16),
+          // Document upload area
+          ShimmerLoading(width: double.infinity, height: 160, borderRadius: 16),
+          SizedBox(height: 24),
+          // Submit button
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 28),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton for KYC form — multi-step form fields.
+class KycSkeleton extends StatelessWidget {
+  const KycSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Step indicator
+          Row(
+            children: [
+              ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
+              SizedBox(width: 8),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 4, borderRadius: 2)),
+              SizedBox(width: 8),
+              ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
+              SizedBox(width: 8),
+              Expanded(child: ShimmerLoading(width: double.infinity, height: 4, borderRadius: 2)),
+              SizedBox(width: 8),
+              ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
+            ],
+          ),
+          SizedBox(height: 32),
+          // Form fields
+          ShimmerLoading(width: 120, height: 16, borderRadius: 4),
+          SizedBox(height: 8),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 16),
+          ShimmerLoading(width: 100, height: 16, borderRadius: 4),
+          SizedBox(height: 8),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 16),
+          ShimmerLoading(width: 80, height: 16, borderRadius: 4),
+          SizedBox(height: 8),
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+          SizedBox(height: 32),
+          // Submit
+          ShimmerLoading(width: double.infinity, height: 56, borderRadius: 28),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton for notification list — list items.
+class NotificationSkeleton extends StatelessWidget {
+  const NotificationSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: List.generate(
+          5,
+          (i) => const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: ShimmerListTile(showTrailing: true),
+          ),
+        ),
+      ),
+    );
+  }
+}

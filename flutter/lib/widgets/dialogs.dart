@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 Future<bool> showConfirmDialog({
   required BuildContext context,
@@ -66,50 +65,24 @@ Future<bool> showDiscardChangesDialog(BuildContext context) async {
   );
 }
 
+/// @deprecated Use [Toast] from `utils/toast.dart` instead.
+///
+///   Toast.success(context, msg)
+///   Toast.error(context, msg)
+///   Toast.info(context, msg)
+@Deprecated('Use Toast from utils/toast.dart instead')
 Future<void> showSuccessSnackBar(BuildContext context, String message) async {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(child: Text(message)),
-        ],
-      ),
-      backgroundColor: Colors.green,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  throw UnimplementedError('Migrate to Toast.success()');
 }
 
+/// @deprecated Use [Toast] from `utils/toast.dart` instead.
+@Deprecated('Use Toast from utils/toast.dart instead')
 Future<void> showErrorSnackBar(BuildContext context, String message) async {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.error, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(child: Text(message)),
-        ],
-      ),
-      backgroundColor: Colors.red,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  throw UnimplementedError('Migrate to Toast.error()');
 }
 
+/// @deprecated Use [Toast] from `utils/toast.dart` instead.
+@Deprecated('Use Toast from utils/toast.dart instead')
 Future<void> showInfoSnackBar(BuildContext context, String message) async {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          const Icon(Icons.info, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(child: Text(message)),
-        ],
-      ),
-      backgroundColor: AppColors.primary,
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+  throw UnimplementedError('Migrate to Toast.info()');
 }

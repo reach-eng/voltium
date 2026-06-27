@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+@Deprecated('Use Toast from utils/toast.dart instead')
 class ToastService {
   static OverlayEntry? _currentToast;
   static Timer? _autoDismissTimer;

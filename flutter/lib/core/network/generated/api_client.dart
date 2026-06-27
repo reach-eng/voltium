@@ -334,6 +334,47 @@ class VoltiumApiClient {
     return response;
   }
 
+  /// Submit vehicle return with photo evidence
+  Future<Map<String, dynamic>> postRiderRentalReturn(
+    VehicleReturnRequest request,
+  ) async {
+    final response = await _client.post('/api/rider/rental/return', body: request.toJson());
+    return response;
+  }
+
+  /// Fetch rider-accessible hub list
+  Future<RiderHubsResponse> getRiderHubs() async {
+    final response = await _client.get('/api/rider/hubs');
+    return RiderHubsResponse.fromJson(response);
+  }
+
+  /// Refresh auth session
+  Future<Map<String, dynamic>> postAuthRefresh(RefreshTokenRequest request) async {
+    final response =
+        await _client.post('/api/auth/refresh', body: request.toJson());
+    return response;
+  }
+
+  /// Sync device permission state
+  Future<Map<String, dynamic>> postRiderDevicePermissions(
+    DevicePermissionsRequest request,
+  ) async {
+    final response = await _client.post('/api/rider/device/permissions', body: request.toJson());
+    return response;
+  }
+
+  /// Fetch device policy details for the current rider
+  Future<Map<String, dynamic>> getRiderDevice() async {
+    final response = await _client.get('/api/rider/device');
+    return response;
+  }
+
+  /// Delete transaction history
+  Future<Map<String, dynamic>> deleteTransactionHistoryEndpoint() async {
+    final response = await _client.delete('/api/transaction/history');
+    return response;
+  }
+
   /// Fetch shifts by hub and date
   Future<Map<String, dynamic>> getShifts(String hubId, String date) async {
     final queryParams = <String, String>{

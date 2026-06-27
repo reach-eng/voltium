@@ -128,11 +128,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
           final rider = provider.rider;
 
           if (rider == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Rider not found. Please contact support.'),
-              ),
-            );
+            Toast.error(context, 'Rider not found. Please contact support.');
             return;
           }
 

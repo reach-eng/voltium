@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/earnings_entry_model.dart';
 import '../theme/app_theme.dart';
+import '../utils/toast.dart';
 
 /// Bottom sheet for adding a new earnings entry.
 class AddEarningSheet extends StatefulWidget {
@@ -41,21 +42,15 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
     final hours = double.tryParse(_hoursController.text);
 
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid amount')),
-      );
+      Toast.error(context, 'Please enter a valid amount');
       return;
     }
     if (trips == null || trips <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid trips count')),
-      );
+      Toast.error(context, 'Please enter valid trips count');
       return;
     }
     if (hours == null || hours <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid hours')),
-      );
+      Toast.error(context, 'Please enter valid hours');
       return;
     }
 

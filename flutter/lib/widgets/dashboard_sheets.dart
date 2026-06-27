@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/rider_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/toast.dart';
 
 /// TL Details bottom sheet
 void showTLDetailsSheet(BuildContext context, RiderModel rider) {
@@ -196,12 +197,9 @@ void showChangeTLReasonSheet(BuildContext context) {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('Your request has been submitted for approval'),
-                      backgroundColor: AppColors.success,
-                    ),
+                  Toast.success(
+                    context,
+                    'Your request has been submitted for approval',
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -558,12 +556,7 @@ Future<void> startVehicleReturnWorkflow(
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit return request. Please try again.'),
-            backgroundColor: Color(0xFFDC2626),
-          ),
-        );
+        Toast.error(context, 'Failed to submit return request. Please try again.');
       }
     }
   }
@@ -616,12 +609,7 @@ void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
   final updated = rider.copyWith(intent: newIntent);
   context.read<AppProvider>().updateRider(updated);
   Navigator.pop(context);
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Intent updated successfully'),
-      backgroundColor: AppColors.success,
-    ),
-  );
+  Toast.success(context, 'Intent updated successfully');
 }
 
 class _IntentOption extends StatelessWidget {

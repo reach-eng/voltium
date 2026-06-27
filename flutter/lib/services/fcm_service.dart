@@ -40,6 +40,7 @@ class FCMService {
     'WALLET_LOW',
     'KYC_STATUS',
     'SUPPORT_REPLY',
+    'DEPOSIT_APPROVED',
   };
 
   static Future<bool> _validatePayload(
@@ -232,6 +233,13 @@ class FCMService {
       _rider?.refresh();
     } else if (action == 'SUPPORT_REPLY') {
       _support?.refreshTickets();
+    } else if (action == 'DEPOSIT_APPROVED') {
+      // Refresh both rider profile (updated lifecycle status) and wallet (security deposit + bonus)
+      _rider?.refresh();
+      final riderId = _rider?.rider?.id;
+      if (riderId != null) {
+        _wallet?.refreshTransactions(riderId: riderId);
+      }
     }
   }
 

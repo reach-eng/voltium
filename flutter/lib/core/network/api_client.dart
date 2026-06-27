@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../services/secure_storage_service.dart';
+import '../../services/offline_storage_service.dart';
 import '../platform/platform_info.dart';
+import 'pinned_http_client.dart';
 
 /// Voltium API Client
 ///
 /// Centralized HTTP client for all API calls.
 /// Handles authentication, base URL, error parsing, and request signing.
 class ApiClient {
-  static final http.Client _sharedHttpClient = http.Client();
+  static final http.Client _sharedHttpClient = PinnedHttpInterceptor.createClient();
   static ApiClient? _sharedInstance;
   static const Duration requestTimeout = Duration(seconds: 30);
   static final Random _requestRandom = Random.secure();
@@ -99,52 +102,139 @@ class ApiClient {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
     final headers = await _getHeaders();
-    final response =
-        await _client.get(uri, headers: headers).timeout(requestTimeout);
-    return _handleResponse(response);
+    try {
+      final response =
+          await _client.get(uri, headers: headers).timeout(requestTimeout);
+      return _handleResponse(response);
+    } on SocketException catch (_) {
+      await _maybeQueueOffline('GET', path, null);
+      rethrow;
+    } on TimeoutException catch (_) {
+      await _maybeQueueOffline('GET', path, null);
+      rethrow;
+    }
   }
 
   /// POST request
   Future<Map<String, dynamic>> post(
     String path, {
     Map<String, dynamic>? body,
+    String? idempotencyKey,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
     final headers = await _getHeaders();
-    final response = await _client
-        .post(
-          uri,
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        )
-        .timeout(requestTimeout);
-    return _handleResponse(response);
+    if (idempotencyKey != null) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    try {
+      final response = await _client
+          .post(
+            uri,
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on SocketException catch (_) {
+      await _maybeQueueOffline('POST', path, body);
+      rethrow;
+    } on TimeoutException catch (_) {
+      await _maybeQueueOffline('POST', path, body);
+      rethrow;
+    }
   }
 
   /// PUT request
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
+    String? idempotencyKey,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
     final headers = await _getHeaders();
-    final response = await _client
-        .put(
-          uri,
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        )
-        .timeout(requestTimeout);
-    return _handleResponse(response);
+    if (idempotencyKey != null) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    try {
+      final response = await _client
+          .put(
+            uri,
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(requestTimeout);
+      return _handleResponse(response);
+    } on SocketException catch (_) {
+      await _maybeQueueOffline('PUT', path, body);
+      rethrow;
+    } on TimeoutException catch (_) {
+      await _maybeQueueOffline('PUT', path, body);
+      rethrow;
+    }
   }
 
   /// DELETE request
-  Future<Map<String, dynamic>> delete(String path) async {
+  Future<Map<String, dynamic>> delete(String path, {String? idempotencyKey}) async {
     final uri = Uri.parse('$_baseUrl$path');
     final headers = await _getHeaders();
-    final response =
-        await _client.delete(uri, headers: headers).timeout(requestTimeout);
-    return _handleResponse(response);
+    if (idempotencyKey != null) {
+      headers['Idempotency-Key'] = idempotencyKey;
+    }
+    try {
+      final response =
+          await _client.delete(uri, headers: headers).timeout(requestTimeout);
+      return _handleResponse(response);
+    } on SocketException catch (_) {
+      await _maybeQueueOffline('DELETE', path, null);
+      rethrow;
+    } on TimeoutException catch (_) {
+      await _maybeQueueOffline('DELETE', path, null);
+      rethrow;
+    }
+  }
+
+  /// Send a previously queued offline request (used by connectivity flush).
+  /// If [idempotencyKey] is provided, it is sent as the `Idempotency-Key` header
+  /// so the server can deduplicate replay of mutating operations.
+  Future<Map<String, dynamic>> sendQueuedRequest(
+    String method,
+    String path,
+    Map<String, dynamic>? body, {
+    String? idempotencyKey,
+  }) async {
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return get(path);
+      case 'POST':
+        return post(path, body: body, idempotencyKey: idempotencyKey);
+      case 'PUT':
+        return put(path, body: body, idempotencyKey: idempotencyKey);
+      case 'DELETE':
+        return delete(path, idempotencyKey: idempotencyKey);
+      default:
+        return post(path, body: body, idempotencyKey: idempotencyKey);
+    }
+  }
+
+  /// Queue an idempotent write offline when the network is unavailable.
+  /// Only queues mutating operations (POST, PUT, DELETE).
+  Future<void> _maybeQueueOffline(
+    String method,
+    String path,
+    Map<String, dynamic>? body,
+  ) async {
+    // Only queue mutating operations for replay
+    if (method == 'GET') return;
+    try {
+      final idempotencyKey = _newCorrelationId();
+      final offlineStorage = OfflineStorageService();
+      await offlineStorage.addPendingOperation(
+        path, method, body,
+        idempotencyKey: idempotencyKey,
+      );
+    } catch (_) {
+      // Offline storage is optional — silently ignore failures
+    }
   }
 
   /// Upload a file via multipart POST

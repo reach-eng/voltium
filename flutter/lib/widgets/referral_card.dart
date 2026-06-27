@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import '../utils/toast.dart';
 
 class ReferralCard extends StatelessWidget {
   final String referralCode;
@@ -115,9 +116,7 @@ class ReferralCard extends StatelessWidget {
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: referralCode));
                       onCopy?.call();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Code copied!')),
-                      );
+                      Toast.success(context, 'Code copied!');
                     },
                     icon: const Icon(Icons.copy, color: AppColors.primary),
                   ),
@@ -315,9 +314,7 @@ class ReferralShareOptions extends StatelessWidget {
                 color: AppColors.primary,
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: referralCode));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Link copied!')),
-                  );
+                  Toast.success(context, 'Link copied!');
                 },
               ),
               _ShareOption(

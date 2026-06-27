@@ -228,6 +228,29 @@ class RiderProvider extends ChangeNotifier {
     _pollTimer = null;
   }
 
+  /// Start post-pickup polling at a slower rate (60s) until lifecycle is CLOSED.
+  void startPostPickupPoll() {
+    if (_isPolling) return;
+    _isPolling = true;
+    _postPickupPoll();
+  }
+
+  Future<void> _postPickupPoll() async {
+    while (_isPolling && _rider != null && _rider!.lifecycleStatus != 'CLOSED') {
+      await Future.doWhile(() async {
+        final completer = Completer<void>();
+        _pollTimer = Timer(const Duration(seconds: 60), completer.complete);
+        await completer.future;
+        return _isPolling;
+      });
+      if (!_isPolling) break;
+      await refreshFromApi();
+    }
+    _isPolling = false;
+    _pollTimer?.cancel();
+    _pollTimer = null;
+  }
+
   Future<void> _poll() async {
     int pollCount = 0;
     const maxPolls = 240;
@@ -245,6 +268,13 @@ class RiderProvider extends ChangeNotifier {
       await refreshFromApi();
       pollCount++;
     }
+
+    // After onboarding polls complete (pickupDone), start slower post-pickup poll
+    if (_isPolling && _rider != null && _rider!.pickupDone) {
+      _postPickupPoll();
+      return;
+    }
+
     _isPolling = false;
     _pollTimer?.cancel();
     _pollTimer = null;

@@ -113,7 +113,7 @@ class VoltiumApiService {
   Future<Map<String, dynamic>> deleteTransactionHistory({
     required String riderId,
   }) async {
-    return _client.delete('/api/transaction/history');
+    return _apiClient.deleteTransactionHistoryEndpoint();
   }
 
   Future<Map<String, dynamic>> fetchTransactionHistory({
@@ -153,7 +153,7 @@ class VoltiumApiService {
   }
 
   Future<Map<String, dynamic>> fetchHubs() async {
-    final response = await _apiClient.getAdminHubs();
+    final response = await _apiClient.getRiderHubs();
     return response.toJson();
   }
 
@@ -174,48 +174,59 @@ class VoltiumApiService {
     });
   }
 
+  /// Submit a vehicle return via the rental return endpoint.
   Future<Map<String, dynamic>> submitVehicleReturn({
     required String riderId,
     required List<String> photoUrls,
     String? reason,
   }) async {
-    return post('/api/rider/vehicle-return', body: {
-      'riderId': riderId,
-      'photoUrls': photoUrls,
-      if (reason != null) 'reason': reason,
-    });
+    final request = gen.VehicleReturnRequest(
+      riderId: riderId,
+      photoUrls: photoUrls,
+      reason: reason,
+    );
+    return _apiClient.postRiderRentalReturn(request);
   }
 
   Future<Map<String, dynamic>> fetchSettings() async {
     return _apiClient.getRiderSettings();
   }
 
+  /// Fetch rewards via the rider rewards endpoint.
   Future<Map<String, dynamic>> fetchRewards() async {
-    return get('/api/rewards', queryParams: {'page': '1', 'limit': '10'});
+    return _apiClient.getRiderRewards();
   }
 
+  /// Fetch referrals via the rider referrals endpoint.
   Future<Map<String, dynamic>> fetchReferrals() async {
-    return get('/api/referrals');
+    return _apiClient.getRiderReferrals();
   }
 
   Future<Map<String, dynamic>> syncPermissionState({
     required String riderId,
     required Map<String, bool> permissions,
   }) async {
-    return post('/api/device/permissions', body: {
-      'riderId': riderId,
-      'permissions': permissions,
-    });
+    final request = gen.DevicePermissionsRequest(
+      riderId: riderId,
+      permissions: permissions,
+    );
+    return _apiClient.postRiderDevicePermissions(request);
   }
 
   Future<Map<String, dynamic>> syncDeviceData({
     required String type,
     required dynamic data,
   }) async {
-    return post('/api/device/data', body: {
+    return _apiClient.postRiderSyncDeviceData({
       'type': type,
       'data': data,
     });
+  }
+
+  /// Refresh the session token when the current one expires.
+  Future<Map<String, dynamic>> refreshSession(String refreshToken) async {
+    final request = gen.RefreshTokenRequest(refreshToken: refreshToken);
+    return _apiClient.postAuthRefresh(request);
   }
 
   Future<Map<String, dynamic>> get(

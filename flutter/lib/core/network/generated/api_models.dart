@@ -1156,6 +1156,105 @@ class HubResponse {
   }
 }
 
+/// Request to submit a vehicle return.
+class VehicleReturnRequest {
+  final String riderId;
+  final List<String> photoUrls;
+  final String? reason;
+
+  VehicleReturnRequest({
+    required this.riderId,
+    required this.photoUrls,
+    this.reason,
+  });
+
+  factory VehicleReturnRequest.fromJson(Map<String, dynamic> json) {
+    return VehicleReturnRequest(
+      riderId: json['riderId'] as String,
+      photoUrls: (json['photoUrls'] as List).cast<String>(),
+      reason: json['reason'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'riderId': riderId,
+      'photoUrls': photoUrls,
+      if (reason != null) 'reason': reason,
+    };
+  }
+}
+
+/// Request to refresh an auth session.
+class RefreshTokenRequest {
+  final String refreshToken;
+
+  RefreshTokenRequest({required this.refreshToken});
+
+  factory RefreshTokenRequest.fromJson(Map<String, dynamic> json) {
+    return RefreshTokenRequest(
+      refreshToken: json['refreshToken'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'refreshToken': refreshToken,
+    };
+  }
+}
+
+/// Request to sync device permission state.
+class DevicePermissionsRequest {
+  final String riderId;
+  final Map<String, bool> permissions;
+
+  DevicePermissionsRequest({
+    required this.riderId,
+    required this.permissions,
+  });
+
+  factory DevicePermissionsRequest.fromJson(Map<String, dynamic> json) {
+    return DevicePermissionsRequest(
+      riderId: json['riderId'] as String,
+      permissions: (json['permissions'] as Map).cast<String, bool>(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'riderId': riderId,
+      'permissions': permissions,
+    };
+  }
+}
+
+/// Response for rider hub list (public-ish endpoint).
+class RiderHubsResponse {
+  final List<HubResponse>? hubs;
+  final int? total;
+
+  RiderHubsResponse({this.hubs, this.total});
+
+  factory RiderHubsResponse.fromJson(Map<String, dynamic> json) {
+    return RiderHubsResponse(
+      hubs: json['hubs'] != null
+          ? (json['hubs'] as List)
+              .map((e) => HubResponse.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
+      total: json['total'] as int?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'hubs': hubs?.map((e) => e.toJson()).toList(),
+      'total': total,
+    };
+  }
+}
+
 class DepositStatusResponse {
   final String? riderId;
   final String? status;

@@ -1,59 +1,59 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
+/// Generic empty state — icon, title, optional subtitle, optional action button.
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String? description;
+  final String? subtitle;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final double iconSize;
 
   const EmptyState({
     super.key,
     required this.icon,
     required this.title,
-    this.description,
+    this.subtitle,
     this.actionLabel,
     this.onAction,
+    this.iconSize = 64,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 80,
-              color: Colors.grey[300],
+              size: iconSize,
+              color: theme.colorScheme.outline,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
-            if (description != null) ...[
+            if (subtitle != null) ...[
               const SizedBox(height: 8),
               Text(
-                description!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF667085),
+                subtitle!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton(
+              FilledButton.tonal(
                 onPressed: onAction,
                 child: Text(actionLabel!),
               ),
@@ -65,68 +65,158 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-class EmptyListWidget extends StatelessWidget {
+/// Network/API error state with a retry button.
+/// Use when an API call fails and the user should retry.
+class NetworkErrorWidget extends StatelessWidget {
   final String message;
-  final IconData icon;
+  final String? details;
+  final VoidCallback onRetry;
 
-  const EmptyListWidget({
+  const NetworkErrorWidget({
     super.key,
-    this.message = 'No items found',
-    this.icon = Icons.inbox_outlined,
+    this.message = 'Something went wrong',
+    this.details,
+    required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    return EmptyState(
-      icon: icon,
-      title: message,
-      description: 'Pull to refresh or check back later.',
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 64,
+              color: theme.colorScheme.error,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Unable to connect',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (details != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                details!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withAlpha(180),
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 24),
+            FilledButton.tonalIcon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class ErrorState extends StatelessWidget {
+/// Generic retry widget with an error icon, message, and retry button.
+/// Simpler alternative to [NetworkErrorWidget] for inline errors.
+class RetryWidget extends StatelessWidget {
   final String message;
-  final VoidCallback? onRetry;
+  final String? details;
+  final VoidCallback onRetry;
 
-  const ErrorState({
+  const RetryWidget({
     super.key,
-    this.message = 'Something went wrong',
-    this.onRetry,
+    this.message = 'Failed to load',
+    this.details,
+    required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red[300],
+              Icons.error_outline_rounded,
+              size: 56,
+              color: theme.colorScheme.error,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               message,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF667085),
-              ),
+              style: theme.textTheme.titleSmall,
               textAlign: TextAlign.center,
             ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+            if (details != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                details!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Retry'),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Simple loading placeholder with a centered spinner.
+/// Use while data is being fetched, switching to [EmptyState] or
+/// [NetworkErrorWidget] depending on result.
+class LoadingPlaceholder extends StatelessWidget {
+  final String? message;
+
+  const LoadingPlaceholder({super.key, this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          if (message != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              message!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

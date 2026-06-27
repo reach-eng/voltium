@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/app_constants.dart';
+import '../utils/toast.dart';
 
 import '../providers/app_provider.dart';
 import '../services/cache_service.dart';
@@ -119,6 +120,14 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkPermissionsOnResume();
+      // Refetch rider + wallet data on foreground resume
+      final provider = context.read<AppProvider>();
+      provider.riderProvider.refreshFromApi();
+      if (provider.riderProvider.rider?.id != null) {
+        provider.walletProvider.refreshTransactions(
+          riderId: provider.riderProvider.rider!.id!,
+        );
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import 'gen/app_localizations.dart';
@@ -167,32 +168,37 @@ Future<void> main() async {
           .bindConnectivityService(ConnectivityService());
 
       runApp(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
-            ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-            ChangeNotifierProvider<RiderProvider>.value(
-              value: appProvider.riderProvider,
-            ),
-            ChangeNotifierProvider<WalletProvider>.value(
-              value: appProvider.walletProvider,
-            ),
-            ChangeNotifierProvider<SupportProvider>.value(
-              value: appProvider.supportProvider,
-            ),
-            ChangeNotifierProvider<EngagementProvider>.value(
-              value: appProvider.engagementProvider,
-            ),
-            ChangeNotifierProvider<DevicePolicyProvider>.value(
-              value: appProvider.devicePolicyProvider,
-            ),
-            ChangeNotifierProvider<ConnectivityProvider>.value(
-              value: appProvider.connectivityProvider,
-            ),
-            ChangeNotifierProvider(create: (_) => NotificationProvider()),
-            ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
-          ],
-          child: const VoltiumApp(),
+        // ProviderScope is the root of Riverpod's dependency injection.
+        // Existing ChangeNotifierProviders are bridged via legacy.MultiProvider
+        // so both Provider and Riverpod patterns work during migration.
+        ProviderScope(
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
+              ChangeNotifierProvider<AppProvider>.value(value: appProvider),
+              ChangeNotifierProvider<RiderProvider>.value(
+                value: appProvider.riderProvider,
+              ),
+              ChangeNotifierProvider<WalletProvider>.value(
+                value: appProvider.walletProvider,
+              ),
+              ChangeNotifierProvider<SupportProvider>.value(
+                value: appProvider.supportProvider,
+              ),
+              ChangeNotifierProvider<EngagementProvider>.value(
+                value: appProvider.engagementProvider,
+              ),
+              ChangeNotifierProvider<DevicePolicyProvider>.value(
+                value: appProvider.devicePolicyProvider,
+              ),
+              ChangeNotifierProvider<ConnectivityProvider>.value(
+                value: appProvider.connectivityProvider,
+              ),
+              ChangeNotifierProvider(create: (_) => NotificationProvider()),
+              ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+            ],
+            child: const VoltiumApp(),
+          ),
         ),
       );
     },
@@ -253,12 +259,14 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
-  final _screens = <Widget>[
-    const ActiveDashboardScreen(),
-    const WalletScreen(),
-    const SupportCenterScreen(),
-    const ProfileScreen(),
-  ];
+  /// Each screen is wrapped in ErrorBoundary so a crash in one tab
+  /// doesn't take down the entire shell.
+  List<Widget> _buildScreens() => <Widget>[
+        const ErrorBoundary(child: ActiveDashboardScreen()),
+        const ErrorBoundary(child: WalletScreen()),
+        const ErrorBoundary(child: SupportCenterScreen()),
+        const ErrorBoundary(child: ProfileScreen()),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +279,7 @@ class _AppShellState extends State<AppShell> {
             Expanded(
               child: IndexedStack(
                 index: _currentIndex,
-                children: _screens,
+                children: _buildScreens(),
               ),
             ),
           ],
