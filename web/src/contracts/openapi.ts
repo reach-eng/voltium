@@ -714,10 +714,16 @@ function buildSpec(): OpenApiSpec {
           requestBody: {
             required: true,
             content: {
-              'application/json': { schema: { properties: { token: { type: 'string' } } } },
+              'application/json': {
+                schema: { properties: { fcmToken: { type: 'string' } }, required: ['fcmToken'] },
+              },
             },
           },
-          responses: { '200': { description: 'Token registered' } },
+          responses: {
+            '200': { description: 'Token registered' },
+            '401': { description: 'Unauthenticated (no valid session)' },
+            '404': { description: 'Rider not found' },
+          },
         },
       },
       '/api/shifts': {

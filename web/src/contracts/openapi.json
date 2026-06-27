@@ -1348,10 +1348,13 @@
             "application/json": {
               "schema": {
                 "properties": {
-                  "token": {
+                  "fcmToken": {
                     "type": "string"
                   }
-                }
+                },
+                "required": [
+                  "fcmToken"
+                ]
               }
             }
           }
@@ -1359,6 +1362,12 @@
         "responses": {
           "200": {
             "description": "Token registered"
+          },
+          "401": {
+            "description": "Unauthenticated (no valid session)"
+          },
+          "404": {
+            "description": "Rider not found"
           }
         }
       }

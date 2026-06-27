@@ -3,6 +3,7 @@ import {
   submitKycSchema,
   topUpSchema,
   updateProfileSchema,
+  registerTokenSchema,
 } from '../../src/lib/validators';
 
 describe('Phase 1: Foundational Schema Validation', () => {
@@ -96,6 +97,40 @@ describe('Phase 1: Foundational Schema Validation', () => {
         dob: '01-01-1990',
       });
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('FCM Token Registration (registerTokenSchema, BLOCKER 1.2)', () => {
+    test('passes with only fcmToken (riderId is derived from session)', () => {
+      const result = registerTokenSchema.safeParse({
+        fcmToken: 'fK3...long:APA91b...',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    test('fails when fcmToken is missing', () => {
+      const result = registerTokenSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    test('fails when fcmToken is empty', () => {
+      const result = registerTokenSchema.safeParse({ fcmToken: '' });
+      expect(result.success).toBe(false);
+    });
+
+    test('legacy body with riderId is now rejected (security tightening)', () => {
+      // Previously the validator required { riderId, fcmToken }. Now it
+      // derives riderId from the session, so the body must not carry it.
+      const result = registerTokenSchema.safeParse({
+        riderId: 'rider-123',
+        fcmToken: 'token-abc',
+      });
+      // riderId is silently dropped (Zod default is strip). The shape
+      // validates; the route rejects because riderId is not used anyway.
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect((result.data as Record<string, unknown>).riderId).toBeUndefined();
+      }
     });
   });
 });

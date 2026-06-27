@@ -38,8 +38,11 @@ class RiderRepositoryImpl implements RiderRepository {
   }
 
   @override
-  Future<void> registerFCMToken(String token) async {
-    await _apiClient.postRidersRegisterToken({'token': token});
+  Future<void> registerFCMToken(String fcmToken) async {
+    // Body must match `registerTokenSchema` in web/src/lib/validators.ts
+    // (BLOCKER 1.2): the server derives the riderId from the verified
+    // session, not from this body, so we send only fcmToken.
+    await _apiClient.postRidersRegisterToken({'fcmToken': fcmToken});
   }
 
   @override

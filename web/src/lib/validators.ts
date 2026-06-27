@@ -405,7 +405,6 @@ export const riderActionSchema = z.object({
 });
 
 export const registerTokenSchema = z.object({
-  riderId: z.string().min(1),
   fcmToken: z.string().min(1),
 });
 
