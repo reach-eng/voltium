@@ -7,6 +7,7 @@ import { rentRemindersJob } from '@/server/workers/jobs/rent-reminders.job';
 import { deviceComplianceJob } from '@/server/workers/jobs/device-compliance.job';
 import { referralRewardJob } from '@/server/workers/jobs/referral-reward.job';
 import { notificationsCleanupJob } from '@/server/workers/jobs/notifications-cleanup.job';
+import { dailyEngagementJob } from '@/server/workers/jobs/daily-engagement.job';
 import { telemetryUseCases } from '@/server/modules/telemetry/telemetry.use-cases';
 import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
 
@@ -95,6 +96,16 @@ export async function GET(req: NextRequest) {
         lastRun: lastRuns['notifications-cleanup']?.timestamp || null,
         lastStatus: lastRuns['notifications-cleanup']?.status || 'NEVER',
         details: lastRuns['notifications-cleanup']?.details || null,
+      },
+      {
+        // BLOCKER 1.4: new daily engagement worker at 06:00 IST.
+        id: 'daily-engagement',
+        name: 'Daily Engagement',
+        schedule: 'Daily (06:00 IST)',
+        purpose: 'Birthday wishes + payment reminders + referral leaderboard.',
+        lastRun: lastRuns['daily-engagement']?.timestamp || null,
+        lastStatus: lastRuns['daily-engagement']?.status || 'NEVER',
+        details: lastRuns['daily-engagement']?.details || null,
       },
       {
         id: 'telemetry-cleanup',
@@ -225,6 +236,16 @@ export async function POST(req: NextRequest) {
           success: true,
           details: `Deleted: ${telRes.locationsDeleted} locations, ${telRes.callLogsDeleted} call logs, ${telRes.contactsDeleted} contacts.`,
           raw: telRes,
+        };
+        break;
+
+      case 'daily-engagement':
+        // BLOCKER 1.4: admin-triggered run of the 06:00 IST daily engagement.
+        const dailyRes = await dailyEngagementJob.process({ id: 'admin-trigger' });
+        result = {
+          success: true,
+          details: `Birthdays: ${dailyRes.birthdays}, Payment reminders: ${dailyRes.paymentReminders}, Referral broadcasts: ${dailyRes.referralLeaderboard}`,
+          raw: dailyRes,
         };
         break;
 

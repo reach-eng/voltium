@@ -6,19 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { 
-  Play, 
-  RefreshCw, 
-  History, 
-  Calendar, 
-  CheckCircle2, 
-  AlertCircle, 
-  Database, 
-  Clock, 
-  ShieldAlert, 
+import {
+  Play,
+  RefreshCw,
+  History,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Database,
+  Clock,
+  ShieldAlert,
   Sparkles,
   Search,
-  ChevronRight
+  ChevronRight,
+  Bell,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -129,6 +130,8 @@ export default function BackgroundJobsScreen() {
       case 'notifications-cleanup':
       case 'telemetry-cleanup':
         return <RefreshCw className="h-5 w-5 text-violet-500" />;
+      case 'daily-engagement':
+        return <Bell className="h-5 w-5 text-rose-500" />;
       default:
         return <Play className="h-5 w-5 text-muted-foreground" />;
     }

@@ -17,12 +17,18 @@ import { sendSms } from '@/lib/sms-provider';
 
 // Import job processors
 import { reconciliationJob } from './jobs/reconciliation.job';
-import { notificationsJob } from './jobs/notifications.job';
+import { notificationDispatchJob } from './jobs/notification-dispatch.job';
+import { dailyEngagementJob, msUntilNext0600IST } from './jobs/daily-engagement.job';
 import { rentRemindersJob } from './jobs/rent-reminders.job';
 import { deviceComplianceJob } from './jobs/device-compliance.job';
 import { referralRewardJob } from './jobs/referral-reward.job';
 import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
+// notifications.job.ts is deprecated (BLOCKER 1.4). Its birthday/payment
+// reminder logic moved to daily-engagement.job.ts; its outbox mapping was
+// the misroute that dropped per-event KYC/topup notifications. The file
+// is intentionally left in the tree as a tombstone for one release and
+// can be deleted in the next cleanup pass.
 
 // ---------------------------------------------------------------------------
 // Event-driven workers — poll the OutboxEvent table for matching event types
@@ -46,11 +52,22 @@ const WORKERS: WorkerDefinition[] = [
     description: 'Wallet reconciliation — triggered by topup approval/rejection',
   },
   {
-    // Processes notification.send events from kyc use-cases and other producers
+    // BLOCKER 1.4: per-event notification dispatch (KYC, topup, support,
+    // deposit, etc). Previously this was misrouted to the daily
+    // birthday/payment reminder job, which ignored the payload and ran
+    // only once per day. Now it dispatches by payload.type.
     jobType: OutboxEventTypes.NOTIFICATION_SEND,
-    processor: notificationsJob.process,
+    processor: notificationDispatchJob.process,
     concurrency: 3,
-    description: 'Push/in-app notification dispatch',
+    description: 'Push/in-app notification dispatch (per-event)',
+  },
+  {
+    // BLOCKER 1.4: daily birthday wishes + payment reminders + referral
+    // leaderboard. Triggered by the scheduled task below at 06:00 IST.
+    jobType: OutboxEventTypes.DAILY_ENGAGEMENT,
+    processor: dailyEngagementJob.process,
+    concurrency: 1,
+    description: 'Daily engagement (birthday + payment reminder) at 06:00 IST',
   },
   {
     // Processes rent.due_check events (emitted on a timer by the scheduled loop below)
@@ -126,6 +143,27 @@ const SCHEDULED_TASKS: Array<{
       await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION_SCAN, {
         triggeredAt: new Date().toISOString(),
       }).catch((e: Error) => logger.error('[Scheduler] Failed to emit device violation scan', e));
+    },
+  },
+  {
+    // BLOCKER 1.4: emit the daily engagement event at 06:00 IST.
+    // msUntilNext0600IST() returns the delay until the next 06:00 IST;
+    // after the first run, we reschedule by recomputing on each tick.
+    name: 'daily-engagement-emitter',
+    intervalMs: 60_000, // checked every minute; only emits at 06:00 IST
+    processor: async () => {
+      const msUntil = msUntilNext0600IST();
+      // If we're within 1 minute of the target, fire now.
+      if (msUntil > 60_000) return;
+      const { OutboxService } = await import('./outbox');
+      await OutboxService.emit(OutboxEventTypes.DAILY_ENGAGEMENT, {
+        triggeredAt: new Date().toISOString(),
+        istDate: new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Kolkata',
+        }).format(new Date()),
+      }).catch((e: Error) =>
+        logger.error('[Scheduler] Failed to emit daily engagement', e)
+      );
     },
   },
 ];

@@ -45,6 +45,7 @@ export const OutboxEventTypes = {
   NOTIFICATION_SEND: 'notification.send',
   SMS_SEND: 'sms.send',
   ANNOUNCEMENT_DISPATCH: 'notification.announcement',
+  DAILY_ENGAGEMENT: 'engagement.daily',
 
   // ── Referrals ──────────────────────────────────────────────────────────
   REFERRAL_SIGNUP: 'referral.signup',
