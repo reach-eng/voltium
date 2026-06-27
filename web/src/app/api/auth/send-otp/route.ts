@@ -11,6 +11,8 @@ import { validateBody, sendOtpSchema } from '@/lib/validators';
 import { authUseCases, RateLimitError } from '@/server/modules/auth/auth.use-cases';
 import { API_VERSION } from '@/lib/api-version';
 import { logger } from '@/lib/logger';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 
 function getCorrelationId(request: NextRequest): string {
   return request.headers.get('x-correlation-id') || 'unknown';
@@ -18,10 +20,7 @@ function getCorrelationId(request: NextRequest): string {
 
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId(request);
-  const clientIp =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
+  const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
   try {
     let body;
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (err instanceof RateLimitError) {
       return errors.tooManyRequests(err.message, { correlationId });
     }
-    logger.error('[POST /api/auth/send-otp]', { correlationId, error: err });
+    logger.error('[POST /api/auth/send-otp]', { correlationId, error: redactPii(err) });
     const response = errors.internal('Failed to process OTP request. Please check your network.', {
       correlationId,
     });

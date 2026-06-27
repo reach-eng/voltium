@@ -47,8 +47,19 @@ export async function POST(req: NextRequest) {
       return errors.badRequest('name, email, password are required');
     if (password.length < 8) return errors.badRequest('Password must be at least 8 characters');
 
+    // Validate role is a known admin role — never default to SUPER_ADMIN
+    const allowedRoles = ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER', 'READ_ONLY'];
+    const validatedRole = role && allowedRoles.includes(role) ? role : 'READ_ONLY';
+
+    // Validate permissions against known keys
+    const { PERMISSION_DESCRIPTORS } = await import('@/lib/permissions');
+    const validPermissionKeys = PERMISSION_DESCRIPTORS.map(p => p.key) as string[];
+    const permissions = Array.isArray(body.permissions)
+      ? body.permissions.filter((p: unknown) => typeof p === 'string' && validPermissionKeys.includes(p))
+      : [];
+
     const result = await adminUseCases.createAdmin(
-      { name, email, password, role: role || 'SUPER_ADMIN', permissions: body.permissions },
+      { name, email, password, role: validatedRole, permissions },
       req.headers.get('x-admin-id') || 'system'
     );
 

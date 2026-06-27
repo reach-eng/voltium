@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ApiError, ERROR_CODES } from './api-error';
 import { errors } from './api-response';
 import { logger } from './logger';
+import { redactPii } from './pii-redact';
 
 export function withApiHandler(
   handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>
@@ -10,11 +11,11 @@ export function withApiHandler(
     try {
       return await handler(request, ...args);
     } catch (err: any) {
-      logger.error('[ApiHandler] Unhandled route error', {
+      logger.error('[ApiHandler] Unhandled route error', redactPii({
         path: request.nextUrl.pathname,
         message: err.message,
         stack: err.stack,
-      });
+      }));
 
       if (err instanceof ApiError) {
         const code = err.code;

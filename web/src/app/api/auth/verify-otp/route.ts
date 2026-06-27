@@ -8,6 +8,8 @@ import { flattenRider } from '@/lib/flatten-rider';
 import { createSessionToken } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 import { API_VERSION } from '@/lib/api-version';
 
 const OTP_VERIFY_RATE_LIMIT = {
@@ -43,8 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { phone: inputPhone } = validation.data;
-    const clientIp =
-      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
 
     const ipRateLimit = await checkRateLimit(`otp-verify-ip:${clientIp}`, OTP_VERIFY_IP_RATE_LIMIT);
     if (!ipRateLimit.allowed) {
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       const rider = await onboardingUseCases.autoProvisionTestRider(result.riderDbId, result.phone);
       if (rider) {
         const flatRider = flattenRider(rider);
-        const sessionToken = createSessionToken({
+        const sessionToken = await createSessionToken({
           riderId: rider.riderId,
           riderDbId: rider.id,
           phone: rider.phone,
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
     logger.error(`[POST /api/auth/verify-otp] error: ${err?.stack || err?.message || err}`);
     const response = errors.internal(
       'Verification failed. Please check your connection or try again.',
-      { correlationId }
+      { correlationId: redactPii(correlationId) }
     );
     response.headers.set('Api-Version', API_VERSION);
     return response;

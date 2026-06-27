@@ -107,12 +107,18 @@ export const adminUseCases = {
     const admin = await adminRepository.findByEmail(email);
     if (!admin || !admin.isActive) throw new Error('Invalid credentials');
 
-    const { verifyPassword } = await import('@/lib/password');
-    const valid = await verifyPassword(password, admin.password);
-    if (!valid) {
+    const { verifyPassword, hashPassword } = await import('@/lib/password');
+    const result = await verifyPassword(password, admin.password);
+    if (!result.valid) {
       loginAttempts.set(rateKey, attempts + 1);
       setTimeout(() => loginAttempts.delete(rateKey), 15 * 60 * 1000);
       throw new Error('Invalid credentials');
+    }
+
+    // Migrate to Argon2id if needed (legacy PBKDF2 → Argon2id)
+    if (result.needsRehash) {
+      const newHash = await hashPassword(password);
+      await adminRepository.update(admin.id, { password: newHash }).catch(() => {});
     }
 
     await adminRepository.updateLastLogin(admin.id);
@@ -124,9 +130,15 @@ export const adminUseCases = {
     const admin = await adminRepository.findByEmail(email);
     if (!admin || !admin.isActive) throw new Error('Invalid credentials');
 
-    const { verifyPassword } = await import('@/lib/password');
-    const valid = await verifyPassword(password, admin.password);
-    if (!valid) throw new Error('Invalid credentials');
+    const { verifyPassword, hashPassword } = await import('@/lib/password');
+    const result = await verifyPassword(password, admin.password);
+    if (!result.valid) throw new Error('Invalid credentials');
+
+    // Migrate to Argon2id if needed
+    if (result.needsRehash) {
+      const newHash = await hashPassword(password);
+      await adminRepository.update(admin.id, { password: newHash }).catch(() => {});
+    }
 
     await adminRepository.updateLastLogin(admin.id);
     return admin;
@@ -148,17 +160,6 @@ export const adminUseCases = {
       logger.error('[getMe] Database query failed:', err);
     }
 
-    if (process.env.NODE_ENV === 'test') {
-      return {
-        id: adminId,
-        email: 'admin@voltium.io',
-        name: 'Dev Admin',
-        role: 'SUPER_ADMIN',
-        isActive: true,
-        permissions: [],
-        adminPermissions: [],
-      };
-    }
     throw new Error('Admin not found');
   },
 

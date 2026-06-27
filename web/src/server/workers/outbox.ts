@@ -6,10 +6,14 @@
  * first. Workers then read and process pending events, marking them as
  * processed on success.
  *
+ * This is the **canonical event type enum** — both producers and consumers
+ * should reference these values. `queues.ts` re-exports this enum as `JOB_TYPES`.
+ *
  * This guarantees at-least-once delivery: if the worker crashes mid-process,
  * the event remains pending and will be retried on the next poll cycle.
  */
 
+import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
@@ -28,32 +32,40 @@ export interface OutboxEventData {
 }
 
 export const OutboxEventTypes = {
-  // Wallet events
+  // ── Wallet / Transactions ──────────────────────────────────────────────
   WALLET_TOPUP_REQUESTED: 'wallet.topup_requested',
   WALLET_TOPUP_APPROVED: 'wallet.topup_approved',
   WALLET_TOPUP_REJECTED: 'wallet.topup_rejected',
+  WALLET_RECONCILIATION: 'wallet.reconciliation',
   DEPOSIT_APPROVED: 'deposit.approved',
   DEPOSIT_REJECTED: 'deposit.rejected',
   DEPOSIT_REFUNDED: 'deposit.refunded',
 
-  // Notifications
+  // ── Notifications ──────────────────────────────────────────────────────
   NOTIFICATION_SEND: 'notification.send',
   SMS_SEND: 'sms.send',
+  ANNOUNCEMENT_DISPATCH: 'notification.announcement',
 
-  // Referrals
+  // ── Referrals ──────────────────────────────────────────────────────────
   REFERRAL_SIGNUP: 'referral.signup',
   REFERRAL_REWARD: 'referral.reward',
 
-  // Rent
+  // ── Rent / Leases ──────────────────────────────────────────────────────
   RENT_DUE: 'rent.due',
   RENT_OVERDUE: 'rent.overdue',
   RENT_PAID: 'rent.paid',
+  RENT_DUE_CHECK: 'rent.due_check',
 
-  // Compliance
+  // ── Device Compliance ──────────────────────────────────────────────────
   DEVICE_VIOLATION: 'device.violation',
+  DEVICE_VIOLATION_SCAN: 'device.violation_scan',
 
-  // Admin
+  // ── Admin / System ─────────────────────────────────────────────────────
   ADMIN_ACTION: 'admin.action',
+
+  // ── Cleanup (cron-driven, no producer) ─────────────────────────────────
+  AUDIT_LOG_CLEANUP: 'cleanup.audit_log',
+  TELEMETRY_DATA_CLEANUP: 'cleanup.telemetry',
 } as const;
 
 export type OutboxEventType = (typeof OutboxEventTypes)[keyof typeof OutboxEventTypes];
@@ -61,14 +73,20 @@ export type OutboxEventType = (typeof OutboxEventTypes)[keyof typeof OutboxEvent
 export const OutboxService = {
   /**
    * Write an event to the outbox table. The worker will pick it up later.
+   *
+   * Pass a Prisma transaction client (`tx`) when called inside a
+   * prisma.$transaction() to get atomic business writes + outbox event.
+   * Without the tx param, it writes directly to the database.
    */
   async emit(
     eventType: OutboxEventType,
     payload: Record<string, unknown>,
-    maxAttempts = 3
+    maxAttempts = 3,
+    tx?: Prisma.TransactionClient
   ): Promise<string> {
+    const client = tx || db;
     try {
-      const event = await db.outboxEvent.create({
+      const event = await client.outboxEvent.create({
         data: {
           eventType,
           payload: JSON.stringify(payload),
@@ -85,12 +103,6 @@ export const OutboxService = {
       throw err;
     }
   },
-
-  /**
-   * Note: Job processing is now handled by workers/index.ts via
-   * JobQueue.processJobs() which reads directly from the OutboxEvent table.
-   * This method is intentionally omitted — use the worker loop instead.
-   */
 
   /**
    * Get outbox stats — counts of PENDING, PROCESSING, COMPLETED, FAILED events.

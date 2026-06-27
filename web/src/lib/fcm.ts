@@ -4,6 +4,35 @@ import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
 
 /**
+ * Server-side nonce dedup store.
+ * Tracks sent security command nonces within a 10-minute window.
+ * This mirrors the client-side nonce tracking in fcm_service.dart.
+ */
+const _sentNonces = new Map<string, number>();
+const NONCE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+// Periodic cleanup of expired nonces every 5 minutes
+if (typeof globalThis !== 'undefined' && !('_fcmNonceCleanup' in globalThis)) {
+  (globalThis as any)._fcmNonceCleanup = true;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, ts] of _sentNonces) {
+      if (now - ts > NONCE_TTL_MS) _sentNonces.delete(key);
+    }
+  }, 5 * 60 * 1000);
+}
+
+function trackNonce(nonce: string, action: string): boolean {
+  const key = `${nonce}:${action}`;
+  if (_sentNonces.has(key)) {
+    logger.warn('[FCM] Duplicate nonce detected (possible replay attempt)', { nonce, action });
+    return false;
+  }
+  _sentNonces.set(key, Date.now());
+  return true;
+}
+
+/**
  * FCM Service Utility
  *
  * Provides methods to send remote commands to rider devices.
@@ -56,6 +85,12 @@ export const fcmService = {
     const nonce = randomBytes(16).toString('hex');
     const challenge = randomBytes(8).toString('hex');
     const hmacSecret = env.FCM_COMMAND_HMAC_SECRET;
+
+    // Track nonce server-side to detect replay
+    if (!trackNonce(nonce, action)) {
+      return { success: false, error: 'Duplicate nonce detected' };
+    }
+
     const signature = createHmac('sha256', hmacSecret)
       .update(`${action}.${ts}.${nonce}.${challenge}`)
       .digest('hex');
@@ -98,8 +133,10 @@ export const fcmService = {
     return this.sendSecurityCommand(token, 'CHECK_LOCATION_INTEGRITY');
   },
 
-  async sendAdminLock(token: string, pin: string) {
-    return this.sendSecurityCommand(token, 'ADMIN_LOCK', { pin });
+  async sendAdminLock(token: string) {
+    // Pin is NOT sent via FCM — the client verifies lock via /api/rider/device/verify-lock
+    // which checks the hashed lockPassword stored server-side.
+    return this.sendSecurityCommand(token, 'ADMIN_LOCK');
   },
 
   async sendUnlockDevice(token: string) {

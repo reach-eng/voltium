@@ -53,38 +53,6 @@ export const rentalUseCases = {
     if (!shift.isActive)
       throw new RentalBookError('This shift is not currently active', 'VALIDATION');
 
-    // Double-booking check
-    const currentBookings = await db.rentalLease.count({
-      where: {
-        vehicleId,
-        shiftId,
-        leaseDate,
-        status: { in: ['BOOKED', 'ACTIVE'] },
-      },
-    });
-    if (currentBookings >= shift.maxBookings) {
-      throw new RentalBookError(
-        `This shift is fully booked (${currentBookings}/${shift.maxBookings} slots taken). Please choose a different shift or date.`,
-        'CONFLICT'
-      );
-    }
-
-    // Check rider doesn't already have a lease for same shift/date
-    const riderExistingLease = await db.rentalLease.findFirst({
-      where: {
-        riderId: riderDbId,
-        shiftId,
-        leaseDate,
-        status: { in: ['BOOKED', 'ACTIVE'] },
-      },
-    });
-    if (riderExistingLease) {
-      throw new RentalBookError(
-        'You already have an active booking for this shift on this date',
-        'CONFLICT'
-      );
-    }
-
     // Calculate dynamic pricing
     const totalVehicles = await db.vehicle.count({ where: { hubId: vehicle.hubId } });
     const availableVehicles = await db.vehicle.count({
@@ -103,8 +71,40 @@ export const rentalUseCases = {
       availabilityRatio,
     });
 
-    // Create RentalLease + update vehicle status atomically
+    // Create RentalLease + update vehicle status atomically with race-condition guards
     const lease = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Double-booking check inside the transaction
+      const currentBookings = await tx.rentalLease.count({
+        where: {
+          vehicleId,
+          shiftId,
+          leaseDate,
+          status: { in: ['BOOKED', 'ACTIVE'] },
+        },
+      });
+      if (currentBookings >= shift.maxBookings) {
+        throw new RentalBookError(
+          `This shift is fully booked (${currentBookings}/${shift.maxBookings} slots taken). Please choose a different shift or date.`,
+          'CONFLICT'
+        );
+      }
+
+      // Check rider doesn't already have a lease for same shift/date
+      const riderExistingLease = await tx.rentalLease.findFirst({
+        where: {
+          riderId: riderDbId,
+          shiftId,
+          leaseDate,
+          status: { in: ['BOOKED', 'ACTIVE'] },
+        },
+      });
+      if (riderExistingLease) {
+        throw new RentalBookError(
+          'You already have an active booking for this shift on this date',
+          'CONFLICT'
+        );
+      }
+
       const newLease = await tx.rentalLease.create({
         data: {
           vehicleId,
@@ -222,21 +222,28 @@ export const rentalUseCases = {
       ? (await db.hub.findUnique({ where: { id: hubId } }))?.name || 'Unknown Hub'
       : vehicle.hub?.name || 'Unknown Hub';
 
-    // Check availability + update vehicle status + rider data atomically
+    // Atomic claim: check availability + update vehicle status + rider data atomically
     const updatedRider = await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const freshVehicle = await tx.vehicle.findUnique({ where: { id: vehicle.id } });
-      if (!freshVehicle) throw new Error('Vehicle not found');
-      if (freshVehicle.status !== 'AVAILABLE' && rider.vehicleId !== freshVehicle.id) {
-        throw new Error(`Vehicle is currently ${freshVehicle.status.toLowerCase()}`);
+      // Atomic conditional claim — only claim if vehicle is AVAILABLE
+      const claimResult = await tx.vehicle.updateMany({
+        where: { id: vehicle.id, status: 'AVAILABLE' },
+        data: { status: 'ACTIVE_RENTAL', assignedAt: new Date() },
+      });
+      if (claimResult.count === 0) {
+        // Check if this rider already owns the vehicle (re-pickup scenario)
+        const currentVehicle = await tx.vehicle.findUnique({ where: { id: vehicle.id }, select: { status: true } });
+        if (currentVehicle && rider.vehicleId === vehicle.id) {
+          // Rider already has this vehicle assigned — allow re-pickup
+        } else {
+          throw new Error(
+            `Vehicle is currently ${currentVehicle?.status?.toLowerCase() || 'unavailable'}. It may have been claimed by another rider.`
+          );
+        }
       }
+
       if (rider.vehicleId && rider.vehicleId !== vehicle.id) {
         await tx.vehicle.update({ where: { id: rider.vehicleId }, data: { status: 'AVAILABLE' } });
       }
-
-      await tx.vehicle.update({
-        where: { id: vehicle.id },
-        data: { status: 'ACTIVE_RENTAL', assignedAt: new Date() },
-      });
 
       await tx.rentalLease.updateMany({
         where: {

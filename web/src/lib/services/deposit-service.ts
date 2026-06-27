@@ -18,6 +18,7 @@ import {
 } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { fcmService } from '@/lib/fcm';
 import { logger } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -145,6 +146,9 @@ export async function approveDeposit(params: {
       });
     }
   });
+
+  // Send FCM overlay trigger to refresh rider state + wallet
+  _notifyDepositApproved(riderId).catch(() => {});
 
   createAuditLog({
     actorId: adminId,
@@ -324,6 +328,21 @@ export async function forfeitDeposit(params: {
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
+
+/** Notify the rider's device that deposit was approved, triggering a UI refresh. */
+async function _notifyDepositApproved(riderId: string): Promise<void> {
+  try {
+    const rider = await db.rider.findUnique({
+      where: { id: riderId },
+      select: { fcmToken: true },
+    });
+    if (rider?.fcmToken) {
+      await fcmService.sendOverlayTrigger(rider.fcmToken, 'DEPOSIT_APPROVED');
+    }
+  } catch (error) {
+    logger.warn('[DepositService] Failed to send FCM deposit notification', { riderId, error });
+  }
+}
 
 async function _getAndValidate(tx: any, riderId: string, action: DepositTransition) {
   const record = await tx.depositRecord.findUnique({ where: { riderId } });

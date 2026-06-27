@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 import { validateBody, chatMessageSchema } from '@/lib/validators';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { withApiHandler } from '@/lib/api-handler';
 
 const CHAT_RATE_LIMIT = {
@@ -57,8 +58,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   if (auth instanceof Response) return auth;
   const riderDbId = auth.riderDbId;
 
-  const clientIp =
-    request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+  const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
   const rateLimit = await checkRateLimit(`chat:${clientIp}`, CHAT_RATE_LIMIT);
   if (!rateLimit.allowed) {
     return errors.tooManyRequests(

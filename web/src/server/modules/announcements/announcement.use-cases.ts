@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export const announcementUseCases = {
   async list(params: { status?: string; search?: string; page?: number; limit?: number }) {
@@ -87,8 +88,8 @@ export const announcementUseCases = {
     const announcement = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       const created = await tx.announcement.create({
         data: {
-          title: data.title,
-          message: data.message,
+          title: sanitizeHtml(data.title),
+          message: sanitizeHtml(data.message),
           channel: data.channel,
           targetAudience: data.targetAudience,
           targetIds: JSON.stringify(data.targetIds),

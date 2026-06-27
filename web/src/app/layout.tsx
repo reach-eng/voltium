@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { SkipLink } from '@/components/ui/skip-link';
 import { Providers } from './providers';
 import { SITE_TITLE, META_DESCRIPTION, FAVICON_PATH } from '@/lib/branding';
 
@@ -29,8 +30,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#000000',
 };
@@ -62,6 +61,7 @@ export default function RootLayout({
         )}
       </head>
       <body className="antialiased" suppressHydrationWarning>
+        <SkipLink />
         <Providers>{children}</Providers>
         <Toaster />
       </body>

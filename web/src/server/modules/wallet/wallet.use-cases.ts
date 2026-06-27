@@ -240,6 +240,12 @@ export const walletUseCases = {
           approvedBy: adminId || null,
         },
       });
+
+      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
+        riderId: txn.riderId,
+        transactionId,
+        amountPaise: txn.amount,
+      }, 3, tx);
     });
 
     await createAuditLog({
@@ -257,11 +263,6 @@ export const walletUseCases = {
       'PAYMENT',
       { screen: 'WALLET' }
     );
-    await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
-      riderId: txn.riderId,
-      transactionId,
-      amountPaise: txn.amount,
-    });
 
     logger.info('[WalletUseCases] Topup approved', {
       transactionId,
@@ -277,7 +278,15 @@ export const walletUseCases = {
       throw new Error(`Transaction ${transactionId} is already ${txn.status}`);
     }
 
-    await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
+      await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
+        riderId: txn.riderId,
+        transactionId,
+        amountPaise: txn.amount,
+        reason,
+      }, 3, tx);
+    });
 
     await createAuditLog({
       actorId: adminId,
@@ -294,12 +303,6 @@ export const walletUseCases = {
       'PAYMENT',
       { screen: 'WALLET' }
     );
-    await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
-      riderId: txn.riderId,
-      transactionId,
-      amountPaise: txn.amount,
-      reason,
-    });
 
     logger.info('[WalletUseCases] Topup rejected', { transactionId, adminId, reason });
   },

@@ -134,6 +134,11 @@ export const kycRepository = {
         where: { id: riderDbId, lifecycleStatus: { in: ['KYC_SUBMITTED', 'PROFILE_SUBMITTED'] } },
         data: { lifecycleStatus: 'KYC_APPROVED', kycDoneAt: new Date() },
       });
+
+      // Notify rider of KYC approval via FCM (fire-and-forget, outside transaction)
+      const { notificationService } = await import('@/lib/notification-service');
+      notificationService.notifyKycStatusChange(riderDbId, 'APPROVED').catch(() => {});
+
       return kyc;
     });
   },
@@ -157,6 +162,11 @@ export const kycRepository = {
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
       });
+
+      // Notify rider of KYC rejection via FCM
+      const { notificationService } = await import('@/lib/notification-service');
+      await notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', reason).catch(() => {});
+
       return kyc;
     });
   },

@@ -10,6 +10,11 @@ export async function requireRiderSession(
 ): Promise<{ riderDbId: string; phone: string } | NextResponse> {
   const session = await getSession(request);
   if (session) {
+    if (session.role !== 'rider') {
+      // Admin tokens must not be accepted as rider session tokens.
+      // Only the explicit impersonation path below (with x-rider-id header) may use admin tokens.
+      return errors.forbidden('Admin tokens cannot access rider endpoints');
+    }
     return { riderDbId: session.riderDbId, phone: session.phone };
   }
 

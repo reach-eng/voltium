@@ -4,6 +4,9 @@
  * Orchestrates KYC submission, review, and document verification workflows.
  */
 
+import { Prisma } from '@prisma/client';
+import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import type { KycSubmission, KycReview } from './kyc.types';
 import { kycRepository } from './kyc.repository';
 import { notificationService } from '@/lib/notification-service';
@@ -41,24 +44,33 @@ export const kycUseCases = {
   async reviewKyc(riderDbId: string, reviewerId: string, review: KycReview) {
     switch (review.action) {
       case 'APPROVE': {
-        const result = await kycRepository.approveKyc(riderDbId, reviewerId);
-        await notificationService.notifyKycStatusChange(riderDbId, 'APPROVED');
-        await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
-          riderId: riderDbId,
-          type: 'KYC_APPROVED',
+        return db.$transaction(async (tx: Prisma.TransactionClient) => {
+          const result = await kycRepository.approveKyc(riderDbId, reviewerId);
+          await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+            riderId: riderDbId,
+            type: 'KYC_APPROVED',
+          }, 3, tx);
+          // Notification is async; runs after transaction commits
+          notificationService.notifyKycStatusChange(riderDbId, 'APPROVED').catch((e) =>
+            logger.warn('[KYC] Push notification failed for APPROVED', { riderDbId, err: e })
+          );
+          return result;
         });
-        return result;
       }
       case 'REJECT': {
         const rejectionReason = review.rejectionReason || '';
-        const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason);
-        await notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', rejectionReason);
-        await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
-          riderId: riderDbId,
-          type: 'KYC_REJECTED',
-          reason: rejectionReason,
+        return db.$transaction(async (tx: Prisma.TransactionClient) => {
+          const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason);
+          await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+            riderId: riderDbId,
+            type: 'KYC_REJECTED',
+            reason: rejectionReason,
+          }, 3, tx);
+          notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', rejectionReason).catch((e) =>
+            logger.warn('[KYC] Push notification failed for REJECTED', { riderDbId, err: e })
+          );
+          return result;
         });
-        return result;
       }
       case 'REQUEST_INFO': {
         const infoRequest = review.infoRequest || 'Additional information required';

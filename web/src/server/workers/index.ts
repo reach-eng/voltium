@@ -2,7 +2,8 @@
  * Worker Orchestrator for Voltium background jobs.
  *
  * Polls the OutboxEvent table (PostgreSQL) for pending jobs.
- * No PostgreSQL-backed local store dependency — all job state lives in the database.
+ * Cron-driven workers (audit cleanup, telemetry cleanup) run on
+ * a direct timer interval, not through event polling.
  *
  * Designed to be run as:
  *   npx tsx src/server/workers/index.ts
@@ -11,6 +12,7 @@
 import { JobQueue, JobTypes } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { JOB_TYPES } from './queues';
+import { OutboxEventTypes } from './outbox';
 import { sendSms } from '@/lib/sms-provider';
 
 // Import job processors
@@ -23,7 +25,7 @@ import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
 
 // ---------------------------------------------------------------------------
-// Worker registry — maps JobType to a processor function
+// Event-driven workers — poll the OutboxEvent table for matching event types
 // ---------------------------------------------------------------------------
 
 type JobProcessor = (job: any) => Promise<any>;
@@ -32,56 +34,104 @@ interface WorkerDefinition {
   jobType: string;
   processor: JobProcessor;
   concurrency: number;
+  description: string;
 }
 
 const WORKERS: WorkerDefinition[] = [
   {
-    jobType: JOB_TYPES.WALLET_RECONCILIATION,
+    // Processes wallet.topup_approved / wallet.topup_rejected events from wallet use-cases
+    jobType: OutboxEventTypes.WALLET_RECONCILIATION,
     processor: reconciliationJob.process,
     concurrency: 1,
+    description: 'Wallet reconciliation — triggered by topup approval/rejection',
   },
   {
-    jobType: JOB_TYPES.ANNOUNCEMENT_DISPATCH,
+    // Processes notification.send events from kyc use-cases and other producers
+    jobType: OutboxEventTypes.NOTIFICATION_SEND,
     processor: notificationsJob.process,
     concurrency: 3,
+    description: 'Push/in-app notification dispatch',
   },
   {
-    jobType: JOB_TYPES.RENT_DUE_CHECK,
+    // Processes rent.due_check events (emitted on a timer by the scheduled loop below)
+    jobType: OutboxEventTypes.RENT_DUE_CHECK,
     processor: rentRemindersJob.process,
     concurrency: 2,
+    description: 'Rent due check & auto-debit',
   },
   {
-    jobType: JOB_TYPES.DEVICE_VIOLATION_SCAN,
+    // Processes device.violation_scan events (emitted on a timer by the scheduled loop below)
+    jobType: OutboxEventTypes.DEVICE_VIOLATION_SCAN,
     processor: deviceComplianceJob.process,
     concurrency: 2,
+    description: 'Device compliance violation scanner',
   },
   {
-    jobType: JOB_TYPES.REFERRAL_REWARD_PROCESS,
+    // Processes referral.reward events from referral-reward job
+    jobType: OutboxEventTypes.REFERRAL_REWARD,
     processor: referralRewardJob.process,
     concurrency: 3,
+    description: 'Referral reward processing',
   },
   {
-    jobType: JOB_TYPES.AUDIT_LOG_CLEANUP,
-    processor: auditCleanupJob.process,
-    concurrency: 1,
-  },
-  {
-    jobType: JOB_TYPES.TELEMETRY_DATA_CLEANUP,
-    processor: telemetryCleanupJob.process,
-    concurrency: 1,
-  },
-  {
-    jobType: JobTypes.SEND_SMS,
+    // SMS sends — processes sms.send events from auth use-cases
+    jobType: OutboxEventTypes.SMS_SEND,
     processor: async (job: any) => {
       const { phone, message } = job.payload as { phone: string; message: string };
       await sendSms(phone, message);
     },
     concurrency: 5,
+    description: 'SMS dispatch via provider',
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Scheduled tasks
+// Scheduled (cron-driven) workers — run directly on a timer, not event-polled
+// ---------------------------------------------------------------------------
+
+const SCHEDULED_TASKS: Array<{
+  name: string;
+  intervalMs: number;
+  processor: () => Promise<void>;
+}> = [
+  {
+    name: 'audit-log-cleanup',
+    intervalMs: 300_000, // every 5 minutes
+    processor: async () => {
+      await auditCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    name: 'telemetry-cleanup',
+    intervalMs: 300_000,
+    processor: async () => {
+      await telemetryCleanupJob.process({ id: 'scheduled' });
+    },
+  },
+  {
+    name: 'rent-due-emitter',
+    intervalMs: 60_000, // every minute
+    processor: async () => {
+      const { OutboxService } = await import('./outbox');
+      await OutboxService.emit(OutboxEventTypes.RENT_DUE_CHECK, {
+        triggeredAt: new Date().toISOString(),
+      }).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
+    },
+  },
+  {
+    name: 'device-violation-emitter',
+    intervalMs: 60_000, // every minute
+    processor: async () => {
+      const { OutboxService } = await import('./outbox');
+      await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION_SCAN, {
+        triggeredAt: new Date().toISOString(),
+      }).catch((e: Error) => logger.error('[Scheduler] Failed to emit device violation scan', e));
+    },
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Scheduled backup check
 // ---------------------------------------------------------------------------
 
 import { scheduledBackupJob } from './jobs/scheduled-backup.job';
@@ -101,10 +151,6 @@ async function checkScheduledBackups(): Promise<void> {
 // Main loop
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Main loop
-// ---------------------------------------------------------------------------
-
 let running = false;
 const activeJobs = new Set<Promise<any>>();
 
@@ -117,14 +163,27 @@ export async function startWorkers(): Promise<void> {
   running = true;
   logger.info('[Workers] Starting all workers', {
     workerCount: WORKERS.length,
+    scheduledTaskCount: SCHEDULED_TASKS.length,
     jobTypes: WORKERS.map((w) => w.jobType),
   });
 
-  // Start each worker in its own polling loop
-  const promises = WORKERS.map((worker) => runWorkerLoop(worker));
+  const promises: Promise<void>[] = [];
 
-  // Check scheduled backups every 5 minutes
+  // Event-driven workers — each polls its own event type
+  for (const worker of WORKERS) {
+    promises.push(runWorkerLoop(worker));
+  }
+
+  // Scheduled tasks — run on direct timer
+  for (const task of SCHEDULED_TASKS) {
+    promises.push(runScheduledTask(task));
+  }
+
+  // Scheduled backup check — every 5 minutes
   promises.push(runScheduledBackupLoop());
+
+  // Reaper — every 5 minutes
+  promises.push(runReaperLoop());
 
   await Promise.all(promises);
 }
@@ -157,15 +216,48 @@ async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
       logger.error(`[Worker] Error in ${jobType} loop`, err);
     }
 
-    // Poll interval — check every 5 seconds
     await sleep(5000);
+  }
+}
+
+async function runScheduledTask(task: {
+  name: string;
+  intervalMs: number;
+  processor: () => Promise<void>;
+}): Promise<void> {
+  logger.info(`[Scheduler] Starting scheduled task "${task.name}"`, {
+    intervalMs: task.intervalMs,
+  });
+
+  while (running) {
+    try {
+      await task.processor();
+    } catch (err) {
+      logger.error(`[Scheduler] Error in "${task.name}"`, err);
+    }
+    await sleep(task.intervalMs);
   }
 }
 
 async function runScheduledBackupLoop(): Promise<void> {
   while (running) {
     await checkScheduledBackups();
-    await sleep(300_000); // Check every 5 minutes
+    await sleep(300_000);
+  }
+}
+
+async function runReaperLoop(): Promise<void> {
+  while (running) {
+    try {
+      const { JobQueue } = await import('@/lib/job-queue');
+      const reclaimed = await JobQueue.runReaper();
+      if (reclaimed > 0) {
+        logger.warn('[Reaper] Reclaimed stuck processing jobs', { count: reclaimed });
+      }
+    } catch (err) {
+      logger.error('[Reaper] Error during reaper cycle', err);
+    }
+    await sleep(300_000);
   }
 }
 
@@ -179,7 +271,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// CLI entry point — run via: npx tsx src/server/workers/index.ts
+// CLI entry point
 // ---------------------------------------------------------------------------
 
 export async function runFromCli(): Promise<void> {
@@ -187,14 +279,13 @@ export async function runFromCli(): Promise<void> {
   await startWorkers();
 }
 
-// Auto-start when executed directly (ESM-safe alternative to require.main)
 const isDirectRun =
   typeof process !== 'undefined' &&
   process.argv.length >= 2 &&
   (process.argv[1]?.endsWith('workers/index.ts') ||
     process.argv[1]?.endsWith('workers/index.js') ||
-    process.argv[1]?.endsWith('workers\\index.ts') ||
-    process.argv[1]?.endsWith('workers\\index.js') ||
+    process.argv[1]?.endsWith('workers\\\\index.ts') ||
+    process.argv[1]?.endsWith('workers\\\\index.js') ||
     process.argv[1]?.endsWith('workers.js') ||
     process.argv[1]?.endsWith('workers.ts'));
 
@@ -225,7 +316,6 @@ if (isDirectRun) {
     process.exit(1);
   });
 
-  // Graceful shutdown
   process.on('SIGINT', () => {
     handleShutdown('SIGINT').catch((err) => {
       logger.error('[Workers] Error during SIGINT handler', err);

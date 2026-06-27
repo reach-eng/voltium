@@ -4,49 +4,38 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   compress: true,
   poweredByHeader: false,
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=()',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-        ],
-      },
-    ];
-  },
+  reactStrictMode: true,
   typescript: {
     ignoreBuildErrors: false,
   },
-  reactStrictMode: true,
-  cacheComponents: true,
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
+  images: {
+    remotePatterns: [
+      // Allow storage host for rider photos, KYC docs, etc.
+      ...(process.env.STORAGE_HOST
+        ? [{ protocol: 'https' as const, hostname: process.env.STORAGE_HOST }]
+        : []),
+      // Allow Firebase storage bucket if configured
+      ...(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        ? [
+            {
+              protocol: 'https' as const,
+              hostname: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+            } as const,
+          ]
+        : []),
+      // Allow localhost in development for local file serving
+      ...(process.env.NODE_ENV === 'development'
+        ? [{ protocol: 'http' as const, hostname: 'localhost' }]
+        : []),
+    ],
+  },
+  // Security headers are set in middleware.ts — no duplicate static headers here
+  // to avoid conflicts with the middleware CSP.
 };
 
 export default nextConfig;

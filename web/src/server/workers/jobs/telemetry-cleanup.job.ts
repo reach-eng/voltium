@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
 interface TelemetryCleanupResult {
   locationsDeleted: number;
@@ -11,21 +12,37 @@ export const telemetryCleanupJob = {
   async process(job: any): Promise<TelemetryCleanupResult> {
     logger.info('[TelemetryCleanupJob] Starting', { jobId: job.id });
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    // Idempotency guard — one run per day
+    const today = new Date().toISOString().split('T')[0];
+    const idempotencyKey = `telemetry-cleanup:daily:${today}`;
+    const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
+    if (claim.status !== 'not_found') {
+      logger.info('[TelemetryCleanupJob] Already processed today', { key: idempotencyKey });
+      return { locationsDeleted: 0, callLogsDeleted: 0, contactsDeleted: 0 };
+    }
 
-    const [locationsDeleted, callLogsDeleted, contactsDeleted] = await Promise.all([
-      db.userLocation.deleteMany({ where: { timestamp: { lt: thirtyDaysAgo } } }),
-      db.userCallLog.deleteMany({ where: { timestamp: { lt: thirtyDaysAgo } } }),
-      db.userContact.deleteMany({ where: { createdAt: { lt: thirtyDaysAgo } } }),
-    ]);
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const result: TelemetryCleanupResult = {
-      locationsDeleted: locationsDeleted.count,
-      callLogsDeleted: callLogsDeleted.count,
-      contactsDeleted: contactsDeleted.count,
-    };
+      const [locationsDeleted, callLogsDeleted, contactsDeleted] = await Promise.all([
+        db.userLocation.deleteMany({ where: { timestamp: { lt: thirtyDaysAgo } } }),
+        db.userCallLog.deleteMany({ where: { timestamp: { lt: thirtyDaysAgo } } }),
+        db.userContact.deleteMany({ where: { createdAt: { lt: thirtyDaysAgo } } }),
+      ]);
 
-    logger.info('[TelemetryCleanupJob] Complete', result);
-    return result;
+      const result: TelemetryCleanupResult = {
+        locationsDeleted: locationsDeleted.count,
+        callLogsDeleted: callLogsDeleted.count,
+        contactsDeleted: contactsDeleted.count,
+      };
+
+      await completeIdempotency(idempotencyKey, result).catch(() => {});
+
+      logger.info('[TelemetryCleanupJob] Complete', result);
+      return result;
+    } catch (err) {
+      await failIdempotency(idempotencyKey).catch(() => {});
+      throw err;
+    }
   },
 };

@@ -168,7 +168,7 @@ export const authUseCases = {
     const riderData = flattenRider(riderWithRelations);
 
     // Create session token
-    const token = createSessionToken({
+    const token = await createSessionToken({
       riderId: rider.riderId,
       riderDbId: rider.id,
       phone: rider.phone,

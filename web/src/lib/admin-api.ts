@@ -1,0 +1,104 @@
+'use client';
+
+import { logger } from '@/lib/logger';
+import type { ApiResponse } from '@/lib/api-response';
+
+export interface FetchOptions extends RequestInit {
+  /** If true, does not throw on non-2xx responses — returns error shape instead */
+  quiet?: boolean;
+  /** AbortSignal for cancellation */
+  signal?: AbortSignal;
+}
+
+export interface ApiErrorResult {
+  success: false;
+  error: { message: string; code?: string };
+}
+
+/**
+ * Shared admin API client.
+ *
+ * Features:
+ * - Consistent error handling
+ * - JSON parsing safety
+ * - Quiet mode for non-critical requests
+ *
+ * @example
+ * ```ts
+ * import { api } from '@/lib/admin-api';
+ *
+ * const { data, pagination } = await api.get<Item[]>('/api/admin/items');
+ * const result = await api.put('/api/admin/items', { id: '...', status: 'APPROVED' });
+ * ```
+ */
+async function request<T = any>(
+  url: string,
+  options: FetchOptions = {}
+): Promise<{ data?: T; pagination?: { totalPages: number; total: number; page: number; limit: number }; error?: string; success: boolean }> {
+  const { quiet, ...fetchOptions } = options;
+
+  try {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...(fetchOptions.headers as Record<string, string>) },
+      ...fetchOptions,
+    });
+
+    let json: ApiResponse<T> | null = null;
+    try {
+      json = await res.json();
+    } catch {
+      // Response was not JSON
+    }
+
+    if (!res.ok) {
+      const errorMessage = json?.success === false
+        ? json.error?.message || json.error?.code || `Request failed with status ${res.status}`
+        : `Request failed with status ${res.status}`;
+
+      if (!quiet) {
+        logger.error('API request failed', {
+          url,
+          status: res.status,
+          error: errorMessage,
+        });
+      }
+
+      return { success: false, error: errorMessage };
+    }
+
+    if (json?.success === true) {
+      return {
+        success: true,
+        data: json.data as T,
+        pagination: json.pagination as any,
+      };
+    }
+
+    // Some APIs return data directly without wrapping
+    if (json && 'success' in json === false) {
+      return { success: true, data: json as unknown as T };
+    }
+
+    return { success: true, data: (json as any)?.data as T };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Network error';
+    if (!quiet) {
+      logger.error('API network error', { url, error: errorMessage });
+    }
+    return { success: false, error: errorMessage };
+  }
+}
+
+export const adminApi = {
+  get: <T = any>(url: string, options?: FetchOptions) =>
+    request<T>(url, { method: 'GET', ...options }),
+
+  post: <T = any>(url: string, body?: unknown, options?: FetchOptions) =>
+    request<T>(url, { method: 'POST', body: body ? JSON.stringify(body) : undefined, ...options }),
+
+  put: <T = any>(url: string, body?: unknown, options?: FetchOptions) =>
+    request<T>(url, { method: 'PUT', body: body ? JSON.stringify(body) : undefined, ...options }),
+
+  del: <T = any>(url: string, options?: FetchOptions) =>
+    request<T>(url, { method: 'DELETE', ...options }),
+};

@@ -3,6 +3,8 @@ import { success, errors } from '@/lib/api-response';
 import { createSessionToken, ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth';
 import { checkRateLimit, AUTH_RATE_LIMIT } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
+import { redactPii } from '@/lib/pii-redact';
 import { z } from 'zod';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 
@@ -13,10 +15,7 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const clientIp =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      'unknown';
+    const clientIp = rateLimitIdentifierFromRequest(request).replace(/^ip:/, '');
     const rl = await checkRateLimit(`admin-login:${clientIp}`, AUTH_RATE_LIMIT);
     if (!rl.allowed) {
       return errors.tooManyRequests('Too many login attempts. Try again later.');
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
       logger.error('Failed to parse admin permissions', { adminId: admin.id, error: e });
     }
 
-    const sessionToken = createSessionToken({
+    const sessionToken = await createSessionToken({
       riderId: admin.id,
       riderDbId: admin.id,
       phone: admin.email,
@@ -75,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (err.message === 'Invalid credentials') {
       return errors.unauthorized('Invalid email or password');
     }
-    logger.error('[POST /api/admin/auth/login]', err);
+    logger.error('[POST /api/admin/auth/login]', redactPii(err));
     return errors.internal('Login failed');
   }
 }

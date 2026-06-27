@@ -19,26 +19,6 @@ export async function GET(_request: NextRequest) {
     }
     return success(admin);
   } catch (err: any) {
-    if (
-      adminId === 'admin-dev-id' ||
-      process.env.NODE_ENV === 'development' ||
-      process.env.ENABLE_DEV_ADMIN_LOGIN === 'true'
-    ) {
-      logger.warn(
-        '[Admin Me] Database check failed, falling back to mock admin info:',
-        err.message
-      );
-      const mockAdmin = {
-        id: adminId || 'admin-dev-id',
-        email: session.phone || 'admin@voltium.io',
-        name: 'Dev Admin',
-        role: session.adminRole || 'SUPER_ADMIN',
-        isActive: true,
-        permissions: [],
-        adminPermissions: [],
-      };
-      return success(mockAdmin);
-    }
     logger.error('[GET /api/admin/auth/me]', err);
     return errors.forbidden('Account validation failed');
   }

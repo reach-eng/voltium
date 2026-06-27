@@ -1440,12 +1440,22 @@ model RestoreJob {
   @@index([createdAt])
 }
 
+enum IdempotencyStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("idempotency_status")
+}
+
 model IdempotencyKey {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  response  String
+  id        String             @id @default(cuid())
+  key       String             @unique
+  status    IdempotencyStatus  @default(PROCESSING)
+  response  String?
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime           @default(now())
 
   @@index([expiresAt])
+  @@index([status])
 }

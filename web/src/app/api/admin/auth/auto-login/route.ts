@@ -5,6 +5,10 @@ import { logger } from '@/lib/logger';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 
 export async function POST(request: NextRequest) {
+  // Hard-disable in production — this endpoint must never work outside development
+  if (process.env.APP_ENV === 'production') {
+    return errors.forbidden('Auto-login is disabled in production');
+  }
   const isDev =
     process.env.NODE_ENV === 'development' || process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
   if (!isDev) {
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
       return error('Database or authentication service unavailable', 'SERVICE_UNAVAILABLE', 503);
     }
 
-    const sessionToken = createSessionToken({
+    const sessionToken = await createSessionToken({
       riderId: admin.id,
       riderDbId: admin.id,
       phone: admin.email,

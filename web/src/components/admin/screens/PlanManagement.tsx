@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Edit, Trash2, RefreshCw } from 'lucide-react';
+import { Search, Plus, Edit, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
@@ -25,40 +25,25 @@ export default function PlanManagement() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Simulate fetching plans
-    setTimeout(() => {
-      setPlans([
-        {
-          id: 'p-1',
-          name: 'Daily Flex',
-          type: 'DAILY',
-          price: 299,
-          durationDays: 1,
-          isActive: true,
-          description: 'Perfect for short-term daily delivery agents.',
-        },
-        {
-          id: 'p-2',
-          name: 'Weekly Value',
-          type: 'WEEKLY',
-          price: 1499,
-          durationDays: 7,
-          isActive: true,
-          description: 'Weekly subscription with lower overall daily rates.',
-        },
-        {
-          id: 'p-3',
-          name: 'Monthly Professional',
-          type: 'MONTHLY',
-          price: 4999,
-          durationDays: 30,
-          isActive: true,
-          description: 'Best long-term pricing for full-time fleet drivers.',
-        },
-      ]);
-      setLoading(false);
-    }, 500);
+    fetchPlans();
   }, []);
+
+  const fetchPlans = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/plans');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setPlans(json.data || []);
+        }
+      }
+    } catch {
+      // Silent fallback
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
     setPlans((prev) => prev.map((p) => (p.id === id ? { ...p, isActive: !currentStatus } : p)));

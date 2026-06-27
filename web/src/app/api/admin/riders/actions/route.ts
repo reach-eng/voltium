@@ -121,7 +121,9 @@ async function handleSecurityAction(
       const newPassword = generateRandomPassword(8);
       dbUpdate.isAdminLocked = true;
       dbUpdate.lockPassword = newPassword;
-      if (rider.fcmToken) fcmResult = await fcmService.sendAdminLock(rider.fcmToken, newPassword);
+      // Pin is NOT sent via FCM — the lock screen on the device
+      // verifies the recovery password via /api/rider/device/verify-lock.
+      if (rider.fcmToken) fcmResult = await fcmService.sendAdminLock(rider.fcmToken);
       else fcmResult = { success: true };
       break;
     }
@@ -132,7 +134,7 @@ async function handleSecurityAction(
       if (!isSuperAdmin) {
         if (!password) return errors.unauthorized('Invalid recovery password');
         const { verifyPassword } = await import('@/lib/password');
-        const valid = await verifyPassword(password, rider.lockPassword);
+        const { valid } = await verifyPassword(password, rider.lockPassword);
         if (!valid) return errors.unauthorized('Invalid recovery password');
       }
       dbUpdate.isAdminLocked = false;

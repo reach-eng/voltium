@@ -22,38 +22,102 @@ if (typeof globalThis !== 'undefined' && !('$_idempotencyCleanup' in globalThis)
   );
 }
 
-export async function checkIdempotency(key: string): Promise<any | null> {
-  // 1. Try DB-backed store
+export type IdempotencyResult =
+  | { status: 'completed'; response: any }
+  | { status: 'processing' }
+  | { status: 'not_found' };
+
+/**
+ * Atomically claim or check an idempotency key.
+ *
+ * Uses INSERT … ON CONFLICT DO NOTHING to ensure only the first caller
+ * sees `not_found`. Subsequent callers see either `completed` (cached
+ * response) or `processing` (another request is in-flight).
+ *
+ * - `not_found`  → caller should proceed with handler, then call `completeIdempotency()`
+ * - `completed`  → caller should return the cached response immediately
+ * - `processing` → caller should return HTTP 409 Conflict (or poll)
+ */
+export async function checkOrClaimIdempotency(
+  key: string,
+  ttlSeconds: number = 86400
+): Promise<IdempotencyResult> {
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+
   try {
-    const existing = await db.idempotencyKey.findUnique({
+    // Atomic claim: INSERT … ON CONFLICT DO NOTHING
+    // If the INSERT succeeds (1 row inserted), we own the lock.
+    // If it returns 0, the key already existed — we need to check its status.
+    const inserted = await db.$executeRawUnsafe(
+      `INSERT INTO "IdempotencyKey" (id, key, status, response, expires_at, created_at)
+       VALUES (gen_random_uuid()::text, $1, 'PROCESSING', NULL, $2, NOW())
+       ON CONFLICT (key) DO NOTHING`,
+      key,
+      expiresAt
+    );
+
+    if (inserted === 1) {
+      // We claimed the lock — caller should proceed with handler
+      return { status: 'not_found' };
+    }
+
+    // Key already existed — read its current state
+    const row = await db.idempotencyKey.findUnique({
       where: { key },
+      select: { status: true, response: true, expiresAt: true },
     });
 
-    if (existing) {
-      if (existing.expiresAt.getTime() > Date.now()) {
-        return JSON.parse(existing.response);
-      } else {
-        await db.idempotencyKey.delete({ where: { key } }).catch(() => {});
-      }
+    if (!row) {
+      // Race: another request may have deleted the row — treat as processing
+      return { status: 'processing' };
+    }
+
+    if (row.expiresAt.getTime() <= Date.now()) {
+      // Expired — delete and give caller a fresh chance
+      await db.idempotencyKey.delete({ where: { key } }).catch(() => {});
+      memoryStore.delete(key);
+      // Try claiming again
+      return checkOrClaimIdempotency(key, ttlSeconds);
+    }
+
+    switch (row.status) {
+      case 'COMPLETED':
+        const parsed = tryParseResponse(row.response);
+        if (parsed !== null) {
+          return { status: 'completed', response: parsed };
+        }
+        // Corrupted response — fall through
+        logger.warn('[Idempotency] Corrupted response, returning processing', { key });
+        return { status: 'processing' };
+
+      case 'PROCESSING':
+      case 'FAILED':
+        return { status: 'processing' };
+
+      default:
+        return { status: 'processing' };
     }
   } catch (err: any) {
     logger.warn(`[Idempotency] DB query failed, falling back to memory: ${err.message}`);
   }
 
-  // 2. Fall back to memory store
+  // Fallback: in-memory store
   const existingMemory = memoryStore.get(key);
   if (existingMemory) {
     if (existingMemory.expiresAt > Date.now()) {
-      return existingMemory.response;
-    } else {
-      memoryStore.delete(key);
+      return { status: 'completed', response: existingMemory.response };
     }
+    memoryStore.delete(key);
   }
 
-  return null;
+  return { status: 'not_found' };
 }
 
-export async function saveIdempotency(
+/**
+ * Mark an idempotency key as completed with the response payload.
+ * Must be called only after a successful handler execution.
+ */
+export async function completeIdempotency(
   key: string,
   response: any,
   ttlSeconds: number = 86400
@@ -61,16 +125,18 @@ export async function saveIdempotency(
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
   const responseStr = JSON.stringify(response);
 
-  // 1. Try DB-backed store
+  // 1. Update the DB row
   try {
     await db.idempotencyKey.upsert({
       where: { key },
       create: {
         key,
+        status: 'COMPLETED',
         response: responseStr,
         expiresAt,
       },
       update: {
+        status: 'COMPLETED',
         response: responseStr,
         expiresAt,
       },
@@ -84,4 +150,68 @@ export async function saveIdempotency(
     response,
     expiresAt: expiresAt.getTime(),
   });
+}
+
+/**
+ * Mark an idempotency key as failed (e.g. handler threw an error).
+ * Allows subsequent retries with the same key.
+ */
+export async function failIdempotency(key: string): Promise<void> {
+  try {
+    await db.idempotencyKey.update({
+      where: { key },
+      data: { status: 'FAILED' },
+    });
+  } catch (err: any) {
+    logger.error(`[Idempotency] Failed to mark as FAILED: ${err.message}`);
+  }
+  memoryStore.delete(key);
+}
+
+/**
+ * TTL purge: delete expired idempotency rows from the DB.
+ * Safely run on a schedule (e.g. every hour).
+ */
+export async function purgeExpiredIdempotencyKeys(): Promise<number> {
+  try {
+    const result = await db.idempotencyKey.deleteMany({
+      where: { expiresAt: { lte: new Date() } },
+    });
+    if (result.count > 0) {
+      logger.info(`[Idempotency] Purged ${result.count} expired keys`);
+    }
+    return result.count;
+  } catch (err: any) {
+    logger.error(`[Idempotency] Purge failed: ${err.message}`);
+    return 0;
+  }
+}
+
+/**
+ * Legacy helpers used by the `withIdempotency` middleware.
+ * These delegate to the new atomic API.
+ */
+export async function checkIdempotency(key: string): Promise<any | null> {
+  const result = await checkOrClaimIdempotency(key);
+  if (result.status === 'completed') return result.response;
+  return null;
+}
+
+export async function saveIdempotency(
+  key: string,
+  response: any,
+  ttlSeconds: number = 86400
+): Promise<void> {
+  await completeIdempotency(key, response, ttlSeconds);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+function tryParseResponse(response: string | null): any | null {
+  if (!response) return null;
+  try {
+    return JSON.parse(response);
+  } catch {
+    return null;
+  }
 }

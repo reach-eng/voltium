@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { hasPermission } from '@/lib/permissions';
 import { ALL_NAV_ITEMS } from '@/lib/role-config';
+import { AdminErrorBoundary } from './error-boundary';
 
 // Screen placeholder with shimmer animation
 function ScreenLoader() {
@@ -43,6 +44,8 @@ const sectionMap: Record<string, React.ComponentType> = {
   rentals: loadAdminScreen('RentalManagement'),
   vehicles: loadAdminScreen('VehicleManagement'),
   hubs: loadAdminScreen('HubManagement'),
+  'wallet-deposits': loadAdminScreen('WalletDepositManagement'),
+  'earnings': loadAdminScreen('EarningsManagement'),
   transactions: loadAdminScreen('TransactionManagement'),
   tickets: loadAdminScreen('TicketManagement'),
   incidents: loadAdminScreen('IncidentManagementScreen'),
@@ -64,6 +67,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   settings: loadAdminScreen('SystemSettingsScreen'),
   'server-health': loadAdminScreen('ServerHealthScreen'),
   'data-management': loadAdminScreen('DataManagementScreen'),
+  'background-jobs': loadAdminScreen('BackgroundJobsScreen'),
 };
 
 function PlaceholderSection({ name }: { name: string }) {
@@ -85,6 +89,9 @@ const sectionLabels: Record<string, string> = {
   rentals: 'Rentals',
   vehicles: 'Vehicles',
   hubs: 'Hubs',
+  'background-jobs': 'Background Jobs',
+  'wallet-deposits': 'Wallet Deposits',
+  'earnings': 'Earnings',
   transactions: 'Finance',
   tickets: 'Support',
   incidents: 'Incidents & Fines',
@@ -276,6 +283,7 @@ export default function AdminLayout() {
   }
 
   return (
+    <AdminErrorBoundary>
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block shrink-0 h-full overflow-hidden">
@@ -357,5 +365,6 @@ export default function AdminLayout() {
       <SonnerToaster position="bottom-right" richColors closeButton />
       <div id="admin-hydration-marker" style={{ display: 'none' }} />
     </div>
+    </AdminErrorBoundary>
   );
 }

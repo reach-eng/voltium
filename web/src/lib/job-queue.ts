@@ -4,6 +4,11 @@
  * Uses the OutboxEvent table as a reliable job queue — no PostgreSQL-backed local store dependency.
  * enqueue() writes an event; processJobs() polls pending events, processes
  * them, and marks COMPLETED or FAILED.
+ *
+ * Features:
+ * - Exponential backoff: delay = 2^attempts × 5s before retry
+ * - Uses maxAttempts column (not hardcoded)
+ * - Reaper: reclaims stuck PROCESSING rows after 5 minutes
  */
 
 import { db } from '@/lib/db';
@@ -51,7 +56,12 @@ export const JobQueue = {
     processor: (job: QueueJob) => Promise<void>,
     concurrency = 5
   ): Promise<void> {
-    const settleTime = new Date(Date.now() - 5_000);
+    const now = new Date();
+
+    // Claim eligible pending jobs using maxAttempts column.
+    // A job is "ready" if createdAt + 2^attempts × 5s <= now.
+    // For attempt 0: 5s delay; attempt 1: 10s; attempt 2: 20s; etc.
+    // Cap backoff at 1 hour.
     const pending = await db.$queryRaw<
       Array<{
         id: string;
@@ -70,8 +80,11 @@ export const JobQueue = {
         FROM "OutboxEvent"
         WHERE "eventType" = ${type}
           AND status = 'PENDING'
-          AND attempts < 3
-          AND "createdAt" <= ${settleTime}
+          AND attempts < "maxAttempts"
+          AND "createdAt" <= ${now}::timestamptz - LEAST(
+            INTERVAL '5 seconds' * POWER(2, GREATEST(attempts, 0)),
+            INTERVAL '1 hour'
+          )
         ORDER BY "createdAt" ASC
         LIMIT ${concurrency}
         FOR UPDATE SKIP LOCKED
@@ -105,25 +118,69 @@ export const JobQueue = {
         });
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        const eventData = event as any;
+        const newAttempts = event.attempts + 1;
+        const isMaxed = newAttempts >= event.maxAttempts;
 
+        // On failure: increment attempts, set backoff-based retry time
+        // Since no readyAt column exists, we rely on createdAt + backoff
         await db.outboxEvent.update({
           where: { id: event.id },
           data: {
             attempts: { increment: 1 },
             error: errorMessage,
-            status:
-              (eventData.attempts ?? 0) + 1 >= (eventData.maxAttempts ?? 3) ? 'FAILED' : 'PENDING',
+            status: isMaxed ? 'FAILED' : 'PENDING',
           },
         });
 
         logger.error('[JobQueue] Failed to process job', {
           jobId: event.id,
           type,
+          attempts: newAttempts,
+          maxAttempts: event.maxAttempts,
+          backoffMs: Math.min(Math.pow(2, newAttempts) * 5000, 3600000),
           error: errorMessage,
         });
       }
     }
+  },
+
+  /**
+   * Reaper: Reclaims stuck PROCESSING events that haven't been updated
+   * in more than 5 minutes. Resets them to PENDING so they get retried.
+   * Run this periodically (e.g. every 5 minutes).
+   */
+  async runReaper(): Promise<number> {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+    const result = await db.outboxEvent.updateMany({
+      where: {
+        status: 'PROCESSING',
+        updatedAt: { lt: cutoff },
+      },
+      data: {
+        status: 'PENDING',
+        error: 'Reclaimed by reaper — stuck in PROCESSING',
+      },
+    });
+    if (result.count > 0) {
+      logger.warn('[JobQueue] Reaper reclaimed stuck PROCESSING events', {
+        count: result.count,
+      });
+    }
+    return result.count;
+  },
+
+  /**
+   * Get stuck-PROCESSING count for health monitoring.
+   */
+  async getStuckProcessingCount(): Promise<number> {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+    const result = await db.outboxEvent.count({
+      where: {
+        status: 'PROCESSING',
+        updatedAt: { lt: cutoff },
+      },
+    });
+    return result;
   },
 
   async getQueueStats(
