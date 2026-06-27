@@ -1,0 +1,59 @@
+# Normalize line endings for all text files to LF
+# Windows-specific files keep CRLF
+* text=auto eol=lf
+
+# Shell scripts must use LF
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Windows scripts keep CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# PowerShell module manifests
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+
+# Binary files (no line ending conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.so binary
+*.dll binary
+*.dylib binary
+*.node binary
+*.class binary
+*.jar binary
+*.war binary
+
+# Lock files - LF
+package-lock.json text eol=lf
+yarn.lock text eol=lf
+pnpm-lock.yaml text eol=lf
+pubspec.lock text eol=lf
+Cargo.lock text eol=lf
+
+# Generated Dart files - LF
+*.g.dart text eol=lf
+*.freezed.dart text eol=lf
+
+# Localization files
+*.arb text eol=lf
+
+# Makefile
+Makefile text eol=lf

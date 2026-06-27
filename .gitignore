@@ -132,3 +132,48 @@ flutter/debug/
 **/key.properties
 *.zip
 
+# IDE / editor state
+.idea/
+.vscode/
+.idea
+.fleet/
+.aider*
+.cursor/
+*.swp
+*.swo
+*~
+
+# One-off debug / scratch scripts
+flutter/fix_*.py
+flutter/fix_*.dart
+flutter/ratchet_tests.py
+flutter/nul
+flutter/Inter_*.ttf
+nul
+debug*.png
+*.png~
+
+# One-off web debug / scratch scripts
+web/extract*.py
+web/extract*.js
+web/find-*.js
+web/find-*.py
+web/fix-*.py
+web/fix-*.js
+web/gen-extract.py
+web/scratch-probe.ts
+
+# Opencode / claude artifacts
+.commandcode/
+
+# Rider-app debug screenshots
+flutter/rider-app-debug-screenshot.png
+web/rider-app-debug-screenshot.png
+web/public/bolt-test.svg
+
+# Build outputs of mini-services / scripts that may litter repo
+# (Flutter helper scripts in flutter/ are committed; see those files)
+
+# Stale Inter font downloaded during build experiments
+flutter/Inter_*.ttf
+
