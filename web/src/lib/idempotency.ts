@@ -28,6 +28,14 @@ export type IdempotencyResult =
   | { status: 'not_found' };
 
 /**
+ * Phase 3.3: the result type uses lowercase strings for backwards
+ * compatibility with existing callers. Internally the DB column is
+ * the Prisma `IdempotencyStatus` enum (uppercase: PROCESSING /
+ * COMPLETED / FAILED). The switch in `checkOrClaimIdempotency`
+ * matches against the uppercase DB values; the result type stays
+ * lowercase so callers don't need to change.
+
+/**
  * Atomically claim or check an idempotency key.
  *
  * Uses INSERT … ON CONFLICT DO NOTHING to ensure only the first caller
@@ -91,8 +99,21 @@ export async function checkOrClaimIdempotency(
         return { status: 'processing' };
 
       case 'PROCESSING':
-      case 'FAILED':
+        // An earlier call claimed the lock but never completed. The
+        // caller should treat this as 409 Conflict and either poll or
+        // surface an error to the user.
         return { status: 'processing' };
+
+      case 'FAILED':
+        // Phase 3.3: the previous attempt failed (handler threw).
+        // The contract is "Allow subsequent retries with the same key"
+        // (per failIdempotency's docstring), so we DELETE the row and
+        // let the caller claim a fresh lock. If the delete fails the
+        // row stays FAILED, but the caller can still try a fresh
+        // claim via the loop below.
+        await db.idempotencyKey.delete({ where: { key } }).catch(() => {});
+        memoryStore.delete(key);
+        return checkOrClaimIdempotency(key, ttlSeconds);
 
       default:
         return { status: 'processing' };
