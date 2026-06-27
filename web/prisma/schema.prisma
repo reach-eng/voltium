@@ -1335,6 +1335,14 @@ model OutboxEvent {
   maxAttempts Int       @default(3)
   error       String?
   createdAt   DateTime  @default(now())
+  /// Phase 3.4: readyAt is the earliest time the job may be claimed
+  /// after a failure (exponential backoff). NULL = eligible now.
+  /// See prisma/migrations/20260626000000_add_outbox_readyAt/.
+  readyAt     DateTime?
+  /// Phase 3.4: @updatedAt is managed by Prisma. The reaper uses
+  /// it to find rows that have been stuck in PROCESSING for more
+  /// than the reaper cutoff.
+  updatedAt   DateTime  @updatedAt
   processedAt DateTime?
 
   @@index([status])
@@ -1342,6 +1350,7 @@ model OutboxEvent {
   @@index([createdAt])
   @@index([status, createdAt])
   @@index([status, eventType])
+  @@index([status, eventType, readyAt])
 }
 
 // ── Reconciliation ────────────────────────────────────────────────────────

@@ -58,10 +58,10 @@ export const JobQueue = {
   ): Promise<void> {
     const now = new Date();
 
-    // Claim eligible pending jobs using maxAttempts column.
-    // A job is "ready" if createdAt + 2^attempts × 5s <= now.
-    // For attempt 0: 5s delay; attempt 1: 10s; attempt 2: 20s; etc.
-    // Cap backoff at 1 hour.
+    // Claim eligible pending jobs using the readyAt column (Phase 3.4).
+    // A job is eligible when status='PENDING' and readyAt is either
+    // NULL (first attempt) or <= now. The composite index on
+    // (status, eventType, readyAt) keeps this fast at scale.
     const pending = await db.$queryRaw<
       Array<{
         id: string;
@@ -71,6 +71,7 @@ export const JobQueue = {
         attempts: number;
         maxAttempts: number;
         createdAt: Date;
+        readyAt: Date | null;
       }>
     >`
       UPDATE "OutboxEvent"
@@ -81,15 +82,12 @@ export const JobQueue = {
         WHERE "eventType" = ${type}
           AND status = 'PENDING'
           AND attempts < "maxAttempts"
-          AND "createdAt" <= ${now}::timestamptz - LEAST(
-            INTERVAL '5 seconds' * POWER(2, GREATEST(attempts, 0)),
-            INTERVAL '1 hour'
-          )
+          AND ("readyAt" IS NULL OR "readyAt" <= ${now}::timestamptz)
         ORDER BY "createdAt" ASC
         LIMIT ${concurrency}
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING id, "eventType", payload, status, attempts, "maxAttempts", "createdAt"
+      RETURNING id, "eventType", payload, status, attempts, "maxAttempts", "createdAt", "readyAt"
     `;
 
     if (pending.length === 0) return;
@@ -114,6 +112,7 @@ export const JobQueue = {
             status: 'COMPLETED',
             processedAt: new Date(),
             attempts: { increment: 1 },
+            readyAt: null, // Reset backoff for any future re-runs
           },
         });
       } catch (err) {
@@ -121,14 +120,21 @@ export const JobQueue = {
         const newAttempts = event.attempts + 1;
         const isMaxed = newAttempts >= event.maxAttempts;
 
-        // On failure: increment attempts, set backoff-based retry time
-        // Since no readyAt column exists, we rely on createdAt + backoff
+        // Phase 3.4: write the exponential-backoff readyAt. The previous
+        // version only bumped `attempts`; the next claim cycle would
+        // immediately retry because the SELECT did not consider
+        // attempts-vs-time. The new readyAt uses createdAt + 2^attempts × 5s
+        // (capped at 1 hour) so the claim cycle honours the backoff.
+        const backoffMs = Math.min(Math.pow(2, newAttempts) * 5000, 3600000);
+        const nextReadyAt = new Date(Date.now() + backoffMs);
+
         await db.outboxEvent.update({
           where: { id: event.id },
           data: {
             attempts: { increment: 1 },
             error: errorMessage,
             status: isMaxed ? 'FAILED' : 'PENDING',
+            readyAt: isMaxed ? null : nextReadyAt,
           },
         });
 
@@ -137,7 +143,8 @@ export const JobQueue = {
           type,
           attempts: newAttempts,
           maxAttempts: event.maxAttempts,
-          backoffMs: Math.min(Math.pow(2, newAttempts) * 5000, 3600000),
+          backoffMs,
+          nextReadyAt: nextReadyAt.toISOString(),
           error: errorMessage,
         });
       }
