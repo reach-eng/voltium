@@ -165,7 +165,7 @@ export const notificationDispatchJob = {
             warning: 'no FCM token',
           };
         }
-        const extra =
+        const extra: Record<string, string> =
           payload.type === 'WALLET_LOW'
             ? { balance: String(payload.balance ?? '0') }
             : { url: (payload.url as string) ?? '' };

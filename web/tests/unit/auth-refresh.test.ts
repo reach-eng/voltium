@@ -1,17 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mocks
+// Mocks (vi.hoisted because vitest hoists vi.mock factories above imports)
 // ---------------------------------------------------------------------------
 
-const mockVerifySessionToken = vi.fn();
-const mockCreateSessionToken = vi.fn();
-const mockCreateRefreshToken = vi.fn();
+const mocks = vi.hoisted(() => ({
+  verifySessionToken: vi.fn(),
+  createSessionToken: vi.fn(),
+  createRefreshToken: vi.fn(),
+  rider: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  },
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
 
 vi.mock('@/lib/auth', () => ({
-  verifySessionToken: mockVerifySessionToken,
-  createSessionToken: mockCreateSessionToken,
-  createRefreshToken: mockCreateRefreshToken,
+  verifySessionToken: mocks.verifySessionToken,
+  createSessionToken: mocks.createSessionToken,
+  createRefreshToken: mocks.createRefreshToken,
   SESSION_COOKIE_NAME: 'voltium-session',
   SESSION_COOKIE_OPTIONS: {
     httpOnly: true,
@@ -22,16 +34,12 @@ vi.mock('@/lib/auth', () => ({
   },
 }));
 
-const mockRider = {
-  findUnique: vi.fn(),
-  update: vi.fn(),
-};
 vi.mock('@/lib/db', () => ({
-  db: { rider: mockRider },
+  db: { rider: mocks.rider },
 }));
 
 vi.mock('@/lib/logger', () => ({
-  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+  logger: mocks.logger,
 }));
 
 import { POST } from '@/app/api/auth/refresh/route';
@@ -50,38 +58,34 @@ function makeRequest(body: object): Request {
 describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCreateSessionToken.mockResolvedValue(newAccessToken);
-    mockCreateRefreshToken.mockResolvedValue(newRefreshToken);
+    mocks.createSessionToken.mockResolvedValue(newAccessToken);
+    mocks.createRefreshToken.mockResolvedValue(newRefreshToken);
   });
 
   it('re-sets the rider session cookie on successful refresh', async () => {
-    mockVerifySessionToken.mockResolvedValue({
+    mocks.verifySessionToken.mockResolvedValue({
       riderDbId: 'rider-db-1',
       tokenVersion: 5,
       role: 'rider',
     });
-    mockRider.findUnique.mockResolvedValue({
+    mocks.rider.findUnique.mockResolvedValue({
       id: 'rider-db-1',
       riderId: 'rider-1',
       phone: '9999999999',
       tokenVersion: 5,
     });
-    mockRider.update.mockResolvedValue({ id: 'rider-db-1' });
+    mocks.rider.update.mockResolvedValue({ id: 'rider-db-1' });
 
     const response = await POST(makeRequest({ refreshToken: 'old-refresh' }) as any);
 
-    // 200 success
     expect(response.status).toBe(200);
 
-    // Body contains the new tokens
     const body = await response.json();
     expect(body.success).toBe(true);
     expect(body.data.token).toBe(newAccessToken);
     expect(body.data.refreshToken).toBe(newRefreshToken);
 
-    // BLOCKER 1.5: cookie is re-set to the new access token so the
-    // Flutter Web build served at /rider-app/ picks up the new
-    // session on the next request.
+    // BLOCKER 1.5: cookie is re-set to the new access token
     const setCookie = response.headers.get('set-cookie');
     expect(setCookie).toBeTruthy();
     expect(setCookie).toContain('voltium-session=new-access-token-abc');
@@ -89,7 +93,7 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
   });
 
   it('rejects with 401 when refresh token is invalid', async () => {
-    mockVerifySessionToken.mockResolvedValue(null);
+    mocks.verifySessionToken.mockResolvedValue(null);
 
     const response = await POST(makeRequest({ refreshToken: 'bogus' }) as any);
 
@@ -98,16 +102,16 @@ describe('POST /api/auth/refresh (BLOCKER 1.5)', () => {
   });
 
   it('rejects with 401 when token version was revoked', async () => {
-    mockVerifySessionToken.mockResolvedValue({
+    mocks.verifySessionToken.mockResolvedValue({
       riderDbId: 'rider-db-1',
       tokenVersion: 3,
       role: 'rider',
     });
-    mockRider.findUnique.mockResolvedValue({
+    mocks.rider.findUnique.mockResolvedValue({
       id: 'rider-db-1',
       riderId: 'rider-1',
       phone: '9999999999',
-      tokenVersion: 5, // newer than session
+      tokenVersion: 5,
     });
 
     const response = await POST(makeRequest({ refreshToken: 'old-refresh' }) as any);
