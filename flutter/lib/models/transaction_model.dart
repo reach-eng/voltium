@@ -4,7 +4,22 @@ part 'transaction_model.g.dart';
 
 enum TransactionType { credit, debit }
 
-enum TransactionStatus { success, failed, pending, refunded }
+/// Mirrors the server-side enum in `web/prisma/schema.prisma`
+/// (`TransactionStatus`): PENDING / APPROVED / REJECTED / FAILED /
+/// REVERSED / REFUNDED. The historical Flutter enum (success /
+/// failed / pending / refunded) is preserved for backwards
+/// compatibility with serialized JSON; the parser below
+/// normalises legacy values into the new canonical set.
+enum TransactionStatus {
+  pending,
+  approved,
+  rejected,
+  failed,
+  reversed,
+  refunded,
+  // Legacy alias for older client writes / cached records.
+  success,
+}
 
 enum BreakdownType { charge, tax, discount, penalty, adjustment }
 
@@ -224,9 +239,13 @@ class TransactionModel {
   static TransactionStatus _parseTransactionStatus(dynamic value) {
     if (value == null) return TransactionStatus.pending;
     if (value is TransactionStatus) return value;
-    final str = value.toString().toLowerCase();
+    final raw = value.toString().toLowerCase();
+    // Map the legacy client-side alias `success` to the new
+    // canonical `approved`. Both mean "the server approved this
+    // transaction".
+    final canonical = raw == 'success' ? 'approved' : raw;
     return TransactionStatus.values.firstWhere(
-      (e) => e.name.toLowerCase() == str,
+      (e) => e.name.toLowerCase() == canonical,
       orElse: () => TransactionStatus.pending,
     );
   }

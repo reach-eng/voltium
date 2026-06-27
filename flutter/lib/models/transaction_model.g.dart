@@ -46,8 +46,11 @@ const _$TransactionTypeEnumMap = {
 };
 
 const _$TransactionStatusEnumMap = {
-  TransactionStatus.success: 'success',
-  TransactionStatus.failed: 'failed',
   TransactionStatus.pending: 'pending',
+  TransactionStatus.approved: 'approved',
+  TransactionStatus.rejected: 'rejected',
+  TransactionStatus.failed: 'failed',
+  TransactionStatus.reversed: 'reversed',
   TransactionStatus.refunded: 'refunded',
+  TransactionStatus.success: 'success',
 };

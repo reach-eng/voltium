@@ -18,7 +18,9 @@ void main() {
 
       expect(tx.id, 'tx-123');
       expect(tx.amount, 50050);
-      expect(tx.status, TransactionStatus.success);
+      // Phase 2.5: legacy 'SUCCESS' is normalised to the new
+      // canonical 'approved' enum value.
+      expect(tx.status, TransactionStatus.approved);
     });
 
     test('TransactionModel should correctly format currency', () {
@@ -27,7 +29,7 @@ void main() {
         id: 'tx-123',
         amount: 15075,
         type: TransactionType.credit,
-        status: TransactionStatus.success,
+        status: TransactionStatus.approved,
         purpose: 'TOP_UP',
         createdAt: DateTime.now(),
       );

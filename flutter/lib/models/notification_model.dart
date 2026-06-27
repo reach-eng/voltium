@@ -3,7 +3,22 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'notification_model.g.dart';
 
+/// Mirrors the server-side enum in `web/prisma/schema.prisma`
+/// (`NotificationType`): INFO / ALERT / PROMOTION / PAYMENT /
+/// VEHICLE / SOS / SYSTEM. The historical Flutter enum
+/// (rideStarted / rideEnded / ...) is preserved for backwards
+/// compatibility with cached records; the parser normalises both
+/// the legacy names and the new server-side values into the
+/// canonical set.
 enum AppNotificationType {
+  info,
+  alert,
+  promotion,
+  payment,
+  vehicle,
+  sos,
+  system,
+  // Legacy aliases from the pre-Phase-2.5 Flutter enum.
   rideStarted,
   rideEnded,
   paymentReceived,
@@ -11,7 +26,6 @@ enum AppNotificationType {
   lowBattery,
   sosAlert,
   promo,
-  system,
 }
 
 @JsonSerializable(createFactory: false)
@@ -57,10 +71,7 @@ class AppNotification {
             DateTime.now().millisecondsSinceEpoch.toString(),
         title: json['title']?.toString() ?? '',
         message: json['message']?.toString() ?? json['body']?.toString() ?? '',
-        type: AppNotificationType.values.firstWhere(
-          (e) => e.name == json['type'],
-          orElse: () => AppNotificationType.system,
-        ),
+        type: _parseType(json['type']),
         createdAt: DateTime.tryParse(json['createdAt']?.toString() ??
                 json['timestamp']?.toString() ??
                 '',) ??
@@ -70,24 +81,61 @@ class AppNotification {
         data: json['data'] as Map<String, dynamic>?,
       );
 
+  /// Phase 2.5: normalises both the new server-side values (INFO /
+  /// ALERT / PROMOTION / etc.) and the legacy Flutter names
+  /// (rideStarted / paymentReceived / etc.) into the canonical enum.
+  static AppNotificationType _parseType(dynamic raw) {
+    if (raw is AppNotificationType) return raw;
+    final name = raw?.toString() ?? '';
+    final lower = name.toLowerCase();
+    // Server-side canonical names.
+    for (final v in AppNotificationType.values) {
+      if (v.name.toLowerCase() == lower) return v;
+    }
+    // Legacy Flutter aliases (deprecated).
+    switch (lower) {
+      case 'ridestarted':
+        return AppNotificationType.rideStarted;
+      case 'rideended':
+        return AppNotificationType.rideEnded;
+      case 'paymentreceived':
+        return AppNotificationType.paymentReceived;
+      case 'paymentsent':
+        return AppNotificationType.paymentSent;
+      case 'lowbattery':
+        return AppNotificationType.lowBattery;
+      case 'sosalert':
+        return AppNotificationType.sosAlert;
+      case 'promo':
+        return AppNotificationType.promo;
+    }
+    return AppNotificationType.system;
+  }
+
   @JsonKey(includeFromJson: false, includeToJson: false)
   IconData get icon {
     switch (type) {
       case AppNotificationType.rideStarted:
+      case AppNotificationType.vehicle:
         return Icons.electric_moped;
       case AppNotificationType.rideEnded:
         return Icons.check_circle;
       case AppNotificationType.paymentReceived:
         return Icons.arrow_downward;
       case AppNotificationType.paymentSent:
+      case AppNotificationType.payment:
         return Icons.arrow_upward;
       case AppNotificationType.lowBattery:
         return Icons.battery_alert;
       case AppNotificationType.sosAlert:
+      case AppNotificationType.sos:
+      case AppNotificationType.alert:
         return Icons.warning;
       case AppNotificationType.promo:
+      case AppNotificationType.promotion:
         return Icons.celebration;
       case AppNotificationType.system:
+      case AppNotificationType.info:
         return Icons.info;
     }
   }
@@ -96,20 +144,25 @@ class AppNotification {
   Color get iconColor {
     switch (type) {
       case AppNotificationType.rideStarted:
+      case AppNotificationType.vehicle:
         return Colors.blue;
       case AppNotificationType.rideEnded:
-        return Colors.green;
       case AppNotificationType.paymentReceived:
         return Colors.green;
       case AppNotificationType.paymentSent:
+      case AppNotificationType.payment:
         return Colors.orange;
       case AppNotificationType.lowBattery:
+      case AppNotificationType.alert:
         return Colors.red;
       case AppNotificationType.sosAlert:
+      case AppNotificationType.sos:
         return Colors.red;
       case AppNotificationType.promo:
+      case AppNotificationType.promotion:
         return Colors.purple;
       case AppNotificationType.system:
+      case AppNotificationType.info:
         return Colors.grey;
     }
   }
@@ -118,20 +171,25 @@ class AppNotification {
   Color get iconBgColor {
     switch (type) {
       case AppNotificationType.rideStarted:
+      case AppNotificationType.vehicle:
         return Colors.blue.shade50;
       case AppNotificationType.rideEnded:
-        return Colors.green.shade50;
       case AppNotificationType.paymentReceived:
         return Colors.green.shade50;
       case AppNotificationType.paymentSent:
+      case AppNotificationType.payment:
         return Colors.orange.shade50;
       case AppNotificationType.lowBattery:
+      case AppNotificationType.alert:
         return Colors.red.shade50;
       case AppNotificationType.sosAlert:
+      case AppNotificationType.sos:
         return Colors.red.shade50;
       case AppNotificationType.promo:
+      case AppNotificationType.promotion:
         return Colors.purple.shade50;
       case AppNotificationType.system:
+      case AppNotificationType.info:
         return Colors.grey.shade50;
     }
   }

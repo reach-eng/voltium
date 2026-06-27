@@ -7,24 +7,24 @@ part of 'rider_rental.dart';
 // **************************************************************************
 
 RiderRental _$RiderRentalFromJson(Map<String, dynamic> json) => RiderRental(
-  rentalStatus: json['rentalStatus'] as String? ?? 'NONE',
-  assignedVehicle: json['assignedVehicle'] as String?,
-  pickupHub: json['pickupHub'] as String?,
-  teamLeader: json['teamLeader'] as String?,
-  emergencyContact: json['emergencyContact'] as String?,
-  intent: json['intent'] as String?,
-  submissionDate: json['submissionDate'] == null
-      ? null
-      : DateTime.parse(json['submissionDate'] as String),
-  returnPending: json['returnPending'] as bool? ?? false,
-  pickupPhotoFront: json['pickupPhotoFront'] as String?,
-  pickupPhotoBack: json['pickupPhotoBack'] as String?,
-  pickupPhotoLeft: json['pickupPhotoLeft'] as String?,
-  pickupPhotoRight: json['pickupPhotoRight'] as String?,
-  pickupPhotoWithVehicle: json['pickupPhotoWithVehicle'] as String?,
-  planDone: json['planDone'] as bool? ?? false,
-  pickupDone: json['pickupDone'] as bool? ?? false,
-);
+      rentalStatus: json['rentalStatus'] as String? ?? 'NONE',
+      assignedVehicle: json['assignedVehicle'] as String?,
+      pickupHub: json['pickupHub'] as String?,
+      teamLeader: json['teamLeader'] as String?,
+      emergencyContact: json['emergencyContact'] as String?,
+      intent: json['intent'] as String?,
+      submissionDate: json['submissionDate'] == null
+          ? null
+          : DateTime.parse(json['submissionDate'] as String),
+      returnPending: json['returnPending'] as bool? ?? false,
+      pickupPhotoFront: json['pickupPhotoFront'] as String?,
+      pickupPhotoBack: json['pickupPhotoBack'] as String?,
+      pickupPhotoLeft: json['pickupPhotoLeft'] as String?,
+      pickupPhotoRight: json['pickupPhotoRight'] as String?,
+      pickupPhotoWithVehicle: json['pickupPhotoWithVehicle'] as String?,
+      planDone: json['planDone'] as bool? ?? false,
+      pickupDone: json['pickupDone'] as bool? ?? false,
+    );
 
 Map<String, dynamic> _$RiderRentalToJson(RiderRental instance) =>
     <String, dynamic>{
