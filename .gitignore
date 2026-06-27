@@ -165,6 +165,8 @@ web/scratch-probe.ts
 
 # Opencode / claude artifacts
 .commandcode/
+.agents/
+.claude/
 
 # Rider-app debug screenshots
 flutter/rider-app-debug-screenshot.png
