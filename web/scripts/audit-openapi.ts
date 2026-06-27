@@ -275,8 +275,12 @@ function main(): void {
   const fromTs = extractOpenApiFromTs();
   const fromJson = extractOpenApiFromJson();
 
-  // Prefer the JSON (compiled) if present, fall back to the TS source.
-  const openapi = fromJson.length > 0 ? fromJson : fromTs;
+  // Prefer the TS source (single source of truth) over the JSON
+  // (compiled output). The TS gets a $ref to a schema that may not
+  // exist yet; we only care about (method, path) coverage, not the
+  // refs, so prefer the TS to keep .ts and .json in sync as one
+  // progresses. Phase 2.4 will regenerate the JSON from the TS.
+  const openapi = fromTs.length > 0 ? fromTs : fromJson;
 
   const rows = diff(routes, openapi);
   const summary = renderSummary(rows);

@@ -334,6 +334,64 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
+      // ── Admin: Auth ──────────────────────────────────────────────────────
+      '/api/admin/auth/login': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Admin login with email + password',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } },
+                  required: ['email', 'password'],
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Login successful, session cookie set' } },
+        },
+      },
+      '/api/admin/auth/auto-login': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Dev-only auto-login (disabled in production)',
+          responses: { '200': { description: 'Auto-login successful' } },
+        },
+      },
+      '/api/admin/auth/me': {
+        get: {
+          tags: ['Auth'],
+          summary: 'Get current admin session profile',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'Admin profile' } },
+        },
+      },
+      '/api/admin/auth/refresh': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Refresh admin session token (sets new cookie)',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': { schema: { properties: { refreshToken: { type: 'string' } }, required: ['refreshToken'] } },
+            },
+          },
+          responses: {
+            '200': { description: 'New tokens issued, admin session cookie re-set' },
+            '401': { description: 'Invalid or revoked refresh token' },
+          },
+        },
+      },
+      '/api/admin/auth/logout': {
+        post: {
+          tags: ['Auth'],
+          summary: 'Clear admin session cookie and bump token version',
+          security: [{ adminSession: [] }],
+          responses: { '200': { description: 'Logged out' } },
+        },
+      },
       // ── Admin ─────────────────────────────────────────────────────────────
       '/api/admin/kyc': {
         post: {

@@ -8,11 +8,11 @@ missing_openapi,POST,/api/admin/announcements,/api/admin/announcements,D:\voltiu
 missing_openapi,GET,/api/admin/audit/cleanup,/api/admin/audit/cleanup,D:\voltium\web\src\app\api\admin\audit\cleanup\route.ts
 missing_openapi,POST,/api/admin/audit/cleanup,/api/admin/audit/cleanup,D:\voltium\web\src\app\api\admin\audit\cleanup\route.ts
 missing_openapi,GET,/api/admin/audit-logs,/api/admin/audit-logs,D:\voltium\web\src\app\api\admin\audit-logs\route.ts
-missing_openapi,POST,/api/admin/auth/auto-login,/api/admin/auth/auto-login,D:\voltium\web\src\app\api\admin\auth\auto-login\route.ts
-missing_openapi,POST,/api/admin/auth/login,/api/admin/auth/login,D:\voltium\web\src\app\api\admin\auth\login\route.ts
-missing_openapi,POST,/api/admin/auth/logout,/api/admin/auth/logout,D:\voltium\web\src\app\api\admin\auth\logout\route.ts
-missing_openapi,GET,/api/admin/auth/me,/api/admin/auth/me,D:\voltium\web\src\app\api\admin\auth\me\route.ts
-missing_openapi,POST,/api/admin/auth/refresh,/api/admin/auth/refresh,D:\voltium\web\src\app\api\admin\auth\refresh\route.ts
+present,POST,/api/admin/auth/auto-login,/api/admin/auth/auto-login,D:\voltium\web\src\app\api\admin\auth\auto-login\route.ts
+present,POST,/api/admin/auth/login,/api/admin/auth/login,D:\voltium\web\src\app\api\admin\auth\login\route.ts
+present,POST,/api/admin/auth/logout,/api/admin/auth/logout,D:\voltium\web\src\app\api\admin\auth\logout\route.ts
+present,GET,/api/admin/auth/me,/api/admin/auth/me,D:\voltium\web\src\app\api\admin\auth\me\route.ts
+present,POST,/api/admin/auth/refresh,/api/admin/auth/refresh,D:\voltium\web\src\app\api\admin\auth\refresh\route.ts
 missing_openapi,GET,/api/admin/coupons,/api/admin/coupons,D:\voltium\web\src\app\api\admin\coupons\route.ts
 missing_openapi,POST,/api/admin/coupons,/api/admin/coupons,D:\voltium\web\src\app\api\admin\coupons\route.ts
 missing_openapi,PUT,/api/admin/coupons,/api/admin/coupons,D:\voltium\web\src\app\api\admin\coupons\route.ts
