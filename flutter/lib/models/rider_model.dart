@@ -107,6 +107,21 @@ class RiderModel {
 
   // ── Plan ────────────────────────────────────────────────────────────────
   final String planStatus;
+
+  // ── Device policy (Phase 2.6) ──────────────────────────────────────────
+  // Mirrors the corresponding Prisma columns used by the FCM overlay
+  // and security flags. Server is source of truth; the rider app
+  // mirrors the values into the secure storage so the FCM service
+  // can read them synchronously.
+  final String? fcmToken;
+  final bool isAdminLocked;
+  final bool isUninstallBlocked;
+  final bool isLocationMandatory;
+  final bool isAppsControlRestricted;
+  final bool deviceAdminGranted;
+  final bool displayOverlayGranted;
+  final DateTime? lastDeviceViolationAt;
+  final int deviceViolationCount;
   final String? currentPlan;
   final DateTime? planStartDate;
   final DateTime? planEndDate;
@@ -182,6 +197,16 @@ class RiderModel {
     this.depositStatus = DepositStatus.pending,
     this.paymentStreak = 0,
     this.planStatus = 'NONE',
+    // Device policy defaults (Phase 2.6). Server is source of truth.
+    this.fcmToken,
+    this.isAdminLocked = false,
+    this.isUninstallBlocked = false,
+    this.isLocationMandatory = false,
+    this.isAppsControlRestricted = false,
+    this.deviceAdminGranted = false,
+    this.displayOverlayGranted = false,
+    this.lastDeviceViolationAt,
+    this.deviceViolationCount = 0,
     this.currentPlan,
     this.planStartDate,
     this.planEndDate,
@@ -430,6 +455,18 @@ class RiderModel {
       depositStatus: _parseDepositStatus(json['depositStatus']),
       paymentStreak: json['paymentStreak'] as int? ?? 0,
       planStatus: json['planStatus'] as String? ?? 'NONE',
+      // Device policy (Phase 2.6).
+      fcmToken: json['fcmToken'] as String?,
+      isAdminLocked: json['isAdminLocked'] as bool? ?? false,
+      isUninstallBlocked: json['isUninstallBlocked'] as bool? ?? false,
+      isLocationMandatory: json['isLocationMandatory'] as bool? ?? false,
+      isAppsControlRestricted: json['isAppsControlRestricted'] as bool? ?? false,
+      deviceAdminGranted: json['deviceAdminGranted'] as bool? ?? false,
+      displayOverlayGranted: json['displayOverlayGranted'] as bool? ?? false,
+      lastDeviceViolationAt: json['lastDeviceViolationAt'] != null
+          ? DateTime.tryParse(json['lastDeviceViolationAt'] as String)
+          : null,
+      deviceViolationCount: json['deviceViolationCount'] as int? ?? 0,
       currentPlan: json['currentPlan'] as String?,
       planStartDate: json['planStartDate'] != null
           ? DateTime.tryParse(json['planStartDate'] as String)

@@ -46,14 +46,15 @@ export const kycUseCases = {
       case 'APPROVE': {
         return db.$transaction(async (tx: Prisma.TransactionClient) => {
           const result = await kycRepository.approveKyc(riderDbId, reviewerId);
+          // BLOCKER 2.7: notification is dispatched by the outbox
+          // worker (notificationDispatchJob, Phase 1.4). The repository
+          // no longer fires a duplicate notification. Emitting the
+          // event inside the transaction guarantees at-least-once
+          // delivery with retry/backoff.
           await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
             riderId: riderDbId,
             type: 'KYC_APPROVED',
           }, 3, tx);
-          // Notification is async; runs after transaction commits
-          notificationService.notifyKycStatusChange(riderDbId, 'APPROVED').catch((e) =>
-            logger.warn('[KYC] Push notification failed for APPROVED', { riderDbId, err: e })
-          );
           return result;
         });
       }
@@ -66,15 +67,15 @@ export const kycUseCases = {
             type: 'KYC_REJECTED',
             reason: rejectionReason,
           }, 3, tx);
-          notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', rejectionReason).catch((e) =>
-            logger.warn('[KYC] Push notification failed for REJECTED', { riderDbId, err: e })
-          );
           return result;
         });
       }
       case 'REQUEST_INFO': {
         const infoRequest = review.infoRequest || 'Additional information required';
         const result = await kycRepository.requestInfo(riderDbId, reviewerId, infoRequest);
+        // REQUEST_INFO is not in the outbox dispatch table yet
+        // (Phase 1.4 dispatcher handles APPROVE/REJECT). Keep the
+        // direct call for now; track for the next dispatcher update.
         await notificationService.notifyKycStatusChange(riderDbId, 'REQUESTED', infoRequest);
         return result;
       }

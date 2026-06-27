@@ -135,9 +135,14 @@ export const kycRepository = {
         data: { lifecycleStatus: 'KYC_APPROVED', kycDoneAt: new Date() },
       });
 
-      // Notify rider of KYC approval via FCM (fire-and-forget, outside transaction)
-      const { notificationService } = await import('@/lib/notification-service');
-      notificationService.notifyKycStatusChange(riderDbId, 'APPROVED').catch(() => {});
+      // BLOCKER 2.7: notification is dispatched by the outbox worker
+      // (kyc.use-cases.ts emits NOTIFICATION_SEND inside the same
+      // transaction). The repository no longer fires a duplicate
+      // notificationService.notifyKycStatusChange call.
+      //
+      // The use-case's emit() is committed atomically with the KYC
+      // approval, and notificationDispatchJob (Phase 1.4) handles
+      // the actual delivery with retry/backoff.
 
       return kyc;
     });
@@ -163,9 +168,8 @@ export const kycRepository = {
         data: { lifecycleStatus: 'SUSPENDED' },
       });
 
-      // Notify rider of KYC rejection via FCM
-      const { notificationService } = await import('@/lib/notification-service');
-      await notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', reason).catch(() => {});
+      // BLOCKER 2.7: notification is dispatched by the outbox worker.
+      // See the comment on approveKyc above.
 
       return kyc;
     });
