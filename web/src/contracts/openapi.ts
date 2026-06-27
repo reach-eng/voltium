@@ -504,6 +504,59 @@ function buildSpec(): OpenApiSpec {
           ],
           responses: { '200': { description: 'Paginated rider list' } },
         },
+        post: {
+          tags: ['Admin'],
+          summary: 'Create rider (admin)',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateRiderRequest' } } } },
+          responses: { '200': { description: 'Rider created' } },
+        },
+        put: {
+          tags: ['Admin'],
+          summary: 'Update rider (admin)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateRiderRequest' } } } },
+          responses: { '200': { description: 'Rider updated' } },
+        },
+        delete: {
+          tags: ['Admin'],
+          summary: 'Delete rider (admin)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Rider deleted' } },
+        },
+      },
+      '/api/admin/riders/actions': {
+        post: {
+          tags: ['Admin'],
+          summary: 'Rider security actions (lock/unlock/lock-password/verify)',
+          security: [{ adminSession: [] }],
+          requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/RiderActionRequest' } } } },
+          responses: { '200': { description: 'Action processed' } },
+        },
+      },
+      '/api/admin/riders/bulk': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Bulk rider query (filter by ids, status, hub)',
+          security: [{ adminSession: [] }],
+          parameters: [
+            { name: 'ids', in: 'query', schema: { type: 'string' } },
+            { name: 'status', in: 'query', schema: { type: 'string' } },
+            { name: 'hubId', in: 'query', schema: { type: 'string' } },
+          ],
+          responses: { '200': { description: 'Rider list' } },
+        },
+      },
+      '/api/admin/riders/{id}/device-data': {
+        get: {
+          tags: ['Admin'],
+          summary: 'Get rider device telemetry (location, battery, violations)',
+          security: [{ adminSession: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Device data' } },
+        },
       },
       '/api/admin/reconciliation': {
         get: {
