@@ -144,6 +144,7 @@ class VerifyOtpResponse {
       'token': token,
       'accountStatus': accountStatus,
       'isNewRider': isNewRider,
+      'fcmCommandSecret': fcmCommandSecret,
     };
   }
 }

@@ -143,6 +143,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
               response['accessToken'] as String?;
           if (token != null && !PlatformInfo.isWeb) {
             await SecureStorageService().setToken(token);
+            // Persist the FCM command secret (BLOCKER 1.1). Returned by the
+            // server in the verify-OTP response; required by
+            // [FCMService._validateSecurityEnvelope] to authenticate
+            // SECURITY_COMMAND messages (ADMIN_LOCK, UNLOCK_DEVICE, etc.).
+            // Web is excluded because FCM is mobile-only.
+            final fcmSecret = response['data']?['fcmCommandSecret'] ??
+                response['fcmCommandSecret'] as String?;
+            if (fcmSecret != null && fcmSecret.isNotEmpty) {
+              await SecureStorageService().writeFcmCommandSecret(fcmSecret);
+            }
           }
           if (!mounted) return;
           final riderData = response['rider'] ?? response['data'];
