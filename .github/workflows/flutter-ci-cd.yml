@@ -37,6 +37,8 @@ jobs:
   analyze:
     name: Flutter Analyze
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: ./flutter
@@ -76,6 +78,8 @@ jobs:
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [analyze]
     defaults:
       run:
@@ -105,6 +109,8 @@ jobs:
   build-debug:
     name: Build Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [analyze]
     defaults:
       run:
@@ -140,6 +146,8 @@ jobs:
   e2e-test:
     name: Flutter E2E Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [build-debug]
 
     strategy:
@@ -237,6 +245,8 @@ jobs:
   build-release:
     name: Build Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [build-debug, e2e-test]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     defaults:

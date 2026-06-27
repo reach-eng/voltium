@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 
-interface RateLimitConfig {
+export interface RateLimitConfig {
   windowMs: number;
   maxRequests: number;
 }

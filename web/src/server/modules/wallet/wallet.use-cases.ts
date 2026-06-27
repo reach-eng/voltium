@@ -14,6 +14,8 @@
 import { db } from '@/lib/db';
 import { walletRepository } from './wallet.repository';
 import { walletLedgerService } from './wallet-ledger.service';
+import { notificationService } from '@/lib/notification-service';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
@@ -248,6 +250,19 @@ export const walletUseCases = {
       details: { riderId: txn.riderId, amountPaise: txn.amount },
     });
 
+    await notificationService.createAndSend(
+      txn.riderId,
+      'Top-up Approved ✅',
+      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} has been approved.`,
+      'PAYMENT',
+      { screen: 'WALLET' }
+    );
+    await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
+      riderId: txn.riderId,
+      transactionId,
+      amountPaise: txn.amount,
+    });
+
     logger.info('[WalletUseCases] Topup approved', {
       transactionId,
       adminId,
@@ -270,6 +285,20 @@ export const walletUseCases = {
       entity: 'transaction',
       entityId: transactionId,
       details: { riderId: txn.riderId, amountPaise: txn.amount, reason },
+    });
+
+    await notificationService.createAndSend(
+      txn.riderId,
+      'Top-up Rejected ❌',
+      `Your top-up of ₹${(txn.amount / 100).toFixed(2)} was rejected: ${reason}`,
+      'PAYMENT',
+      { screen: 'WALLET' }
+    );
+    await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
+      riderId: txn.riderId,
+      transactionId,
+      amountPaise: txn.amount,
+      reason,
     });
 
     logger.info('[WalletUseCases] Topup rejected', { transactionId, adminId, reason });

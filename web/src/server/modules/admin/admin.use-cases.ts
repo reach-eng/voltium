@@ -65,7 +65,7 @@ export const adminUseCases = {
       action: AUDIT_ACTIONS.ADMIN_UPDATE,
       entity: 'admin',
       entityId: id,
-      details: { changes: params },
+      details: { changes: (({ password, ...safe }) => safe)(params) },
     });
 
     return admin;

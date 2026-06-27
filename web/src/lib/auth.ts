@@ -61,18 +61,16 @@ export function createSessionToken(payload: {
 }
 
 // Verify and decode a session token
-export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
+// The second parameter (context) is unused — kept for backward compatibility with existing callers
+export async function verifySessionToken(token: string, _context?: string): Promise<SessionPayload | null> {
   try {
-    // Validate token format
     if (!token || typeof token !== 'string' || token.split('.').length !== 3) {
       return null;
     }
 
     const [header, payload, signature] = token.split('.');
 
-    // Validate base64url encoding
     try {
-      // Try to decode to check if it's valid base64url
       Buffer.from(header, 'base64url');
       Buffer.from(payload, 'base64url');
     } catch {
@@ -96,12 +94,10 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 
     const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString());
 
-    // Check if token is expired
     if (decoded.exp && Date.now() > decoded.exp) {
       return null;
     }
 
-    // Validate required fields exist
     if (!decoded.riderId || !decoded.riderDbId || !decoded.phone) {
       return null;
     }
@@ -112,17 +108,36 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     try {
       if (decoded.role === 'admin') {
         const adminId = decoded.adminId || decoded.riderDbId;
-        currentVersion = await getOrSetResponse(
+        const cached = await getOrSetResponse(
           `token_version:admin:${adminId}`,
           async () => {
             const admin = await db.admin.findUnique({
               where: { id: adminId },
-              select: { tokenVersion: true },
+              select: { tokenVersion: true, isActive: true, role: true, permissions: true },
             });
-            return admin?.tokenVersion ?? 1;
+            return { tokenVersion: admin?.tokenVersion ?? 1, isActive: admin?.isActive ?? true, role: admin?.role ?? null, permissions: admin?.permissions ?? null };
           },
           30
         );
+        if (!cached) return null;
+        currentVersion = cached.tokenVersion;
+
+        if (!cached.isActive) {
+          logger.info('[Auth] Admin is deactivated. Token rejected.', { adminId });
+          return null;
+        }
+
+        if (cached.role && cached.role !== decoded.adminRole) {
+          decoded.adminRole = cached.role;
+        }
+
+        if (cached.permissions) {
+          try {
+            decoded.adminPermissions = JSON.parse(cached.permissions);
+          } catch {
+            // ignore parse errors
+          }
+        }
       } else {
         const riderDbId = decoded.riderDbId;
         currentVersion = await getOrSetResponse(
@@ -162,6 +177,39 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
     logger.error('[Auth] Token verification failed:', err);
     return null;
   }
+}
+
+/**
+ * Create a refresh token with longer expiry (30 days).
+ * Uses the same HS256 JWT format with a 'refresh' type marker.
+ */
+export function createRefreshToken(payload: {
+  riderId: string;
+  riderDbId: string;
+  phone: string;
+  role: string;
+  adminRole?: string;
+  adminId?: string;
+  adminPermissions?: string[];
+  tokenVersion?: number;
+}): string {
+  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+  const payloadStr = Buffer.from(
+    JSON.stringify({
+      ...payload,
+      type: 'refresh',
+      tokenVersion: payload.tokenVersion ?? 1,
+      iat: Date.now(),
+      exp: Date.now() + 30 * 24 * 60 * 60 * 1000,
+    })
+  ).toString('base64url');
+
+  const signature = crypto
+    .createHmac('sha256', ACTUAL_SECRET)
+    .update(`${header}.${payloadStr}`)
+    .digest('base64url');
+
+  return `${header}.${payloadStr}.${signature}`;
 }
 
 export * from './permissions';

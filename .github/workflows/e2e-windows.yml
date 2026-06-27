@@ -16,9 +16,13 @@ jobs:
   playwright-e2e:
     name: Playwright E2E Tests (Windows)
     runs-on: windows-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Start PostgreSQL Service
         shell: pwsh
@@ -40,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
@@ -73,7 +77,8 @@ jobs:
   flutter-e2e:
     name: Flutter Android E2E Tests (Windows)
     runs-on: windows-latest
-
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +108,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
       - name: Install backend dependencies
         run: npm ci --legacy-peer-deps
@@ -146,4 +151,5 @@ jobs:
           disable-animations: true
           working-directory: ./flutter
           script: |
+            adb reverse tcp:8081 tcp:8081
             flutter test integration_test/app_test.dart --dart-define=API_URL=http://localhost:8081 --timeout=none

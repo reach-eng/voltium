@@ -6,6 +6,8 @@
 
 import type { KycSubmission, KycReview } from './kyc.types';
 import { kycRepository } from './kyc.repository';
+import { notificationService } from '@/lib/notification-service';
+import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 
 export const kycUseCases = {
   async getKycStatus(riderDbId: string) {
@@ -38,16 +40,32 @@ export const kycUseCases = {
 
   async reviewKyc(riderDbId: string, reviewerId: string, review: KycReview) {
     switch (review.action) {
-      case 'APPROVE':
-        return kycRepository.approveKyc(riderDbId, reviewerId);
-      case 'REJECT':
-        return kycRepository.rejectKyc(riderDbId, reviewerId, review.rejectionReason || '');
-      case 'REQUEST_INFO':
-        return kycRepository.requestInfo(
-          riderDbId,
-          reviewerId,
-          review.infoRequest || 'Additional information required'
-        );
+      case 'APPROVE': {
+        const result = await kycRepository.approveKyc(riderDbId, reviewerId);
+        await notificationService.notifyKycStatusChange(riderDbId, 'APPROVED');
+        await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+          riderId: riderDbId,
+          type: 'KYC_APPROVED',
+        });
+        return result;
+      }
+      case 'REJECT': {
+        const rejectionReason = review.rejectionReason || '';
+        const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason);
+        await notificationService.notifyKycStatusChange(riderDbId, 'REJECTED', rejectionReason);
+        await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
+          riderId: riderDbId,
+          type: 'KYC_REJECTED',
+          reason: rejectionReason,
+        });
+        return result;
+      }
+      case 'REQUEST_INFO': {
+        const infoRequest = review.infoRequest || 'Additional information required';
+        const result = await kycRepository.requestInfo(riderDbId, reviewerId, infoRequest);
+        await notificationService.notifyKycStatusChange(riderDbId, 'REQUESTED', infoRequest);
+        return result;
+      }
     }
   },
 };

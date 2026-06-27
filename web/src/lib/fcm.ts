@@ -1,5 +1,7 @@
+import { createHmac, randomBytes } from 'crypto';
 import firebaseAdmin from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
+import { env } from '@/lib/env';
 
 /**
  * FCM Service Utility
@@ -50,11 +52,21 @@ export const fcmService = {
     if (action === 'LOCK_DEVICE' || action === 'FACTORY_RESET') {
       throw new Error(`${action} command is disabled for security compliance.`);
     }
+    const ts = Date.now().toString();
+    const nonce = randomBytes(16).toString('hex');
+    const challenge = randomBytes(8).toString('hex');
+    const hmacSecret = env.FCM_COMMAND_HMAC_SECRET;
+    const signature = createHmac('sha256', hmacSecret)
+      .update(`${action}.${ts}.${nonce}.${challenge}`)
+      .digest('hex');
     return this.sendDataMessage(token, {
       type: 'SECURITY_COMMAND',
       action,
+      ts,
+      nonce,
+      challenge,
+      signature,
       ...extra,
-      timestamp: new Date().toISOString(),
     });
   },
 
@@ -147,14 +159,13 @@ export const fcmService = {
    */
   async sendOverlayTrigger(
     token: string,
-    overlayType: string,
+    action: string,
     extraData: Record<string, string> = {}
   ) {
     return this.sendDataMessage(token, {
-      type: 'OVERLAY',
-      overlayType,
+      type: 'OVERLAY_TRIGGER',
+      action,
       ...extraData,
-      timestamp: new Date().toISOString(),
     });
   },
 };

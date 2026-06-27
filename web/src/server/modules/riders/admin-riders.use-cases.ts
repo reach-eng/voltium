@@ -670,7 +670,7 @@ export const adminRiderUseCases = {
       entityId: riderId,
       entity: 'rider',
       actorId,
-      details: data,
+      details: (({ lockPassword, ...safe }) => safe)(data),
     });
   },
 

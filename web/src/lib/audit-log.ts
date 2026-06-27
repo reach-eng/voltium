@@ -67,7 +67,8 @@ export async function createAuditLog(params: {
         `Audit log write failed for critical action ${params.action}: ${err?.message || err}`
       );
     }
-    console.error('[AUDIT_FAILED]', JSON.stringify(params), err?.message || err);
+    const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
+    console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), err?.message || err);
   }
 }
 

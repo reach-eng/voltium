@@ -218,16 +218,17 @@ export const rentalUseCases = {
       include: { hub: true },
     });
     if (!vehicle) throw new Error('Vehicle not found');
-    if (vehicle.status !== 'AVAILABLE' && rider.vehicleId !== vehicle.id) {
-      throw new Error(`Vehicle is currently ${vehicle.status.toLowerCase()}`);
-    }
-
     const resolvedHubName = hubId
       ? (await db.hub.findUnique({ where: { id: hubId } }))?.name || 'Unknown Hub'
       : vehicle.hub?.name || 'Unknown Hub';
 
-    // Update vehicle status + rider data atomically
+    // Check availability + update vehicle status + rider data atomically
     const updatedRider = await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      const freshVehicle = await tx.vehicle.findUnique({ where: { id: vehicle.id } });
+      if (!freshVehicle) throw new Error('Vehicle not found');
+      if (freshVehicle.status !== 'AVAILABLE' && rider.vehicleId !== freshVehicle.id) {
+        throw new Error(`Vehicle is currently ${freshVehicle.status.toLowerCase()}`);
+      }
       if (rider.vehicleId && rider.vehicleId !== vehicle.id) {
         await tx.vehicle.update({ where: { id: rider.vehicleId }, data: { status: 'AVAILABLE' } });
       }

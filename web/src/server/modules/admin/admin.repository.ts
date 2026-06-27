@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/password';
 import { AdminRole } from './admin.types';
+import type { Prisma } from '@prisma/client';
 
 export interface CreateAdminParams {
   email: string;
@@ -70,6 +71,16 @@ export const adminRepository = {
     if (params.password !== undefined) data.password = params.password;
     if (params.permissions !== undefined) data.permissions = JSON.stringify(params.permissions);
     if (params.isActive !== undefined) data.isActive = params.isActive;
+
+    const shouldInvalidateSession =
+      params.role !== undefined || params.permissions !== undefined || params.isActive !== undefined;
+
+    if (shouldInvalidateSession) {
+      return db.$transaction(async (tx: Prisma.TransactionClient) => {
+        await tx.admin.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });
+        return tx.admin.update({ where: { id }, data });
+      });
+    }
 
     return db.admin.update({ where: { id }, data });
   },

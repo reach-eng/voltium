@@ -34,6 +34,8 @@ jobs:
   e2e:
     name: Run Flutter E2E Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4

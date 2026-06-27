@@ -7,10 +7,14 @@ This file tracks issues that are known and accepted only temporarily for public 
 | Area | Issue | Status |
 | --- | --- | --- |
 | Mobile API layer | `flutter/lib/services/api_service.dart` still has broad legacy callers beyond the initial F8 wallet fix. | Fixed |
-| Device commands | FCM security commands are limited to `ADMIN_LOCK` and `UNLOCK_DEVICE`; real HMAC validation still needs to replace the interim challenge check. | Fixed |
+| Device commands | FCM security commands now use HMAC signing with `ts`/`nonce`/`challenge`/`signature`; client validates before executing commands. | Fixed |
 | Consent UX | Location consent is recorded from the permissions flow, but a dedicated privacy/consent screen is still needed for clearer user choice and revocation. | Fixed |
 | Flutter analysis | `flutter analyze` still reports existing warning/info debt in integration tests and UI files. | Fixed |
-| Secret operations | `CI_JWT_SECRET` must be added in GitHub Actions secrets before CI jobs that reference it can run. | Open |
+| Secret operations | `CI_JWT_SECRET` must be added in GitHub Actions secrets before CI jobs that reference it can run. | Manual step: `gh secret set CI_JWT_SECRET -R voltium -b "<value>"` aligns with CI workflow secret |
+| Vehicle pickup race | Availability check moved inside `$transaction` to prevent concurrent duplicate rentals. | Fixed |
+| KYC notifications | `reviewKcy` now sends rider notifications + OutboxEvents for approve/reject/request_info. | Fixed |
+| Wallet topup notifications | `approveTopup`/`rejectTopup` now send rider notifications + OutboxEvents. | Fixed |
+| CI/CD hardening | All 5 workflows have least-privilege `permissions:` blocks; `e2e-windows.yml` now has `adb reverse` and Node `20` standardization. | Fixed |
 
 ## Recently Remediated
 

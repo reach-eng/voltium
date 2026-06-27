@@ -19,6 +19,9 @@ jobs:
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +36,8 @@ jobs:
   no-docker-check:
     name: No-Docker Enforcement
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: .
@@ -46,6 +51,8 @@ jobs:
   regression-gates-check:
     name: Regression Gates Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: .
@@ -59,6 +66,8 @@ jobs:
   lint-and-typecheck:
     name: Lint & TypeScript
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -84,6 +93,8 @@ jobs:
   prisma-check:
     name: Prisma Validate & Migration Status
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -109,6 +120,8 @@ jobs:
   openapi-check:
     name: OpenAPI Spec Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -135,6 +148,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [lint-and-typecheck, prisma-check, openapi-check, no-docker-check, regression-gates-check]
     steps:
       - uses: actions/checkout@v4
@@ -161,6 +176,8 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [build]
     services:
       postgres:
