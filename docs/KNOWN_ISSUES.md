@@ -20,6 +20,12 @@ This file tracks issues that are known and accepted only temporarily for public 
 | Flutter Web session refresh | `/api/auth/refresh` re-sets the `voltium-session` cookie alongside the JSON body so the Flutter Web build at `/rider-app/` keeps the session alive. | Resolved in Phase 1.5 (commit `c738501`) |
 | FCM_COMMAND_HMAC_SECRET | **Rotate post-deploy.** The previous value was returned to every dev rider in verify-OTP responses before Phase 1.1 wired client-side storage. Existing rider devices will silently drop SECURITY_COMMAND messages until the user re-logs in. | Rotation step in `SECRET_ROTATION_CHECKLIST.md` |
 | Daily engagement cron | Birthday wishes + payment reminders now fire at 06:00 IST (was mislabeled as "Sun 03:00 IST" in the admin UI; the worker never actually had a cron schedule, only ran when an outbox event landed). | Resolved in Phase 1.4 (commit `c56b3a6`) — scheduled task `daily-engagement-emitter` |
+| Idempotency status enum | `IdempotencyKey.status` column was added as lowercase `text` in the original migration; Phase 3.3 rewrote it as a proper Prisma enum with `PROCESSING`/`COMPLETED`/`FAILED`. FAILED rows now allow retry (was returning `KeyNotFound`). | Resolved in Phase 3.3 (commit `fb0ba3b`) |
+| Outbox readyAt + updatedAt | `readyAt` was added by a prior migration but the Prisma schema never knew it, so exponential backoff was a no-op. `updatedAt` was missing, so the reaper never found stuck PROCESSING rows. Both wired in Phase 3.4. | Resolved in Phase 3.4 (commit `ae9a381`) |
+| Rider-app polling | Hard-coded `Timer.periodic` in `RiderProvider._poll()` / `_postPickupPoll()` has no lifecycle awareness. Ticked even while backgrounded, no pause on connectivity loss, no slow cadence for inactive screens. | **Follow-up:** wire `PollingManager` into `RiderProvider` (the utility class exists at `flutter/lib/core/polling/polling_manager.dart` with 6 tests) |
+| Focus-based data refresh | Dashboard, wallet, and support screens each call `provider.refreshFromApi()` in `initState` regardless of whether the screen is already visible. | **Follow-up:** wire `FocusObserver` into app shell (the utility exists at `flutter/lib/core/navigation/focus_observer.dart` with 1 test) |
+| Duplicate Zod schemas | `validators.ts` has `topUpSchema` and `topupSchema` (case collision); `zod-to-json-schema` generates duplicate keys, blocking Flutter client regen. | **Follow-up:** deduplicate to a single schema |
+| Phantom OpenAPI paths | 5 entries in `openapi.ts` have no corresponding `route.ts` handler (`POST /rider/fcm/update`, `PUT /api/notifications/read`, `PUT /api/rider/referral`, `PUT /api/rider/profile`, `POST /devices/fcm`). | **Follow-up:** remove or implement |
 
 ## Recently Remediated
 
@@ -41,7 +47,16 @@ This file tracks issues that are known and accepted only temporarily for public 
 | Firebase config | Env-driven; 9 required keys; no dummies. |
 | Outbox NOTIFICATION_SEND worker | Split into `notificationDispatchJob` (per-event) + `dailyEngagementJob` (06:00 IST). |
 | Token refresh cookie | Re-set on refresh, mirroring admin behavior. |
-
+| OpenAPI coverage | Expanded from 43 → 115 paths (97.2% coverage) via script (`npm run audit:openapi`). |
+| OpenAPI generation | Flutter client generator writes to `flutter/lib/core/network/generated/` (was `flutter/lib/generated/`). |
+| Enum alignment | `TransactionStatus` (APPROVED/REJECTED/REVERSED), `AppNotificationType` (INFO/ALERT/PAYMENT/VEHICLE/SOS), `TicketMessageSender` (new). |
+| Rider device-policy fields | Added `fcmToken`, `isAdminLocked`, `isUninstallBlocked` to rider model. |
+| KYC notification dedupe | Removed duplicate `sendRiderNotification` call from KYC repository (was up to 3 notifications per review). |
+| Idempotency status enum | `IdempotencyKey.status` column rewritten as proper Prisma enum; FAILED branch now allows retry. |
+| Outbox readyAt + updatedAt | Exponential backoff and reaper fixed; 2 new columns + composite index on `(status, eventType, readyAt)`. |
+| PollingManager utility | Lifecycle-aware polling class created (`flutter/lib/core/polling/polling_manager.dart`, 6 tests). |
+| FocusObserver utility | NavigatorObserver for focus-based refresh (`flutter/lib/core/navigation/focus_observer.dart`, 1 test). |
+ 
 ## Source Of Truth
 
 - Architecture: `docs/FINAL_ARCHITECTURE.md`
@@ -49,7 +64,9 @@ This file tracks issues that are known and accepted only temporarily for public 
 - Backup and restore: `docs/BACKUP_RESTORE.md`
 - PM2 production process setup: `docs/PM2_SETUP.md`
 
-## Phase 1 Audit
+## Audits
 
-See `docs/audits/2026-06-28-phase1-blockers.md` for the per-commit audit
-of the BLOCKERs (1.1-1.5) and Phase 0 pre-work.
+- **Phase 0 (Pre-work):** `docs/audits/2026-06-27-pre-work.md`
+- **Phase 1 (Blockers):** `docs/audits/2026-06-28-phase1-blockers.md`
+- **Phase 2 (Contracts & Enums):** `docs/audits/2026-06-27-phase2-contracts.md`
+- **Phase 3 (Polling & Idempotency):** `docs/audits/2026-06-28-phase3-polling.md`
