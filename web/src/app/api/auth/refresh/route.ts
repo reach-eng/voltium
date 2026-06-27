@@ -11,7 +11,13 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { db } from '@/lib/db';
-import { verifySessionToken, createSessionToken, createRefreshToken } from '@/lib/auth';
+import {
+  verifySessionToken,
+  createSessionToken,
+  createRefreshToken,
+  SESSION_COOKIE_NAME,
+  SESSION_COOKIE_OPTIONS,
+} from '@/lib/auth';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -68,11 +74,20 @@ export async function POST(request: NextRequest) {
 
     logger.info('[AuthRefresh] Token refreshed', { riderDbId: rider.id });
 
-    return success({
+    // BLOCKER 1.5: re-set the rider session cookie so the Flutter Web
+    // build served at /rider-app/ picks up the new access token on
+    // its next request. Without this, the browser would keep sending
+    // the old (now revoked) cookie and get 401 immediately.
+    //
+    // Mobile apps use the Authorization: Bearer header from the body
+    // and are unaffected. This change is web-only in effect.
+    const response = success({
       token: newToken,
       refreshToken: newRefreshToken,
       expiresIn: 60 * 60, // 1 hour in seconds
     });
+    response.cookies.set(SESSION_COOKIE_NAME, newToken, SESSION_COOKIE_OPTIONS);
+    return response;
   } catch (err: any) {
     logger.error('[AuthRefresh] Failed', { error: err.message });
     return errors.internal('Failed to refresh session');
