@@ -1,0 +1,15 @@
+# Codeowners for Voltium
+
+# Default owners (fallback)
+* @voltium-admin
+
+# Backend & Web
+/web/ @voltium-backend
+/prisma/ @voltium-backend @voltium-db
+
+# Mobile
+/flutter/ @voltium-mobile
+
+# DevOps & CI/CD
+/.github/ @voltium-devops
+/scripts/ @voltium-devops
