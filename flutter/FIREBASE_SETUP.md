@@ -4,48 +4,87 @@ The app uses Firebase for:
 - **Firebase Auth** — Optional Google-signed ID token verification (falls back to OTP)
 - **Firebase Cloud Messaging (FCM)** — Push notifications
 
-## Prerequisites
+## Configuration via env (BLOCKER 1.3)
+
+The app reads Firebase credentials from build-time `--dart-define` flags.
+The values are read by `flutter/lib/core/firebase/firebase_config.dart`.
+
+### 1. Get Firebase credentials
 
 ```bash
 npm install -g firebase-tools
 dart pub global activate flutterfire_cli
+firebase login
+# Create or open the Firebase project at https://console.firebase.google.com
 ```
 
-## Configure
+In Firebase Console:
+- Project Settings -> Your apps -> Android: copy `apiKey`, `mobilesdk_app_id`, `project_number`
+- Project Settings -> Your apps -> iOS: copy the iOS equivalents
+- Project Settings -> General: copy `projectId` and `storageBucket`
+
+### 2. Populate `flutter/.env` (copy from `flutter/.env.example`)
 
 ```bash
-# Login to Firebase (opens browser)
-firebase login
-
-# Create a Firebase project at https://console.firebase.google.com
-# Enable Authentication (Phone) and Cloud Messaging
-
-# Run FlutterFire configure — regenerates firebase_options.dart and downloads configs
-flutterfire configure --project=voltium-rider
-
-# This will overwrite:
-#   - lib/firebase_options.dart
-#   - android/app/google-services.json
-#   - ios/Runner/GoogleService-Info.plist (if iOS configured)
+cp flutter/.env.example flutter/.env
+# Then edit flutter/.env and fill in the 9 values
 ```
 
-## Development
+`.env` is in `.gitignore` and must never be committed.
 
-For local development without real Firebase credentials, the app:
-- Falls back to OTP-based login when Firebase Auth is unavailable
-- Logs a warning and skips FCM initialization
-- Works fully with `--dart-define=API_URL=http://localhost:8081`
+### 3. Build with env
 
-## Production / CI Integration
+Use the helper script:
 
-The repository commits **dummy** `firebase_options.dart` and `google-services.json` files to prevent secret leakage. 
-For production releases, the CI pipeline must inject the real configuration:
+```bash
+./flutter/scripts/build-web-with-env.sh
+```
 
-1. Base64-encode the real `google-services.json` and store it as a GitHub Secret (`GOOGLE_SERVICES_JSON_BASE64`).
-2. Base64-encode the real `firebase_options.dart` and store it as a GitHub Secret (`FIREBASE_OPTIONS_DART_BASE64`).
-3. During the CI build step (before `flutter build apk`), decode these secrets and overwrite the dummy files:
-   ```bash
-   echo $GOOGLE_SERVICES_JSON_BASE64 | base64 --decode > android/app/google-services.json
-   echo $FIREBASE_OPTIONS_DART_BASE64 | base64 --decode > lib/firebase_options.dart
-   ```
-4. Verify FCM HMAC secrets are synced with the backend.
+It reads `flutter/.env` and passes each value as `--dart-define=KEY=VALUE`
+to `flutter build web --release --base-href "/rider-app/"`.
+
+Or manually:
+
+```bash
+flutter build web --release --base-href "/rider-app/" \
+  --dart-define=FIREBASE_API_KEY_ANDROID=... \
+  --dart-define=FIREBASE_APP_ID_ANDROID=... \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID_ANDROID=... \
+  --dart-define=FIREBASE_API_KEY_IOS=... \
+  --dart-define=FIREBASE_APP_ID_IOS=... \
+  --dart-define=FIREBASE_MESSAGING_SENDER_ID_IOS=... \
+  --dart-define=FIREBASE_IOS_BUNDLE_ID=com.voltiumelectric.voltium \
+  --dart-define=FIREBASE_PROJECT_ID=... \
+  --dart-define=FIREBASE_STORAGE_BUCKET=...
+```
+
+For Android (APK), the same `--dart-define` flags apply to
+`flutter build apk --release`.
+
+### 4. If a value is missing
+
+`Firebase.initializeApp` throws `MissingFirebaseConfigException` at startup
+naming the missing key. Fix by adding the value to `.env` and rebuilding.
+
+## Development without real Firebase
+
+`flutter/.env.example` ships with empty values. If you build without
+populating `.env`, FCM is unavailable but the app still works for
+OTP-based login. Set `TEST_MODE=true` for the e2e tests.
+
+## CI Integration
+
+The CI must:
+1. Read 9 secrets from the secret store.
+2. Write them to a temporary `.env`.
+3. Invoke `./flutter/scripts/build-web-with-env.sh`.
+
+The legacy `GOOGLE_SERVICES_JSON_BASE64` / `FIREBASE_OPTIONS_DART_BASE64`
+secrets from previous CI are deprecated. Migrate to the per-key env
+variables.
+
+## Legacy
+
+The previous CI flow used base64-encoded `google-services.json` and
+`firebase_options.dart`. That path is preserved for reference but
+**deprecated** — the env-driven path above is the supported approach.
