@@ -1,5 +1,0 @@
-{
-  "saropaLints.enabled": true,
-  "saropaLints.runAnalysisAfterConfigChange": true,
-  "cmake.sourceDirectory": "/path/to/voltium/flutter/linux/runner"
-}
