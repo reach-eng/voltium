@@ -20,6 +20,7 @@
     "worker:start": "node dist/workers.js",
     "generate:openapi": "npx tsx src/contracts/openapi.ts",
     "check:openapi-drift": "npx tsx scripts/check-openapi-drift.ts",
+    "audit:openapi": "npx tsx scripts/audit-openapi.ts",
     "test:contracts": "vitest --run src/contracts/__tests__/",
     "test": "vitest",
     "test:unit": "vitest --run tests/unit",
