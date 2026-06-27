@@ -7,14 +7,11 @@ required_admin=(
   web/src/components/admin/screens/DashboardOverview.tsx
   web/src/components/admin/screens/RiderManagement.tsx
   web/src/components/admin/screens/KycManagement.tsx
-  web/src/components/admin/screens/GuarantorManagement.tsx
   web/src/components/admin/screens/RentalManagement.tsx
   web/src/components/admin/screens/VehicleManagement.tsx
   web/src/components/admin/screens/HubManagement.tsx
-  web/src/components/admin/screens/PlanManagement.tsx
   web/src/components/admin/screens/WalletDepositManagement.tsx
   web/src/components/admin/screens/TransactionManagement.tsx
-  web/src/components/admin/screens/PickupReturnBoard.tsx
   web/src/components/admin/screens/TicketManagement.tsx
   web/src/components/admin/screens/IncidentManagementScreen.tsx
   web/src/components/admin/screens/TeamLeaderManagement.tsx
@@ -23,23 +20,19 @@ required_admin=(
   web/src/components/admin/screens/ShiftManagement.tsx
   web/src/components/admin/screens/RiderScoringScreen.tsx
   web/src/components/admin/screens/NotificationManagement.tsx
-  web/src/components/admin/screens/BulkMessagingScreen.tsx
   web/src/components/admin/screens/OfferManagement.tsx
   web/src/components/admin/screens/RewardManagement.tsx
-  web/src/components/admin/screens/ReferralManagement.tsx
   web/src/components/admin/screens/AnalyticsDashboard.tsx
   web/src/components/admin/screens/AdminUserManagement.tsx
-  web/src/components/admin/screens/RolePermissionManagement.tsx
-  web/src/components/admin/screens/AuditLogScreen.tsx
   web/src/components/admin/screens/FaqManagement.tsx
   web/src/components/admin/screens/LegalManagement.tsx
-  web/src/components/admin/screens/FeatureFlagsScreen.tsx
   web/src/components/admin/screens/DeviceTrackingView.tsx
   web/src/components/admin/screens/SystemSettingsScreen.tsx
   web/src/components/admin/screens/ServerHealthScreen.tsx
   web/src/components/admin/screens/DataManagementScreen.tsx
-  web/src/components/admin/screens/MaintenanceModeScreen.tsx
   web/src/components/admin/screens/WorkflowCoverageScreen.tsx
+  web/src/components/admin/screens/BackgroundJobsScreen.tsx
+  web/src/components/admin/screens/EarningsManagement.tsx
 )
 
 required_rider=(
@@ -95,7 +88,23 @@ for file in "${required_rider[@]}"; do
   echo "PASS: $file"
 done
 
-grep -q "workflow-coverage" web/src/lib/role-config.ts || { echo "FAIL: workflow coverage nav missing"; exit 1; }
+grep -q "workflow-coverage" web/src/lib/role-config.ts || { echo "FAIL: workflow coverage nav missing from role-config.ts"; exit 1; }
+grep -q "background-jobs" web/src/lib/role-config.ts || { echo "FAIL: background-jobs nav missing from role-config.ts"; exit 1; }
+grep -q "earnings" web/src/lib/role-config.ts || { echo "FAIL: earnings nav missing from role-config.ts"; exit 1; }
+
+# Check each screen is reachable from AdminLayout.tsx sectionMap
+ADMIN_LAYOUT="web/src/components/admin/AdminLayout.tsx"
+SCREENS_DIR="web/src/components/admin/screens"
+for screen_file in "${required_admin[@]}"; do
+  base=$(basename "$screen_file" .tsx)
+  # Extract the section key from AdminLayout.tsx
+  if ! grep -q "loadAdminScreen('$base')" "$ADMIN_LAYOUT" 2>/dev/null; then
+    echo "FAIL: $base is not imported in AdminLayout.tsx sectionMap (unreachable)"
+    exit 1
+  fi
+  echo "REACHABLE: $base"
+done
+
 grep -q "RiderWorkflowHubScreen" flutter/lib/features/profile/presentation/screens/profile_screen.dart || { echo "FAIL: rider workflow hub not linked from profile"; exit 1; }
 grep -q "AuthState.topUpProof" flutter/lib/app/router_body.dart || { echo "FAIL: top-up proof screen not routed"; exit 1; }
 

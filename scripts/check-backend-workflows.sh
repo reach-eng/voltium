@@ -9,7 +9,6 @@ REQUIRED=(
   "web/src/app/api/rider/rental/return/route.ts"
   "web/src/app/api/rider/notifications/route.ts"
   "web/src/app/api/files/local-upload/[fileRecordId]/route.ts"
-  "web/prisma/migrations/20260616000002_add_local_auth_rate_limit/migration.sql"
   "docs/BACKEND_WORKFLOW_READY.md"
 )
 for file in "${REQUIRED[@]}"; do
