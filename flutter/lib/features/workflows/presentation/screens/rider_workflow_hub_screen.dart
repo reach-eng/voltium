@@ -24,7 +24,7 @@ import 'package:voltium_rider/features/notifications/presentation/screens/notifi
 import 'package:voltium_rider/features/notifications/presentation/screens/smart_notifications_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/app_settings_screen.dart';
-import 'package:voltium_rider/features/profile/presentation/screens/legal_page_screen.dart';
+import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';

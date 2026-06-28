@@ -1,24 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Set NODE_ENV to production so we exercise the real rate-limit logic
-// rather than the dev-mode bypass.
 vi.stubEnv('NODE_ENV', 'production');
 
-// Mock Prisma db so we can control database responses deterministically.
 vi.mock('@/lib/db', () => ({
   db: {
     rateLimitBucket: {
-      findUnique: vi.fn().mockResolvedValue(null),
-      upsert: vi.fn().mockResolvedValue(null),
-      update: vi.fn().mockResolvedValue(null),
       deleteMany: vi.fn().mockResolvedValue(undefined),
     },
+    $queryRawUnsafe: vi.fn().mockResolvedValue([{ points: 1, resetAt: new Date(Date.now() + 60000) }]),
   },
 }));
 
 type RateLimitResult = { allowed: boolean; remaining: number; resetAt: number };
 
-/** Create a Date object in the future/fresh window */
 function futureDate(offsetMs = 60_000): Date {
   return new Date(Date.now() + offsetMs);
 }
@@ -26,8 +20,7 @@ function futureDate(offsetMs = 60_000): Date {
 describe('checkRateLimit — token bucket logic (database path)', () => {
   let checkRateLimit: (identifier: string, config?: any) => Promise<RateLimitResult>;
   let clearRateLimitStore: () => Promise<void>;
-  const SECOND = 1000;
-  const MINUTE = 60 * SECOND;
+  const MINUTE = 60 * 1000;
 
   beforeEach(async () => {
     vi.useFakeTimers({ shouldAdvanceTime: false });
@@ -44,46 +37,32 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
 
   it('allows the first request and returns correct remaining', async () => {
     const { db } = await import('@/lib/db');
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue(null);
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:1',
-      points: 1,
-      resetAt: futureDate(),
-    });
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: futureDate() }]);
 
     const result = await checkRateLimit('user:1');
     expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(59); // API_RATE_LIMIT = 60 → 60 - 1
+    expect(result.remaining).toBe(59);
     expect(result.resetAt).toBeGreaterThan(Date.now());
   });
 
   it('decrements remaining for each successive request in the window', async () => {
     const { db } = await import('@/lib/db');
     const windowEnd = futureDate();
-
-    // Track bucket state across calls
     let points = 0;
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
-      if (points === 0) return Promise.resolve(null);
-      return Promise.resolve({ key: 'ratelimit:user:seq', points, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
-      points = 1;
-      return Promise.resolve({ key: 'ratelimit:user:seq', points: 1, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.update).mockImplementation(() => {
+
+    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
       points += 1;
-      return Promise.resolve({ key: 'ratelimit:user:seq', points, resetAt: windowEnd });
+      return Promise.resolve([{ points, resetAt: windowEnd }]);
     });
 
     const r1 = await checkRateLimit('user:seq');
-    expect(r1.remaining).toBe(59); // 60 - 1
+    expect(r1.remaining).toBe(59);
 
     const r2 = await checkRateLimit('user:seq');
-    expect(r2.remaining).toBe(58); // 60 - 2
+    expect(r2.remaining).toBe(58);
 
     const r3 = await checkRateLimit('user:seq');
-    expect(r3.remaining).toBe(57); // 60 - 3
+    expect(r3.remaining).toBe(57);
   });
 
   it('blocks requests after exceeding the max limit', async () => {
@@ -91,17 +70,9 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = futureDate();
     let points = 0;
 
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
-      if (points === 0) return Promise.resolve(null);
-      return Promise.resolve({ key: 'ratelimit:user:burst', points, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
-      points = 1;
-      return Promise.resolve({ key: 'ratelimit:user:burst', points: 1, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.update).mockImplementation(() => {
-      points += 1;
-      return Promise.resolve({ key: 'ratelimit:user:burst', points, resetAt: windowEnd });
+    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+      points = Math.min(points + 1, 4);
+      return Promise.resolve([{ points, resetAt: windowEnd }]);
     });
 
     const config = { windowMs: MINUTE, maxRequests: 3 };
@@ -118,11 +89,6 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     expect(r3.allowed).toBe(true);
     expect(r3.remaining).toBe(0);
 
-    // 4th request — points (3) >= maxRequests (3) → blocked
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() =>
-      Promise.resolve({ key: 'ratelimit:user:burst', points: 3, resetAt: windowEnd })
-    );
-
     const r4 = await checkRateLimit('user:burst', config);
     expect(r4.allowed).toBe(false);
     expect(r4.remaining).toBe(0);
@@ -133,15 +99,9 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const windowEnd = new Date(Date.now() + MINUTE);
     let points = 0;
 
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
-      if (points === 0) return Promise.resolve(null);
-      if (points >= 1)
-        return Promise.resolve({ key: 'ratelimit:user:reset', points, resetAt: windowEnd });
-      return Promise.resolve(null);
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
-      points = 1;
-      return Promise.resolve({ key: 'ratelimit:user:reset', points: 1, resetAt: windowEnd });
+    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+      points += 1;
+      return Promise.resolve([{ points, resetAt: windowEnd }]);
     });
 
     const config = { windowMs: MINUTE, maxRequests: 1 };
@@ -149,21 +109,10 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const r1 = await checkRateLimit('user:reset', config);
     expect(r1.allowed).toBe(true);
 
-    // Advance past the window so the database entry is expired
     vi.advanceTimersByTime(MINUTE + 1);
 
-    // Now findUnique returns the old entry, but existing.resetAt <= now is true
-    // → code upserts a new entry (first path)
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:reset',
-      points: 1,
-      resetAt: windowEnd, // expired
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:reset',
-      points: 1,
-      resetAt: new Date(Date.now() + MINUTE), // fresh window
-    });
+    const freshReset = new Date(Date.now() + MINUTE);
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: freshReset }]);
 
     const r2 = await checkRateLimit('user:reset', config);
     expect(r2.allowed).toBe(true);
@@ -174,73 +123,43 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const { db } = await import('@/lib/db');
     const config = { windowMs: MINUTE, maxRequests: 1 };
 
-    // First key → entry exhausted
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:a',
-      points: 1,
-      resetAt: futureDate(),
-    });
-
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: futureDate() }]);
     const r1 = await checkRateLimit('user:a', config);
-    expect(r1.allowed).toBe(false); // already at max
+    expect(r1.allowed).toBe(true);
 
-    // Different key → findUnique returns null → upsert creates new entry
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue(null);
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:b',
-      points: 1,
-      resetAt: futureDate(),
-    });
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 2, resetAt: futureDate() }]);
+    const r2 = await checkRateLimit('user:a', config);
+    expect(r2.allowed).toBe(false);
 
-    const r2 = await checkRateLimit('user:b', config);
-    expect(r2.allowed).toBe(true);
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: futureDate() }]);
+    const r3 = await checkRateLimit('user:b', config);
+    expect(r3.allowed).toBe(true);
   });
 
-  it('exposes resetAt in the future', async () => {
+  it('exposes resetAt from the result', async () => {
     const { db } = await import('@/lib/db');
-    const config = { windowMs: MINUTE, maxRequests: 5 };
+    const expectedResetAt = new Date(Date.now() + MINUTE);
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: expectedResetAt }]);
 
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue(null);
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:time',
-      points: 1,
-      resetAt: new Date(Date.now() + MINUTE),
-    });
-
-    const r1 = await checkRateLimit('user:time', config);
-    expect(r1.resetAt).toBeGreaterThanOrEqual(Date.now() + MINUTE);
+    const r1 = await checkRateLimit('user:time', { windowMs: MINUTE, maxRequests: 5 });
+    expect(r1.resetAt).toBe(expectedResetAt.getTime());
   });
 
   it('uses default API_RATE_LIMIT (60 req/min) when no config is passed', async () => {
     const { db } = await import('@/lib/db');
     const windowEnd = futureDate();
-    let points = 0;
+    let callCount = 0;
 
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
-      if (points === 0) return Promise.resolve(null);
-      return Promise.resolve({ key: 'ratelimit:user:default', points, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
-      points = 1;
-      return Promise.resolve({ key: 'ratelimit:user:default', points: 1, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.update).mockImplementation(() => {
-      points += 1;
-      return Promise.resolve({ key: 'ratelimit:user:default', points, resetAt: windowEnd });
+    vi.mocked(db.$queryRawUnsafe).mockImplementation(() => {
+      callCount++;
+      const points = Math.min(callCount, 61);
+      return Promise.resolve([{ points, resetAt: windowEnd }]);
     });
 
-    // 60 requests should all be allowed
     for (let i = 0; i < 60; i++) {
       const r = await checkRateLimit('user:default');
       expect(r.allowed).toBe(true);
     }
-
-    // 61st → blocked
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:default',
-      points: 60,
-      resetAt: windowEnd,
-    });
 
     const blocked = await checkRateLimit('user:default');
     expect(blocked.allowed).toBe(false);
@@ -252,7 +171,6 @@ describe('checkRateLimit — token bucket logic (database path)', () => {
     const { db } = await import('@/lib/db');
 
     await clearRateLimitStore();
-    // Should call deleteMany on the database rate limit bucket
     expect(db.rateLimitBucket.deleteMany).toHaveBeenCalledWith({});
   });
 });
@@ -273,99 +191,34 @@ describe('checkRateLimit — window expiry and renewal (database path)', () => {
     vi.useRealTimers();
   });
 
-  it('re-uses the existing entry when the window has not expired', async () => {
+  it('handles maxRequests=0 (all requests blocked)', async () => {
     const { db } = await import('@/lib/db');
-    const windowEnd = new Date(Date.now() + MINUTE);
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: futureDate() }]);
 
-    // Entry with 2 points, window still active
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:reuse',
-      points: 2,
-      resetAt: windowEnd,
-    });
-    vi.mocked(db.rateLimitBucket.update).mockResolvedValue({
-      key: 'ratelimit:user:reuse',
-      points: 3,
-      resetAt: windowEnd,
-    });
-
-    const r = await checkRateLimit('user:reuse', { windowMs: MINUTE, maxRequests: 5 });
-    expect(r.allowed).toBe(true);
-    expect(r.remaining).toBe(2); // 5 - 3
-    expect(db.rateLimitBucket.update).toHaveBeenCalled();
-    expect(db.rateLimitBucket.upsert).not.toHaveBeenCalled();
-  });
-
-  it('creates a fresh entry after the previous window expires', async () => {
-    const { db } = await import('@/lib/db');
-    const expiredReset = new Date(Date.now() - 1000); // expired 1 second ago
-    const freshReset = new Date(Date.now() + MINUTE);
-
-    // Entry exists but expired → should go through upsert path
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:renew',
-      points: 5,
-      resetAt: expiredReset,
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:renew',
-      points: 1,
-      resetAt: freshReset,
-    });
-
-    const r = await checkRateLimit('user:renew', { windowMs: MINUTE, maxRequests: 3 });
-    expect(r.allowed).toBe(true);
-    expect(r.remaining).toBe(2); // 3 - 1
-    expect(db.rateLimitBucket.upsert).toHaveBeenCalled();
-    expect(db.rateLimitBucket.update).not.toHaveBeenCalled();
-  });
-
-  it('handles maxRequests=0 (immediately blocks second request)', async () => {
-    const { db } = await import('@/lib/db');
-    const windowEnd = new Date(Date.now() + 60_000);
-    let points = 0;
-
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => {
-      if (points === 0) return Promise.resolve(null);
-      return Promise.resolve({ key: 'ratelimit:user:zero', points, resetAt: windowEnd });
-    });
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => {
-      points = 1;
-      return Promise.resolve({ key: 'ratelimit:user:zero', points: 1, resetAt: windowEnd });
-    });
-
-    // First request: creates bucket (points=1), 1 >= 0 means remaining = -1
     const r1 = await checkRateLimit('user:zero', { windowMs: 60_000, maxRequests: 0 });
-    expect(r1.allowed).toBe(true);
-    expect(r1.remaining).toBe(-1);
-
-    // Second request: points (1) >= maxRequests (0), blocked
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:zero',
-      points: 1,
-      resetAt: windowEnd,
-    });
-    const r2 = await checkRateLimit('user:zero', { windowMs: 60_000, maxRequests: 0 });
-    expect(r2.allowed).toBe(false);
-    expect(r2.remaining).toBe(0);
+    expect(r1.allowed).toBe(false);
+    expect(r1.remaining).toBe(0);
   });
 
   it('blocks when entry.points >= maxRequests and window is active', async () => {
     const { db } = await import('@/lib/db');
     const windowEnd = new Date(Date.now() + MINUTE);
 
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:full',
-      points: 10,
-      resetAt: windowEnd,
-    });
-
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 11, resetAt: windowEnd }]);
     const r = await checkRateLimit('user:full', { windowMs: MINUTE, maxRequests: 10 });
     expect(r.allowed).toBe(false);
     expect(r.remaining).toBe(0);
     expect(r.resetAt).toBe(windowEnd.getTime());
-    expect(db.rateLimitBucket.upsert).not.toHaveBeenCalled();
-    expect(db.rateLimitBucket.update).not.toHaveBeenCalled();
+  });
+
+  it('allows within limit after partial usage', async () => {
+    const { db } = await import('@/lib/db');
+    const windowEnd = new Date(Date.now() + MINUTE);
+
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 3, resetAt: windowEnd }]);
+    const r = await checkRateLimit('user:partial', { windowMs: MINUTE, maxRequests: 5 });
+    expect(r.allowed).toBe(true);
+    expect(r.remaining).toBe(2);
   });
 });
 
@@ -384,51 +237,40 @@ describe('checkRateLimit — database error handling', () => {
     vi.useRealTimers();
   });
 
-  it('handles findUnique rejection gracefully', async () => {
+  it('fails closed when $queryRawUnsafe rejects and failClosed is true', async () => {
     const { db } = await import('@/lib/db');
-    vi.mocked(db.rateLimitBucket.findUnique).mockRejectedValue(new Error('DB error'));
-    // upsert has to succeed for the code to continue
-    vi.mocked(db.rateLimitBucket.upsert).mockResolvedValue({
-      key: 'ratelimit:user:err',
-      points: 1,
-      resetAt: new Date(Date.now() + 60_000),
-    });
+    vi.mocked(db.$queryRawUnsafe).mockRejectedValue(new Error('DB error'));
 
-    // findUnique fails → catch returns null → new entry via upsert
-    const result = await checkRateLimit('user:err');
-    expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(59);
+    const result = await checkRateLimit('user:auth-err', { windowMs: 60_000, maxRequests: 5, failClosed: true });
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
   });
 
-  // upsert rejection is implicitly covered by the .catch() pattern
-  // tested in 'handles findUnique rejection gracefully' above.
+  it('fails open when $queryRawUnsafe rejects and failClosed is false', async () => {
+    const { db } = await import('@/lib/db');
+    vi.mocked(db.$queryRawUnsafe).mockRejectedValue(new Error('DB error'));
+
+    const result = await checkRateLimit('user:open-err', { windowMs: 60_000, maxRequests: 5, failClosed: false });
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(1);
+  });
+
+  it('fails open by default (failClosed is undefined)', async () => {
+    const { db } = await import('@/lib/db');
+    vi.mocked(db.$queryRawUnsafe).mockRejectedValue(new Error('DB error'));
+
+    const result = await checkRateLimit('user:default-err');
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(1);
+  });
 
   it('handles deleteMany rejection gracefully (cleanup)', async () => {
     const { db } = await import('@/lib/db');
-    vi.mocked(db.rateLimitBucket.deleteMany).mockImplementation(() =>
-      Promise.reject(new Error('DB error'))
-    );
-    vi.mocked(db.rateLimitBucket.findUnique).mockImplementation(() => Promise.resolve(null));
-    vi.mocked(db.rateLimitBucket.upsert).mockImplementation(() => Promise.resolve(null));
+    vi.mocked(db.rateLimitBucket.deleteMany).mockRejectedValue(new Error('DB error'));
+    vi.mocked(db.$queryRawUnsafe).mockResolvedValue([{ points: 1, resetAt: new Date(Date.now() + 60_000) }]);
 
-    // deleteMany is called during cleanup inside checkRateLimit;
-    // .catch(() => {}) should swallow the rejection.
     const result = await checkRateLimit('user:cleanup-err');
     expect(result.allowed).toBe(true);
-  });
-
-  it('propagates update rejection (no .catch() on update path)', async () => {
-    const { db } = await import('@/lib/db');
-    const windowEnd = futureDate();
-    vi.mocked(db.rateLimitBucket.findUnique).mockResolvedValue({
-      key: 'ratelimit:user:update-err',
-      points: 1,
-      resetAt: windowEnd,
-    });
-    vi.mocked(db.rateLimitBucket.update).mockRejectedValue(new Error('DB error'));
-
-    // The update path has no .catch() guard, so the error propagates
-    await expect(checkRateLimit('user:update-err')).rejects.toThrow('DB error');
   });
 });
 

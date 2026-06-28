@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
-import 'support_center_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import '../../../../theme/app_theme.dart';
 

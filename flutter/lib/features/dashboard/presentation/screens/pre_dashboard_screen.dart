@@ -5,6 +5,7 @@ import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/providers/rider_provider.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/utils/lifecycle_rank.dart';
 import 'package:voltium_rider/widgets/approval_matrix_widget.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
@@ -12,8 +13,8 @@ import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/pre_dashboard_widgets.dart';
-import 'notification_center_screen.dart';
-import 'support_center_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import '../../../../theme/app_theme.dart';
 
 class PreDashboardScreen extends StatefulWidget {
@@ -41,18 +42,18 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
     }
 
     final kycDone = rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 4);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4);
     final kycVerified = rider.kycStatus == KycStatus.verified || rider.kycDone;
     final kycRejected = rider.kycStatus == KycStatus.rejected;
     final kycSubmitted = rider.kycStatus == KycStatus.submitted;
     final depositDone = rider.depositDone ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 8);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 8);
     final planDone = rider.planDone ||
         (rider.currentPlan?.isNotEmpty ?? false) ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 9);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 9);
     final pickupDone = rider.pickupDone ||
         (rider.assignedVehicle?.isNotEmpty ?? false) ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 10);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 10);
 
     // Redirect to full dashboard (Screen 5) when vehicle is picked up
     if (pickupDone && !_redirected) {
@@ -431,27 +432,6 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
         ),
       ),
     );
-  }
-
-  int _lifecycleRank(RiderModel rider) {
-    const rank = <String, int>{
-      'NEW': 0,
-      'PHONE_VERIFIED': 1,
-      'PROFILE_SUBMITTED': 2,
-      'KYC_SUBMITTED': 3,
-      'KYC_APPROVED': 4,
-      'GUARANTOR_SUBMITTED': 5,
-      'GUARANTOR_APPROVED': 6,
-      'DEPOSIT_PENDING': 7,
-      'DEPOSIT_APPROVED': 8,
-      'PLAN_SELECTED': 9,
-      'PICKUP_SCHEDULED': 10,
-      'ACTIVE': 11,
-      'SUSPENDED': 12,
-      'RETURN_PENDING': 13,
-      'CLOSED': 14,
-    };
-    return rank[rider.lifecycleStatus] ?? 0;
   }
 
   Widget _buildMainContentCard(

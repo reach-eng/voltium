@@ -40,6 +40,11 @@ class DevicePolicyProvider extends ChangeNotifier {
   Timer? _securityFlagsTimer;
   Timer? _integrityTimer;
   String? _riderId;
+  int _integrityFailureCount = 0;
+
+  static const Duration _integrityInitialInterval = Duration(seconds: 10);
+  static const Duration _integrityMaxBackoff = Duration(seconds: 60);
+  static const int _integrityMaxRetries = 6;
 
   Future<void> _selfCheck() async {
     if (PlatformInfo.isWeb) return;
@@ -70,6 +75,50 @@ class DevicePolicyProvider extends ChangeNotifier {
     _forceUpdate = force;
     _mandatoryUpdateUrl = url;
     notifyListeners();
+  }
+
+  void setCameraDisabled(bool disabled) {
+    _hasPermissionViolation = disabled;
+    notifyListeners();
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('setCameraDisabled', {'disabled': disabled});
+    }
+  }
+
+  void setPasscodeRequired(bool required) {
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('setPasscodeRequired', {'required': required});
+    }
+  }
+
+  void triggerLocationVerification() {
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('triggerLocationVerification');
+    }
+  }
+
+  void setAppPersistenceRequired(bool required) {
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('setAppPersistenceRequired', {
+        'required': required,
+      });
+    }
+  }
+
+  void setLocationRequired(bool required) {
+    _hasPermissionViolation = required;
+    notifyListeners();
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('setLocationMandatory', {'enabled': required});
+    }
+  }
+
+  void setRestrictedAppsMode(bool restricted) {
+    if (!PlatformInfo.isWeb && Platform.isAndroid) {
+      _platform.invokeMethod('setAppsControlDisabled', {
+        'enabled': restricted,
+      });
+    }
   }
 
   void setLockedByAdmin(bool locked) {
@@ -172,15 +221,18 @@ class DevicePolicyProvider extends ChangeNotifier {
 
   void startIntegrityCheck() {
     _stopIntegrityCheck();
-    _integrityTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _performIntegrityCheck();
-    });
-    _performIntegrityCheck();
+    _integrityFailureCount = 0;
+    _scheduleIntegrityCheck(_integrityInitialInterval);
   }
 
   void _stopIntegrityCheck() {
     _integrityTimer?.cancel();
     _integrityTimer = null;
+  }
+
+  void _scheduleIntegrityCheck(Duration interval) {
+    _stopIntegrityCheck();
+    _integrityTimer = Timer(interval, _performIntegrityCheck);
   }
 
   Future<void> _performIntegrityCheck() async {
@@ -200,9 +252,31 @@ class DevicePolicyProvider extends ChangeNotifier {
       } else {
         _clearViolation();
       }
+
+      _onIntegrityResult(locationOk && cameraOk);
     } catch (e) {
       log('DevicePolicyProvider: Integrity check failed: $e');
+      _onIntegrityResult(false);
     }
+  }
+
+  void _onIntegrityResult(bool success) {
+    if (success) {
+      _integrityFailureCount = 0;
+      _scheduleIntegrityCheck(_integrityInitialInterval);
+      return;
+    }
+    _integrityFailureCount++;
+    if (_integrityFailureCount >= _integrityMaxRetries) {
+      _stopIntegrityCheck();
+      return;
+    }
+    final backoff = Duration(
+      seconds: (_integrityInitialInterval.inSeconds
+                  << (_integrityFailureCount - 1))
+              .clamp(0, _integrityMaxBackoff.inSeconds),
+    );
+    _scheduleIntegrityCheck(backoff);
   }
 
   void _setViolation(String permissionId) {

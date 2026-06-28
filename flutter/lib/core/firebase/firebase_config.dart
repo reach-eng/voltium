@@ -34,14 +34,6 @@ class MissingFirebaseConfigException implements Exception {
       'See flutter/lib/core/firebase/firebase_config.dart for the full key list.';
 }
 
-String _required(String key) {
-  const fromEnv = String.fromEnvironment('');
-  // String.fromEnvironment only resolves at compile time. We use it
-  // directly per key below; this helper exists for documentation.
-  assert(false, '_required should not be called at runtime');
-  return fromEnv;
-}
-
 class FirebaseConfig {
   // Android
   static const String _androidApiKey =

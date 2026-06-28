@@ -8,6 +8,7 @@
 library;
 
 import 'package:voltium_rider/models/rider_model.dart';
+import 'package:voltium_rider/utils/lifecycle_rank.dart';
 
 /// The target route for the rider based on their lifecycle state.
 enum LifecycleTarget {
@@ -45,7 +46,7 @@ class RiderLifecycleGate {
   static LifecycleTarget redirect(RiderModel rider) {
     // Account status overrides everything
     if (rider.accountStatus == AccountStatus.terminated ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 14)) {
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 14)) {
       return LifecycleTarget.terminated;
     }
     if (rider.accountStatus == AccountStatus.suspended ||
@@ -55,7 +56,7 @@ class RiderLifecycleGate {
 
     // Fully onboarded — go to dashboard
     if (rider.pickupDone ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 10)) {
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 10)) {
       return LifecycleTarget.dashboard;
     }
 
@@ -63,13 +64,13 @@ class RiderLifecycleGate {
     if (rider.intent == null ||
         rider.intent!.isEmpty ||
         !(rider.registrationDone ||
-            (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 2))) {
+            (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 2))) {
       return LifecycleTarget.intent;
     }
 
     // KYC not done — go to KYC form
     if (!(rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && _lifecycleRank(rider) >= 4))) {
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4))) {
       return LifecycleTarget.kycForm;
     }
 
@@ -96,24 +97,4 @@ class RiderLifecycleGate {
         target == LifecycleTarget.preDashboard;
   }
 
-  static int _lifecycleRank(RiderModel rider) {
-    const rank = <String, int>{
-      'NEW': 0,
-      'PHONE_VERIFIED': 1,
-      'PROFILE_SUBMITTED': 2,
-      'KYC_SUBMITTED': 3,
-      'KYC_APPROVED': 4,
-      'GUARANTOR_SUBMITTED': 5,
-      'GUARANTOR_APPROVED': 6,
-      'DEPOSIT_PENDING': 7,
-      'DEPOSIT_APPROVED': 8,
-      'PLAN_SELECTED': 9,
-      'PICKUP_SCHEDULED': 10,
-      'ACTIVE': 11,
-      'SUSPENDED': 12,
-      'RETURN_PENDING': 13,
-      'CLOSED': 14,
-    };
-    return rank[rider.lifecycleStatus] ?? 0;
-  }
 }

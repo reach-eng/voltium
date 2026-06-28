@@ -74,7 +74,7 @@ class BackgroundLocationService {
       service.stopSelf();
     });
 
-    Timer.periodic(const Duration(seconds: 30), (timer) async {
+    Timer.periodic(const Duration(seconds: 60), (timer) async {
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
           service.setForegroundNotificationInfo(
@@ -93,7 +93,7 @@ class BackgroundLocationService {
 
         final position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
+            accuracy: LocationAccuracy.medium,
           ),
         );
 

@@ -1351,6 +1351,7 @@ model OutboxEvent {
   @@index([status, createdAt])
   @@index([status, eventType])
   @@index([status, eventType, readyAt])
+  @@index([status, updatedAt])
 }
 
 // ── Reconciliation ────────────────────────────────────────────────────────

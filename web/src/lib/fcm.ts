@@ -9,7 +9,7 @@ import { env } from '@/lib/env';
  * This mirrors the client-side nonce tracking in fcm_service.dart.
  */
 const _sentNonces = new Map<string, number>();
-const NONCE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes (matches client staleness window)
 
 // Periodic cleanup of expired nonces every 5 minutes
 if (typeof globalThis !== 'undefined' && !('_fcmNonceCleanup' in globalThis)) {

@@ -1,13 +1,3 @@
-/**
- * Auth Module — Unit Tests
- *
- * Covers:
- *   - createSessionToken (valid, missing fields)
- *   - verifySessionToken (valid, expired, tampered, malformed, null)
- *   - hasPermission (role-based, session-based, overrides, edge cases)
- *   - getPermissionsForRole (SUPER_ADMIN, READ_ONLY, other roles, unknown)
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   createSessionToken,
@@ -18,10 +8,6 @@ import {
   SESSION_COOKIE_OPTIONS,
   PERMISSIONS,
 } from '../../src/lib/auth';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 const validPayload = {
   riderId: 'VF-RD-TEST1234',
@@ -40,44 +26,39 @@ const adminPayload = {
   adminPermissions: ['riders_view', 'riders_update', 'kyc_view'],
 };
 
-// ---------------------------------------------------------------------------
-// createSessionToken
-// ---------------------------------------------------------------------------
-
 describe('createSessionToken', () => {
-  it('creates a valid JWT with 3 dot-separated parts', () => {
-    const token = createSessionToken(validPayload);
+  it('creates a valid JWT with 3 dot-separated parts', async () => {
+    const token = await createSessionToken(validPayload);
     expect(token).toBeDefined();
     expect(typeof token).toBe('string');
     expect(token.split('.')).toHaveLength(3);
   });
 
-  it('uses base64url-encoded header and payload', () => {
-    const token = createSessionToken(validPayload);
+  it('uses base64url-encoded header and payload', async () => {
+    const token = await createSessionToken(validPayload);
     const [header, payload] = token.split('.');
 
-    // Should decode without errors
     const decodedHeader = JSON.parse(Buffer.from(header, 'base64url').toString());
-    expect(decodedHeader).toEqual({ alg: 'HS256', typ: 'JWT' });
+    expect(decodedHeader).toEqual({ alg: 'HS256' });
 
     const decodedPayload = JSON.parse(Buffer.from(payload, 'base64url').toString());
     expect(decodedPayload.riderId).toBe(validPayload.riderId);
     expect(decodedPayload.phone).toBe(validPayload.phone);
   });
 
-  it('includes iat (issued at) and exp (expiry) claims', () => {
+  it('includes iat (issued at) and exp (expiry) claims', async () => {
     const before = Date.now();
-    const token = createSessionToken(validPayload);
+    const token = await createSessionToken(validPayload);
     const after = Date.now();
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
 
-    expect(payload.iat).toBeGreaterThanOrEqual(before);
-    expect(payload.iat).toBeLessThanOrEqual(after);
-    expect(payload.exp).toBe(payload.iat + SESSION_COOKIE_OPTIONS.maxAge * 1000);
+    expect(payload.iat).toBeGreaterThanOrEqual(Math.floor(before / 1000));
+    expect(payload.iat).toBeLessThanOrEqual(Math.ceil(after / 1000));
+    expect(payload.exp).toBe(payload.iat + 2 * 60 * 60);
   });
 
-  it('includes all provided fields in the payload', () => {
-    const token = createSessionToken(adminPayload);
+  it('includes all provided fields in the payload', async () => {
+    const token = await createSessionToken(adminPayload);
     const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
 
     expect(payload.adminRole).toBe('SUPER_ADMIN');
@@ -85,35 +66,31 @@ describe('createSessionToken', () => {
     expect(payload.adminPermissions).toEqual(['riders_view', 'riders_update', 'kyc_view']);
   });
 
-  it('throws if riderId is missing', () => {
+  it('throws if riderId is missing', async () => {
     const { riderId: _, ...incomplete } = validPayload;
-    expect(() => createSessionToken(incomplete as any)).toThrow('Invalid payload');
+    await expect(createSessionToken(incomplete as any)).rejects.toThrow('Invalid payload');
   });
 
-  it('throws if riderDbId is missing', () => {
+  it('throws if riderDbId is missing', async () => {
     const { riderDbId: _, ...incomplete } = validPayload;
-    expect(() => createSessionToken(incomplete as any)).toThrow('Invalid payload');
+    await expect(createSessionToken(incomplete as any)).rejects.toThrow('Invalid payload');
   });
 
-  it('throws if phone is missing', () => {
+  it('throws if phone is missing', async () => {
     const { phone: _, ...incomplete } = validPayload;
-    expect(() => createSessionToken(incomplete as any)).toThrow('Invalid payload');
+    await expect(createSessionToken(incomplete as any)).rejects.toThrow('Invalid payload');
   });
 
-  it('throws on empty strings for required fields', () => {
-    expect(() =>
+  it('throws on empty strings for required fields', async () => {
+    await expect(
       createSessionToken({ riderId: '', riderDbId: 'db-1', phone: '1234567890', role: 'rider' })
-    ).toThrow('Invalid payload');
+    ).rejects.toThrow('Invalid payload');
   });
 });
 
-// ---------------------------------------------------------------------------
-// verifySessionToken
-// ---------------------------------------------------------------------------
-
 describe('verifySessionToken', () => {
   it('verifies a valid token and returns the payload', async () => {
-    const token = createSessionToken(validPayload);
+    const token = await createSessionToken(validPayload);
     const decoded = await verifySessionToken(token);
 
     expect(decoded).not.toBeNull();
@@ -124,7 +101,7 @@ describe('verifySessionToken', () => {
   });
 
   it('verifies a token with admin fields and returns them', async () => {
-    const token = createSessionToken(adminPayload);
+    const token = await createSessionToken(adminPayload);
     const decoded = await verifySessionToken(token);
 
     expect(decoded?.adminRole).toBe('SUPER_ADMIN');
@@ -133,7 +110,7 @@ describe('verifySessionToken', () => {
   });
 
   it('returns null for a tampered token (modified signature)', async () => {
-    const token = createSessionToken(validPayload);
+    const token = await createSessionToken(validPayload);
     const parts = token.split('.');
     const tampered = `${parts[0]}.${parts[1]}.invalidsignature`;
 
@@ -142,9 +119,8 @@ describe('verifySessionToken', () => {
   });
 
   it('returns null for a tampered token (modified payload)', async () => {
-    const token = createSessionToken(validPayload);
+    const token = await createSessionToken(validPayload);
     const parts = token.split('.');
-    // Modify the payload to change riderId, then re-encode
     const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
     payload.riderId = 'different-rider';
     const tamperedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
@@ -155,17 +131,14 @@ describe('verifySessionToken', () => {
   });
 
   it('returns null for an expired token', async () => {
-    // Create a token with exp in the past by manipulating time
     const pastPayload = {
       ...validPayload,
       iat: Date.now() - 10_000,
-      exp: Date.now() - 1_000, // expired 1 second ago
+      exp: Date.now() - 1_000,
     };
-    // Manually craft an expired token
-    const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+    const header = Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url');
     const payload = Buffer.from(JSON.stringify(pastPayload)).toString('base64url');
 
-    // Need the correct secret to sign
     const crypto = await import('crypto');
     const { env } = await import('../../src/lib/env');
     const signature = crypto
@@ -203,7 +176,7 @@ describe('verifySessionToken', () => {
   });
 
   it('returns null for token with invalid base64url header', async () => {
-    const token = createSessionToken(validPayload);
+    const token = await createSessionToken(validPayload);
     const parts = token.split('.');
     const badToken = `not!valid!base64url!!!.${parts[1]}.${parts[2]}`;
     expect(await verifySessionToken(badToken)).toBeNull();
@@ -214,7 +187,6 @@ describe('verifySessionToken', () => {
     const crypto = await import('crypto');
 
     const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-    // Missing riderId
     const payload = Buffer.from(
       JSON.stringify({
         phone: '123',
@@ -232,10 +204,6 @@ describe('verifySessionToken', () => {
     expect(await verifySessionToken(`${header}.${payload}.${signature}`)).toBeNull();
   });
 });
-
-// ---------------------------------------------------------------------------
-// hasPermission — role-based
-// ---------------------------------------------------------------------------
 
 describe('hasPermission (role-based)', () => {
   it('SUPER_ADMIN returns true for any valid permission', () => {
@@ -279,10 +247,6 @@ describe('hasPermission (role-based)', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// hasPermission — session/object-based
-// ---------------------------------------------------------------------------
-
 describe('hasPermission (session-based)', () => {
   it('SUPER_ADMIN via session returns true for any permission', () => {
     const session = {
@@ -306,9 +270,9 @@ describe('hasPermission (session-based)', () => {
       riderDbId: 'x',
       phone: 'x',
     };
-    expect(hasPermission(session, 'kyc_approve')).toBe(true); // in overrides
-    expect(hasPermission(session, 'kyc_view')).toBe(true); // in overrides
-    expect(hasPermission(session, 'transactions_view')).toBe(false); // not in overrides
+    expect(hasPermission(session, 'kyc_approve')).toBe(true);
+    expect(hasPermission(session, 'kyc_view')).toBe(true);
+    expect(hasPermission(session, 'transactions_view')).toBe(false);
   });
 
   it('falls back to role-based check when adminPermissions is empty', () => {
@@ -320,7 +284,7 @@ describe('hasPermission (session-based)', () => {
       riderDbId: 'x',
       phone: 'x',
     };
-    expect(hasPermission(session, 'kyc_approve')).toBe(true); // from role
+    expect(hasPermission(session, 'kyc_approve')).toBe(true);
     expect(hasPermission(session, 'transactions_view')).toBe(false);
   });
 
@@ -359,10 +323,6 @@ describe('hasPermission (session-based)', () => {
     expect(hasPermission(session, 'kyc_view')).toBe(false);
   });
 });
-
-// ---------------------------------------------------------------------------
-// getPermissionsForRole
-// ---------------------------------------------------------------------------
 
 describe('getPermissionsForRole', () => {
   it('SUPER_ADMIN returns all permission keys', () => {
@@ -425,10 +385,6 @@ describe('getPermissionsForRole', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
 describe('auth constants', () => {
   it('ADMIN_ROLES contains all expected roles', () => {
     expect(ADMIN_ROLES).toContain('SUPER_ADMIN');
@@ -447,6 +403,6 @@ describe('auth constants', () => {
     expect(SESSION_COOKIE_OPTIONS.httpOnly).toBe(true);
     expect(SESSION_COOKIE_OPTIONS.sameSite).toBe('strict');
     expect(SESSION_COOKIE_OPTIONS.path).toBe('/');
-    expect(SESSION_COOKIE_OPTIONS.maxAge).toBe(7 * 24 * 60 * 60); // 7 days in seconds
+    expect(SESSION_COOKIE_OPTIONS.maxAge).toBe(7 * 24 * 60 * 60);
   });
 });

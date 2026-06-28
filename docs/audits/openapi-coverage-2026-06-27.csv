@@ -24,12 +24,16 @@ present,GET,/api/admin/data-management/backups/[id]/download,/api/admin/data-man
 present,GET,/api/admin/data-management/backups/[id],/api/admin/data-management/backups/{id},D:\voltium\web\src\app\api\admin\data-management\backups\[id]\route.ts
 present,DELETE,/api/admin/data-management/backups/[id],/api/admin/data-management/backups/{id},D:\voltium\web\src\app\api\admin\data-management\backups\[id]\route.ts
 present,POST,/api/admin/data-management/backups/[id]/verify,/api/admin/data-management/backups/{id}/verify,D:\voltium\web\src\app\api\admin\data-management\backups\[id]\verify\route.ts
+missing_openapi,GET,/api/admin/data-management/overview,/api/admin/data-management/overview,D:\voltium\web\src\app\api\admin\data-management\overview\route.ts
 present,GET,/api/admin/data-management/restore/history,/api/admin/data-management/restore/history,D:\voltium\web\src\app\api\admin\data-management\restore\history\route.ts
+missing_openapi,POST,/api/admin/data-management/restore/start,/api/admin/data-management/restore/start,D:\voltium\web\src\app\api\admin\data-management\restore\start\route.ts
+missing_openapi,POST,/api/admin/data-management/restore/validate,/api/admin/data-management/restore/validate,D:\voltium\web\src\app\api\admin\data-management\restore\validate\route.ts
 present,GET,/api/admin/data-management/schedule,/api/admin/data-management/schedule,D:\voltium\web\src\app\api\admin\data-management\schedule\route.ts
 present,POST,/api/admin/data-management/schedule,/api/admin/data-management/schedule,D:\voltium\web\src\app\api\admin\data-management\schedule\route.ts
 present,PUT,/api/admin/data-management/schedule,/api/admin/data-management/schedule,D:\voltium\web\src\app\api\admin\data-management\schedule\route.ts
 present,GET,/api/admin/data-management/storage,/api/admin/data-management/storage,D:\voltium\web\src\app\api\admin\data-management\storage\route.ts
 present,GET,/api/admin/deposits,/api/admin/deposits,D:\voltium\web\src\app\api\admin\deposits\route.ts
+present,POST,/api/admin/deposits,/api/admin/deposits,D:\voltium\web\src\app\api\admin\deposits\route.ts
 present,PUT,/api/admin/deposits,/api/admin/deposits,D:\voltium\web\src\app\api\admin\deposits\route.ts
 present,GET,/api/admin/earnings,/api/admin/earnings,D:\voltium\web\src\app\api\admin\earnings\route.ts
 present,GET,/api/admin/faqs,/api/admin/faqs,D:\voltium\web\src\app\api\admin\faqs\route.ts
@@ -39,6 +43,8 @@ present,DELETE,/api/admin/faqs,/api/admin/faqs,D:\voltium\web\src\app\api\admin\
 present,GET,/api/admin/feature-flags,/api/admin/feature-flags,D:\voltium\web\src\app\api\admin\feature-flags\route.ts
 present,PUT,/api/admin/feature-flags,/api/admin/feature-flags,D:\voltium\web\src\app\api\admin\feature-flags\route.ts
 present,GET,/api/admin/fleet,/api/admin/fleet,D:\voltium\web\src\app\api\admin\fleet\route.ts
+missing_openapi,GET,/api/admin/guarantors,/api/admin/guarantors,D:\voltium\web\src\app\api\admin\guarantors\route.ts
+missing_openapi,POST,/api/admin/guarantors,/api/admin/guarantors,D:\voltium\web\src\app\api\admin\guarantors\route.ts
 present,POST,/api/admin/hubs/bulk,/api/admin/hubs/bulk,D:\voltium\web\src\app\api\admin\hubs\bulk\route.ts
 present,GET,/api/admin/hubs,/api/admin/hubs,D:\voltium\web\src\app\api\admin\hubs\route.ts
 present,POST,/api/admin/hubs,/api/admin/hubs,D:\voltium\web\src\app\api\admin\hubs\route.ts
@@ -50,6 +56,8 @@ present,GET,/api/admin/incidents/[id],/api/admin/incidents/{id},D:\voltium\web\s
 present,PUT,/api/admin/incidents/[id],/api/admin/incidents/{id},D:\voltium\web\src\app\api\admin\incidents\[id]\route.ts
 present,GET,/api/admin/jobs,/api/admin/jobs,D:\voltium\web\src\app\api\admin\jobs\route.ts
 present,POST,/api/admin/jobs,/api/admin/jobs,D:\voltium\web\src\app\api\admin\jobs\route.ts
+missing_openapi,GET,/api/admin/kyc,/api/admin/kyc,D:\voltium\web\src\app\api\admin\kyc\route.ts
+present,POST,/api/admin/kyc,/api/admin/kyc,D:\voltium\web\src\app\api\admin\kyc\route.ts
 present,GET,/api/admin/legal,/api/admin/legal,D:\voltium\web\src\app\api\admin\legal\route.ts
 present,PUT,/api/admin/legal,/api/admin/legal,D:\voltium\web\src\app\api\admin\legal\route.ts
 present,GET,/api/admin/maintenance-mode,/api/admin/maintenance-mode,D:\voltium\web\src\app\api\admin\maintenance-mode\route.ts
@@ -66,10 +74,13 @@ present,PUT,/api/admin/plans,/api/admin/plans,D:\voltium\web\src\app\api\admin\p
 present,DELETE,/api/admin/plans,/api/admin/plans,D:\voltium\web\src\app\api\admin\plans\route.ts
 present,GET,/api/admin/reconciliation,/api/admin/reconciliation,D:\voltium\web\src\app\api\admin\reconciliation\route.ts
 present,GET,/api/admin/referrals,/api/admin/referrals,D:\voltium\web\src\app\api\admin\referrals\route.ts
+missing_openapi,GET,/api/admin/rentals,/api/admin/rentals,D:\voltium\web\src\app\api\admin\rentals\route.ts
+missing_openapi,PUT,/api/admin/rentals,/api/admin/rentals,D:\voltium\web\src\app\api\admin\rentals\route.ts
 present,GET,/api/admin/rewards,/api/admin/rewards,D:\voltium\web\src\app\api\admin\rewards\route.ts
 present,POST,/api/admin/rewards,/api/admin/rewards,D:\voltium\web\src\app\api\admin\rewards\route.ts
 present,POST,/api/admin/riders/actions,/api/admin/riders/actions,D:\voltium\web\src\app\api\admin\riders\actions\route.ts
 present,GET,/api/admin/riders/bulk,/api/admin/riders/bulk,D:\voltium\web\src\app\api\admin\riders\bulk\route.ts
+missing_openapi,POST,/api/admin/riders/bulk,/api/admin/riders/bulk,D:\voltium\web\src\app\api\admin\riders\bulk\route.ts
 present,GET,/api/admin/riders,/api/admin/riders,D:\voltium\web\src\app\api\admin\riders\route.ts
 present,POST,/api/admin/riders,/api/admin/riders,D:\voltium\web\src\app\api\admin\riders\route.ts
 present,PUT,/api/admin/riders,/api/admin/riders,D:\voltium\web\src\app\api\admin\riders\route.ts
@@ -84,6 +95,8 @@ present,GET,/api/admin/shifts,/api/admin/shifts,D:\voltium\web\src\app\api\admin
 present,POST,/api/admin/shifts,/api/admin/shifts,D:\voltium\web\src\app\api\admin\shifts\route.ts
 present,PUT,/api/admin/shifts,/api/admin/shifts,D:\voltium\web\src\app\api\admin\shifts\route.ts
 present,DELETE,/api/admin/shifts,/api/admin/shifts,D:\voltium\web\src\app\api\admin\shifts\route.ts
+missing_openapi,GET,/api/admin/system-settings,/api/admin/system-settings,D:\voltium\web\src\app\api\admin\system-settings\route.ts
+missing_openapi,PUT,/api/admin/system-settings,/api/admin/system-settings,D:\voltium\web\src\app\api\admin\system-settings\route.ts
 present,POST,/api/admin/team-leaders/bulk,/api/admin/team-leaders/bulk,D:\voltium\web\src\app\api\admin\team-leaders\bulk\route.ts
 present,GET,/api/admin/team-leaders,/api/admin/team-leaders,D:\voltium\web\src\app\api\admin\team-leaders\route.ts
 present,POST,/api/admin/team-leaders,/api/admin/team-leaders,D:\voltium\web\src\app\api\admin\team-leaders\route.ts
@@ -95,7 +108,9 @@ present,PUT,/api/admin/tickets,/api/admin/tickets,D:\voltium\web\src\app\api\adm
 present,POST,/api/admin/tickets/[id]/messages,/api/admin/tickets/{id}/messages,D:\voltium\web\src\app\api\admin\tickets\[id]\messages\route.ts
 present,GET,/api/admin/tickets/[id],/api/admin/tickets/{id},D:\voltium\web\src\app\api\admin\tickets\[id]\route.ts
 present,GET,/api/admin/transactions/bulk,/api/admin/transactions/bulk,D:\voltium\web\src\app\api\admin\transactions\bulk\route.ts
+missing_openapi,POST,/api/admin/transactions/bulk,/api/admin/transactions/bulk,D:\voltium\web\src\app\api\admin\transactions\bulk\route.ts
 present,GET,/api/admin/transactions,/api/admin/transactions,D:\voltium\web\src\app\api\admin\transactions\route.ts
+present,POST,/api/admin/transactions,/api/admin/transactions,D:\voltium\web\src\app\api\admin\transactions\route.ts
 present,PUT,/api/admin/transactions,/api/admin/transactions,D:\voltium\web\src\app\api\admin\transactions\route.ts
 present,POST,/api/admin/vehicles/bulk,/api/admin/vehicles/bulk,D:\voltium\web\src\app\api\admin\vehicles\bulk\route.ts
 present,GET,/api/admin/vehicles,/api/admin/vehicles,D:\voltium\web\src\app\api\admin\vehicles\route.ts
@@ -104,6 +119,7 @@ present,PUT,/api/admin/vehicles,/api/admin/vehicles,D:\voltium\web\src\app\api\a
 present,DELETE,/api/admin/vehicles,/api/admin/vehicles,D:\voltium\web\src\app\api\admin\vehicles\route.ts
 present,GET,/api/admin/vehicles/[id]/history,/api/admin/vehicles/{id}/history,D:\voltium\web\src\app\api\admin\vehicles\[id]\history\route.ts
 present,GET,/api/admin/workflow-coverage,/api/admin/workflow-coverage,D:\voltium\web\src\app\api\admin\workflow-coverage\route.ts
+missing_openapi,POST,/api/auth/logout,/api/auth/logout,D:\voltium\web\src\app\api\auth\logout\route.ts
 present,POST,/api/auth/refresh,/api/auth/refresh,D:\voltium\web\src\app\api\auth\refresh\route.ts
 present,POST,/api/auth/send-otp,/api/auth/send-otp,D:\voltium\web\src\app\api\auth\send-otp\route.ts
 present,POST,/api/auth/verify-otp,/api/auth/verify-otp,D:\voltium\web\src\app\api\auth\verify-otp\route.ts
@@ -162,6 +178,8 @@ present,GET,/api/rider/sync/pickup/vehicle,/api/rider/sync/pickup/vehicle,D:\vol
 present,POST,/api/riders/register-token,/api/riders/register-token,D:\voltium\web\src\app\api\riders\register-token\route.ts
 present,GET,/api/search,/api/search,D:\voltium\web\src\app\api\search\route.ts
 present,GET,/api/shifts,/api/shifts,D:\voltium\web\src\app\api\shifts\route.ts
+present,GET,/api/support/chat,/api/support/chat,D:\voltium\web\src\app\api\support\chat\route.ts
+present,POST,/api/support/chat,/api/support/chat,D:\voltium\web\src\app\api\support\chat\route.ts
 present,GET,/api/support/faqs,/api/support/faqs,D:\voltium\web\src\app\api\support\faqs\route.ts
 present,GET,/api/support/tickets,/api/support/tickets,D:\voltium\web\src\app\api\support\tickets\route.ts
 present,POST,/api/support/tickets,/api/support/tickets,D:\voltium\web\src\app\api\support\tickets\route.ts
@@ -172,8 +190,3 @@ present,DELETE,/api/transaction/history,/api/transaction/history,D:\voltium\web\
 present,POST,/api/transaction/request,/api/transaction/request,D:\voltium\web\src\app\api\transaction\request\route.ts
 present,POST,/api/transaction/topup,/api/transaction/topup,D:\voltium\web\src\app\api\transaction\topup\route.ts
 present,GET,/api/vehicles,/api/vehicles,D:\voltium\web\src\app\api\vehicles\route.ts
-missing_route,POST,,/api/admin/kyc,
-missing_route,POST,,/api/admin/deposits,
-missing_route,POST,,/api/admin/transactions,
-missing_route,GET,,/api/support/chat,
-missing_route,POST,,/api/support/chat,

@@ -27,6 +27,7 @@ import 'services/notification_service.dart';
 import 'services/fcm_service.dart';
 import 'services/monitoring_service.dart';
 import 'core/platform/platform_info.dart';
+import 'core/navigation/focus_observer.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'theme/app_theme.dart';
@@ -44,6 +45,12 @@ import 'package:voltium_rider/utils/app_constants.dart';
 
 bool get isTestModeOverride => AppConstants.isTestModeOverride;
 set isTestModeOverride(bool val) => AppConstants.isTestModeOverride = val;
+
+final FocusObserver focusObserver = FocusObserver((route) {
+  // Navigation is state-machine driven (setState), not Navigator-based.
+  // Tab-switch refresh is handled by AppShell.onTap.
+  // Reserved for future modal/push screen scenarios.
+});
 
 Future<void> main() async {
   if (AppConstants.isTestMode) {
@@ -237,6 +244,9 @@ class VoltiumApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
 
+      // ── Navigation Observer ───────────────────────────────────────────────
+      navigatorObservers: [focusObserver],
+
       // ── Home ──────────────────────────────────────────────────────────────
       home: const ErrorBoundary(
         child: OverlayManager(
@@ -268,6 +278,21 @@ class _AppShellState extends State<AppShell> {
         const ErrorBoundary(child: ProfileScreen()),
       ];
 
+  void _refreshTabOnFocus(int index) {
+    switch (index) {
+      case 1:
+        final wallet = context.read<WalletProvider>();
+        final riderId = context.read<RiderProvider>().riderId;
+        if (riderId != null) {
+          wallet.refreshTransactions(riderId: riderId);
+        }
+        break;
+      case 2:
+        context.read<SupportProvider>().refreshTickets();
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -289,6 +314,7 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() => _currentIndex = index);
+          _refreshTabOnFocus(index);
           MonitoringService.logInfo('Navigation: Switched to tab $index');
         },
         tabKeys: [

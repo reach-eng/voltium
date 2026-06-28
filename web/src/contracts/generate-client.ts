@@ -148,16 +148,21 @@ function run() {
       const isReq = required.includes(propName);
       const typeInfo = mapType(prop);
 
-      modelsContent += `  final ${typeInfo.typeStr}${isReq ? '' : '?'} ${propName};\n`;
+      modelsContent += `  final ${typeInfo.typeStr}${!isReq && typeInfo.typeStr !== 'dynamic' ? '?' : ''} ${propName};\n`;
     }
 
     // Constructor
-    modelsContent += `\n  ${name}({\n`;
-    for (const [propName, prop] of Object.entries(props)) {
-      const isReq = required.includes(propName);
-      modelsContent += `    ${isReq ? 'required ' : ''}this.${propName},\n`;
+    const propEntries = Object.entries(props);
+    if (propEntries.length === 0) {
+      modelsContent += `\n  ${name}();\n\n`;
+    } else {
+      modelsContent += `\n  ${name}({\n`;
+      for (const [propName, prop] of propEntries) {
+        const isReq = required.includes(propName);
+        modelsContent += `    ${isReq ? 'required ' : ''}this.${propName},\n`;
+      }
+      modelsContent += '  });\n\n';
     }
-    modelsContent += '  });\n\n';
 
     // fromJson
     modelsContent += `  factory ${name}.fromJson(Map<String, dynamic> json) {\n`;
@@ -191,8 +196,6 @@ function run() {
   let clientContent = `// GENERATED CODE - DO NOT MODIFY BY HAND
 // Generated from OpenAPI spec using generate-client.ts
 
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import '../api_client.dart';
 import 'api_models.dart';
 
@@ -278,7 +281,9 @@ class VoltiumApiClient {
           methodArgs.push(
             `${p.schema?.type === 'integer' ? 'int' : 'String'}${isReq ? '' : '?'} ${p.name}`
           );
-          queryParamsMap += `      if (${p.name} != null) '${p.name}': ${p.name}.toString(),\n`;
+          queryParamsMap += isReq
+            ? `      '${p.name}': ${p.name}.toString(),\n`
+            : `      if (${p.name} != null) '${p.name}': ${p.name}.toString(),\n`;
         }
         queryParamsMap += '    };\n';
       }

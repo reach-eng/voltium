@@ -138,7 +138,13 @@ class SupportProvider extends ChangeNotifier {
       required String message,
       String? riderId,}) async {
     try {
-      await _repository.createTicket(category, subject, message);
+      await _repository.createTicket(
+        category,
+        subject,
+        message,
+        riderId: riderId ?? '',
+        priority: 'NORMAL',
+      );
       await refreshTickets(riderId: riderId);
     } catch (e) {
       rethrow;

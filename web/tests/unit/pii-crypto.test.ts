@@ -7,7 +7,7 @@ describe('pii-crypto', () => {
     const encrypted = encryptPii(text);
     expect(encrypted).toBeDefined();
     expect(encrypted).not.toBe(text);
-    expect(encrypted?.split(':').length).toBe(3);
+    expect(encrypted?.split(':').length).toBe(4);
 
     const decrypted = decryptPii(encrypted);
     expect(decrypted).toBe(text);

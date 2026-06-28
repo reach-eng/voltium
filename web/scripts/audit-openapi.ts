@@ -79,7 +79,7 @@ function extractRouteEntries(file: string): Method[] {
   const src = fs.readFileSync(file, 'utf8');
   // Find every `export async function XXX(` declaration at the top level
   // (no nested function bodies).
-  const re = /export\s+async\s+function\s+(GET|POST|PUT|DELETE|PATCH)\b/g;
+  const re = /export\s+(?:async\s+function|const)\s+(GET|POST|PUT|DELETE|PATCH)\b/g;
   const found = new Set<Method>();
   let m: RegExpExecArray | null;
   while ((m = re.exec(src)) !== null) {

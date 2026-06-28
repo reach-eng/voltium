@@ -113,7 +113,7 @@ class VoltiumApiService {
   Future<Map<String, dynamic>> deleteTransactionHistory({
     required String riderId,
   }) async {
-    return _apiClient.deleteTransactionHistoryEndpoint();
+    return _apiClient.deleteTransactionHistory();
   }
 
   Future<Map<String, dynamic>> fetchTransactionHistory({
@@ -153,8 +153,7 @@ class VoltiumApiService {
   }
 
   Future<Map<String, dynamic>> fetchHubs() async {
-    final response = await _apiClient.getRiderHubs();
-    return response.toJson();
+    return _apiClient.getRiderHubs();
   }
 
   Future<Map<String, dynamic>> fetchVehicles(String hubId) async {

@@ -172,6 +172,7 @@ if (isServer) {
       'YOUR_SECURE_JWT_SECRET',
       'YOUR_SECURE_JWT_SECRET_MIN_32_CHARS_LONG',
       'placeholder',
+      'fcm-command-hmac-secret-default-32-chars-long',
     ];
     const secretLower = parsedEnv.JWT_SECRET.toLowerCase();
     if (

@@ -9,7 +9,7 @@
 
 import { writeFileSync } from 'fs';
 import { resolve } from 'path';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 import * as validators from '../lib/validators';
 
 interface OpenApiSpec {
@@ -1617,7 +1617,11 @@ function buildSpec(): OpenApiSpec {
         post: {
           tags: ['Auth'],
           summary: 'Create Refresh',
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          security: [{ riderSession: [] }],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/RefreshTokenRequest' } } },
+          },
           responses: { '200': { description: 'OK' } },
         },
       },
@@ -1654,12 +1658,15 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'OK' } },
         },
       },
-      '/api/device/permissions': {
+      '/api/rider/device/permissions': {
         post: {
-          tags: ['Admin'],
-          summary: 'Create Permissions',
+          tags: ['Rider Profile'],
+          summary: 'Update Device Permissions',
           security: [{ riderSession: [] }],
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/DevicePermissionsRequest' } } },
+          },
           responses: { '200': { description: 'OK' } },
         },
       },
@@ -1760,7 +1767,10 @@ function buildSpec(): OpenApiSpec {
           tags: ['Rider Profile'],
           summary: 'Create Return',
           security: [{ riderSession: [] }],
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/VehicleReturnRequest' } } },
+          },
           responses: { '200': { description: 'OK' } },
         },
       },
@@ -1834,6 +1844,7 @@ function buildSpec(): OpenApiSpec {
             token: { type: 'string' },
             accountStatus: { type: 'string' },
             isNewRider: { type: 'boolean' },
+            fcmCommandSecret: { type: 'string' },
           },
         },
         // ── Rider ──────────────────────────────────────────────────────────
@@ -2284,7 +2295,7 @@ function buildSpec(): OpenApiSpec {
     if (key.endsWith('Schema')) {
       const name = key.replace('Schema', 'Request');
       const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
-      const jsonSchema = zodToJsonSchema(schema as any, { target: 'openApi3' });
+      const jsonSchema = z.toJSONSchema(schema as any);
       spec.components.schemas[capitalizedName] = jsonSchema;
     }
   }

@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import '../features/profile/domain/repository.dart';
 import '../features/rentals/domain/repository.dart';
 import '../core/network/files_repository.dart';
+import '../core/polling/polling_manager.dart';
 import '../models/rider_model.dart';
 import '../services/cache_service.dart';
 import '../services/device_data_service.dart';
 import '../services/performance_service.dart';
 import '../services/fcm_service.dart';
+import '../utils/lifecycle_rank.dart';
 
 import '../app/app_state.dart';
 import '../features/auth/presentation/rider_lifecycle_gate.dart';
@@ -40,7 +42,22 @@ class RiderProvider extends ChangeNotifier {
         _phone = phone,
         _riderRepository = riderRepository,
         _rentalRepository = rentalRepository,
-        _filesRepository = filesRepository;
+        _filesRepository = filesRepository {
+    _onboardingPoller = PollingManager(
+      onTick: _onOnboardingTick,
+      strategy: const PollingStrategy(
+        active: Duration(seconds: 30),
+        inactive: Duration(seconds: 60),
+      ),
+    );
+    _postPickupPoller = PollingManager(
+      onTick: _onPostPickupTick,
+      strategy: const PollingStrategy(
+        active: Duration(seconds: 60),
+        inactive: Duration(seconds: 120),
+      ),
+    );
+  }
 
   RiderModel? _rider;
   RiderModel? get rider => _rider;
@@ -63,8 +80,9 @@ class RiderProvider extends ChangeNotifier {
   bool _hasFetchedOnce = false;
   bool get hasFetchedOnce => _hasFetchedOnce;
 
-  bool _isPolling = false;
-  Timer? _pollTimer;
+  int _onboardingPollCount = 0;
+  late final PollingManager _onboardingPoller;
+  late final PollingManager _postPickupPoller;
   Timer? _locationSyncTimer;
   bool _hasSyncedDeviceDataOnce = false;
 
@@ -73,29 +91,7 @@ class RiderProvider extends ChangeNotifier {
   bool get isActuallyActive =>
       _rider?.accountStatus == AccountStatus.active ||
       (_rider?.lifecycleStatus.isNotEmpty == true &&
-          _lifecycleRank(_rider) >= 11);
-
-  static int _lifecycleRank(RiderModel? rider) {
-    if (rider == null) return 0;
-    const rank = <String, int>{
-      'NEW': 0,
-      'PHONE_VERIFIED': 1,
-      'PROFILE_SUBMITTED': 2,
-      'KYC_SUBMITTED': 3,
-      'KYC_APPROVED': 4,
-      'GUARANTOR_SUBMITTED': 5,
-      'GUARANTOR_APPROVED': 6,
-      'DEPOSIT_PENDING': 7,
-      'DEPOSIT_APPROVED': 8,
-      'PLAN_SELECTED': 9,
-      'PICKUP_SCHEDULED': 10,
-      'ACTIVE': 11,
-      'SUSPENDED': 12,
-      'RETURN_PENDING': 13,
-      'CLOSED': 14,
-    };
-    return rank[rider.lifecycleStatus] ?? 0;
-  }
+          lifecycleRank(_rider!) >= 11);
 
   Future<void> init() async {
     PerformanceService().startTrace('RiderProvider_Init');
@@ -138,7 +134,7 @@ class RiderProvider extends ChangeNotifier {
 
         if (_rider!.accountStatus == AccountStatus.active ||
             (_rider!.lifecycleStatus.isNotEmpty &&
-                _lifecycleRank(_rider) >= 11)) {
+                lifecycleRank(_rider!) >= 11)) {
           _startDeviceDataSync();
         }
         if (_rider!.id != null) {
@@ -217,70 +213,60 @@ class RiderProvider extends ChangeNotifier {
   }
 
   void startOnboardingPoll() {
-    if (_isPolling) return;
-    _isPolling = true;
-    _poll();
+    if (_onboardingPoller.isRunning) return;
+    _onboardingPollCount = 0;
+    _onboardingPoller.start();
   }
 
   void stopPolling() {
-    _isPolling = false;
-    _pollTimer?.cancel();
-    _pollTimer = null;
+    _onboardingPoller.stop();
+    _postPickupPoller.stop();
   }
 
   /// Start post-pickup polling at a slower rate (60s) until lifecycle is CLOSED.
   void startPostPickupPoll() {
-    if (_isPolling) return;
-    _isPolling = true;
-    _postPickupPoll();
+    if (_postPickupPoller.isRunning) return;
+    _postPickupPoller.start();
   }
 
-  Future<void> _postPickupPoll() async {
-    while (_isPolling && _rider != null && _rider!.lifecycleStatus != 'CLOSED') {
-      await Future.doWhile(() async {
-        final completer = Completer<void>();
-        _pollTimer = Timer(const Duration(seconds: 60), completer.complete);
-        await completer.future;
-        return _isPolling;
-      });
-      if (!_isPolling) break;
-      await refreshFromApi();
-    }
-    _isPolling = false;
-    _pollTimer?.cancel();
-    _pollTimer = null;
+  /// Lifecycle: app resumed / foreground.
+  void setPollingActive() {
+    _onboardingPoller.active();
+    _postPickupPoller.active();
   }
 
-  Future<void> _poll() async {
-    int pollCount = 0;
+  /// Lifecycle: app inactive / background.
+  void setPollingInactive() {
+    _onboardingPoller.inactive();
+    _postPickupPoller.inactive();
+  }
+
+  Future<void> _onOnboardingTick() async {
     const maxPolls = 240;
-    while (_isPolling &&
-        _rider != null &&
-        !_rider!.pickupDone &&
-        pollCount < maxPolls) {
-      await Future.doWhile(() async {
-        final completer = Completer<void>();
-        _pollTimer = Timer(const Duration(seconds: 30), completer.complete);
-        await completer.future;
-        return _isPolling;
-      });
-      if (!_isPolling) break;
-      await refreshFromApi();
-      pollCount++;
-    }
+    if (_rider == null) return;
 
-    // After onboarding polls complete (pickupDone), start slower post-pickup poll
-    if (_isPolling && _rider != null && _rider!.pickupDone) {
-      _postPickupPoll();
+    if (_rider!.pickupDone) {
+      _onboardingPoller.stop();
+      startPostPickupPoll();
       return;
     }
 
-    _isPolling = false;
-    _pollTimer?.cancel();
-    _pollTimer = null;
-    if (pollCount >= maxPolls && _rider != null && !_rider!.pickupDone) {
+    _onboardingPollCount++;
+    if (_onboardingPollCount > maxPolls) {
+      _onboardingPoller.stop();
       log('RiderProvider: Polling timeout reached.');
+      return;
     }
+
+    await refreshFromApi();
+  }
+
+  Future<void> _onPostPickupTick() async {
+    if (_rider != null && _rider!.lifecycleStatus == 'CLOSED') {
+      _postPickupPoller.stop();
+      return;
+    }
+    await refreshFromApi();
   }
 
   void _startDeviceDataSync() {

@@ -17,14 +17,14 @@ import '../theme/app_theme.dart';
 class AppBottomNav extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final int unreadCount;
+  final Map<int, int> badgeCounts;
   final List<Key>? tabKeys;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
-    this.unreadCount = 0,
+    this.badgeCounts = const {},
     this.tabKeys,
   });
 
@@ -116,8 +116,7 @@ class _AppBottomNavState extends State<AppBottomNav>
                             : null,
                         tab: _tabs[index],
                         isActive: index == widget.currentIndex,
-                        hasNotification: (index == 0 || index == 2) &&
-                            widget.unreadCount > 0,
+                        hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
                         onTap: () => widget.onTap(index),
                       );
                     }),
@@ -166,6 +165,12 @@ class _NavButtonState extends State<_NavButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _pillCtrl;
   late Animation<double> _pillFade;
+
+  static final TextStyle _navLabelStyle = GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+  );
 
   @override
   void initState() {
@@ -272,12 +277,7 @@ class _NavButtonState extends State<_NavButton>
                 // Label
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                    letterSpacing: -0.2,
-                  ),
+                  style: _navLabelStyle.copyWith(color: labelColor),
                   child: Text(widget.tab.label),
                 ),
               ],

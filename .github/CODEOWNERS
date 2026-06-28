@@ -5,7 +5,7 @@
 
 # Backend & Web
 /web/ @voltium-backend
-/prisma/ @voltium-backend @voltium-db
+/web/prisma/ @voltium-backend @voltium-db
 
 # Mobile
 /flutter/ @voltium-mobile

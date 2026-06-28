@@ -118,16 +118,28 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkPermissionsOnResume();
-      // Refetch rider + wallet data on foreground resume
-      final provider = context.read<AppProvider>();
-      provider.riderProvider.refreshFromApi();
-      if (provider.riderProvider.rider?.id != null) {
-        provider.walletProvider.refreshTransactions(
-          riderId: provider.riderProvider.rider!.id!,
-        );
-      }
+    if (!mounted) return;
+    final provider = context.read<AppProvider>();
+    final riderProvider = provider.riderProvider;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _checkPermissionsOnResume();
+        riderProvider.setPollingActive();
+        riderProvider.refreshFromApi();
+        if (riderProvider.rider?.id != null) {
+          provider.walletProvider.refreshTransactions(
+            riderId: riderProvider.rider!.id!,
+          );
+        }
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        riderProvider.setPollingInactive();
+        break;
+      case AppLifecycleState.detached:
+        break;
     }
   }
 

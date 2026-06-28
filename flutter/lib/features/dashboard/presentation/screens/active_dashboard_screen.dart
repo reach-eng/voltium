@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
-import 'notification_center_screen.dart';
-import 'rental_details_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
+import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/widgets/cards.dart';
 import 'package:voltium_rider/widgets/dashboard_profile_card.dart';
@@ -15,6 +15,7 @@ import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 import 'package:voltium_rider/widgets/dashboard_tl_card.dart';
 import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
 import 'package:voltium_rider/widgets/dashboard_sheets.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 
 /// Active Dashboard screen for the Voltium Rider App.
 ///
@@ -31,174 +32,115 @@ class _ActiveDashboardScreenState extends State<ActiveDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: Stack(
+      body: const Stack(
         children: [
-          Builder(
-            builder: (context) {
-              final rider = context.select((AppProvider p) => p.rider);
-              final dataState = context.select((AppProvider p) => p.dataState);
-              final isRefreshing = context.select((AppProvider p) => p.isRefreshing);
-              final errorMessage = context.select((AppProvider p) => p.errorMessage);
-              final walletMinTopup = context.select((AppProvider p) => p.walletMinTopup);
-
-              final isCache = dataState == DataState.fromCache;
-
-              if (isCache && isRefreshing && rider == null) {
-                return const DashboardSkeleton();
-              }
-
-              if (rider == null) {
-                if (dataState == DataState.error) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: GlassCard(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.error_outline,
-                                color: Colors.red, size: 48,),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Unable to connect to command center: $errorMessage',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                            const SizedBox(height: 24),
-                            FilledButton(
-                              onPressed: () => context.read<AppProvider>().refresh(),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),),
-                              ),
-                              child: Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                if (isRefreshing ||
-                    dataState == DataState.initial) {
-                  return const DashboardSkeleton();
-                }
-
-                return Center(
-                  child: GlassCard(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('No data available',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,),),
-                        const SizedBox(height: 16),
-                        FilledButton.icon(
-                          onPressed: () => context.read<AppProvider>().refresh(),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Initialize System'),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return RefreshIndicator(
-                color: AppColors.primary,
-                backgroundColor: Colors.white,
-                onRefresh: () => context.read<AppProvider>().refresh(),
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Row(
-                              children: [
-                                Icon(Icons.bolt,
-                                    color: AppColors.primary, size: 32,),
-                                SizedBox(width: 8),
-                                Text('Dashboard',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1E293B),
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            _buildNotificationBell(context),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 24,),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (isCache) _buildCacheIndicator(),
-                            if (rider.returnPending || rider.intent == 'RETURN')
-                              ScooterSubmissionBanner(
-                                submissionDate:
-                                    rider.submissionDate?.toIso8601String(),
-                                pickupHub: rider.pickupHub,
-                              ),
-                            DashboardProfileCard(
-                              rider: rider,
-                              onTap: () => AppNavigator.push(
-                                  context, const RentalDetailsScreen(),),
-                            ),
-                            const SizedBox(height: 16),
-                            PlanCard(
-                              currentPlan: rider.currentPlan,
-                              planEndDate: rider.planEndDate,
-                            ),
-                            const SizedBox(height: 16),
-                            WalletCard(
-                              walletBalance: rider.walletBalance,
-                              requiredPayment: rider.activeRentalPlanPrice > 0
-                                  ? rider.activeRentalPlanPrice
-                                  : walletMinTopup,
-                              paymentStreak: rider.paymentStreak,
-                              currentPlan: rider.currentPlan,
-                              onTopUp: () {},
-                            ),
-                            const SizedBox(height: 16),
-                            TeamLeaderCard(
-                              teamLeaderName: rider.teamLeader,
-                              onViewDetails: () =>
-                                  showTLDetailsSheet(context, rider),
-                            ),
-                            const SizedBox(height: 16),
-                            ReferralCard(
-                              referralCode: rider.referralCode ?? 'VOLT123',
-                            ),
-                            const SizedBox(height: 120),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+          _DashboardStateWidget(),
         ],
       ),
     );
   }
+}
+
+class _DashboardStateWidget extends StatelessWidget {
+  const _DashboardStateWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    final rider = context.select((AppProvider p) => p.rider);
+    final dataState = context.select((AppProvider p) => p.dataState);
+    final isRefreshing = context.select((AppProvider p) => p.isRefreshing);
+    final errorMessage = context.select((AppProvider p) => p.errorMessage);
+
+    final isCache = dataState == DataState.fromCache;
+
+    if (isCache && isRefreshing && rider == null) {
+      return const DashboardSkeleton();
+    }
+
+    if (rider == null) {
+      if (dataState == DataState.error) {
+        return _DashboardErrorWidget(errorMessage: errorMessage);
+      }
+      if (isRefreshing || dataState == DataState.initial) {
+        return const DashboardSkeleton();
+      }
+      return const _DashboardEmptyWidget();
+    }
+
+    return _DashboardContentWidget(rider: rider);
+  }
+}
+
+class _DashboardErrorWidget extends StatelessWidget {
+  final String? errorMessage;
+  const _DashboardErrorWidget({this.errorMessage});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: GlassCard(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline,
+                  color: Colors.red, size: 48,),
+              const SizedBox(height: 16),
+              Text(
+                'Unable to connect to command center: $errorMessage',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.read<AppProvider>().refresh(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),),
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardEmptyWidget extends StatelessWidget {
+  const _DashboardEmptyWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GlassCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('No data available',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,),),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context.read<AppProvider>().refresh(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Initialize System'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardContentWidget extends StatelessWidget {
+  final RiderModel rider;
+  const _DashboardContentWidget({required this.rider});
 
   Widget _buildNotificationBell(BuildContext context) {
     return InkWell(
@@ -255,6 +197,99 @@ class _ActiveDashboardScreenState extends State<ActiveDashboardScreen> {
               fontSize: 12,
               color: Colors.amber.shade700,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final walletMinTopup = context.select((AppProvider p) => p.walletMinTopup);
+    final dataState = context.select((AppProvider p) => p.dataState);
+    final isCache = dataState == DataState.fromCache;
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      backgroundColor: Colors.white,
+      onRefresh: () => context.read<AppProvider>().refresh(),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.bolt,
+                          color: AppColors.primary, size: 32,),
+                      SizedBox(width: 8),
+                      Text('Dashboard',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF1E293B),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  _buildNotificationBell(context),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 24,),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (isCache) _buildCacheIndicator(),
+                  if (rider.returnPending || rider.intent == 'RETURN')
+                    ScooterSubmissionBanner(
+                      submissionDate:
+                          rider.submissionDate?.toIso8601String(),
+                      pickupHub: rider.pickupHub,
+                    ),
+                  DashboardProfileCard(
+                    rider: rider,
+                    onTap: () => AppNavigator.push(
+                        context, const RentalDetailsScreen(),),
+                  ),
+                  const SizedBox(height: 16),
+                  PlanCard(
+                    currentPlan: rider.currentPlan,
+                    planEndDate: rider.planEndDate,
+                  ),
+                  const SizedBox(height: 16),
+                  WalletCard(
+                    walletBalance: rider.walletBalance,
+                    requiredPayment: rider.activeRentalPlanPrice > 0
+                        ? rider.activeRentalPlanPrice
+                        : walletMinTopup,
+                    paymentStreak: rider.paymentStreak,
+                    currentPlan: rider.currentPlan,
+                    onTopUp: () {},
+                  ),
+                  const SizedBox(height: 16),
+                  TeamLeaderCard(
+                    teamLeaderName: rider.teamLeader,
+                    onViewDetails: () =>
+                        showTLDetailsSheet(context, rider),
+                  ),
+                  const SizedBox(height: 16),
+                    ReferralCard(
+                    referralCode: rider.referralCode ?? 'VOLT123',
+                  ),
+                  const SizedBox(height: 120),
+                ],
+              ),
             ),
           ),
         ],

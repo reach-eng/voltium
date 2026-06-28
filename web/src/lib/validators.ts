@@ -451,7 +451,7 @@ export const awardRewardSchema = z.object({
 });
 
 // ==================== WALLET TOPUP ====================
-export const walletTopupSchema = z.object({
+export const adminWalletTopupSchema = z.object({
   riderId: z.string().min(1),
   amount: z.number().int().min(10, 'Minimum ₹10').max(10000, 'Maximum ₹10000'),
   purpose: z.string().optional(),
@@ -506,6 +506,24 @@ export const createEarningSchema = z.object({
 // ==================== RIDER SCORES ====================
 export const recalculateScoreSchema = z.object({
   riderId: z.string().min(1, 'Rider ID required'),
+});
+
+// ==================== AUTH ====================
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token required'),
+});
+
+// ==================== VEHICLE / RENTAL ====================
+export const vehicleReturnSchema = z.object({
+  riderId: z.string().min(1, 'Rider ID required'),
+  photoUrls: z.array(z.string()).min(1, 'At least one photo required'),
+  reason: z.string().optional(),
+});
+
+// ==================== DEVICE ====================
+export const devicePermissionsSchema = z.object({
+  riderId: z.string().min(1, 'Rider ID required'),
+  permissions: z.record(z.string(), z.boolean()),
 });
 
 // Helper: validate request body and return parsed data or error response

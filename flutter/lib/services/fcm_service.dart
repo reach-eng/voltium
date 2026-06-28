@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
+import 'package:meta/meta.dart';
 import 'dart:developer' as developer;
 import '../providers/device_policy_provider.dart';
 import '../providers/wallet_provider.dart';
@@ -19,7 +20,7 @@ class FCMService {
   static SupportProvider? _support;
   static RiderProvider? _rider;
   static StreamSubscription<RemoteMessage>? _foregroundSubscription;
-  static final Set<String> _seenSecurityChallenges = <String>{};
+  static final Map<String, int> _seenSecurityChallenges = <String, int>{};
   static const _securityReplayWindow = Duration(minutes: 5);
   
   static String? _commandHmacSecret;
@@ -33,6 +34,13 @@ class FCMService {
   static const _allowedSecurityActions = <String>{
     'ADMIN_LOCK',
     'UNLOCK_DEVICE',
+    'DISABLE_CAMERA',
+    'ENABLE_CAMERA',
+    'ENFORCE_PASSCODE',
+    'CHECK_LOCATION_INTEGRITY',
+    'PERSIST_APP',
+    'ENFORCE_LOCATION',
+    'RESTRICT_APPS_CONTROL',
   };
 
   static const _allowedOverlayActions = <String>{
@@ -43,7 +51,8 @@ class FCMService {
     'DEPOSIT_APPROVED',
   };
 
-  static Future<bool> _validatePayload(
+  @visibleForTesting
+  static Future<bool> validatePayload(
     Map<String, dynamic> data, {
     required bool isSecurity,
   }) async {
@@ -60,13 +69,14 @@ class FCMService {
       );
       return false;
     }
-    if (isSecurity && !await _validateSecurityEnvelope(data)) {
+    if (isSecurity && !await validateSecurityEnvelope(data)) {
       return false;
     }
     return true;
   }
 
-  static Future<bool> _validateSecurityEnvelope(Map<String, dynamic> data) async {
+  @visibleForTesting
+  static Future<bool> validateSecurityEnvelope(Map<String, dynamic> data) async {
     final challenge = data['challenge'];
     final ts = data['ts'];
     final nonce = data['nonce'];
@@ -115,7 +125,8 @@ class FCMService {
     }
 
     final replayKey = '$nonce:$challenge:$ts';
-    if (_seenSecurityChallenges.contains(replayKey)) {
+    pruneExpiredChallenges();
+    if (_seenSecurityChallenges.containsKey(replayKey)) {
       developer.log('FCM: Rejected replayed security command');
       return false;
     }
@@ -125,17 +136,24 @@ class FCMService {
       utf8.encode(secret),
     ).convert(utf8.encode('$action.$ts.$nonce.$challenge')).toString();
 
-    if (!_constantTimeEquals(signature, expectedSignature)) {
+    if (!constantTimeEquals(signature, expectedSignature)) {
       developer.log('FCM: Rejected security command with invalid signature');
       return false;
     }
 
-    _seenSecurityChallenges.add(replayKey);
+    _seenSecurityChallenges[replayKey] = DateTime.now().millisecondsSinceEpoch;
 
     return true;
   }
 
-  static bool _constantTimeEquals(String a, String b) {
+  @visibleForTesting
+  static void pruneExpiredChallenges() {
+    final cutoff = DateTime.now().millisecondsSinceEpoch - _securityReplayWindow.inMilliseconds;
+    _seenSecurityChallenges.removeWhere((_, added) => added < cutoff);
+  }
+
+  @visibleForTesting
+  static bool constantTimeEquals(String a, String b) {
     if (a.length != b.length) return false;
 
     var diff = 0;
@@ -143,6 +161,34 @@ class FCMService {
       diff |= a.codeUnitAt(i) ^ b.codeUnitAt(i);
     }
     return diff == 0;
+  }
+
+  @visibleForTesting
+  static void initializeForTesting({
+    required DevicePolicyProvider devicePolicy,
+    required WalletProvider wallet,
+    required SupportProvider support,
+    required RiderProvider rider,
+  }) {
+    _devicePolicy = devicePolicy;
+    _wallet = wallet;
+    _support = support;
+    _rider = rider;
+  }
+
+  @visibleForTesting
+  static void overrideSecretForTesting(String secret) {
+    _commandHmacSecret = secret;
+  }
+
+  @visibleForTesting
+  static void injectChallengeForTesting(String key, int addedAtMs) {
+    _seenSecurityChallenges[key] = addedAtMs;
+  }
+
+  @visibleForTesting
+  static bool hasChallengeForTesting(String key) {
+    return _seenSecurityChallenges.containsKey(key);
   }
 
   static Future<void> initialize({
@@ -180,11 +226,11 @@ class FCMService {
       developer.log('Foreground message received: ${message.data}');
       final data = message.data;
       if (data['type'] == 'SECURITY_COMMAND' &&
-          await _validatePayload(data, isSecurity: true)) {
-        _handleSecurityCommand(message);
+          await validatePayload(data, isSecurity: true)) {
+          handleSecurityCommand(message);
       } else if (data['type'] == 'OVERLAY_TRIGGER' &&
-          await _validatePayload(data, isSecurity: false)) {
-        _handleOverlayTrigger(message);
+          await validatePayload(data, isSecurity: false)) {
+        handleOverlayTrigger(message);
       }
     });
   }
@@ -199,7 +245,8 @@ class FCMService {
     _seenSecurityChallenges.clear();
   }
 
-  static Future<void> _handleSecurityCommand(RemoteMessage message) async {
+  @visibleForTesting
+  static Future<void> handleSecurityCommand(RemoteMessage message) async {
     final data = message.data;
     if (data['type'] == 'SECURITY_COMMAND') {
       final action = data['action'];
@@ -211,6 +258,20 @@ class FCMService {
           await _channel.invokeMethod('lockDevice');
         } else if (action == 'UNLOCK_DEVICE') {
           _devicePolicy?.setLockedByAdmin(false);
+        } else if (action == 'DISABLE_CAMERA') {
+          _devicePolicy?.setCameraDisabled(true);
+        } else if (action == 'ENABLE_CAMERA') {
+          _devicePolicy?.setCameraDisabled(false);
+        } else if (action == 'ENFORCE_PASSCODE') {
+          _devicePolicy?.setPasscodeRequired(true);
+        } else if (action == 'CHECK_LOCATION_INTEGRITY') {
+          _devicePolicy?.triggerLocationVerification();
+        } else if (action == 'PERSIST_APP') {
+          _devicePolicy?.setAppPersistenceRequired(true);
+        } else if (action == 'ENFORCE_LOCATION') {
+          _devicePolicy?.setLocationRequired(true);
+        } else if (action == 'RESTRICT_APPS_CONTROL') {
+          _devicePolicy?.setRestrictedAppsMode(true);
         }
       } on PlatformException catch (e) {
         developer.log('Error executing security command: ${e.message}');
@@ -218,7 +279,8 @@ class FCMService {
     }
   }
 
-  static void _handleOverlayTrigger(RemoteMessage message) {
+  @visibleForTesting
+  static void handleOverlayTrigger(RemoteMessage message) {
     final data = message.data;
     final action = data['action'];
     developer.log('Overlay trigger received: $action');
@@ -278,7 +340,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     return;
   }
 
-  if (isSecurity && !await FCMService._validateSecurityEnvelope(data)) {
+  if (isSecurity && !await FCMService.validateSecurityEnvelope(data)) {
     return;
   }
 
@@ -298,6 +360,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       } else if (action == 'ADMIN_LOCK') {
         // System lock as part of Admin Lock
         await channel.invokeMethod('lockDevice');
+      } else if (action == 'DISABLE_CAMERA') {
+        developer.log('DISABLE_CAMERA received in background');
+      } else if (action == 'ENABLE_CAMERA') {
+        developer.log('ENABLE_CAMERA received in background');
+      } else if (action == 'ENFORCE_PASSCODE') {
+        developer.log('ENFORCE_PASSCODE received in background');
+      } else if (action == 'CHECK_LOCATION_INTEGRITY') {
+        developer.log('CHECK_LOCATION_INTEGRITY received in background');
+      } else if (action == 'PERSIST_APP') {
+        developer.log('PERSIST_APP received in background');
+      } else if (action == 'ENFORCE_LOCATION') {
+        developer.log('ENFORCE_LOCATION received in background');
+      } else if (action == 'RESTRICT_APPS_CONTROL') {
+        developer.log('RESTRICT_APPS_CONTROL received in background');
       }
     } catch (e) {
       developer.log('Error in background security command: $e');

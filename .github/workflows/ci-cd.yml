@@ -223,6 +223,27 @@ jobs:
       - name: Run contract tests
         run: npm run test:contracts
 
+      - name: Seed database
+        run: npm run db:seed
+
+      - name: Start dev server
+        run: |
+          npm run dev > /tmp/next-dev.log 2>&1 &
+          echo "DEV_PID=$!" >> $GITHUB_ENV
+
+      - name: Wait for dev server
+        run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Run API route tests
+        run: npm run test:api
+
+      - name: Stop dev server
+        if: always()
+        run: kill ${{ env.DEV_PID }} || true
+
   # ─── Workflow Coverage Gates ────────────────────────────────────────────────
   workflow-gates:
     name: Workflow Coverage Gates

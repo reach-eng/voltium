@@ -149,8 +149,10 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? idempotencyKey,
+    Map<String, String>? queryParams,
   }) async {
-    final uri = Uri.parse('$_baseUrl$path');
+    final uri =
+        Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
     final headers = await _getHeaders();
     if (idempotencyKey != null) {
       headers['Idempotency-Key'] = idempotencyKey;
@@ -174,8 +176,9 @@ class ApiClient {
   }
 
   /// DELETE request
-  Future<Map<String, dynamic>> delete(String path, {String? idempotencyKey}) async {
-    final uri = Uri.parse('$_baseUrl$path');
+  Future<Map<String, dynamic>> delete(String path, {String? idempotencyKey, Map<String, String>? queryParams}) async {
+    final uri =
+        Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
     final headers = await _getHeaders();
     if (idempotencyKey != null) {
       headers['Idempotency-Key'] = idempotencyKey;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { errors } from '@/lib/api-response';
+import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { validateBody, chatMessageSchema } from '@/lib/validators';
 import { requireRiderSession } from '@/lib/rider-auth';
@@ -52,6 +52,16 @@ function localSupportReply(message: string): string {
 
   return 'Thanks. Please create a support ticket with the key details, screenshots/photos if relevant, and your preferred callback time. The Voltium support team will respond from the admin panel.';
 }
+
+export const GET = withApiHandler(async (request: NextRequest) => {
+  const auth = await requireRiderSession(request);
+  if (auth instanceof Response) return auth;
+
+  return success({
+    messages: [],
+    hint: 'Use POST to send a message to support.',
+  });
+});
 
 export const POST = withApiHandler(async (request: NextRequest) => {
   const auth = await requireRiderSession(request);

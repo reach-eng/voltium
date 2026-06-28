@@ -9,7 +9,12 @@ abstract class SupportRepository {
 
   /// Creates a support ticket.
   Future<Map<String, dynamic>> createTicket(
-      String category, String subject, String message,);
+    String category,
+    String subject,
+    String message, {
+    String riderId = '',
+    String priority = 'NORMAL',
+  });
 
   /// Fetches support chat history.
   Future<Map<String, dynamic>> getSupportChat();

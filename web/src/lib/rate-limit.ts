@@ -63,7 +63,7 @@ export async function checkRateLimit(
          VALUES ($1, $2, 1, $3, NOW(), NOW())
          ON CONFLICT (key) DO UPDATE SET
            points = CASE
-             WHEN "RateLimitBucket".points < $4 THEN "RateLimitBucket".points + 1
+             WHEN "RateLimitBucket".points < $4 + 1 THEN "RateLimitBucket".points + 1
              ELSE "RateLimitBucket".points
            END,
            "resetAt" = CASE

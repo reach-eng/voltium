@@ -10,6 +10,8 @@ This file contains context for AI assistants working on this codebase.
 | `npm run build`     | Production build              |
 | `npm run typecheck` | TypeScript validation         |
 | `npm run test:unit` | Unit tests only               |
+| `npm run test:integration` | Integration tests (needs dev server) |
+| `npm run test:api`  | API route tests (needs dev server)   |
 | `npm run lint`      | ESLint                        |
 | `npm run db:deploy` | Apply database migrations     |
 
@@ -44,7 +46,15 @@ This file contains context for AI assistants working on this codebase.
 ### Backend Unit Tests
 
 - Location: `tests/unit/`
-- Run: `npm run test:unit`
+- Run: `npm run test:unit` (574 passing, 28 skipped)
+
+### Backend Integration & API Tests
+
+- **Integration tests**: `tests/integration/` (23 files) — run against live dev server
+- **API route tests**: `tests/api-routes.test.ts` (541 lines) — comprehensive endpoint coverage
+- Run: `npm run test:integration` or `npm run test:api` (requires `npm run dev` running)
+- Wait-for-server: `npx wait-on tcp:8081`
+- CI pipeline: seed DB → start dev → wait → integration tests → API tests → stop dev
 
 ### Flutter E2E Tests (33/33 PASSING)
 
@@ -133,7 +143,7 @@ This file contains context for AI assistants working on this codebase.
 
 GitHub Actions: `.github/workflows/ci-cd.yml`
 
-- Runs: lint → typecheck → build → test:unit
+- Runs: lint → typecheck → build → test:unit → seed DB → start dev → integration tests → API tests → cleanup
 
 ## graphify
 

@@ -108,20 +108,41 @@ vi.mock('@/server/modules/support/support.repository', () => ({
 vi.mock('@/lib/db', () => ({ db: mockDb }));
 vi.mock('@/lib/audit-log', () => ({ createAuditLog: mockAuditLog.createAuditLog }));
 vi.mock('@/lib/logger', () => ({ logger: mockLogger }));
+vi.mock('@/server/workers/outbox', () => ({
+  OutboxService: { emit: () => Promise.resolve('event-1') },
+  OutboxEventTypes: {
+    NOTIFICATION_SEND: 'notification.send',
+    WALLET_TOPUP_APPROVED: 'wallet.topup.approved',
+    WALLET_TOPUP_REJECTED: 'wallet.topup.rejected',
+  },
+}));
+vi.mock('@/lib/notification-service', () => ({
+  notificationService: {
+    notifyKycStatusChange: () => Promise.resolve(undefined),
+    createAndSend: () => Promise.resolve(undefined),
+  },
+}));
 vi.mock('@/lib/dynamic-pricing', () => ({
-  calculateDynamicPrice: vi.fn(() => ({
+  calculateDynamicPrice: () => ({
     basePrice: 18000,
     finalPrice: 16000,
     tier: 'off-peak',
     discount: '11%',
     discountLabel: 'Off-peak discount',
     availability: 'High',
-  })),
+  }),
 }));
-vi.mock('@/lib/flatten-rider', () => ({ flattenRider: vi.fn((r: any) => r) }));
-vi.mock('@/lib/sign-rider', () => ({ signRiderUrls: vi.fn((r: any) => r) }));
+vi.mock('@/lib/flatten-rider', () => ({ flattenRider: (r: any) => r }));
+vi.mock('@/lib/sign-rider', () => ({ signRiderUrls: (r: any) => r }));
 vi.mock('@/lib/services/deposit-service', () => ({
-  upsertDepositRecord: vi.fn().mockResolvedValue(undefined),
+  upsertDepositRecord: () => Promise.resolve(undefined),
+}));
+vi.mock('isomorphic-dompurify', () => ({
+  default: () => ({
+    sanitize: (s: string) => s,
+    addHook: () => {},
+    isValidTag: () => true,
+  }),
 }));
 
 // ===========================================================================
@@ -226,6 +247,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
 
   it('approves KYC', async () => {
     mockKycRepository.approveKyc.mockResolvedValue({ id: 'kyc-1', status: 'APPROVED' });
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     const result = await kycUseCases.reviewKyc('rider-123', 'admin-1', { action: 'APPROVE' });
 
@@ -235,6 +257,7 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
 
   it('rejects KYC with reason', async () => {
     mockKycRepository.rejectKyc.mockResolvedValue({ id: 'kyc-1', status: 'REJECTED' });
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await kycUseCases.reviewKyc('rider-123', 'admin-1', {
       action: 'REJECT',
@@ -360,7 +383,7 @@ describe('Wallet — Top-up', () => {
     mockDb.rider.findUnique.mockResolvedValue({
       id: 'rider-123',
       depositDone: true,
-      phone: '9876543210',
+      phone: '9876543222',
       lifecycleStatus: 'DEPOSIT_APPROVED',
     });
     mockWalletRepository.findTransactionByKey.mockResolvedValue(null);
@@ -504,6 +527,7 @@ describe('Wallet — Approval', () => {
     });
     mockWalletRepository.updateTransactionStatus.mockResolvedValue(undefined);
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn({}));
 
     await walletUseCases.rejectTopup('txn-1', 'admin-1', 'Suspicious');
 
@@ -587,6 +611,8 @@ describe('Rental — Book Rental', () => {
 
     const mockTx = {
       rentalLease: {
+        count: vi.fn().mockResolvedValue(2),
+        findFirst: vi.fn().mockResolvedValue(null),
         create: vi.fn().mockResolvedValue({
           id: 'lease-1',
           status: 'BOOKED',
@@ -640,7 +666,14 @@ describe('Rental — Book Rental', () => {
   it('throws when shift is fully booked', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
-    mockDb.rentalLease.count.mockResolvedValue(5); // maxBookings = 5
+    mockDb.vehicle.count.mockResolvedValue(10);
+    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    const mockTxFullyBooked = {
+      rentalLease: { count: vi.fn().mockResolvedValue(5) },
+      vehicle: {},
+      rider: {},
+    };
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn(mockTxFullyBooked));
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
@@ -655,8 +688,17 @@ describe('Rental — Book Rental', () => {
   it('throws when rider already has booking for same shift/date', async () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
-    mockDb.rentalLease.count.mockResolvedValue(2);
-    mockDb.rentalLease.findFirst.mockResolvedValue({ id: 'existing-lease' });
+    mockDb.vehicle.count.mockResolvedValue(10);
+    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    const mockTxDuplicateRider = {
+      rentalLease: {
+        count: vi.fn().mockResolvedValue(2),
+        findFirst: vi.fn().mockResolvedValue({ id: 'existing-lease' }),
+      },
+      vehicle: {},
+      rider: {},
+    };
+    mockDb.$transaction.mockImplementation(async (fn: any) => fn(mockTxDuplicateRider));
 
     await expect(
       rentalUseCases.bookRental('rider-123', {
@@ -689,7 +731,10 @@ describe('Rental — Sync Pickup', () => {
     });
 
     const mockTx = {
-      vehicle: { update: vi.fn().mockResolvedValue(undefined) },
+      vehicle: {
+        update: vi.fn().mockResolvedValue(undefined),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
       rider: {
         update: vi.fn().mockResolvedValue({
           id: 'rider-123',
