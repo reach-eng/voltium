@@ -152,9 +152,6 @@ export function handleSummary(data: any) {
   );
   console.log('═══════════════════════════════════════════════════════\n');
 
-  return {
-    stdout: textSummary(data, { indent: ' ', enableColors: true }),
-  };
 }
 
 
