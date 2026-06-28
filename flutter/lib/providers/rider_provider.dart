@@ -126,7 +126,7 @@ class RiderProvider extends ChangeNotifier {
     try {
       final response = await _riderRepository.getRiderProfile();
       final payload = response['data'] ?? response['rider'] ?? response;
-      if (payload != null) {
+      if (payload != null && (payload as Map).isNotEmpty) {
         _rider = RiderModel.fromJson(payload as Map<String, dynamic>);
         await CacheService().cacheRider(_rider!.toCacheMap());
         _dataState = DataState.fresh;

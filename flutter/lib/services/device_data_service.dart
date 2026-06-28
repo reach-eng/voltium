@@ -64,7 +64,11 @@ class DeviceDataService {
   Future<void> syncLocation(String riderId) async {
     if (PlatformInfo.isWeb) return;
     if (!_isMobile) return;
-    if (!await ConsentService().hasConsent(ConsentType.location)) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.location)) return;
+    } catch (_) {
+      return;
+    }
 
     final granted =
         await Permission.location.status == PermissionStatus.granted;
@@ -95,27 +99,39 @@ class DeviceDataService {
   }
 
   Future<void> syncContacts(String riderId) async {
-    if (!await ConsentService().hasConsent(ConsentType.contacts)) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.contacts)) return;
+    } catch (_) {
+      return;
+    }
     // Disabled for public beta privacy compliance
     return;
   }
 
   Future<void> syncCallLogs(String riderId) async {
-    if (!await ConsentService().hasConsent(ConsentType.callLogs)) return;
+    try {
+      if (!await ConsentService().hasConsent(ConsentType.callLogs)) return;
+    } catch (_) {
+      return;
+    }
     // Disabled for public beta privacy compliance
     return;
   }
 
   Future<void> syncAll(String riderId) async {
-    await Future.wait(
-      [
-        syncPermissionState(riderId),
-        syncLocation(riderId),
-        syncContacts(riderId),
-        syncCallLogs(riderId),
-      ],
-      eagerError: false,
-    );
+    try {
+      await Future.wait(
+        [
+          syncPermissionState(riderId),
+          syncLocation(riderId),
+          syncContacts(riderId),
+          syncCallLogs(riderId),
+        ],
+        eagerError: false,
+      );
+    } catch (e) {
+      debugPrint('DeviceDataService: syncAll failed: $e');
+    }
 
     debugPrint('DeviceDataService: syncAll completed');
   }

@@ -36,6 +36,11 @@ void main() {
   late MockFilesRepository mockFilesRepo;
   late RiderProvider provider;
 
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    registerFallbackValue(File('dummy'));
+  });
+
   setUp(() {
     mockRiderRepo = MockRiderRepository();
     mockRentalRepo = MockRentalRepository();

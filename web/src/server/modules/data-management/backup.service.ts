@@ -728,8 +728,15 @@ export function calculateNextRun(config: {
   const minutesVal = minutes !== undefined && !isNaN(minutes) ? minutes : 0;
   next.setHours(hoursVal, minutesVal, 0, 0);
 
-  // If today's time has passed, move to next occurrence
-  if (next <= now) {
+  // MONTHLY always needs day clamping regardless of time
+  if (config.frequency === 'MONTHLY') {
+    const targetDay = Math.min(config.dayOfMonth ?? 1, 28);
+    next.setDate(targetDay);
+    if (next <= now) {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(targetDay);
+    }
+  } else if (next <= now) {
     switch (config.frequency) {
       case 'DAILY':
         next.setDate(next.getDate() + 1);
@@ -738,15 +745,6 @@ export function calculateNextRun(config: {
         const targetDay = config.dayOfWeek ?? 0;
         const daysUntil = (targetDay - next.getDay() + 7) % 7;
         next.setDate(next.getDate() + (daysUntil || 7));
-        break;
-      }
-      case 'MONTHLY': {
-        const targetDay = Math.min(config.dayOfMonth ?? 1, 28);
-        next.setDate(targetDay);
-        if (next <= now) {
-          next.setMonth(next.getMonth() + 1);
-          next.setDate(targetDay);
-        }
         break;
       }
     }
