@@ -20,6 +20,8 @@ import { z } from 'zod';
 // ── Replicate the env schema from src/lib/env.ts for isolated testing ──────
 // We re-declare the schema here to test it in isolation without importing
 // the actual env.ts (which has side effects and process.env mutation).
+// NOTE: This means the schema here can drift from env.ts. If you add a new
+// required field to env.ts, add it here too to keep tests in sync.
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

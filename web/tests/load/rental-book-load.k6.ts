@@ -157,6 +157,4 @@ export function handleSummary(data: any) {
   };
 }
 
-function textSummary(data: any, options: any): string {
-  return '';
-}
+

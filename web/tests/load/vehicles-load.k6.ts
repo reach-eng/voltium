@@ -117,7 +117,4 @@ export function handleSummary(data: any) {
   };
 }
 
-function textSummary(data: any, options: any): string {
-  // k6 provides built-in text summary — this is a fallback
-  return '';
-}
+
