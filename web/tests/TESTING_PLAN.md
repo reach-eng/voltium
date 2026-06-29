@@ -4,12 +4,18 @@
 
 | Aspect | Current State |
 |---|---|
-| Unit tests | ~1,130 passing, 0 skipped, 42+ files |
-| Integration tests | 24 files covering health, auth, rentals, wallet, KYC, support, rate-limiting, etc. |
-| API routes | 84 Next.js route handlers, 14 backend modules |
+| Web unit tests | ~1,025 passing across 38 files |
+| Web integration tests | 219 across 33 files |
+| Web API route tests | 53 across 4 files |
+| Web contract tests | 12 (openapi validator) |
+| Web security tests | 7 across 2 files |
+| Web Playwright E2E | 138 across 41 specs |
+| Flutter widget/unit tests | 441 across 58 files |
+| Flutter integration tests | 84 across 45 files (e2e_individual) + 96 across 9 (e2e) + 24 root |
+| **Total automated** | **~2,099 test cases** |
 | Architecture | Route handler → use-case → repository → Prisma/Postgres |
 | CI | Ubuntu, Node 20, no Docker, Postgres 16 as service |
-| Flutter E2E | 33 passing integration tests |
+| Flutter platforms | Android, iOS (33+ e2e tests) |
 
 ---
 
@@ -241,9 +247,51 @@ Existing: `src/contracts/__tests__/contract-validator.test.ts` (20 tests):
 ## Priority
 
 ```
-Phase 1  ████████████████████████████████  ✅ (integration tests in CI)
-Phase 2  ████████████████████████████      ✅ (security & edge cases)
-Phase 3  ██████████████████                ✅ (payment/reliability)
-Phase 4  ████████████████                  ✅ (Flutter widget & unit tests)
-Phase 5  █████████                         ✅ (hardening: migration, secrets, load, contracts)
+Phase 1  ████████████████████████████████  ✅ DONE (CI integration tests)
+Phase 2  ████████████████████████████      ✅ DONE (security & edge cases)
+Phase 3  ██████████████████                ✅ DONE (payment/reliability)
+Phase 4  ████████████████                  ✅ DONE (Flutter widget & unit tests)
+Phase 5  █████████                         ✅ DONE (hardening: migration, secrets, load, contracts)
 ```
+
+**Status as of 2026-06-29**: All 5 phases complete. ~2,099 automated test cases. See [`docs/COVERAGE_PLAN.md`](../../docs/COVERAGE_PLAN.md) for the next phase — meaningful 100% coverage gap analysis and 5-milestone plan to fill remaining gaps.
+
+---
+
+## Phase 6 — Meaningful 100% Coverage (Forward Plan)
+
+The 5 phases above addressed the highest-priority testing gaps at the time. A comprehensive gap analysis (see `docs/COVERAGE_PLAN.md` for full details) identified remaining low-coverage areas:
+
+| Layer | Coverage | Gap |
+|---|---|---|
+| Web `src/server/modules/wallet/`, `deposits/`, `transactions/` services | <30% | Money-path ledger logic untested |
+| Web `src/server/workers/jobs/` | 17% | 10 of 12 jobs have no direct unit test |
+| Web `src/app/api/**/route.ts` | ~43% | ~70 of 123 route handlers untested, mostly mutations |
+| Web `src/server/shared/` | 0% | Cross-cutting auth/db/errors modules untested |
+| Web `src/components/admin/` | ~5% | Admin UI covered only by Playwright (fragile) |
+| Flutter `lib/services/` | 25% | 15 of 20 services untested (biometric, location, notifications, etc.) |
+| Flutter `lib/providers/` | 18% | 9 of 11 providers untested (incl. `app_provider` global state) |
+| Flutter `lib/features/*/data/` | 0% | All 6 repository implementations untested |
+| Flutter `lib/models/` | 7% | 13 of 14 models untested |
+| Flutter screens (16) | varies | KYC intent, wallet history, support checklist, notification prefs, etc. |
+
+### Plan Reference
+
+See [`docs/COVERAGE_PLAN.md`](../../docs/COVERAGE_PLAN.md) for the full 5-milestone plan to close these gaps. The plan uses:
+
+- **Real Postgres** (testcontainers per file, CI Postgres service) for money-path tests
+- **Real timers with `Clock` injection** via dispatcher for worker job tests
+- **Golden tests** (per-widget, per-state, single device pixel ratio) for Flutter screens
+- **Coverage gates** in CI: 85% lines / 75% branches (web), 80% lines / 70% branches (Flutter)
+
+**Estimated effort**: ~17 days, ~1,033 new tests, ~145 new test files.
+
+**Excluded from coverage**: generated code (`*.g.dart`, `*.freezed.dart`, `web/src/contracts/openapi.json`, `flutter/lib/core/network/generated/*`), trivial getters, static config (`app_constants.dart`, `app_info.dart`, brand colors, design tokens).
+
+### Cleanup Tasks (with Phase 6)
+
+- Delete `web/tests/realistic/_bootstrap/` (empty)
+- Delete 9 placeholder `web/e2e/*.spec.ts` files (consolidated into `rider-flutter-tests.spec.ts`)
+- Replace `flutter/test/widget_test.dart` (placeholder) with meaningful first-launch smoke
+- Consolidate redundant `flutter/integration_test/` root files into `e2e_individual/`
+- Annotate or delete `web/tests/unit/worker-jobs.test.ts` (asserts on local mocks, superseded by Phase 2 dispatcher tests)
