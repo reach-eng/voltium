@@ -53,6 +53,7 @@ import {
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { BRAND_DOMAIN } from '@/lib/branding';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const PAGE_SIZE = 20;
 
@@ -125,13 +126,7 @@ function getSeverityBadgeClass(severity: string) {
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateDDMMYYYY(dateStr);
 }
 
 export default function IncidentManagementScreen() {
@@ -322,7 +317,7 @@ export default function IncidentManagementScreen() {
     const report = [
       `${BRAND_DOMAIN} Incident Report`,
       `Incident ID: ${incident.incidentId}`,
-      `Generated: ${new Date().toLocaleString('en-IN')}`,
+      `Generated: ${formatDateTimeDDMMYYYY()}`,
       '',
       'Details',
       `Title,${incident.title}`,
@@ -345,7 +340,7 @@ export default function IncidentManagementScreen() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `incident-${incident.incidentId}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `incident-${incident.incidentId}-${formatDateDDMMYYYY(new Date())}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }

@@ -12,6 +12,7 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { validateBody } from '@/lib/validators';
+import { parseDDMMYYYY } from '@/lib/date-utils';
 import { approveTransactionSchema } from '@/server/modules/transactions/transaction.schemas';
 import {
   transactionUseCases,
@@ -32,8 +33,16 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || '';
     const type = url.searchParams.get('type') || '';
     const search = url.searchParams.get('search') || '';
-    const startDate = url.searchParams.get('startDate') || '';
-    const endDate = url.searchParams.get('endDate') || '';
+    // Accept both DD-MM-YYYY (canonical) and ISO 8601 (legacy) for
+    // backward compatibility with existing API clients.
+    const startDateRaw = url.searchParams.get('startDate') || '';
+    const endDateRaw = url.searchParams.get('endDate') || '';
+    const startDate = startDateRaw
+      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
+      : '';
+    const endDate = endDateRaw
+      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
+      : '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 

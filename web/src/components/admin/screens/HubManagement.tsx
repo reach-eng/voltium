@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Hub {
   id: string;
@@ -311,7 +312,7 @@ export default function HubManagement() {
   }
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
 
   return (
     <div className="space-y-6">
@@ -428,7 +429,7 @@ export default function HubManagement() {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.setAttribute('download', `hubs-${new Date().toISOString().split('T')[0]}.csv`);
+                link.setAttribute('download', `hubs-${formatDateDDMMYYYY(new Date())}.csv`);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);

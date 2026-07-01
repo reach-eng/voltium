@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { hasPermission } from '@/lib/permissions';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Contact {
   name: string;
@@ -339,10 +340,7 @@ export default function DeviceTrackingView({ riderId }: { riderId: string }) {
                         {Math.floor(call.duration / 60)}m {call.duration % 60}s
                       </div>
                       <p className="text-[10px] text-muted-foreground/50 mt-1">
-                        {new Date(call.timestamp).toLocaleString([], {
-                          dateStyle: 'short',
-                          timeStyle: 'short',
-                        })}
+                        {formatDateTimeDDMMYYYY(call.timestamp)}
                       </p>
                     </div>
                   </div>

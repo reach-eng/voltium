@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { FileText, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, VideoOff, Shield } from 'lucide-react';
 import { MediaPreview } from '../../media-preview';
 import { KycRider, kycDocuments } from './KycReviewsTab';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 export function KycReviewModal({
   selectedRider,
@@ -323,9 +324,7 @@ export function KycReviewModal({
                         Registration
                       </p>
                       <p className="text-sm font-medium">
-                        {new Date(selectedRider.createdAt).toLocaleDateString(undefined, {
-                          dateStyle: 'medium',
-                        })}
+                        {formatDateDDMMYYYY(selectedRider.createdAt)}
                       </p>
                       <Badge
                         variant="outline"

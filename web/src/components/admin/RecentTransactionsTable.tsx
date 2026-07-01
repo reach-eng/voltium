@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { IndianRupee } from 'lucide-react';
 import { useAdminStore } from '@/store/admin';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface RecentTransaction {
   id: string;
@@ -25,11 +26,7 @@ function formatINR(amount: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatDateDDMMYYYY(dateStr);
 }
 
 interface RecentTransactionsTableProps {

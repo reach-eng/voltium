@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi, Mock } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { startWorkers, stopWorkers } from '../../../src/server/workers/index';
 import { JobQueue } from '../../../src/lib/job-queue';
 import { clock } from '../../../src/lib/clock';
@@ -11,13 +11,11 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
   
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
     vi.useFakeTimers();
   });
 
   afterAll(async () => {
     vi.useRealTimers();
-    await teardownTestPostgres();
   });
 
   beforeEach(async () => {
@@ -41,77 +39,42 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
     clock.reset();
   });
 
-  it.skip('should enqueue job, attempt processing, apply backoff via clock, and retry when time advances', async () => {
-    // TODO: This test reveals a real timezone bug in the production code.
-    //
-    // The OutboxEvent.readyAt column is `timestamp without time zone`
-    // (naive). Prisma writes JS Date values by converting them to the
-    // Postgres session's local timezone (e.g. Asia/Calcutta = +05:30 on
-    // this dev machine). The `processJobs` claim query compares
-    // `readyAt <= clock.now()` — but `clock.now()` is a JS Date (UTC),
-    // which Prisma also converts to local time. When the DB timezone
-    // is NOT UTC, the two values are in different reference frames and
-    // the comparison evaluates incorrectly.
-    //
-    // Production fix (out of scope for this commit): migrate all
-    // DateTime columns from `timestamp(3)` to `timestamptz` so they
-    // are stored as UTC internally. This is a schema migration that
-    // touches 135+ columns and requires a data backfill.
-    //
-    // Until that migration is applied, this test is skipped to keep
-    // CI green. The backoff logic is still correct in production
-    // when the server timezone is UTC (e.g. in containers).
+  it('should enqueue job, attempt processing, apply backoff via clock, and retry when time advances', async () => {
+    // After the 20260701131758_datetime_to_timestamptz migration, all
+    // DateTime columns (including OutboxEvent.readyAt) are now
+    // timestamptz, which means the `readyAt <= now` comparison in
+    // JobQueue.processJobs now evaluates correctly. The previous bug
+    // was that readyAt was timestamp without time zone and the
+    // session timezone was Asia/Calcutta, causing the comparison to
+    // be off by 5h30m.
 
-    // We will use the 'sms.send' job type which is already registered in WORKERS
-    // We mock the sms provider or since it's just logging or failing, we can force a failure
-    
-    // We will enqueue a job that we force to fail by using a mock. 
-    // Wait, SMS send provider is hard to mock if it's imported inside the worker file.
-    // Instead, let's enqueue a job, let it fail, and then see the readyAt column.
-    
-    // Let's create a stub job type if possible, or just observe an existing one. 
-    // Let's use `notification.send` with a malformed payload which causes an error... wait, 
-    // the notification dispatcher catches malformed payload and just ACKs it. 
-    // What's a job that throws? 
-    // If we use 'sms.send' with a broken provider, or just mock `JobQueue.processJobs`?
-    // No, we want to test JobQueue's actual backoff.
-    
-    // Let's manually enqueue an event with maxAttempts = 3
-    const jobId = await JobQueue.enqueue('unknown.event.to.fail', { data: 123 }, 0, 3);
-    
-    // Wait, the dispatcher only polls known job types (WORKERS array).
-    // Let's use 'sms.send' and mock the actual sendSms function? 
-    // It's imported in `src/server/workers/index.ts` from `@/lib/sms-provider`.
-    // Let's mock it using vi.mock
-    
-    // Actually, if we just enqueue `sms.send`, we can verify that without a valid provider it throws.
-    // Or we can just insert a job and call JobQueue.processJobs directly with a failing processor 
-    // to verify the backoff logic.
+    // We will manually enqueue a job and call JobQueue.processJobs
+    // directly with a failing processor to verify the backoff logic.
     const testJobId = await JobQueue.enqueue('test.backoff', { msg: 'fail' }, 0, 3);
-    
+
     let processCount = 0;
     const failingProcessor = async () => {
       processCount++;
       throw new Error('Forced failure');
     };
-    
+
     // 1st attempt
     await JobQueue.processJobs('test.backoff', failingProcessor, 1);
-    
+
     // Verify it failed and backoff was applied
     let dbJob = await testDb.outboxEvent.findUnique({ where: { id: testJobId } });
     expect(dbJob?.status).toBe('PENDING'); // Not FAILED yet, still has attempts
     expect(dbJob?.attempts).toBe(1);
     expect(dbJob?.readyAt).not.toBeNull();
-    
+
     // Exponential backoff: attempt 1 -> 2^1 * 5000 = 10000ms
     const expectedReadyAt = new Date(mockDate + 10000).toISOString();
     expect(dbJob?.readyAt?.toISOString()).toBe(expectedReadyAt);
-    
+
     // 2nd attempt - immediate poll should ignore it because readyAt > now
     await JobQueue.processJobs('test.backoff', failingProcessor, 1);
     expect(processCount).toBe(1); // Still 1
-    
+
     // Advance time by 5000ms - still shouldn't pick it up
     mockDate += 5000;
     await JobQueue.processJobs('test.backoff', failingProcessor, 1);

@@ -3,6 +3,7 @@
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BRAND_DOMAIN } from '@/lib/branding';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 /**
  * Escape a value for safe CSV output.
@@ -77,7 +78,7 @@ export function ExportButton({
     const link = document.createElement('a');
     link.href = url;
     const defaultFilename =
-      filename || `${BRAND_DOMAIN.split('.')[0]}-export-${new Date().toISOString().split('T')[0]}`;
+      filename || `${BRAND_DOMAIN.split('.')[0]}-export-${formatDateDDMMYYYY(new Date())}`;
     link.setAttribute('download', `${defaultFilename}.csv`);
     document.body.appendChild(link);
     link.click();

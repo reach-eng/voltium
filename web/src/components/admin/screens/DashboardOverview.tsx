@@ -43,6 +43,7 @@ import {
   Tooltip,
 } from 'recharts';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -110,11 +111,7 @@ function formatINR(amount: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatDateDDMMYYYY(dateStr);
 }
 
 const statCards: { key: string; label: string; icon: any; route: string; format?: boolean }[] = [
@@ -283,7 +280,7 @@ export default function DashboardOverview() {
     if (!stats) return;
     const report = [
       `${BRAND_SHORT} Dashboard Report`,
-      `Generated: ${new Date().toLocaleString('en-IN')}`,
+      `Generated: ${formatDateTimeDDMMYYYY()}`,
       '',
       'Key Metrics',
       `Active Riders,${stats.activeRiders}`,
@@ -304,7 +301,7 @@ export default function DashboardOverview() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${BRAND_DOMAIN.split('.')[0]}-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${BRAND_DOMAIN.split('.')[0]}-report-${formatDateDDMMYYYY(new Date())}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }, [stats, recentTransactions]);
@@ -337,12 +334,7 @@ export default function DashboardOverview() {
     );
   }
 
-  const today = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const today = formatDateDDMMYYYY();
   const trendData = stats?.trend || [];
   const secondaryStats = stats
     ? [

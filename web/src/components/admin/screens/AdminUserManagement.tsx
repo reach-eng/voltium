@@ -56,6 +56,7 @@ interface Admin {
 import { PERMISSION_DESCRIPTORS, getPermissionsForRole } from '@/lib/permissions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const roleColors: Record<string, string> = {
   SUPER_ADMIN: 'border-red-500/20 text-red-600 bg-red-500/5 dark:text-red-400',
@@ -188,15 +189,9 @@ function AdminUsersTab() {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
   const formatDateTime = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    formatDateDDMMYYYY(d);
 
   const filtered = search
     ? admins.filter(

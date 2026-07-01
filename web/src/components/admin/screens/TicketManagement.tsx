@@ -52,6 +52,7 @@ import {
   Undo2,
   Loader2,
 } from 'lucide-react';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Ticket {
   id: string;
@@ -462,7 +463,7 @@ export default function TicketManagement() {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
   const formatTime = (d: string) =>
     new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 
@@ -621,7 +622,7 @@ export default function TicketManagement() {
                   link.href = url;
                   link.setAttribute(
                     'download',
-                    `tickets-${new Date().toISOString().split('T')[0]}.csv`
+                    `tickets-${formatDateDDMMYYYY(new Date())}.csv`
                   );
                   document.body.appendChild(link);
                   link.click();

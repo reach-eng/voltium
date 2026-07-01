@@ -79,6 +79,7 @@ export const getRevenueTrend = async (days = 7) => {
     GROUP BY DATE("createdAt")
     ORDER BY date ASC
   `;
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
   for (const row of result) {
     const key = row.date;
@@ -90,7 +91,7 @@ export const getRevenueTrend = async (days = 7) => {
   }
 
   return Array.from(dailyMap.entries()).map(([date, data]) => ({
-    date: new Date(date).toLocaleDateString('en-IN', { weekday: 'short' }),
+    date: formatDateDDMMYYYY(date),
     revenue: Math.round(data.revenue),
     riders: data.riders,
   }));

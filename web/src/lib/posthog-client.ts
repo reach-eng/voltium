@@ -1,4 +1,5 @@
 import { PostHog } from 'posthog-node';
+import { getPostHogRateLimiter } from './posthog-rate-limiter';
 
 let posthogClient: PostHog | null = null;
 
@@ -14,7 +15,7 @@ const PII_KEYS = ['phone', 'email', 'otp', 'aadhaar', 'pan', 'password', 'token'
 
 function scrubProperties(properties?: Record<string, any>): Record<string, any> | undefined {
   if (!properties) return undefined;
-  
+
   const scrubbed = { ...properties };
   for (const key of Object.keys(scrubbed)) {
     if (PII_KEYS.some(pii => key.toLowerCase().includes(pii))) {
@@ -29,15 +30,24 @@ function scrubProperties(properties?: Record<string, any>): Record<string, any> 
 export const posthog = {
   capture(event: string, properties?: Record<string, any>, distinctId: string = 'anonymous') {
     if (!posthogClient) return;
+    // Free tier safety valve: drop events when the monthly cap is hit.
+    // See src/lib/posthog-rate-limiter.ts for details.
+    if (!getPostHogRateLimiter().tryConsume()) {
+      return;
+    }
     posthogClient.capture({
       distinctId,
       event,
       properties: scrubProperties(properties),
     });
   },
-  
+
   identify(distinctId: string, properties?: Record<string, any>) {
     if (!posthogClient) return;
+    // identify() events count against the cap too.
+    if (!getPostHogRateLimiter().tryConsume()) {
+      return;
+    }
     posthogClient.identify({
       distinctId,
       properties: scrubProperties(properties),

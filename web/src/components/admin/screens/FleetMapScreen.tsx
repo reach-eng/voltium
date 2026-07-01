@@ -33,6 +33,7 @@ import {
 import { logger } from '@/lib/logger';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Search } from 'lucide-react';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -481,7 +482,7 @@ export default function FleetMapScreen() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Last Location</span>
                         <span className="text-xs">
-                          {new Date(selectedRider.lastLocationAt).toLocaleString('en-IN')}
+                          {formatDateTimeDDMMYYYY(selectedRider.lastLocationAt)}
                         </span>
                       </div>
                     )}

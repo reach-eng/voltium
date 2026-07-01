@@ -53,6 +53,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface TeamLeader {
   id: string;
@@ -304,7 +305,7 @@ export default function TeamLeaderManagement() {
   }
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
 
   const filtered = leaders;
 
@@ -450,7 +451,7 @@ export default function TeamLeaderManagement() {
                 link.href = url;
                 link.setAttribute(
                   'download',
-                  `team-leaders-${new Date().toISOString().split('T')[0]}.csv`
+                  `team-leaders-${formatDateDDMMYYYY(new Date())}.csv`
                 );
                 document.body.appendChild(link);
                 link.click();

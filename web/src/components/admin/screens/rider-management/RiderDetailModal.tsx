@@ -35,6 +35,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { STATE_FILTERS, DetailGroup, getKycBadge } from './index';
 import { MediaPreview } from '../../media-preview';
 import DeviceTrackingView from '../DeviceTrackingView';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const permissions = [
   { id: 'location', label: 'Location' },
@@ -756,16 +757,7 @@ export function RiderDetailModal({
                                 </span>
                                 {selectedRider[step.key] && selectedRider[step.dateKey] && (
                                   <span className="text-[9px] text-muted-foreground/50 block mt-0.5">
-                                    {new Date(selectedRider[step.dateKey]).toLocaleDateString(
-                                      'en-IN',
-                                      {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      }
-                                    )}
+                                    {formatDateDDMMYYYY(selectedRider[step.dateKey])}
                                   </span>
                                 )}
                               </div>

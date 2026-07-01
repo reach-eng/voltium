@@ -1,24 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { transactionRepository } from '../../../src/server/modules/transactions/transaction.repository';
 import { TransactionType, TransactionPurpose, TransactionStatus } from '@prisma/client';
 
-describe.skip('transactionRepository', () => {
-  // TODO: This file's beforeEach fails intermittently with
-  // "Can't reach database server" when run as part of the full unit test
-  // suite. Root cause: the shared Prisma connection pool (size 10) fills
-  // up across the 55+ test files run before this one. Fix requires either
-  // per-file connection scoping or a global teardown that drains the pool.
-
-  beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
-  });
-
-  afterAll(async () => {
-    await teardownTestPostgres();
-  });
+describe('transactionRepository', () => {
 
   let riderDbId: string;
   let txnId: string;

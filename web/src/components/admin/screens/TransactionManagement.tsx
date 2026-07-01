@@ -52,6 +52,7 @@ import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { ExportButton } from '../export-button';
 import { AdminErrorBoundary } from '../error-boundary';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Transaction {
   id: string;
@@ -85,13 +86,7 @@ function formatINR(amount: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateDDMMYYYY(dateStr);
 }
 
 // ── Shared color logic ──────────────────────────────────────────────
@@ -540,7 +535,7 @@ export default function TransactionManagement() {
                             link.href = url;
                             link.setAttribute(
                               'download',
-                              `transactions-${new Date().toISOString().split('T')[0]}.csv`
+                              `transactions-${formatDateDDMMYYYY(new Date())}.csv`
                             );
                             document.body.appendChild(link);
                             link.click();

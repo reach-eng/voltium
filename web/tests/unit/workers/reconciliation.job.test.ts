@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { reconciliationJob } from '../../../src/server/workers/jobs/reconciliation.job';
 import { clock } from '../../../src/lib/clock';
 import { JobQueue } from '../../../src/lib/job-queue';
@@ -9,11 +9,9 @@ import { OutboxEventTypes } from '../../../src/server/workers/outbox';
 describe('Reconciliation Job', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
   });
 
   beforeEach(async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { rentRemindersJob } from '../../../src/server/workers/jobs/rent-reminders.job';
 import { clock } from '../../../src/lib/clock';
 
@@ -13,11 +13,9 @@ vi.mock('../../../src/lib/notification-service', () => ({
 describe('Rent Reminders Job', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
   });
 
   beforeEach(async () => {

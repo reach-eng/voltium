@@ -1,17 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { depositService } from '../../../src/server/modules/deposits/deposit.service';
 import { DepositStatus } from '@prisma/client';
 
 describe('depositService', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
   });
 
   let riderDbId: string;

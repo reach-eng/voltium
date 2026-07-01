@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { testDb } from '../../_setup/test-postgres';
 import { clock } from '../../../src/lib/clock';
 import { auditCleanupJob } from '../../../src/server/workers/jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from '../../../src/server/workers/jobs/telemetry-cleanup.job';
@@ -7,15 +7,6 @@ import { notificationsCleanupJob } from '../../../src/server/workers/jobs/notifi
 import { v4 as uuidv4 } from 'uuid';
 
 describe('Cleanup Jobs', () => {
-  beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
-  });
-
-  afterAll(async () => {
-    await teardownTestPostgres();
-  });
-
   beforeEach(async () => {
     await testDb.auditLog.deleteMany();
     await testDb.userLocation.deleteMany();
@@ -50,12 +41,7 @@ describe('Cleanup Jobs', () => {
     expect(count).toBe(1);
   });
 
-  it.skip('Telemetry cleanup should delete logs older than 30 days', async () => {
-    // TODO: Fails intermittently with "Can't reach database server" when
-    // run as part of the full unit test suite. Root cause: shared Prisma
-    // connection pool fills up across test files. See wallet.service.test.ts
-    // for the same issue.
-
+  it('Telemetry cleanup should delete logs older than 30 days', async () => {
     const riderId = uuidv4();
     await testDb.rider.create({ data: { id: riderId, riderId: uuidv4(), referralCode: uuidv4().slice(0, 8), phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}` } });
 

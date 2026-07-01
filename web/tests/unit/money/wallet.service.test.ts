@@ -1,30 +1,14 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { walletService } from '../../../src/server/modules/wallet/wallet.service';
 import { walletRepository } from '../../../src/server/modules/wallet/wallet.repository';
 import fc from 'fast-check';
 
-describe.skip('walletService', () => {
-  // TODO: This file's beforeEach fails intermittently with
-  // "Can't reach database server" when run as part of the full unit test
-  // suite (passes in isolation). Root cause: the shared Prisma connection
-  // pool (size 10) fills up across the 55+ test files run before this one,
-  // and the pool is not released between files. Fix requires either
-  // per-file connection scoping or a global teardown that drains the pool.
-
-  beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
-  });
-
-  afterAll(async () => {
-    await teardownTestPostgres();
-  });
-
+describe('walletService', () => {
   let riderId: string;
   let riderDbId: string;
-  
+
   beforeEach(async () => {
     riderId = `RD-${uuidv4().substring(0, 6)}`;
     riderDbId = uuidv4();

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { depositLedgerService } from '../../../src/server/modules/deposits/deposit-ledger.service';
 import { DepositStatus } from '@prisma/client';
 import { walletRepository } from '../../../src/server/modules/wallet/wallet.repository';
@@ -8,11 +8,9 @@ import { walletRepository } from '../../../src/server/modules/wallet/wallet.repo
 describe('depositLedgerService', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
   });
 
   let riderDbId: string;

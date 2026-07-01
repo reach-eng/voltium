@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { useDebounce } from '@/hooks/use-debounce';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Announcement {
   id: string;
@@ -106,13 +107,7 @@ function getChannelIcon(channel: string) {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateDDMMYYYY(dateStr);
 }
 
 export default function BulkMessagingScreen() {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { clock } from '../../../src/lib/clock';
 import { dailyEngagementJob } from '../../../src/server/workers/jobs/daily-engagement.job';
 import { notificationService } from '../../../src/lib/notification-service';
@@ -16,11 +16,9 @@ vi.mock('../../../src/lib/notification-service', () => ({
 describe('Daily Engagement Job', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
     vi.restoreAllMocks();
   });
 

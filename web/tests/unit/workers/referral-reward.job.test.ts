@@ -1,19 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../../_setup/test-postgres';
+import { testDb } from '../../_setup/test-postgres';
 import { referralRewardJob } from '../../../src/server/workers/jobs/referral-reward.job';
 import { clock } from '../../../src/lib/clock';
 
 describe('Referral Reward Job', () => {
-  beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
-  });
-
-  afterAll(async () => {
-    await teardownTestPostgres();
-  });
-
   beforeEach(async () => {
     await testDb.outboxEvent.deleteMany();
     await testDb.reward.deleteMany();
@@ -24,12 +15,7 @@ describe('Referral Reward Job', () => {
     clock.reset();
   });
 
-  it.skip('should process referral reward and credit referrer wallet', async () => {
-    // TODO: Test fails in full suite (passes in isolation). Likely a test
-    // isolation issue with the shared test DB — other tests' riders/wallets
-    // may be interfering. Needs investigation into proper test isolation
-    // (e.g., transaction wrapper, unique schema per test file).
-
+  it('should process referral reward and credit referrer wallet', async () => {
     const referrerId = uuidv4();
     const referredId = uuidv4();
     const referralCode = uuidv4().slice(0, 8);

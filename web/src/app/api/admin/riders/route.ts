@@ -14,6 +14,7 @@ import { success, errors } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
+import { parseDDMMYYYY } from '@/lib/date-utils';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 
 /**
@@ -102,8 +103,14 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get('search') || '';
     const state = url.searchParams.get('state') || '';
     const kycStatus = url.searchParams.get('kycStatus') || '';
-    const startDate = url.searchParams.get('startDate') || '';
-    const endDate = url.searchParams.get('endDate') || '';
+    const startDateRaw = url.searchParams.get('startDate') || '';
+    const endDateRaw = url.searchParams.get('endDate') || '';
+    const startDate = startDateRaw
+      ? parseDDMMYYYY(startDateRaw)?.toISOString() || startDateRaw
+      : '';
+    const endDate = endDateRaw
+      ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
+      : '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '20'));
     const sortBy = url.searchParams.get('sortBy') || 'createdAt';

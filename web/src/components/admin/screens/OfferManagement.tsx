@@ -45,6 +45,7 @@ import { Plus, Pencil, Trash2, Sparkles, Search, X, Loader2 } from 'lucide-react
 import { Skeleton } from '@/components/ui/skeleton';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Offer {
   id: string;
@@ -336,7 +337,7 @@ export default function OfferManagement() {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
 
   return (
     <div className="space-y-6">

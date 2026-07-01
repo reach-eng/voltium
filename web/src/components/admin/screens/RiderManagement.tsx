@@ -85,6 +85,7 @@ import DeviceTrackingView from './DeviceTrackingView';
 import { ExportButton } from '../export-button';
 import { AdminErrorBoundary } from '../error-boundary';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Rider {
   [key: string]: any;
@@ -837,7 +838,7 @@ export default function RiderManagement() {
                     link.href = url;
                     link.setAttribute(
                       'download',
-                      `${BRAND_DOMAIN.split('.')[0]}-riders-${new Date().toISOString().split('T')[0]}.csv`
+                      `${BRAND_DOMAIN.split('.')[0]}-riders-${formatDateDDMMYYYY(new Date())}.csv`
                     );
                     document.body.appendChild(link);
                     link.click();
@@ -1086,11 +1087,7 @@ export default function RiderManagement() {
                           <TableCell className="text-xs">
                             {rider.pickedUpAt ? (
                               <span className="text-emerald-600 font-medium">
-                                {new Date(rider.pickedUpAt).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
+                                {formatDateDDMMYYYY(rider.pickedUpAt)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground italic">Pending</span>
@@ -1879,16 +1876,7 @@ export default function RiderManagement() {
                                 </span>
                                 {selectedRider[step.key] && selectedRider[step.dateKey] && (
                                   <span className="text-[9px] text-muted-foreground/50 block mt-0.5">
-                                    {new Date(selectedRider[step.dateKey]).toLocaleDateString(
-                                      'en-IN',
-                                      {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      }
-                                    )}
+                                    {formatDateDDMMYYYY(selectedRider[step.dateKey])}
                                   </span>
                                 )}
                               </div>

@@ -162,9 +162,11 @@ const createPrismaClient = () => {
     try {
       const url = new URL(dbUrl);
       if (!url.searchParams.has('connection_limit')) {
-        // Default to 50 for test environments (DATABASE_OFFLINE !== 'true')
-        // and 10 for production. The higher test limit prevents pool
-        // exhaustion when 55+ test files share a single Prisma client.
+        // Default to 50 for test environments and 10 for production.
+        // The higher test limit prevents pool exhaustion when 55+ test
+        // files share a single Prisma client. Production keeps the
+        // smaller pool because concurrent load is bounded by the number
+        // of Next.js workers.
         const defaultPool = process.env.NODE_ENV === 'test' ? '50' : '10';
         url.searchParams.set('connection_limit', process.env.DATABASE_POOL_SIZE || defaultPool);
       }
@@ -174,6 +176,12 @@ const createPrismaClient = () => {
       if (!url.searchParams.has('connect_timeout')) {
         url.searchParams.set('connect_timeout', isDev ? '2' : '10');
       }
+      // Do NOT set a session timezone. Prisma always sends JS Date values
+      // as UTC (ISO 8601 with 'Z' suffix). With the connection in UTC
+      // timezone, Postgres stores and compares TIMESTAMPTZ values
+      // correctly. Setting a non-UTC session timezone causes Prisma
+      // to convert dates to local time on write, which can lead to
+      // off-by-hours bugs in time comparisons.
       dbUrl = url.toString();
       logger.info('PostgreSQL pool config applied dynamically', {
         connectionLimit: process.env.DATABASE_POOL_SIZE || '10',

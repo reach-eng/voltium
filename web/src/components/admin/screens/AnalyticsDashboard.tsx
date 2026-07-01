@@ -36,6 +36,7 @@ import {
 } from 'recharts';
 import { logger } from '@/lib/logger';
 import { BRAND_DOMAIN } from '@/lib/branding';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const POLL_INTERVAL_MS = 60_000;
 
@@ -72,6 +73,9 @@ function formatINR(amount: number): string {
 function getMonthLabel(monthStr: string): string {
   const [year, month] = monthStr.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
+  // Returns the month abbreviation + 2-digit year (e.g., "Mar 26") for
+  // chart axis labels. This is a compact display format, not a full
+  // DD-MM-YYYY date, so we keep the Intl formatter.
   return date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
 }
 
@@ -127,7 +131,7 @@ export default function AnalyticsDashboard() {
     if (!data) return;
     const rows = [
       'Ryd Financial Report',
-      `Generated: ${new Date().toLocaleString('en-IN')}`,
+      `Generated: ${formatDateTimeDDMMYYYY()}`,
       '',
       'Key Metrics',
       `MRR,${data.overview.currentMRR}`,
@@ -152,7 +156,7 @@ export default function AnalyticsDashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${BRAND_DOMAIN.split('.')[0]}-financial-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${BRAND_DOMAIN.split('.')[0]}-financial-${formatDateDDMMYYYY(new Date())}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }, [data]);

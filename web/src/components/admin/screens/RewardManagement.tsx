@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Reward {
   id: string;
@@ -189,7 +190,7 @@ function RewardsTab() {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    formatDateDDMMYYYY(d);
 
   return (
     <div className="space-y-6">

@@ -19,6 +19,7 @@ import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Download, Search, In
 import { ExportButton } from '../../export-button';
 import { logger } from '@/lib/logger';
 import { KycReviewModal } from './KycReviewModal';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 // We just copy the KycRider and helpers since they're needed here too
 export interface KycRider {
@@ -600,12 +601,7 @@ export function KycReviewsTab() {
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {rider.submissionDate
-                            ? new Date(rider.submissionDate).toLocaleString('en-IN', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
+                            ? formatDateTimeDDMMYYYY(rider.submissionDate)
                             : '-'}
                         </TableCell>
                         <TableCell>

@@ -237,6 +237,7 @@ import { KycActionModal } from './KycActionModal';
 import { DeleteDocModal } from './DeleteDocModal';
 import { ClearGuarantorModal } from './ClearGuarantorModal';
 import { BulkDeleteModal } from './BulkDeleteModal';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 export default function RiderManagement() {
   const [search, setSearch] = useState('');
   const [searching, setSearching] = useState(false);
@@ -713,7 +714,7 @@ export default function RiderManagement() {
                     link.href = url;
                     link.setAttribute(
                       'download',
-                      `${BRAND_DOMAIN.split('.')[0]}-riders-${new Date().toISOString().split('T')[0]}.csv`
+                      `${BRAND_DOMAIN.split('.')[0]}-riders-${formatDateDDMMYYYY(new Date())}.csv`
                     );
                     document.body.appendChild(link);
                     link.click();
@@ -962,11 +963,7 @@ export default function RiderManagement() {
                           <TableCell className="text-xs">
                             {rider.pickedUpAt ? (
                               <span className="text-emerald-600 font-medium">
-                                {new Date(rider.pickedUpAt).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
+                                {formatDateDDMMYYYY(rider.pickedUpAt)}
                               </span>
                             ) : (
                               <span className="text-muted-foreground italic">Pending</span>

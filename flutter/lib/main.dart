@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
@@ -64,6 +66,11 @@ Future<void> main() async {
     }
   }
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize date formatting for DD-MM-YYYY (Indian locale).
+  // Required by DateUtils.formatDateDDMMYYYY().
+  await initializeDateFormatting('en_IN', null);
+  Intl.defaultLocale = 'en_IN';
 
   // Initialize Error Monitoring
   await MonitoringService.initialize();

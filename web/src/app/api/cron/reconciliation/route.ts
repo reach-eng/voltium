@@ -7,6 +7,7 @@ import {
   recordReconciliation,
   checkReconciliationToday,
 } from '@/server/workers/jobs/wallet-reconciliation.job';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 export async function GET(req: NextRequest) {
   const authError = requireCronAuth(req);
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
     return authError;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatDateDDMMYYYY(new Date());
 
   const existingReport = await checkReconciliationToday(today);
   if (existingReport) {

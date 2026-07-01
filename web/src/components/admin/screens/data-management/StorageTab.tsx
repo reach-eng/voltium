@@ -80,6 +80,7 @@ import {
   Search,
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -191,13 +192,7 @@ function formatBytes(bytes: number | null | undefined): string {
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeDDMMYYYY(dateStr);
 }
 
 function getStatusBadge(status: string | null | undefined) {

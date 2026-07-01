@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Referral {
   id: string;
@@ -132,11 +133,7 @@ export default function ReferralManagement() {
 
   const formatDate = (d: string) => {
     try {
-      return new Date(d).toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
+      return formatDateDDMMYYYY(d);
     } catch {
       return d;
     }

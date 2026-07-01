@@ -1,16 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { setupTestPostgres, teardownTestPostgres, testDb } from '../unit/_setup/test-postgres';
+import { testDb } from '../unit/_setup/test-postgres';
 import { JobQueue } from '../../src/lib/job-queue';
 import { clock } from '../../src/lib/clock';
 
 describe('Worker Dispatcher & JobQueue Integration', () => {
   beforeAll(async () => {
     process.env.DATABASE_OFFLINE = 'false';
-    await setupTestPostgres();
   });
 
   afterAll(async () => {
-    await teardownTestPostgres();
   });
 
   beforeEach(async () => {

@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface RentalPlan {
   id: string;
@@ -350,12 +351,7 @@ export default function RentalManagement() {
                     </p>
                     <p className="text-sm font-semibold">
                       {rental.submissionDate
-                        ? new Date(rental.submissionDate).toLocaleString('en-IN', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
+                        ? formatDateTimeDDMMYYYY(rental.submissionDate)
                         : 'Today'}
                     </p>
                     <div className="mt-2 flex items-center gap-2">

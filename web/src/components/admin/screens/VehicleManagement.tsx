@@ -67,6 +67,7 @@ import {
 import { ExportButton } from '../export-button';
 import { AdminErrorBoundary } from '../error-boundary';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 interface Vehicle {
   id: string;
@@ -499,7 +500,7 @@ export default function VehicleManagement() {
                   link.href = url;
                   link.setAttribute(
                     'download',
-                    `vehicles-${new Date().toISOString().split('T')[0]}.csv`
+                    `vehicles-${formatDateDDMMYYYY(new Date())}.csv`
                   );
                   document.body.appendChild(link);
                   link.click();

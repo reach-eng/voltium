@@ -51,6 +51,7 @@ import { EditVehicleModal } from './EditVehicleModal';
 import { AddVehicleModal } from './AddVehicleModal';
 import { BulkStatusModal } from './BulkStatusModal';
 import { BulkHubModal } from './BulkHubModal';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 export interface Vehicle {
   id: string;
   vehicleId: string;
@@ -482,7 +483,7 @@ export default function VehicleManagement() {
                   link.href = url;
                   link.setAttribute(
                     'download',
-                    `vehicles-${new Date().toISOString().split('T')[0]}.csv`
+                    `vehicles-${formatDateDDMMYYYY(new Date())}.csv`
                   );
                   document.body.appendChild(link);
                   link.click();

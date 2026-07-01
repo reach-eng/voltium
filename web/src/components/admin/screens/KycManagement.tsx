@@ -57,6 +57,7 @@ import {
 import { ExportButton } from '../export-button';
 import { AdminErrorBoundary } from '../error-boundary';
 import { logger } from '@/lib/logger';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 // ── Media Preview with hover zoom ──────────────────────────────────────
 const MediaPreview = ({
@@ -726,12 +727,7 @@ function KycManagementTab() {
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {rider.submissionDate
-                            ? new Date(rider.submissionDate).toLocaleString('en-IN', {
-                                day: '2-digit',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
+                            ? formatDateTimeDDMMYYYY(rider.submissionDate)
                             : '-'}
                         </TableCell>
                         <TableCell>
@@ -1113,9 +1109,7 @@ function KycManagementTab() {
                         Registration
                       </p>
                       <p className="text-sm font-medium">
-                        {new Date(selectedRider.createdAt).toLocaleDateString(undefined, {
-                          dateStyle: 'medium',
-                        })}
+                        {formatDateDDMMYYYY(selectedRider.createdAt)}
                       </p>
                       <Badge
                         variant="outline"
