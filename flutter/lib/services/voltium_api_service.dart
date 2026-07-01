@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import '../core/network/api_client.dart';
 import '../core/network/generated/api_client.dart';
 import '../core/network/generated/api_models.dart' as gen;

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { notificationService } from '@/lib/notification-service';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
@@ -14,7 +15,7 @@ export const notificationsJob = {
     logger.info('[NotificationsJob] Starting', { jobId: job.id });
 
     // Idempotency guard — one run per day
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
     const idempotencyKey = `notifications:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (claim.status !== 'not_found') {
@@ -30,8 +31,8 @@ export const notificationsJob = {
       };
 
       // 1. Birthday Wishes
-      const day = today.split('-')[2] || new Date().getDate().toString().padStart(2, '0');
-      const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
+      const day = today.split('-')[2] || clock.now().getDate().toString().padStart(2, '0');
+      const month = (clock.now().getMonth() + 1).toString().padStart(2, '0');
       const birthdayString = `${day}-${month}`;
 
       const birthdayRiders = await db.rider.findMany({

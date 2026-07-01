@@ -14,6 +14,7 @@
 
 export type DepositStatus =
   | 'NOT_SUBMITTED'
+  | 'PENDING'
   | 'PENDING_VERIFICATION'
   | 'APPROVED'
   | 'REJECTED'
@@ -25,7 +26,8 @@ export type DepositStatus =
 type TransitionMap = Record<DepositStatus, DepositStatus[]>;
 
 const VALID_TRANSITIONS: TransitionMap = {
-  NOT_SUBMITTED: ['PENDING_VERIFICATION'],
+  NOT_SUBMITTED: ['PENDING_VERIFICATION', 'PENDING'],
+  PENDING: ['APPROVED', 'REJECTED'],
   PENDING_VERIFICATION: ['APPROVED', 'REJECTED'],
   APPROVED: ['REFUND_REQUESTED', 'FORFEITED'],
   REJECTED: ['PENDING_VERIFICATION'],

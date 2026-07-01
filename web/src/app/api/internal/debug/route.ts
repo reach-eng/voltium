@@ -63,15 +63,15 @@ export async function GET(req: NextRequest) {
       failed: failedJobs,
       stuck: latestStuckJob ? latestStuckJob.id : null,
     };
-  } catch (err: any) {
-    result.jobs = { error: err.message };
+  } catch (err: unknown) {
+    result.jobs = { error: (err instanceof Error ? err.message : String(err)) };
   }
 
   // 2. Circuit breaker states
   try {
     result.circuitBreakers = getAllCircuitBreakers();
-  } catch (err: any) {
-    result.circuitBreakers = { error: err.message };
+  } catch (err: unknown) {
+    result.circuitBreakers = { error: (err instanceof Error ? err.message : String(err)) };
   }
 
   // 3. Rate limit stats

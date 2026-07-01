@@ -33,20 +33,20 @@ export async function POST(req: NextRequest) {
     const result = await planUseCases.subscribeToPlan(riderDbId, planId);
     return success(result, `Subscribed to ${result.planName} plan`);
   } catch (err) {
-    if (err instanceof Error && err.message === 'INSUFFICIENT_BALANCE') {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INSUFFICIENT_BALANCE') {
       return errors.badRequest('Insufficient wallet balance');
     }
     if (err instanceof WalletServiceError && err.code === 'INSUFFICIENT_BALANCE') {
-      return errors.badRequest(err.message);
+      return errors.badRequest((err instanceof Error ? err.message : String(err)));
     }
-    if (err instanceof Error && err.message === 'Plan is not active') {
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'Plan is not active') {
       return errors.badRequest('Plan is not active');
     }
     if (
       err instanceof Error &&
-      (err.message === 'Rider not found' || err.message === 'Plan not found')
+      ((err instanceof Error ? err.message : String(err)) === 'Rider not found' || (err instanceof Error ? err.message : String(err)) === 'Plan not found')
     ) {
-      return errors.notFound(err.message);
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
     logger.error('[POST /api/rider/plans]', err);
     return errors.internal('Failed to subscribe to plan');

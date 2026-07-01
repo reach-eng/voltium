@@ -27,10 +27,10 @@ export async function POST(request: NextRequest) {
     let admin;
     try {
       admin = await adminUseCases.autoLogin(email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[Admin Auto-Login] Database lookup or password verification failed:', err);
       // Return 503 Service Unavailable if database is down/issue, or 401 on invalid credentials
-      if (err.message === 'Invalid credentials') {
+      if ((err instanceof Error ? err.message : String(err)) === 'Invalid credentials') {
         return errors.unauthorized('Invalid credentials');
       }
       return error('Database or authentication service unavailable', 'SERVICE_UNAVAILABLE', 503);
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set(ADMIN_SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
 
     return response;
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[POST /api/admin/auth/auto-login]', err);
     return errors.internal('Auto-login failed');
   }

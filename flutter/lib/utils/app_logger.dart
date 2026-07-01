@@ -1,14 +1,23 @@
+import 'package:logger/logger.dart';
 import 'package:flutter/foundation.dart';
 
-void appLog(String message, {String? tag, dynamic data}) {
-  if (!kDebugMode) return;
+// Create a configured logger instance
+final _logger = Logger(
+  printer: kDebugMode 
+    ? PrettyPrinter(
+        methodCount: 1,
+        errorMethodCount: 5,
+        lineLength: 80,
+        colors: true,
+        printEmojis: true,
+      )
+    : SimplePrinter(),
+  level: kDebugMode ? Level.debug : Level.info,
+);
 
-  final prefix = tag != null ? '[$tag] ' : '';
-  if (data != null) {
-    debugPrint('$prefix$message: $data');
-  } else {
-    debugPrint('$prefix$message');
-  }
+void appLog(String message, {String? tag, dynamic data}) {
+  final content = tag != null ? '[$tag] $message' : message;
+  _logger.d(data != null ? '$content: $data' : content);
 }
 
 void logApi(String message, {dynamic data}) {
@@ -24,9 +33,5 @@ void logState(String message, {dynamic data}) {
 }
 
 void logError(String message, {dynamic error, StackTrace? stackTrace}) {
-  if (!kDebugMode) return;
-  debugPrint('[ERROR] $message: $error');
-  if (stackTrace != null) {
-    debugPrintStack(stackTrace: stackTrace);
-  }
+  _logger.e(message, error: error, stackTrace: stackTrace);
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:convert';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';

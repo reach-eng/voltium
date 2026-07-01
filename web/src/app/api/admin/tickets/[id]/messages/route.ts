@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return success(newMessage, 'Reply sent successfully');
   } catch (error) {
-    if (error instanceof Error && error.message === 'Ticket not found') {
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)) === 'Ticket not found') {
       return errors.notFound('Ticket not found');
     }
     return errors.internal('Failed to send reply');

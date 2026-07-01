@@ -23,7 +23,7 @@ import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { refreshToken } = body;
+    const refreshToken = request.cookies.get('voltium_refresh')?.value || body.refreshToken;
 
     if (!refreshToken) {
       return errors.badRequest('Missing refreshToken');
@@ -87,9 +87,14 @@ export async function POST(request: NextRequest) {
       expiresIn: 60 * 60, // 1 hour in seconds
     });
     response.cookies.set(SESSION_COOKIE_NAME, newToken, SESSION_COOKIE_OPTIONS);
+    response.cookies.set('voltium_refresh', newRefreshToken, {
+      ...SESSION_COOKIE_OPTIONS,
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
     return response;
-  } catch (err: any) {
-    logger.error('[AuthRefresh] Failed', { error: err.message });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : String(err);
+    logger.error('[AuthRefresh] Failed', { error: errorMessage });
     return errors.internal('Failed to refresh session');
   }
 }

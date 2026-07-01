@@ -47,11 +47,16 @@ import { POST } from '@/app/api/auth/refresh/route';
 const newAccessToken = 'new-access-token-abc';
 const newRefreshToken = 'new-refresh-token-xyz';
 
-function makeRequest(body: object): Request {
-  return new Request('http://localhost/api/auth/refresh', {
+function makeRequest(body: object): any {
+  const req = new Request('http://localhost/api/auth/refresh', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+  });
+  return Object.assign(req, {
+    cookies: {
+      get: () => undefined,
+    },
   });
 }
 

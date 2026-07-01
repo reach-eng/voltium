@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
       workers: { status: workerStatus, detail: workerDetail },
       timestamp: new Date().toISOString(),
     });
-  } catch (err: any) {
-    return errors.internal(`Workflow coverage check failed: ${err.message}`);
+  } catch (err: unknown) {
+    return errors.internal(`Workflow coverage check failed: ${(err instanceof Error ? err.message : String(err))}`);
   }
 }

@@ -41,7 +41,7 @@ export function withTiming(handler: RouteHandler, routeName: string): RouteHandl
       const duration = performance.now() - startTime;
       logRequestEnd(req.method, req.nextUrl.pathname, 500, duration, correlationId, {
         routeName,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error',
       });
 
       // Track as a failed API call

@@ -74,7 +74,7 @@ Five parallel exploration passes:
 - `.husky/pre-commit` runs `cd web && npx lint-staged`
 - `lint-staged` is NOT in `web/package.json` devDependencies
 - No `lint-staged` config file exists anywhere
-- Every `git commit` fails on a clean clone until developer uses `--no-verify`
+- Every `git commit` fails on a clean clone until developer uses `--no-verify` (FIXED: husky installed properly)
 - **Fix**: either install `lint-staged` + add config, or remove the pre-commit hook
 
 ### H6 — ESLint OOM risk in CI

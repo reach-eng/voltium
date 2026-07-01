@@ -67,11 +67,11 @@ export async function POST(request: NextRequest) {
     response.cookies.set(ADMIN_SESSION_COOKIE_NAME, sessionToken, SESSION_COOKIE_OPTIONS);
 
     return response;
-  } catch (err: any) {
-    if (err.message === 'Too many login attempts. Try again later.') {
-      return errors.tooManyRequests(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err)) === 'Too many login attempts. Try again later.') {
+      return errors.tooManyRequests((err instanceof Error ? err.message : String(err)));
     }
-    if (err.message === 'Invalid credentials') {
+    if ((err instanceof Error ? err.message : String(err)) === 'Invalid credentials') {
       return errors.unauthorized('Invalid email or password');
     }
     logger.error('[POST /api/admin/auth/login]', redactPii(err));

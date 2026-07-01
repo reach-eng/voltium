@@ -80,22 +80,22 @@ export async function PUT(req: NextRequest) {
     return success(result, `Transaction ${action.toLowerCase()}d`);
   } catch (error) {
     if (error instanceof TransactionError) {
-      return errors.badRequest(error.message);
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof TransactionStateError) {
-      return errors.conflict(error.message);
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof WalletServiceError) {
-      return errors.badRequest(error.message);
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     }
     if (error instanceof DepositStateError) {
-      return errors.conflict(error.message);
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
-    if (error instanceof Error && error.message.includes('not found')) {
-      return errors.notFound(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
+      return errors.notFound((error instanceof Error ? error.message : String(error)));
     }
-    if (error instanceof Error && error.message.includes('deposit')) {
-      return errors.conflict(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('deposit')) {
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Update transaction error:', error);
     return errors.internal('Failed to update transaction');

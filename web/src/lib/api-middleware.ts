@@ -92,7 +92,7 @@ export async function withErrorHandler(handler: (req: NextRequest) => Promise<Ne
       const errorInfo: Record<string, unknown> = {
         path: req.nextUrl.pathname,
         method: req.method,
-        error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+        error: error instanceof Error ? { name: error.name, message: (error instanceof Error ? error.message : String(error)) } : String(error),
       };
       // Include stack trace in development for debugging
       if (process.env.NODE_ENV !== 'production' && error instanceof Error && error.stack) {

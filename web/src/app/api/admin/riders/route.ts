@@ -143,8 +143,8 @@ export async function POST(req: NextRequest) {
     const result = await adminRiderUseCases.create({ phone, fullName });
     return success(result);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('already exists')) {
-      return errors.conflict(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {
+      return errors.conflict((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Create rider error:', error);
     return errors.internal('Failed to create rider');
@@ -164,7 +164,7 @@ export async function PUT(req: NextRequest) {
     const parsed = updateRiderSchema.safeParse(raw);
     if (!parsed.success) {
       return errors.badRequest(
-        parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${e.message}`).join('; ')
+        parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${(e instanceof Error ? e.message : String(e))}`).join('; ')
       );
     }
     const { id, ...data } = parsed.data;
@@ -178,8 +178,8 @@ export async function PUT(req: NextRequest) {
 
     return success(result);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('not found')) {
-      return errors.notFound(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
+      return errors.notFound((error instanceof Error ? error.message : String(error)));
     }
     logger.error('Update rider error:', error);
     return errors.internal('Failed to update rider');

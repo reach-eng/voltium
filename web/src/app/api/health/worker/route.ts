@@ -3,6 +3,10 @@ export const dynamic = 'force-dynamic';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function GET() {
   const start = Date.now();
 
@@ -63,14 +67,15 @@ export async function GET() {
       },
       { status: healthy ? 200 : 503 }
     );
-  } catch (err: any) {
-    logger.error('[Health/Worker] Worker check failed', { error: err?.message });
+  } catch (err: unknown) {
+    const message = errorMessage(err);
+    logger.error('[Health/Worker] Worker check failed', { error: message });
 
     return NextResponse.json(
       {
         status: 'unhealthy',
         latencyMs: Date.now() - start,
-        error: err?.message ?? 'Unknown error',
+        error: message || 'Unknown error',
         timestamp: new Date().toISOString(),
       },
       { status: 503 }

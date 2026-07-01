@@ -65,7 +65,7 @@ export function encryptPii(text: string | null | undefined): string | null | und
   try {
     const { version, key } = getLatestKey();
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: 16 });
 
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
@@ -118,7 +118,7 @@ export function decryptPii(cipherText: string | null | undefined): string | null
     const authTag = Buffer.from(authTagHex, 'hex');
     const encryptedText = Buffer.from(encryptedHex, 'hex');
 
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: 16 });
     decipher.setAuthTag(authTag);
 
     let decrypted = decipher.update(encryptedText);
@@ -127,6 +127,6 @@ export function decryptPii(cipherText: string | null | undefined): string | null
     return decrypted.toString('utf8');
   } catch (err) {
     // Throw on auth-tag failure (tampered ciphertext) instead of returning garbage
-    throw new Error(`PII decryption failed: ${err instanceof Error ? err.message : err}`);
+    throw new Error(`PII decryption failed: ${err instanceof Error ? (err instanceof Error ? err.message : String(err)) : err}`);
   }
 }

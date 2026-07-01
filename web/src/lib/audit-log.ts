@@ -35,6 +35,10 @@ const CRITICAL_ACTIONS = new Set<string>([
   'SYSTEM_CONFIG',
 ]);
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export async function createAuditLog(params: {
   actorId: string;
   actorType?: string;
@@ -60,15 +64,15 @@ export async function createAuditLog(params: {
         expiresAt: getExpiresAt(params.action),
       },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[AuditLog] Failed to create entry:', err);
     if (CRITICAL_ACTIONS.has(params.action)) {
       throw new Error(
-        `Audit log write failed for critical action ${params.action}: ${err?.message || err}`
+        `Audit log write failed for critical action ${params.action}: ${errorMessage(err)}`
       );
     }
     const { password, lockPassword, otp, idToken, token, ...safeParams } = params as Record<string, unknown>;
-    console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), err?.message || err);
+    console.error('[AUDIT_FAILED]', JSON.stringify(safeParams), errorMessage(err));
   }
 }
 

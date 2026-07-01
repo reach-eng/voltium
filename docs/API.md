@@ -1,199 +1,82 @@
 # Voltium API Documentation
 
-## Response Format
+This document describes the primary REST endpoints available to client applications (Flutter App and Admin Web).
 
-All API responses follow a consistent format:
+## Authentication Flow
 
-### Success Response
+Voltium uses HTTP-only cookies for authentication tokens (`auth_token`, `refresh_token`), protecting against XSS attacks.
 
+### `POST /api/auth/login`
+Initiates the login flow by sending an SMS OTP to the provided phone number.
+- **Request Body**: `{ "phone": "+919876543210" }`
+- **Response**: `200 OK` (OTP sent)
+- **Rate Limit**: 3 per 15 minutes.
+
+### `POST /api/auth/verify-otp`
+Verifies the OTP and issues a JWT session.
+- **Request Body**: `{ "phone": "+919876543210", "otp": "123456" }`
+- **Response**: `200 OK` with `Set-Cookie` headers for `auth_token` and `refresh_token`.
+
+### `POST /api/auth/refresh`
+Refreshes an expired `auth_token` using a valid `refresh_token`.
+
+---
+
+## Rider Core API
+
+### `GET /api/vehicles?hubId={hubId}`
+Fetches the active list of vehicles for a given hub.
+- **Response**: `200 OK` with a cached list of vehicles.
+
+### `POST /api/rentals`
+Initiates a vehicle booking.
+- **Headers**: `Idempotency-Key: <uuid>`
+- **Request Body**: `{ "vehicleId": "...", "shiftId": "...", "leaseDate": "YYYY-MM-DD" }`
+- **Response**: `201 Created`
+
+### `GET /api/wallet/balance`
+Retrieves the real-time wallet and deposit balance.
+- **Response**: `200 OK` `{ "balanceInPaise": 50000, "securityDeposit": 100000 }`
+
+---
+
+## Webhooks
+
+Voltium accepts incoming webhooks from external payment providers to verify and reconcile wallet top-ups and deposit payments.
+
+### `POST /api/webhooks/razorpay`
+- **Headers**: `X-Razorpay-Signature: <hmac-sha256>`
+- **Behavior**: The application verifies the signature against the pre-configured secret. Valid events trigger an outbox event, while invalid signatures return a `400 Bad Request`.
+
+---
+
+## Error Handling & Status Codes
+All responses conform to the standard API structure.
+
+**Successful Response**
 ```json
 {
   "success": true,
   "data": { ... },
-  "message": "optional message",
-  "pagination": { "page": 1, "limit": 10, "total": 100, "totalPages": 10 }
+  "message": "Operation successful"
 }
 ```
 
-### Error Response
-
+**Error Response**
 ```json
 {
   "success": false,
-  "error": "Human readable error message",
-  "code": "ERROR_CODE"
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Invalid input provided"
+  }
 }
 ```
 
-## Error Codes
-
-| Code               | Description             | HTTP Status |
-| ------------------ | ----------------------- | ----------- |
-| `BAD_REQUEST`      | Invalid input           | 400         |
-| `UNAUTHORIZED`     | Authentication required | 401         |
-| `FORBIDDEN`        | Access denied           | 403         |
-| `NOT_FOUND`        | Resource not found      | 404         |
-| `CONFLICT`         | Resource already exists | 409         |
-| `VALIDATION_ERROR` | Validation failed       | 422         |
-| `RATE_LIMITED`     | Too many requests       | 429         |
-| `SERVER_ERROR`     | Internal server error   | 500         |
-
-## Authentication
-
-### Send OTP
-
-```http
-POST /api/auth/send-otp
-Content-Type: application/json
-
-{ "phone": "9999900001" }
-```
-
-### Verify OTP
-
-```http
-POST /api/auth/verify-otp
-Content-Type: application/json
-
-{ "phone": "9999900001", "otp": "123456" }
-```
-
-## Rider Endpoints
-
-### Get Profile
-
-```http
-GET /api/rider/profile?riderId=xxx
-```
-
-### Update Profile
-
-```http
-PUT /api/rider/profile
-Content-Type: application/json
-
-{
-  "fullName": "John Doe",
-  "email": "john@example.com",
-  "fatherName": "John Sr",
-  "currentAddress": "123 Main St"
-}
-```
-
-### Submit KYC
-
-```http
-POST /api/rider/kyc
-Content-Type: application/json
-
-{
-  "riderId": "xxx",
-  "aadhaarNumber": "1234-5678-9012",
-  "panNumber": "ABCDE1234F",
-  "bankName": "HDFC Bank",
-  "bankAccount": "1234567890",
-  "bankIfsc": "HDFC0001234"
-}
-```
-
-### Submit Guarantor
-
-```http
-POST /api/rider/guarantor
-Content-Type: application/json
-
-{
-  "riderId": "xxx",
-  "name": "Jane Doe",
-  "relation": "father",
-  "phone": "9999900002"
-}
-```
-
-## Admin Endpoints
-
-### Dashboard Stats
-
-```http
-GET /api/admin/dashboard
-```
-
-### List Riders
-
-```http
-GET /api/admin/riders?page=1&limit=10&state=ONBOARDING
-```
-
-### Create Rider
-
-```http
-POST /api/admin/riders
-Content-Type: application/json
-
-{
-  "phone": "9999900001",
-  "fullName": "John Doe"
-}
-```
-
-### Update Rider
-
-```http
-PUT /api/admin/riders/:id
-Content-Type: application/json
-
-{
-  "state": "ACTIVE",
-  "kycApproved": true
-}
-```
-
-### List Transactions
-
-```http
-GET /api/admin/transactions?status=PENDING&page=1&limit=20
-```
-
-### Approve Transaction
-
-```http
-PUT /api/admin/transactions
-Content-Type: application/json
-
-{
-  "id": "tx-xxx",
-  "action": "APPROVE"
-}
-```
-
-### List Support Tickets
-
-```http
-GET /api/admin/tickets?status=OPEN&priority=HIGH
-```
-
-### Update Ticket
-
-```http
-PUT /api/admin/tickets
-Content-Type: application/json
-
-{
-  "id": "ticket-xxx",
-  "status": "RESOLVED",
-  "resolution": "Issue resolved"
-}
-```
-
-## Validation Schemas
-
-All POST/PUT requests should use the validators defined in `src/lib/validators.ts`:
-
-- `sendOtpSchema`
-- `verifyOtpSchema`
-- `updateProfileSchema`
-- `submitKycSchema`
-- `submitGuarantorSchema`
-- `subscribePlanSchema`
-- `topUpSchema`
-- `createTicketSchema`
+- **400 Bad Request**: Invalid input, Zod validation failure.
+- **401 Unauthorized**: Missing or invalid session token.
+- **403 Forbidden**: Valid token, but insufficient RBAC permissions.
+- **404 Not Found**: Resource does not exist.
+- **409 Conflict**: State transition failure (e.g., booking an unavailable vehicle).
+- **429 Too Many Requests**: Rate limit exceeded.
+- **500 Internal Server Error**: Unexpected backend fault.

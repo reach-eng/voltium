@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class FormScrollHelper {
   static void scrollToFirstError(
-      BuildContext context, Map<String, String?> errors,) {
+      BuildContext context, Map<String, String?> errors, {Map<String, GlobalKey>? keys}) {
     String? firstErrorKey;
     for (final entry in errors.entries) {
       if (entry.value != null && entry.value!.isNotEmpty) {
@@ -12,10 +12,16 @@ class FormScrollHelper {
     }
 
     if (firstErrorKey != null) {
-      final context = primaryFocus?.context;
-      if (context != null) {
+      BuildContext? targetContext;
+      if (keys != null && keys.containsKey(firstErrorKey)) {
+        targetContext = keys[firstErrorKey]?.currentContext;
+      }
+      
+      targetContext ??= primaryFocus?.context;
+
+      if (targetContext != null) {
         Scrollable.ensureVisible(
-          context,
+          targetContext,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -51,6 +57,7 @@ class AutoScrollForm extends StatefulWidget {
   final GlobalKey? scrollKey;
   final Widget child;
   final Map<String, String?> errors;
+  final Map<String, GlobalKey>? fieldKeys;
   final bool autoScroll;
 
   const AutoScrollForm({
@@ -58,6 +65,7 @@ class AutoScrollForm extends StatefulWidget {
     this.scrollKey,
     required this.child,
     required this.errors,
+    this.fieldKeys,
     this.autoScroll = true,
   });
 
@@ -71,7 +79,7 @@ class _AutoScrollFormState extends State<AutoScrollForm> {
     super.didUpdateWidget(oldWidget);
     if (widget.autoScroll && _hasErrorsChanged(oldWidget.errors)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        FormScrollHelper.scrollToFirstError(context, widget.errors);
+        FormScrollHelper.scrollToFirstError(context, widget.errors, keys: widget.fieldKeys);
       });
     }
   }

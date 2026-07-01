@@ -140,6 +140,100 @@
         }
       }
     },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout rider",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logged out"
+          }
+        }
+      }
+    },
+    "/api/device/permissions": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Update device permissions",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Permissions updated"
+          }
+        }
+      }
+    },
+    "/api/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness probe",
+        "responses": {
+          "200": {
+            "description": "Ready"
+          }
+        }
+      }
+    },
+    "/api/rider/verify-lock-password": {
+      "post": {
+        "tags": [
+          "Rider Profile"
+        ],
+        "summary": "Verify lock password",
+        "security": [
+          {
+            "riderSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verified"
+          }
+        }
+      }
+    },
     "/api/rider/profile": {
       "get": {
         "tags": [

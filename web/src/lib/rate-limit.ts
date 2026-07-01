@@ -44,10 +44,6 @@ export async function checkRateLimit(
   identifier: string,
   config: RateLimitConfig = API_RATE_LIMIT
 ): Promise<RateLimitResult> {
-  if (process.env.NODE_ENV !== 'production') {
-    return { allowed: true, remaining: 1000, resetAt: Date.now() + 1000 };
-  }
-
   const key = `ratelimit:${identifier}`;
   const now = Date.now();    if (shouldUseDatabaseLimiter()) {
     const resetAt = new Date(now + config.windowMs);

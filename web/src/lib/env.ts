@@ -11,8 +11,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   FCM_COMMAND_HMAC_SECRET: z
     .string()
-    .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters')
-    .default('fcm-command-hmac-secret-default-32-chars-long'),
+    .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').optional(),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000'),
   CRON_SECRET: z.string().optional(),
@@ -181,6 +180,15 @@ if (isServer) {
     ) {
       throw new Error(
         'Security violation: Leaked, insecure, or placeholder JWT_SECRET is not allowed.'
+      );
+    }
+    
+    if (
+      insecurePlaceholders.some((p) => parsedEnv.FCM_COMMAND_HMAC_SECRET.toLowerCase().includes(p.toLowerCase())) ||
+      parsedEnv.FCM_COMMAND_HMAC_SECRET.length < 32
+    ) {
+      throw new Error(
+        'Security violation: Leaked, insecure, or placeholder FCM_COMMAND_HMAC_SECRET is not allowed.'
       );
     }
   }

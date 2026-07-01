@@ -12,7 +12,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     logger.error('[Global Error]', {
-      message: error.message,
+      message: (error instanceof Error ? error.message : String(error)),
       digest: error.digest,
       stack: error.stack,
     });

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
@@ -55,7 +56,7 @@ export const referralRewardJob = {
             purpose: 'REWARD',
             status: 'APPROVED',
             description: `Referral reward for rider ${referredRiderId}`,
-            approvedAt: new Date(),
+            approvedAt: clock.now(),
           },
         });
 
@@ -66,7 +67,7 @@ export const referralRewardJob = {
           txnId: txn.id,
           idempotencyKey,
           note: `Referral reward for rider ${referredRiderId}`,
-        });
+        }, tx);
 
         await tx.reward.create({
           data: {
@@ -81,7 +82,7 @@ export const referralRewardJob = {
 
       createAuditLog({
         actorId: 'system',
-        action: 'finance.referral_reward',
+        action: 'CREATE',
         entity: 'rider',
         entityId: referrer.id,
         details: { amountPaise: REWARD_AMOUNT_PAISE, referredRiderId },

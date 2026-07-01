@@ -222,7 +222,7 @@ export const backupService = {
         logger.error('[BackupService] Failed to purge old backup', {
           jobId: job.id,
           backupPath: job.backupPath,
-          error: err instanceof Error ? err.message : 'Unknown error',
+          error: err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error',
         });
       }
     }
@@ -442,11 +442,11 @@ export const backupService = {
         path: backupDir,
         sizeBytes: Number(totalSize),
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Mark job as failed
       await backupRepository.updateBackupJob(job.id, {
         status: 'FAILED',
-        errorMessage: err.message,
+        errorMessage: (err instanceof Error ? err.message : String(err)),
         completedAt: new Date(),
       });
 
@@ -456,10 +456,10 @@ export const backupService = {
         action: 'backup.failed',
         entity: 'BackupJob',
         entityId: job.id,
-        details: { backupId, error: err.message },
+        details: { backupId, error: (err instanceof Error ? err.message : String(err)) },
       });
 
-      logger.error('[BackupService] Backup failed', { backupId, error: err.message });
+      logger.error('[BackupService] Backup failed', { backupId, error: (err instanceof Error ? err.message : String(err)) });
       throw err;
     } finally {
       if (!isPreRestore) {
@@ -580,7 +580,7 @@ export const backupService = {
         logger.info('[BackupService] Lock acquired successfully', { status, owner });
         return true;
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[BackupService] Error acquiring lock', err);
       return false;
     }
@@ -606,7 +606,7 @@ export const backupService = {
         }),
       ]);
       logger.info('[BackupService] Lock released successfully');
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('[BackupService] Error releasing lock', err);
     }
   },

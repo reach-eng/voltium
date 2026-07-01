@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest) {
       return errors.forbidden('Account not found or deactivated');
     }
     return success(admin);
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('[GET /api/admin/auth/me]', err);
     return errors.forbidden('Account validation failed');
   }

@@ -9,6 +9,10 @@ import { hubUseCases } from '@/server/modules/hubs/hub.use-cases';
 
 const deleteHubSchema = z.object({ id: z.string().min(1, 'Hub ID is required') });
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 // GET /api/admin/hubs — list all hubs (paginated)
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -74,9 +78,10 @@ export async function DELETE(req: NextRequest) {
     const { id } = validation.data;
     await hubUseCases.deleteHub(id, session.adminId || '');
     return success(null, 'Hub deleted');
-  } catch (error: any) {
-    if (error?.message?.includes?.(`Cannot delete hub`)) {
-      return errors.conflict(error.message);
+  } catch (error: unknown) {
+    const message = errorMessage(error);
+    if (message.includes('Cannot delete hub')) {
+      return errors.conflict(message);
     }
     logger.error('DELETE /api/admin/hubs error:', error);
     return errors.internal('Failed to delete hub');

@@ -1,3 +1,4 @@
+import { GuarantorStatus, Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -17,8 +18,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const search = url.searchParams.get('search') || undefined;
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
   const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
-  const where: any = {};
-  if (status && status !== 'ALL') where.status = status;
+  const where: Prisma.GuarantorWhereInput = {};
+  if (status && status !== 'ALL' && status in GuarantorStatus) {
+    where.status = status as GuarantorStatus;
+  }
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },

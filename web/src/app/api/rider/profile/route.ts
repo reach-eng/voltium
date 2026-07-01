@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
     const result = await riderUseCases.updateProfile(riderDbId, updateData);
     return success(result, 'Profile updated');
   } catch (err) {
-    if (err instanceof RiderLifecycleError) return errors.conflict(err.message);
+    if (err instanceof RiderLifecycleError) return errors.conflict((err instanceof Error ? err.message : String(err)));
     logger.error('[PUT /api/rider/profile]', err);
     return errors.internal('Failed to update profile');
   }

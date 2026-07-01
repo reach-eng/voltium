@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import '../theme/app_theme.dart';
 
 class UploadPreview extends StatelessWidget {

@@ -47,7 +47,9 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 vi.mock('@/lib/auth', () => ({
   createSessionToken: mockCreateSessionToken,
+  createRefreshToken: vi.fn(),
   SESSION_COOKIE_OPTIONS: {},
+  REFRESH_COOKIE_OPTIONS: {},
 }));
 vi.mock('@/lib/firebase-admin', () => ({ auth: null }));
 vi.mock('@/lib/job-queue', () => ({

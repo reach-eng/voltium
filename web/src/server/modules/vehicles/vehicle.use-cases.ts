@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
+import { invalidateCache } from '@/lib/cache';
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -18,11 +19,15 @@ export const vehicleUseCases = {
   },
 
   async createVehicle(input: Prisma.VehicleCreateInput) {
-    return vehicleRepository.create(input);
+    const result = await vehicleRepository.create(input);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async updateVehicle(vehicleId: string, input: Prisma.VehicleUpdateInput) {
-    return vehicleRepository.update(vehicleId, input);
+    const result = await vehicleRepository.update(vehicleId, input);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async assignVehicle(vehicleId: string, riderDbId: string) {
@@ -43,7 +48,9 @@ export const vehicleUseCases = {
       throw new Error('Rider already has an active rental');
     }
 
-    return vehicleRepository.assignToRider(vehicleId, riderDbId);
+    const result = await vehicleRepository.assignToRider(vehicleId, riderDbId);
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   async markForMaintenance(vehicleId: string) {
@@ -55,7 +62,9 @@ export const vehicleUseCases = {
         'Vehicle is currently on an active rental and cannot be marked for maintenance'
       );
     }
-    return vehicleRepository.update(vehicleId, { status: 'MAINTENANCE' });
+    const result = await vehicleRepository.update(vehicleId, { status: 'MAINTENANCE' });
+    invalidateCache('vehicles_list:*');
+    return result;
   },
 
   /**
@@ -260,6 +269,7 @@ export const vehicleUseCases = {
       details: { ids, ...(value ? { value } : {}), count: updatedCount },
     }).catch((e: unknown) => logger.error('Audit log failed for bulk vehicle action', e));
 
+    invalidateCache('vehicles_list:*');
     return { count: updatedCount };
   },
 };

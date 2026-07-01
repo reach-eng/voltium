@@ -24,18 +24,9 @@
 **Goal**: All integration & API route tests run in CI against a live dev server.
 
 ### 1a. CI Postgres
-Postgres 16 configured as CI service:
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    env:
-      POSTGRES_USER: voltium_test
-      POSTGRES_PASSWORD: voltium_test
-      POSTGRES_DB: voltium_test
-    ports:
-      - 5432:5432
-```
+Postgres 16 runs as a native service on the CI host. The test job sets
+`DATABASE_URL=postgresql://voltium_test:voltium_test@localhost:5432/voltium_test`
+and verifies connectivity before migrations run.
 
 ### 1b. CI Test Pipeline
 In `test` job, after migration + contract tests:

@@ -4,6 +4,7 @@ import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
+import { clock } from '@/lib/clock';
 
 interface RentReminderResult {
   checkedRentals: number;
@@ -25,7 +26,7 @@ export const rentRemindersJob = {
 
     // Find active rentals that are due or overdue
     // Uses the RentalLease model to find active riders with active leases
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
 
     const activeLeases = (await db.rentalLease.findMany({
       where: {
@@ -69,7 +70,7 @@ export const rentRemindersJob = {
                 amount: rentAmount,
                 purpose: 'RENT_PAYMENT',
                 status: 'APPROVED',
-                approvedAt: new Date(),
+                approvedAt: clock.now(),
                 description: `Auto-debit rent for lease ${lease.id}`,
               },
             });
@@ -81,12 +82,12 @@ export const rentRemindersJob = {
               txnId: txn.id,
               idempotencyKey,
               note: `Auto-debit rent payment for lease ${lease.id}`,
-            });
+            }, tx);
           });
 
           createAuditLog({
             actorId: 'system',
-            action: 'finance.rent_debit',
+            action: 'CREATE',
             entity: 'rentalLease',
             entityId: lease.id,
             details: { riderId: rider.id, amountPaise: rentAmount },

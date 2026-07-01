@@ -1,0 +1,36 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":preserveSemverRanges",
+    ":semanticPrefixFixDepsChoreOthers",
+    ":automergeMinor",
+    "group:allNonMajor"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "matchPackagePatterns": ["^react", "^next"],
+      "groupName": "react ecosystem"
+    },
+    {
+      "matchManagers": ["flutter", "pub"],
+      "groupName": "flutter packages"
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "automerge": true
+  },
+  "timezone": "Asia/Kolkata",
+  "schedule": ["before 5am on monday"]
+}

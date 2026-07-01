@@ -1,3 +1,4 @@
+import { KycStatus, Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -17,8 +18,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
   const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
 
-  const where: any = {};
-  if (status && status !== 'ALL') where.status = status;
+  const where: Prisma.KycProfileWhereInput = {};
+  if (status && status !== 'ALL' && status in KycStatus) {
+    where.status = status as KycStatus;
+  }
   if (search) {
     where.rider = {
       OR: [

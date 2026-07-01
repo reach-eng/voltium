@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (err: unknown) {
     if (err instanceof RateLimitError) {
-      return errors.tooManyRequests(err.message, { correlationId });
+      return errors.tooManyRequests((err instanceof Error ? err.message : String(err)), { correlationId });
     }
     logger.error('[POST /api/auth/send-otp]', { correlationId, error: redactPii(err) });
     const response = errors.internal('Failed to process OTP request. Please check your network.', {

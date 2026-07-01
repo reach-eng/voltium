@@ -57,7 +57,7 @@ export async function checkOrClaimIdempotency(
     // If the INSERT succeeds (1 row inserted), we own the lock.
     // If it returns 0, the key already existed — we need to check its status.
     const inserted = await db.$executeRawUnsafe(
-      `INSERT INTO "IdempotencyKey" (id, key, status, response, expires_at, created_at)
+      `INSERT INTO "IdempotencyKey" (id, key, status, response, "expiresAt", "createdAt")
        VALUES (gen_random_uuid()::text, $1, 'PROCESSING', NULL, $2, NOW())
        ON CONFLICT (key) DO NOTHING`,
       key,
@@ -118,8 +118,8 @@ export async function checkOrClaimIdempotency(
       default:
         return { status: 'processing' };
     }
-  } catch (err: any) {
-    logger.warn(`[Idempotency] DB query failed, falling back to memory: ${err.message}`);
+  } catch (err: unknown) {
+    logger.warn(`[Idempotency] DB query failed, falling back to memory: ${(err instanceof Error ? err.message : String(err))}`);
   }
 
   // Fallback: in-memory store
@@ -162,8 +162,8 @@ export async function completeIdempotency(
         expiresAt,
       },
     });
-  } catch (err: any) {
-    logger.error(`[Idempotency] Failed to save to DB: ${err.message}`);
+  } catch (err: unknown) {
+    logger.error(`[Idempotency] Failed to save to DB: ${(err instanceof Error ? err.message : String(err))}`);
   }
 
   // 2. Always write to memory store as hot cache / fallback
@@ -183,8 +183,8 @@ export async function failIdempotency(key: string): Promise<void> {
       where: { key },
       data: { status: 'FAILED' },
     });
-  } catch (err: any) {
-    logger.error(`[Idempotency] Failed to mark as FAILED: ${err.message}`);
+  } catch (err: unknown) {
+    logger.error(`[Idempotency] Failed to mark as FAILED: ${(err instanceof Error ? err.message : String(err))}`);
   }
   memoryStore.delete(key);
 }
@@ -202,8 +202,8 @@ export async function purgeExpiredIdempotencyKeys(): Promise<number> {
       logger.info(`[Idempotency] Purged ${result.count} expired keys`);
     }
     return result.count;
-  } catch (err: any) {
-    logger.error(`[Idempotency] Purge failed: ${err.message}`);
+  } catch (err: unknown) {
+    logger.error(`[Idempotency] Purge failed: ${(err instanceof Error ? err.message : String(err))}`);
     return 0;
   }
 }

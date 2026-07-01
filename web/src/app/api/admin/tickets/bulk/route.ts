@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
 
     return success(result, 'Bulk action completed');
   } catch (error) {
-    if (error instanceof Error && error.message.includes('is required')) {
-      return errors.badRequest(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('is required')) {
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     }
     return errors.internal('Failed to process bulk action');
   }

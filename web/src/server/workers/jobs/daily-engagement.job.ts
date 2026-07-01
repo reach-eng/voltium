@@ -19,6 +19,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { notificationService } from '@/lib/notification-service';
 import {
   checkOrClaimIdempotency,
@@ -45,7 +46,7 @@ export const dailyEngagementJob = {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    }).format(new Date()); // YYYY-MM-DD in IST
+    }).format(clock.now()); // YYYY-MM-DD in IST
 
     const idempotencyKey = `daily_engagement:${istDateKey}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
@@ -77,7 +78,7 @@ export const dailyEngagementJob = {
           .catch((err: Error) =>
             logger.error('[DailyEngagement] Birthday wish failed', {
               riderId: rider.id,
-              err: err.message,
+              err: (err instanceof Error ? err.message : String(err)),
             })
           );
         results.birthdays++;
@@ -100,7 +101,7 @@ export const dailyEngagementJob = {
             .catch((err: Error) =>
               logger.error('[DailyEngagement] Payment reminder failed', {
                 riderId: rider.id,
-                err: err.message,
+                err: (err instanceof Error ? err.message : String(err)),
               })
             );
           results.paymentReminders++;
@@ -112,7 +113,7 @@ export const dailyEngagementJob = {
         .notifyReferralUpdate()
         .catch((err: Error) =>
           logger.error('[DailyEngagement] Referral update failed', {
-            err: err.message,
+            err: (err instanceof Error ? err.message : String(err)),
           })
         );
       results.referralLeaderboard = 1;
@@ -133,7 +134,7 @@ export const dailyEngagementJob = {
  * number of milliseconds to wait. Exported so `index.ts` can compute
  * the next firing time for the scheduled task.
  */
-export function msUntilNext0600IST(now: Date = new Date()): number {
+export function msUntilNext0600IST(now: Date = clock.now()): number {
   // Convert current UTC time to IST parts
   const istParts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Kolkata',

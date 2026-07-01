@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { deleteExpiredLogs } from '@/lib/audit-log';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
@@ -12,7 +13,7 @@ export const auditCleanupJob = {
     logger.info('[AuditCleanupJob] Starting', { jobId: job.id });
 
     // Idempotency guard — one run per day
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
     const idempotencyKey = `audit-cleanup:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (claim.status !== 'not_found') {

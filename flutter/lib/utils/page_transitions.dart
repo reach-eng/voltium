@@ -91,6 +91,7 @@ class AppPageTransitions {
           animation: animation,
           secondaryAnimation: secondaryAnimation,
           fillColor: Colors.transparent,
+          forward: forward,
           child: child,
         );
       },
@@ -106,6 +107,7 @@ class SharedAxisTransition extends StatelessWidget {
   final Animation<double> secondaryAnimation;
   final Widget child;
   final Color fillColor;
+  final bool forward;
 
   const SharedAxisTransition({
     super.key,
@@ -113,6 +115,7 @@ class SharedAxisTransition extends StatelessWidget {
     required this.secondaryAnimation,
     required this.child,
     this.fillColor = Colors.transparent,
+    this.forward = true,
   });
 
   @override
@@ -125,7 +128,7 @@ class SharedAxisTransition extends StatelessWidget {
     );
 
     final slideIn =
-        Tween<Offset>(begin: const Offset(0.03, 0), end: Offset.zero).animate(
+        Tween<Offset>(begin: Offset(forward ? 0.03 : -0.03, 0), end: Offset.zero).animate(
       CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,

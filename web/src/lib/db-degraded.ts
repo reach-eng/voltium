@@ -61,7 +61,7 @@ export const dbDegraded = {
       if (isDegradedMode) this.exitDegradedMode();
       return result;
     } catch (err) {
-      this.enterDegradedMode(err instanceof Error ? err.message : 'DB check failed');
+      this.enterDegradedMode(err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'DB check failed');
       // Return cached result even if stale, rather than failing
       if (healthCache) return healthCache;
       throw err; // No cache at all — propagate

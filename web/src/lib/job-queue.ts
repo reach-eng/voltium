@@ -13,6 +13,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 
 export interface QueueJob {
   id: string;
@@ -56,7 +57,7 @@ export const JobQueue = {
     processor: (job: QueueJob) => Promise<void>,
     concurrency = 5
   ): Promise<void> {
-    const now = new Date();
+    const now = clock.now();
 
     // Claim eligible pending jobs using the readyAt column (Phase 3.4).
     // A job is eligible when status='PENDING' and readyAt is either
@@ -82,7 +83,7 @@ export const JobQueue = {
         WHERE "eventType" = ${type}
           AND status = 'PENDING'
           AND attempts < "maxAttempts"
-          AND ("readyAt" IS NULL OR "readyAt" <= ${now}::timestamptz)
+          AND ("readyAt" IS NULL OR "readyAt" <= ${now}::timestamp)
         ORDER BY "createdAt" ASC
         LIMIT ${concurrency}
         FOR UPDATE SKIP LOCKED
@@ -110,13 +111,13 @@ export const JobQueue = {
           where: { id: event.id },
           data: {
             status: 'COMPLETED',
-            processedAt: new Date(),
+            processedAt: clock.now(),
             attempts: { increment: 1 },
             readyAt: null, // Reset backoff for any future re-runs
           },
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Unknown error';
         const newAttempts = event.attempts + 1;
         const isMaxed = newAttempts >= event.maxAttempts;
 
@@ -126,7 +127,7 @@ export const JobQueue = {
         // attempts-vs-time. The new readyAt uses createdAt + 2^attempts × 5s
         // (capped at 1 hour) so the claim cycle honours the backoff.
         const backoffMs = Math.min(Math.pow(2, newAttempts) * 5000, 3600000);
-        const nextReadyAt = new Date(Date.now() + backoffMs);
+        const nextReadyAt = new Date(clock.now().getTime() + backoffMs);
 
         await db.outboxEvent.update({
           where: { id: event.id },
@@ -157,7 +158,7 @@ export const JobQueue = {
    * Run this periodically (e.g. every 5 minutes).
    */
   async runReaper(): Promise<number> {
-    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+    const cutoff = new Date(clock.now().getTime() - 5 * 60 * 1000);
     const result = await db.outboxEvent.updateMany({
       where: {
         status: 'PROCESSING',
@@ -180,7 +181,7 @@ export const JobQueue = {
    * Get stuck-PROCESSING count for health monitoring.
    */
   async getStuckProcessingCount(): Promise<number> {
-    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+    const cutoff = new Date(clock.now().getTime() - 5 * 60 * 1000);
     const result = await db.outboxEvent.count({
       where: {
         status: 'PROCESSING',

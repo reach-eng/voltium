@@ -37,7 +37,7 @@ function sanitizeContext(context?: ErrorContext): ErrorContext | undefined {
 }
 
 export async function captureError(error: unknown, context?: ErrorContext): Promise<void> {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? (error instanceof Error ? error.message : String(error)) : String(error);
   logger.error('[monitoring] local error captured', {
     message: mask(message),
     stack: error instanceof Error ? mask(error.stack || '') : undefined,

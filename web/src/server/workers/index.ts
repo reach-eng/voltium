@@ -11,6 +11,7 @@
 
 import { JobQueue, JobTypes } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { JOB_TYPES } from './queues';
 import { OutboxEventTypes } from './outbox';
 import { sendSms } from '@/lib/sms-provider';
@@ -109,7 +110,7 @@ const WORKERS: WorkerDefinition[] = [
 const SCHEDULED_TASKS: Array<{
   name: string;
   intervalMs: number;
-  processor: () => Promise<void>;
+  processor: (injectedClock: typeof clock) => Promise<void>;
 }> = [
   {
     name: 'audit-log-cleanup',
@@ -128,20 +129,20 @@ const SCHEDULED_TASKS: Array<{
   {
     name: 'rent-due-emitter',
     intervalMs: 60_000, // every minute
-    processor: async () => {
+    processor: async (injectedClock) => {
       const { OutboxService } = await import('./outbox');
       await OutboxService.emit(OutboxEventTypes.RENT_DUE_CHECK, {
-        triggeredAt: new Date().toISOString(),
+        triggeredAt: injectedClock.now().toISOString(),
       }).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
     },
   },
   {
     name: 'device-violation-emitter',
     intervalMs: 60_000, // every minute
-    processor: async () => {
+    processor: async (injectedClock) => {
       const { OutboxService } = await import('./outbox');
       await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION_SCAN, {
-        triggeredAt: new Date().toISOString(),
+        triggeredAt: injectedClock.now().toISOString(),
       }).catch((e: Error) => logger.error('[Scheduler] Failed to emit device violation scan', e));
     },
   },
@@ -151,16 +152,16 @@ const SCHEDULED_TASKS: Array<{
     // after the first run, we reschedule by recomputing on each tick.
     name: 'daily-engagement-emitter',
     intervalMs: 60_000, // checked every minute; only emits at 06:00 IST
-    processor: async () => {
+    processor: async (injectedClock) => {
       const msUntil = msUntilNext0600IST();
       // If we're within 1 minute of the target, fire now.
       if (msUntil > 60_000) return;
       const { OutboxService } = await import('./outbox');
       await OutboxService.emit(OutboxEventTypes.DAILY_ENGAGEMENT, {
-        triggeredAt: new Date().toISOString(),
+        triggeredAt: injectedClock.now().toISOString(),
         istDate: new Intl.DateTimeFormat('en-CA', {
           timeZone: 'Asia/Kolkata',
-        }).format(new Date()),
+        }).format(injectedClock.now()),
       }).catch((e: Error) =>
         logger.error('[Scheduler] Failed to emit daily engagement', e)
       );
@@ -192,7 +193,7 @@ async function checkScheduledBackups(): Promise<void> {
 let running = false;
 const activeJobs = new Set<Promise<any>>();
 
-export async function startWorkers(): Promise<void> {
+export async function startWorkers(injectedClock: typeof clock = clock): Promise<void> {
   if (running) {
     logger.warn('[Workers] Already running');
     return;
@@ -209,24 +210,24 @@ export async function startWorkers(): Promise<void> {
 
   // Event-driven workers — each polls its own event type
   for (const worker of WORKERS) {
-    promises.push(runWorkerLoop(worker));
+    promises.push(runWorkerLoop(worker, injectedClock));
   }
 
   // Scheduled tasks — run on direct timer
   for (const task of SCHEDULED_TASKS) {
-    promises.push(runScheduledTask(task));
+    promises.push(runScheduledTask(task, injectedClock));
   }
 
   // Scheduled backup check — every 5 minutes
-  promises.push(runScheduledBackupLoop());
+  promises.push(runScheduledBackupLoop(injectedClock));
 
   // Reaper — every 5 minutes
-  promises.push(runReaperLoop());
+  promises.push(runReaperLoop(injectedClock));
 
   await Promise.all(promises);
 }
 
-async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
+async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clock): Promise<void> {
   const { jobType, processor, concurrency } = worker;
 
   logger.info(`[Worker] Starting loop for ${jobType}`, { concurrency });
@@ -261,15 +262,15 @@ async function runWorkerLoop(worker: WorkerDefinition): Promise<void> {
 async function runScheduledTask(task: {
   name: string;
   intervalMs: number;
-  processor: () => Promise<void>;
-}): Promise<void> {
+  processor: (injectedClock: typeof clock) => Promise<void>;
+}, injectedClock: typeof clock): Promise<void> {
   logger.info(`[Scheduler] Starting scheduled task "${task.name}"`, {
     intervalMs: task.intervalMs,
   });
 
   while (running) {
     try {
-      await task.processor();
+      await task.processor(injectedClock);
     } catch (err) {
       logger.error(`[Scheduler] Error in "${task.name}"`, err);
     }
@@ -277,14 +278,14 @@ async function runScheduledTask(task: {
   }
 }
 
-async function runScheduledBackupLoop(): Promise<void> {
+async function runScheduledBackupLoop(injectedClock: typeof clock): Promise<void> {
   while (running) {
     await checkScheduledBackups();
     await sleep(300_000);
   }
 }
 
-async function runReaperLoop(): Promise<void> {
+async function runReaperLoop(injectedClock: typeof clock): Promise<void> {
   while (running) {
     try {
       const { JobQueue } = await import('@/lib/job-queue');

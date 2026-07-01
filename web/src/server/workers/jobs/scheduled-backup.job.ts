@@ -10,6 +10,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { backupRepository } from '@/server/modules/data-management/backup.repository';
 import {
   backupService,
@@ -65,7 +66,7 @@ export const scheduledBackupJob = {
       }
 
       // Check if backup is due
-      const now = new Date();
+      const now = clock.now();
       if (schedule.nextRunAt && now < schedule.nextRunAt) {
         return {
           ran: false,
@@ -107,8 +108,8 @@ export const scheduledBackupJob = {
         const nextRunAt = calculateNextRun(schedule);
         await backupRepository.markScheduleSuccess(
           schedule.id,
-          new Date(),
-          nextRunAt ?? new Date()
+          clock.now(),
+          nextRunAt ?? clock.now()
         );
 
         // Clear any previous failure alert
@@ -130,14 +131,14 @@ export const scheduledBackupJob = {
         });
 
         return { ran: true };
-      } catch (err: any) {
-        logger.error('[ScheduledBackup] Backup execution failed', { error: err.message });
-        await backupRepository.markScheduleFailure(schedule.id, err.message);
+      } catch (err: unknown) {
+        logger.error('[ScheduledBackup] Backup execution failed', { error: (err instanceof Error ? err.message : String(err)) });
+        await backupRepository.markScheduleFailure(schedule.id, (err instanceof Error ? err.message : String(err)));
 
         // Persist failure alert in SystemSetting so admin dashboard can surface it
         const failurePayload = JSON.stringify({
-          error: err.message,
-          at: new Date().toISOString(),
+          error: (err instanceof Error ? err.message : String(err)),
+          at: clock.now().toISOString(),
           scheduleId: schedule.id,
         });
         await db.setting
@@ -154,7 +155,7 @@ export const scheduledBackupJob = {
           action: 'backup.scheduled_failed',
           entity: 'BackupSchedule',
           entityId: schedule.id,
-          details: { error: err.message },
+          details: { error: (err instanceof Error ? err.message : String(err)) },
         });
 
         // Send FCM alert notification to admins via a dedicated topic
@@ -162,17 +163,17 @@ export const scheduledBackupJob = {
           .sendPushNotification(
             '/topics/admin_alerts',
             'Backup Failed 🚨',
-            `Scheduled backup failed: ${err.message}`
+            `Scheduled backup failed: ${(err instanceof Error ? err.message : String(err))}`
           )
           .catch((fcmErr) => {
             logger.error('[ScheduledBackup] Failed to send FCM alert', { error: fcmErr.message });
           });
 
-        return { ran: false, reason: err.message };
+        return { ran: false, reason: (err instanceof Error ? err.message : String(err)) };
       }
-    } catch (err: any) {
-      logger.error('[ScheduledBackup] Critical error in check cycle', { error: err.message });
-      return { ran: false, reason: err.message };
+    } catch (err: unknown) {
+      logger.error('[ScheduledBackup] Critical error in check cycle', { error: (err instanceof Error ? err.message : String(err)) });
+      return { ran: false, reason: (err instanceof Error ? err.message : String(err)) };
     }
   },
 };

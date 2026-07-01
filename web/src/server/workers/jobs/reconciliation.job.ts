@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { backfillOpeningBalance } from '@/lib/services/wallet-service';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 
@@ -16,7 +17,7 @@ export const reconciliationJob = {
   async process(job: any): Promise<ReconciliationResult> {
     logger.info('[ReconciliationJob] Starting', { jobId: job.id });
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
 
     // Idempotent check
     const existingReport = await db.reconciliationReport.findUnique({

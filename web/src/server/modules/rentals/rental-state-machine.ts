@@ -11,6 +11,7 @@
 
 export type RentalStatus =
   | 'NO_RENTAL'
+  | 'DEPOSIT_APPROVED'
   | 'PLAN_SELECTED'
   | 'PICKUP_SCHEDULED'
   | 'ACTIVE'
@@ -23,8 +24,9 @@ export type RentalStatus =
 type TransitionMap = Record<RentalStatus, RentalStatus[]>;
 
 const VALID_TRANSITIONS: TransitionMap = {
-  NO_RENTAL: ['PLAN_SELECTED'],
-  PLAN_SELECTED: ['PICKUP_SCHEDULED'],
+  NO_RENTAL: ['PLAN_SELECTED', 'DEPOSIT_APPROVED'],
+  DEPOSIT_APPROVED: ['PLAN_SELECTED'],
+  PLAN_SELECTED: ['PICKUP_SCHEDULED', 'ACTIVE'],
   PICKUP_SCHEDULED: ['ACTIVE'],
   ACTIVE: ['OVERDUE', 'RETURN_PENDING', 'SUSPENDED', 'CLOSED'],
   OVERDUE: ['ACTIVE', 'SUSPENDED'],

@@ -293,16 +293,3 @@ describe('rate limit configs', () => {
     expect(UPLOAD_RATE_LIMIT.maxRequests).toBe(10);
   });
 });
-
-describe('dev-mode bypass', () => {
-  it('always allows in non-production environment', async () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    vi.resetModules();
-    const { checkRateLimit: devCheck } = await import('@/lib/rate-limit');
-
-    const result = await devCheck('any-user', { windowMs: 1000, maxRequests: 1 });
-    expect(result.allowed).toBe(true);
-    expect(result.remaining).toBe(1000);
-    vi.unstubAllEnvs();
-  });
-});

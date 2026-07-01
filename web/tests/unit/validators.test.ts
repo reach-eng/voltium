@@ -5,6 +5,7 @@ import {
   updateProfileSchema,
   registerTokenSchema,
 } from '../../src/lib/validators';
+import fc from 'fast-check';
 
 describe('Phase 1: Foundational Schema Validation', () => {
   describe('Auth Validators (sendOtpSchema)', () => {
@@ -21,6 +22,18 @@ describe('Phase 1: Foundational Schema Validation', () => {
     test('should pass for valid 10-digit phone', () => {
       const result = sendOtpSchema.safeParse({ phone: '9876543210' });
       expect(result.success).toBe(true);
+    });
+
+    test('fuzz testing phone schema with extreme/invalid strings', () => {
+      fc.assert(
+        fc.property(
+          fc.string({ maxLength: 100 }).filter((s) => !/^\d{10}$/.test(s)),
+          (invalidPhone) => {
+            const result = sendOtpSchema.safeParse({ phone: invalidPhone });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
     });
   });
 
@@ -82,6 +95,29 @@ describe('Phase 1: Foundational Schema Validation', () => {
       });
       expect(result.success).toBe(false);
     });
+
+    test('fuzz testing topUpSchema with extreme invalid amounts', () => {
+      fc.assert(
+        fc.property(
+          fc.oneof(
+            fc.double({ max: 0, noDefaultInfinity: true, noNaN: true }),
+            fc.double({ min: 50000.01, noDefaultInfinity: true, noNaN: true }),
+            fc.float({ max: 0, noDefaultInfinity: true, noNaN: true }),
+            fc.integer({ max: 0 }),
+            fc.integer({ min: 50001 })
+          ),
+          (invalidAmount) => {
+            const result = topUpSchema.safeParse({
+              riderId: 'test-123',
+              amount: invalidAmount,
+              purpose: 'TOP_UP',
+              method: 'UPI',
+            });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
+    });
   });
 
   describe('Profile Validators (updateProfileSchema)', () => {
@@ -97,6 +133,30 @@ describe('Phase 1: Foundational Schema Validation', () => {
         dob: '01-01-1990',
       });
       expect(result.success).toBe(true);
+    });
+
+    test('fuzz testing email with junk data and unicode', () => {
+      fc.assert(
+        fc.property(
+          fc.string().filter((s) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s !== ''),
+          (invalidEmail) => {
+            const result = updateProfileSchema.safeParse({ email: invalidEmail });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
+    });
+
+    test('fuzz testing fullName with extreme lengths', () => {
+      fc.assert(
+        fc.property(
+          fc.oneof(fc.string({ maxLength: 1 }), fc.string({ minLength: 101 })),
+          (invalidName) => {
+            const result = updateProfileSchema.safeParse({ fullName: invalidName });
+            expect(result.success).toBe(false);
+          }
+        )
+      );
     });
   });
 

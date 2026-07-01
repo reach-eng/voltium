@@ -11,6 +11,12 @@ import { dailyEngagementJob } from '@/server/workers/jobs/daily-engagement.job';
 import { telemetryUseCases } from '@/server/modules/telemetry/telemetry.use-cases';
 import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
 
+type JobRunResult = {
+  success: boolean;
+  details: string;
+  raw?: unknown;
+};
+
 export async function GET(req: NextRequest) {
   try {
     const admin = await requireAdmin();
@@ -122,8 +128,8 @@ export async function GET(req: NextRequest) {
       jobs,
       reconHistory,
     });
-  } catch (err: any) {
-    return errors.internal(`Failed to load jobs list: ${err.message}`);
+  } catch (err: unknown) {
+    return errors.internal(`Failed to load jobs list: ${(err instanceof Error ? err.message : String(err))}`);
   }
 }
 
@@ -142,7 +148,7 @@ export async function POST(req: NextRequest) {
     }
 
     const start = Date.now();
-    let result: any = null;
+    let result: JobRunResult;
 
     switch (jobId) {
       case 'wallet-reconciliation':
@@ -280,7 +286,7 @@ export async function POST(req: NextRequest) {
       elapsedMs: Date.now() - start,
       result,
     }, 'Job executed successfully');
-  } catch (err: any) {
-    return errors.internal(`Job execution failed: ${err.message}`);
+  } catch (err: unknown) {
+    return errors.internal(`Job execution failed: ${(err instanceof Error ? err.message : String(err))}`);
   }
 }

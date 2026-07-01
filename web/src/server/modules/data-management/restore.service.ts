@@ -216,11 +216,11 @@ export const restoreService = {
       logger.info('[RestoreService] Restore completed successfully', { backupId: backupJobId });
 
       return { id: restoreJob.id, status: 'COMPLETED' };
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Mark restore as failed
       await backupRepository.updateRestoreJob(restoreJob.id, {
         status: 'FAILED',
-        errorMessage: err.message,
+        errorMessage: (err instanceof Error ? err.message : String(err)),
         completedAt: new Date(),
       });
 
@@ -236,12 +236,12 @@ export const restoreService = {
         action: 'restore.failed',
         entity: 'RestoreJob',
         entityId: restoreJob.id,
-        details: { backupId: backupJobId, error: err.message },
+        details: { backupId: backupJobId, error: (err instanceof Error ? err.message : String(err)) },
       });
 
       logger.error('[RestoreService] Restore failed', {
         backupId: backupJobId,
-        error: err.message,
+        error: (err instanceof Error ? err.message : String(err)),
       });
       throw err;
     }

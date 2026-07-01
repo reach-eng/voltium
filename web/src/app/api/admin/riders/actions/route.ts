@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
@@ -97,7 +98,7 @@ async function handleSecurityAction(
   }
 
   let fcmResult;
-  const dbUpdate: any = {};
+  const dbUpdate: Prisma.RiderUpdateInput = {};
 
   switch (action) {
     case 'LOCK_DEVICE':

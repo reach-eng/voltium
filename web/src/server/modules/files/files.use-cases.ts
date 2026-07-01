@@ -13,7 +13,8 @@ export const fileUseCases = {
   /** Generate an upload token tied to a fileRecordId with a 15-minute expiry.
    *  Token format: `<expiry_epoch_ms>.<hmac>` */
   _generateUploadToken(fileRecordId: string): string {
-    const secret = process.env.JWT_SECRET || env.JWT_SECRET || 'fallback-secret';
+    const secret = env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
     const expiresAt = Date.now() + this.UPLOAD_TOKEN_TTL_SECONDS * 1000;
     const payload = `${fileRecordId}:${expiresAt}`;
     const hmac = createHmac('sha256', secret).update(payload).digest('hex');
@@ -27,7 +28,10 @@ export const fileUseCases = {
       const expiresAt = parseInt(token.slice(0, dotIndex), 10);
       const providedHmac = token.slice(dotIndex + 1);
       if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
-      const secret = process.env.JWT_SECRET || env.JWT_SECRET || 'fallback-secret';
+      
+      const secret = env.JWT_SECRET;
+      if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
+      
       const payload = `${fileRecordId}:${expiresAt}`;
       const expected = createHmac('sha256', secret).update(payload).digest('hex');
       // Constant-time comparison to prevent timing attacks

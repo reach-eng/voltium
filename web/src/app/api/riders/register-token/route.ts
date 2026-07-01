@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     logger.info('[TokenRegistration] FCM token updated for rider', { riderId: session });
 
     return success(null, 'Token registered successfully');
-  } catch (error: any) {
-    if (error.message === 'Rider not found') return errors.notFound('Rider not found');
+  } catch (error: unknown) {
+    if ((error instanceof Error ? error.message : String(error)) === 'Rider not found') return errors.notFound('Rider not found');
     logger.error('[TokenRegistration] Error registering token:', error);
     return errors.internal('Failed to register device token');
   }

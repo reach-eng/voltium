@@ -8,6 +8,10 @@ import { join, parse } from 'path';
 
 const VERSION = process.env.npm_package_version ?? '0.2.0';
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 function getProbePath(): string {
   return process.env.LOCAL_STORAGE_ROOT || process.env.VOLTIUM_SERVER_ROOT || process.cwd();
 }
@@ -87,12 +91,13 @@ async function checkDatabase(): Promise<{
   try {
     await db.$queryRaw`SELECT 1`;
     return { status: 'healthy', latencyMs: Date.now() - start };
-  } catch (err: any) {
-    logger.error('[Health] Database check failed', { error: err?.message });
+  } catch (err: unknown) {
+    const message = errorMessage(err);
+    logger.error('[Health] Database check failed', { error: message });
     return {
       status: 'unhealthy',
       latencyMs: Date.now() - start,
-      error: err?.message ?? 'Unknown error',
+      error: message || 'Unknown error',
     };
   }
 }

@@ -153,7 +153,7 @@ export default function HubManagement() {
       setEditHub(null);
       fetchHubs();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Network error. Please try again.');
+      setError(e instanceof Error ? (e instanceof Error ? e.message : String(e)) : 'Network error. Please try again.');
     } finally {
       setSaving(false);
     }

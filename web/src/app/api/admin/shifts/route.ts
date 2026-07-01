@@ -23,6 +23,10 @@ const shiftSchema = z.object({
 
 const deleteShiftSchema = z.object({ id: z.string().min(1) });
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
@@ -82,9 +86,10 @@ export async function DELETE(req: NextRequest) {
     const { id } = validation.data;
     await shiftUseCases.deleteShift(id, session.adminId || '');
     return success(null, 'Shift deleted');
-  } catch (error: any) {
-    if (error?.message?.includes?.('Cannot delete shift')) {
-      return errors.conflict(error.message);
+  } catch (error: unknown) {
+    const message = errorMessage(error);
+    if (message.includes('Cannot delete shift')) {
+      return errors.conflict(message);
     }
     logger.error('DELETE /api/admin/shifts error:', error);
     return errors.internal('Failed to delete shift');

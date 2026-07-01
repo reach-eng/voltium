@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
     return success(result, 'Return request submitted');
   } catch (error) {
     logger.error('[POST /api/rider/rental/return]', error);
-    if (error instanceof Error && error.message.includes('No vehicle'))
-      return errors.badRequest(error.message);
+    if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('No vehicle'))
+      return errors.badRequest((error instanceof Error ? error.message : String(error)));
     return errors.internal('Failed to submit return request');
   }
 }

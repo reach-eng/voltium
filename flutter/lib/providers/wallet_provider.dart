@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import '../core/network/files_repository.dart';
 import '../features/wallet/domain/repository.dart';

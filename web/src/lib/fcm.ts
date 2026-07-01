@@ -1,5 +1,6 @@
 import { createHmac, randomBytes } from 'crypto';
 import firebaseAdmin from '@/lib/firebase-admin';
+import { getMessaging } from 'firebase-admin/messaging';
 import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
 
@@ -58,12 +59,12 @@ export const fcmService = {
         },
       };
 
-      const response = await firebaseAdmin.messaging().send(message);
+      const response = await getMessaging(firebaseAdmin).send(message);
       logger.info('[FCM] Message sent successfully', { response, data });
       return { success: true, messageId: response };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[FCM] Error sending message:', { error, token });
-      return { success: false, error: error.message || 'Failed to send FCM message' };
+      return { success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to send FCM message' };
     }
   },
 
@@ -183,11 +184,11 @@ export const fcmService = {
         },
       };
 
-      const response = await firebaseAdmin.messaging().send(message);
+      const response = await getMessaging(firebaseAdmin).send(message);
       return { success: true, messageId: response };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[FCM] Error sending push:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error instanceof Error ? error.message : String(error)) };
     }
   },
 

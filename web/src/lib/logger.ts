@@ -1,12 +1,6 @@
-type LogLevel = 'info' | 'error' | 'warn' | 'debug';
+import pino from 'pino';
 
-interface LogEntry {
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  correlationId?: string;
-  [key: string]: unknown;
-}
+type LogLevel = 'info' | 'error' | 'warn' | 'debug';
 
 const SENSITIVE_KEYS = [
   'aadhaar',
@@ -50,90 +44,30 @@ function maskSensitiveData(obj: unknown, seen?: WeakSet<object>): unknown {
   return masked;
 }
 
-function formatObject(obj: unknown): Record<string, unknown> | undefined {
-  if (obj === undefined || obj === null) return undefined;
-
-  if (obj instanceof Error) {
-    return {
-      error: {
-        name: obj.name,
-        message: obj.message,
-        stack: obj.stack,
-      },
-    };
-  }
-
-  if (typeof obj === 'object') {
-    return maskSensitiveData(obj) as Record<string, unknown>;
-  }
-
-  return { value: String(obj) };
-}
-
-function createLogEntry(
-  level: LogLevel,
-  message: string,
-  context?: unknown,
-  correlationId?: string
-): LogEntry {
-  const entry: LogEntry = {
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-  };
-
-  if (correlationId) {
-    entry.correlationId = correlationId;
-  }
-
-  const formatted = formatObject(context);
-  if (formatted) {
-    Object.assign(entry, formatted);
-  }
-
-  return entry;
-}
-
-function getCorrelationId(context?: unknown): string | undefined {
-  if (context && typeof context === 'object' && 'correlationId' in context) {
-    return (context as Record<string, unknown>).correlationId as string | undefined;
-  }
-  return undefined;
-}
-
-const LOG_LEVELS: Record<string, number> = { debug: 0, info: 1, warn: 2, error: 3 };
-const configuredLevel = (process.env.LOG_LEVEL || 'debug').toLowerCase();
-
-function shouldLog(level: LogLevel): boolean {
-  return (LOG_LEVELS[level] ?? 0) >= (LOG_LEVELS[configuredLevel] ?? 0);
-}
+const pinoInstance = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  formatters: {
+    log: (obj) => maskSensitiveData(obj) as Record<string, unknown>,
+  },
+  ...(process.env.NODE_ENV !== 'production' && {
+    transport: {
+      target: 'pino-pretty',
+      options: { colorize: true }
+    }
+  })
+});
 
 export const logger = {
   info(message: string, context?: unknown): void {
-    if (!shouldLog('info')) return;
-    const correlationId = getCorrelationId(context);
-    const entry = createLogEntry('info', message, context, correlationId);
-    console.log(JSON.stringify(entry));
+    pinoInstance.info(context || {}, message);
   },
-
   error(message: string, context?: unknown): void {
-    if (!shouldLog('error')) return;
-    const correlationId = getCorrelationId(context);
-    const entry = createLogEntry('error', message, context, correlationId);
-    console.error(JSON.stringify(entry));
+    pinoInstance.error(context || {}, message);
   },
-
   warn(message: string, context?: unknown): void {
-    if (!shouldLog('warn')) return;
-    const correlationId = getCorrelationId(context);
-    const entry = createLogEntry('warn', message, context, correlationId);
-    console.warn(JSON.stringify(entry));
+    pinoInstance.warn(context || {}, message);
   },
-
   debug(message: string, context?: unknown): void {
-    if (!shouldLog('debug')) return;
-    const correlationId = getCorrelationId(context);
-    const entry = createLogEntry('debug', message, context, correlationId);
-    console.debug(JSON.stringify(entry));
+    pinoInstance.debug(context || {}, message);
   },
 };

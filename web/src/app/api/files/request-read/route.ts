@@ -34,12 +34,12 @@ export async function POST(request: NextRequest) {
     const result = await fileUseCases.requestReadUrl(validation.data.fileRecordId, actor);
 
     return success(result, 'Read URL generated');
-  } catch (err: any) {
-    if (err.message?.includes('not found')) {
-      return errors.notFound(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err))?.includes('not found')) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
-    if (err.message?.includes('permission')) {
-      return errors.forbidden(err.message);
+    if ((err instanceof Error ? err.message : String(err))?.includes('permission')) {
+      return errors.forbidden((err instanceof Error ? err.message : String(err)));
     }
     return errors.internal('Failed to generate read URL');
   }

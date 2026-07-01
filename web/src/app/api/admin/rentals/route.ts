@@ -1,3 +1,4 @@
+import { Prisma, RentalStatus } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -16,8 +17,10 @@ export const GET = withApiHandler(async (request: NextRequest) => {
   const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
   const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)), 100);
 
-  const where: any = {};
-  if (status && status !== 'ALL') where.status = status;
+  const where: Prisma.RentalLeaseWhereInput = {};
+  if (status && status !== 'ALL' && status in RentalStatus) {
+    where.status = status as RentalStatus;
+  }
   if (search) {
     where.OR = [
       { rider: { fullName: { contains: search, mode: 'insensitive' } } },

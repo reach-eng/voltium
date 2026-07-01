@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
 interface TelemetryCleanupResult {
@@ -13,7 +14,7 @@ export const telemetryCleanupJob = {
     logger.info('[TelemetryCleanupJob] Starting', { jobId: job.id });
 
     // Idempotency guard — one run per day
-    const today = new Date().toISOString().split('T')[0];
+    const today = clock.now().toISOString().split('T')[0];
     const idempotencyKey = `telemetry-cleanup:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (claim.status !== 'not_found') {
@@ -22,7 +23,7 @@ export const telemetryCleanupJob = {
     }
 
     try {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(clock.now().getTime() - 30 * 24 * 60 * 60 * 1000);
 
       const [locationsDeleted, callLogsDeleted, contactsDeleted] = await Promise.all([
         db.userLocation.deleteMany({ where: { timestamp: { lt: thirtyDaysAgo } } }),

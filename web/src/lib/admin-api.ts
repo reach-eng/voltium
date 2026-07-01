@@ -81,7 +81,7 @@ async function request<T = any>(
 
     return { success: true, data: (json as any)?.data as T };
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Network error';
+    const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Network error';
     if (!quiet) {
       logger.error('API network error', { url, error: errorMessage });
     }

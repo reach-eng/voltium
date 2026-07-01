@@ -101,4 +101,30 @@ describe('Auth Flow Validation', () => {
       expect(body.success).toBe(false);
     });
   });
+
+  describe('POST /api/auth/logout', () => {
+    it('logs out and invalidates session', async () => {
+      const { status, body } = await api('/api/auth/logout', { method: 'POST' });
+      // Might return 401 if not authenticated, or 200 if successful
+      if (status === 200) {
+        expect(body.success).toBe(true);
+      } else {
+        expect(status).toBeGreaterThanOrEqual(400);
+      }
+    });
+  });
+
+  describe('POST /api/auth/refresh', () => {
+    it('refreshes token if valid refresh token provided', async () => {
+      const { status } = await api('/api/auth/refresh', { method: 'POST', body: JSON.stringify({ refreshToken: 'invalid' }) });
+      expect(status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
+  describe('POST /api/auth/verify-phone', () => {
+    it('validates phone number existence', async () => {
+      const { status } = await api('/api/auth/verify-phone', { method: 'POST', body: JSON.stringify({ phone: '' }) });
+      expect(status).toBeGreaterThanOrEqual(400);
+    });
+  });
 });

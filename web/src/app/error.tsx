@@ -21,7 +21,7 @@ export default function GlobalError({
     if (process.env.NODE_ENV !== 'production') {
       console.error('[GlobalError]', {
         name: error.name,
-        message: error.message,
+        message: (error instanceof Error ? error.message : String(error)),
         digest: error.digest,
       });
     }
@@ -44,7 +44,7 @@ export default function GlobalError({
                 Error details (dev only)
               </summary>
               <pre className="mt-2 text-xs bg-muted p-4 rounded-lg overflow-auto max-h-40 text-destructive">
-                {error.name}: {error.message}
+                {error.name}: {(error instanceof Error ? error.message : String(error))}
                 {error.digest && `\nDigest: ${error.digest}`}
               </pre>
             </details>

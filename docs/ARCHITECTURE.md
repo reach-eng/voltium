@@ -1,351 +1,95 @@
 # Voltium Architecture
 
-> System map, current architecture, and target architecture for the Voltium Electric Mobility platform.
+This document describes the architectural layout, data flow, and core design patterns of the Voltium platform.
 
----
+## High-Level Architecture
 
-## 1. System Overview
+Voltium follows a modern, distributed monolith architecture with a clear separation of concerns between the frontend (Flutter for Riders, Next.js for Admins) and the backend API (Next.js Route Handlers).
 
-Voltium is an electric vehicle rental and fleet management platform with three primary surfaces:
+```mermaid
+graph TD
+    subgraph Client Tier
+      Mobile[Flutter iOS/Android App]
+      WebAdmin[Next.js Admin Dashboard]
+    end
 
-| Surface     | Stack                                                | Purpose                         |
-| ----------- | ---------------------------------------------------- | ------------------------------- |
-| Rider App   | Flutter (Provider, Google Fonts, image_picker)       | Rider mobile experience         |
-| Admin Panel | Next.js App Router (React, Tailwind, shadcn/ui)      | Fleet operations command center |
-| API Layer   | Next.js API routes (Prisma, Zod, JWT)                 | Backend services                |
+    subgraph API Gateway / CDN
+      Caddy[Caddy Reverse Proxy]
+    end
 
-**Database**: Prisma ORM → PostgreSQL (local PostgreSQL on laptop)
+    subgraph Backend Application (Next.js)
+      API[REST API Routes]
+      Workers[Background Job Workers]
+    end
 
-> **Note**: Voltium does not use Docker. All services run as native Node.js processes on a local workstation. Cloudflare Tunnel is used only for public routing — no app data is stored in the cloud.
+    subgraph Data Tier
+      Postgres[(PostgreSQL 16)]
+      Redis[(Redis Cache)]
+    end
+    
+    subgraph Third Party
+      Payment[Razorpay / Stripe]
+      SMS[Twilio / Firebase]
+    end
 
----
-
-## 2. Current Architecture (Before Migration)
-
-### 2.1 Backend (`src/`)
-
-```
-src/
-├─ app/
-│  ├─ api/
-│  │  ├─ admin/
-│  │  │  ├─ announcements/
-│  │  │  ├─ auth/
-│  │  │  ├─ compliance/
-│  │  │  ├─ deposits/
-│  │  │  ├─ earning-tiers/
-│  │  │  ├─ guarantors/
-│  │  │  ├─ hubs/
-│  │  │  ├─ kyc/
-│  │  │  ├─ notifications/
-│  │  │  ├─ plans/
-│  │  │  ├─ riders/
-│  │  │  ├─ settings/
-│  │  │  ├─ shifts/
-│  │  │  ├─ support/
-│  │  │  ├─ teams/
-│  │  │  ├─ transactions/
-│  │  │  ├─ upload/
-│  │  │  ├─ vehicles/
-│  │  │  └── wallets/
-│  │  ├─ auth/
-│  │  ├─ notifications/
-│  │  ├─ rider/
-│  │  ├─ rental/
-│  │  ├─ support/
-│  │  └─ webhook/
-│  └─ admin/
-│     └─ (admin React pages)
-│
-├─ components/       (shadcn/ui + custom React components)
-├─ hooks/            (React hooks)
-├─ lib/
-│  ├─ api-response.ts
-│  ├─ api-version.ts
-│  ├─ auth.ts
-│  ├─ db.ts
-│  ├─ env.ts
-│  ├─ logger.ts
-│  └─ validators.ts
-├─ store/            (Zustand stores)
-├─ types/            (TypeScript types)
-│
-├─ middleware.ts     (CSP, CSRF, validation)
-└─ proxy.ts          (CORS, request logging)
+    Mobile --> Caddy
+    WebAdmin --> Caddy
+    Caddy --> API
+    API --> Postgres
+    API --> Redis
+    API -.-> Workers
+    Workers --> SMS
+    Payment -->|Webhooks| API
 ```
 
-### 2.2 Current Architecture Characteristics
+## Module Map (`web/src/server/modules/`)
 
-- **Business logic lives inside API route files** — routes handle auth, validation, business rules, Prisma queries, and response formatting in one file
-- **Statuses are free-form strings** — `String @default("ACTIVE")` with no enum enforcement
-- **Shared utilities are few** — `auth.ts` for JWT, `validators.ts` for Zod schemas, `db.ts` for Prisma client
-- **No repository layer** — Prisma is called directly from routes
-- **No use-case layer** — business decisions are inline
-- **No wallet ledger** — wallet balance is stored as `balanceInPaise` on Wallet model, updated directly
-- **Single-file validators** — all Zod schemas live in `src/lib/validators.ts`
-- **No worker/background job infrastructure** — cron tasks are not separated
+The backend follows a Domain-Driven Design (DDD) inspired modular structure. Each module encapsulates its own controllers (routes), use-cases (business logic), and repositories (database access).
 
-### 2.3 API Route Pattern (Current)
+- **`auth/`**: SMS OTP generation, verification, and JWT session issuance.
+- **`riders/`**: Rider profiles, KYC verification states, and GDPR data deletion.
+- **`vehicles/`**: Vehicle inventory, telemetry tracking, and maintenance statuses.
+- **`rentals/`**: The core booking engine, handling vehicle leasing and time-tracking.
+- **`wallet/`**: Financial ledger for rider balances and security deposits.
+- **`webhooks/`**: Ingress for payment provider events.
+- **`support/`**: FAQ and ticketing system.
 
-```typescript
-// Typical current route pattern — everything in one file
-export async function POST(req: NextRequest) {
-  // 1. Auth check (inline)
-  // 2. Body parse (inline)
-  // 3. Validation (calls validator)
-  // 4. Business logic (inline Prisma queries)
-  // 5. State/status transitions (inline)
-  // 6. Response formatting (inline)
-}
+## Key Design Patterns
+
+### 1. The Transactional Outbox Pattern
+To prevent dual-write vulnerabilities (e.g., deducting money but failing to send an SMS), all critical side-effects are written to an `OutboxEvent` table in the *same database transaction* as the state change. A background worker continuously polls this table to execute the side-effects safely.
+- **See ADR**: [0005: Outbox Pattern](./ADR/0005-outbox-pattern.md)
+
+### 2. Idempotency Keys
+For financial mutations (Top-ups, Rentals), clients generate a UUID `Idempotency-Key` header. The backend stores this key upon successful processing. If a network timeout causes a retry, the backend intercepts the identical key and returns the cached success response, preventing double-billing.
+- **See ADR**: [0006: Idempotency Keys](./ADR/0006-idempotency-keys.md)
+
+### 3. Role-Based Access Control (RBAC)
+Voltium implements a hierarchical RBAC system enforced at the API Middleware layer.
+- `RIDER`: Only has access to their own resources.
+- `SUPPORT`: Can view tickets and user profiles but cannot mutate finances.
+- `ADMIN`: Full access to the platform except sensitive system configurations.
+- `SUPER_ADMIN`: Root privileges.
+
+## Data Flow: Vehicle Rental
+
+```mermaid
+sequenceDiagram
+    participant App as Flutter App
+    participant API as Rental API
+    participant DB as PostgreSQL
+    participant Wallet as Wallet Service
+    
+    App->>API: POST /api/rentals (Idempotency-Key, vehicleId)
+    API->>DB: Check vehicle availability
+    API->>Wallet: Check sufficient funds
+    Wallet-->>API: Funds OK
+    
+    API->>DB: BEGIN TRANSACTION
+    API->>DB: INSERT RentalLease
+    API->>DB: UPDATE Wallet Balance
+    API->>DB: INSERT OutboxEvent (Send Confirmation SMS)
+    API->>DB: COMMIT TRANSACTION
+    
+    API-->>App: 201 Created
 ```
-
----
-
-## 3. Target Architecture (Post-Migration)
-
-### 3.1 Backend Target Structure
-
-```
-src/
-├─ app/
-│  ├─ api/                  → Thin route handlers only
-│  └─ admin/                → Admin panel pages
-│
-├─ server/
-│  ├─ modules/
-│  │  ├─ auth/
-│  │  │  ├─ auth.routes.ts
-│  │  │  ├─ auth.use-cases.ts
-│  │  │  ├─ auth.service.ts
-│  │  │  ├─ auth.repository.ts
-│  │  │  ├─ auth.schemas.ts
-│  │  │  └─ auth.types.ts
-│  │  │
-│  │  ├─ riders/
-│  │  ├─ onboarding/
-│  │  ├─ kyc/
-│  │  ├─ guarantors/
-│  │  ├─ wallet/
-│  │  ├─ deposits/
-│  │  ├─ rentals/
-│  │  ├─ vehicles/
-│  │  ├─ hubs/
-│  │  ├─ support/
-│  │  ├─ notifications/
-│  │  ├─ device-compliance/
-│  │  └─ analytics/
-│  │
-│  ├─ shared/
-│  │  ├─ auth/
-│  │  ├─ rbac/
-│  │  ├─ errors/
-│  │  ├─ logger/
-│  │  ├─ storage/
-│  │  ├─ queue/
-│  │  └─ validation/
-│  │
-│  ├─ db/
-│  │  └─ prisma.ts
-│  │
-│  └─ workers/
-│     ├─ index.ts
-│     ├─ queues.ts
-│     └─ jobs/
-│
-├─ contracts/
-│  ├─ auth.contract.ts
-│  ├─ rider.contract.ts
-│  ├─ kyc.contract.ts
-│  ├─ wallet.contract.ts
-│  ├─ rental.contract.ts
-│  └─ openapi.ts
-│
-├─ components/
-├─ hooks/
-├─ lib/
-└─ store/
-```
-
-### 3.2 Module Template
-
-Each module follows a consistent pattern:
-
-```
-module-name/
-├─ module.routes.ts      → Route definitions (thin, delegates to use-cases)
-├─ module.use-cases.ts   → Business logic orchestration
-├─ module.service.ts     → Domain service operations
-├─ module.repository.ts  → Data access (Prisma queries)
-├─ module.policy.ts      → Authorization rules
-├─ module.schemas.ts     → Zod validation schemas
-└─ module.types.ts       → TypeScript types and enums
-```
-
-### 3.3 Target API Route Pattern
-
-```typescript
-// Target pattern — thin route handler
-export async function POST(req: NextRequest) {
-  const session = await requireRiderSession(req);
-  const body = await req.json();
-  const input = SubmitKycSchema.parse(body);
-  const result = await kycUseCases.submitKyc({
-    riderId: session.riderId,
-    input,
-  });
-  return Response.json({ success: true, data: result });
-}
-```
-
-### 3.4 Flutter Target Structure
-
-```
-flutter/lib/
-├─ app/
-│  ├─ app.dart
-│  ├─ router.dart
-│  └─ bootstrap.dart
-│
-├─ core/
-│  ├─ network/         → Dio client, interceptors
-│  ├─ storage/         → flutter_secure_storage, local DB
-│  ├─ errors/          → Error handling, retry logic
-│  ├─ theme/           → AppTheme, colors, typography
-│  ├─ widgets/         → Shared reusable widgets
-│  ├─ permissions/     → Runtime permission handling
-│  └─ constants/       → App-wide constants
-│
-├─ features/
-│  ├─ auth/
-│  ├─ onboarding/
-│  ├─ kyc/
-│  ├─ guarantor/
-│  ├─ wallet/
-│  ├─ deposits/
-│  ├─ rental/
-│  ├─ pickup/
-│  ├─ dashboard/
-│  ├─ support/
-│  ├─ notifications/
-│  ├─ profile/
-│  ├─ rewards/
-│  ├─ referrals/
-│  └─ device_compliance/
-│
-└─ models/             → Shared domain models
-```
-
-Each feature follows Clean Architecture:
-
-```
-feature/
-├─ data/
-│  ├─ api.dart
-│  ├─ dto.dart
-│  └─ repository_impl.dart
-├─ domain/
-│  ├─ entity.dart
-│  ├─ repository.dart
-│  └─ use_cases.dart
-└─ presentation/
-   ├─ screens/
-   ├─ widgets/
-   └─ controller.dart
-```
-
----
-
-## 4. Core Architectural Principles
-
-| Principle              | Description                                           |
-| ---------------------- | ----------------------------------------------------- |
-| **Thin routes**        | API routes only parse input and delegate to use-cases |
-| **Use-cases first**    | Business logic lives in use-case files, not routes    |
-| **Repositories**       | All Prisma queries behind repository abstractions     |
-| **Schema-first**       | Every input validated by Zod schema before use-case   |
-| **State machines**     | Statuses are controlled enums with valid transitions  |
-| **Ledger-everything**  | Money/wallet changes require double-entry ledger rows |
-| **Idempotent ops**     | Approvals, payments, and deposits are idempotent      |
-| **Audit trail**        | Every sensitive action is logged                      |
-| **Feature-first Flutter** | Flutter organized by domain feature, not layer    |
-
----
-
-## 5. Data Flow Architecture
-
-```
-Rider App (Flutter)
-     │
-     ▼  HTTPS + JWT
-API Routes (thin)
-     │
-     ▼
-Use-Cases (business logic + auth)
-     │
-     ├──► Service Layer (domain operations)
-     │       │
-     │       └──► Repository (Prisma)
-     │               │
-     │               └──► Database
-     │
-     ├──► State Machine (transition validation)
-     │
-     ├──► Wallet Ledger (append-only)
-     │
-     └──► Audit Log (append-only)
-              │
-              └──► Background Workers (DB-backed outbox, Node worker process)
-```
-
----
-
-## 6. Security Architecture
-
-```
-Request
-  │
-  ├──► Middleware: CSP headers, CSRF check
-  │
-  ├──► Route: Authentication (JWT session)
-  │
-  ├──► Use-Case: Authorization (RBAC policy)
-  │
-  ├──► Schema: Input validation (Zod)
-  │
-  └──► Repository: Parameterized queries (Prisma)
-```
-
----
-
-## 7. Migration Strategy
-
-Refactor workflow by workflow, in this order:
-
-1. Auth (OTP login, session, JWT)
-2. KYC (submit, approve, reject)
-3. Guarantor (submit, approve, reject)
-4. Wallet/Deposits (top-up, approve, ledger)
-5. Rental/Pickup (plan, hub, vehicle, return)
-6. Support/Notifications
-7. Device compliance
-
-Each workflow is complete when it has:
-- Backend use-case + repository + schema
-- State machine with valid transitions
-- Thin API route
-- Flutter feature module
-- Tests
-- Audit logging (if money/security related)
-
----
-
-## 8. Environment Strategy
-
-| Environment | Database           | Storage         | Purpose           |
-| ----------- | ------------------ | --------------- | ----------------- |
-| local       | Local PostgreSQL   | Local disk      | Development       |
-| staging     | Local PostgreSQL   | Local disk      | Integration tests |
-| production  | Local PostgreSQL   | Local disk      | Live operations   |
-
-All environments run on a local workstation. Database, files, and backups stay on local disk.
-Public access via Cloudflare Tunnel (routing only — no data storage).

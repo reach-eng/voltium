@@ -40,7 +40,7 @@ async function postHandler(req: NextRequest) {
         });
         results.push({ id, status: (result as any).status || action });
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
+        const message = e instanceof Error ? (e instanceof Error ? e.message : String(e)) : String(e);
         results.push({ id, status: 'ERROR', error: message });
       }
     }

@@ -107,7 +107,7 @@ export async function PUT(req: NextRequest) {
         );
     }
   } catch (err) {
-    if (err instanceof DepositStateError) return errors.conflict(err.message);
+    if (err instanceof DepositStateError) return errors.conflict((err instanceof Error ? err.message : String(err)));
     return errors.internal('Failed to process deposit action');
   }
 }

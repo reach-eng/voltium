@@ -173,7 +173,7 @@ export const notificationDispatchJob = {
           .sendOverlayTrigger(rider.fcmToken, payload.type, extra)
           .catch((err: Error) =>
             logger.warn('[NotificationDispatch] FCM overlay failed', {
-              err: err.message,
+              err: (err instanceof Error ? err.message : String(err)),
             })
           );
         return { delivered: true, channel: 'overlay' };

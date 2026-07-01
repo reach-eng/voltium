@@ -35,6 +35,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # ─── SAST (Semgrep) ───────────────────────────────────────────────────────────
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69b48a968c21fb4b97b6e0e07d466a47e0d # v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (security-audit + owasp-top-ten)
+        run: |
+          semgrep scan \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/typescript \
+            --config p/javascript \
+            --error \
+            --severity ERROR \
+            --severity WARNING \
+            web/src
+
   # ─── No-Docker Check ──────────────────────────────────────────────────────────
   no-docker-check:
     name: No-Docker Enforcement
@@ -153,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [lint-and-typecheck, prisma-check, openapi-check, no-docker-check, regression-gates-check]
+    needs: [lint-and-typecheck, prisma-check, openapi-check, no-docker-check, regression-gates-check, sast]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -217,8 +250,17 @@ jobs:
       - name: Check migration status
         run: npx prisma migrate status
 
-      - name: Run unit tests
-        run: npm test -- --run tests/unit
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: web/coverage/lcov.info
+
+      - name: Coverage threshold check
+        run: npm run test:coverage:check
 
       - name: Run contract tests
         run: npm run test:contracts
@@ -262,9 +304,45 @@ jobs:
       - name: Run screen workflow coverage gate
         run: bash scripts/check-screen-workflow-coverage.sh
 
-  # ─── Deploy (laptop mode — manual via PM2 + Cloudflare Tunnel) ────────
-  # Deployment is done manually on the local laptop:
-  #   1. git pull && npm ci && npm run build
-  #   2. pm2 restart all
-  #   3. Verify Cloudflare Tunnel is running: cloudflared tunnel list
-  #   4. Verify: pm2 status
+  # ─── Deploy Staging ──────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [test]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
+
+      - name: Deploy & Restart
+        run: npm ci && npm run build && pm2 restart voltium-staging-web voltium-staging-worker
+
+      - name: Health Check
+        run: curl -f http://localhost:8082/api/health
+
+  flutter-test:
+    name: Flutter Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+      - run: cd flutter && flutter pub get
+      - run: cd flutter && flutter test --coverage
+      - name: Enforce 85% coverage
+        run: |
+          COVERAGE=$(lcov --summary flutter/coverage/lcov.info | grep "lines......" | cut -d ' ' -f 4 | cut -d '%' -f 1)
+          echo "Current coverage: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 85.0" | bc -l) )); then
+            echo "::error::Coverage ($COVERAGE%) is below the required 85%"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flutter-coverage
+          path: flutter/coverage/lcov.info

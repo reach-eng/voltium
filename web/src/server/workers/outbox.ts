@@ -16,6 +16,7 @@
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { clock } from '@/lib/clock';
 
 export type OutboxEventStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
 
@@ -138,7 +139,7 @@ export const OutboxService = {
    * Cleanup COMPLETED events older than the retention period.
    */
   async cleanupCompleted(retentionDays = 7): Promise<number> {
-    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(clock.now().getTime() - retentionDays * 24 * 60 * 60 * 1000);
     const result = await db.outboxEvent.deleteMany({
       where: {
         status: 'COMPLETED',

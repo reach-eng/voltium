@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'package:universal_io/io.dart';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -94,6 +94,58 @@ class ApiClient {
         '-${hex.substring(20, 32)}';
   }
 
+  Future<bool> _refreshToken() async {
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken == null) return false;
+
+    try {
+      final uri = Uri.parse('$_baseUrl/api/auth/refresh');
+      final headers = {
+        'Content-Type': 'application/json',
+        'x-correlation-id': _newCorrelationId(),
+      };
+      
+      final response = await _client.post(
+        uri,
+        headers: headers,
+        body: jsonEncode({'refreshToken': refreshToken}),
+      ).timeout(requestTimeout);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final body = jsonDecode(response.body);
+        if (body['success'] == true) {
+          final data = body['data'];
+          await _storage.saveSessionToken(data['token']);
+          await _storage.setRefreshToken(data['refreshToken']);
+          return true;
+        }
+      }
+      // If refresh failed, clear tokens
+      await _storage.clearAll();
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> _executeWithRetry(
+    Future<http.Response> Function(Map<String, String> headers) request,
+  ) async {
+    final headers = await _getHeaders();
+    http.Response response = await request(headers);
+
+    // If 401 and not web (web uses cookies for refresh), try to refresh
+    if (response.statusCode == 401 && !PlatformInfo.isWeb) {
+      final refreshed = await _refreshToken();
+      if (refreshed) {
+        final newHeaders = await _getHeaders();
+        response = await request(newHeaders);
+      }
+    }
+
+    return _handleResponse(response);
+  }
+
   /// GET request
   Future<Map<String, dynamic>> get(
     String path, {
@@ -101,11 +153,11 @@ class ApiClient {
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    final headers = await _getHeaders();
+    
     try {
-      final response =
-          await _client.get(uri, headers: headers).timeout(requestTimeout);
-      return _handleResponse(response);
+      return await _executeWithRetry(
+        (headers) => _client.get(uri, headers: headers).timeout(requestTimeout),
+      );
     } on SocketException catch (_) {
       await _maybeQueueOffline('GET', path, null);
       rethrow;
@@ -122,19 +174,20 @@ class ApiClient {
     String? idempotencyKey,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    final headers = await _getHeaders();
-    if (idempotencyKey != null) {
-      headers['Idempotency-Key'] = idempotencyKey;
-    }
+    
     try {
-      final response = await _client
-          .post(
-            uri,
-            headers: headers,
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(requestTimeout);
-      return _handleResponse(response);
+      return await _executeWithRetry((headers) async {
+        if (idempotencyKey != null) {
+          headers['Idempotency-Key'] = idempotencyKey;
+        }
+        return await _client
+            .post(
+              uri,
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null,
+            )
+            .timeout(requestTimeout);
+      });
     } on SocketException catch (_) {
       await _maybeQueueOffline('POST', path, body);
       rethrow;
@@ -153,19 +206,20 @@ class ApiClient {
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    final headers = await _getHeaders();
-    if (idempotencyKey != null) {
-      headers['Idempotency-Key'] = idempotencyKey;
-    }
+    
     try {
-      final response = await _client
-          .put(
-            uri,
-            headers: headers,
-            body: body != null ? jsonEncode(body) : null,
-          )
-          .timeout(requestTimeout);
-      return _handleResponse(response);
+      return await _executeWithRetry((headers) async {
+        if (idempotencyKey != null) {
+          headers['Idempotency-Key'] = idempotencyKey;
+        }
+        return await _client
+            .put(
+              uri,
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null,
+            )
+            .timeout(requestTimeout);
+      });
     } on SocketException catch (_) {
       await _maybeQueueOffline('PUT', path, body);
       rethrow;
@@ -179,14 +233,14 @@ class ApiClient {
   Future<Map<String, dynamic>> delete(String path, {String? idempotencyKey, Map<String, String>? queryParams}) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    final headers = await _getHeaders();
-    if (idempotencyKey != null) {
-      headers['Idempotency-Key'] = idempotencyKey;
-    }
+    
     try {
-      final response =
-          await _client.delete(uri, headers: headers).timeout(requestTimeout);
-      return _handleResponse(response);
+      return await _executeWithRetry((headers) async {
+        if (idempotencyKey != null) {
+          headers['Idempotency-Key'] = idempotencyKey;
+        }
+        return await _client.delete(uri, headers: headers).timeout(requestTimeout);
+      });
     } on SocketException catch (_) {
       await _maybeQueueOffline('DELETE', path, null);
       rethrow;
@@ -247,16 +301,16 @@ class ApiClient {
     String fieldName = 'file',
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    final headers = await _getHeaders();
-    final request = http.MultipartRequest('POST', uri);
-
-    request.headers.addAll(headers);
-    request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
-
-    final streamedResponse =
-        await _client.send(request).timeout(requestTimeout);
-    final response = await http.Response.fromStream(streamedResponse);
-    return _handleResponse(response);
+    
+    return await _executeWithRetry((headers) async {
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(headers);
+      request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
+      
+      final streamedResponse =
+          await _client.send(request).timeout(requestTimeout);
+      return await http.Response.fromStream(streamedResponse);
+    });
   }
 
   /// Handle API response, standardize errors

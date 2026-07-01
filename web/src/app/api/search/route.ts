@@ -126,8 +126,8 @@ export async function GET(req: NextRequest) {
       total: Object.values(results).reduce((sum, arr) => sum + arr.length, 0),
       results,
     });
-  } catch (err: any) {
-    logger.error('[Search] GET failed', { error: err.message });
+  } catch (err: unknown) {
+    logger.error('[Search] GET failed', { error: (err instanceof Error ? err.message : String(err)) });
     return errors.internal('Search failed');
   }
 }

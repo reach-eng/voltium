@@ -39,8 +39,8 @@ export async function sendSms(phone: string, message: string): Promise<boolean> 
 
       logger.info('[SMS] Delivered via MSG91', { phone: phone.slice(-4) });
       return true;
-    } catch (err: any) {
-      logger.error('[SMS] MSG91 provider failed', { error: err.message, phone: phone.slice(-4) });
+    } catch (err: unknown) {
+      logger.error('[SMS] MSG91 provider failed', { error: (err instanceof Error ? err.message : String(err)), phone: phone.slice(-4) });
       return false;
     }
   }

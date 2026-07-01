@@ -40,6 +40,9 @@ import 'widgets/shell_banners.dart';
 import 'widgets/animated_bottom_nav.dart';
 import 'widgets/error_boundary.dart';
 import 'widgets/overlay_manager.dart';
+import 'core/observability/posthog_service.dart';
+import 'core/observability/telemetry_service.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
 
 import 'package:voltium_rider/utils/app_constants.dart';
 
@@ -64,6 +67,8 @@ Future<void> main() async {
 
   // Initialize Error Monitoring
   await MonitoringService.initialize();
+  await PostHogService.initialize();
+  TelemetryService.initialize();
 
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
@@ -74,6 +79,7 @@ Future<void> main() async {
       details.stack,
       reason: 'FlutterError',
     );
+    PostHogService.captureError(details.exception, details.stack, reason: 'FlutterError');
   };
 
   // ── Custom ErrorWidget Builder (skip in test mode) ─────────────────────────
@@ -213,6 +219,7 @@ Future<void> main() async {
       debugPrint('[ZoneError] $error');
       AnalyticsService().trackError('ZoneError', error.toString());
       MonitoringService.logError(error, stackTrace, reason: 'ZoneError');
+      PostHogService.captureError(error, stackTrace, reason: 'ZoneError');
     },
   );
 }
@@ -244,8 +251,21 @@ class VoltiumApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
 
+      // ── Responsive Web Wrapper ────────────────────────────────────────────
+      builder: (context, child) {
+        if (kIsWeb) {
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: child ?? const SizedBox.shrink(),
+            ),
+          );
+        }
+        return child ?? const SizedBox.shrink();
+      },
+
       // ── Navigation Observer ───────────────────────────────────────────────
-      navigatorObservers: [focusObserver],
+      navigatorObservers: [focusObserver, PosthogObserver()],
 
       // ── Home ──────────────────────────────────────────────────────────────
       home: const ErrorBoundary(

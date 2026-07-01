@@ -10,6 +10,7 @@ import {
   createPlanSchema,
   createVehicleSchema,
 } from './lib/validators';
+import { env } from './lib/env';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const isProd = process.env.NODE_ENV === 'production';
@@ -156,12 +157,26 @@ export async function middleware(request: NextRequest) {
     response.headers.set(key, value);
   });
 
+  // ── CORS ────────────────────────────────────────────────────────────────
+  const origin = request.headers.get('origin');
+  const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) ?? [];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Max-Age', '86400');
+  }
+
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204, headers: response.headers });
+  }
+
   // Skip CSRF for safe methods
   if (isSafeMethod(request.method)) {
     return response;
   }
-
-  const origin = request.headers.get('origin');
 
   // Reject unsafe requests with null origin (sandboxed iframes, data: URIs, etc.)
   if (origin === 'null') {

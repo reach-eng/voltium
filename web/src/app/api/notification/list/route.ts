@@ -54,8 +54,8 @@ export async function PUT(request: NextRequest) {
 
     await notificationUseCases.markRead(notificationId, riderDbId);
     return success(null, 'Notification marked as read');
-  } catch (err: any) {
-    if (err.message === 'NOTIFICATION_ACCESS_DENIED')
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err)) === 'NOTIFICATION_ACCESS_DENIED')
       return errors.forbidden('Cannot access this notification');
     logger.error('[PUT /api/notification/list]', err);
     return errors.internal('Failed to update notifications');

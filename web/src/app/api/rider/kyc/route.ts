@@ -13,6 +13,10 @@ import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
 
+function errorName(err: unknown): string {
+  return err instanceof Error ? err.name : '';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await requireRiderSession(request);
@@ -33,9 +37,9 @@ export async function POST(request: NextRequest) {
       },
       'KYC submitted successfully'
     );
-  } catch (err: any) {
-    if (err.name === 'KycStateError') {
-      return errors.conflict(err.message);
+  } catch (err: unknown) {
+    if (errorName(err) === 'KycStateError') {
+      return errors.conflict((err instanceof Error ? err.message : String(err)));
     }
     logger.error('[POST /api/rider/kyc]', err);
     return errors.internal('Failed to submit KYC');

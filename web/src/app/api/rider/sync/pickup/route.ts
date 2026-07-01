@@ -49,11 +49,11 @@ export async function POST(request: NextRequest) {
     logger.info('Vehicle pickup completed', { riderId: riderDbId, vehicleId });
     return success(result, 'Vehicle pickup successful and account activated');
   } catch (err) {
-    if (err instanceof Error && err.message.includes('not found')) {
-      return errors.notFound(err.message);
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)).includes('not found')) {
+      return errors.notFound((err instanceof Error ? err.message : String(err)));
     }
-    if (err instanceof Error && err.message.includes('currently')) {
-      return errors.conflict(err.message);
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)).includes('currently')) {
+      return errors.conflict((err instanceof Error ? err.message : String(err)));
     }
     logger.error('Failed to complete vehicle pickup', err);
     return errors.internal('Failed to complete pickup');

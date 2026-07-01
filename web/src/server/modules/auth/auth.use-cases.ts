@@ -8,7 +8,7 @@
 import { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/db';
-import { createSessionToken } from '@/lib/auth';
+import { createSessionToken, createRefreshToken } from '@/lib/auth';
 import { generateOtp, verifyOtp as verifyOtpStore } from '@/lib/otp-store';
 import { checkRateLimit, AUTH_RATE_LIMIT } from '@/lib/rate-limit';
 import { auth as firebaseAuth } from '@/lib/firebase-admin';
@@ -176,14 +176,22 @@ export const authUseCases = {
       tokenVersion: rider.tokenVersion,
     });
 
+    const refreshToken = await createRefreshToken({
+      riderId: rider.riderId,
+      riderDbId: rider.id,
+      phone: rider.phone,
+      role: 'rider',
+      tokenVersion: rider.tokenVersion,
+    });
+
     return {
       riderId: rider.riderId,
       riderDbId: rider.id,
       phone: rider.phone,
       isNewRider,
       token,
+      refreshToken,
       riderData,
-      fcmCommandSecret: env.FCM_COMMAND_HMAC_SECRET,
     };
   },
 

@@ -6,6 +6,8 @@ import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
+import type { AdminRole } from '@/server/modules/admin/admin.types';
+import type { UpdateAdminParams } from '@/server/modules/admin/admin.repository';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const err = error as Error;
     logger.error('POST /api/admin/admins error:', error);
-    if (err.message.includes('already exists')) return errors.conflict(err.message);
+    if ((err instanceof Error ? err.message : String(err)).includes('already exists')) return errors.conflict((err instanceof Error ? err.message : String(err)));
     return errors.internal('Failed to create admin');
   }
 }
@@ -83,7 +85,13 @@ export async function PUT(req: NextRequest) {
 
     if (!id) return errors.badRequest('id is required');
 
-    const updateData: any = { ...data };
+    const updateData: UpdateAdminParams = {
+      email: typeof data.email === 'string' ? data.email : undefined,
+      name: typeof data.name === 'string' ? data.name : undefined,
+      role: typeof data.role === 'string' ? (data.role as AdminRole) : undefined,
+      permissions: Array.isArray(data.permissions) ? data.permissions : undefined,
+      isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
+    };
     if (password) {
       if (password.length < 8) return errors.badRequest('Password must be at least 8 characters');
       updateData.password = await hashPassword(password);

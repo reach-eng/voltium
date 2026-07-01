@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
     response.cookies.set(ADMIN_SESSION_COOKIE_NAME, newToken, SESSION_COOKIE_OPTIONS);
 
     return response;
-  } catch (err: any) {
-    logger.error('[AdminAuthRefresh] Failed', { error: err.message });
+  } catch (err: unknown) {
+    logger.error('[AdminAuthRefresh] Failed', { error: (err instanceof Error ? err.message : String(err)) });
     return errors.internal('Failed to refresh admin session');
   }
 }

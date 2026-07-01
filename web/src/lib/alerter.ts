@@ -67,7 +67,7 @@ export const alerter = {
     // Send webhook if configured
     if (webhookUrl) {
       await this.sendWebhook(payload).catch((err) => {
-        logger.error('[Alerter] Webhook send failed', { error: err.message });
+        logger.error('[Alerter] Webhook send failed', { error: (err instanceof Error ? err.message : String(err)) });
       });
     }
   },
@@ -172,7 +172,7 @@ export function alertOnError(
   return alerter.send({
     level: 'error',
     title: 'Unhandled Error',
-    message: error.message,
+    message: (error instanceof Error ? error.message : String(error)),
     error,
     source: context.source || 'backend',
     details: context.details,

@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
       },
       'Upload URL generated'
     );
-  } catch (err: any) {
-    if (err.message?.includes('Invalid file type') || err.message?.includes('File too large')) {
-      return errors.badRequest(err.message);
+  } catch (err: unknown) {
+    if ((err instanceof Error ? err.message : String(err))?.includes('Invalid file type') || (err instanceof Error ? err.message : String(err))?.includes('File too large')) {
+      return errors.badRequest((err instanceof Error ? err.message : String(err)));
     }
     return errors.internal('Failed to generate upload URL');
   }

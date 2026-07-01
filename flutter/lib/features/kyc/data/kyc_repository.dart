@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:universal_io/io.dart';
 
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
