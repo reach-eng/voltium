@@ -358,26 +358,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     body: Stack(
       children: [
         Positioned.fill(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeIn,
-            switchOutCurve: Curves.easeOut,
-            layoutBuilder:
-                (Widget? currentChild, List<Widget> previousChildren) {
-              return Stack(
-                fit: StackFit.passthrough,
-                alignment: Alignment.center,
-                children: <Widget>[
-                  ...previousChildren,
-                  if (currentChild != null) currentChild,
-                ],
-              );
-            },
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: state.childScreenWrapper(currentScreen),
-          ),
+          child: state.childScreenWrapper(currentScreen),
         ),
         if (state._isTransitioning)
           Positioned.fill(
