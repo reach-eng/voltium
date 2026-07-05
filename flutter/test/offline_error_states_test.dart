@@ -125,8 +125,7 @@ void main() {
       expect(find.byKey(const Key('refreshButton')), findsOneWidget);
     });
 
-    testWidgets('shows wallet content with zero balance',
-        (tester) async {
+    testWidgets('shows wallet content with zero balance', (tester) async {
       await tester.pumpWidget(wrapInApp(
         child: const WalletScreen(),
         provider: _MockAppProvider(
@@ -310,8 +309,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('ActiveDashboardScreen handles multiple pumps',
-        (tester) async {
+    testWidgets('ActiveDashboardScreen handles multiple pumps', (tester) async {
       await tester.pumpWidget(wrapInApp(
         child: const ActiveDashboardScreen(),
       ));

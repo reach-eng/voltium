@@ -28,16 +28,24 @@ void main() {
 
     test('fromJson falls back to GigPlatform.other for unknown platform', () {
       final json = {
-        'id': 'e1', 'date': '2024-01-01T00:00:00.000Z',
-        'platform': 'unknown_app', 'amount': 100.0, 'trips': 5, 'hours': 4.0,
+        'id': 'e1',
+        'date': '2024-01-01T00:00:00.000Z',
+        'platform': 'unknown_app',
+        'amount': 100.0,
+        'trips': 5,
+        'hours': 4.0,
       };
       expect(EarningEntry.fromJson(json).platform, GigPlatform.other);
     });
 
     test('toJson serializes date as ISO string', () {
       final e = EarningEntry(
-        id: 'e1', date: DateTime(2024, 6, 1), platform: GigPlatform.swiggy,
-        amount: 200.0, trips: 5, hours: 3.0,
+        id: 'e1',
+        date: DateTime(2024, 6, 1),
+        platform: GigPlatform.swiggy,
+        amount: 200.0,
+        trips: 5,
+        hours: 3.0,
       );
       final json = e.toJson();
       expect(json['platform'], 'swiggy');
@@ -53,7 +61,8 @@ void main() {
     });
 
     test('platformColor returns distinct Color values', () {
-      final colors = GigPlatform.values.map(EarningEntry.platformColor).toList();
+      final colors =
+          GigPlatform.values.map(EarningEntry.platformColor).toList();
       // All should be non-null Color instances
       expect(colors.every((c) => c is Color), isTrue);
     });
@@ -62,8 +71,13 @@ void main() {
   // ── FaqCategory._parseColor (via fromJson) ──────────────────────────────
   group('FaqCategory._parseColor', () {
     Map<String, dynamic> _base({required dynamic iconColor}) => {
-          'id': 'c1', 'title': 'T', 'subtitle': 'S', 'articleCount': 5,
-          'icon': 'build', 'iconColor': iconColor, 'iconBgColor': 0xFF000000,
+          'id': 'c1',
+          'title': 'T',
+          'subtitle': 'S',
+          'articleCount': 5,
+          'icon': 'build',
+          'iconColor': iconColor,
+          'iconBgColor': 0xFF000000,
         };
 
     test('parses int color value', () {
@@ -90,8 +104,13 @@ void main() {
   // ── FaqCategory._getIconData (via fromJson) ──────────────────────────────
   group('FaqCategory._getIconData', () {
     FaqCategory _fromIcon(String name) => FaqCategory.fromJson({
-          'id': 'c1', 'title': 'T', 'subtitle': 'S', 'articleCount': 0,
-          'icon': name, 'iconColor': 0xFF000000, 'iconBgColor': 0xFF000000,
+          'id': 'c1',
+          'title': 'T',
+          'subtitle': 'S',
+          'articleCount': 0,
+          'icon': name,
+          'iconColor': 0xFF000000,
+          'iconBgColor': 0xFF000000,
         });
 
     test('build → Icons.build_outlined', () {
@@ -123,7 +142,10 @@ void main() {
   group('FaqItem', () {
     test('category getter returns categoryId', () {
       final item = FaqItem.fromJson({
-        'id': 'f1', 'categoryId': 'cat123', 'question': 'Q?', 'answer': 'A.',
+        'id': 'f1',
+        'categoryId': 'cat123',
+        'question': 'Q?',
+        'answer': 'A.',
       });
       expect(item.category, 'cat123');
       expect(item.category, item.categoryId);
@@ -134,9 +156,12 @@ void main() {
   group('IssueModel.fromJson', () {
     test('uses ticketId when present', () {
       final m = IssueModel.fromJson({
-        'id': 'i1', 'ticketId': 'TKT-001',
-        'subject': 'Help', 'message': 'Msg',
-        'category': 'BILLING', 'status': 'OPEN',
+        'id': 'i1',
+        'ticketId': 'TKT-001',
+        'subject': 'Help',
+        'message': 'Msg',
+        'category': 'BILLING',
+        'status': 'OPEN',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.ticketId, 'TKT-001');
@@ -145,8 +170,10 @@ void main() {
     test('falls back ticketId to id when absent', () {
       final m = IssueModel.fromJson({
         'id': 'i1',
-        'subject': 'Help', 'message': 'Msg',
-        'category': 'BILLING', 'status': 'OPEN',
+        'subject': 'Help',
+        'message': 'Msg',
+        'category': 'BILLING',
+        'status': 'OPEN',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.ticketId, 'i1');
@@ -154,8 +181,11 @@ void main() {
 
     test('falls back subject to title when absent', () {
       final m = IssueModel.fromJson({
-        'id': 'i1', 'title': 'My Title', 'message': 'Msg',
-        'category': 'BILLING', 'status': 'OPEN',
+        'id': 'i1',
+        'title': 'My Title',
+        'message': 'Msg',
+        'category': 'BILLING',
+        'status': 'OPEN',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.subject, 'My Title');
@@ -163,8 +193,10 @@ void main() {
 
     test('falls back subject to No Subject when both absent', () {
       final m = IssueModel.fromJson({
-        'id': 'i1', 'message': 'Msg',
-        'category': 'BILLING', 'status': 'OPEN',
+        'id': 'i1',
+        'message': 'Msg',
+        'category': 'BILLING',
+        'status': 'OPEN',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.subject, 'No Subject');
@@ -175,8 +207,10 @@ void main() {
   group('TicketMessage.fromJson', () {
     test('parses rider sender', () {
       final m = TicketMessage.fromJson({
-        'id': 'tm1', 'ticketId': 't1',
-        'senderType': 'RIDER', 'body': 'Hello',
+        'id': 'tm1',
+        'ticketId': 't1',
+        'senderType': 'RIDER',
+        'body': 'Hello',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.sender, TicketMessageSender.rider);
@@ -184,8 +218,10 @@ void main() {
 
     test('parses admin sender', () {
       final m = TicketMessage.fromJson({
-        'id': 'tm1', 'ticketId': 't1',
-        'sender': 'admin', 'body': 'Reply',
+        'id': 'tm1',
+        'ticketId': 't1',
+        'sender': 'admin',
+        'body': 'Reply',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.sender, TicketMessageSender.admin);
@@ -193,8 +229,10 @@ void main() {
 
     test('falls back to unknown for invalid sender', () {
       final m = TicketMessage.fromJson({
-        'id': 'tm1', 'ticketId': 't1',
-        'senderType': 'BOT', 'body': 'Bot reply',
+        'id': 'tm1',
+        'ticketId': 't1',
+        'senderType': 'BOT',
+        'body': 'Bot reply',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.sender, TicketMessageSender.unknown);
@@ -202,8 +240,10 @@ void main() {
 
     test('falls back body to message key', () {
       final m = TicketMessage.fromJson({
-        'id': 'tm1', 'ticketId': 't1',
-        'senderType': 'rider', 'message': 'from message key',
+        'id': 'tm1',
+        'ticketId': 't1',
+        'senderType': 'rider',
+        'message': 'from message key',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
       expect(m.body, 'from message key');
@@ -214,7 +254,9 @@ void main() {
   group('SponsoredOffer', () {
     test('fromJson parses dates correctly', () {
       final json = {
-        'id': 'o1', 'title': 'Offer', 'description': 'Desc',
+        'id': 'o1',
+        'title': 'Offer',
+        'description': 'Desc',
         'validFrom': '2024-01-01T00:00:00.000Z',
         'validUntil': '2024-12-31T00:00:00.000Z',
         'isActive': true,

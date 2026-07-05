@@ -131,7 +131,8 @@ class RaiseTicketCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text('Raise a Ticket',
+              const Text(
+                'Raise a Ticket',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -141,7 +142,8 @@ class RaiseTicketCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const Text('ISSUE TYPE',
+          const Text(
+            'ISSUE TYPE',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -182,7 +184,8 @@ class RaiseTicketCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text('DESCRIPTION',
+          const Text(
+            'DESCRIPTION',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -328,7 +331,8 @@ class RaiseTicketCard extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                   )
-                : const Text('RAISE TICKET',
+                : const Text(
+                    'RAISE TICKET',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1,

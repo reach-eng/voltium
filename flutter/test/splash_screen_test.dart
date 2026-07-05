@@ -34,7 +34,8 @@ void main() {
     expect(completed, isTrue);
   });
 
-  testWidgets('SplashScreen shows connecting label', (WidgetTester tester) async {
+  testWidgets('SplashScreen shows connecting label',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: SplashScreen(onComplete: () {}),

@@ -65,12 +65,16 @@ class TlDetailsScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: AppColors.onSurface,),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: AppColors.onSurface,
+              ),
             ),
           ),
           const SizedBox(width: 16),
-          Text('Team Leader',
+          Text(
+            'Team Leader',
             style: GoogleFonts.inter(
               fontSize: 21,
               fontWeight: FontWeight.w700,
@@ -108,7 +112,8 @@ class TlDetailsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text('Assigned Team Leader',
+          Text(
+            'Assigned Team Leader',
             style: GoogleFonts.inter(
               fontSize: 13,
               color: AppColors.onSurfaceVariant,

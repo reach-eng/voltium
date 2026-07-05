@@ -166,7 +166,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Text('Step 3 of 3',
+          Text(
+            'Step 3 of 3',
             style: GoogleFonts.inter(
               color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
@@ -174,7 +175,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Text('Upload Proof',
+          Text(
+            'Upload Proof',
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 28,
@@ -225,7 +227,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primaryGradientEnd,
             ),
-            child: Text('Edit',
+            child: Text(
+              'Edit',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -265,7 +268,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Proof of Top Up',
+                Text(
+                  'Proof of Top Up',
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -273,7 +277,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Text('Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
+                Text(
+                  'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     height: 1.4,
@@ -312,7 +317,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Upload Photo Proof',
+                  child: Text(
+                    'Upload Photo Proof',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -346,7 +352,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                       size: 34,
                     ),
                     const SizedBox(height: 10),
-                    Text('Tap to upload photo',
+                    Text(
+                      'Tap to upload photo',
                       style: GoogleFonts.inter(
                         color: const Color(0xFF1E293B),
                         fontSize: 14,
@@ -354,7 +361,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('Camera or gallery',
+                    Text(
+                      'Camera or gallery',
                       style: GoogleFonts.inter(
                         color: AppColors.slate500,
                         fontSize: 12,
@@ -434,7 +442,9 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
         duration: const Duration(milliseconds: 200),
         height: 56,
         decoration: BoxDecoration(
-          color: canSubmit ? AppColors.primaryGradientEnd : AppColors.outlineVariant,
+          color: canSubmit
+              ? AppColors.primaryGradientEnd
+              : AppColors.outlineVariant,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -447,7 +457,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                     strokeWidth: 2.5,
                   ),
                 )
-              : Text('Submit Proof',
+              : Text(
+                  'Submit Proof',
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

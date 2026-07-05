@@ -389,7 +389,8 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Continue',
+              Text(
+                'Continue',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

@@ -6,7 +6,9 @@ import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/profile/data/repository_impl.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
+
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class FakeUpdateProfileRequest extends Fake implements UpdateProfileRequest {}
 
 void main() {
@@ -33,13 +35,14 @@ void main() {
               ));
 
       final result = await repository.getRiderProfile();
-      
+
       expect(result['data'], isA<Map<String, dynamic>>());
       expect(result['data']['riderId'], '123');
       expect(result['rider'], isA<Map<String, dynamic>>());
     });
 
-    test('updateRiderProfile calls putRiderProfile with UpdateProfileRequest', () async {
+    test('updateRiderProfile calls putRiderProfile with UpdateProfileRequest',
+        () async {
       when(() => mockVoltiumApiClient.putRiderProfile(any()))
           .thenAnswer((_) async => <String, dynamic>{});
 
@@ -50,7 +53,9 @@ void main() {
 
       await repository.updateRiderProfile(data);
 
-      final captured = verify(() => mockVoltiumApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.putRiderProfile(captureAny()))
+              .captured;
       final request = captured.first as UpdateProfileRequest;
       expect(request.fullName, 'John Doe');
       expect(request.email, 'test@example.com');
@@ -62,7 +67,9 @@ void main() {
 
       await repository.registerFCMToken('token123');
 
-      final captured = verify(() => mockVoltiumApiClient.postRidersRegisterToken(captureAny())).captured;
+      final captured = verify(
+              () => mockVoltiumApiClient.postRidersRegisterToken(captureAny()))
+          .captured;
       final request = captured.first as Map<String, dynamic>;
       expect(request['fcmToken'], 'token123');
     });
@@ -74,7 +81,8 @@ void main() {
       final data = {'battery': 50};
       await repository.syncDeviceData(data);
 
-      verify(() => mockVoltiumApiClient.postRiderSyncDeviceData(data)).called(1);
+      verify(() => mockVoltiumApiClient.postRiderSyncDeviceData(data))
+          .called(1);
     });
 
     test('getEarnings calls getRiderEarnings', () async {

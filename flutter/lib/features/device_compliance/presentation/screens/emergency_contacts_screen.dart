@@ -19,11 +19,14 @@ class EmergencyContactsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: isDark ? Colors.white : Colors.black,),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDark ? Colors.white : Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Emergency Contacts',
+        title: Text(
+          'Emergency Contacts',
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
@@ -68,7 +71,8 @@ class EmergencyContactsScreen extends StatelessWidget {
             color: isDark ? Colors.grey[600] : Colors.grey[400],
           ),
           const SizedBox(height: 16),
-          Text('No emergency contacts',
+          Text(
+            'No emergency contacts',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -76,7 +80,8 @@ class EmergencyContactsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Add contacts to alert in case of emergency',
+          Text(
+            'Add contacts to alert in case of emergency',
             style: TextStyle(
               color: isDark ? Colors.grey[600] : Colors.grey[500],
             ),
@@ -94,7 +99,9 @@ class EmergencyContactsScreen extends StatelessWidget {
   }
 
   Future<void> _showAddContactDialog(
-      BuildContext context, EmergencyContactsService service,) async {
+    BuildContext context,
+    EmergencyContactsService service,
+  ) async {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     String relationship = 'Other';
@@ -136,12 +143,14 @@ class EmergencyContactsScreen extends StatelessWidget {
             onPressed: () {
               if (nameController.text.isNotEmpty &&
                   phoneController.text.isNotEmpty) {
-                service.addContact(EmergencyContact(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: nameController.text,
-                  phone: phoneController.text,
-                  relationship: relationship,
-                ),);
+                service.addContact(
+                  EmergencyContact(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: nameController.text,
+                    phone: phoneController.text,
+                    relationship: relationship,
+                  ),
+                );
                 Navigator.pop(ctx);
               }
             },
@@ -187,7 +196,9 @@ class _ContactCard extends StatelessWidget {
           child: Text(
             contact.name[0].toUpperCase(),
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold,),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         title: Row(
@@ -207,11 +218,13 @@ class _ContactCard extends StatelessWidget {
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text('PRIMARY',
+                child: const Text(
+                  'PRIMARY',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,),
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

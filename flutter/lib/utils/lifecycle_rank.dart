@@ -1,5 +1,6 @@
 /// Shared lifecycle rank utility — single source of truth.
 library;
+
 ///
 /// Previously duplicated in 5 files. Update this one function
 /// when lifecycle statuses change.

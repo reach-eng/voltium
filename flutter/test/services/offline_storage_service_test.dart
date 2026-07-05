@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:voltium_rider/services/offline_storage_service.dart';
 
 class MockDatabase extends Mock implements Database {}
+
 class MockBatch extends Mock implements Batch {}
 
 void main() {
@@ -90,7 +91,7 @@ void main() {
     expect(result.first['endpoint'], '/api/test');
     expect(result.first['body']['foo'], 'bar');
   });
-  
+
   test('clearAll deletes tables', () async {
     when(() => mockDb.delete(any())).thenAnswer((_) async => 1);
 

@@ -227,8 +227,7 @@ void main() {
       expect(editable.controller.text.length, lessThanOrEqualTo(10));
     });
 
-    testWidgets('phone input rejects non-numeric characters',
-        (tester) async {
+    testWidgets('phone input rejects non-numeric characters', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
 

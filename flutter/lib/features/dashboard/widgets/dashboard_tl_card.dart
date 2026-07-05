@@ -35,7 +35,8 @@ class TeamLeaderCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Team Leader',
+              const Text(
+                'Team Leader',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -45,7 +46,8 @@ class TeamLeaderCard extends StatelessWidget {
               ),
               InkWell(
                 onTap: onViewDetails,
-                child: const Text('View Details',
+                child: const Text(
+                  'View Details',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -87,7 +89,8 @@ class TeamLeaderCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text('Assigned TL',
+                    const Text(
+                      'Assigned TL',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -103,8 +106,11 @@ class TeamLeaderCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.phone,
-                      color: Color(0xFF475569), size: 20,),
+                  icon: const Icon(
+                    Icons.phone,
+                    color: Color(0xFF475569),
+                    size: 20,
+                  ),
                   onPressed: onCall,
                 ),
               ),

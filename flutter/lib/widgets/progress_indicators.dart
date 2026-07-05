@@ -135,9 +135,8 @@ class KYCProgressIndicator extends StatelessWidget {
               progress: progress,
               size: size,
               strokeWidth: 10,
-              progressColor: isComplete
-                  ? const Color(0xFF16A34A)
-                  : AppColors.primary,
+              progressColor:
+                  isComplete ? const Color(0xFF16A34A) : AppColors.primary,
             ),
             if (isComplete)
               const Icon(

@@ -45,7 +45,8 @@ void main() {
       );
 
       expect(result['success'], true);
-      final captured = verify(() => mockApiClient.postRiderPlans(captureAny())).captured;
+      final captured =
+          verify(() => mockApiClient.postRiderPlans(captureAny())).captured;
       final request = captured.first as Map<String, dynamic>;
       expect(request['hubId'], 'hub123');
       expect(request['planId'], 'plan123');
@@ -63,14 +64,16 @@ void main() {
       );
 
       expect(result['success'], true);
-      final captured = verify(() => mockApiClient.postRiderSyncPickup(captureAny())).captured;
+      final captured =
+          verify(() => mockApiClient.postRiderSyncPickup(captureAny()))
+              .captured;
       final request = captured.first as Map<String, dynamic>;
       expect(request['vehicleId'], 'v123');
       expect(request['hubId'], 'h123');
       expect(request['bookingId'], 'b123');
     });
 
-    // submitVehicleReturn depends on VoltiumApiService singleton. 
+    // submitVehicleReturn depends on VoltiumApiService singleton.
     // We can skip testing it here or test it via integration.
   });
 }

@@ -11,6 +11,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
+import 'package:voltium_rider/services/cache_service.dart';
 
 /// Matches web OtpScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -78,11 +79,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
       duration: const Duration(milliseconds: 600),
     );
 
-    if (VoltiumApp.isTestMode) {
-      _entryCtrl.value = 1.0;
-    } else {
-      _entryCtrl.forward();
-    }
+    _entryCtrl.forward();
 
     _startCountdown();
   }
@@ -135,44 +132,24 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     setState(() => _isLoading = true);
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
-      final response = await VoltiumApiService().verifyOtp(phone: phone, otp: code);
+      final response =
+          await VoltiumApiService().verifyOtp(phone: phone, otp: code);
       if (mounted) {
-        if (response['success'] == true) {
-          final token = response['data']?['token'] ??
-              response['token'] ??
-              response['accessToken'] as String?;
-          if (token != null && !PlatformInfo.isWeb) {
-            await SecureStorageService().setToken(token);
-            // Persist the FCM command secret (BLOCKER 1.1). Returned by the
-            // server in the verify-OTP response; required by
-            // [FCMService._validateSecurityEnvelope] to authenticate
-            // SECURITY_COMMAND messages (ADMIN_LOCK, UNLOCK_DEVICE, etc.).
-            // Web is excluded because FCM is mobile-only.
-            final fcmSecret = response['data']?['fcmCommandSecret'] ??
-                response['fcmCommandSecret'] as String?;
-            if (fcmSecret != null && fcmSecret.isNotEmpty) {
-              await SecureStorageService().writeFcmCommandSecret(fcmSecret);
-            }
+        final token = response['token'] as String?;
+        if (token != null && !PlatformInfo.isWeb) {
+          await SecureStorageService().setToken(token);
+          // Persist the FCM command secret (BLOCKER 1.1).
+          final fcmSecret = response['fcmCommandSecret'] as String?;
+          if (fcmSecret != null && fcmSecret.isNotEmpty) {
+            await SecureStorageService().writeFcmCommandSecret(fcmSecret);
           }
-          if (!mounted) return;
-          final riderData = response['rider'] ?? response['data'];
-          if (riderData != null && riderData is Map<String, dynamic>) {
-            final rider = RiderModel.fromJson(riderData);
-            context.read<AppProvider>().setRider(rider);
-          }
-          widget.onNext?.call();
-        } else {
-          for (var c in _controllers) {
-            c.clear();
-          }
-          _focusNodes[0].requestFocus();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Invalid OTP'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
         }
+        if (!mounted) return;
+        // VerifyOtpResponse is flat, so we can pass it directly
+        final rider = RiderModel.fromJson(response);
+        await CacheService().cacheRider(rider.toCacheMap());
+        context.read<AppProvider>().setRider(rider);
+        widget.onNext?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -263,7 +240,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                   ),
 
                   // Centered brand name
-                  Text('Voltium',
+                  Text(
+                    'Voltium',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -293,11 +271,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // Bouncing smartphone icon in white circle
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl, curve: const Interval(0, 0.7),),
+                        parent: _entryCtrl,
+                        curve: const Interval(0, 0.7),
+                      ),
                       child: ScaleTransition(
                         scale: Tween<double>(begin: 0.8, end: 1.0).animate(
                           CurvedAnimation(
-                              parent: _entryCtrl, curve: Curves.easeOutCubic,),
+                            parent: _entryCtrl,
+                            curve: Curves.easeOutCubic,
+                          ),
                         ),
                         child: AnimatedBuilder(
                           animation: _bounceAnim,
@@ -334,7 +316,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // Title
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl, curve: const Interval(0.1, 0.8),),
+                        parent: _entryCtrl,
+                        curve: const Interval(0.1, 0.8),
+                      ),
                       child: Column(
                         children: [
                           Text(
@@ -381,7 +365,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     // OTP Input boxes
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl, curve: const Interval(0.2, 0.9),),
+                        parent: _entryCtrl,
+                        curve: const Interval(0.2, 0.9),
+                      ),
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () {
@@ -404,7 +390,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                 key: ValueKey('otp_box_$index'),
                                 controller: _controllers[index],
                                 focusNode: _focusNodes[index],
-                                keyboardType: TextInputType.number,
+                                keyboardType: TextInputType.text,
                                 textAlign: TextAlign.center,
                                 maxLength: 1,
                                 obscureText: false,
@@ -494,7 +480,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
             // Gradient "Verify & Proceed" CTA
             Padding(
               padding: const EdgeInsets.only(
-                  left: 24, right: 24, bottom: 32, top: 16,),
+                left: 24,
+                right: 24,
+                bottom: 32,
+                top: 16,
+              ),
               child: GestureDetector(
                 key: const Key('verifyOtpButton'),
                 behavior: HitTestBehavior.opaque,

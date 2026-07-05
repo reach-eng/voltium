@@ -159,8 +159,9 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
             color: isDark ? const Color(0xFF1E293B) : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-                color:
-                    isDark ? const Color(0xFF334155) : AppColors.outlineVariant,),
+              color:
+                  isDark ? const Color(0xFF334155) : AppColors.outlineVariant,
+            ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -172,14 +173,12 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
                 ),
                 headingTextStyle: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.iconBackground
-                      : AppColors.onSurface,
+                  color:
+                      isDark ? AppColors.iconBackground : AppColors.onSurface,
                 ),
                 dataTextStyle: TextStyle(
-                  color: isDark
-                      ? AppColors.iconBackground
-                      : AppColors.onSurface,
+                  color:
+                      isDark ? AppColors.iconBackground : AppColors.onSurface,
                 ),
                 columnSpacing: 24,
                 horizontalMargin: 16,
@@ -358,14 +357,16 @@ class FilterChipBar extends StatelessWidget {
             onSelected: (_) => onFilterSelected(null),
           ),
           const SizedBox(width: 8),
-          ...filters.map((filter) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(filter),
-                  selected: selectedFilter == filter,
-                  onSelected: (_) => onFilterSelected(filter),
-                ),
-              ),),
+          ...filters.map(
+            (filter) => Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilterChip(
+                label: Text(filter),
+                selected: selectedFilter == filter,
+                onSelected: (_) => onFilterSelected(filter),
+              ),
+            ),
+          ),
         ],
       ),
     );

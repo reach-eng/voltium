@@ -97,7 +97,8 @@ void main() {
       var result = formatter.formatEditUpdate(oldValue, newValue);
       expect(result.text, '123456'); // Leaves only digits
 
-      newValue = const TextEditingValue(text: '1234567890123456789'); // 19 digits
+      newValue =
+          const TextEditingValue(text: '1234567890123456789'); // 19 digits
       result = formatter.formatEditUpdate(oldValue, newValue);
       expect(result.text, '123456789012345678'); // Max 18 digits
     });

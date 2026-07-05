@@ -13,11 +13,9 @@ void main() {
     };
 
     MonitoringService.logError(
-      Exception('Failed to process payment for user@example.com'), 
-      null, 
-      reason: 'Phone +91 9876543210 not verified'
-    );
-    
+        Exception('Failed to process payment for user@example.com'), null,
+        reason: 'Phone +91 9876543210 not verified');
+
     expect(printedMessage, isNotNull);
     expect(printedMessage, contains('***@***')); // email masked
     expect(printedMessage, contains('+91 ******3210')); // phone masked
@@ -37,7 +35,7 @@ void main() {
     };
 
     MonitoringService.logInfo('User 9876543210 logged in');
-    
+
     expect(printedMessage, contains('******3210'));
     expect(printedMessage, isNot(contains('9876543210')));
 
@@ -53,10 +51,9 @@ void main() {
       }
     };
 
-    MonitoringService.logEvent('email@test.com_event', parameters: {
-      'phone': '9876543210'
-    });
-    
+    MonitoringService.logEvent('email@test.com_event',
+        parameters: {'phone': '9876543210'});
+
     expect(printedMessage, contains('***@***_event'));
     expect(printedMessage, contains('******3210'));
 

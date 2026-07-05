@@ -56,7 +56,8 @@ class GuarantorDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Guarantor Details',
+          const Text(
+            'Guarantor Details',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -65,40 +66,62 @@ class GuarantorDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           _buildTextField(
-              'Full Name', 'Enter guarantor\'s full name', nameController,
-              key: const Key('guarantorFullNameField'),),
+            'Full Name',
+            'Enter guarantor\'s full name',
+            nameController,
+            key: const Key('guarantorFullNameField'),
+          ),
           const SizedBox(height: 16),
           _buildDateField(
-              'Date of Birth', 'DD-MM-YYYY', dobController, onSelectDob,),
+            'Date of Birth',
+            'DD-MM-YYYY',
+            dobController,
+            onSelectDob,
+          ),
           const SizedBox(height: 16),
           _buildPhoneField(context),
           const SizedBox(height: 16),
           _buildTextField(
-              'Father\'s Name', 'Enter father\'s name', fatherNameController,
-              key: const Key('guarantorFatherNameField'),),
+            'Father\'s Name',
+            'Enter father\'s name',
+            fatherNameController,
+            key: const Key('guarantorFatherNameField'),
+          ),
           const SizedBox(height: 16),
           _buildTextField(
-              'Mother\'s Name', 'Enter mother\'s name', motherNameController,
-              key: const Key('guarantorMotherNameField'),),
+            'Mother\'s Name',
+            'Enter mother\'s name',
+            motherNameController,
+            key: const Key('guarantorMotherNameField'),
+          ),
           const SizedBox(height: 16),
           _buildTextArea(
-              'Current Address', 'Enter full address', addressController,),
+            'Current Address',
+            'Enter full address',
+            addressController,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTextField(
-      String label, String hint, TextEditingController controller,
-      {Key? key,}) {
+    String label,
+    String hint,
+    TextEditingController controller, {
+    Key? key,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate500,),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate500,
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           key: key,
@@ -111,30 +134,40 @@ class GuarantorDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.outlineVariant),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.outlineVariant),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.outlineVariant),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.outlineVariant),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.info),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.info),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDateField(String label, String hint,
-      TextEditingController controller, VoidCallback onTap,) {
+  Widget _buildDateField(
+    String label,
+    String hint,
+    TextEditingController controller,
+    VoidCallback onTap,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate500,),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate500,
+          ),
+        ),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
@@ -146,21 +179,27 @@ class GuarantorDetailsCard extends StatelessWidget {
                 hintText: hint,
                 hintStyle:
                     const TextStyle(color: AppColors.slate400, fontSize: 14),
-                prefixIcon: const Icon(Icons.calendar_today,
-                    size: 18, color: AppColors.slate500,),
+                prefixIcon: const Icon(
+                  Icons.calendar_today,
+                  size: 18,
+                  color: AppColors.slate500,
+                ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
                 fillColor: const Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.outlineVariant),),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.outlineVariant),),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.info),),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.info),
+                ),
               ),
             ),
           ),
@@ -173,11 +212,14 @@ class GuarantorDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Guarantor Phone Number',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate500,),),
+        const Text(
+          'Guarantor Phone Number',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate500,
+          ),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -196,14 +238,19 @@ class GuarantorDetailsCard extends StatelessWidget {
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.outlineVariant),),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: AppColors.outlineVariant),
+                  ),
                   enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.outlineVariant),),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: AppColors.outlineVariant),
+                  ),
                   focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.info),),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.info),
+                  ),
                 ),
               ),
             ),
@@ -219,7 +266,8 @@ class GuarantorDetailsCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.info,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     elevation: 0,
                   ),
                   child: isSendingOtp
@@ -227,11 +275,17 @@ class GuarantorDetailsCard extends StatelessWidget {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2,),)
-                      : Text(isOtpSent ? 'RESEND' : 'SEND OTP',
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          isOtpSent ? 'RESEND' : 'SEND OTP',
                           style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,),),
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -243,21 +297,27 @@ class GuarantorDetailsCard extends StatelessWidget {
             children: [
               Icon(Icons.check_circle, color: AppColors.success, size: 16),
               SizedBox(width: 6),
-              Text('Phone Number Verified',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w600,),),
+              Text(
+                'Phone Number Verified',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ],
         if (isOtpSent && !isPhoneVerified) ...[
           const SizedBox(height: 16),
-          const Text('Enter OTP',
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate500,),),
+          const Text(
+            'Enter OTP',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate500,
+            ),
+          ),
           const SizedBox(height: 8),
           otpBoxes,
           const SizedBox(height: 16),
@@ -270,7 +330,8 @@ class GuarantorDetailsCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.success,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
               child: isVerifyingOtp
@@ -278,10 +339,17 @@ class GuarantorDetailsCard extends StatelessWidget {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2,),)
-                  : const Text('VERIFY OTP',
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'VERIFY OTP',
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold,),),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -290,15 +358,21 @@ class GuarantorDetailsCard extends StatelessWidget {
   }
 
   Widget _buildTextArea(
-      String label, String hint, TextEditingController controller,) {
+    String label,
+    String hint,
+    TextEditingController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate500,),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate500,
+          ),
+        ),
         const SizedBox(height: 8),
         TextFormField(
           key: const Key('guarantorAddressField'),
@@ -312,14 +386,17 @@ class GuarantorDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.outlineVariant),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.outlineVariant),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.outlineVariant),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.outlineVariant),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.info),),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.info),
+            ),
           ),
         ),
       ],
@@ -368,7 +445,8 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Documents Upload',
+          const Text(
+            'Documents Upload',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -376,50 +454,56 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text('Clear photos only. Max 5MB each.',
-              style: TextStyle(fontSize: 12, color: AppColors.slate500),),
+          const Text(
+            'Clear photos only. Max 5MB each.',
+            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
-                  child: DocTile(
-                label: 'Aadhaar Card\n(Front)',
-                icon: Icons.upload_file,
-                isUploaded: aadhaarFrontUploaded,
-                onTap: onPickAadhaarFront,
-                key: const Key('guarantorAadhaarFrontTile'),
-              ),),
+                child: DocTile(
+                  label: 'Aadhaar Card\n(Front)',
+                  icon: Icons.upload_file,
+                  isUploaded: aadhaarFrontUploaded,
+                  onTap: onPickAadhaarFront,
+                  key: const Key('guarantorAadhaarFrontTile'),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
-                  child: DocTile(
-                label: 'Aadhaar Card\n(Back)',
-                icon: Icons.upload_file,
-                isUploaded: aadhaarBackUploaded,
-                onTap: onPickAadhaarBack,
-                key: const Key('guarantorAadhaarBackTile'),
-              ),),
+                child: DocTile(
+                  label: 'Aadhaar Card\n(Back)',
+                  icon: Icons.upload_file,
+                  isUploaded: aadhaarBackUploaded,
+                  onTap: onPickAadhaarBack,
+                  key: const Key('guarantorAadhaarBackTile'),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                  child: DocTile(
-                label: 'PAN Card',
-                icon: Icons.upload_file,
-                isUploaded: panUploaded,
-                onTap: onPickPan,
-                key: const Key('guarantorPanTile'),
-              ),),
+                child: DocTile(
+                  label: 'PAN Card',
+                  icon: Icons.upload_file,
+                  isUploaded: panUploaded,
+                  onTap: onPickPan,
+                  key: const Key('guarantorPanTile'),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
-                  child: DocTile(
-                label: 'Guarantor Photo',
-                icon: Icons.face,
-                isUploaded: photoUploaded,
-                onTap: onPickPhoto,
-                key: const Key('guarantorPhotoTile'),
-              ),),
+                child: DocTile(
+                  label: 'Guarantor Photo',
+                  icon: Icons.face,
+                  isUploaded: photoUploaded,
+                  onTap: onPickPhoto,
+                  key: const Key('guarantorPhotoTile'),
+                ),
+              ),
             ],
           ),
         ],
@@ -469,8 +553,9 @@ class GuarantorVideoProofCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-              'Record a 5-sec video holding ID, saying "I agree to be the guarantor for [Rider Name]"',
-              style: TextStyle(fontSize: 12, color: AppColors.slate500),),
+            'Record a 5-sec video holding ID, saying "I agree to be the guarantor for [Rider Name]"',
+            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+          ),
           const SizedBox(height: 20),
           GestureDetector(
             key: const Key('guarantorVideoTile'),
@@ -551,7 +636,8 @@ class GuarantorSignatureCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Guarantor Signature',
+          const Text(
+            'Guarantor Signature',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -559,8 +645,10 @@ class GuarantorSignatureCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text('Sign on screen to authorize details.',
-              style: TextStyle(fontSize: 12, color: AppColors.slate500),),
+          const Text(
+            'Sign on screen to authorize details.',
+            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+          ),
           const SizedBox(height: 20),
           GestureDetector(
             key: const Key('guarantorSignatureTile'),
@@ -630,7 +718,8 @@ class GuarantorOnboardingHeader extends StatelessWidget {
               onPressed: onBack,
             ),
             const Expanded(
-              child: Text('Onboarding',
+              child: Text(
+                'Onboarding',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
@@ -641,11 +730,14 @@ class GuarantorOnboardingHeader extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Step',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),),
-                  Text('2/2',
-                      style:
-                          TextStyle(fontSize: 11, fontWeight: FontWeight.w600),),
+                  Text(
+                    'Step',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                  ),
+                  Text(
+                    '2/2',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
                 ],
               ),
             ),
@@ -685,10 +777,13 @@ class GuarantorOnboardingProgressSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('One more step',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),),
+          const Text(
+            'One more step',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
-          const Text('We need a few more details to set up your fleet profile securely.',
+          const Text(
+            'We need a few more details to set up your fleet profile securely.',
             style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
         ],
@@ -785,16 +880,21 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2,),
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                 )
               : const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('FINISH SETUP',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,),),
+                    Text(
+                      'FINISH SETUP',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                     SizedBox(width: 8),
                     Icon(Icons.check, color: Colors.white, size: 18),
                   ],

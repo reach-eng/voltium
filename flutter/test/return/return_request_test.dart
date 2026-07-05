@@ -36,7 +36,8 @@ void main() {
       expect(find.byType(EndRentalScreen), findsOneWidget);
     });
 
-    testWidgets('end rental screen shows return form or instructions', (tester) async {
+    testWidgets('end rental screen shows return form or instructions',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const EndRentalScreen()));
       await tester.pumpAndSettle();
 

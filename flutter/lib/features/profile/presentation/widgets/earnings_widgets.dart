@@ -46,13 +46,17 @@ class WeekSelectorBar extends StatelessWidget {
                 color: AppColors.iconBackground,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.chevron_left,
-                  size: 20, color: Color(0xFF1E293B),),
+              child: const Icon(
+                Icons.chevron_left,
+                size: 20,
+                color: Color(0xFF1E293B),
+              ),
             ),
           ),
           Column(
             children: [
-              const Text('WEEKLY EARNINGS',
+              const Text(
+                'WEEKLY EARNINGS',
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
@@ -131,7 +135,8 @@ class TotalEarningsCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('THIS WEEK',
+              Text(
+                'THIS WEEK',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
@@ -199,7 +204,8 @@ class TotalEarningsCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TRIPS',
+                      Text(
+                        'TRIPS',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
@@ -231,7 +237,8 @@ class TotalEarningsCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('HOURS',
+                      Text(
+                        'HOURS',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
@@ -301,8 +308,13 @@ class DayEarningsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEntryCard(DateTime date, double amount, int trips, double hours,
-      Set<GigPlatform> platforms,) {
+  Widget _buildEntryCard(
+    DateTime date,
+    double amount,
+    int trips,
+    double hours,
+    Set<GigPlatform> platforms,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -336,26 +348,30 @@ class DayEarningsCard extends StatelessWidget {
               ),
               Row(
                 children: [
-                  ...platforms.map((p) => Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2,),
-                          decoration: BoxDecoration(
-                            color: EarningEntry.platformColor(p)
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            EarningEntry.platformLabel(p),
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: EarningEntry.platformColor(p),
-                            ),
+                  ...platforms.map(
+                    (p) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: EarningEntry.platformColor(p)
+                              .withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          EarningEntry.platformLabel(p),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: EarningEntry.platformColor(p),
                           ),
                         ),
-                      ),),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     '\u20B9${amount.toStringAsFixed(0)}',
@@ -375,7 +391,9 @@ class DayEarningsCard extends StatelessWidget {
               _buildDayStat(Icons.directions_bike, '$trips trips'),
               const SizedBox(width: 16),
               _buildDayStat(
-                  Icons.schedule, '${hours.toStringAsFixed(1)}h online',),
+                Icons.schedule,
+                '${hours.toStringAsFixed(1)}h online',
+              ),
               const Spacer(),
               InkWell(
                 onTap: onAddEntry,
@@ -391,7 +409,8 @@ class DayEarningsCard extends StatelessWidget {
                     children: [
                       Icon(Icons.add, size: 14, color: AppColors.primary),
                       SizedBox(width: 4),
-                      Text('Add',
+                      Text(
+                        'Add',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -451,7 +470,8 @@ class DayEarningsCard extends StatelessWidget {
                 children: [
                   Icon(Icons.add, size: 14, color: AppColors.slate500),
                   SizedBox(width: 4),
-                  Text('Add Entry',
+                  Text(
+                    'Add Entry',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -518,7 +538,8 @@ class WeeklySummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('WEEKLY SUMMARY',
+          const Text(
+            'WEEKLY SUMMARY',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -531,7 +552,9 @@ class WeeklySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildSummaryStat(
-                    'Total Earnings', '\u20B9${total.toStringAsFixed(0)}',),
+                  'Total Earnings',
+                  '\u20B9${total.toStringAsFixed(0)}',
+                ),
               ),
               Expanded(
                 child: _buildSummaryStat('Total Trips', '$trips'),
@@ -543,11 +566,15 @@ class WeeklySummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildSummaryStat(
-                    'Avg/Day', '\u20B9${avgPerDay.toStringAsFixed(0)}',),
+                  'Avg/Day',
+                  '\u20B9${avgPerDay.toStringAsFixed(0)}',
+                ),
               ),
               Expanded(
-                child: _buildSummaryStat('Best Day',
-                    '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})',),
+                child: _buildSummaryStat(
+                  'Best Day',
+                  '${DateHelpers.dayName(bestDate)} (\u20B9${bestAmount.toStringAsFixed(0)})',
+                ),
               ),
             ],
           ),

@@ -31,7 +31,8 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => widget.onBack?.call(),
         ),
-        title: const Text('Intent of Use',
+        title: const Text(
+          'Intent of Use',
           style: TextStyle(
             color: AppColors.onSurface,
             fontSize: 18,
@@ -73,7 +74,8 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Select your primary usage to help us customize your experience and support.',
+                    const Text(
+                      'Select your primary usage to help us customize your experience and support.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.onSurfaceVariant,
@@ -114,8 +116,8 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.primaryLighter, // Soft blue tint container
+                        color: AppColors
+                            .primaryLighter, // Soft blue tint container
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: const Color(0xFFD0E0F5),
@@ -132,7 +134,8 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                           ),
                           SizedBox(width: 12),
                           Expanded(
-                            child: Text('Switching between types is possible later through account settings, though commercial access may require additional verification.',
+                            child: Text(
+                              'Switching between types is possible later through account settings, though commercial access may require additional verification.',
                               style: TextStyle(
                                 color: AppColors.onSurfaceVariant,
                                 fontSize: 13,
@@ -152,7 +155,11 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
             // Bottom Continue Button
             Padding(
               padding: const EdgeInsets.only(
-                  left: 24, right: 24, bottom: 24, top: 16,),
+                left: 24,
+                right: 24,
+                bottom: 24,
+                top: 16,
+              ),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -194,7 +201,8 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
-                  child: const Text('Confirm Selection',
+                  child: const Text(
+                    'Confirm Selection',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -272,8 +280,7 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      color:
-                          isSelected ? Colors.white : AppColors.onSurface,
+                      color: isSelected ? Colors.white : AppColors.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),

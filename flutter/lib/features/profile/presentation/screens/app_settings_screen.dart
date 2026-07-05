@@ -42,7 +42,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Account'),
-        content: const Text('This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?',
+        content: const Text(
+          'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?',
         ),
         actions: [
           TextButton(
@@ -56,7 +57,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Account deletion is not yet available. Please contact support.',
+                  content: Text(
+                    'Account deletion is not yet available. Please contact support.',
                   ),
                   backgroundColor: AppColors.warning,
                 ),
@@ -100,7 +102,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
             ),
           ),
         ),
-        title: Text('Settings',
+        title: Text(
+          'Settings',
           style: TextStyle(
             color: isDark ? AppColors.iconBackground : const Color(0xFF1E293B),
             fontWeight: FontWeight.bold,
@@ -350,8 +353,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w800,
-          color: color ??
-              (isDark ? AppColors.slate400 : AppColors.slate500),
+          color: color ?? (isDark ? AppColors.slate400 : AppColors.slate500),
           letterSpacing: 1,
         ),
       ),
@@ -450,8 +452,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
             Text(
               trailing,
               style: TextStyle(
-                color:
-                    isDark ? AppColors.slate400 : AppColors.slate500,
+                color: isDark ? AppColors.slate400 : AppColors.slate500,
                 fontSize: 14,
               ),
             ),
@@ -533,14 +534,16 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Delete Account',
+                Text(
+                  'Delete Account',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                     color: Color(0xFF991B1B),
                   ),
                 ),
-                Text('This action is irreversible',
+                Text(
+                  'This action is irreversible',
                   style: TextStyle(fontSize: 12, color: AppColors.error),
                 ),
               ],
@@ -558,7 +561,8 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text('Delete',
+            child: const Text(
+              'Delete',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),

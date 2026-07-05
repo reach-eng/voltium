@@ -266,22 +266,30 @@ class ProfileGuarantorCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           memCacheWidth: 96,
                           memCacheHeight: 96,
-                          errorWidget: (_, __, ___) => const Icon(Icons.person,
-                              color: AppColors.slate400, size: 24,),
+                          errorWidget: (_, __, ___) => const Icon(
+                            Icons.person,
+                            color: AppColors.slate400,
+                            size: 24,
+                          ),
                           placeholder: (_, __) => const SizedBox(
                             width: 48,
                             height: 48,
                             child: Center(
                               child: SizedBox(
-                                width: 16, height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                width: 16,
+                                height: 16,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
                             ),
                           ),
                         ),
                       )
-                    : const Icon(Icons.person,
-                        color: AppColors.slate400, size: 24,),
+                    : const Icon(
+                        Icons.person,
+                        color: AppColors.slate400,
+                        size: 24,
+                      ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -291,14 +299,17 @@ class ProfileGuarantorCard extends StatelessWidget {
                     Text(
                       rider.guarantorName ?? 'No Name Provided',
                       style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
                     Text(
                       rider.guarantorPhone ?? 'No Phone Provided',
                       style: const TextStyle(
-                          fontSize: 12, color: AppColors.slate500,),
+                        fontSize: 12,
+                        color: AppColors.slate500,
+                      ),
                     ),
                   ],
                 ),
@@ -311,18 +322,18 @@ class ProfileGuarantorCard extends StatelessWidget {
                       : const Color(0xFFFFFBEB),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: isApproved
-                          ? AppColors.success.withValues(alpha: 0.2)
-                          : const Color(0xFFFDE68A),),
+                    color: isApproved
+                        ? AppColors.success.withValues(alpha: 0.2)
+                        : const Color(0xFFFDE68A),
+                  ),
                 ),
                 child: Text(
                   _capitalize(rider.guarantorStatus.name),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: isApproved
-                        ? AppColors.success
-                        : AppColors.warningDark,
+                    color:
+                        isApproved ? AppColors.success : AppColors.warningDark,
                   ),
                 ),
               ),
@@ -335,8 +346,11 @@ class ProfileGuarantorCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.home_outlined,
-                    color: AppColors.slate500, size: 16,),
+                const Icon(
+                  Icons.home_outlined,
+                  color: AppColors.slate500,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -383,12 +397,16 @@ class ProfileEmergencySosTile extends StatelessWidget {
                     color: AppColors.errorLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.emergency_outlined,
-                      color: Color(0xFFDC2626), size: 22,),
+                  child: const Icon(
+                    Icons.emergency_outlined,
+                    color: Color(0xFFDC2626),
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 const Expanded(
-                  child: Text('Emergency SOS',
+                  child: Text(
+                    'Emergency SOS',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -431,7 +449,8 @@ class ProfileLogoutButton extends StatelessWidget {
         children: [
           Icon(Icons.logout, size: 20),
           SizedBox(width: 8),
-          Text('Logout',
+          Text(
+            'Logout',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

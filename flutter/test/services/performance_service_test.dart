@@ -21,10 +21,10 @@ void main() {
     service.startTrace('MyTrace');
     await Future.delayed(const Duration(milliseconds: 50));
     service.stopTrace('MyTrace');
-    
+
     expect(printedMessage, isNotNull);
     expect(printedMessage, contains('MyTrace took'));
-    
+
     debugPrint = originalDebugPrint;
   });
 
@@ -70,7 +70,7 @@ void main() {
     expect(errorMessage, isNotNull);
     expect(errorMessage, contains('Load failed'));
     expect(errorMessage, contains('Failed to load HomeScreen'));
-    
+
     debugPrint = originalDebugPrint;
   });
 

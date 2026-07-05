@@ -55,16 +55,28 @@ void main() {
     expect(provider.unreadCount, 2);
 
     await provider.markAsRead('1');
-    
+
     expect(provider.unreadCount, 1);
-    expect(provider.notifications.firstWhere((n) => n.id == '1').isRead, isTrue);
-    expect(provider.notifications.firstWhere((n) => n.id == '2').isRead, isFalse);
+    expect(
+        provider.notifications.firstWhere((n) => n.id == '1').isRead, isTrue);
+    expect(
+        provider.notifications.firstWhere((n) => n.id == '2').isRead, isFalse);
   });
 
   test('markAllAsRead marks all notifications', () async {
     await provider.addNotifications([
-      AppNotification(id: '1', title: 'T', message: 'M', type: AppNotificationType.info, createdAt: DateTime.now()),
-      AppNotification(id: '2', title: 'T', message: 'M', type: AppNotificationType.info, createdAt: DateTime.now()),
+      AppNotification(
+          id: '1',
+          title: 'T',
+          message: 'M',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now()),
+      AppNotification(
+          id: '2',
+          title: 'T',
+          message: 'M',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now()),
     ]);
     expect(provider.unreadCount, 2);
 
@@ -74,7 +86,12 @@ void main() {
 
   test('deleteNotification removes it completely', () async {
     await provider.addNotification(
-      AppNotification(id: '1', title: 'T', message: 'M', type: AppNotificationType.info, createdAt: DateTime.now()),
+      AppNotification(
+          id: '1',
+          title: 'T',
+          message: 'M',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now()),
     );
     expect(provider.notifications.length, 1);
 
@@ -84,8 +101,18 @@ void main() {
 
   test('clearAll removes all notifications', () async {
     await provider.addNotifications([
-      AppNotification(id: '1', title: 'T', message: 'M', type: AppNotificationType.info, createdAt: DateTime.now()),
-      AppNotification(id: '2', title: 'T', message: 'M', type: AppNotificationType.info, createdAt: DateTime.now()),
+      AppNotification(
+          id: '1',
+          title: 'T',
+          message: 'M',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now()),
+      AppNotification(
+          id: '2',
+          title: 'T',
+          message: 'M',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now()),
     ]);
     expect(provider.notifications.length, 2);
 

@@ -40,44 +40,49 @@ class SupportProvider extends ChangeNotifier {
 
       _faqCategories = [
         const FaqCategory(
-            id: 'tech',
-            title: 'Technical Issues',
-            subtitle: 'App & Device help',
-            articleCount: 12,
-            icon: Icons.build_outlined,
-            iconColor: AppColors.warningDark,
-            iconBgColor: AppColors.warningLight,),
+          id: 'tech',
+          title: 'Technical Issues',
+          subtitle: 'App & Device help',
+          articleCount: 12,
+          icon: Icons.build_outlined,
+          iconColor: AppColors.warningDark,
+          iconBgColor: AppColors.warningLight,
+        ),
         const FaqCategory(
-            id: 'payment',
-            title: 'Payments & Wallet',
-            subtitle: 'Billing & Top-ups',
-            articleCount: 8,
-            icon: Icons.credit_card_outlined,
-            iconColor: Color(0xFF16A34A),
-            iconBgColor: Color(0xFFDCFCE7),),
+          id: 'payment',
+          title: 'Payments & Wallet',
+          subtitle: 'Billing & Top-ups',
+          articleCount: 8,
+          icon: Icons.credit_card_outlined,
+          iconColor: Color(0xFF16A34A),
+          iconBgColor: Color(0xFFDCFCE7),
+        ),
         const FaqCategory(
-            id: 'vehicle',
-            title: 'Vehicle Issues',
-            subtitle: 'Moped & Battery',
-            articleCount: 15,
-            icon: Icons.electric_moped_outlined,
-            iconColor: Color(0xFF2563EB),
-            iconBgColor: AppColors.infoLight,),
+          id: 'vehicle',
+          title: 'Vehicle Issues',
+          subtitle: 'Moped & Battery',
+          articleCount: 15,
+          icon: Icons.electric_moped_outlined,
+          iconColor: Color(0xFF2563EB),
+          iconBgColor: AppColors.infoLight,
+        ),
       ];
 
       _faqs = [
         const FaqItem(
-            id: '1',
-            categoryId: 'tech',
-            question: 'How do I start my rental?',
-            answer:
-                'To start your rental, locate your assigned vehicle at the hub, perform the pre-ride check in the app, and tap "Start Ride".',),
+          id: '1',
+          categoryId: 'tech',
+          question: 'How do I start my rental?',
+          answer:
+              'To start your rental, locate your assigned vehicle at the hub, perform the pre-ride check in the app, and tap "Start Ride".',
+        ),
         const FaqItem(
-            id: '2',
-            categoryId: 'vehicle',
-            question: 'What happens if the battery dies?',
-            answer:
-                'If your battery is low, navigate to the nearest swapping station shown on the map or contact support via the SOS button in an emergency.',),
+          id: '2',
+          categoryId: 'vehicle',
+          question: 'What happens if the battery dies?',
+          answer:
+              'If your battery is low, navigate to the nearest swapping station shown on the map or contact support via the SOS button in an emergency.',
+        ),
       ];
     }
     _fetchAll();
@@ -132,11 +137,12 @@ class SupportProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> createTicket(
-      {required String category,
-      required String subject,
-      required String message,
-      String? riderId,}) async {
+  Future<void> createTicket({
+    required String category,
+    required String subject,
+    required String message,
+    String? riderId,
+  }) async {
     try {
       await _repository.createTicket(
         category,

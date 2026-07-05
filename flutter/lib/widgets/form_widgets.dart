@@ -236,9 +236,10 @@ class _AnimatedLinearProgressBarState extends State<AnimatedLinearProgressBar>
   void didUpdateWidget(AnimatedLinearProgressBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
-      _animation = Tween<double>(begin: _animation.value, end: widget.value)
-          .animate(
-              CurvedAnimation(parent: _controller, curve: Curves.easeInOut),);
+      _animation =
+          Tween<double>(begin: _animation.value, end: widget.value).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      );
       _controller.forward(from: 0);
     }
   }

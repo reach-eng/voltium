@@ -14,7 +14,8 @@ class SyncBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOnline = context.select<AppProvider, bool>((p) => p.isOnline);
-    final pendingCount = context.select<AppProvider, int>((p) => p.pendingSyncCount);
+    final pendingCount =
+        context.select<AppProvider, int>((p) => p.pendingSyncCount);
 
     if (isOnline && pendingCount == 0) return const SizedBox.shrink();
 
@@ -60,9 +61,8 @@ class SyncBanner extends StatelessWidget {
                       : 'Data shown may be outdated',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isOnline
-                        ? const Color(0xFF16A34A)
-                        : AppColors.slate500,
+                    color:
+                        isOnline ? const Color(0xFF16A34A) : AppColors.slate500,
                   ),
                 ),
               ],
@@ -119,36 +119,44 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
     }
 
     if (rider.walletBalance < 0) {
-      reasons.add(const _Reason(
-        title: 'Wallet Balance Below ₹0',
-        description: 'Top up to restore your account.',
-        severity: _Severity.critical,
-      ),);
+      reasons.add(
+        const _Reason(
+          title: 'Wallet Balance Below ₹0',
+          description: 'Top up to restore your account.',
+          severity: _Severity.critical,
+        ),
+      );
     } else if (rider.walletBalance < 50) {
-      reasons.add(const _Reason(
-        title: 'Low Wallet Balance',
-        description: 'Daily charges may cause suspension.',
-        severity: _Severity.warning,
-      ),);
+      reasons.add(
+        const _Reason(
+          title: 'Low Wallet Balance',
+          description: 'Daily charges may cause suspension.',
+          severity: _Severity.warning,
+        ),
+      );
     }
 
     if (rider.kycStatus != KycStatus.verified) {
-      reasons.add(_Reason(
-        title: 'KYC Verification Pending',
-        description: 'Complete verification to activate.',
-        severity: rider.kycStatus == KycStatus.rejected
-            ? _Severity.critical
-            : _Severity.warning,
-      ),);
+      reasons.add(
+        _Reason(
+          title: 'KYC Verification Pending',
+          description: 'Complete verification to activate.',
+          severity: rider.kycStatus == KycStatus.rejected
+              ? _Severity.critical
+              : _Severity.warning,
+        ),
+      );
     }
 
     if (rider.planStatus == 'EXPIRED' ||
         (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 13)) {
-      reasons.add(const _Reason(
-        title: 'Subscription Expired',
-        description: 'Select a new plan to continue.',
-        severity: _Severity.critical,
-      ),);
+      reasons.add(
+        const _Reason(
+          title: 'Subscription Expired',
+          description: 'Select a new plan to continue.',
+          severity: _Severity.critical,
+        ),
+      );
     }
 
     if (reasons.isEmpty) return const SizedBox.shrink();
@@ -174,11 +182,10 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
             onTap: () => setState(() => _expanded = !_expanded),
             leading: Icon(
               isCritical ? Icons.error_outline : Icons.warning_amber_outlined,
-              color: isCritical
-                  ? AppColors.error
-                  : AppColors.warning,
+              color: isCritical ? AppColors.error : AppColors.warning,
             ),
-            title: Text('Action Required',
+            title: Text(
+              'Action Required',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -235,44 +242,49 @@ class _SuspensionBannerState extends State<SuspensionBanner> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
                 children: reasons
-                    .map((r) => Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: r.severity == _Severity.critical
-                                      ? Colors.red
-                                      : Colors.orange,
-                                ),
+                    .map(
+                      (r) => Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: r.severity == _Severity.critical
+                                    ? Colors.red
+                                    : Colors.orange,
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      r.title,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    r.title,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    Text(
-                                      r.description,
-                                      style: const TextStyle(
-                                          fontSize: 12, color: Colors.black54,),
+                                  ),
+                                  Text(
+                                    r.description,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),)
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -288,8 +300,9 @@ class _Reason {
   final String title;
   final String description;
   final _Severity severity;
-  const _Reason(
-      {required this.title, required this.description, required this.severity,});
+  const _Reason({
+    required this.title,
+    required this.description,
+    required this.severity,
+  });
 }
-
-

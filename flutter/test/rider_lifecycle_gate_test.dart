@@ -2,6 +2,7 @@
 ///
 /// These are pure Dart unit tests with no Flutter widget testing overhead.
 library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 import 'package:voltium_rider/models/rider_model.dart';

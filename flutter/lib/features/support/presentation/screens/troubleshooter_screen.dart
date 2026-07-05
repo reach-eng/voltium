@@ -99,11 +99,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     if (_currentNode == null) return;
 
     // Record this step.
-    _path.add(TroubleshooterAnswer(
-      question: _currentNode!.question,
-      answer: answer,
-      nodeId: _currentNode!.id,
-    ),);
+    _path.add(
+      TroubleshooterAnswer(
+        question: _currentNode!.question,
+        answer: answer,
+        nodeId: _currentNode!.id,
+      ),
+    );
 
     // Determine next node.
     final nextId = answer ? _currentNode!.yesNodeId : _currentNode!.noNodeId;
@@ -115,7 +117,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
         resolutionType: 'NEEDS_SUPPORT',
       );
       return;
-    }      final nextNode = findNode(nextId);
+    }
+    final nextNode = findNode(nextId);
     if (nextNode == null) {
       _finishWithResult(
         resolution: 'Tree data error. Please contact support.',
@@ -127,11 +130,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     final resolutionType = nextNode.resolutionType ?? 'UNKNOWN';
 
     if (nextNode.isLeaf) {
-      _path.add(TroubleshooterAnswer(
-        question: nextNode.question,
-        answer: true, // leaf acceptance
-        nodeId: nextNode.id,
-      ),);
+      _path.add(
+        TroubleshooterAnswer(
+          question: nextNode.question,
+          answer: true, // leaf acceptance
+          nodeId: nextNode.id,
+        ),
+      );
       _finishWithResult(
         resolution: nextNode.resolution!,
         resolutionType: resolutionType,
@@ -365,7 +370,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           // Header illustration.
           const TroubleshooterHeaderIcon(),
           const SizedBox(height: 16),
-          Text('What issue are you experiencing?',
+          Text(
+            'What issue are you experiencing?',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1A1A2E),
@@ -555,7 +561,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Troubleshoot Another Issue',
+                label: const Text(
+                  'Troubleshoot Another Issue',
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),

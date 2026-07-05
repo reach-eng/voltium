@@ -58,17 +58,23 @@ void main() {
     test('server-side enum values map to the canonical set', () {
       // PENDING / APPROVED / REJECTED / FAILED / REVERSED / REFUNDED
       // map 1:1 with the canonical Flutter enum.
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'PENDING'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'PENDING'}).status,
           TransactionStatus.pending);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'APPROVED'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'APPROVED'}).status,
           TransactionStatus.approved);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'REJECTED'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REJECTED'}).status,
           TransactionStatus.rejected);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'FAILED'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'FAILED'}).status,
           TransactionStatus.failed);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'REVERSED'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REVERSED'}).status,
           TransactionStatus.reversed);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'REFUNDED'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'REFUNDED'}).status,
           TransactionStatus.refunded);
     });
 
@@ -76,14 +82,18 @@ void main() {
       // Before Phase 2.5 the client wrote `success` (lowercase) and
       // the server wrote `APPROVED`. Old records with `success` still
       // round-trip; the parser normalises to the canonical value.
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'success'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'success'}).status,
           TransactionStatus.approved);
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'SUCCESS'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'SUCCESS'}).status,
           TransactionStatus.approved);
     });
 
     test('unknown status falls back to pending (not crash)', () {
-      expect(TransactionModel.fromJson({...mockJson, 'status': 'GIBBERISH'}).status,
+      expect(
+          TransactionModel.fromJson({...mockJson, 'status': 'GIBBERISH'})
+              .status,
           TransactionStatus.pending);
     });
 

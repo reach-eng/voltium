@@ -9,7 +9,8 @@ void main() {
   // `goldens/dashboard_screen_default.png` does not exist yet. Run
   // `flutter test --update-goldens test/features/dashboard/presentation/screens/dashboard_screen_golden_test.dart`
   // locally to generate it, then commit the PNG.
-  testWidgets('DashboardScreen golden test (skipped — needs --update-goldens)', (WidgetTester tester) async {
+  testWidgets('DashboardScreen golden test (skipped — needs --update-goldens)',
+      (WidgetTester tester) async {
     return;
     configureGoldenSurface(tester, size: const Size(400, 800));
 

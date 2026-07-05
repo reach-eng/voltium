@@ -33,8 +33,10 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       appBar: AppBar(
-        title: const Text('Support Checklist',
-            style: TextStyle(fontWeight: FontWeight.bold),),
+        title: const Text(
+          'Support Checklist',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
@@ -48,7 +50,8 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('PLEASE VERIFY',
+                    const Text(
+                      'PLEASE VERIFY',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -57,7 +60,8 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
+                    const Text(
+                      'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF1E293B),
@@ -128,7 +132,9 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
             onPressed: _allChecked
                 ? () {
                     AppNavigator.pushReplacement(
-                        context, const TroubleshooterScreen(),);
+                      context,
+                      const TroubleshooterScreen(),
+                    );
                   }
                 : null,
             style: ElevatedButton.styleFrom(
@@ -136,17 +142,20 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(9999),),
+                borderRadius: BorderRadius.circular(9999),
+              ),
               elevation: _allChecked ? 4 : 0,
               disabledBackgroundColor: const Color(0xFFCBD5E1),
               disabledForegroundColor: Colors.white70,
             ),
-            child: const Text('Proceed to Support',
+            child: const Text(
+              'Proceed to Support',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 12),
-          Text('Keep checking all items to proceed',
+          Text(
+            'Keep checking all items to proceed',
             style: TextStyle(
               fontSize: 12,
               color: _allChecked ? Colors.transparent : Colors.redAccent,

@@ -15,7 +15,7 @@ void main() {
     provider.setOnline(false);
     expect(provider.isOnline, isFalse);
 
-    // we don't test setting it to true extensively because it invokes offline flushing 
+    // we don't test setting it to true extensively because it invokes offline flushing
     // which requires complex mocking of sql databases, but we can verify state change.
     // just change the state to true and don't await the async operation.
     provider.setOnline(true);
@@ -34,7 +34,7 @@ void main() {
     provider.setPendingSyncCount(5);
 
     provider.logout();
-    
+
     expect(provider.isOnline, isTrue);
     expect(provider.pendingSyncCount, 0);
   });

@@ -8,8 +8,11 @@ import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class MockFilesRepository extends Mock implements FilesRepository {}
+
 class FakeFile extends Fake implements File {}
+
 class FakeUpdateProfileRequest extends Fake implements UpdateProfileRequest {}
 
 void main() {
@@ -62,7 +65,8 @@ void main() {
         signatureUrl: 'url5',
       );
 
-      final captured = verify(() => mockApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockApiClient.putRiderProfile(captureAny())).captured;
       final req = captured.first as UpdateProfileRequest;
       expect(req.fullName, 'John Doe');
       expect(req.email, 'test@example.com');
@@ -85,10 +89,10 @@ void main() {
 
       test('saveFormCache and loadFormCache work correctly', () async {
         final data = {'name': 'John Doe', 'email': 'test@example.com'};
-        
+
         await KycRepository.saveFormCache(data);
         final cached = await KycRepository.loadFormCache();
-        
+
         expect(cached, isNotNull);
         expect(cached!['name'], 'John Doe');
         expect(cached['email'], 'test@example.com');
@@ -97,7 +101,7 @@ void main() {
       test('clearFormCache removes cached data', () async {
         await KycRepository.saveFormCache({'name': 'John Doe'});
         await KycRepository.clearFormCache();
-        
+
         final cached = await KycRepository.loadFormCache();
         expect(cached, isNull);
       });

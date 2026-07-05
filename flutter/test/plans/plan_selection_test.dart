@@ -79,7 +79,8 @@ void main() {
       ));
       await tester.pump();
 
-      final hasLoading = find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+      final hasLoading =
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
       final hasPlanCard = find.byType(Card).evaluate().isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 

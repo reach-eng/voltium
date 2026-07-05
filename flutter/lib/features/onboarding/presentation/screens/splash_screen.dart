@@ -36,8 +36,9 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-          parent: _logoCtrl,
-          curve: const Interval(0.0, 0.5, curve: Curves.easeIn),),
+        parent: _logoCtrl,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
     );
 
     _textCtrl = AnimationController(
@@ -114,7 +115,10 @@ class _SplashScreenState extends State<SplashScreen>
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [AppColors.primaryGradientEnd, Color(0xFF1A1C2E)],
+                              colors: [
+                                AppColors.primaryGradientEnd,
+                                Color(0xFF1A1C2E)
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
@@ -145,7 +149,8 @@ class _SplashScreenState extends State<SplashScreen>
                         offset: Offset(0, _textSlide.value),
                         child: const Column(
                           children: [
-                            Text('Voltium',
+                            Text(
+                              'Voltium',
                               style: TextStyle(
                                 fontSize: 40,
                                 fontWeight: FontWeight.w700,
@@ -157,7 +162,8 @@ class _SplashScreenState extends State<SplashScreen>
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Ride the Future',
+                                Text(
+                                  'Ride the Future',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w300,
@@ -195,8 +201,9 @@ class _SplashScreenState extends State<SplashScreen>
                           child: Stack(
                             children: [
                               Container(
-                                  color: const Color(0xFF0F172A)
-                                      .withValues(alpha: 0.1),),
+                                color: const Color(0xFF0F172A)
+                                    .withValues(alpha: 0.1),
+                              ),
                               FractionallySizedBox(
                                 alignment: Alignment.centerLeft,
                                 widthFactor: _barWidth.value,
@@ -217,12 +224,14 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text('CONNECTING TO GRID',
+                      const Text(
+                        'CONNECTING TO GRID',
                         style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.slate400,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 2.0,),
+                          fontSize: 10,
+                          color: AppColors.slate400,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 2.0,
+                        ),
                       ),
                     ],
                   ),

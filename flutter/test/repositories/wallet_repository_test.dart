@@ -7,7 +7,9 @@ import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart';
 
 class MockApiClient extends Mock implements ApiClient {}
+
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class FakeTopupRequest extends Fake implements api.TopupRequest {}
 
 void main() {
@@ -51,7 +53,9 @@ void main() {
       final result = await repository.submitTopup(request);
 
       expect(result, request);
-      final captured = verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
+              .captured;
       final req = captured.first as api.TopupRequest;
       expect(req.amount, 500);
       expect(req.method, 'UPI');
@@ -74,7 +78,8 @@ void main() {
       );
     });
 
-    test('getTransactionHistory extracts from data or transactions list', () async {
+    test('getTransactionHistory extracts from data or transactions list',
+        () async {
       when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
           .thenAnswer((_) async => {
                 'data': [
@@ -83,7 +88,8 @@ void main() {
                 ]
               });
 
-      final result = await repository.getTransactionHistory('r123', page: 1, limit: 10);
+      final result =
+          await repository.getTransactionHistory('r123', page: 1, limit: 10);
 
       expect(result.length, 2);
       expect(result[0].id, 'tx1');

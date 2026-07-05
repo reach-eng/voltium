@@ -99,7 +99,9 @@ class RiderProvider extends ChangeNotifier {
     // Attempt cache read
     final cached = CacheService().getCachedRider();
     if (cached != null) {
-      _rider = RiderModel.fromJson(cached);
+      _rider = RiderModel.fromCacheMap(cached);
+      _riderId = _rider?.id;
+      _phone = _rider?.phone;
       _dataState = DataState.fromCache;
       notifyListeners();
     }
@@ -308,8 +310,6 @@ class RiderProvider extends ChangeNotifier {
     _rider = updated;
     notifyListeners();
   }
-
-
 
   Future<void> refresh() async {
     await refreshFromApi();

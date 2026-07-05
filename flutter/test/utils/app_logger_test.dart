@@ -15,13 +15,15 @@ void main() {
     });
 
     test('does not throw with data', () {
-      expect(() => appLog('Test message', data: {'key': 'value'}), returnsNormally);
+      expect(() => appLog('Test message', data: {'key': 'value'}),
+          returnsNormally);
     });
   });
 
   group('logApi', () {
     test('does not throw', () {
-      expect(() => logApi('GET /api/rider', data: {'status': 200}), returnsNormally);
+      expect(() => logApi('GET /api/rider', data: {'status': 200}),
+          returnsNormally);
     });
   });
 
@@ -45,7 +47,8 @@ void main() {
     test('does not throw with error and stack trace', () {
       final error = Exception('test error');
       final stackTrace = StackTrace.current;
-      expect(() => logError('Error', error: error, stackTrace: stackTrace), returnsNormally);
+      expect(() => logError('Error', error: error, stackTrace: stackTrace),
+          returnsNormally);
     });
   });
 }

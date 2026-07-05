@@ -54,7 +54,8 @@ class _WalletScreenState extends State<WalletScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Wallet',
+                const Text(
+                  'Wallet',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -148,7 +149,8 @@ class _WalletScreenState extends State<WalletScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete History?'),
-        content: const Text('This will clear your local transaction history. This action cannot be undone.',
+        content: const Text(
+          'This will clear your local transaction history. This action cannot be undone.',
         ),
         actions: [
           TextButton(

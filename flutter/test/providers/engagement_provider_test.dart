@@ -38,7 +38,7 @@ void main() {
   test('logout clears all data', () {
     final provider = EngagementProvider();
     provider.initEngagementData();
-    
+
     expect(provider.rewardPoints, 1250);
     provider.logout();
 

@@ -62,7 +62,6 @@ class AppProvider extends ChangeNotifier {
     engagementProvider = EngagementProvider();
     devicePolicyProvider = DevicePolicyProvider();
     connectivityProvider = ConnectivityProvider();
-
   }
 
   late final RiderProvider riderProvider;
@@ -171,7 +170,6 @@ class AppProvider extends ChangeNotifier {
       riderProvider.setRiderId(id, phoneNumber: phoneNumber);
   void setRider(RiderModel r) => riderProvider.setRider(r);
   void updateRider(RiderModel updated) => riderProvider.updateRider(updated);
-
 
   Future<bool> submitVehicleReturn({
     required List<File> photos,

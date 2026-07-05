@@ -27,7 +27,7 @@ void main() {
     };
 
     service.trackScreen('Home', {'test_param': 123});
-    
+
     expect(printedMessage, isNotNull);
     expect(printedMessage, contains('[Analytics] screenViewed:'));
     expect(printedMessage, contains('screen_name: Home'));
@@ -45,7 +45,7 @@ void main() {
 
     service.setEnabled(false);
     service.trackScreen('Home');
-    
+
     expect(printedMessage, isNull);
 
     debugPrint = originalDebugPrint;
@@ -59,14 +59,14 @@ void main() {
     };
 
     service.trackButtonTap('LoginButton', 'LoginScreen');
-    
+
     expect(printedMessage, contains('buttonTapped'));
     expect(printedMessage, contains('button_name: LoginButton'));
     expect(printedMessage, contains('screen_name: LoginScreen'));
 
     debugPrint = originalDebugPrint;
   });
-  
+
   test('setUserProperties and clearUser log appropriately', () {
     String? printedMessage;
     final originalDebugPrint = debugPrint;
@@ -76,7 +76,7 @@ void main() {
 
     service.setUserProperties('RIDER_123', {'vip': true});
     expect(printedMessage, contains('User properties set for RIDER_123'));
-    
+
     service.clearUser();
     expect(printedMessage, contains('User cleared'));
 

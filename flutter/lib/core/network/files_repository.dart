@@ -37,9 +37,15 @@ class FilesRepository {
       // Step 2: Upload file data to the signed URL via PUT
       final uri = Uri.parse(uploadUrl);
       final storagePath = uri.path.replaceFirst('/api/files/', '');
-      final uploadUri = Uri.parse(uploadUrl.startsWith('http')
-          ? uploadUrl
-          : '${_client.baseUrl}$uploadUrl',);
+      String finalUploadUrl = uploadUrl;
+      if (finalUploadUrl.startsWith('http')) {
+        if (Platform.isAndroid && finalUploadUrl.contains('localhost')) {
+          finalUploadUrl = finalUploadUrl.replaceAll('localhost', '10.0.2.2');
+        }
+      } else {
+        finalUploadUrl = '${_client.baseUrl}$uploadUrl';
+      }
+      final uploadUri = Uri.parse(finalUploadUrl);
 
       final token = await _client.storage.getSessionToken();
       final uploadResponse = await http.put(

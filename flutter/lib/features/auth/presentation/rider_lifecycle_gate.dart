@@ -96,5 +96,4 @@ class RiderLifecycleGate {
         target == LifecycleTarget.guarantorForm ||
         target == LifecycleTarget.preDashboard;
   }
-
 }

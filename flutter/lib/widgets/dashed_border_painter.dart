@@ -25,15 +25,17 @@ class DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          strokeWidth / 2,
-          strokeWidth / 2,
-          size.width - strokeWidth,
-          size.height - strokeWidth,
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            strokeWidth / 2,
+            strokeWidth / 2,
+            size.width - strokeWidth,
+            size.height - strokeWidth,
+          ),
+          Radius.circular(borderRadius),
         ),
-        Radius.circular(borderRadius),
-      ),);
+      );
 
     final dashedPath = _buildDashedPath(path, dashPattern, gapPattern);
     canvas.drawPath(dashedPath, paint);

@@ -151,8 +151,7 @@ void main() {
       expect(find.text('Top Up Wallet'), findsOneWidget);
     });
 
-    testWidgets('shows error color for non-daily low balance',
-        (tester) async {
+    testWidgets('shows error color for non-daily low balance', (tester) async {
       await tester.pumpWidget(wrapInMaterialApp(
         const WalletCard(
           walletBalance: 100,

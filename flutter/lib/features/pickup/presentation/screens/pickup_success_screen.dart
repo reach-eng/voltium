@@ -42,7 +42,8 @@ class PickupSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!',
+              const Text(
+                'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,

@@ -38,7 +38,9 @@ class _SwipeableCardState extends State<SwipeableCard>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 200),);
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
     _slideAnimation =
         Tween<Offset>(begin: Offset.zero, end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),

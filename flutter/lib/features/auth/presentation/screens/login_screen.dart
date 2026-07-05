@@ -8,6 +8,7 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _referralController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
+  final FocusNode _referralFocusNode = FocusNode();
   bool _isLoading = false;
   String? _phoneError;
 
@@ -51,11 +53,16 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
+    // No autofill for manual testing
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _entryCtrl.forward();
+    _entryCtrl.forward().then((_) {
+      if (mounted) {
+        _phoneFocusNode.requestFocus();
+      }
+    });
   }
 
   @override
@@ -63,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen>
     _phoneController.dispose();
     _referralController.dispose();
     _phoneFocusNode.dispose();
+    _referralFocusNode.dispose();
     _entryCtrl.dispose();
     super.dispose();
   }
@@ -103,16 +111,7 @@ class _LoginScreenState extends State<LoginScreen>
         referralCode: referralCode.isNotEmpty ? referralCode : null,
       );
       if (mounted) {
-        if (response['success'] == true) {
-          widget.onNext?.call(digits);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Failed to send OTP'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        widget.onNext?.call(digits);
       }
     } catch (e) {
       if (mounted) {
@@ -231,7 +230,8 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Voltium',
+                Text(
+                  'Voltium',
                   style: GoogleFonts.inter(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
@@ -242,7 +242,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 const SizedBox(height: 8),
                 ExcludeSemantics(
-                  child: Text('Manage your journey with precision.',
+                  child: Text(
+                    'Manage your journey with precision.',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -261,19 +262,25 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildWelcomeSection() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.1, 0.8, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.8, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.1, 0.7),),
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7),
+        ),
         child: Semantics(
           label: 'Welcome section with instructions',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome',
+              Text(
+                'Welcome',
                 style: GoogleFonts.inter(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -282,7 +289,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               const SizedBox(height: 8),
-              Text('Enter the registered phone number to login or enter a new number to create another account.',
+              Text(
+                'Enter the registered phone number to login or enter a new number to create another account.',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   color: AppColors.onSurfaceVariant,
@@ -298,13 +306,18 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildPhoneInput() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.2, 0.8),),
+          parent: _entryCtrl,
+          curve: const Interval(0.2, 0.8),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -333,14 +346,18 @@ class _LoginScreenState extends State<LoginScreen>
                             child: Text(
                               '+91',
                               style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.onSurface,),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.onSurface,
+                              ),
                             ),
                           ),
                         ),
                         Container(
-                            width: 1, height: 20, color: AppColors.divider,),
+                          width: 1,
+                          height: 20,
+                          color: AppColors.divider,
+                        ),
                         const SizedBox(width: 12),
                       ],
                     ),
@@ -350,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen>
                       key: const Key('phoneInput'),
                       controller: _phoneController,
                       focusNode: _phoneFocusNode,
-                      keyboardType: TextInputType.phone,
+                      keyboardType: TextInputType.text,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
@@ -367,7 +384,8 @@ class _LoginScreenState extends State<LoginScreen>
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        filled: false,
+                        filled: true,
+                        fillColor: Colors.transparent,
                         hintText: '00000 00000',
                         hintStyle: GoogleFonts.inter(
                           fontSize: 16,
@@ -406,55 +424,66 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildReferralInput() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.25, 0.95, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.25, 0.95, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.25, 0.85),),
+          parent: _entryCtrl,
+          curve: const Interval(0.25, 0.85),
+        ),
         child: Container(
           height: 56,
           decoration: BoxDecoration(
             color: AppColors.inputBackground,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 20, right: 8),
-                child: Icon(
-                  Icons.person_add_outlined,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-              ),
-              Expanded(
-                child: TextFormField(
-                  key: const Key('referralInput'),
-                  controller: _referralController,
-                  textCapitalization: TextCapitalization.characters,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _referralFocusNode.requestFocus(),
+            child: Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 20, right: 8),
+                  child: Icon(
+                    Icons.person_add_outlined,
+                    size: 20,
+                    color: AppColors.primary,
                   ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    filled: false,
-                    hintText: 'Referral Code (Optional)',
-                    hintStyle: GoogleFonts.inter(
+                ),
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('referralInput'),
+                    controller: _referralController,
+                    focusNode: _referralFocusNode,
+                    textCapitalization: TextCapitalization.characters,
+                    style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: AppColors.onSurfaceDisabled,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.onSurface,
                     ),
-                    contentPadding: EdgeInsets.zero,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      hintText: 'Referral Code (Optional)',
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: AppColors.onSurfaceDisabled,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -473,7 +502,8 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(width: 8),
-        Text('A SECURE OTP WILL BE SENT',
+        Text(
+          'A SECURE OTP WILL BE SENT',
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.w800,
@@ -517,7 +547,8 @@ class _LoginScreenState extends State<LoginScreen>
                           strokeWidth: 2,
                         ),
                       )
-                    : Text('Enter',
+                    : Text(
+                        'Enter',
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -536,7 +567,9 @@ class _LoginScreenState extends State<LoginScreen>
     return Center(
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.5, 1.0),),
+          parent: _entryCtrl,
+          curve: const Interval(0.5, 1.0),
+        ),
         child: RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
@@ -553,7 +586,8 @@ class _LoginScreenState extends State<LoginScreen>
                   label: a11yButton('Terms of Service'),
                   child: GestureDetector(
                     onTap: () => _launchUrl('https://voltium.app/terms'),
-                    child: Text('Terms of Service',
+                    child: Text(
+                      'Terms of Service',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: AppColors.primary,
@@ -564,16 +598,20 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
               TextSpan(
-                  text: ' and ',
-                  style: GoogleFonts.inter(
-                      fontSize: 12, color: AppColors.onSurfaceVariant,),),
+                text: ' and ',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
               WidgetSpan(
                 child: Semantics(
                   button: true,
                   label: a11yButton('Privacy Policy'),
                   child: GestureDetector(
                     onTap: () => _launchUrl('https://voltium.app/privacy'),
-                    child: Text('Privacy Policy',
+                    child: Text(
+                      'Privacy Policy',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: AppColors.primary,

@@ -41,7 +41,11 @@ void main() {
     });
 
     test('fetchFaqs returns properly populated faqs list', () async {
-      final mockData = {'faqs': [{'q': 'What?', 'a': 'Nothing'}]};
+      final mockData = {
+        'faqs': [
+          {'q': 'What?', 'a': 'Nothing'}
+        ]
+      };
       when(() => mockVoltiumApiClient.getSupportFaqs())
           .thenAnswer((_) async => mockData);
 
@@ -92,7 +96,9 @@ void main() {
       expect(result['id'], 't1');
       expect(result['status'], 'OPEN');
 
-      final captured = verify(() => mockVoltiumApiClient.postSupportTickets(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postSupportTickets(captureAny()))
+              .captured;
       final request = captured.first as CreateTicketRequest;
       expect(request.category, 'Billing');
       expect(request.subject, 'Charge issue');
@@ -101,14 +107,17 @@ void main() {
       expect(request.priority, 'HIGH');
     });
 
-    test('createTicket uses default priority and riderId if not provided', () async {
+    test('createTicket uses default priority and riderId if not provided',
+        () async {
       final mockResponse = TicketResponse(id: 't2');
       when(() => mockVoltiumApiClient.postSupportTickets(any()))
           .thenAnswer((_) async => mockResponse);
 
       await repository.createTicket('App', 'Crash', 'App crashed');
 
-      final captured = verify(() => mockVoltiumApiClient.postSupportTickets(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postSupportTickets(captureAny()))
+              .captured;
       final request = captured.first as CreateTicketRequest;
       expect(request.riderId, '');
       expect(request.priority, 'NORMAL');
@@ -157,7 +166,9 @@ void main() {
 
       await repository.sendChatMessage('Hello there');
 
-      final captured = verify(() => mockVoltiumApiClient.postSupportChat(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postSupportChat(captureAny()))
+              .captured;
       final payload = captured.first as Map<String, dynamic>;
       expect(payload['message'], 'Hello there');
     });
@@ -174,7 +185,9 @@ void main() {
           .thenAnswer((_) async => {});
 
       await repository.sendChatMessage('');
-      final captured = verify(() => mockVoltiumApiClient.postSupportChat(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postSupportChat(captureAny()))
+              .captured;
       expect((captured.first as Map)['message'], '');
     });
   });

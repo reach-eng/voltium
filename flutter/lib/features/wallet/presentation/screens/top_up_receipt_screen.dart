@@ -190,7 +190,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.5, 0.8)),
       child: Column(
         children: [
-          Text('Payment Submitted',
+          Text(
+            'Payment Submitted',
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -212,12 +213,14 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   text:
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onSurfaceAlt,),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onSurfaceAlt,
+                  ),
                 ),
                 TextSpan(
-                    text:
-                        ' for ${widget.purpose.replaceAll('_', ' ').toLowerCase()} is being verified by our team.',),
+                  text:
+                      ' for ${widget.purpose.replaceAll('_', ' ').toLowerCase()} is being verified by our team.',
+                ),
               ],
             ),
           ),
@@ -246,15 +249,19 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                 color: AppColors.warningLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.access_time,
-                  color: AppColors.warningDark, size: 20,),
+              child: const Icon(
+                Icons.access_time,
+                color: AppColors.warningDark,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Verification in Progress',
+                  Text(
+                    'Verification in Progress',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -327,7 +334,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
             children: [
               const Icon(Icons.home_outlined, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              Text('Back to Dashboard',
+              Text(
+                'Back to Dashboard',
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

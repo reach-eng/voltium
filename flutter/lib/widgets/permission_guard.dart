@@ -55,10 +55,13 @@ class PermissionGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasViolation = context.select<AppProvider, bool>((p) => p.hasPermissionViolation);
+    final hasViolation =
+        context.select<AppProvider, bool>((p) => p.hasPermissionViolation);
     if (!hasViolation) return const SizedBox.shrink();
 
-    final permId = context.select<AppProvider, String?>((p) => p.violationPermissionId) ?? 'unknown';
+    final permId =
+        context.select<AppProvider, String?>((p) => p.violationPermissionId) ??
+            'unknown';
     final permName = _permissionName(permId);
     final icon = _permissionIcon(permId);
 
@@ -119,11 +122,14 @@ class PermissionGuard extends StatelessWidget {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10,),
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                        border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         permName.toUpperCase(),
@@ -142,7 +148,8 @@ class PermissionGuard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: _openSettings,
                         icon: const Icon(Icons.settings),
-                        label: const Text('OPEN SETTINGS',
+                        label: const Text(
+                          'OPEN SETTINGS',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -161,7 +168,8 @@ class PermissionGuard extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () => context.read<AppProvider>().clearViolation(),
+                      onPressed: () =>
+                          context.read<AppProvider>().clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
                         style: TextStyle(
@@ -171,7 +179,8 @@ class PermissionGuard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    Text('Voltium Security System v3.0',
+                    Text(
+                      'Voltium Security System v3.0',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.2),
                         fontSize: 12,

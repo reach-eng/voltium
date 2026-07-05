@@ -47,8 +47,11 @@ class ReferralCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.card_giftcard,
-                    color: Colors.white, size: 24,),
+                child: const Icon(
+                  Icons.card_giftcard,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -63,7 +66,8 @@ class ReferralCard extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    Text('Share your code with friends',
+                    Text(
+                      'Share your code with friends',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -89,7 +93,8 @@ class ReferralCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('YOUR CODE',
+                    Text(
+                      'YOUR CODE',
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
@@ -122,8 +127,11 @@ class ReferralCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.copy,
-                            color: Colors.white, size: 16,),
+                        child: const Icon(
+                          Icons.copy,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -143,8 +151,11 @@ class ReferralCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.share,
-                            color: Colors.white, size: 16,),
+                        child: const Icon(
+                          Icons.share,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ],

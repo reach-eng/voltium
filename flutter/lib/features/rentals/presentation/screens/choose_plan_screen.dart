@@ -102,7 +102,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(response['message'] ?? 'Subscription failed'),),
+              content: Text(response['message'] ?? 'Subscription failed'),
+            ),
           );
         }
       }
@@ -110,7 +111,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Failed to subscribe. Check your balance.'),),
+            content: Text('Failed to subscribe. Check your balance.'),
+          ),
         );
       }
     } finally {
@@ -166,7 +168,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
             : const Color(0xFFF3E8FF),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text('BEST VALUE',
+      child: Text(
+        'BEST VALUE',
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w800,
@@ -215,11 +218,15 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!,
-                          style: const TextStyle(color: AppColors.error),),
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: AppColors.error),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchPlans, child: const Text('Retry'),),
+                        onPressed: _fetchPlans,
+                        child: const Text('Retry'),
+                      ),
                     ],
                   ),
                 )
@@ -241,16 +248,21 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                        color: AppColors.outlineVariant,),
+                                      color: AppColors.outlineVariant,
+                                    ),
                                   ),
-                                  child: const Icon(Icons.arrow_back_ios_new,
-                                      size: 18, color: Color(0xFF1E293B),),
+                                  child: const Icon(
+                                    Icons.arrow_back_ios_new,
+                                    size: 18,
+                                    color: Color(0xFF1E293B),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                             ],
                             const Expanded(
-                              child: Text('Select a new plan',
+                              child: Text(
+                                'Select a new plan',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
@@ -264,7 +276,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Text('Choose the rental duration that best fits your needs. You can change this at any time.',
+                        child: Text(
+                          'Choose the rental duration that best fits your needs. You can change this at any time.',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.slate500,
@@ -276,7 +289,9 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10,),
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
                           physics: const BouncingScrollPhysics(),
                           itemCount: _plans.length,
                           itemBuilder: (context, index) {
@@ -317,7 +332,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                       color: isSelected
                                           ? AppColors.primary
                                               .withValues(alpha: 0.2)
-                                          : Colors.black.withValues(alpha: 0.02),
+                                          : Colors.black
+                                              .withValues(alpha: 0.02),
                                       blurRadius: 16,
                                       offset: const Offset(0, 8),
                                     ),
@@ -350,7 +366,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                           fontWeight:
                                                               FontWeight.w800,
                                                           color: Colors.white
-                                                              .withValues(alpha: 0.8),
+                                                              .withValues(
+                                                                  alpha: 0.8),
                                                           letterSpacing: 0.5,
                                                         ),
                                                       ),
@@ -359,10 +376,11 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                         children: [
                                                           if (isBestValue) ...[
                                                             _buildBestValueBadge(
-                                                                isSelected:
-                                                                    true,),
+                                                              isSelected: true,
+                                                            ),
                                                             const SizedBox(
-                                                                width: 8,),
+                                                              width: 8,
+                                                            ),
                                                           ],
                                                           Expanded(
                                                             child: Text(
@@ -386,9 +404,11 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                     children: [
                                                       if (isBestValue) ...[
                                                         _buildBestValueBadge(
-                                                            isSelected: false,),
+                                                          isSelected: false,
+                                                        ),
                                                         const SizedBox(
-                                                            width: 8,),
+                                                          width: 8,
+                                                        ),
                                                       ],
                                                       Expanded(
                                                         child: Text(
@@ -399,7 +419,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                             color: Color(
-                                                                0xFF0F172A,),
+                                                              0xFF0F172A,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),
@@ -415,10 +436,12 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                   decoration: BoxDecoration(
                                                     shape: BoxShape.circle,
                                                     color: Colors.white
-                                                        .withValues(alpha: 0.15),
+                                                        .withValues(
+                                                            alpha: 0.15),
                                                     border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 2,),
+                                                      color: Colors.white,
+                                                      width: 2,
+                                                    ),
                                                   ),
                                                   child: const Center(
                                                     child: Icon(
@@ -435,7 +458,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                     shape: BoxShape.circle,
                                                     border: Border.all(
                                                       color: const Color(
-                                                          0xFFCBD5E1,),
+                                                        0xFFCBD5E1,
+                                                      ),
                                                       width: 2,
                                                     ),
                                                   ),
@@ -449,51 +473,58 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: isSelected
-                                                ? Colors.white.withValues(alpha: 0.8)
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.8)
                                                 : AppColors.slate500,
                                           ),
                                         ),
                                       ],
                                       const SizedBox(height: 16),
                                       // Features list
-                                      ...planFeatures.map((feature) => Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 12,),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Icon(
-                                                  _getFeatureIcon(feature),
-                                                  size: 16,
-                                                  color: isSelected
-                                                      ? Colors.white
-                                                          .withValues(alpha: 0.9)
-                                                      : AppColors.slate400,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Text(
-                                                    feature,
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color: isSelected
-                                                          ? Colors.white
-                                                              .withValues(alpha: 0.9)
-                                                          : const Color(
-                                                              0xFF475569,),
-                                                      height: 1.4,
-                                                    ),
+                                      ...planFeatures.map(
+                                        (feature) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                _getFeatureIcon(feature),
+                                                size: 16,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                        .withValues(alpha: 0.9)
+                                                    : AppColors.slate400,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  feature,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.9)
+                                                        : const Color(
+                                                            0xFF475569,
+                                                          ),
+                                                    height: 1.4,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                       const SizedBox(height: 16),
                                       // Divider
                                       Divider(
                                         color: isSelected
-                                            ? Colors.white.withValues(alpha: 0.15)
+                                            ? Colors.white
+                                                .withValues(alpha: 0.15)
                                             : AppColors.iconBackground,
                                         height: 1,
                                       ),
@@ -569,8 +600,12 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white, strokeWidth: 2,),)
-                                  : const Text('Confirm New Plan',
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Confirm New Plan',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,

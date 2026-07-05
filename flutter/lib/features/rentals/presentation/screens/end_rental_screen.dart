@@ -143,7 +143,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text('Request Submitted!',
+                Text(
+                  'Request Submitted!',
                   style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
@@ -153,7 +154,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 48),
-                  child: Text('Your vehicle return request has been sent for approval.',
+                  child: Text(
+                    'Your vehicle return request has been sent for approval.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 15,
@@ -189,12 +191,16 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                         shape: BoxShape.circle,
                         boxShadow: AppShadows.glass,
                       ),
-                      child: const Icon(Icons.arrow_back,
-                          size: 18, color: AppColors.onSurface,),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 18,
+                        color: AppColors.onSurface,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Text('End Rental',
+                  Text(
+                    'End Rental',
                     style: GoogleFonts.inter(
                       fontSize: 21,
                       fontWeight: FontWeight.w700,
@@ -261,15 +267,19 @@ class _EndRentalScreenState extends State<EndRentalScreen>
               color: AppColors.errorLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_amber_rounded,
-                color: Color(0xFFBA1A1A), size: 20,),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFBA1A1A),
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Are you sure?',
+                Text(
+                  'Are you sure?',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -277,7 +287,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text('Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.',
+                Text(
+                  'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.error.withValues(alpha: 0.8),
@@ -303,7 +314,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('RETURN INSPECTION',
+        Text(
+          'RETURN INSPECTION',
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w800,
@@ -312,9 +324,12 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           ),
         ),
         const SizedBox(height: 6),
-        Text('Take return photos of your vehicle',
+        Text(
+          'Take return photos of your vehicle',
           style: GoogleFonts.inter(
-              fontSize: 12, color: AppColors.onSurfaceVariant,),
+            fontSize: 12,
+            color: AppColors.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         GridView.count(
@@ -391,7 +406,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ODOMETER READING',
+          Text(
+            'ODOMETER READING',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -413,7 +429,9 @@ class _EndRentalScreenState extends State<EndRentalScreen>
             decoration: InputDecoration(
               hintText: 'Enter current odometer reading',
               hintStyle: GoogleFonts.inter(
-                  fontSize: 14, color: AppColors.onSurfaceDisabled,),
+                fontSize: 14,
+                color: AppColors.onSurfaceDisabled,
+              ),
               filled: true,
               fillColor: AppColors.inputBackground,
               border: OutlineInputBorder(
@@ -446,17 +464,23 @@ class _EndRentalScreenState extends State<EndRentalScreen>
               color: AppColors.successLight,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(Icons.battery_5_bar,
-                color: AppColors.successDark, size: 18,),
+            child: const Icon(
+              Icons.battery_5_bar,
+              color: AppColors.successDark,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Battery Level',
+                Text(
+                  'Battery Level',
                   style: GoogleFonts.inter(
-                      fontSize: 12, color: AppColors.onSurfaceVariant,),
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                  ),
                 ),
                 Text(
                   'Current battery: 72%',
@@ -519,7 +543,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text('I confirm the vehicle is returned in good condition with all accessories intact.',
+              child: Text(
+                'I confirm the vehicle is returned in good condition with all accessories intact.',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.onSurface,
@@ -561,9 +586,12 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2,),
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     )
-                  : Text('Confirm Return',
+                  : Text(
+                      'Confirm Return',
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -577,7 +605,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
         ),
         if (!_allPhotosTaken) ...[
           const SizedBox(height: 8),
-          Text('Please take all inspection photos to continue',
+          Text(
+            'Please take all inspection photos to continue',
             style: GoogleFonts.inter(
               fontSize: 11,
               color: AppColors.error,

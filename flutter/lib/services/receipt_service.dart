@@ -36,7 +36,8 @@ class TransactionReceipt {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Center(
-                child: pw.Text('Voltium',
+                child: pw.Text(
+                  'Voltium',
                   style: pw.TextStyle(
                     fontSize: 24,
                     fontWeight: pw.FontWeight.bold,
@@ -45,7 +46,8 @@ class TransactionReceipt {
               ),
               pw.SizedBox(height: 8),
               pw.Center(
-                child: pw.Text('Electric Vehicle Rental Service',
+                child: pw.Text(
+                  'Electric Vehicle Rental Service',
                   style: const pw.TextStyle(fontSize: 12),
                 ),
               ),
@@ -57,21 +59,31 @@ class TransactionReceipt {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Transaction Receipt',
-                          style: pw.TextStyle(
-                              fontSize: 18, fontWeight: pw.FontWeight.bold,),),
+                      pw.Text(
+                        'Transaction Receipt',
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
                       pw.SizedBox(height: 4),
-                      pw.Text('ID: ${transactionId.substring(0, 8)}...',
-                          style: const pw.TextStyle(fontSize: 10),),
+                      pw.Text(
+                        'ID: ${transactionId.substring(0, 8)}...',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
                     ],
                   ),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
-                      pw.Text('Date: ${_formatDate(date)}',
-                          style: const pw.TextStyle(fontSize: 10),),
-                      pw.Text('Time: ${_formatTime(date)}',
-                          style: const pw.TextStyle(fontSize: 10),),
+                      pw.Text(
+                        'Date: ${_formatDate(date)}',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
+                      pw.Text(
+                        'Time: ${_formatTime(date)}',
+                        style: const pw.TextStyle(fontSize: 10),
+                      ),
                     ],
                   ),
                 ],
@@ -108,7 +120,9 @@ class TransactionReceipt {
                     pw.Text(
                       'Amount ${type == 'CREDIT' ? 'Credited' : 'Debited'}',
                       style: pw.TextStyle(
-                          fontSize: 14, fontWeight: pw.FontWeight.bold,),
+                        fontSize: 14,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
                     pw.Text(
                       '₹${(amount / 100).toStringAsFixed(2)}',
@@ -127,7 +141,8 @@ class TransactionReceipt {
               pw.Divider(),
               pw.SizedBox(height: 8),
               pw.Center(
-                child: pw.Text('Thank you for using Voltium!',
+                child: pw.Text(
+                  'Thank you for using Voltium!',
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ),
@@ -156,12 +171,14 @@ class TransactionReceipt {
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text(label,
-              style:
-                  const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),),
-          pw.Text(value,
-              style:
-                  pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),),
+          pw.Text(
+            label,
+            style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+          ),
+          pw.Text(
+            value,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
         ],
       ),
     );

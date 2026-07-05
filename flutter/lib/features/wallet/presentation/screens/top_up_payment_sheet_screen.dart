@@ -23,7 +23,8 @@ class TopUpPaymentSheetScreen extends StatefulWidget {
   });
 
   @override
-  State<TopUpPaymentSheetScreen> createState() => _TopUpPaymentSheetScreenState();
+  State<TopUpPaymentSheetScreen> createState() =>
+      _TopUpPaymentSheetScreenState();
 }
 
 class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
@@ -107,12 +108,12 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
 
     final riderId = context.read<RiderProvider>().riderId ?? '';
     await context.read<WalletProvider>().topUpWallet(
-      amount: widget.amount.toDouble(),
-      method: 'UPI',
-      upiRef: 'AUTO_UPI',
-      purpose: widget.purpose,
-      riderId: riderId,
-    );
+          amount: widget.amount.toDouble(),
+          method: 'UPI',
+          upiRef: 'AUTO_UPI',
+          purpose: widget.purpose,
+          riderId: riderId,
+        );
 
     setState(() {
       _isProcessing = false;
@@ -298,7 +299,8 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                               Icon(
                                 Icons.qr_code_2_rounded,
                                 size: 160,
-                                color: AppColors.onSurface.withValues(alpha: 0.8),
+                                color:
+                                    AppColors.onSurface.withValues(alpha: 0.8),
                               ),
                               // Central Voltium brand logo
                               Container(

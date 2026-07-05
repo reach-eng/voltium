@@ -139,9 +139,11 @@ class BarChartWidget extends StatelessWidget {
               ),
             ),
             rightTitles: const fl.AxisTitles(
-                sideTitles: fl.SideTitles(showTitles: false),),
+              sideTitles: fl.SideTitles(showTitles: false),
+            ),
             topTitles: const fl.AxisTitles(
-                sideTitles: fl.SideTitles(showTitles: false),),
+              sideTitles: fl.SideTitles(showTitles: false),
+            ),
           ),
           borderData: fl.FlBorderData(show: false),
           barGroups: data.asMap().entries.map((entry) {

@@ -41,15 +41,20 @@ class _AppBottomNavState extends State<AppBottomNav>
   static const _tabs = [
     _TabInfo(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
     _TabInfo(
-        icon: Icons.account_balance_wallet_outlined,
-        activeIcon: Icons.account_balance_wallet,
-        label: 'Wallet',),
+      icon: Icons.account_balance_wallet_outlined,
+      activeIcon: Icons.account_balance_wallet,
+      label: 'Wallet',
+    ),
     _TabInfo(
-        icon: Icons.headset_mic_outlined,
-        activeIcon: Icons.headset_mic,
-        label: 'Support',),
+      icon: Icons.headset_mic_outlined,
+      activeIcon: Icons.headset_mic,
+      label: 'Support',
+    ),
     _TabInfo(
-        icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile',),
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      label: 'Profile',
+    ),
   ];
 
   @override
@@ -63,10 +68,12 @@ class _AppBottomNavState extends State<AppBottomNav>
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entryCtrl,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-    ),);
+    ).animate(
+      CurvedAnimation(
+        parent: _entryCtrl,
+        curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
     _fadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _entryCtrl,

@@ -38,14 +38,22 @@ void main() {
       expect(find.byType(TopUpPurposeScreen), findsOneWidget);
     });
 
-    testWidgets('purpose screen shows deposit and top-up options', (tester) async {
+    testWidgets('purpose screen shows deposit and top-up options',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const TopUpPurposeScreen()));
       await tester.pumpAndSettle();
 
       // Should show purpose options
-      final hasDeposit = find.textContaining('deposit', skipOffstage: false).evaluate().isNotEmpty;
-      final hasTopup = find.textContaining('top', skipOffstage: false).evaluate().isNotEmpty;
-      final hasWallet = find.textContaining('wallet', skipOffstage: false).evaluate().isNotEmpty;
+      final hasDeposit = find
+          .textContaining('deposit', skipOffstage: false)
+          .evaluate()
+          .isNotEmpty;
+      final hasTopup =
+          find.textContaining('top', skipOffstage: false).evaluate().isNotEmpty;
+      final hasWallet = find
+          .textContaining('wallet', skipOffstage: false)
+          .evaluate()
+          .isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 
       expect(hasDeposit || hasTopup || hasWallet || hasText, isTrue);

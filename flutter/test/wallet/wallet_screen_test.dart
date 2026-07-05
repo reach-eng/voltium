@@ -74,7 +74,8 @@ void main() {
       // There should be a way to initiate top-up
       final addMoneyFinder = find.textContaining('Add', skipOffstage: false);
       final topupFinder = find.textContaining('Top', skipOffstage: false);
-      final hasTopupAction = addMoneyFinder.evaluate().isNotEmpty || topupFinder.evaluate().isNotEmpty;
+      final hasTopupAction = addMoneyFinder.evaluate().isNotEmpty ||
+          topupFinder.evaluate().isNotEmpty;
       expect(hasTopupAction, isTrue);
     });
   });

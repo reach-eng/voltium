@@ -13,7 +13,13 @@ void main() {
   // ── HubModel ────────────────────────────────────────────────────────────
   group('HubModel', () {
     test('fromJson / toJson round-trips', () {
-      final json = {'id': 'h1', 'name': 'Main Hub', 'location': 'Andheri', 'city': 'Mumbai', 'isActive': true};
+      final json = {
+        'id': 'h1',
+        'name': 'Main Hub',
+        'location': 'Andheri',
+        'city': 'Mumbai',
+        'isActive': true
+      };
       final model = HubModel.fromJson(json);
       expect(model.id, 'h1');
       expect(model.name, 'Main Hub');
@@ -22,12 +28,14 @@ void main() {
     });
 
     test('displayAddress joins location and city', () {
-      const hub = HubModel(id: 'h1', name: 'X', location: 'Andheri', city: 'Mumbai');
+      const hub =
+          HubModel(id: 'h1', name: 'X', location: 'Andheri', city: 'Mumbai');
       expect(hub.displayAddress, 'Andheri, Mumbai');
     });
 
     test('displayAddress uses only non-null part', () {
-      const hub = HubModel(id: 'h1', name: 'X', location: 'Andheri', city: null);
+      const hub =
+          HubModel(id: 'h1', name: 'X', location: 'Andheri', city: null);
       expect(hub.displayAddress, 'Andheri');
     });
 
@@ -42,7 +50,8 @@ void main() {
     });
 
     test('isActive defaults to true', () {
-      final hub = HubModel.fromJson({'id': 'h1', 'name': 'X', 'isActive': true});
+      final hub =
+          HubModel.fromJson({'id': 'h1', 'name': 'X', 'isActive': true});
       expect(hub.isActive, isTrue);
     });
   });
@@ -68,21 +77,38 @@ void main() {
     });
 
     test('fromJson defaults features to [] when missing', () {
-      final json = {'id': 'p1', 'name': 'X', 'description': 'D', 'price': 100.0, 'durationDays': 7};
+      final json = {
+        'id': 'p1',
+        'name': 'X',
+        'description': 'D',
+        'price': 100.0,
+        'durationDays': 7
+      };
       final model = PlanModel.fromJson(json);
       expect(model.features, isEmpty);
     });
 
     test('fromJson defaults category to empty string when missing', () {
-      final json = {'id': 'p1', 'name': 'X', 'description': 'D', 'price': 100.0, 'durationDays': 7};
+      final json = {
+        'id': 'p1',
+        'name': 'X',
+        'description': 'D',
+        'price': 100.0,
+        'durationDays': 7
+      };
       final model = PlanModel.fromJson(json);
       expect(model.category, '');
     });
 
     test('toJson round-trips', () {
       final model = PlanModel.fromJson({
-        'id': 'p1', 'name': 'X', 'description': 'D', 'price': 100.0, 'durationDays': 7,
-        'features': ['A'], 'category': 'ECONOMY',
+        'id': 'p1',
+        'name': 'X',
+        'description': 'D',
+        'price': 100.0,
+        'durationDays': 7,
+        'features': ['A'],
+        'category': 'ECONOMY',
       });
       final json = model.toJson();
       expect(json['id'], 'p1');
@@ -107,7 +133,12 @@ void main() {
     });
 
     test('toJson round-trips', () {
-      final json = {'id': 'r1', 'title': 'T', 'points': 50, 'createdAt': '2024-06-01T00:00:00.000Z'};
+      final json = {
+        'id': 'r1',
+        'title': 'T',
+        'points': 50,
+        'createdAt': '2024-06-01T00:00:00.000Z'
+      };
       final model = RewardItem.fromJson(json);
       final out = model.toJson();
       expect(out['id'], 'r1');
@@ -126,7 +157,8 @@ void main() {
     });
 
     test('copyWith overrides specified fields only', () {
-      const m = RiderMetrics(weeklyDistance: 10.0, carbonSaved: 5.0, accountStatus: 'ACTIVE');
+      const m = RiderMetrics(
+          weeklyDistance: 10.0, carbonSaved: 5.0, accountStatus: 'ACTIVE');
       final updated = m.copyWith(weeklyDistance: 20.0);
       expect(updated.weeklyDistance, 20.0);
       expect(updated.carbonSaved, 5.0); // unchanged
@@ -151,7 +183,8 @@ void main() {
     });
 
     test('copyWith overrides walletBalance only', () {
-      const w = RiderWallet(walletBalance: 1000.0, paymentStreak: 3, planStatus: 'ACTIVE');
+      const w = RiderWallet(
+          walletBalance: 1000.0, paymentStreak: 3, planStatus: 'ACTIVE');
       final updated = w.copyWith(walletBalance: 2000.0);
       expect(updated.walletBalance, 2000.0);
       expect(updated.paymentStreak, 3);
@@ -215,9 +248,12 @@ void main() {
 
     test('copyWith updates name and email', () {
       final identity = RiderIdentity.fromJson({
-        'riderId': 'r1', 'phone': '9876543210', 'name': 'John',
+        'riderId': 'r1',
+        'phone': '9876543210',
+        'name': 'John',
       });
-      final updated = identity.copyWith(name: 'Jane', email: 'jane@example.com');
+      final updated =
+          identity.copyWith(name: 'Jane', email: 'jane@example.com');
       expect(updated.name, 'Jane');
       expect(updated.email, 'jane@example.com');
       expect(updated.riderId, 'r1'); // unchanged

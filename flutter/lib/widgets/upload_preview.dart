@@ -62,9 +62,11 @@ class UploadPreview extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                             image: DecorationImage(
                               image: FileImage(
-                                File(filePath!.startsWith('/')
-                                    ? filePath!
-                                    : filePath!,),
+                                File(
+                                  filePath!.startsWith('/')
+                                      ? filePath!
+                                      : filePath!,
+                                ),
                               ),
                               fit: BoxFit.cover,
                             ),

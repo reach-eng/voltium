@@ -66,21 +66,34 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),),
-        title: const Text('Draw Signature',
-            style: TextStyle(
-                color: Color(0xFF111827), fontWeight: FontWeight.w600,),),
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Draw Signature',
+          style: TextStyle(
+            color: Color(0xFF111827),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         actions: [
           TextButton(
-              onPressed: _clear,
-              child: const Text('Clear',
-                  style: TextStyle(color: Color(0xFF2563EB)),),),
+            onPressed: _clear,
+            child: const Text(
+              'Clear',
+              style: TextStyle(color: Color(0xFF2563EB)),
+            ),
+          ),
           TextButton(
-              onPressed: _save,
-              child: const Text('Save',
-                  style: TextStyle(
-                      color: Color(0xFF2563EB), fontWeight: FontWeight.w600,),),),
+            onPressed: _save,
+            child: const Text(
+              'Save',
+              style: TextStyle(
+                color: Color(0xFF2563EB),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
       body: Padding(

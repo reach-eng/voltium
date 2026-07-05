@@ -23,8 +23,6 @@ class DevicePolicyProvider extends ChangeNotifier {
   bool _lockedByAdmin = false;
   bool get lockedByAdmin => _lockedByAdmin;
 
-
-
   bool _forceUpdate = false;
   bool get forceUpdate => _forceUpdate;
 
@@ -272,8 +270,8 @@ class DevicePolicyProvider extends ChangeNotifier {
       return;
     }
     final backoff = Duration(
-      seconds: (_integrityInitialInterval.inSeconds
-                  << (_integrityFailureCount - 1))
+      seconds:
+          (_integrityInitialInterval.inSeconds << (_integrityFailureCount - 1))
               .clamp(0, _integrityMaxBackoff.inSeconds),
     );
     _scheduleIntegrityCheck(backoff);

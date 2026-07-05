@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,7 +37,7 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
   bool _isUploading = false;
   String _uploadProgressText = '';
-  
+
   bool _aadhaarFrontUploaded = false;
   bool _aadhaarBackUploaded = false;
   bool _panUploaded = false;
@@ -120,11 +122,24 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (AppConstants.isTestMode) {
-        if (_dobController.text.isEmpty) {
-          setState(() {
-            _dobController.text = '01-01-2000';
-          });
-        }
+        setState(() {
+          if (_dobController.text.isEmpty) _dobController.text = '01-01-2000';
+          if (_nameController.text.isEmpty) _nameController.text = 'Test Rider';
+          if (_emailController.text.isEmpty)
+            _emailController.text = 'test@example.com';
+          if (_fatherNameController.text.isEmpty)
+            _fatherNameController.text = 'Father Name';
+          if (_motherNameController.text.isEmpty)
+            _motherNameController.text = 'Mother Name';
+          if (_addressController.text.isEmpty)
+            _addressController.text = '123 Test Street';
+          if (_bankNameController.text.isEmpty)
+            _bankNameController.text = 'Test Bank';
+          if (_bankAccountController.text.isEmpty)
+            _bankAccountController.text = '1234567890';
+          if (_bankIfscController.text.isEmpty)
+            _bankIfscController.text = 'TEST0001234';
+        });
       }
       final rider = context.read<AppProvider>().rider;
       if (rider != null) {
@@ -174,8 +189,10 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
       lastDate: DateTime.now(),
     );
     if (date != null && mounted) {
-      setState(() => _dobController.text =
-          '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',);
+      setState(
+        () => _dobController.text =
+            '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',
+      );
     }
   }
 
@@ -263,8 +280,7 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _bankAccountController,
-              decoration:
-                  const InputDecoration(labelText: 'Account Number'),
+              decoration: const InputDecoration(labelText: 'Account Number'),
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 8),
@@ -298,11 +314,12 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
     }
 
     final provider = context.read<AppProvider>();
-    final riderId = provider.rider?.id;
-    if (riderId == null) {
-      _showError('Rider ID not found. Please restart onboarding.');
+    final rider = provider.rider;
+    if (rider == null) {
+      _showError('Session lost. Please log in again.');
       return;
     }
+    final riderId = rider.id ?? rider.riderId;
 
     _kycRepository ??= KycRepository(
       provider.voltiumApiClient,
@@ -326,19 +343,30 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
         signatureUrl = 'mock_url_signature.png';
       } else {
         final Map<String, dynamic> tasks = {};
-        if (_aadhaarFrontPath != null) tasks['Aadhaar Front'] = () => _kycRepository!.uploadDocument(File(_aadhaarFrontPath!), 'KYC_AADHAAR_FRONT');
-        if (_aadhaarBackPath != null) tasks['Aadhaar Back'] = () => _kycRepository!.uploadDocument(File(_aadhaarBackPath!), 'KYC_AADHAAR_BACK');
-        if (_panPath != null) tasks['PAN'] = () => _kycRepository!.uploadDocument(File(_panPath!), 'KYC_PAN');
-        if (_selfiePath != null) tasks['Selfie'] = () => _kycRepository!.uploadDocument(File(_selfiePath!), 'KYC_SELFIE');
-        if (_signaturePath != null) tasks['Signature'] = () => _kycRepository!.uploadDocument(File(_signaturePath!), 'KYC_SIGNATURE');
+        if (_aadhaarFrontPath != null)
+          tasks['Aadhaar Front'] = () => _kycRepository!
+              .uploadDocument(File(_aadhaarFrontPath!), 'kyc_document');
+        if (_aadhaarBackPath != null)
+          tasks['Aadhaar Back'] = () => _kycRepository!
+              .uploadDocument(File(_aadhaarBackPath!), 'kyc_document');
+        if (_panPath != null)
+          tasks['PAN'] = () =>
+              _kycRepository!.uploadDocument(File(_panPath!), 'kyc_document');
+        if (_selfiePath != null)
+          tasks['Selfie'] = () => _kycRepository!
+              .uploadDocument(File(_selfiePath!), 'profile_photo');
+        if (_signaturePath != null)
+          tasks['Signature'] = () => _kycRepository!
+              .uploadDocument(File(_signaturePath!), 'kyc_document');
 
         int completed = 0;
         final results = <String, String>{};
-        
+
         for (final entry in tasks.entries) {
           if (mounted) {
             setState(() {
-              _uploadProgressText = 'Uploading ${completed + 1} of ${tasks.length}...';
+              _uploadProgressText =
+                  'Uploading ${completed + 1} of ${tasks.length}...';
             });
           }
           results[entry.key] = await entry.value();
@@ -381,16 +409,27 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
         String userMessage = 'Something went wrong. Please try again.';
         final msg = e.toString();
         debugPrint('Profile update error: $msg');
-        if (msg.contains('422') || msg.contains('VALIDATION')) {
-          // Extract the actual validation error message
+
+        // Extract real validation error if available (e.g. from DioException)
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          debugPrint('Backend error data: $data');
+          if (data is Map && data['message'] != null) {
+            userMessage = data['message'];
+            if (data['errors'] != null) {
+              userMessage += ': ${data['errors']}';
+            }
+          }
+        } else if (msg.contains('422') || msg.contains('VALIDATION')) {
           final match = RegExp(r'"message":"([^"]+)"').firstMatch(msg);
           userMessage = match != null
               ? match.group(1)!
               : 'Please check your documents and try uploading again.';
-        } else if (msg.contains('401') || msg.contains('unauthorized'))
+        } else if (msg.contains('401') || msg.contains('unauthorized')) {
           userMessage = 'Session expired. Please log in again.';
-        else if (msg.contains('network') || msg.contains('timeout'))
+        } else if (msg.contains('network') || msg.contains('timeout')) {
           userMessage = 'No internet connection. Please check and retry.';
+        }
         _showError(userMessage);
       }
     } finally {
@@ -400,95 +439,98 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
-      body: SafeArea(
-        child: Column(
-          children: [
-            UserOnboardingAppBar(
-              onBack: () => widget.onBack?.call(),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const UserOnboardingHeader(),
-                    const SizedBox(height: 20),
-                    PersonalDetailsCard(
-                      nameController: _nameController,
-                      dobController: _dobController,
-                      emailController: _emailController,
-                      fatherNameController: _fatherNameController,
-                      motherNameController: _motherNameController,
-                      addressController: _addressController,
-                      phone: context.read<AppProvider>().rider?.phone ?? '',
-                      onSelectDob: _selectDob,
-                    ),
-                    const SizedBox(height: 20),
-                    IdentityVerificationCard(
-                      aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                      aadhaarBackUploaded: _aadhaarBackUploaded,
-                      panUploaded: _panUploaded,
-                      bankDetailsDone:
-                          _bankAccountController.text.isNotEmpty,
-                      onPickAadhaarFront: () =>
-                          _pickDocument('aadhaar_front', false),
-                      onPickAadhaarBack: () =>
-                          _pickDocument('aadhaar_back', false),
-                      onPickPan: () => _pickDocument('pan', false),
-                      onShowBankDialog: () => _showBankDetailsDialog(),
-                    ),
-                    const SizedBox(height: 20),
-                    SelfieCard(
-                      selfieUploaded: _selfieUploaded,
-                      selfiePath: _selfiePath,
-                      onTap: () async {
-                        final source = await showDialog<ImageSource>(
-                          context: context,
-                          builder: (ctx) => SimpleDialog(
-                            title: const Text('Take Selfie'),
-                            children: [
-                              SimpleDialogOption(
-                                onPressed: () =>
-                                    Navigator.pop(ctx, ImageSource.camera),
-                                child: const ListTile(
+    return ColoredBox(
+      color: const Color(0xFFF5F5F7),
+      child: SafeArea(
+        child: SizedBox.expand(
+          child: Column(
+            children: [
+              UserOnboardingAppBar(
+                onBack: () => widget.onBack?.call(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const UserOnboardingHeader(),
+                      const SizedBox(height: 20),
+                      PersonalDetailsCard(
+                        nameController: _nameController,
+                        dobController: _dobController,
+                        emailController: _emailController,
+                        fatherNameController: _fatherNameController,
+                        motherNameController: _motherNameController,
+                        addressController: _addressController,
+                        phone: context.read<AppProvider>().rider?.phone ?? '',
+                        onSelectDob: _selectDob,
+                      ),
+                      const SizedBox(height: 20),
+                      IdentityVerificationCard(
+                        aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                        aadhaarBackUploaded: _aadhaarBackUploaded,
+                        panUploaded: _panUploaded,
+                        bankDetailsDone: _bankAccountController.text.isNotEmpty,
+                        onPickAadhaarFront: () =>
+                            _pickDocument('aadhaar_front', false),
+                        onPickAadhaarBack: () =>
+                            _pickDocument('aadhaar_back', false),
+                        onPickPan: () => _pickDocument('pan', false),
+                        onShowBankDialog: () => _showBankDetailsDialog(),
+                      ),
+                      const SizedBox(height: 20),
+                      SelfieCard(
+                        selfieUploaded: _selfieUploaded,
+                        selfiePath: _selfiePath,
+                        onTap: () async {
+                          final source = await showDialog<ImageSource>(
+                            context: context,
+                            builder: (ctx) => SimpleDialog(
+                              title: const Text('Take Selfie'),
+                              children: [
+                                SimpleDialogOption(
+                                  onPressed: () =>
+                                      Navigator.pop(ctx, ImageSource.camera),
+                                  child: const ListTile(
                                     leading: Icon(Icons.camera_alt),
-                                    title: Text('Camera'),),
-                              ),
-                              SimpleDialogOption(
-                                onPressed: () =>
-                                    Navigator.pop(ctx, ImageSource.gallery),
-                                child: const ListTile(
+                                    title: Text('Camera'),
+                                  ),
+                                ),
+                                SimpleDialogOption(
+                                  onPressed: () =>
+                                      Navigator.pop(ctx, ImageSource.gallery),
+                                  child: const ListTile(
                                     leading: Icon(Icons.photo_library),
-                                    title: Text('Gallery'),),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (source != null) {
-                          _pickDocument('selfie', source == ImageSource.camera);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    SignatureCard(
-                      signatureUploaded: _signatureUploaded,
-                      onTap: _openSignaturePad,
-                    ),
-                  ],
+                                    title: Text('Gallery'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (source != null) {
+                            _pickDocument(
+                                'selfie', source == ImageSource.camera);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      SignatureCard(
+                        signatureUploaded: _signatureUploaded,
+                        onTap: _openSignaturePad,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            UserOnboardingBottomButton(
-              canProceed: AppConstants.isTestMode ||
-                  _isFormComplete,
-              isUploading: _isUploading,
-              uploadProgressText: _uploadProgressText,
-              onNext: _handleNext,
-            ),
-          ],
+              UserOnboardingBottomButton(
+                canProceed: AppConstants.isTestMode || _isFormComplete,
+                isUploading: _isUploading,
+                uploadProgressText: _uploadProgressText,
+                onNext: _handleNext,
+              ),
+            ],
+          ),
         ),
       ),
     );

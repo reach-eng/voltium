@@ -203,7 +203,8 @@ class _NotificationPreferencesScreenState
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Save Preferences',
+                            : const Text(
+                                'Save Preferences',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -250,27 +251,36 @@ class _NotificationPreferencesScreenState
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: Color(0xFF1E293B),),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: Color(0xFF1E293B),
+              ),
             ),
           ),
           const SizedBox(width: 16),
-          const Text('Notification Preferences',
+          const Text(
+            'Notification Preferences',
             style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSection(
-      {required String title, required List<Widget> children,}) {
+  Widget _buildSection({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,

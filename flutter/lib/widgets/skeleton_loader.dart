@@ -22,7 +22,10 @@ class DashboardSkeleton extends StatelessWidget {
               children: [
                 ShimmerLoading(width: 112, height: 24, borderRadius: 4),
                 ShimmerLoading(
-                    width: 40, height: 40, shape: ShimmerShape.circle,),
+                  width: 40,
+                  height: 40,
+                  shape: ShimmerShape.circle,
+                ),
               ],
             ),
           ),
@@ -35,32 +38,45 @@ class DashboardSkeleton extends StatelessWidget {
                 ShimmerLoading(width: 192, height: 40, borderRadius: 20),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 96, borderRadius: 20,),
+                  width: double.infinity,
+                  height: 96,
+                  borderRadius: 20,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 176, borderRadius: 20,),
+                  width: double.infinity,
+                  height: 176,
+                  borderRadius: 20,
+                ),
                 SizedBox(height: 16),
 
                 // Bento Grid
                 Row(
                   children: [
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 96,
-                            borderRadius: 20,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 96,
+                        borderRadius: 20,
+                      ),
+                    ),
                     SizedBox(width: 12),
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 96,
-                            borderRadius: 20,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 96,
+                        borderRadius: 20,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 16),
 
                 ShimmerLoading(
-                    width: double.infinity, height: 112, borderRadius: 20,),
+                  width: double.infinity,
+                  height: 112,
+                  borderRadius: 20,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(width: 160, height: 32, borderRadius: 8),
                 SizedBox(height: 16),
@@ -69,21 +85,28 @@ class DashboardSkeleton extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 80,
-                            borderRadius: 20,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 80,
+                        borderRadius: 20,
+                      ),
+                    ),
                     SizedBox(width: 12),
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 80,
-                            borderRadius: 20,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 80,
+                        borderRadius: 20,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 12),
                 ShimmerLoading(
-                    width: double.infinity, height: 80, borderRadius: 20,),
+                  width: double.infinity,
+                  height: 80,
+                  borderRadius: 20,
+                ),
               ],
             ),
           ),
@@ -115,24 +138,34 @@ class WalletSkeleton extends StatelessWidget {
             child: Column(
               children: [
                 ShimmerLoading(
-                    width: double.infinity, height: 192, borderRadius: 24,),
+                  width: double.infinity,
+                  height: 192,
+                  borderRadius: 24,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 128, borderRadius: 24,),
+                  width: double.infinity,
+                  height: 128,
+                  borderRadius: 24,
+                ),
                 SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 64,
-                            borderRadius: 16,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 64,
+                        borderRadius: 16,
+                      ),
+                    ),
                     SizedBox(width: 12),
                     Expanded(
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 64,
-                            borderRadius: 16,),),
+                      child: ShimmerLoading(
+                        width: double.infinity,
+                        height: 64,
+                        borderRadius: 16,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -172,19 +205,34 @@ class PreDashboardSkeleton extends StatelessWidget {
             child: Column(
               children: [
                 ShimmerLoading(
-                    width: double.infinity, height: 64, borderRadius: 12,),
+                  width: double.infinity,
+                  height: 64,
+                  borderRadius: 12,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 112, borderRadius: 12,),
+                  width: double.infinity,
+                  height: 112,
+                  borderRadius: 12,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 192, borderRadius: 12,),
+                  width: double.infinity,
+                  height: 192,
+                  borderRadius: 12,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 128, borderRadius: 12,),
+                  width: double.infinity,
+                  height: 128,
+                  borderRadius: 12,
+                ),
                 SizedBox(height: 16),
                 ShimmerLoading(
-                    width: double.infinity, height: 96, borderRadius: 12,),
+                  width: double.infinity,
+                  height: 96,
+                  borderRadius: 12,
+                ),
               ],
             ),
           ),
@@ -212,10 +260,16 @@ class ProfileSkeleton extends StatelessWidget {
           ),
           SizedBox(height: 24),
           ShimmerLoading(
-              width: double.infinity, height: 192, borderRadius: 16,),
+            width: double.infinity,
+            height: 192,
+            borderRadius: 16,
+          ),
           SizedBox(height: 24),
           ShimmerLoading(
-              width: double.infinity, height: 208, borderRadius: 16,),
+            width: double.infinity,
+            height: 208,
+            borderRadius: 16,
+          ),
         ],
       ),
     );
@@ -241,28 +295,37 @@ class SupportSkeleton extends StatelessWidget {
           const SizedBox(height: 20),
           Row(
             children: List.generate(
-                3,
-                (i) => const Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 4),
-                        child: ShimmerLoading(
-                            width: double.infinity,
-                            height: 80,
-                            borderRadius: 12,),
-                      ),
-                    ),),
+              3,
+              (i) => const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: ShimmerLoading(
+                    width: double.infinity,
+                    height: 80,
+                    borderRadius: 12,
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           const ShimmerLoading(
-              width: double.infinity, height: 48, borderRadius: 12,),
+            width: double.infinity,
+            height: 48,
+            borderRadius: 12,
+          ),
           const SizedBox(height: 20),
           ...List.generate(
-              4,
-              (i) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12),
-                    child: ShimmerLoading(
-                        width: double.infinity, height: 64, borderRadius: 12,),
-                  ),),
+            4,
+            (i) => const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: ShimmerLoading(
+                width: double.infinity,
+                height: 64,
+                borderRadius: 12,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -327,11 +390,17 @@ class PickupVerificationSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+              Expanded(
+                  child: ShimmerLoading(
+                      width: double.infinity, height: 80, borderRadius: 12)),
               SizedBox(width: 8),
-              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+              Expanded(
+                  child: ShimmerLoading(
+                      width: double.infinity, height: 80, borderRadius: 12)),
               SizedBox(width: 8),
-              Expanded(child: ShimmerLoading(width: double.infinity, height: 80, borderRadius: 12)),
+              Expanded(
+                  child: ShimmerLoading(
+                      width: double.infinity, height: 80, borderRadius: 12)),
             ],
           ),
         ),
@@ -341,11 +410,14 @@ class PickupVerificationSkeleton extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+              ShimmerLoading(
+                  width: double.infinity, height: 56, borderRadius: 12),
               SizedBox(height: 12),
-              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+              ShimmerLoading(
+                  width: double.infinity, height: 56, borderRadius: 12),
               SizedBox(height: 12),
-              ShimmerLoading(width: double.infinity, height: 56, borderRadius: 12),
+              ShimmerLoading(
+                  width: double.infinity, height: 56, borderRadius: 12),
             ],
           ),
         ),
@@ -434,11 +506,15 @@ class KycSkeleton extends StatelessWidget {
             children: [
               ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
               SizedBox(width: 8),
-              Expanded(child: ShimmerLoading(width: double.infinity, height: 4, borderRadius: 2)),
+              Expanded(
+                  child: ShimmerLoading(
+                      width: double.infinity, height: 4, borderRadius: 2)),
               SizedBox(width: 8),
               ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
               SizedBox(width: 8),
-              Expanded(child: ShimmerLoading(width: double.infinity, height: 4, borderRadius: 2)),
+              Expanded(
+                  child: ShimmerLoading(
+                      width: double.infinity, height: 4, borderRadius: 2)),
               SizedBox(width: 8),
               ShimmerLoading(width: 32, height: 32, shape: ShimmerShape.circle),
             ],

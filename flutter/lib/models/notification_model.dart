@@ -72,9 +72,11 @@ class AppNotification {
         title: json['title']?.toString() ?? '',
         message: json['message']?.toString() ?? json['body']?.toString() ?? '',
         type: _parseType(json['type']),
-        createdAt: DateTime.tryParse(json['createdAt']?.toString() ??
-                json['timestamp']?.toString() ??
-                '',) ??
+        createdAt: DateTime.tryParse(
+              json['createdAt']?.toString() ??
+                  json['timestamp']?.toString() ??
+                  '',
+            ) ??
             DateTime.now(),
         isRead: json['isRead'] ?? false,
         actionUrl: json['actionUrl']?.toString(),

@@ -34,7 +34,8 @@ void main() {
       expect(find.byType(SupportCenterScreen), findsOneWidget);
     });
 
-    testWidgets('support center shows support categories or options', (tester) async {
+    testWidgets('support center shows support categories or options',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
       await tester.pumpAndSettle();
 

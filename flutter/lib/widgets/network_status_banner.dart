@@ -65,7 +65,8 @@ class _NetworkStatusBannerState extends State<NetworkStatusBanner> {
               children: [
                 Icon(Icons.wifi_off, color: Colors.white, size: 14),
                 SizedBox(width: 8),
-                Text('No internet connection',
+                Text(
+                  'No internet connection',
                   style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
@@ -92,9 +93,13 @@ class OfflineBanner extends StatelessWidget {
         children: [
           Icon(Icons.wifi_off, color: Colors.white, size: 14),
           SizedBox(width: 8),
-          Text('You are offline',
+          Text(
+            'You are offline',
             style: TextStyle(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500,),
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -116,9 +121,13 @@ class OnlineBanner extends StatelessWidget {
         children: [
           Icon(Icons.cloud_done, color: Colors.white, size: 14),
           SizedBox(width: 8),
-          Text('Back online',
+          Text(
+            'Back online',
             style: TextStyle(
-                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500,),
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

@@ -69,8 +69,11 @@ class OfflineStorageService {
     ''');
   }
 
-  Future<void> cacheData(String key, Map<String, dynamic> data,
-      {Duration? ttl,}) async {
+  Future<void> cacheData(
+    String key,
+    Map<String, dynamic> data, {
+    Duration? ttl,
+  }) async {
     if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final expiresAt = ttl != null ? now + ttl.inMilliseconds : null;
@@ -99,7 +102,8 @@ class OfflineStorageService {
   }
 
   Future<void> cacheTransactions(
-      List<Map<String, dynamic>> transactions,) async {
+    List<Map<String, dynamic>> transactions,
+  ) async {
     if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final batch = _db!.batch();
@@ -157,10 +161,15 @@ class OfflineStorageService {
   }
 
   Future<void> addPendingOperation(
-      String endpoint, String method, Map<String, dynamic>? body, {String? idempotencyKey,}) async {
+    String endpoint,
+    String method,
+    Map<String, dynamic>? body, {
+    String? idempotencyKey,
+  }) async {
     if (_db == null) return;
     MonitoringService.logInfo(
-        'Offline: Queuing pending operation: $method $endpoint',);
+      'Offline: Queuing pending operation: $method $endpoint',
+    );
     await _db!.insert('pending_operations', {
       'endpoint': endpoint,
       'method': method,
@@ -175,14 +184,15 @@ class OfflineStorageService {
     final results =
         await _db!.query('pending_operations', orderBy: 'created_at ASC');
     return results
-        .map((r) => {
-              'id': r['id'],
-              'endpoint': r['endpoint'],
-              'method': r['method'],
-              'body':
-                  r['body'] != null ? jsonDecode(r['body'] as String) : null,
-              'idempotency_key': r['idempotency_key'],
-            },)
+        .map(
+          (r) => {
+            'id': r['id'],
+            'endpoint': r['endpoint'],
+            'method': r['method'],
+            'body': r['body'] != null ? jsonDecode(r['body'] as String) : null,
+            'idempotency_key': r['idempotency_key'],
+          },
+        )
         .toList();
   }
 

@@ -134,7 +134,8 @@ class _AppShellState extends State<AppShell> {
                 controller: _pageController,
                 onPageChanged: (index) {
                   setState(() => _currentIndex = index);
-                  MonitoringService.logInfo('Navigation: Switched to tab $index');
+                  MonitoringService.logInfo(
+                      'Navigation: Switched to tab $index');
                 },
                 children: [
                   LazyScreenWrapper(

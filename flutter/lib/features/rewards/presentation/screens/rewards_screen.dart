@@ -14,18 +14,27 @@ class RewardsScreen extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text('Rewards',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
           child: GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4))
+                ],
               ),
-              child: const Icon(Icons.arrow_back, color: Color(0xFF1E293B), size: 20),
+              child: const Icon(Icons.arrow_back,
+                  color: Color(0xFF1E293B), size: 20),
             ),
           ),
         ),

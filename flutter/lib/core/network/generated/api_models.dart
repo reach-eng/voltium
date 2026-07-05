@@ -366,10 +366,16 @@ class UpdateProfileRequest {
       bankIfsc: json['bankIfsc'],
       selfie: json['selfie'],
       returnPending: json['returnPending'] as bool?,
-      returnPhotos: json['returnPhotos'] != null ? (json['returnPhotos'] as List).map((e) => e as String).toList() : null,
+      returnPhotos: json['returnPhotos'] != null
+          ? (json['returnPhotos'] as List).map((e) => e as String).toList()
+          : null,
       returnReason: json['returnReason'] as String?,
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
       guarantorName: json['guarantorName'] as String?,
       guarantorPhone: json['guarantorPhone'] as String?,
       guarantorRelation: json['guarantorRelation'] as String?,
@@ -673,7 +679,8 @@ class TopupResponse {
   factory TopupResponse.fromJson(Map<String, dynamic> json) {
     return TopupResponse(
       id: json['id'] as String?,
-      amount: json['amount'] != null ? (json['amount'] as num).toDouble() : null,
+      amount:
+          json['amount'] != null ? (json['amount'] as num).toDouble() : null,
       status: json['status'] as String?,
       idempotent: json['idempotent'] as bool?,
     );
@@ -709,8 +716,12 @@ class ReviewDepositRequest {
       riderId: json['riderId'] as String,
       action: json['action'] as String,
       reason: json['reason'] as String?,
-      refundAmount: json['refundAmount'] != null ? (json['refundAmount'] as num).toDouble() : null,
-      bonusAmount: json['bonusAmount'] != null ? (json['bonusAmount'] as num).toDouble() : null,
+      refundAmount: json['refundAmount'] != null
+          ? (json['refundAmount'] as num).toDouble()
+          : null,
+      bonusAmount: json['bonusAmount'] != null
+          ? (json['bonusAmount'] as num).toDouble()
+          : null,
     );
   }
 
@@ -743,7 +754,9 @@ class ApproveTransactionRequest {
       id: json['id'] as String,
       action: json['action'] as String,
       rejectionReason: json['rejectionReason'] as String?,
-      walletCreditAmount: json['walletCreditAmount'] != null ? (json['walletCreditAmount'] as num).toDouble() : null,
+      walletCreditAmount: json['walletCreditAmount'] != null
+          ? (json['walletCreditAmount'] as num).toDouble()
+          : null,
     );
   }
 
@@ -959,7 +972,9 @@ class RequestUploadUrlResponse {
       uploadUrl: json['uploadUrl'] as String?,
       fileRecordId: json['fileRecordId'] as String?,
       storageKey: json['storageKey'] as String?,
-      expiresIn: json['expiresIn'] != null ? (json['expiresIn'] as num).toDouble() : null,
+      expiresIn: json['expiresIn'] != null
+          ? (json['expiresIn'] as num).toDouble()
+          : null,
     );
   }
 
@@ -1037,7 +1052,9 @@ class RequestReadUrlResponse {
   factory RequestReadUrlResponse.fromJson(Map<String, dynamic> json) {
     return RequestReadUrlResponse(
       readUrl: json['readUrl'] as String?,
-      expiresIn: json['expiresIn'] != null ? (json['expiresIn'] as num).toDouble() : null,
+      expiresIn: json['expiresIn'] != null
+          ? (json['expiresIn'] as num).toDouble()
+          : null,
     );
   }
 
@@ -1062,7 +1079,12 @@ class ListNotificationsResponse {
 
   factory ListNotificationsResponse.fromJson(Map<String, dynamic> json) {
     return ListNotificationsResponse(
-      notifications: json['notifications'] != null ? (json['notifications'] as List).map((e) => NotificationResponse.fromJson(e as Map<String, dynamic>)).toList() : null,
+      notifications: json['notifications'] != null
+          ? (json['notifications'] as List)
+              .map((e) =>
+                  NotificationResponse.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
       unreadCount: json['unreadCount'] as int?,
       total: json['total'] as int?,
     );
@@ -1128,7 +1150,11 @@ class ListVehiclesResponse {
 
   factory ListVehiclesResponse.fromJson(Map<String, dynamic> json) {
     return ListVehiclesResponse(
-      vehicles: json['vehicles'] != null ? (json['vehicles'] as List).map((e) => VehicleResponse.fromJson(e as Map<String, dynamic>)).toList() : null,
+      vehicles: json['vehicles'] != null
+          ? (json['vehicles'] as List)
+              .map((e) => VehicleResponse.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
       total: json['total'] as int?,
     );
   }
@@ -1167,7 +1193,9 @@ class VehicleResponse {
       registrationNumber: json['registrationNumber'] as String?,
       model: json['model'] as String?,
       status: json['status'] as String?,
-      batteryLevel: json['batteryLevel'] != null ? (json['batteryLevel'] as num).toDouble() : null,
+      batteryLevel: json['batteryLevel'] != null
+          ? (json['batteryLevel'] as num).toDouble()
+          : null,
       hubId: json['hubId'] as String?,
     );
   }
@@ -1196,7 +1224,11 @@ class ListHubsResponse {
 
   factory ListHubsResponse.fromJson(Map<String, dynamic> json) {
     return ListHubsResponse(
-      hubs: json['hubs'] != null ? (json['hubs'] as List).map((e) => HubResponse.fromJson(e as Map<String, dynamic>)).toList() : null,
+      hubs: json['hubs'] != null
+          ? (json['hubs'] as List)
+              .map((e) => HubResponse.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : null,
       total: json['total'] as int?,
     );
   }
@@ -1272,7 +1304,9 @@ class DepositStatusResponse {
     return DepositStatusResponse(
       riderId: json['riderId'] as String?,
       status: json['status'] as String?,
-      amountInPaise: json['amountInPaise'] != null ? (json['amountInPaise'] as num).toDouble() : null,
+      amountInPaise: json['amountInPaise'] != null
+          ? (json['amountInPaise'] as num).toDouble()
+          : null,
     );
   }
 
@@ -1538,7 +1572,9 @@ class CreateCouponRequest {
       description: json['description'] as String,
       discountType: json['discountType'] as String,
       discountValue: (json['discountValue'] as num).toDouble(),
-      minAmount: json['minAmount'] != null ? (json['minAmount'] as num).toDouble() : null,
+      minAmount: json['minAmount'] != null
+          ? (json['minAmount'] as num).toDouble()
+          : null,
       maxUses: json['maxUses'] as int?,
       validFrom: json['validFrom'] as String,
       validUntil: json['validUntil'] as String,
@@ -1586,8 +1622,12 @@ class CreateEarningRequest {
       platform: json['platform'] as String?,
       amount: (json['amount'] as num).toDouble(),
       trips: json['trips'] as int,
-      distance: json['distance'] != null ? (json['distance'] as num).toDouble() : null,
-      hoursOnline: json['hoursOnline'] != null ? (json['hoursOnline'] as num).toDouble() : null,
+      distance: json['distance'] != null
+          ? (json['distance'] as num).toDouble()
+          : null,
+      hoursOnline: json['hoursOnline'] != null
+          ? (json['hoursOnline'] as num).toDouble()
+          : null,
       notes: json['notes'] as String?,
     );
   }
@@ -1711,8 +1751,12 @@ class CreateIncidentRequest {
       title: json['title'] as String,
       description: json['description'] as String,
       location: json['location'] as String?,
-      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      latitude: json['latitude'] != null
+          ? (json['latitude'] as num).toDouble()
+          : null,
+      longitude: json['longitude'] != null
+          ? (json['longitude'] as num).toDouble()
+          : null,
       photos: (json['photos'] as List).map((e) => e as String).toList(),
       insuranceClaim: json['insuranceClaim'] as bool,
       insuranceClaimNumber: json['insuranceClaimNumber'] as String?,
@@ -2121,7 +2165,9 @@ class SendNotificationRequest {
       title: json['title'] as String,
       message: json['message'] as String,
       type: json['type'] as String,
-      riderIds: json['riderIds'] != null ? (json['riderIds'] as List).map((e) => e as String).toList() : null,
+      riderIds: json['riderIds'] != null
+          ? (json['riderIds'] as List).map((e) => e as String).toList()
+          : null,
       sendToAll: json['sendToAll'] as bool,
     );
   }
@@ -2237,7 +2283,9 @@ class SyncQueueRequest {
   factory SyncQueueRequest.fromJson(Map<String, dynamic> json) {
     return SyncQueueRequest(
       riderId: json['riderId'] as String,
-      actions: (json['actions'] as List).map((e) => e as Map<String, dynamic>).toList(),
+      actions: (json['actions'] as List)
+          .map((e) => e as Map<String, dynamic>)
+          .toList(),
     );
   }
 
@@ -2428,8 +2476,12 @@ class UpdateCouponRequest {
       code: json['code'] as String?,
       description: json['description'] as String?,
       discountType: json['discountType'] as String?,
-      discountValue: json['discountValue'] != null ? (json['discountValue'] as num).toDouble() : null,
-      minAmount: json['minAmount'] != null ? (json['minAmount'] as num).toDouble() : null,
+      discountValue: json['discountValue'] != null
+          ? (json['discountValue'] as num).toDouble()
+          : null,
+      minAmount: json['minAmount'] != null
+          ? (json['minAmount'] as num).toDouble()
+          : null,
       maxUses: json['maxUses'] as int?,
       validFrom: json['validFrom'] as String?,
       validUntil: json['validUntil'] as String?,
@@ -2562,17 +2614,14 @@ class UpdatePlanRequest {
 }
 
 class UpdateSettingsRequest {
-
   UpdateSettingsRequest();
 
   factory UpdateSettingsRequest.fromJson(Map<String, dynamic> json) {
-    return UpdateSettingsRequest(
-    );
+    return UpdateSettingsRequest();
   }
 
   Map<String, dynamic> toJson() {
-    return {
-    };
+    return {};
   }
 }
 
@@ -2703,4 +2752,3 @@ class VehicleReturnRequest {
     };
   }
 }
-

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class FormScrollHelper {
   static void scrollToFirstError(
-      BuildContext context, Map<String, String?> errors, {Map<String, GlobalKey>? keys}) {
+      BuildContext context, Map<String, String?> errors,
+      {Map<String, GlobalKey>? keys}) {
     String? firstErrorKey;
     for (final entry in errors.entries) {
       if (entry.value != null && entry.value!.isNotEmpty) {
@@ -16,7 +17,7 @@ class FormScrollHelper {
       if (keys != null && keys.containsKey(firstErrorKey)) {
         targetContext = keys[firstErrorKey]?.currentContext;
       }
-      
+
       targetContext ??= primaryFocus?.context;
 
       if (targetContext != null) {
@@ -79,7 +80,8 @@ class _AutoScrollFormState extends State<AutoScrollForm> {
     super.didUpdateWidget(oldWidget);
     if (widget.autoScroll && _hasErrorsChanged(oldWidget.errors)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        FormScrollHelper.scrollToFirstError(context, widget.errors, keys: widget.fieldKeys);
+        FormScrollHelper.scrollToFirstError(context, widget.errors,
+            keys: widget.fieldKeys);
       });
     }
   }

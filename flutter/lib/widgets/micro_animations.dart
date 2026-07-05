@@ -117,12 +117,16 @@ class _MicroAnimationState extends State<MicroAnimation>
             return Opacity(opacity: _animation.value, child: child);
           case AnimationType.slide:
             return Transform.translate(
-                offset: Offset(0, _animation.value), child: child,);
+              offset: Offset(0, _animation.value),
+              child: child,
+            );
           case AnimationType.bounce:
             return Transform.scale(scale: _animation.value, child: child);
           case AnimationType.shake:
             return Transform.translate(
-                offset: Offset(_animation.value, 0), child: child,);
+              offset: Offset(_animation.value, 0),
+              child: child,
+            );
           case AnimationType.pulse:
             return Transform.scale(scale: _animation.value, child: child);
           case AnimationType.rotate:

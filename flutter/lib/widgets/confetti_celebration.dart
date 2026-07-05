@@ -126,15 +126,21 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500),);
-    _scale = Tween<double>(begin: 0.5, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ),);
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    ),);
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _scale = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.elasticOut,
+      ),
+    );
+    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
+      ),
+    );
 
     if (widget.show) {
       _controller.forward().then((_) {

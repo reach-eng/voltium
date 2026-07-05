@@ -75,7 +75,9 @@ void main() {
       m.stop();
     });
 
-    test('setConnectivity(false) suspends ticks; true resumes with an immediate tick', () async {
+    test(
+        'setConnectivity(false) suspends ticks; true resumes with an immediate tick',
+        () async {
       var calls = 0;
       final m = PollingManager(
         onTick: () async => calls++,

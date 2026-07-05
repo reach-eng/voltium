@@ -79,7 +79,9 @@ void main() {
         ['SYSTEM', AppNotificationType.system],
       ]) {
         final n = AppNotification.fromJson({
-          'id': 'x', 'title': 'T', 'message': 'M',
+          'id': 'x',
+          'title': 'T',
+          'message': 'M',
           'type': pair[0] as String,
           'createdAt': '2024-01-01T00:00:00.000Z',
         });
@@ -89,7 +91,9 @@ void main() {
 
     test('falls back to system for unknown type', () {
       final n = AppNotification.fromJson({
-        'id': 'x', 'title': 'T', 'message': 'M',
+        'id': 'x',
+        'title': 'T',
+        'message': 'M',
         'type': 'UNKNOWN_TYPE',
         'createdAt': '2024-01-01T00:00:00.000Z',
       });
@@ -122,7 +126,8 @@ void main() {
     });
 
     test('paymentReceived → arrow_downward', () {
-      expect(_make(AppNotificationType.paymentReceived).icon, Icons.arrow_downward);
+      expect(_make(AppNotificationType.paymentReceived).icon,
+          Icons.arrow_downward);
     });
 
     test('sos, sosAlert, alert → warning', () {
@@ -143,11 +148,25 @@ void main() {
 
   // ── iconColor getter ─────────────────────────────────────────────────────
   group('AppNotification.iconColor', () {
-    test('vehicle → blue', () => expect(_make(AppNotificationType.vehicle).iconColor, Colors.blue));
-    test('payment → orange', () => expect(_make(AppNotificationType.payment).iconColor, Colors.orange));
-    test('paymentReceived → green', () => expect(_make(AppNotificationType.paymentReceived).iconColor, Colors.green));
-    test('sos → red', () => expect(_make(AppNotificationType.sos).iconColor, Colors.red));
-    test('promotion → purple', () => expect(_make(AppNotificationType.promotion).iconColor, Colors.purple));
-    test('info → grey', () => expect(_make(AppNotificationType.info).iconColor, Colors.grey));
+    test(
+        'vehicle → blue',
+        () =>
+            expect(_make(AppNotificationType.vehicle).iconColor, Colors.blue));
+    test(
+        'payment → orange',
+        () => expect(
+            _make(AppNotificationType.payment).iconColor, Colors.orange));
+    test(
+        'paymentReceived → green',
+        () => expect(_make(AppNotificationType.paymentReceived).iconColor,
+            Colors.green));
+    test('sos → red',
+        () => expect(_make(AppNotificationType.sos).iconColor, Colors.red));
+    test(
+        'promotion → purple',
+        () => expect(
+            _make(AppNotificationType.promotion).iconColor, Colors.purple));
+    test('info → grey',
+        () => expect(_make(AppNotificationType.info).iconColor, Colors.grey));
   });
 }

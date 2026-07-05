@@ -83,8 +83,11 @@ class TransactionFilterSort extends StatelessWidget {
                 child: Row(
                   children: [
                     if (sort == selectedSort)
-                      const Icon(Icons.check,
-                          size: 16, color: AppColors.primary,)
+                      const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppColors.primary,
+                      )
                     else
                       const SizedBox(width: 16),
                     const SizedBox(width: 8),
@@ -137,8 +140,11 @@ class DateRangePicker extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today,
-                      size: 16, color: Color(0xFF667085),),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Color(0xFF667085),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     startDate != null
@@ -180,8 +186,11 @@ class DateRangePicker extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today,
-                      size: 16, color: Color(0xFF667085),),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Color(0xFF667085),
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     endDate != null

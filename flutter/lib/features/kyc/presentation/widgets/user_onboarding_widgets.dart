@@ -45,58 +45,91 @@ class PersonalDetailsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
-                    borderRadius: BorderRadius.circular(8),),
-                child: const Icon(Icons.person,
-                    color: Color(0xFF2563EB), size: 18,),
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: Color(0xFF2563EB),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
-              const Text('Personal Details',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),),),
+              const Text(
+                'Personal Details',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF111827),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildTextField('Full Name', 'Enter full name', nameController,
-              key: const Key('fullNameField'),),
+          _buildTextField(
+            'Full Name',
+            'Enter full name',
+            nameController,
+            key: const Key('fullNameField'),
+          ),
           const SizedBox(height: 12),
           _buildDateField(
-              'Date of Birth', 'DD-MM-YYYY', dobController, onSelectDob,),
+            'Date of Birth',
+            'DD-MM-YYYY',
+            dobController,
+            onSelectDob,
+          ),
           const SizedBox(height: 12),
           _buildTextField(
-              'Email Address', 'Enter email address', emailController,
-              key: const Key('emailField'),),
+            'Email Address',
+            'Enter email address',
+            emailController,
+            key: const Key('emailField'),
+          ),
           const SizedBox(height: 12),
           _buildPhoneField(formattedPhone),
           const SizedBox(height: 12),
           _buildTextField(
-              "Father's Name", "Enter father's name", fatherNameController,
-              key: const Key('fatherNameField'),),
+            "Father's Name",
+            "Enter father's name",
+            fatherNameController,
+            key: const Key('fatherNameField'),
+          ),
           const SizedBox(height: 12),
           _buildTextField(
-              "Mother's Name", "Enter mother's name", motherNameController,
-              key: const Key('motherNameField'),),
+            "Mother's Name",
+            "Enter mother's name",
+            motherNameController,
+            key: const Key('motherNameField'),
+          ),
           const SizedBox(height: 12),
           _buildTextArea(
-              'Current Address', 'Enter your full address', addressController,),
+            'Current Address',
+            'Enter your full address',
+            addressController,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTextField(
-      String label, String hint, TextEditingController controller,
-      {Key? key,}) {
+    String label,
+    String hint,
+    TextEditingController controller, {
+    Key? key,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           key: key,
@@ -109,30 +142,40 @@ class PersonalDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: AppColors.surfaceContainer,
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF2563EB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDateField(String label, String hint,
-      TextEditingController controller, VoidCallback onTap,) {
+  Widget _buildDateField(
+    String label,
+    String hint,
+    TextEditingController controller,
+    VoidCallback onTap,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 6),
         GestureDetector(
           onTap: onTap,
@@ -144,21 +187,27 @@ class PersonalDetailsCard extends StatelessWidget {
                 hintText: hint,
                 hintStyle:
                     const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.calendar_today,
-                    size: 18, color: Color(0xFF6B7280),),
+                prefixIcon: const Icon(
+                  Icons.calendar_today,
+                  size: 18,
+                  color: Color(0xFF6B7280),
+                ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 filled: true,
                 fillColor: AppColors.surfaceContainer,
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                ),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                ),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF2563EB)),),
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                ),
               ),
             ),
           ),
@@ -171,11 +220,14 @@ class PersonalDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Phone Number',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),),),
+        const Text(
+          'Phone Number',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 6),
         Container(
           width: double.infinity,
@@ -189,11 +241,14 @@ class PersonalDetailsCard extends StatelessWidget {
             children: [
               const Icon(Icons.phone, size: 16, color: Color(0xFF9CA3AF)),
               const SizedBox(width: 8),
-              Text(phone,
-                  style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,),),
+              Text(
+                phone,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
@@ -202,15 +257,21 @@ class PersonalDetailsCard extends StatelessWidget {
   }
 
   Widget _buildTextArea(
-      String label, String hint, TextEditingController controller,) {
+    String label,
+    String hint,
+    TextEditingController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),),),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF374151),
+          ),
+        ),
         const SizedBox(height: 6),
         TextFormField(
           key: const Key('currentAddressField'),
@@ -224,14 +285,17 @@ class PersonalDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: AppColors.surfaceContainer,
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF2563EB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+            ),
           ),
         ),
       ],
@@ -278,64 +342,77 @@ class IdentityVerificationCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(8),),
-                child: const Icon(Icons.badge_outlined,
-                    color: Color(0xFF4F46E5), size: 18,),
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.badge_outlined,
+                  color: Color(0xFF4F46E5),
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
-              const Text('Identity Verification',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),),),
+              const Text(
+                'Identity Verification',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF111827),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Clear photos only. Max 5MB each.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),),
+          const Text(
+            'Clear photos only. Max 5MB each.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+          ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                  child: DocTile(
-                label: 'Aadhaar Card\n(Front)',
-                icon: Icons.upload_file,
-                isUploaded: aadhaarFrontUploaded,
-                onTap: onPickAadhaarFront,
-                key: const Key('aadhaarFrontTile'),
-              ),),
+                child: DocTile(
+                  label: 'Aadhaar Card\n(Front)',
+                  icon: Icons.upload_file,
+                  isUploaded: aadhaarFrontUploaded,
+                  onTap: onPickAadhaarFront,
+                  key: const Key('aadhaarFrontTile'),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
-                  child: DocTile(
-                label: 'Aadhaar Card\n(Back)',
-                icon: Icons.upload_file,
-                isUploaded: aadhaarBackUploaded,
-                onTap: onPickAadhaarBack,
-                key: const Key('aadhaarBackTile'),
-              ),),
+                child: DocTile(
+                  label: 'Aadhaar Card\n(Back)',
+                  icon: Icons.upload_file,
+                  isUploaded: aadhaarBackUploaded,
+                  onTap: onPickAadhaarBack,
+                  key: const Key('aadhaarBackTile'),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                  child: DocTile(
-                label: 'PAN Card',
-                icon: Icons.upload_file,
-                isUploaded: panUploaded,
-                onTap: onPickPan,
-                key: const Key('panTile'),
-              ),),
+                child: DocTile(
+                  label: 'PAN Card',
+                  icon: Icons.upload_file,
+                  isUploaded: panUploaded,
+                  onTap: onPickPan,
+                  key: const Key('panTile'),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
-                  child: DocTile(
-                label: 'Bank Details',
-                icon: Icons.account_balance,
-                isUploaded: bankDetailsDone,
-                onTap: onShowBankDialog,
-                key: const Key('bankTile'),
-              ),),
+                child: DocTile(
+                  label: 'Bank Details',
+                  icon: Icons.account_balance,
+                  isUploaded: bankDetailsDone,
+                  onTap: onShowBankDialog,
+                  key: const Key('bankTile'),
+                ),
+              ),
             ],
           ),
         ],
@@ -365,11 +442,11 @@ class DocTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isUploaded ? const Color(0xFFF0FDF4) : AppColors.surfaceContainer,
+          color:
+              isUploaded ? const Color(0xFFF0FDF4) : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color:
-                isUploaded ? AppColors.success : const Color(0xFFD1D5DB),
+            color: isUploaded ? AppColors.success : const Color(0xFFD1D5DB),
             width: isUploaded ? 1 : 2,
           ),
         ),
@@ -381,11 +458,11 @@ class DocTile extends StatelessWidget {
                 color: isUploaded ? const Color(0xFFDCFCE7) : Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon,
-                  color: isUploaded
-                      ? AppColors.success
-                      : const Color(0xFF6B7280),
-                  size: 20,),
+              child: Icon(
+                icon,
+                color: isUploaded ? AppColors.success : const Color(0xFF6B7280),
+                size: 20,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -394,9 +471,7 @@ class DocTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isUploaded
-                    ? AppColors.success
-                    : const Color(0xFF374151),
+                color: isUploaded ? AppColors.success : const Color(0xFF374151),
               ),
             ),
           ],
@@ -436,8 +511,11 @@ class SelfieCard extends StatelessWidget {
             if (selfieUploaded && selfiePath != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(File(selfiePath!),
-                    height: 160, fit: BoxFit.cover,),
+                child: Image.file(
+                  File(selfiePath!),
+                  height: 160,
+                  fit: BoxFit.cover,
+                ),
               )
             else
               Container(
@@ -456,17 +534,25 @@ class SelfieCard extends StatelessWidget {
                         color: const Color(0xFFEFF6FF),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Icon(Icons.photo_camera,
-                          color: Color(0xFF2563EB), size: 28,),
+                      child: const Icon(
+                        Icons.photo_camera,
+                        color: Color(0xFF2563EB),
+                        size: 28,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    const Text('Take Rider Photo',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500,),),
+                    const Text(
+                      'Take Rider Photo',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    const Text('Tap to capture your photo',
-                        style:
-                            TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),),
+                    const Text(
+                      'Tap to capture your photo',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    ),
                   ],
                 ),
               ),
@@ -479,18 +565,22 @@ class SelfieCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(12),),
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.check, color: AppColors.success, size: 14),
                         SizedBox(width: 4),
-                        Text('Photo Captured',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.successText,),),
+                        Text(
+                          'Photo Captured',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.successText,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -519,32 +609,43 @@ class SignatureCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(8),),
-                  child: const Icon(Icons.draw,
-                      color: Color(0xFF2563EB), size: 18,),),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.draw,
+                  color: Color(0xFF2563EB),
+                  size: 18,
+                ),
+              ),
               const SizedBox(width: 10),
-              const Text('Digital Signature',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),),),
+              const Text(
+                'Digital Signature',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF111827),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('Sign below to authorize documentation.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),),
+          const Text(
+            'Sign below to authorize documentation.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+          ),
           const SizedBox(height: 12),
           GestureDetector(
             key: const Key('signatureTile'),
@@ -557,33 +658,43 @@ class SignatureCard extends StatelessWidget {
                     : AppColors.surfaceContainer,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color: signatureUploaded
-                        ? AppColors.success
-                        : const Color(0xFFD1D5DB),),
+                  color: signatureUploaded
+                      ? AppColors.success
+                      : const Color(0xFFD1D5DB),
+                ),
               ),
               child: Stack(
                 children: [
                   Center(
-                      child: Text(
-                          signatureUploaded
-                              ? 'Signature Captured'
-                              : 'Tap to draw signature',
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: signatureUploaded
-                                  ? AppColors.success
-                                  : const Color(0xFF9CA3AF),),),),
+                    child: Text(
+                      signatureUploaded
+                          ? 'Signature Captured'
+                          : 'Tap to draw signature',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: signatureUploaded
+                            ? AppColors.success
+                            : const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ),
                   if (signatureUploaded)
                     Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                                color: AppColors.success,
-                                shape: BoxShape.circle,),
-                            child: const Icon(Icons.check,
-                                color: Colors.white, size: 12,),),),
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 12,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -615,12 +726,14 @@ class UserOnboardingAppBar extends StatelessWidget {
             onPressed: onBack,
           ),
           const Expanded(
-            child: Text('Onboarding',
+            child: Text(
+              'Onboarding',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,),
+                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const Padding(
@@ -628,13 +741,18 @@ class UserOnboardingAppBar extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Step',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),),
-                Text('1/2',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),),),
+                Text(
+                  'Step',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                ),
+                Text(
+                  '1/2',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
               ],
             ),
           ),
@@ -656,8 +774,9 @@ class UserOnboardingHeader extends StatelessWidget {
         Container(
           height: 6,
           decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
-              borderRadius: BorderRadius.circular(3),),
+            color: const Color(0xFFE5E7EB),
+            borderRadius: BorderRadius.circular(3),
+          ),
           child: Stack(
             children: [
               Positioned(
@@ -666,9 +785,11 @@ class UserOnboardingHeader extends StatelessWidget {
                 bottom: 0,
                 width: screenWidth * 0.45,
                 child: Container(
-                    decoration: BoxDecoration(
-                        color: AppColors.success,
-                        borderRadius: BorderRadius.circular(3),),),
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
               ),
               Positioned(
                 right: 0,
@@ -676,22 +797,29 @@ class UserOnboardingHeader extends StatelessWidget {
                 bottom: 0,
                 width: screenWidth * 0.45,
                 child: Container(
-                    decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
-                        borderRadius: BorderRadius.circular(3),),),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
-        const Text('Almost there!',
-            style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111827),),),
+        const Text(
+          'Almost there!',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111827),
+          ),
+        ),
         const SizedBox(height: 6),
-        const Text('We need a few more details to set up your fleet profile securely.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),),
+        const Text(
+          'We need a few more details to set up your fleet profile securely.',
+          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+        ),
       ],
     );
   }
@@ -716,8 +844,9 @@ class UserOnboardingBottomButton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),),
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
       child: SizedBox(
         width: double.infinity,
         height: 52,
@@ -740,15 +869,20 @@ class UserOnboardingBottomButton extends StatelessWidget {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2,),
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
                     ),
                     if (uploadProgressText.isNotEmpty) ...[
                       const SizedBox(width: 12),
-                      Text(uploadProgressText,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,),),
+                      Text(
+                        uploadProgressText,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ],
                   ],
                 )
@@ -756,16 +890,21 @@ class UserOnboardingBottomButton extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                        canProceed
-                            ? 'NEXT: ADD GUARANTOR'
-                            : 'COMPLETE ALL FIELDS',
-                        style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,),),
+                      canProceed
+                          ? 'NEXT: ADD GUARANTOR'
+                          : 'COMPLETE ALL FIELDS',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward,
-                        color: Colors.white, size: 18,),
+                    const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ],
                 ),
         ),
@@ -791,8 +930,10 @@ class UserOnboardingDialogField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
         const SizedBox(height: 4),
         TextFormField(
           controller: controller,
@@ -800,14 +941,17 @@ class UserOnboardingDialogField extends StatelessWidget {
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+            ),
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF2563EB)),),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+            ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           ),

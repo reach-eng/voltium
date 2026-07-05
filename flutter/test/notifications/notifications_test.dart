@@ -29,26 +29,36 @@ void main() {
 
   group('Notification Center Screen', () {
     testWidgets('notification center renders without error', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
       await tester.pumpAndSettle();
       expect(find.byType(NotificationCenterScreen), findsOneWidget);
     });
 
-    testWidgets('notification center shows empty state or list', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+    testWidgets('notification center shows empty state or list',
+        (tester) async {
+      await tester
+          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
       await tester.pumpAndSettle();
 
       // Either shows notifications or an empty state
       final hasListView = find.byType(ListView).evaluate().isNotEmpty;
-      final hasEmptyText = find.textContaining('no notification', skipOffstage: false).evaluate().isNotEmpty ||
-          find.textContaining('empty', skipOffstage: false).evaluate().isNotEmpty;
+      final hasEmptyText = find
+              .textContaining('no notification', skipOffstage: false)
+              .evaluate()
+              .isNotEmpty ||
+          find
+              .textContaining('empty', skipOffstage: false)
+              .evaluate()
+              .isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 
       expect(hasListView || hasEmptyText || hasText, isTrue);
     });
 
     testWidgets('notification center does not overflow', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });

@@ -48,7 +48,8 @@ class ReferralCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Refer Friends',
+                    const Text(
+                      'Refer Friends',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -92,7 +93,8 @@ class ReferralCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Your Referral Code',
+                        const Text(
+                          'Your Referral Code',
                           style: TextStyle(
                             color: Color(0xFF667085),
                             fontSize: 12,
@@ -136,8 +138,11 @@ class ReferralCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.card_giftcard,
-                        color: Colors.white, size: 18,),
+                    const Icon(
+                      Icons.card_giftcard,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Get \$${rewardAmount!.toStringAsFixed(2)} for each referral',
@@ -287,7 +292,8 @@ class ReferralShareOptions extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Share via',
+          const Text(
+            'Share via',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,

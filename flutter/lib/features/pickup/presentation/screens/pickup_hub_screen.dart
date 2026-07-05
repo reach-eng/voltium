@@ -158,15 +158,21 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline_rounded,
-                color: Colors.white, size: 18,),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(msg,
-                  style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,),),
+              child: Text(
+                msg,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -186,15 +192,21 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_outline_rounded,
-                color: Colors.white, size: 18,),
+            const Icon(
+              Icons.check_circle_outline_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(msg,
-                  style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,),),
+              child: Text(
+                msg,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -226,7 +238,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     }
     if (digits == guarantorPhone) {
       _showError(
-          'Emergency contact cannot be the same as guarantor phone number',);
+        'Emergency contact cannot be the same as guarantor phone number',
+      );
       return;
     }
 
@@ -271,7 +284,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     setState(() => _isVerifyingOtp = true);
 
     try {
-      final response = await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
+      final response =
+          await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
       if (!mounted) return;
       if (response['success'] == true) {
         setState(() => _isOtpVerified = true);
@@ -322,7 +336,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
           entry.isUploading = false;
         });
         _showError(
-            'Upload failed. Please check your connection and try again.',);
+          'Upload failed. Please check your connection and try again.',
+        );
       }
     }
   }
@@ -370,8 +385,11 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded,
-                  color: AppColors.error, size: 48,),
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
                 _error ?? 'An unexpected error occurred',
@@ -396,7 +414,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: Text('Retry',
+                  child: Text(
+                    'Retry',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,

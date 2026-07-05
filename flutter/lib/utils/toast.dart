@@ -21,7 +21,6 @@ enum ToastStyle { success, error, info, warning }
 /// THE canonical toast utility for the Voltium Flutter app.
 /// Use via: `Toast.success(context, 'Wallet topped up!')`
 class Toast {
-
   /// Convenience: shows a success toast with green background + check icon.
   static void success(BuildContext context, String message) {
     show(context, message, ToastStyle.success);

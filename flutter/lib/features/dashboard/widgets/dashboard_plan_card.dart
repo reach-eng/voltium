@@ -42,7 +42,8 @@ class PlanCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('CURRENT SUBSCRIPTION',
+                Text(
+                  'CURRENT SUBSCRIPTION',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -104,7 +105,8 @@ class PlanCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('TIME REMAINING',
+                      const Text(
+                        'TIME REMAINING',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
@@ -136,7 +138,8 @@ class PlanCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('NEXT RECHARGE',
+                      const Text(
+                        'NEXT RECHARGE',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,

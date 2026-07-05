@@ -15,21 +15,27 @@ class TicketStatusScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = ticket.status.toUpperCase();
     final isCreated = true; // Always true
-    final isAssigned = status == 'ASSIGNED' || status == 'IN_PROGRESS' || status == 'RESOLVED' || status == 'CLOSED';
-    final isInProgress = status == 'IN_PROGRESS' || status == 'RESOLVED' || status == 'CLOSED';
+    final isAssigned = status == 'ASSIGNED' ||
+        status == 'IN_PROGRESS' ||
+        status == 'RESOLVED' ||
+        status == 'CLOSED';
+    final isInProgress =
+        status == 'IN_PROGRESS' || status == 'RESOLVED' || status == 'CLOSED';
     final isResolved = status == 'RESOLVED' || status == 'CLOSED';
 
     final steps = [
       _TimelineStep(
         title: 'Ticket Created',
         description: 'Your ticket has been logged and queued for review.',
-        time: '${ticket.createdAt.day}/${ticket.createdAt.month}/${ticket.createdAt.year}',
+        time:
+            '${ticket.createdAt.day}/${ticket.createdAt.month}/${ticket.createdAt.year}',
         isCompleted: isCreated,
         isActive: status == 'OPEN',
       ),
       _TimelineStep(
         title: 'Assigned to Agent',
-        description: 'A support representative has been assigned to investigate your issue.',
+        description:
+            'A support representative has been assigned to investigate your issue.',
         time: isAssigned ? 'Completed' : 'Pending',
         isCompleted: isAssigned,
         isActive: status == 'ASSIGNED',
@@ -43,7 +49,8 @@ class TicketStatusScreen extends StatelessWidget {
       ),
       _TimelineStep(
         title: 'Resolved',
-        description: 'The issue has been resolved. Let us know if you need anything else!',
+        description:
+            'The issue has been resolved. Let us know if you need anything else!',
         time: isResolved ? 'Resolved' : 'Pending',
         isCompleted: isResolved,
         isActive: status == 'RESOLVED' || status == 'CLOSED',
@@ -129,9 +136,13 @@ class TicketStatusScreen extends StatelessWidget {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: (isResolved ? AppColors.success : AppColors.primary).withValues(alpha: 0.1),
+                                  color: (isResolved
+                                          ? AppColors.success
+                                          : AppColors.primary)
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -139,7 +150,9 @@ class TicketStatusScreen extends StatelessWidget {
                                   style: GoogleFonts.inter(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900,
-                                    color: isResolved ? AppColors.success : AppColors.primary,
+                                    color: isResolved
+                                        ? AppColors.success
+                                        : AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -225,14 +238,16 @@ class TicketStatusScreen extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     AnimatedContainer(
-                                      duration: const Duration(milliseconds: 300),
+                                      duration:
+                                          const Duration(milliseconds: 300),
                                       width: 24,
                                       height: 24,
                                       decoration: BoxDecoration(
                                         color: step.isCompleted
                                             ? AppColors.primary
                                             : step.isActive
-                                                ? AppColors.primary.withValues(alpha: 0.2)
+                                                ? AppColors.primary
+                                                    .withValues(alpha: 0.2)
                                                 : Colors.grey.shade200,
                                         shape: BoxShape.circle,
                                         border: Border.all(
@@ -255,7 +270,8 @@ class TicketStatusScreen extends StatelessWidget {
                                     if (!isLast)
                                       Expanded(
                                         child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 300),
+                                          duration:
+                                              const Duration(milliseconds: 300),
                                           width: 3,
                                           color: step.isCompleted
                                               ? AppColors.primary
@@ -269,17 +285,20 @@ class TicketStatusScreen extends StatelessWidget {
                                 child: Padding(
                                   padding: const EdgeInsets.only(bottom: 24),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             step.title,
                                             style: GoogleFonts.inter(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w800,
-                                              color: step.isCompleted || step.isActive
+                                              color: step.isCompleted ||
+                                                      step.isActive
                                                   ? AppColors.onSurface
                                                   : AppColors.onSurfaceVariant,
                                             ),

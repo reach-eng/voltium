@@ -78,7 +78,8 @@ class PhoneInputField extends StatelessWidget {
                     LengthLimitingTextInputFormatter(10),
                   ],
                   onChanged: onChanged,
-                  onFieldSubmitted: onSubmitted != null ? (_) => onSubmitted!() : null,
+                  onFieldSubmitted:
+                      onSubmitted != null ? (_) => onSubmitted!() : null,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

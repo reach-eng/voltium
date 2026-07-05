@@ -97,11 +97,13 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Add Earning',
+                const Text(
+                  'Add Earning',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
                 InkWell(
                   onTap: () => Navigator.of(context).pop(),
@@ -111,8 +113,11 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                       color: AppColors.iconBackground,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close,
-                        size: 18, color: AppColors.slate500,),
+                    child: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: AppColors.slate500,
+                    ),
                   ),
                 ),
               ],
@@ -178,7 +183,9 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12,),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         hintText: '0',
                       ),
                     ),
@@ -200,7 +207,9 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                           borderSide: BorderSide.none,
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12,),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         hintText: '0',
                       ),
                     ),
@@ -226,10 +235,15 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                       Text(
                         '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                         style: const TextStyle(
-                            fontSize: 14, color: Color(0xFF1E293B),),
+                          fontSize: 14,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                      const Icon(Icons.calendar_today,
-                          size: 16, color: AppColors.slate500,),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: AppColors.slate500,
+                      ),
                     ],
                   ),
                 ),
@@ -264,11 +278,13 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
               ),
-              child: const Text('Submit',
+              child: const Text(
+                'Submit',
                 style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],

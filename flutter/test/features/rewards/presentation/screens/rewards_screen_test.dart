@@ -6,12 +6,12 @@ import '../../../../helpers/golden_test_helper.dart';
 void main() {
   testWidgets('Golden test for RewardsScreen', (WidgetTester tester) async {
     configureGoldenSurface(tester);
-    
+
     // Ignore const warning temporarily if constructor is not const
     // ignore: prefer_const_constructors
     await tester.pumpWidget(wrapForGolden(RewardsScreen()));
     await tester.pumpAndSettle();
-    
+
     await expectLater(
       find.byType(RewardsScreen),
       matchesGoldenFile('goldens/rewardsscreen_golden.png'),

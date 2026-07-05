@@ -10,7 +10,7 @@ import 'package:voltium_rider/core/network/generated/api_client.dart';
 class MockWalletRepository implements WalletRepository {
   bool submitCalled = false;
   bool deleteCalled = false;
-  
+
   @override
   Future<entity.TopupRequest> submitTopup(entity.TopupRequest request) async {
     submitCalled = true;
@@ -18,7 +18,8 @@ class MockWalletRepository implements WalletRepository {
   }
 
   @override
-  Future<List<entity.TransactionEntity>> getTransactionHistory(String riderId, {int page = 1, int limit = 20}) async {
+  Future<List<entity.TransactionEntity>> getTransactionHistory(String riderId,
+      {int page = 1, int limit = 20}) async {
     return [
       entity.TransactionEntity(
         id: '1',
@@ -49,13 +50,13 @@ class MockFilesRepository implements FilesRepository {
     uploadCalled = true;
     return 'http://example.com/proof.jpg';
   }
-  
+
   @override
   ApiClient get apiClient => throw UnimplementedError();
-  
+
   @override
   VoltiumApiClient get voltiumApiClient => throw UnimplementedError();
-  
+
   @override
   Future<String> uploadProfileImage(File file) {
     throw UnimplementedError();
@@ -65,9 +66,8 @@ class MockFilesRepository implements FilesRepository {
 void main() {
   test('WalletProvider initializes correctly', () {
     final provider = WalletProvider(
-      walletRepository: MockWalletRepository(), 
-      filesRepository: MockFilesRepository()
-    );
+        walletRepository: MockWalletRepository(),
+        filesRepository: MockFilesRepository());
     expect(provider.transactions, isEmpty);
     expect(provider.walletMinTopup, 0.0);
     expect(provider.currentBalance, 0.0);
@@ -75,18 +75,16 @@ void main() {
 
   test('setWalletSettings sets min topup', () {
     final provider = WalletProvider(
-      walletRepository: MockWalletRepository(), 
-      filesRepository: MockFilesRepository()
-    );
+        walletRepository: MockWalletRepository(),
+        filesRepository: MockFilesRepository());
     provider.setWalletSettings(500.0);
     expect(provider.walletMinTopup, 500.0);
   });
 
   test('setWalletBalanceWarning changes balance state', () {
     final provider = WalletProvider(
-      walletRepository: MockWalletRepository(), 
-      filesRepository: MockFilesRepository()
-    );
+        walletRepository: MockWalletRepository(),
+        filesRepository: MockFilesRepository());
     provider.setWalletBalanceWarning(true, balance: 10.0);
     expect(provider.walletBalanceLow, isTrue);
     expect(provider.currentBalance, 10.0);
@@ -94,9 +92,8 @@ void main() {
 
   test('refreshTransactions loads history', () async {
     final provider = WalletProvider(
-      walletRepository: MockWalletRepository(), 
-      filesRepository: MockFilesRepository()
-    );
+        walletRepository: MockWalletRepository(),
+        filesRepository: MockFilesRepository());
     await provider.refreshTransactions(riderId: '1');
     expect(provider.transactions.length, 1);
     expect(provider.transactions.first.id, '1');
@@ -106,10 +103,8 @@ void main() {
   test('deleteTransactionHistory removes history', () async {
     final mockRepo = MockWalletRepository();
     final provider = WalletProvider(
-      walletRepository: mockRepo, 
-      filesRepository: MockFilesRepository()
-    );
-    
+        walletRepository: mockRepo, filesRepository: MockFilesRepository());
+
     await provider.refreshTransactions(riderId: '1');
     expect(provider.transactions.length, 1);
 
@@ -121,20 +116,14 @@ void main() {
   test('topUpWallet sets isToppingUp and uploads image', () async {
     final mockFiles = MockFilesRepository();
     final mockRepo = MockWalletRepository();
-    final provider = WalletProvider(
-      walletRepository: mockRepo, 
-      filesRepository: mockFiles
-    );
-    
+    final provider =
+        WalletProvider(walletRepository: mockRepo, filesRepository: mockFiles);
+
     // Using a fake file path
     final fakeFile = File('dummy.jpg');
 
     await provider.topUpWallet(
-      amount: 500, 
-      method: 'UPI', 
-      riderId: '1',
-      image: fakeFile
-    );
+        amount: 500, method: 'UPI', riderId: '1', image: fakeFile);
 
     expect(mockFiles.uploadCalled, isTrue);
     expect(mockRepo.submitCalled, isTrue);

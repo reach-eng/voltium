@@ -4,17 +4,20 @@ import '../helpers/golden_test_harness.dart';
 import '../helpers/golden_test_helper.dart';
 
 void main() {
-  testWidgets('Golden Test - IllustratedEmptyState', (WidgetTester tester) async {
+  testWidgets('Golden Test - IllustratedEmptyState',
+      (WidgetTester tester) async {
     configureGoldenSurface(tester);
     await tester.pumpWidget(
       const GoldenTestHarness(
-        child: SizedBox(width: 100, height: 100, child: Placeholder()), // Mocked fallback
+        child: SizedBox(
+            width: 100, height: 100, child: Placeholder()), // Mocked fallback
       ),
     );
     await tester.pumpAndSettle();
     await expectLater(
       find.byType(SizedBox),
-      matchesGoldenFile('goldens/illustrated_empty_state_golden_test_default.png'),
+      matchesGoldenFile(
+          'goldens/illustrated_empty_state_golden_test_default.png'),
     );
   });
 }

@@ -82,7 +82,10 @@ class ShimmerListTile extends StatelessWidget {
         children: [
           if (showAvatar) ...[
             const ShimmerLoading(
-                width: 52, height: 52, shape: ShimmerShape.circle,),
+              width: 52,
+              height: 52,
+              shape: ShimmerShape.circle,
+            ),
             const SizedBox(width: 14),
           ],
           Expanded(
@@ -123,7 +126,10 @@ class ShimmerTransactionCard extends StatelessWidget {
         child: const Row(
           children: [
             ShimmerLoading(
-                width: 48, height: 48, shape: ShimmerShape.circle,),
+              width: 48,
+              height: 48,
+              shape: ShimmerShape.circle,
+            ),
             SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -197,7 +203,10 @@ class ShimmerVehicleCard extends StatelessWidget {
                   ),
                 ),
                 ShimmerLoading(
-                    width: 32, height: 32, shape: ShimmerShape.circle,),
+                  width: 32,
+                  height: 32,
+                  shape: ShimmerShape.circle,
+                ),
               ],
             ),
             SizedBox(height: 16),
@@ -221,7 +230,10 @@ class ShimmerProfileCard extends StatelessWidget {
           const Row(
             children: [
               ShimmerLoading(
-                  width: 72, height: 72, shape: ShimmerShape.circle,),
+                width: 72,
+                height: 72,
+                shape: ShimmerShape.circle,
+              ),
               SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -243,7 +255,10 @@ class ShimmerProfileCard extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.only(left: index > 0 ? 8 : 0),
                   child: const ShimmerLoading(
-                      width: double.infinity, height: 60, borderRadius: 12,),
+                    width: double.infinity,
+                    height: 60,
+                    borderRadius: 12,
+                  ),
                 ),
               ),
             ),
@@ -266,7 +281,10 @@ class ShimmerKycStep extends StatelessWidget {
       child: Row(
         children: [
           ShimmerLoading(
-              width: 40, height: 40, shape: ShimmerShape.circle,),
+            width: 40,
+            height: 40,
+            shape: ShimmerShape.circle,
+          ),
           SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -303,7 +321,10 @@ class ShimmerDashboardCard extends StatelessWidget {
           const Row(
             children: [
               ShimmerLoading(
-                  width: 40, height: 40, shape: ShimmerShape.circle,),
+                width: 40,
+                height: 40,
+                shape: ShimmerShape.circle,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: ShimmerLoading(width: 80, height: 14),

@@ -11,7 +11,8 @@ class LockedOverlay extends StatefulWidget {
   State<LockedOverlay> createState() => _LockedOverlayState();
 }
 
-class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserver {
+class _LockedOverlayState extends State<LockedOverlay>
+    with WidgetsBindingObserver {
   final TextEditingController _passwordController = TextEditingController();
   String _error = '';
   bool _loading = false;
@@ -87,7 +88,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
             _loading = false;
           });
         } else {
-          final msg = response['message'] as String? ?? 'Incorrect Password. Contact Voltium support.';
+          final msg = response['message'] as String? ??
+              'Incorrect Password. Contact Voltium support.';
           setState(() {
             _error = msg;
             _passwordController.clear();
@@ -98,7 +100,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Verification failed. Please check your network and try again.';
+          _error =
+              'Verification failed. Please check your network and try again.';
           _loading = false;
         });
       }
@@ -118,7 +121,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.lock_person_rounded, size: 64, color: Colors.amber),
+                const Icon(Icons.lock_person_rounded,
+                    size: 64, color: Colors.amber),
                 const SizedBox(height: 16),
                 const Text(
                   'Your account has been locked by Voltium.',
@@ -166,7 +170,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                     size: 80,
                   ),
                   const SizedBox(height: 24),
-                  const Text('VOLTIUM SOFT LOCK',
+                  const Text(
+                    'VOLTIUM SOFT LOCK',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -184,7 +189,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Contact Voltium support to unlock',
+                  const Text(
+                    'Contact Voltium support to unlock',
                     style: TextStyle(
                       color: Colors.redAccent,
                       fontSize: 16,
@@ -255,7 +261,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text('UNLOCK',
+                                : const Text(
+                                    'UNLOCK',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -267,7 +274,8 @@ class _LockedOverlayState extends State<LockedOverlay> with WidgetsBindingObserv
                     ),
                   ),
                   const SizedBox(height: 64),
-                  Text('Voltium Security System v3.0',
+                  Text(
+                    'Voltium Security System v3.0',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.3),
                       fontSize: 12,

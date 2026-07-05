@@ -209,8 +209,7 @@ void main() {
       );
     });
 
-    testWidgets('change password shows "coming soon" snackbar',
-        (tester) async {
+    testWidgets('change password shows "coming soon" snackbar', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
 

@@ -11,7 +11,8 @@ void main() {
     });
 
     test('slide() with Direction.left creates a route', () {
-      final route = AppPageTransitions.slide(const SizedBox(), direction: Direction.left);
+      final route =
+          AppPageTransitions.slide(const SizedBox(), direction: Direction.left);
       expect(route, isA<PageRouteBuilder>());
     });
 
@@ -41,10 +42,12 @@ void main() {
     });
 
     test('sharedAxis() returns a route without throwing', () {
-      final route = AppPageTransitions.sharedAxis(const SizedBox(), forward: true);
+      final route =
+          AppPageTransitions.sharedAxis(const SizedBox(), forward: true);
       expect(route, isA<PageRouteBuilder>());
       // forward=false should also not throw
-      final route2 = AppPageTransitions.sharedAxis(const SizedBox(), forward: false);
+      final route2 =
+          AppPageTransitions.sharedAxis(const SizedBox(), forward: false);
       expect(route2, isA<PageRouteBuilder>());
     });
   });
@@ -52,9 +55,14 @@ void main() {
   // ── Direction enum ───────────────────────────────────────────────────────
   group('Direction enum', () {
     test('has all 4 values', () {
-      expect(Direction.values, containsAll([
-        Direction.right, Direction.left, Direction.up, Direction.down,
-      ]));
+      expect(
+          Direction.values,
+          containsAll([
+            Direction.right,
+            Direction.left,
+            Direction.up,
+            Direction.down,
+          ]));
     });
   });
 
@@ -79,10 +87,14 @@ void main() {
   // ── TransitionType enum ──────────────────────────────────────────────────
   group('TransitionType enum', () {
     test('has all 4 values', () {
-      expect(TransitionType.values, containsAll([
-        TransitionType.slide, TransitionType.fade,
-        TransitionType.scale, TransitionType.slideUp,
-      ]));
+      expect(
+          TransitionType.values,
+          containsAll([
+            TransitionType.slide,
+            TransitionType.fade,
+            TransitionType.scale,
+            TransitionType.slideUp,
+          ]));
     });
   });
 }

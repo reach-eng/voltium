@@ -5,7 +5,7 @@ import 'package:local_auth/local_auth.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   late BiometricService service;
   const channel = MethodChannel('plugins.flutter.io/local_auth');
 
@@ -18,7 +18,8 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('init() sets isSupported and availableBiometrics when available', () async {
+  test('init() sets isSupported and availableBiometrics when available',
+      () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
       if (methodCall.method == 'isDeviceSupported') {

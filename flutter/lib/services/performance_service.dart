@@ -36,15 +36,20 @@ class PerformanceService {
 
   /// Helper to track a screen load from start to finish
   void trackScreenLoad(
-      String screenName, Future<void> Function() loadAction,) async {
+    String screenName,
+    Future<void> Function() loadAction,
+  ) async {
     startTrace('Load_$screenName');
     try {
       await loadAction();
       stopTrace('Load_$screenName');
     } catch (e, stack) {
       stopTrace('Load_$screenName', attributes: {'error': e.toString()});
-      MonitoringService.logError(e, stack,
-          reason: 'Failed to load $screenName',);
+      MonitoringService.logError(
+        e,
+        stack,
+        reason: 'Failed to load $screenName',
+      );
     }
   }
 }

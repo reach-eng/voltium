@@ -16,5 +16,7 @@ class AppConstants {
   static bool isTestModeOverride = false;
 
   static bool get isTestMode =>
-      !kReleaseMode && (isTestModeOverride || const String.fromEnvironment('TEST_MODE') == 'true');
+      !kReleaseMode &&
+      (isTestModeOverride ||
+          const String.fromEnvironment('TEST_MODE') == 'true');
 }

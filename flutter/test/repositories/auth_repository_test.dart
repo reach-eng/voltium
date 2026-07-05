@@ -39,7 +39,8 @@ void main() {
   });
 
   group('AuthRepository', () {
-    test('sendOtp delegates to postAuthSendOtp and returns exists flag', () async {
+    test('sendOtp delegates to postAuthSendOtp and returns exists flag',
+        () async {
       when(() => mockVoltiumApiClient.postAuthSendOtp(any()))
           .thenAnswer((_) async => SendOtpResponse(exists: true));
 
@@ -64,7 +65,8 @@ void main() {
                 token: 'mock-token',
                 riderId: 'mock-rider-id',
                 isNewRider: false,
-                fcmCommandSecret: null, // null → skips SecureStorageService write
+                fcmCommandSecret:
+                    null, // null → skips SecureStorageService write
               ));
 
       final result = await repository.verifyOtp('9876543210', '123456');

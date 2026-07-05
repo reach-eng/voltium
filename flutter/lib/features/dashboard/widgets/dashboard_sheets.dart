@@ -32,8 +32,9 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppColors.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),),
+                  color: AppColors.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -50,42 +51,52 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                   ? 'Amit Sharma'
                   : rider.teamLeader!,
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
             ),
             const SizedBox(height: 4),
-            const Text('Assigned Team Leader',
+            const Text(
+              'Assigned Team Leader',
               style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.slate500,
-                  fontWeight: FontWeight.w500,),
+                fontSize: 13,
+                color: AppColors.slate500,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(16),),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.phone_outlined,
-                      color: Color(0xFF2563EB), size: 20,),
+                  const Icon(
+                    Icons.phone_outlined,
+                    color: Color(0xFF2563EB),
+                    size: 20,
+                  ),
                   const SizedBox(width: 16),
                   Text(
-                      (rider.emergencyContact == null ||
-                              rider.emergencyContact!.isEmpty)
-                          ? '+91 98765 12345'
-                          : rider.emergencyContact!,
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF1E293B),),),
+                    (rider.emergencyContact == null ||
+                            rider.emergencyContact!.isEmpty)
+                        ? '+91 98765 12345'
+                        : rider.emergencyContact!,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
                   const Spacer(),
                   IconButton(
-                      key: const Key('callTeamLeaderButton'),
-                      onPressed: () {},
-                      icon: const Icon(Icons.call, color: Color(0xFF16A34A)),),
+                    key: const Key('callTeamLeaderButton'),
+                    onPressed: () {},
+                    icon: const Icon(Icons.call, color: Color(0xFF16A34A)),
+                  ),
                 ],
               ),
             ),
@@ -103,12 +114,16 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppColors.outlineVariant),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: const Text('Change TL',
-                        style: TextStyle(
-                            color: Color(0xFFDC2626),
-                            fontWeight: FontWeight.bold,),),
+                    child: const Text(
+                      'Change TL',
+                      style: TextStyle(
+                        color: Color(0xFFDC2626),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -120,10 +135,13 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    child: const Text('Close',
-                        style: TextStyle(fontWeight: FontWeight.bold),),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -164,19 +182,23 @@ void showChangeTLReasonSheet(BuildContext context) {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                      color: AppColors.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),),
+                    color: AppColors.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Change Team Leader',
+              const Text(
+                'Change Team Leader',
                 style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
               ),
               const SizedBox(height: 8),
-              const Text('Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
+              const Text(
+                'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
                 style: TextStyle(fontSize: 14, color: AppColors.slate500),
               ),
               const SizedBox(height: 20),
@@ -188,8 +210,9 @@ void showChangeTLReasonSheet(BuildContext context) {
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,),
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -209,10 +232,13 @@ void showChangeTLReasonSheet(BuildContext context) {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: const Text('Submit Request',
-                    style: TextStyle(fontWeight: FontWeight.bold),),
+                child: const Text(
+                  'Submit Request',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -223,8 +249,11 @@ void showChangeTLReasonSheet(BuildContext context) {
 }
 
 /// Subscription management bottom sheet
-void showSubscriptionSheet(BuildContext context, RiderModel rider,
-    {VoidCallback? onRequestPlanChange,}) {
+void showSubscriptionSheet(
+  BuildContext context,
+  RiderModel rider, {
+  VoidCallback? onRequestPlanChange,
+}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -255,7 +284,8 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Manage Subscription',
+            const Text(
+              'Manage Subscription',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -263,7 +293,8 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
               ),
             ),
             const SizedBox(height: 8),
-            const Text('View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.',
+            const Text(
+              'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.slate500,
@@ -294,12 +325,15 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4,),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text('Active',
+                        child: const Text(
+                          'Active',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -312,8 +346,11 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.currency_rupee,
-                          size: 16, color: AppColors.slate500,),
+                      const Icon(
+                        Icons.currency_rupee,
+                        size: 16,
+                        color: AppColors.slate500,
+                      ),
                       Text(
                         '${rider.activeRentalPlanPrice.toInt()} / week',
                         style: const TextStyle(
@@ -342,7 +379,8 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                   borderRadius: BorderRadius.circular(27),
                 ),
               ),
-              child: const Text('Request Plan Change',
+              child: const Text(
+                'Request Plan Change',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -365,7 +403,8 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                 children: [
                   Icon(Icons.assignment_return_outlined, size: 20),
                   SizedBox(width: 8),
-                  Text('End Rental',
+                  Text(
+                    'End Rental',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -396,7 +435,9 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                         ? 'Change Intent: ${rider.intent}'
                         : 'Change Intent of Use',
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold,),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -412,7 +453,8 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
                   borderRadius: BorderRadius.circular(27),
                 ),
               ),
-              child: const Text('Close',
+              child: const Text(
+                'Close',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -426,7 +468,9 @@ void showSubscriptionSheet(BuildContext context, RiderModel rider,
 
 /// Vehicle return workflow using ImagePicker
 Future<void> startVehicleReturnWorkflow(
-    BuildContext context, RiderModel rider,) async {
+  BuildContext context,
+  RiderModel rider,
+) async {
   final picker = ImagePicker();
   final List<File> photos = [];
   const List<String> labels = [
@@ -450,23 +494,28 @@ Future<void> startVehicleReturnWorkflow(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.camera_alt,
-                    size: 48, color: AppColors.primary,),
+                const Icon(
+                  Icons.camera_alt,
+                  size: 48,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Step ${i + 1} of 4',
                   style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Capture ${labels[i]} of Vehicle',
                   style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -492,15 +541,18 @@ Future<void> startVehicleReturnWorkflow(
                     backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   key: const Key('cancelReturnProcessButton'),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel Return Process',
-                      style: TextStyle(color: AppColors.slate500),),
+                  child: const Text(
+                    'Cancel Return Process',
+                    style: TextStyle(color: AppColors.slate500),
+                  ),
                 ),
               ],
             ),
@@ -523,11 +575,15 @@ Future<void> startVehicleReturnWorkflow(
           children: [
             CircularProgressIndicator(color: AppColors.primary),
             SizedBox(height: 16),
-            Text('Uploading photos & submitting request...',
-                style: TextStyle(fontWeight: FontWeight.bold),),
+            Text(
+              'Uploading photos & submitting request...',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
-            Text('Please do not close the app.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),),
+            Text(
+              'Please do not close the app.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
       ),
@@ -545,10 +601,15 @@ Future<void> startVehicleReturnWorkflow(
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            icon: const Icon(Icons.check_circle,
-                size: 48, color: Color(0xFF16A34A),),
+            icon: const Icon(
+              Icons.check_circle,
+              size: 48,
+              color: Color(0xFF16A34A),
+            ),
             title: const Text('Return Request Submitted'),
-            content: const Text('Your vehicle return request is pending approval. Our hub manager will verify your submission soon.',),
+            content: const Text(
+              'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),

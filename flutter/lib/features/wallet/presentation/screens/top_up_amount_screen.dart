@@ -78,7 +78,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                 opacity: _entryCtrl,
                 child: Column(
                   children: [
-                    Text('Enter Amount',
+                    Text(
+                      'Enter Amount',
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -86,7 +87,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('How much would you like to add?',
+                    Text(
+                      'How much would you like to add?',
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         color: AppColors.slate500,
@@ -189,29 +191,31 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                     const SizedBox(height: 24),
 
                     // Balance info row
-                    Consumer<AppProvider>(builder: (context, provider, _) {
-                      final currentBalance =
-                          provider.rider?.walletBalance ?? 0.0;
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Current Balance: ₹${currentBalance.toInt()}',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: const Color(0xFF475569),
+                    Consumer<AppProvider>(
+                      builder: (context, provider, _) {
+                        final currentBalance =
+                            provider.rider?.walletBalance ?? 0.0;
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Current Balance: ₹${currentBalance.toInt()}',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFF475569),
+                              ),
                             ),
-                          ),
-                          Text(
-                            'Min: ₹100',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: AppColors.slate500,
+                            Text(
+                              'Min: ₹100',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: AppColors.slate500,
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    },),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -270,7 +274,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
             ],
           ),
           const SizedBox(height: 24),
-          Text('Step 2 of 3',
+          Text(
+            'Step 2 of 3',
             style: GoogleFonts.inter(
               color: Colors.white.withValues(alpha: 0.7),
               fontSize: 14,
@@ -278,7 +283,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
             ),
           ),
           const SizedBox(height: 4),
-          Text('Enter Amount',
+          Text(
+            'Enter Amount',
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 28,
@@ -298,8 +304,9 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
         duration: const Duration(milliseconds: 200),
         height: 56,
         decoration: BoxDecoration(
-          color:
-              _canProceed ? AppColors.primaryGradientEnd : AppColors.outlineVariant,
+          color: _canProceed
+              ? AppColors.primaryGradientEnd
+              : AppColors.outlineVariant,
           borderRadius: BorderRadius.circular(16),
           boxShadow: _canProceed
               ? [
@@ -317,7 +324,8 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Expanded(
-                child: Text('PROCEED TO PAYMENT',
+                child: Text(
+                  'PROCEED TO PAYMENT',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 15,

@@ -31,14 +31,17 @@ void main() {
 
   group('KYC / Onboarding Screen', () {
     testWidgets('onboarding screen renders without error', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
       await tester.pumpAndSettle();
 
       expect(find.byType(UserOnboardingScreen), findsOneWidget);
     });
 
-    testWidgets('onboarding screen has a next/continue button or form field', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
+    testWidgets('onboarding screen has a next/continue button or form field',
+        (tester) async {
+      await tester
+          .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
       await tester.pumpAndSettle();
 
       // At least a text input or button should be visible
@@ -50,7 +53,8 @@ void main() {
     });
 
     testWidgets('onboarding screen does not overflow', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
       await tester.pumpAndSettle();
 
       // Should render without RenderFlex overflow errors

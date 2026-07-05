@@ -2,6 +2,7 @@
 ///
 /// These test the existing form_validators.dart Aadhaar/PAN/IFSC validation.
 library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/utils/form_validators.dart';
 
@@ -51,8 +52,10 @@ void main() {
 
     test('rejects PAN with letters in position 6-9', () {
       expect(FormValidators.pan('ABCDE1234F'), isNull); // valid
-      expect(FormValidators.pan('ABCDEABCD'),
-          isNotNull,); // letters in digit positions
+      expect(
+        FormValidators.pan('ABCDEABCD'),
+        isNotNull,
+      ); // letters in digit positions
     });
 
     test('rejects empty PAN', () {

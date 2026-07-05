@@ -49,7 +49,8 @@ void main() {
       test('returns error for invalid email', () {
         expect(FormValidators.email('invalid'), 'Please enter a valid email');
         expect(FormValidators.email('invalid@'), 'Please enter a valid email');
-        expect(FormValidators.email('invalid@domain'), 'Please enter a valid email');
+        expect(FormValidators.email('invalid@domain'),
+            'Please enter a valid email');
       });
 
       test('returns null for valid email', () {
@@ -70,11 +71,12 @@ void main() {
 
       test('returns error for invalid Verhoeff checksum', () {
         // A valid 12-digit number but invalid checksum
-        expect(FormValidators.aadhaar('123456789012'), 'Invalid Aadhaar number');
+        expect(
+            FormValidators.aadhaar('123456789012'), 'Invalid Aadhaar number');
       });
 
       test('returns null for valid Aadhaar with correct checksum', () {
-        // 123456789012 invalid, but 123456789019 is a valid verhoeff, but wait, need a real or properly generated Verhoeff Aadhaar. 
+        // 123456789012 invalid, but 123456789019 is a valid verhoeff, but wait, need a real or properly generated Verhoeff Aadhaar.
         // 999999999999 is valid for testing sometimes? Actually let's use a known Verhoeff string or skip testing true positive if we don't know one.
         // Actually, we can generate a valid verhoeff if we know the algorithm, but let's just test that the validator triggers.
         // Let's provide a valid aadhaar that passes verhoeff. Let's see: "999999999999" -> wait, does it pass?
@@ -89,14 +91,18 @@ void main() {
       });
 
       test('returns error for invalid format', () {
-        expect(FormValidators.pan('123'), 'Please enter a valid PAN (e.g., ABCDE1234F)');
-        expect(FormValidators.pan('AAAAA1234'), 'Please enter a valid PAN (e.g., ABCDE1234F)');
-        expect(FormValidators.pan('AAAAA12345'), 'Please enter a valid PAN (e.g., ABCDE1234F)');
+        expect(FormValidators.pan('123'),
+            'Please enter a valid PAN (e.g., ABCDE1234F)');
+        expect(FormValidators.pan('AAAAA1234'),
+            'Please enter a valid PAN (e.g., ABCDE1234F)');
+        expect(FormValidators.pan('AAAAA12345'),
+            'Please enter a valid PAN (e.g., ABCDE1234F)');
       });
 
       test('returns null for valid PAN', () {
         expect(FormValidators.pan('ABCDE1234F'), isNull);
-        expect(FormValidators.pan('abcde1234f'), isNull); // case insensitive test since the code does toUpperCase
+        expect(FormValidators.pan('abcde1234f'),
+            isNull); // case insensitive test since the code does toUpperCase
       });
     });
 
@@ -106,8 +112,10 @@ void main() {
       });
 
       test('returns error when out of bounds', () {
-        expect(FormValidators.bankAccount('1234567'), 'Account number must be 8-18 digits');
-        expect(FormValidators.bankAccount('1234567890123456789'), 'Account number must be 8-18 digits');
+        expect(FormValidators.bankAccount('1234567'),
+            'Account number must be 8-18 digits');
+        expect(FormValidators.bankAccount('1234567890123456789'),
+            'Account number must be 8-18 digits');
       });
 
       test('returns null for valid account number', () {
@@ -123,7 +131,8 @@ void main() {
       });
 
       test('returns error for invalid format', () {
-        expect(FormValidators.ifsc('SBIN1234567'), 'Please enter a valid IFSC code');
+        expect(FormValidators.ifsc('SBIN1234567'),
+            'Please enter a valid IFSC code');
       });
 
       test('returns null for valid IFSC', () {
@@ -133,12 +142,14 @@ void main() {
 
     group('minLength and maxLength', () {
       test('minLength validates', () {
-        expect(FormValidators.minLength('ab', 3), 'This field must be at least 3 characters');
+        expect(FormValidators.minLength('ab', 3),
+            'This field must be at least 3 characters');
         expect(FormValidators.minLength('abc', 3), isNull);
       });
 
       test('maxLength validates', () {
-        expect(FormValidators.maxLength('abcd', 3), 'This field must be at most 3 characters');
+        expect(FormValidators.maxLength('abcd', 3),
+            'This field must be at most 3 characters');
         expect(FormValidators.maxLength('abc', 3), isNull);
       });
     });

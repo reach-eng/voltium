@@ -39,32 +39,50 @@ class ToastService {
     });
   }
 
-  static void success(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.success,
-        duration: duration ?? const Duration(seconds: 2),);
+  static void success(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.success,
+      duration: duration ?? const Duration(seconds: 2),
+    );
   }
 
-  static void error(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.error,
-        duration: duration ?? const Duration(seconds: 4),);
+  static void error(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.error,
+      duration: duration ?? const Duration(seconds: 4),
+    );
   }
 
-  static void warning(BuildContext context, String message,
-      {Duration? duration,}) {
-    show(context,
-        message: message,
-        type: ToastType.warning,
-        duration: duration ?? const Duration(seconds: 3),);
+  static void warning(
+    BuildContext context,
+    String message, {
+    Duration? duration,
+  }) {
+    show(
+      context,
+      message: message,
+      type: ToastType.warning,
+      duration: duration ?? const Duration(seconds: 3),
+    );
   }
 
-  static void info(BuildContext context, String message,
-      {Duration duration = const Duration(seconds: 3),}) {
+  static void info(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
     show(context, message: message, type: ToastType.info, duration: duration);
   }
 }
@@ -98,7 +116,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300),);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
@@ -281,7 +301,9 @@ class _ToastItemState extends State<_ToastItem>
   void initState() {
     super.initState();
     _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 300),);
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
   }

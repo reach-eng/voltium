@@ -2,7 +2,8 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 class PostHogService {
-  static const String _postHogApiKey = 'phc_placeholder'; // To be replaced via env
+  static const String _postHogApiKey =
+      'phc_placeholder'; // To be replaced via env
 
   static Future<void> initialize() async {
     if (kIsWeb) return; // For now focus on mobile app
@@ -11,28 +12,32 @@ class PostHogService {
     // are no-ops until then.
   }
 
-  static Future<void> capture(String eventName, {Map<String, Object>? properties}) async {
+  static Future<void> capture(String eventName,
+      {Map<String, Object>? properties}) async {
     await Posthog().capture(
       eventName: eventName,
       properties: _scrubProperties(properties),
     );
   }
 
-  static Future<void> screen(String screenName, {Map<String, Object>? properties}) async {
+  static Future<void> screen(String screenName,
+      {Map<String, Object>? properties}) async {
     await Posthog().screen(
       screenName: screenName,
       properties: _scrubProperties(properties),
     );
   }
 
-  static Future<void> identify(String userId, {Map<String, Object>? properties}) async {
+  static Future<void> identify(String userId,
+      {Map<String, Object>? properties}) async {
     await Posthog().identify(
       userId: userId,
       userProperties: _scrubProperties(properties),
     );
   }
 
-  static Future<void> captureError(dynamic error, StackTrace? stack, {String? reason}) async {
+  static Future<void> captureError(dynamic error, StackTrace? stack,
+      {String? reason}) async {
     await Posthog().capture(
       eventName: 'fatal_error',
       properties: <String, Object>{
@@ -45,7 +50,8 @@ class PostHogService {
   }
 
   // PII Scrubbing
-  static Map<String, Object>? _scrubProperties(Map<String, Object>? properties) {
+  static Map<String, Object>? _scrubProperties(
+      Map<String, Object>? properties) {
     if (properties == null) return null;
 
     final Map<String, Object> scrubbed = Map<String, Object>.from(properties);

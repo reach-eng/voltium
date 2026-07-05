@@ -28,7 +28,8 @@ void main() {
   test('shareReferral invokes method channel', () async {
     // Should not throw
     await ShareService.shareReferral(referralCode: 'VOLT123');
-    await ShareService.shareReferral(referralCode: 'VOLT123', riderName: 'John');
+    await ShareService.shareReferral(
+        referralCode: 'VOLT123', riderName: 'John');
     expect(true, isTrue);
   });
 

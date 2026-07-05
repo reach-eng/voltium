@@ -19,9 +19,9 @@ void main() {
 
   test('setDarkMode updates state and cache', () async {
     final provider = ThemeProvider();
-    
+
     await provider.setDarkMode(true);
-    
+
     expect(provider.isDarkMode, isTrue);
     expect(provider.themeMode, ThemeMode.dark);
     expect(CacheService().getDarkMode(), isTrue);
@@ -30,10 +30,10 @@ void main() {
   test('toggleTheme toggles state', () async {
     final provider = ThemeProvider();
     expect(provider.isDarkMode, isFalse);
-    
+
     await provider.toggleTheme();
     expect(provider.isDarkMode, isTrue);
-    
+
     await provider.toggleTheme();
     expect(provider.isDarkMode, isFalse);
   });

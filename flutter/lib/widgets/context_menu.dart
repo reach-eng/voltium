@@ -186,10 +186,11 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
         child: Row(
           children: [
             if (item.icon != null) ...[
-              Icon(item.icon,
-                  size: 20,
-                  color:
-                      item.color ?? (isDark ? Colors.white : Colors.black87),),
+              Icon(
+                item.icon,
+                size: 20,
+                color: item.color ?? (isDark ? Colors.white : Colors.black87),
+              ),
               const SizedBox(width: 12),
             ],
             Expanded(

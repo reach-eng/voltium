@@ -61,12 +61,16 @@ class VehiclePhotosScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(Icons.arrow_back,
-                  size: 18, color: AppColors.onSurface,),
+              child: const Icon(
+                Icons.arrow_back,
+                size: 18,
+                color: AppColors.onSurface,
+              ),
             ),
           ),
           const SizedBox(width: 16),
-          Text('Vehicle Photos',
+          Text(
+            'Vehicle Photos',
             style: GoogleFonts.inter(
               fontSize: 21,
               fontWeight: FontWeight.w700,
@@ -95,15 +99,19 @@ class VehiclePhotosScreen extends StatelessWidget {
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.electric_bike,
-                color: AppColors.primary, size: 24,),
+            child: const Icon(
+              Icons.electric_bike,
+              color: AppColors.primary,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ASSIGNED VEHICLE',
+                Text(
+                  'ASSIGNED VEHICLE',
                   style: GoogleFonts.inter(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -132,7 +140,8 @@ class VehiclePhotosScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('PICKUP PHOTOS',
+        Text(
+          'PICKUP PHOTOS',
           style: GoogleFonts.inter(
             fontSize: 11,
             fontWeight: FontWeight.w800,
@@ -160,8 +169,11 @@ class VehiclePhotosScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 image: url != null && url.isNotEmpty
                     ? DecorationImage(
-                        image: ResizeImage(NetworkImage(url),
-                            width: 400, height: 300,),
+                        image: ResizeImage(
+                          NetworkImage(url),
+                          width: 400,
+                          height: 300,
+                        ),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -170,8 +182,11 @@ class VehiclePhotosScreen extends StatelessWidget {
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.camera_alt_outlined,
-                            color: AppColors.onSurfaceVariant, size: 32,),
+                        const Icon(
+                          Icons.camera_alt_outlined,
+                          color: AppColors.onSurfaceVariant,
+                          size: 32,
+                        ),
                         const SizedBox(height: 8),
                         Text(
                           photo['label'],
@@ -192,8 +207,11 @@ class VehiclePhotosScreen extends StatelessWidget {
                           color: Colors.black54,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.zoom_in,
-                            color: Colors.white, size: 16,),
+                        child: const Icon(
+                          Icons.zoom_in,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
             );
@@ -216,7 +234,8 @@ class VehiclePhotosScreen extends StatelessWidget {
           boxShadow: AppShadows.primaryButton,
         ),
         child: const Center(
-          child: Text('Back to Dashboard',
+          child: Text(
+            'Back to Dashboard',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,

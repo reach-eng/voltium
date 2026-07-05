@@ -11,13 +11,15 @@ class VoltiumApiClient {
 
   /// Send OTP to phone number
   Future<SendOtpResponse> postAuthSendOtp(SendOtpRequest request) async {
-    final response = await _client.post('/api/auth/send-otp', body: request.toJson());
+    final response =
+        await _client.post('/api/auth/send-otp', body: request.toJson());
     return SendOtpResponse.fromJson(response);
   }
 
   /// Verify OTP and establish session
   Future<VerifyOtpResponse> postAuthVerifyOtp(VerifyOtpRequest request) async {
-    final response = await _client.post('/api/auth/verify-otp', body: request.toJson());
+    final response =
+        await _client.post('/api/auth/verify-otp', body: request.toJson());
     return VerifyOtpResponse.fromJson(response);
   }
 
@@ -28,8 +30,10 @@ class VoltiumApiClient {
   }
 
   /// Update rider profile fields
-  Future<Map<String, dynamic>> putRiderProfile(UpdateProfileRequest request) async {
-    final response = await _client.put('/api/rider/profile', body: request.toJson());
+  Future<Map<String, dynamic>> putRiderProfile(
+      UpdateProfileRequest request) async {
+    final response =
+        await _client.put('/api/rider/profile', body: request.toJson());
     return response;
   }
 
@@ -41,7 +45,8 @@ class VoltiumApiClient {
 
   /// Submit KYC documents
   Future<SubmitKycResponse> postRiderKyc(SubmitKycRequest request) async {
-    final response = await _client.post('/api/rider/kyc', body: request.toJson());
+    final response =
+        await _client.post('/api/rider/kyc', body: request.toJson());
     return SubmitKycResponse.fromJson(response);
   }
 
@@ -52,24 +57,28 @@ class VoltiumApiClient {
   }
 
   /// Submit guarantor details
-  Future<Map<String, dynamic>> postRiderGuarantor(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postRiderGuarantor(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/rider/guarantor', body: request);
     return response;
   }
 
   /// Submit a top-up or security deposit payment
   Future<TopupResponse> postTransactionTopup(TopupRequest request) async {
-    final response = await _client.post('/api/transaction/topup', body: request.toJson());
+    final response =
+        await _client.post('/api/transaction/topup', body: request.toJson());
     return TopupResponse.fromJson(response);
   }
 
   /// Get transaction history
-  Future<Map<String, dynamic>> getTransactionHistory(int? page, int? limit) async {
+  Future<Map<String, dynamic>> getTransactionHistory(
+      int? page, int? limit) async {
     final queryParams = <String, String>{
       if (page != null) 'page': page.toString(),
       if (limit != null) 'limit': limit.toString(),
     };
-    final response = await _client.get('/api/transaction/history', queryParams: queryParams);
+    final response =
+        await _client.get('/api/transaction/history', queryParams: queryParams);
     return response;
   }
 
@@ -81,7 +90,8 @@ class VoltiumApiClient {
 
   /// Book a vehicle rental
   Future<BookRentalResponse> postRentalBook(BookRentalRequest request) async {
-    final response = await _client.post('/api/rental/book', body: request.toJson());
+    final response =
+        await _client.post('/api/rental/book', body: request.toJson());
     return BookRentalResponse.fromJson(response);
   }
 
@@ -93,19 +103,24 @@ class VoltiumApiClient {
 
   /// Create a support ticket
   Future<TicketResponse> postSupportTickets(CreateTicketRequest request) async {
-    final response = await _client.post('/api/support/tickets', body: request.toJson());
+    final response =
+        await _client.post('/api/support/tickets', body: request.toJson());
     return TicketResponse.fromJson(response);
   }
 
   /// Request a signed upload URL for a file
-  Future<RequestUploadUrlResponse> postFilesRequestUpload(RequestUploadUrlRequest request) async {
-    final response = await _client.post('/api/files/request-upload', body: request.toJson());
+  Future<RequestUploadUrlResponse> postFilesRequestUpload(
+      RequestUploadUrlRequest request) async {
+    final response =
+        await _client.post('/api/files/request-upload', body: request.toJson());
     return RequestUploadUrlResponse.fromJson(response);
   }
 
   /// Confirm a file upload was completed
-  Future<Map<String, dynamic>> postFilesConfirmUpload(ConfirmUploadRequest request) async {
-    final response = await _client.post('/api/files/confirm-upload', body: request.toJson());
+  Future<Map<String, dynamic>> postFilesConfirmUpload(
+      ConfirmUploadRequest request) async {
+    final response =
+        await _client.post('/api/files/confirm-upload', body: request.toJson());
     return response;
   }
 
@@ -116,13 +131,15 @@ class VoltiumApiClient {
   }
 
   /// Update {path}
-  Future<Map<String, dynamic>> putFilespath(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> putFilespath(
+      Map<String, dynamic> request) async {
     final response = await _client.put('/api/files/{path}', body: request);
     return response;
   }
 
   /// Admin login with email + password
-  Future<Map<String, dynamic>> postAdminAuthLogin(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postAdminAuthLogin(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/admin/auth/login', body: request);
     return response;
   }
@@ -140,8 +157,10 @@ class VoltiumApiClient {
   }
 
   /// Refresh admin session token (sets new cookie)
-  Future<Map<String, dynamic>> postAdminAuthRefresh(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/admin/auth/refresh', body: request);
+  Future<Map<String, dynamic>> postAdminAuthRefresh(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/admin/auth/refresh', body: request);
     return response;
   }
 
@@ -153,13 +172,16 @@ class VoltiumApiClient {
 
   /// Review KYC submission (approve/reject/request-info)
   Future<Map<String, dynamic>> postAdminKyc(ReviewKycRequest request) async {
-    final response = await _client.post('/api/admin/kyc', body: request.toJson());
+    final response =
+        await _client.post('/api/admin/kyc', body: request.toJson());
     return response;
   }
 
   /// Review deposit (approve/reject/refund/forfeit)
-  Future<Map<String, dynamic>> postAdminDeposits(ReviewDepositRequest request) async {
-    final response = await _client.post('/api/admin/deposits', body: request.toJson());
+  Future<Map<String, dynamic>> postAdminDeposits(
+      ReviewDepositRequest request) async {
+    final response =
+        await _client.post('/api/admin/deposits', body: request.toJson());
     return response;
   }
 
@@ -170,14 +192,17 @@ class VoltiumApiClient {
   }
 
   /// Bulk update Deposits
-  Future<Map<String, dynamic>> putAdminDeposits(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> putAdminDeposits(
+      Map<String, dynamic> request) async {
     final response = await _client.put('/api/admin/deposits', body: request);
     return response;
   }
 
   /// Approve/reject/reverse a transaction
-  Future<Map<String, dynamic>> postAdminTransactions(ApproveTransactionRequest request) async {
-    final response = await _client.post('/api/admin/transactions', body: request.toJson());
+  Future<Map<String, dynamic>> postAdminTransactions(
+      ApproveTransactionRequest request) async {
+    final response =
+        await _client.post('/api/admin/transactions', body: request.toJson());
     return response;
   }
 
@@ -188,8 +213,10 @@ class VoltiumApiClient {
   }
 
   /// Bulk update Transactions
-  Future<Map<String, dynamic>> putAdminTransactions(Map<String, dynamic> request) async {
-    final response = await _client.put('/api/admin/transactions', body: request);
+  Future<Map<String, dynamic>> putAdminTransactions(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.put('/api/admin/transactions', body: request);
     return response;
   }
 
@@ -200,8 +227,10 @@ class VoltiumApiClient {
   }
 
   /// Bulk update Notifications
-  Future<Map<String, dynamic>> putRiderNotifications(Map<String, dynamic> request) async {
-    final response = await _client.put('/api/rider/notifications', body: request);
+  Future<Map<String, dynamic>> putRiderNotifications(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.put('/api/rider/notifications', body: request);
     return response;
   }
 
@@ -210,7 +239,8 @@ class VoltiumApiClient {
     final queryParams = <String, String>{
       'hubId': hubId.toString(),
     };
-    final response = await _client.get('/api/vehicles', queryParams: queryParams);
+    final response =
+        await _client.get('/api/vehicles', queryParams: queryParams);
     return ListVehiclesResponse.fromJson(response);
   }
 
@@ -221,13 +251,15 @@ class VoltiumApiClient {
   }
 
   /// Create Hubs
-  Future<Map<String, dynamic>> postAdminHubs(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postAdminHubs(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/admin/hubs', body: request);
     return response;
   }
 
   /// Bulk update Hubs
-  Future<Map<String, dynamic>> putAdminHubs(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> putAdminHubs(
+      Map<String, dynamic> request) async {
     final response = await _client.put('/api/admin/hubs', body: request);
     return response;
   }
@@ -239,29 +271,35 @@ class VoltiumApiClient {
   }
 
   /// List riders (paginated)
-  Future<Map<String, dynamic>> getAdminRiders(int? page, int? limit, String? search, String? status) async {
+  Future<Map<String, dynamic>> getAdminRiders(
+      int? page, int? limit, String? search, String? status) async {
     final queryParams = <String, String>{
       if (page != null) 'page': page.toString(),
       if (limit != null) 'limit': limit.toString(),
       if (search != null) 'search': search.toString(),
       if (status != null) 'status': status.toString(),
     };
-    final response = await _client.get('/api/admin/riders', queryParams: queryParams);
+    final response =
+        await _client.get('/api/admin/riders', queryParams: queryParams);
     return response;
   }
 
   /// Create rider (admin)
-  Future<Map<String, dynamic>> postAdminRiders(CreateRiderRequest request) async {
-    final response = await _client.post('/api/admin/riders', body: request.toJson());
+  Future<Map<String, dynamic>> postAdminRiders(
+      CreateRiderRequest request) async {
+    final response =
+        await _client.post('/api/admin/riders', body: request.toJson());
     return response;
   }
 
   /// Update rider (admin)
-  Future<Map<String, dynamic>> putAdminRiders(CreateRiderRequest request, String id) async {
+  Future<Map<String, dynamic>> putAdminRiders(
+      CreateRiderRequest request, String id) async {
     final queryParams = <String, String>{
       'id': id.toString(),
     };
-    final response = await _client.put('/api/admin/riders', queryParams: queryParams, body: request.toJson());
+    final response = await _client.put('/api/admin/riders',
+        queryParams: queryParams, body: request.toJson());
     return response;
   }
 
@@ -270,7 +308,8 @@ class VoltiumApiClient {
     final queryParams = <String, String>{
       'id': id.toString(),
     };
-    final response = await _client.delete('/api/admin/riders', queryParams: queryParams);
+    final response =
+        await _client.delete('/api/admin/riders', queryParams: queryParams);
     return response;
   }
 
@@ -281,14 +320,18 @@ class VoltiumApiClient {
   }
 
   /// Verify phone OTP
-  Future<VerifyPhoneResponse> postAuthVerifyPhone(VerifyPhoneRequest request) async {
-    final response = await _client.post('/api/auth/verify-phone', body: request.toJson());
+  Future<VerifyPhoneResponse> postAuthVerifyPhone(
+      VerifyPhoneRequest request) async {
+    final response =
+        await _client.post('/api/auth/verify-phone', body: request.toJson());
     return VerifyPhoneResponse.fromJson(response);
   }
 
   /// Request read URL
-  Future<RequestReadUrlResponse> postFilesRequestRead(RequestReadUrlRequest request) async {
-    final response = await _client.post('/api/files/request-read', body: request.toJson());
+  Future<RequestReadUrlResponse> postFilesRequestRead(
+      RequestReadUrlRequest request) async {
+    final response =
+        await _client.post('/api/files/request-read', body: request.toJson());
     return RequestReadUrlResponse.fromJson(response);
   }
 
@@ -299,18 +342,21 @@ class VoltiumApiClient {
   }
 
   /// Bulk update List
-  Future<Map<String, dynamic>> putNotificationList(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> putNotificationList(
+      Map<String, dynamic> request) async {
     final response = await _client.put('/api/notification/list', body: request);
     return response;
   }
 
   /// Fetch plan pricing
-  Future<Map<String, dynamic>> getPricing(String hubId, String basePrice) async {
+  Future<Map<String, dynamic>> getPricing(
+      String hubId, String basePrice) async {
     final queryParams = <String, String>{
       'hubId': hubId.toString(),
       'basePrice': basePrice.toString(),
     };
-    final response = await _client.get('/api/pricing', queryParams: queryParams);
+    final response =
+        await _client.get('/api/pricing', queryParams: queryParams);
     return response;
   }
 
@@ -321,7 +367,8 @@ class VoltiumApiClient {
   }
 
   /// Submit device telemetry or token
-  Future<Map<String, dynamic>> postRiderDevice(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postRiderDevice(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/rider/device', body: request);
     return response;
   }
@@ -339,7 +386,8 @@ class VoltiumApiClient {
   }
 
   /// Add earning entry
-  Future<Map<String, dynamic>> postRiderEarnings(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postRiderEarnings(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/rider/earnings', body: request);
     return response;
   }
@@ -357,7 +405,8 @@ class VoltiumApiClient {
   }
 
   /// Subscribe to plan
-  Future<Map<String, dynamic>> postRiderPlans(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postRiderPlans(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/rider/plans', body: request);
     return response;
   }
@@ -393,30 +442,38 @@ class VoltiumApiClient {
   }
 
   /// Sync device telemetry logs
-  Future<Map<String, dynamic>> postRiderSyncDeviceData(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/rider/sync/device-data', body: request);
+  Future<Map<String, dynamic>> postRiderSyncDeviceData(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/rider/sync/device-data', body: request);
     return response;
   }
 
   /// Finalise pickup checklists
-  Future<Map<String, dynamic>> postRiderSyncPickup(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/rider/sync/pickup', body: request);
+  Future<Map<String, dynamic>> postRiderSyncPickup(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/rider/sync/pickup', body: request);
     return response;
   }
 
   /// Check vehicle availability for pickup
-  Future<Map<String, dynamic>> getRiderSyncPickupVehicle(String hubId, String vehicleId) async {
+  Future<Map<String, dynamic>> getRiderSyncPickupVehicle(
+      String hubId, String vehicleId) async {
     final queryParams = <String, String>{
       'hubId': hubId.toString(),
       'vehicleId': vehicleId.toString(),
     };
-    final response = await _client.get('/api/rider/sync/pickup/vehicle', queryParams: queryParams);
+    final response = await _client.get('/api/rider/sync/pickup/vehicle',
+        queryParams: queryParams);
     return response;
   }
 
   /// Register FCM device token
-  Future<Map<String, dynamic>> postRidersRegisterToken(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/riders/register-token', body: request);
+  Future<Map<String, dynamic>> postRidersRegisterToken(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/riders/register-token', body: request);
     return response;
   }
 
@@ -437,7 +494,8 @@ class VoltiumApiClient {
   }
 
   /// Send chat message
-  Future<Map<String, dynamic>> postSupportChat(Map<String, dynamic> request) async {
+  Future<Map<String, dynamic>> postSupportChat(
+      Map<String, dynamic> request) async {
     final response = await _client.post('/api/support/chat', body: request);
     return response;
   }
@@ -449,8 +507,10 @@ class VoltiumApiClient {
   }
 
   /// Request a transaction / payment session
-  Future<Map<String, dynamic>> postTransactionRequest(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/transaction/request', body: request);
+  Future<Map<String, dynamic>> postTransactionRequest(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/transaction/request', body: request);
     return response;
   }
 
@@ -461,32 +521,42 @@ class VoltiumApiClient {
   }
 
   /// Create Refresh
-  Future<Map<String, dynamic>> postAuthRefresh(RefreshTokenRequest request) async {
-    final response = await _client.post('/api/auth/refresh', body: request.toJson());
+  Future<Map<String, dynamic>> postAuthRefresh(
+      RefreshTokenRequest request) async {
+    final response =
+        await _client.post('/api/auth/refresh', body: request.toJson());
     return response;
   }
 
   /// Update Device Permissions
-  Future<Map<String, dynamic>> postRiderDevicePermissions(DevicePermissionsRequest request) async {
-    final response = await _client.post('/api/rider/device/permissions', body: request.toJson());
+  Future<Map<String, dynamic>> postRiderDevicePermissions(
+      DevicePermissionsRequest request) async {
+    final response = await _client.post('/api/rider/device/permissions',
+        body: request.toJson());
     return response;
   }
 
   /// Bulk update Direct Upload
-  Future<Map<String, dynamic>> putFilesDirectUpload(Map<String, dynamic> request) async {
-    final response = await _client.put('/api/files/direct-upload', body: request);
+  Future<Map<String, dynamic>> putFilesDirectUpload(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.put('/api/files/direct-upload', body: request);
     return response;
   }
 
   /// Update {fileRecordId}
-  Future<Map<String, dynamic>> putFilesLocalUploadfileRecordId(Map<String, dynamic> request) async {
-    final response = await _client.put('/api/files/local-upload/{fileRecordId}', body: request);
+  Future<Map<String, dynamic>> putFilesLocalUploadfileRecordId(
+      Map<String, dynamic> request) async {
+    final response = await _client.put('/api/files/local-upload/{fileRecordId}',
+        body: request);
     return response;
   }
 
   /// Create Verify Lock
-  Future<Map<String, dynamic>> postRiderDeviceVerifyLock(Map<String, dynamic> request) async {
-    final response = await _client.post('/api/rider/device/verify-lock', body: request);
+  Future<Map<String, dynamic>> postRiderDeviceVerifyLock(
+      Map<String, dynamic> request) async {
+    final response =
+        await _client.post('/api/rider/device/verify-lock', body: request);
     return response;
   }
 
@@ -497,9 +567,10 @@ class VoltiumApiClient {
   }
 
   /// Create Return
-  Future<Map<String, dynamic>> postRiderRentalReturn(VehicleReturnRequest request) async {
-    final response = await _client.post('/api/rider/rental/return', body: request.toJson());
+  Future<Map<String, dynamic>> postRiderRentalReturn(
+      VehicleReturnRequest request) async {
+    final response =
+        await _client.post('/api/rider/rental/return', body: request.toJson());
     return response;
   }
-
 }

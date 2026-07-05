@@ -107,7 +107,8 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Select Vehicle',
+                    child: Text(
+                      'Select Vehicle',
                       style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
@@ -136,13 +137,18 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                 decoration: InputDecoration(
                   hintText: 'Search by ID, model or plate…',
                   hintStyle: GoogleFonts.inter(
-                      fontSize: 14, color: _textMuted.withValues(alpha: 0.7),),
+                    fontSize: 14,
+                    color: _textMuted.withValues(alpha: 0.7),
+                  ),
                   prefixIcon:
                       const Icon(Icons.search, color: _primary, size: 20),
                   suffixIcon: _searchCtrl.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.close,
-                              size: 18, color: _textMuted,),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: _textMuted,
+                          ),
                           onPressed: () => _searchCtrl.clear(),
                         )
                       : null,
@@ -176,12 +182,18 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                       padding: const EdgeInsets.all(32),
                       child: Column(
                         children: [
-                          const Icon(Icons.electric_moped_outlined,
-                              size: 40, color: _outline,),
+                          const Icon(
+                            Icons.electric_moped_outlined,
+                            size: 40,
+                            color: _outline,
+                          ),
                           const SizedBox(height: 12),
-                          Text('No vehicles match your search',
+                          Text(
+                            'No vehicles match your search',
                             style: GoogleFonts.inter(
-                                fontSize: 14, color: _textMuted,),
+                              fontSize: 14,
+                              color: _textMuted,
+                            ),
                           ),
                         ],
                       ),
@@ -201,7 +213,9 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                             Navigator.of(ctx).pop();
                           },
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 4,),
+                            horizontal: 20,
+                            vertical: 4,
+                          ),
                           leading: Container(
                             width: 42,
                             height: 42,
@@ -233,14 +247,19 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                 v['licensePlate'] as String,
                             ].where((s) => s.isNotEmpty).join(' · '),
                             style: GoogleFonts.inter(
-                                fontSize: 12, color: _textMuted,),
+                              fontSize: 12,
+                              color: _textMuted,
+                            ),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (battery.isNotEmpty) ...[
-                                Icon(Icons.battery_charging_full_rounded,
-                                    size: 14, color: _batteryColor(v),),
+                                Icon(
+                                  Icons.battery_charging_full_rounded,
+                                  size: 14,
+                                  color: _batteryColor(v),
+                                ),
                                 const SizedBox(width: 2),
                                 Text(
                                   battery,
@@ -253,8 +272,11 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                 const SizedBox(width: 8),
                               ],
                               if (isSelected)
-                                const Icon(Icons.check_circle,
-                                    color: _success, size: 20,),
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: _success,
+                                  size: 20,
+                                ),
                             ],
                           ),
                         );

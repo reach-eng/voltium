@@ -1,4 +1,3 @@
-
 /// Abstract repository for customer support operations.
 abstract class SupportRepository {
   /// Fetches FAQs.

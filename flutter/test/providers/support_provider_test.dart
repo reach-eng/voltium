@@ -73,7 +73,7 @@ void main() {
   test('refreshFaqs loads faqs from repository', () async {
     final mockRepo = MockSupportRepository();
     final provider = SupportProvider(repository: mockRepo);
-    
+
     await provider.refreshFaqs();
     expect(mockRepo.fetchFaqsCalled, isTrue);
     expect(provider.faqs.length, 1);
@@ -83,7 +83,7 @@ void main() {
   test('refreshTickets loads tickets from repository', () async {
     final mockRepo = MockSupportRepository();
     final provider = SupportProvider(repository: mockRepo);
-    
+
     await provider.refreshTickets();
     expect(mockRepo.fetchTicketsCalled, isTrue);
     expect(provider.tickets.length, 1);
@@ -93,13 +93,10 @@ void main() {
   test('createTicket creates ticket and refreshes', () async {
     final mockRepo = MockSupportRepository();
     final provider = SupportProvider(repository: mockRepo);
-    
+
     await provider.createTicket(
-      category: 'VEHICLE', 
-      subject: 'Flat Tire', 
-      message: 'Help'
-    );
-    
+        category: 'VEHICLE', subject: 'Flat Tire', message: 'Help');
+
     expect(mockRepo.createTicketCalled, isTrue);
     expect(mockRepo.fetchTicketsCalled, isTrue);
   });
@@ -108,7 +105,7 @@ void main() {
     final provider = SupportProvider(repository: MockSupportRepository());
     provider.initSupportData();
     provider.logout();
-    
+
     expect(provider.supportConfig, isNull);
     expect(provider.faqCategories, isEmpty);
     expect(provider.faqs, isEmpty);

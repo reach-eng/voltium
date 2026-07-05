@@ -297,7 +297,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
         onPressed: () => _showAddEntrySheet(),
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Entry',
+        label: const Text(
+          'Add Entry',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
@@ -345,7 +346,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          const Text('Earnings Log',
+          const Text(
+            'Earnings Log',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -381,7 +383,8 @@ class _EarningsScreenState extends State<EarningsScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('No earnings logged yet',
+          const Text(
+            'No earnings logged yet',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

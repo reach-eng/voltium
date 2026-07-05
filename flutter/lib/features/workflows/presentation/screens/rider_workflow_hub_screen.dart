@@ -53,129 +53,202 @@ class RiderWorkflowHubScreen extends StatelessWidget {
           _Section(
             title: 'Onboarding & verification',
             children: [
-              _Tile('Intent of use', Icons.assignment_outlined,
-                  () => AppNavigator.push(context, const IntentOfUseScreen()),),
               _Tile(
-                  'Rider profile',
-                  Icons.person_add_alt,
-                  () =>
-                      AppNavigator.push(context, const UserOnboardingScreen()),),
-              _Tile('Signature / consent', Icons.draw_outlined,
-                  () => AppNavigator.push(context, const SignaturePadScreen()),),
-              _Tile('My documents', Icons.folder_copy_outlined,
-                  () => AppNavigator.push(context, const MyDocumentsScreen()),),
+                'Intent of use',
+                Icons.assignment_outlined,
+                () => AppNavigator.push(context, const IntentOfUseScreen()),
+              ),
               _Tile(
-                  'Guarantor details',
-                  Icons.verified_user_outlined,
-                  () => AppNavigator.push(
-                      context, const GuarantorOnboardingScreen(),),),
+                'Rider profile',
+                Icons.person_add_alt,
+                () => AppNavigator.push(context, const UserOnboardingScreen()),
+              ),
+              _Tile(
+                'Signature / consent',
+                Icons.draw_outlined,
+                () => AppNavigator.push(context, const SignaturePadScreen()),
+              ),
+              _Tile(
+                'My documents',
+                Icons.folder_copy_outlined,
+                () => AppNavigator.push(context, const MyDocumentsScreen()),
+              ),
+              _Tile(
+                'Guarantor details',
+                Icons.verified_user_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const GuarantorOnboardingScreen(),
+                ),
+              ),
             ],
           ),
           _Section(
             title: 'Plan, wallet & deposit',
             children: [
               _Tile(
-                  'Choose plan',
-                  Icons.electric_bolt_outlined,
-                  () => AppNavigator.push(
-                      context,
-                      ChoosePlanScreen(
-                          onNext: () => Navigator.maybePop(context),),),),
+                'Choose plan',
+                Icons.electric_bolt_outlined,
+                () => AppNavigator.push(
+                  context,
+                  ChoosePlanScreen(
+                    onNext: () => Navigator.maybePop(context),
+                  ),
+                ),
+              ),
               _Tile(
-                  'Top-up / deposit flow',
-                  Icons.account_balance_wallet_outlined,
-                  () => AppNavigator.push(context, const TopUpFlow()),),
+                'Top-up / deposit flow',
+                Icons.account_balance_wallet_outlined,
+                () => AppNavigator.push(context, const TopUpFlow()),
+              ),
               _Tile(
-                  'Transaction history',
-                  Icons.history,
-                  () => AppNavigator.push(
-                      context, HistoryScreen(riderId: riderId),),),
-              _Tile('Rewards', Icons.card_giftcard_outlined,
-                  () => AppNavigator.push(context, const RewardsScreen()),),
-              _Tile('Referrals', Icons.people_alt_outlined,
-                  () => AppNavigator.push(context, const ReferralScreen()),),
+                'Transaction history',
+                Icons.history,
+                () => AppNavigator.push(
+                  context,
+                  HistoryScreen(riderId: riderId),
+                ),
+              ),
+              _Tile(
+                'Rewards',
+                Icons.card_giftcard_outlined,
+                () => AppNavigator.push(context, const RewardsScreen()),
+              ),
+              _Tile(
+                'Referrals',
+                Icons.people_alt_outlined,
+                () => AppNavigator.push(context, const ReferralScreen()),
+              ),
             ],
           ),
           _Section(
             title: 'Pickup, rental & return',
             children: [
               _Tile(
-                  'Pickup hub and vehicle',
-                  Icons.store_mall_directory_outlined,
-                  () => AppNavigator.push(
-                      context,
-                      PickupHubScreen(
-                          onNext: (_, __, ___, ____, _____, ______, _______,
-                              ________, _________,) {},),),),
+                'Pickup hub and vehicle',
+                Icons.store_mall_directory_outlined,
+                () => AppNavigator.push(
+                  context,
+                  PickupHubScreen(
+                    onNext: (
+                      _,
+                      __,
+                      ___,
+                      ____,
+                      _____,
+                      ______,
+                      _______,
+                      ________,
+                      _________,
+                    ) {},
+                  ),
+                ),
+              ),
               _Tile(
-                  'Rental details',
-                  Icons.description_outlined,
-                  () =>
-                      AppNavigator.push(context, const RentalDetailsScreen()),),
-              _Tile('End rental / return', Icons.assignment_return_outlined,
-                  () => AppNavigator.push(context, const EndRentalScreen()),),
+                'Rental details',
+                Icons.description_outlined,
+                () => AppNavigator.push(context, const RentalDetailsScreen()),
+              ),
+              _Tile(
+                'End rental / return',
+                Icons.assignment_return_outlined,
+                () => AppNavigator.push(context, const EndRentalScreen()),
+              ),
             ],
           ),
           _Section(
             title: 'Support & communication',
             children: [
               _Tile(
-                  'Support center',
-                  Icons.support_agent,
-                  () =>
-                      AppNavigator.push(context, const SupportCenterScreen()),),
+                'Support center',
+                Icons.support_agent,
+                () => AppNavigator.push(context, const SupportCenterScreen()),
+              ),
               _Tile(
-                  'Support checklist',
-                  Icons.checklist_outlined,
-                  () => AppNavigator.push(
-                      context, const SupportChecklistScreen(),),),
-              _Tile('FAQ', Icons.help_outline,
-                  () => AppNavigator.push(context, const FaqScreen()),),
+                'Support checklist',
+                Icons.checklist_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const SupportChecklistScreen(),
+                ),
+              ),
               _Tile(
-                  'Troubleshooter',
-                  Icons.build_circle_outlined,
-                  () =>
-                      AppNavigator.push(context, const TroubleshooterScreen()),),
+                'FAQ',
+                Icons.help_outline,
+                () => AppNavigator.push(context, const FaqScreen()),
+              ),
               _Tile(
-                  'Feedback',
-                  Icons.rate_review_outlined,
-                  () => AppNavigator.push(
-                      context,
-                      FeedbackScreen(
-                          onSubmit: () => Navigator.maybePop(context),),),),
+                'Troubleshooter',
+                Icons.build_circle_outlined,
+                () => AppNavigator.push(context, const TroubleshooterScreen()),
+              ),
               _Tile(
-                  'Notifications',
-                  Icons.notifications_outlined,
-                  () => AppNavigator.push(
-                      context, const NotificationCenterScreen(),),),
+                'Feedback',
+                Icons.rate_review_outlined,
+                () => AppNavigator.push(
+                  context,
+                  FeedbackScreen(
+                    onSubmit: () => Navigator.maybePop(context),
+                  ),
+                ),
+              ),
               _Tile(
-                  'Smart notifications',
-                  Icons.tips_and_updates_outlined,
-                  () => AppNavigator.push(
-                      context, const SmartNotificationsScreen(),),),
+                'Notifications',
+                Icons.notifications_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const NotificationCenterScreen(),
+                ),
+              ),
               _Tile(
-                  'Notification preferences',
-                  Icons.tune_outlined,
-                  () => AppNavigator.push(
-                      context, const NotificationPreferencesScreen(),),),
+                'Smart notifications',
+                Icons.tips_and_updates_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const SmartNotificationsScreen(),
+                ),
+              ),
+              _Tile(
+                'Notification preferences',
+                Icons.tune_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const NotificationPreferencesScreen(),
+                ),
+              ),
             ],
           ),
           _Section(
             title: 'Profile, legal & safety',
             children: [
-              _Tile('Edit profile', Icons.edit_outlined,
-                  () => AppNavigator.push(context, const EditProfileScreen()),),
-              _Tile('App settings', Icons.settings_outlined,
-                  () => AppNavigator.push(context, const AppSettingsScreen()),),
-              _Tile('Legal documents', Icons.gavel_outlined,
-                  () => AppNavigator.push(context, const LegalPageScreen()),),
-              _Tile('Emergency SOS', Icons.sos_outlined,
-                  () => AppNavigator.push(context, const EmergencySOSScreen()),),
               _Tile(
-                  'Emergency contacts',
-                  Icons.contact_phone_outlined,
-                  () => AppNavigator.push(
-                      context, const EmergencyContactsScreen(),),),
+                'Edit profile',
+                Icons.edit_outlined,
+                () => AppNavigator.push(context, const EditProfileScreen()),
+              ),
+              _Tile(
+                'App settings',
+                Icons.settings_outlined,
+                () => AppNavigator.push(context, const AppSettingsScreen()),
+              ),
+              _Tile(
+                'Legal documents',
+                Icons.gavel_outlined,
+                () => AppNavigator.push(context, const LegalPageScreen()),
+              ),
+              _Tile(
+                'Emergency SOS',
+                Icons.sos_outlined,
+                () => AppNavigator.push(context, const EmergencySOSScreen()),
+              ),
+              _Tile(
+                'Emergency contacts',
+                Icons.contact_phone_outlined,
+                () => AppNavigator.push(
+                  context,
+                  const EmergencyContactsScreen(),
+                ),
+              ),
             ],
           ),
         ],
@@ -254,7 +327,9 @@ class _Tile extends StatelessWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w800, color: Color(0xFF1E293B),),
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right, color: AppColors.slate400),

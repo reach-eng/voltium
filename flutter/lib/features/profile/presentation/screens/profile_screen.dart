@@ -41,7 +41,8 @@ class ProfileScreen extends StatelessWidget {
                   child: _buildProfileCard(context, rider),
                 ),
                 const SizedBox(height: 24),
-                const Text('Personal Details',
+                const Text(
+                  'Personal Details',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -61,7 +62,8 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 if (rider?.guarantorName != null) ...[
                   const SizedBox(height: 24),
-                  const Text('Guarantor Details',
+                  const Text(
+                    'Guarantor Details',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -76,7 +78,8 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 24),
-                const Text('QUICK LINKS',
+                const Text(
+                  'QUICK LINKS',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
@@ -167,14 +170,18 @@ class ProfileScreen extends StatelessWidget {
                     Navigator.pop(context);
                   }
                 },
-                child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20,),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Color(0xFF1E293B),
+                  size: 20,
+                ),
               ),
             ),
           ),
         ),
       ),
-      title: const Text('Profile',
+      title: const Text(
+        'Profile',
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
@@ -215,9 +222,8 @@ class ProfileScreen extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: isVerified
-                      ? AppColors.success
-                      : const Color(0xFF2563EB),
+                  color:
+                      isVerified ? AppColors.success : const Color(0xFF2563EB),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 4),
                   boxShadow: [
@@ -234,16 +240,20 @@ class ProfileScreen extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(48),
                         child: CachedNetworkImage(
-                            imageUrl: rider.profilePhoto!,
+                          imageUrl: rider.profilePhoto!,
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => const SizedBox(
                             width: 96,
                             height: 96,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => const SizedBox(
-                              width: 96,
-                              height: 96,
-                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                            ),
-                            errorWidget: (_, __, ___) => const Icon(Icons.person, size: 48),),
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (_, __, ___) =>
+                              const Icon(Icons.person, size: 48),
+                        ),
                       )
                     : Text(
                         initial,
@@ -261,9 +271,7 @@ class ProfileScreen extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warning,
+                    color: isVerified ? AppColors.success : AppColors.warning,
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 3),
                   ),
@@ -312,27 +320,27 @@ class ProfileScreen extends StatelessWidget {
                   : const Color(0xFFFFFBEB),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                  color: isVerified
-                      ? AppColors.success.withValues(alpha: 0.2)
-                      : const Color(0xFFFDE68A),),
+                color: isVerified
+                    ? AppColors.success.withValues(alpha: 0.2)
+                    : const Color(0xFFFDE68A),
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.shield_outlined,
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warningDark,
-                    size: 14,),
+                Icon(
+                  Icons.shield_outlined,
+                  color: isVerified ? AppColors.success : AppColors.warningDark,
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'KYC: ${_capitalize(kycStatusName)}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: isVerified
-                        ? AppColors.success
-                        : AppColors.warningDark,
+                    color:
+                        isVerified ? AppColors.success : AppColors.warningDark,
                   ),
                 ),
               ],

@@ -65,7 +65,8 @@ class MyDocumentsScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text('My Documents',
+        title: const Text(
+          'My Documents',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Color(0xFF1E293B),
@@ -231,7 +232,8 @@ class MyDocumentsScreen extends StatelessWidget {
                   const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('SECURITY PROFILE',
+                      Text(
+                        'SECURITY PROFILE',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
@@ -337,7 +339,8 @@ class MyDocumentsScreen extends StatelessWidget {
           ),
         ),
         child: const Center(
-          child: Text('No documents submitted yet',
+          child: Text(
+            'No documents submitted yet',
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
@@ -415,7 +418,8 @@ class MyDocumentsScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Text('VERIFIED',
+                      const Text(
+                        'VERIFIED',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
@@ -472,8 +476,7 @@ class MyDocumentsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,7 +496,8 @@ class MyDocumentsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Having trouble with documents?',
+                const Text(
+                  'Having trouble with documents?',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -501,7 +505,8 @@ class MyDocumentsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text('If you see any issues with your verified documents or need to update them, please raise a support ticket.',
+                const Text(
+                  'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.primary,
@@ -515,7 +520,8 @@ class MyDocumentsScreen extends StatelessWidget {
                       AppNavigator.push(context, const SupportCenterScreen()),
                   child: const Row(
                     children: [
-                      Text('CONTACT SUPPORT',
+                      Text(
+                        'CONTACT SUPPORT',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,

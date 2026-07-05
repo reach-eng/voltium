@@ -31,7 +31,8 @@ class PlanSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              const Text('Subscription Confirmed!',
+              const Text(
+                'Subscription Confirmed!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
@@ -41,7 +42,8 @@ class PlanSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.',
+              const Text(
+                'Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,

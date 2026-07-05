@@ -66,7 +66,13 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = LegalScreen(
         key: const ValueKey('legal'),
         onNext: () {
-          state._navigateToLocal(AuthState.privacyConsent);
+          if (state._postOtpTargetState != null) {
+            final target = state._postOtpTargetState!;
+            state.updatePostOtpTarget(null);
+            state._navigateToLocal(target);
+          } else {
+            state._navigateToLocal(AuthState.privacyConsent);
+          }
         },
       );
       break;
@@ -349,14 +355,10 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
   }
 
   return Scaffold(
-    body: GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Stack(
-        children: [
-          AnimatedSwitcher(
+    body: Stack(
+      children: [
+        Positioned.fill(
+          child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             switchInCurve: Curves.easeIn,
             switchOutCurve: Curves.easeOut,
@@ -365,13 +367,15 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
             },
             child: state.childScreenWrapper(currentScreen),
           ),
-          if (state._isTransitioning)
-            Container(
+        ),
+        if (state._isTransitioning)
+          Positioned.fill(
+            child: Container(
               color: Colors.black26,
               child: const Center(child: CircularProgressIndicator()),
             ),
-        ],
-      ),
+          ),
+      ],
     ),
   );
 }

@@ -5,7 +5,8 @@ import 'package:voltium_rider/providers/device_policy_provider.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel('com.voltiumelectric.voltium/device_policy');
-  const secureStorageChannel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  const secureStorageChannel =
+      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -17,7 +18,8 @@ void main() {
     });
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(secureStorageChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(secureStorageChannel,
+            (MethodCall methodCall) async {
       if (methodCall.method == 'read') {
         return 'false';
       }

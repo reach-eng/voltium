@@ -39,37 +39,47 @@ final riderProvider = ChangeNotifierProvider<RiderProvider>((ref) {
 
 /// Riverpod provider for [WalletProvider].
 final walletProvider = ChangeNotifierProvider<WalletProvider>((ref) {
-  throw UnimplementedError('WalletProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+      'WalletProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [SupportProvider].
 final supportProvider = ChangeNotifierProvider<SupportProvider>((ref) {
-  throw UnimplementedError('SupportProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+      'SupportProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [EngagementProvider].
 final engagementProvider = ChangeNotifierProvider<EngagementProvider>((ref) {
-  throw UnimplementedError('EngagementProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+      'EngagementProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [DevicePolicyProvider].
-final devicePolicyProvider = ChangeNotifierProvider<DevicePolicyProvider>((ref) {
-  throw UnimplementedError('DevicePolicyProvider must be overridden in ProviderScope');
+final devicePolicyProvider =
+    ChangeNotifierProvider<DevicePolicyProvider>((ref) {
+  throw UnimplementedError(
+      'DevicePolicyProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [ConnectivityProvider].
-final connectivityProvider = ChangeNotifierProvider<ConnectivityProvider>((ref) {
-  throw UnimplementedError('ConnectivityProvider must be overridden in ProviderScope');
+final connectivityProvider =
+    ChangeNotifierProvider<ConnectivityProvider>((ref) {
+  throw UnimplementedError(
+      'ConnectivityProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [NotificationProvider].
-final notificationProvider = ChangeNotifierProvider<NotificationProvider>((ref) {
-  throw UnimplementedError('NotificationProvider must be overridden in ProviderScope');
+final notificationProvider =
+    ChangeNotifierProvider<NotificationProvider>((ref) {
+  throw UnimplementedError(
+      'NotificationProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [LocaleProvider].
 final localeProviderRef = ChangeNotifierProvider<LocaleProvider>((ref) {
-  throw UnimplementedError('LocaleProvider must be overridden in ProviderScope');
+  throw UnimplementedError(
+      'LocaleProvider must be overridden in ProviderScope');
 });
 
 /// Riverpod provider for [ThemeProvider].

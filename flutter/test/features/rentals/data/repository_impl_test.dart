@@ -6,6 +6,7 @@ import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class MockVoltiumApiService extends Mock implements VoltiumApiService {}
 
 void main() {
@@ -16,7 +17,7 @@ void main() {
   setUp(() {
     mockVoltiumApiClient = MockVoltiumApiClient();
     mockApiService = MockVoltiumApiService();
-    
+
     // Inject mock into singleton
     VoltiumApiService.instance = mockApiService;
 
@@ -47,7 +48,8 @@ void main() {
     });
 
     test('fetchHubs returns properly formatted data with hubs', () async {
-      final mockHubs = ListHubsResponse(hubs: [HubResponse(id: 'hub1', name: 'Main Hub')]);
+      final mockHubs =
+          ListHubsResponse(hubs: [HubResponse(id: 'hub1', name: 'Main Hub')]);
       when(() => mockVoltiumApiClient.getAdminHubs())
           .thenAnswer((_) async => mockHubs);
 
@@ -56,7 +58,8 @@ void main() {
       expect((result['hubs'][0] as Map)['id'], 'hub1');
     });
 
-    test('fetchHubs throws StateError when empty response (if applicable)', () async {
+    test('fetchHubs throws StateError when empty response (if applicable)',
+        () async {
       when(() => mockVoltiumApiClient.getAdminHubs())
           .thenThrow(StateError('Empty response'));
       expect(() => repository.fetchHubs(), throwsStateError);
@@ -81,7 +84,8 @@ void main() {
     });
 
     test('fetchVehicles validates returned payload', () async {
-      final mockVehicles = ListVehiclesResponse(vehicles: [VehicleResponse(id: 'v1', status: 'AVAILABLE')]);
+      final mockVehicles = ListVehiclesResponse(
+          vehicles: [VehicleResponse(id: 'v1', status: 'AVAILABLE')]);
       when(() => mockVoltiumApiClient.getVehicles(any()))
           .thenAnswer((_) async => mockVehicles);
 
@@ -117,7 +121,9 @@ void main() {
       );
 
       expect(result['success'], true);
-      final captured = verify(() => mockVoltiumApiClient.postRiderPlans(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postRiderPlans(captureAny()))
+              .captured;
       final payload = captured.first as Map<String, dynamic>;
       expect(payload['hubId'], 'hub1');
       expect(payload['planId'], 'plan1');
@@ -129,7 +135,8 @@ void main() {
           .thenThrow(Exception('Plan error'));
 
       expect(
-        () => repository.subscribePlan(hubId: 'h', planId: 'p', securityDeposit: 0),
+        () => repository.subscribePlan(
+            hubId: 'h', planId: 'p', securityDeposit: 0),
         throwsException,
       );
     });
@@ -137,16 +144,22 @@ void main() {
     test('subscribePlan checks zero security deposit', () async {
       when(() => mockVoltiumApiClient.postRiderPlans(any()))
           .thenAnswer((_) async => {'id': '1'});
-      await repository.subscribePlan(hubId: 'h', planId: 'p', securityDeposit: 0.0);
-      final captured = verify(() => mockVoltiumApiClient.postRiderPlans(captureAny())).captured;
+      await repository.subscribePlan(
+          hubId: 'h', planId: 'p', securityDeposit: 0.0);
+      final captured =
+          verify(() => mockVoltiumApiClient.postRiderPlans(captureAny()))
+              .captured;
       expect((captured.first as Map)['securityDeposit'], 0.0);
     });
 
     test('subscribePlan checks large security deposit', () async {
       when(() => mockVoltiumApiClient.postRiderPlans(any()))
           .thenAnswer((_) async => {'id': '1'});
-      await repository.subscribePlan(hubId: 'h', planId: 'p', securityDeposit: 99999.0);
-      final captured = verify(() => mockVoltiumApiClient.postRiderPlans(captureAny())).captured;
+      await repository.subscribePlan(
+          hubId: 'h', planId: 'p', securityDeposit: 99999.0);
+      final captured =
+          verify(() => mockVoltiumApiClient.postRiderPlans(captureAny()))
+              .captured;
       expect((captured.first as Map)['securityDeposit'], 99999.0);
     });
 
@@ -162,7 +175,9 @@ void main() {
       );
 
       expect(result['status'], 'ok');
-      final captured = verify(() => mockVoltiumApiClient.postRiderSyncPickup(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postRiderSyncPickup(captureAny()))
+              .captured;
       final payload = captured.first as Map<String, dynamic>;
       expect(payload['vehicleId'], 'v1');
       expect(payload['hubId'], 'h1');
@@ -174,7 +189,8 @@ void main() {
           .thenThrow(Exception('Sync error'));
 
       expect(
-        () => repository.syncPickup(vehicleId: 'v1', hubId: 'h1', bookingId: 'b1'),
+        () => repository.syncPickup(
+            vehicleId: 'v1', hubId: 'h1', bookingId: 'b1'),
         throwsException,
       );
     });
@@ -183,7 +199,8 @@ void main() {
       final fakeResponse = {'fake': 'response', 'time': 123};
       when(() => mockVoltiumApiClient.postRiderSyncPickup(any()))
           .thenAnswer((_) async => fakeResponse);
-      final result = await repository.syncPickup(vehicleId: 'v', hubId: 'h', bookingId: 'b');
+      final result = await repository.syncPickup(
+          vehicleId: 'v', hubId: 'h', bookingId: 'b');
       expect(result, fakeResponse);
     });
 
@@ -214,7 +231,8 @@ void main() {
           )).thenThrow(Exception('Return error'));
 
       expect(
-        () => repository.submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []),
+        () => repository
+            .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []),
         throwsException,
       );
     });
@@ -225,8 +243,11 @@ void main() {
             photoUrls: any(named: 'photoUrls'),
           )).thenAnswer((_) async => {});
 
-      await repository.submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []);
-      verify(() => mockApiService.submitVehicleReturn(riderId: 'v', photoUrls: [])).called(1);
+      await repository
+          .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: []);
+      verify(() =>
+              mockApiService.submitVehicleReturn(riderId: 'v', photoUrls: []))
+          .called(1);
     });
 
     test('submitVehicleReturn returns full response payload', () async {
@@ -235,7 +256,8 @@ void main() {
             photoUrls: any(named: 'photoUrls'),
           )).thenAnswer((_) async => {'key1': 'val1', 'key2': 2});
 
-      final result = await repository.submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: ['p1']);
+      final result = await repository
+          .submitVehicleReturn(vehicleId: 'v', hubId: 'h', photos: ['p1']);
       expect(result['key1'], 'val1');
       expect(result['key2'], 2);
     });

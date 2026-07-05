@@ -183,9 +183,7 @@ class TicketMessage {
 
   factory TicketMessage.fromJson(Map<String, dynamic> json) {
     return TicketMessage(
-      id: json['id']?.toString() ??
-          json['messageId']?.toString() ??
-          '',
+      id: json['id']?.toString() ?? json['messageId']?.toString() ?? '',
       ticketId: json['ticketId']?.toString() ?? '',
       sender: _parseSenderType(json['senderType'] ?? json['sender']),
       senderName: json['senderName']?.toString() ??
@@ -195,14 +193,12 @@ class TicketMessage {
           json['message']?.toString() ??
           json['text']?.toString() ??
           '',
-      attachments: (json['attachments'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          const [],
-      createdAt: DateTime.tryParse(
-              json['createdAt']?.toString() ??
-                  json['timestamp']?.toString() ??
-                  '') ??
+      attachments:
+          (json['attachments'] as List?)?.map((e) => e.toString()).toList() ??
+              const [],
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ??
+              json['timestamp']?.toString() ??
+              '') ??
           DateTime.now(),
     );
   }

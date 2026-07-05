@@ -3,15 +3,15 @@ import 'package:flutter/foundation.dart';
 
 // Create a configured logger instance
 final _logger = Logger(
-  printer: kDebugMode 
-    ? PrettyPrinter(
-        methodCount: 1,
-        errorMethodCount: 5,
-        lineLength: 80,
-        colors: true,
-        printEmojis: true,
-      )
-    : SimplePrinter(),
+  printer: kDebugMode
+      ? PrettyPrinter(
+          methodCount: 1,
+          errorMethodCount: 5,
+          lineLength: 80,
+          colors: true,
+          printEmojis: true,
+        )
+      : SimplePrinter(),
   level: kDebugMode ? Level.debug : Level.info,
 );
 

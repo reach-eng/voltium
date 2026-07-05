@@ -36,10 +36,10 @@ class AppColors {
 
   // Surface / Background Colors
   /// Main scaffold background color (#F7F9FB)
-  static const Color surface = Color(0xFFF7F9FB); 
+  static const Color surface = Color(0xFFF7F9FB);
 
   /// Alternate background color for auth/login/onboarding pages and table rows (#F5F7FA)
-  static const Color surfaceAlt = Color(0xFFF5F7FA); 
+  static const Color surfaceAlt = Color(0xFFF5F7FA);
   static const Color surfaceContainer = Color(0xFFF9FAFB);
   static const Color surfaceWhite = Color(0xFFFFFFFF);
 

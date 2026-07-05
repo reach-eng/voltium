@@ -31,6 +31,7 @@ import '../features/dashboard/presentation/screens/pre_dashboard_screen.dart';
 import '../features/support/presentation/screens/faq_screen.dart';
 import '../features/referrals/presentation/screens/referral_screen.dart';
 import '../features/kyc/presentation/screens/documents_screen.dart';
+
 /// Shared navigator key so go_router can be accessed from non-widget contexts.
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 

@@ -141,7 +141,8 @@ class QuestionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text('Answer honestly for the most accurate diagnosis.',
+            Text(
+              'Answer honestly for the most accurate diagnosis.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: const Color(0xFF9CA3AF),
@@ -181,7 +182,8 @@ class ActionButtons extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text('Yes',
+              label: const Text(
+                'Yes',
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
@@ -553,7 +555,8 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
               children: [
                 const Icon(Icons.route, size: 18, color: Color(0xFF6B7280)),
                 const SizedBox(width: 8),
-                Text('Diagnostic path taken',
+                Text(
+                  'Diagnostic path taken',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1A1A2E),
@@ -654,7 +657,8 @@ class TroubleshooterSosButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         icon: const Icon(Icons.warning_amber_rounded, size: 22),
-        label: const Text('Emergency SOS',
+        label: const Text(
+          'Emergency SOS',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
         ),
       ),

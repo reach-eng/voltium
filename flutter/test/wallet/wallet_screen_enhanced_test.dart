@@ -87,12 +87,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Top Up and History buttons should exist
-      final hasAddMoney =
-          find.textContaining('Add').evaluate().isNotEmpty;
-      final hasTopUp =
-          find.textContaining('Top').evaluate().isNotEmpty;
-      final hasHistory =
-          find.textContaining('History').evaluate().isNotEmpty;
+      final hasAddMoney = find.textContaining('Add').evaluate().isNotEmpty;
+      final hasTopUp = find.textContaining('Top').evaluate().isNotEmpty;
+      final hasHistory = find.textContaining('History').evaluate().isNotEmpty;
       expect(hasAddMoney || hasTopUp || hasHistory, isTrue);
     });
 
@@ -132,10 +129,7 @@ void main() {
       // There should be a way to initiate top-up
       final topUpFinder = find.byIcon(Icons.add);
       final hasTopUpButton = topUpFinder.evaluate().isNotEmpty;
-      final hasTopUpText = find
-          .textContaining('Top')
-          .evaluate()
-          .isNotEmpty;
+      final hasTopUpText = find.textContaining('Top').evaluate().isNotEmpty;
       expect(hasTopUpButton || hasTopUpText, isTrue);
     });
   });

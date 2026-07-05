@@ -45,13 +45,16 @@ void main() {
 
     test('computeTimeRemaining calculates remaining time', () {
       final now = DateTime.now();
-      final future = now.add(const Duration(days: 2, hours: 5, minutes: 1)); // Add buffer
+      final future =
+          now.add(const Duration(days: 2, hours: 5, minutes: 1)); // Add buffer
       expect(DateHelpers.computeTimeRemaining(future), '2d 5h');
     });
-    
-    test('computeTimeRemaining calculates remaining hours if less than a day', () {
+
+    test('computeTimeRemaining calculates remaining hours if less than a day',
+        () {
       final now = DateTime.now();
-      final future = now.add(const Duration(hours: 15, minutes: 1)); // Add buffer
+      final future =
+          now.add(const Duration(hours: 15, minutes: 1)); // Add buffer
       expect(DateHelpers.computeTimeRemaining(future), '15h');
     });
 
@@ -80,7 +83,7 @@ void main() {
       // 2023-10-24 is a Tuesday. The Monday is 2023-10-23.
       final date = DateTime(2023, 10, 24, 15, 30);
       final monday = DateHelpers.getMondayOfWeek(date);
-      
+
       expect(monday.year, 2023);
       expect(monday.month, 10);
       expect(monday.day, 23);

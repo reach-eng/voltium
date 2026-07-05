@@ -233,8 +233,7 @@ class _FaqScreenState extends State<FaqScreen> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color:
-                                AppColors.primary.withValues(alpha: 0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -271,7 +270,8 @@ class _FaqScreenState extends State<FaqScreen> {
           child: const Icon(Icons.search, color: AppColors.primary, size: 24),
         ),
         const SizedBox(height: 16),
-        const Text('No results found',
+        const Text(
+          'No results found',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -363,7 +363,8 @@ class _FaqScreenState extends State<FaqScreen> {
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Still need help?',
+                  Text(
+                    'Still need help?',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,

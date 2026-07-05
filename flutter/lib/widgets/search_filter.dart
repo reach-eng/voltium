@@ -117,9 +117,8 @@ class FilterChipList extends StatelessWidget {
               selectedColor: AppColors.primaryLighter,
               checkmarkColor: AppColors.primary,
               labelStyle: TextStyle(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.onSurfaceVariant,
+                color:
+                    isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
             ),
           );

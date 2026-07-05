@@ -29,7 +29,8 @@ void main() {
 
   group('WalletRepositoryImpl', () {
     // getWallet tests
-    test('getWallet calls getRiderDashboard and maps to WalletEntity', () async {
+    test('getWallet calls getRiderDashboard and maps to WalletEntity',
+        () async {
       final mockResponse = {
         'balanceInPaise': 150050,
       };
@@ -51,7 +52,8 @@ void main() {
       expect(result.balanceInRupees, 0.0);
     });
 
-    test('getWallet handles null balance correctly by defaulting to 0', () async {
+    test('getWallet handles null balance correctly by defaulting to 0',
+        () async {
       final mockResponse = <String, dynamic>{};
       when(() => mockVoltiumApiClient.getRiderDashboard())
           .thenAnswer((_) async => mockResponse);
@@ -67,10 +69,9 @@ void main() {
       expect(() => repository.getWallet('r1'), throwsException);
     });
 
-
-
     // submitTopup tests
-    test('submitTopup delegates to postTransactionTopup with mapped request', () async {
+    test('submitTopup delegates to postTransactionTopup with mapped request',
+        () async {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenAnswer((_) async => api.TopupResponse(id: 'tx-123'));
 
@@ -86,7 +87,9 @@ void main() {
       final result = await repository.submitTopup(request);
 
       expect(result, request);
-      final captured = verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
+              .captured;
       final payload = captured.first as api.TopupRequest;
       expect(payload.riderId, 'r1');
       expect(payload.amount, 500);
@@ -100,7 +103,8 @@ void main() {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenAnswer((_) async => api.TopupResponse(id: null));
 
-      final request = TopupRequest(riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+      final request = TopupRequest(
+          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -108,7 +112,8 @@ void main() {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenAnswer((_) async => api.TopupResponse(id: ''));
 
-      final request = TopupRequest(riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+      final request = TopupRequest(
+          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -116,7 +121,8 @@ void main() {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenThrow(Exception('Topup error'));
 
-      final request = TopupRequest(riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+      final request = TopupRequest(
+          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
       expect(() => repository.submitTopup(request), throwsException);
     });
 
@@ -124,9 +130,12 @@ void main() {
       when(() => mockVoltiumApiClient.postTransactionTopup(any()))
           .thenAnswer((_) async => api.TopupResponse(id: 'tx-123'));
 
-      final request = TopupRequest(riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
+      final request = TopupRequest(
+          riderId: 'r1', amount: 100, method: 'CASH', purpose: 'TOP_UP');
       await repository.submitTopup(request);
-      final captured = verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postTransactionTopup(captureAny()))
+              .captured;
       final payload = captured.first as api.TopupRequest;
       expect(payload.upiRef, null);
       expect(payload.proofUrl, null);
@@ -150,7 +159,8 @@ void main() {
       verify(() => mockVoltiumApiClient.getTransactionHistory(1, 20)).called(1);
     });
 
-    test('getTransactionHistory reads from transactions key if data is missing', () async {
+    test('getTransactionHistory reads from transactions key if data is missing',
+        () async {
       final mockData = {
         'transactions': [
           {'id': 'tx3', 'amount': 200.0, 'type': 'CREDIT'}
@@ -164,7 +174,8 @@ void main() {
       expect(result[0].id, 'tx3');
     });
 
-    test('getTransactionHistory returns empty list if no data available', () async {
+    test('getTransactionHistory returns empty list if no data available',
+        () async {
       when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
           .thenAnswer((_) async => {});
 
@@ -172,15 +183,14 @@ void main() {
       expect(result.isEmpty, true);
     });
 
-    test('getTransactionHistory passes custom page and limit arguments', () async {
+    test('getTransactionHistory passes custom page and limit arguments',
+        () async {
       when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
           .thenAnswer((_) async => {});
 
       await repository.getTransactionHistory('r1', page: 2, limit: 10);
       verify(() => mockVoltiumApiClient.getTransactionHistory(2, 10)).called(1);
     });
-
-
 
     test('getTransactionHistory propagates API exceptions', () async {
       when(() => mockVoltiumApiClient.getTransactionHistory(any(), any()))
@@ -190,7 +200,8 @@ void main() {
     });
 
     // deleteTransactionHistory tests
-    test('deleteTransactionHistory calls ApiClient.delete on correct endpoint', () async {
+    test('deleteTransactionHistory calls ApiClient.delete on correct endpoint',
+        () async {
       when(() => mockApiClient.delete(any()))
           .thenAnswer((_) async => {'success': true});
 
@@ -205,7 +216,9 @@ void main() {
       expect(() => repository.deleteTransactionHistory('r1'), throwsException);
     });
 
-    test('deleteTransactionHistory handles missing API response gracefully if no return required', () async {
+    test(
+        'deleteTransactionHistory handles missing API response gracefully if no return required',
+        () async {
       when(() => mockApiClient.delete(any()))
           .thenAnswer((_) async => <String, dynamic>{});
 

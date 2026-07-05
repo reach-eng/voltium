@@ -13,7 +13,7 @@ import 'package:voltium_rider/services/cache_service.dart';
 class MockRiderRepository implements RiderRepository {
   bool getRiderProfileCalled = false;
   bool registerFCMTokenCalled = false;
-  
+
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
     getRiderProfileCalled = true;
@@ -35,19 +35,19 @@ class MockRiderRepository implements RiderRepository {
   Future<void> registerFCMToken(String token) async {
     registerFCMTokenCalled = true;
   }
-  
+
   @override
   Future<Map<String, dynamic>> getDeviceDetails() async => {};
-  
+
   @override
   Future<Map<String, dynamic>> getEarnings() async => {};
-  
+
   @override
   Future<Map<String, dynamic>> getSettings() async => {};
-  
+
   @override
   Future<void> syncDeviceData(Map<String, dynamic> data) async {}
-  
+
   @override
   Future<void> updateRiderProfile(Map<String, dynamic> data) async {}
 }
@@ -64,13 +64,13 @@ class MockRentalRepository implements RentalRepository {
     submitReturnCalled = true;
     return {};
   }
-  
+
   @override
   Future<Map<String, dynamic>> fetchHubs() async => {};
-  
+
   @override
   Future<Map<String, dynamic>> fetchVehicles(String hubId) async => {};
-  
+
   @override
   Future<Map<String, dynamic>> subscribePlan({
     required String planId,
@@ -80,8 +80,9 @@ class MockRentalRepository implements RentalRepository {
     required double securityDeposit,
     String? promoCode,
     String? upiRef,
-  }) async => {};
-  
+  }) async =>
+      {};
+
   @override
   Future<Map<String, dynamic>> syncPickup({
     required String rentalId,
@@ -89,7 +90,8 @@ class MockRentalRepository implements RentalRepository {
     required String bookingId,
     required String hubId,
     required List<String> photos,
-  }) async => {};
+  }) async =>
+      {};
 }
 
 class MockFilesRepository implements FilesRepository {
@@ -97,13 +99,13 @@ class MockFilesRepository implements FilesRepository {
   Future<String> uploadFile(File file, String type) async {
     return 'url';
   }
-  
+
   @override
   ApiClient get apiClient => throw UnimplementedError();
-  
+
   @override
   VoltiumApiClient get voltiumApiClient => throw UnimplementedError();
-  
+
   @override
   Future<String> uploadProfileImage(File file) {
     throw UnimplementedError();
@@ -118,7 +120,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await CacheService().init();
-    
+
     riderRepo = MockRiderRepository();
     rentalRepo = MockRentalRepository();
     filesRepo = MockFilesRepository();
@@ -133,7 +135,7 @@ void main() {
     );
 
     await provider.init();
-    
+
     expect(riderRepo.getRiderProfileCalled, isTrue);
     expect(provider.rider, isNotNull);
     expect(provider.rider!.id, '1');
@@ -161,12 +163,12 @@ void main() {
       rentalRepository: rentalRepo,
       filesRepository: filesRepo,
     );
-    
+
     await provider.init();
     expect(provider.rider, isNotNull);
 
     provider.logout();
-    
+
     expect(provider.rider, isNull);
     expect(provider.riderId, isNull);
     expect(provider.phone, isNull);
@@ -181,10 +183,11 @@ void main() {
       rentalRepository: rentalRepo,
       filesRepository: filesRepo,
     );
-    
+
     await provider.init();
-    final success = await provider.submitVehicleReturn(photos: [File('dummy.jpg')]);
-    
+    final success =
+        await provider.submitVehicleReturn(photos: [File('dummy.jpg')]);
+
     expect(success, isTrue);
     expect(rentalRepo.submitReturnCalled, isTrue);
   });

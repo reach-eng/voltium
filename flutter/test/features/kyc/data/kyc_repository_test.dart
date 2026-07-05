@@ -7,7 +7,9 @@ import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class MockFilesRepository extends Mock implements FilesRepository {}
+
 class MockFile extends Mock implements File {}
 
 class FakeUpdateProfileRequest extends Fake implements UpdateProfileRequest {}
@@ -26,7 +28,7 @@ void main() {
     mockVoltiumApiClient = MockVoltiumApiClient();
     mockFilesRepository = MockFilesRepository();
     repository = KycRepository(mockVoltiumApiClient, mockFilesRepository);
-    
+
     // Clear static cache before each test
     KycRepository.clearFormCache();
   });
@@ -41,7 +43,8 @@ void main() {
       final url = await repository.uploadDocument(mockFile, 'AADHAAR_FRONT');
 
       expect(url, 'https://example.com/doc.jpg');
-      verify(() => mockFilesRepository.uploadFile(mockFile, 'AADHAAR_FRONT')).called(1);
+      verify(() => mockFilesRepository.uploadFile(mockFile, 'AADHAAR_FRONT'))
+          .called(1);
     });
 
     test('uploadDocument propagates exception from FilesRepository', () async {
@@ -87,7 +90,9 @@ void main() {
         signatureUrl: 'sig.jpg',
       );
 
-      final captured = verify(() => mockVoltiumApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.putRiderProfile(captureAny()))
+              .captured;
       final request = captured.first as UpdateProfileRequest;
       expect(request.fullName, 'John Doe');
       expect(request.email, 'john@example.com');
@@ -108,12 +113,26 @@ void main() {
           .thenAnswer((_) async => <String, dynamic>{});
 
       await repository.updateProfile(
-        riderId: '', name: '', email: '', address: '', dob: '',
-        fatherName: '', motherName: '', bankName: '', accountNumber: '', ifscCode: '',
-        aadhaarFrontUrl: '', aadhaarBackUrl: '', panUrl: '', selfieUrl: '', signatureUrl: '',
+        riderId: '',
+        name: '',
+        email: '',
+        address: '',
+        dob: '',
+        fatherName: '',
+        motherName: '',
+        bankName: '',
+        accountNumber: '',
+        ifscCode: '',
+        aadhaarFrontUrl: '',
+        aadhaarBackUrl: '',
+        panUrl: '',
+        selfieUrl: '',
+        signatureUrl: '',
       );
 
-      final captured = verify(() => mockVoltiumApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.putRiderProfile(captureAny()))
+              .captured;
       final request = captured.first as UpdateProfileRequest;
       expect(request.fullName, '');
       expect(request.email, '');
@@ -125,9 +144,21 @@ void main() {
 
       expect(
         () => repository.updateProfile(
-          riderId: '', name: '', email: '', address: '', dob: '',
-          fatherName: '', motherName: '', bankName: '', accountNumber: '', ifscCode: '',
-          aadhaarFrontUrl: '', aadhaarBackUrl: '', panUrl: '', selfieUrl: '', signatureUrl: '',
+          riderId: '',
+          name: '',
+          email: '',
+          address: '',
+          dob: '',
+          fatherName: '',
+          motherName: '',
+          bankName: '',
+          accountNumber: '',
+          ifscCode: '',
+          aadhaarFrontUrl: '',
+          aadhaarBackUrl: '',
+          panUrl: '',
+          selfieUrl: '',
+          signatureUrl: '',
         ),
         throwsException,
       );
@@ -147,12 +178,15 @@ void main() {
       expect(cache, isNull);
     });
 
-    test('saveFormCache ignores null values gracefully or maps them appropriately', () async {
+    test(
+        'saveFormCache ignores null values gracefully or maps them appropriately',
+        () async {
       // Dart's Map.from will fail if casting nulls to strings if strict type.
       // Assuming KycRepository maps String? appropriately. Wait, the method takes Map<String, String?>
       // and converts using Map<String, String>.from which throws if nulls are present? Let's check runtime.
       try {
-        await KycRepository.saveFormCache({'name': 'Test', 'empty': 'null-val'});
+        await KycRepository.saveFormCache(
+            {'name': 'Test', 'empty': 'null-val'});
         final cache = await KycRepository.loadFormCache();
         expect(cache!['empty'], 'null-val');
       } catch (e) {
@@ -167,7 +201,8 @@ void main() {
       expect(cache, isNull);
     });
 
-    test('loadFormCache returns a copy of the map to prevent external mutation', () async {
+    test('loadFormCache returns a copy of the map to prevent external mutation',
+        () async {
       await KycRepository.saveFormCache({'key': 'val'});
       final cache1 = await KycRepository.loadFormCache();
       cache1!['key'] = 'new_val';
@@ -190,7 +225,7 @@ void main() {
       expect(cache!['first'], isNull);
       expect(cache['second'], '2');
     });
-    
+
     test('clearFormCache is idempotent', () async {
       await KycRepository.clearFormCache();
       await KycRepository.clearFormCache();

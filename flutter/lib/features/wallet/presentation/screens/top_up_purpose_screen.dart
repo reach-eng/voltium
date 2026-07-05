@@ -79,7 +79,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       isSelected: _selected == TopUpPurpose.securityDeposit,
                       onTap: () {
                         setState(
-                            () => _selected = TopUpPurpose.securityDeposit,);
+                          () => _selected = TopUpPurpose.securityDeposit,
+                        );
                         widget.onPurposeSelected
                             ?.call(TopUpPurpose.securityDeposit);
                       },
@@ -147,7 +148,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Step 1 of 3',
+                    Text(
+                      'Step 1 of 3',
                       style: GoogleFonts.inter(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 14,
@@ -155,7 +157,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text('Select Purpose',
+                    Text(
+                      'Select Purpose',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 24,
@@ -199,8 +202,11 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
     final delay = 0.1 + index * 0.05;
     final anim = CurvedAnimation(
       parent: _entryCtrl,
-      curve: Interval(delay, (delay + 0.35).clamp(0.0, 1.0),
-          curve: Curves.easeOutCubic,),
+      curve: Interval(
+        delay,
+        (delay + 0.35).clamp(0.0, 1.0),
+        curve: Curves.easeOutCubic,
+      ),
     );
 
     return FadeTransition(
@@ -256,8 +262,7 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       child: Icon(
                         icon,
                         size: 24,
-                        color:
-                            isSelected ? Colors.white : AppColors.primary,
+                        color: isSelected ? Colors.white : AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -285,7 +290,9 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12,),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white.withValues(alpha: 0.12)
@@ -295,7 +302,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Standard Amount',
+                            Text(
+                              'Standard Amount',
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -349,7 +357,9 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
   Widget _buildInfoBox() {
     return FadeTransition(
       opacity: CurvedAnimation(
-          parent: _entryCtrl, curve: const Interval(0.25, 0.85),),
+        parent: _entryCtrl,
+        curve: const Interval(0.25, 0.85),
+      ),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -377,7 +387,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Important Information',
+                  Text(
+                    'Important Information',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -423,7 +434,8 @@ class _TopUpPurposeScreenState extends State<TopUpPurposeScreen>
             ],
           ),
           child: Center(
-            child: Text('Continue to Payment',
+            child: Text(
+              'Continue to Payment',
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

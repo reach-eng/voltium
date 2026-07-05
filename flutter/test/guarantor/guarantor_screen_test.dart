@@ -31,13 +31,16 @@ void main() {
 
   group('Guarantor Onboarding Screen', () {
     testWidgets('guarantor screen renders without error', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
       await tester.pumpAndSettle();
       expect(find.byType(GuarantorOnboardingScreen), findsOneWidget);
     });
 
-    testWidgets('guarantor screen has form fields for name and phone', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
+    testWidgets('guarantor screen has form fields for name and phone',
+        (tester) async {
+      await tester
+          .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
       await tester.pumpAndSettle();
 
       // Should have text fields for guarantor info
@@ -46,7 +49,8 @@ void main() {
     });
 
     testWidgets('guarantor screen does not overflow', (tester) async {
-      await tester.pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
+      await tester
+          .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });

@@ -34,14 +34,24 @@ void main() {
       expect(find.byType(ReferralScreen), findsOneWidget);
     });
 
-    testWidgets('referral screen shows referral code or invite section', (tester) async {
+    testWidgets('referral screen shows referral code or invite section',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const ReferralScreen()));
       await tester.pumpAndSettle();
 
       // Should show referral code or invite friends button
-      final hasReferralCode = find.textContaining('refer', skipOffstage: false).evaluate().isNotEmpty;
-      final hasInvite = find.textContaining('invite', skipOffstage: false).evaluate().isNotEmpty;
-      final hasShare = find.textContaining('share', skipOffstage: false).evaluate().isNotEmpty;
+      final hasReferralCode = find
+          .textContaining('refer', skipOffstage: false)
+          .evaluate()
+          .isNotEmpty;
+      final hasInvite = find
+          .textContaining('invite', skipOffstage: false)
+          .evaluate()
+          .isNotEmpty;
+      final hasShare = find
+          .textContaining('share', skipOffstage: false)
+          .evaluate()
+          .isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 
       expect(hasReferralCode || hasInvite || hasShare || hasText, isTrue);

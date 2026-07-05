@@ -10,7 +10,8 @@ void main() {
     FCMService.overrideSecretForTesting(secret);
   });
 
-  String generateSignature(String action, String ts, String nonce, String challenge) {
+  String generateSignature(
+      String action, String ts, String nonce, String challenge) {
     return Hmac(sha256, utf8.encode(secret))
         .convert(utf8.encode('$action.$ts.$nonce.$challenge'))
         .toString();
@@ -48,7 +49,7 @@ void main() {
     final ts = DateTime.now().toUtc().millisecondsSinceEpoch.toString();
     final nonce = 'random_nonce';
     final challenge = 'challenge_123';
-    
+
     final signature = generateSignature(action, ts, nonce, challenge);
 
     final data = {
@@ -68,7 +69,7 @@ void main() {
     final ts = DateTime.now().toUtc().millisecondsSinceEpoch.toString();
     final nonce = 'random_nonce';
     final challenge = 'challenge_123';
-    
+
     final data = {
       'action': action,
       'ts': ts,
@@ -80,15 +81,15 @@ void main() {
     final isValid = await FCMService.validateSecurityEnvelope(data);
     expect(isValid, isFalse);
   });
-  
+
   test('validateSecurityEnvelope rejects replayed challenge', () async {
     final action = 'ADMIN_LOCK';
     final ts = DateTime.now().toUtc().millisecondsSinceEpoch.toString();
     final nonce = 'replayed_nonce';
     final challenge = 'challenge_123';
-    
+
     final signature = generateSignature(action, ts, nonce, challenge);
-    
+
     final data = {
       'action': action,
       'ts': ts,
@@ -96,7 +97,7 @@ void main() {
       'challenge': challenge,
       'signature': signature,
     };
-    
+
     // First time is accepted
     var isValid = await FCMService.validateSecurityEnvelope(data);
     expect(isValid, isTrue);
@@ -109,10 +110,14 @@ void main() {
   test('validateSecurityEnvelope rejects stale payload', () async {
     final action = 'ADMIN_LOCK';
     // Older than 5 minutes
-    final ts = DateTime.now().toUtc().subtract(const Duration(minutes: 6)).millisecondsSinceEpoch.toString();
+    final ts = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(minutes: 6))
+        .millisecondsSinceEpoch
+        .toString();
     final nonce = 'random_nonce';
     final challenge = 'challenge_123';
-    
+
     final signature = generateSignature(action, ts, nonce, challenge);
 
     final data = {

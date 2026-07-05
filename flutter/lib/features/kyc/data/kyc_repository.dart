@@ -47,13 +47,18 @@ class KycRepository {
       aadhaarFront: aadhaarFrontUrl,
       aadhaarBack: aadhaarBackUrl,
       panCard: panUrl,
+      selfie: selfieUrl,
+      signature: signatureUrl,
     ));
   }
 
   // ── Static form cache helpers ──────────────────────────────────────────
 
   static Future<void> saveFormCache(Map<String, String?> data) async {
-    _cache = Map<String, String>.from(data);
+    _cache = {};
+    data.forEach((k, v) {
+      if (v != null) _cache![k] = v;
+    });
   }
 
   static Future<Map<String, String>?> loadFormCache() async {

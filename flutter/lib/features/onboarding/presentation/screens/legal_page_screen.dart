@@ -25,8 +25,6 @@ const _kSupportPhone = '+91 1800-889-VOLT';
 
 // ─── Document Sections ───────────────────────────────────────────────────────
 
-
-
 // =============================================================================
 // LegalPageScreen – Document viewer with signatures & PDF download
 // =============================================================================
@@ -230,7 +228,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         ),
                       ),
                       pw.SizedBox(height: 4),
-                      pw.Text('Authorized Signatory',
+                      pw.Text(
+                        'Authorized Signatory',
                         style: pw.TextStyle(
                           fontSize: 10,
                           fontWeight: pw.FontWeight.bold,
@@ -442,7 +441,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text('SIGNED BY',
+                                          const Text(
+                                            'SIGNED BY',
                                             style: TextStyle(
                                               fontSize: 9,
                                               fontWeight: FontWeight.w900,
@@ -467,7 +467,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                       crossAxisAlignment:
                                           CrossAxisAlignment.end,
                                       children: [
-                                        const Text('DATE',
+                                        const Text(
+                                          'DATE',
                                           style: TextStyle(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w900,
@@ -530,8 +531,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                                   child: SizedBox(
                                                     width: 16,
                                                     height: 16,
-                                                    child: CircularProgressIndicator(
-                                                        strokeWidth: 2),
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
                                                   ),
                                                 ),
                                               ),
@@ -563,7 +565,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         ),
                                         clipBehavior: Clip.antiAlias,
                                         child: CachedNetworkImage(
-                                          imageUrl: _getPhotoUrl(rider, isGuarantor)!,
+                                          imageUrl:
+                                              _getPhotoUrl(rider, isGuarantor)!,
                                           fit: BoxFit.cover,
                                           memCacheWidth: 96,
                                           memCacheHeight: 96,
@@ -659,7 +662,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('NEED HELP?',
+                  const Text(
+                    'NEED HELP?',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -752,7 +756,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
           ),
         ),
       ),
-      title: const Text('Legal',
+      title: const Text(
+        'Legal',
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,

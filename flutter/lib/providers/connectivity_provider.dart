@@ -40,7 +40,8 @@ class ConnectivityProvider extends ChangeNotifier {
 
       if (pending.isEmpty) return;
 
-      debugPrint('[Connectivity] Flushing ${pending.length} pending offline operations');
+      debugPrint(
+          '[Connectivity] Flushing ${pending.length} pending offline operations');
 
       final apiClient = ApiClient();
 
@@ -52,7 +53,9 @@ class ConnectivityProvider extends ChangeNotifier {
           final idempotencyKey = op['idempotency_key'] as String?;
 
           await apiClient.sendQueuedRequest(
-            method, endpoint, body,
+            method,
+            endpoint,
+            body,
             idempotencyKey: idempotencyKey,
           );
 
@@ -60,7 +63,8 @@ class ConnectivityProvider extends ChangeNotifier {
           await offlineStorage.removePendingOperation(op['id'] as int);
           _updatePendingCount();
         } catch (e) {
-          debugPrint('[Connectivity] Failed to flush operation ${op['id']}: $e');
+          debugPrint(
+              '[Connectivity] Failed to flush operation ${op['id']}: $e');
           // Leave in queue for next retry
           break; // Stop on first failure to preserve ordering
         }

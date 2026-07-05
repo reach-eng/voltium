@@ -11,8 +11,11 @@ class AppNavigator {
     });
   }
 
-  static void pushReplacement(BuildContext context, Widget page,
-      {String? routeName,}) {
+  static void pushReplacement(
+    BuildContext context,
+    Widget page, {
+    String? routeName,
+  }) {
     Navigator.pushReplacement(
       context,
       AppPageTransitions.slide(page),

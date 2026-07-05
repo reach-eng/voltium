@@ -29,8 +29,8 @@ void main() {
   group('RiderRepositoryImpl', () {
     // getRiderProfile
     test('getRiderProfile returns properly formatted map', () async {
-      when(() => mockVoltiumApiClient.getRiderProfile())
-          .thenAnswer((_) async => RiderProfileResponse(riderId: '123', fullName: 'John Doe'));
+      when(() => mockVoltiumApiClient.getRiderProfile()).thenAnswer((_) async =>
+          RiderProfileResponse(riderId: '123', fullName: 'John Doe'));
 
       final result = await repository.getRiderProfile();
 
@@ -58,7 +58,8 @@ void main() {
     });
 
     // updateRiderProfile
-    test('updateRiderProfile calls putRiderProfile with mapped fields', () async {
+    test('updateRiderProfile calls putRiderProfile with mapped fields',
+        () async {
       when(() => mockVoltiumApiClient.putRiderProfile(any()))
           .thenAnswer((_) async => <String, dynamic>{});
 
@@ -78,14 +79,17 @@ void main() {
 
       await repository.updateRiderProfile(updateData);
 
-      final captured = verify(() => mockVoltiumApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.putRiderProfile(captureAny()))
+              .captured;
       final request = captured.first as UpdateProfileRequest;
       expect(request.fullName, 'Jane Doe');
       expect(request.email, 'jane@example.com');
       expect(request.aadhaarFront, 'url1');
     });
 
-    test('updateRiderProfile calls putRiderProfile with partial fields', () async {
+    test('updateRiderProfile calls putRiderProfile with partial fields',
+        () async {
       when(() => mockVoltiumApiClient.putRiderProfile(any()))
           .thenAnswer((_) async => <String, dynamic>{});
 
@@ -95,7 +99,9 @@ void main() {
 
       await repository.updateRiderProfile(updateData);
 
-      final captured = verify(() => mockVoltiumApiClient.putRiderProfile(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.putRiderProfile(captureAny()))
+              .captured;
       final request = captured.first as UpdateProfileRequest;
       expect(request.fullName, 'Jane Doe');
       expect(request.email, null);
@@ -115,7 +121,9 @@ void main() {
 
       await repository.registerFCMToken('mock-fcm-token');
 
-      final captured = verify(() => mockVoltiumApiClient.postRidersRegisterToken(captureAny())).captured;
+      final captured = verify(
+              () => mockVoltiumApiClient.postRidersRegisterToken(captureAny()))
+          .captured;
       final payload = captured.first as Map<String, dynamic>;
       expect(payload['fcmToken'], 'mock-fcm-token');
     });
@@ -135,7 +143,9 @@ void main() {
       final data = {'battery': 90, 'os': 'Android'};
       await repository.syncDeviceData(data);
 
-      final captured = verify(() => mockVoltiumApiClient.postRiderSyncDeviceData(captureAny())).captured;
+      final captured = verify(
+              () => mockVoltiumApiClient.postRiderSyncDeviceData(captureAny()))
+          .captured;
       final payload = captured.first as Map<String, dynamic>;
       expect(payload['battery'], 90);
     });

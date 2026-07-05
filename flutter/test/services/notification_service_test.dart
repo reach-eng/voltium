@@ -9,7 +9,7 @@ void main() {
   test('NotificationService is a singleton', () {
     final instance1 = NotificationService();
     final instance2 = NotificationService();
-    
+
     expect(identical(instance1, instance2), isTrue);
   });
 

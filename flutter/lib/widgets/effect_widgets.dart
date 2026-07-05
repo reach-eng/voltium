@@ -63,15 +63,17 @@ class _ParticleEffectState extends State<ParticleEffect>
   void _initParticles(Size size) {
     _particles.clear();
     for (int i = 0; i < widget.particleCount; i++) {
-      _particles.add(Particle(
-        x: _random.nextDouble() * size.width,
-        y: _random.nextDouble() * size.height,
-        vx: (_random.nextDouble() - 0.5) * 2 * widget.speed,
-        vy: (_random.nextDouble() - 0.5) * 2 * widget.speed,
-        radius: _random.nextDouble() * 3 + 1,
-        opacity: _random.nextDouble() * 0.5 + 0.2,
-        color: widget.color,
-      ),);
+      _particles.add(
+        Particle(
+          x: _random.nextDouble() * size.width,
+          y: _random.nextDouble() * size.height,
+          vx: (_random.nextDouble() - 0.5) * 2 * widget.speed,
+          vy: (_random.nextDouble() - 0.5) * 2 * widget.speed,
+          radius: _random.nextDouble() * 3 + 1,
+          opacity: _random.nextDouble() * 0.5 + 0.2,
+          color: widget.color,
+        ),
+      );
     }
   }
 

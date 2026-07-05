@@ -181,7 +181,8 @@ class EditProfileAdminNote extends StatelessWidget {
           Icon(Icons.info_outline, color: AppColors.warningDark, size: 22),
           SizedBox(width: 16),
           Expanded(
-            child: Text('Profile changes require admin approval before becoming active.',
+            child: Text(
+              'Profile changes require admin approval before becoming active.',
               style: TextStyle(
                 color: Color(0xFF9A3412),
                 fontSize: 13,

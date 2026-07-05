@@ -121,7 +121,8 @@ class ApprovalMatrixWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Approval Matrix',
+            const Text(
+              'Approval Matrix',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
@@ -213,8 +214,11 @@ class ApprovalMatrixWidget extends StatelessWidget {
                   ? const Icon(Icons.check, color: Colors.white, size: 18)
                   : step.isRejected
                       ? const Icon(Icons.close, color: Colors.white, size: 18)
-                      : Icon(step.icon,
-                          size: 16, color: AppColors.slate400,),
+                      : Icon(
+                          step.icon,
+                          size: 16,
+                          color: AppColors.slate400,
+                        ),
             ),
           ),
           const SizedBox(width: 14),
@@ -272,5 +276,3 @@ class ApprovalMatrixWidget extends StatelessWidget {
     );
   }
 }
-
-

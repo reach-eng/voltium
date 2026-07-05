@@ -40,7 +40,8 @@ class PreDashboardBanner extends StatelessWidget {
         children: [
           Icon(Icons.circle, color: AppColors.error, size: 10),
           SizedBox(width: 8),
-          Text('KYC REJECTED',
+          Text(
+            'KYC REJECTED',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
@@ -77,7 +78,8 @@ class PreDashboardBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('KYC Approved',
+                const Text(
+                  'KYC Approved',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -102,7 +104,8 @@ class PreDashboardBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFFFFA000)),
             ),
-            child: const Text('PENDING',
+            child: const Text(
+              'PENDING',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -133,22 +136,27 @@ class PreDashboardBanner extends StatelessWidget {
               color: AppColors.error,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.warning_amber_rounded,
-                color: Colors.white, size: 18,),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 14),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Account Action',
+                Text(
+                  'Account Action',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF991B1B),
                   ),
                 ),
-                Text('Required',
+                Text(
+                  'Required',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -165,7 +173,8 @@ class PreDashboardBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.error),
             ),
-            child: const Text('INACTIVE',
+            child: const Text(
+              'INACTIVE',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -231,8 +240,7 @@ class PreDashboardProfileCard extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border:
-                        Border.all(color: AppColors.error, width: 2),
+                    border: Border.all(color: AppColors.error, width: 2),
                   ),
                   child: ClipOval(
                     child: rider.profilePhoto != null &&
@@ -284,7 +292,8 @@ class PreDashboardProfileCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Text('RIDER ID',
+                    const Text(
+                      'RIDER ID',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -295,7 +304,9 @@ class PreDashboardProfileCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4,),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.iconBackground,
                         borderRadius: BorderRadius.circular(6),
@@ -351,15 +362,15 @@ class PreDashboardProfileCard extends StatelessWidget {
               border: Border.all(color: AppColors.iconBackground, width: 4),
             ),
             child: ClipOval(
-              child: rider.profilePhoto != null &&
-                      rider.profilePhoto!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: rider.profilePhoto!,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => _buildPlaceholder(rider),
-                      placeholder: (_, __) => _buildPlaceholder(rider),
-                    )
-                  : _buildPlaceholder(rider),
+              child:
+                  rider.profilePhoto != null && rider.profilePhoto!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: rider.profilePhoto!,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => _buildPlaceholder(rider),
+                          placeholder: (_, __) => _buildPlaceholder(rider),
+                        )
+                      : _buildPlaceholder(rider),
             ),
           ),
           const SizedBox(height: 14),
@@ -455,15 +466,19 @@ class RejectionCard extends StatelessWidget {
                     color: const Color(0xFFFFE4E6),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.error_outline,
-                      color: AppColors.error, size: 24,),
+                  child: const Icon(
+                    Icons.error_outline,
+                    color: AppColors.error,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Rejection Remarks',
+                      const Text(
+                        'Rejection Remarks',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -498,7 +513,8 @@ class RejectionCard extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                 ),
                 child: const Row(
@@ -628,7 +644,8 @@ class PreDashboardCtaCard extends StatelessWidget {
                 foregroundColor: buttonColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 elevation: 0,
               ),
               child: Row(
@@ -681,7 +698,8 @@ class PickupButton extends StatelessWidget {
           children: [
             Icon(Icons.local_shipping, size: 22),
             SizedBox(width: 12),
-            Text('PICKUP YOUR VEHICLE',
+            Text(
+              'PICKUP YOUR VEHICLE',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
@@ -740,7 +758,8 @@ class NeedHelpCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('NEED HELP?',
+                  Text(
+                    'NEED HELP?',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -748,7 +767,8 @@ class NeedHelpCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 4),
-                  Text('Contact support for onboarding assistance',
+                  Text(
+                    'Contact support for onboarding assistance',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,

@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const secureStorageChannel = MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
+  const secureStorageChannel =
+      MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(secureStorageChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(secureStorageChannel,
+            (MethodCall methodCall) async {
       return null;
     });
   });
@@ -22,7 +24,7 @@ void main() {
 
   test('AppProvider initializes and wires delegates', () {
     final provider = AppProvider();
-    
+
     // Delegation getters
     expect(provider.isOnline, isTrue); // connectivity provider default
     expect(provider.rewardPoints, 0); // engagement provider default
@@ -36,9 +38,9 @@ void main() {
     // We can test propagation by checking state resets on a delegate that has simple state
     provider.devicePolicyProvider.setForceUpdate(true, url: 'x');
     provider.connectivityProvider.setPendingSyncCount(10);
-    
+
     await provider.logout();
-    
+
     expect(provider.forceUpdate, isFalse);
     expect(provider.pendingSyncCount, 0);
   });

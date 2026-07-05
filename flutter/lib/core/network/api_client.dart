@@ -14,7 +14,8 @@ import 'pinned_http_client.dart';
 /// Centralized HTTP client for all API calls.
 /// Handles authentication, base URL, error parsing, and request signing.
 class ApiClient {
-  static final http.Client _sharedHttpClient = PinnedHttpInterceptor.createClient();
+  static final http.Client _sharedHttpClient =
+      PinnedHttpInterceptor.createClient();
   static ApiClient? _sharedInstance;
   static const Duration requestTimeout = Duration(seconds: 30);
   static final Random _requestRandom = Random.secure();
@@ -51,14 +52,14 @@ class ApiClient {
     required SecureStorageService storage,
     required String baseUrl,
   })  : _client = client,
-         _storage = storage,
-         _baseUrl = baseUrl;
+        _storage = storage,
+        _baseUrl = baseUrl;
 
   static const configuredApiUrl = String.fromEnvironment('API_URL');
 
   static String get _defaultBaseUrl {
-    if (PlatformInfo.isWeb) return ''; // Relative URLs for same-origin routing
     if (configuredApiUrl.isNotEmpty) return configuredApiUrl;
+    if (PlatformInfo.isWeb) return ''; // Relative URLs for same-origin routing
     if (kReleaseMode) {
       throw Exception('API_URL must be provided for release builds');
     }
@@ -104,12 +105,14 @@ class ApiClient {
         'Content-Type': 'application/json',
         'x-correlation-id': _newCorrelationId(),
       };
-      
-      final response = await _client.post(
-        uri,
-        headers: headers,
-        body: jsonEncode({'refreshToken': refreshToken}),
-      ).timeout(requestTimeout);
+
+      final response = await _client
+          .post(
+            uri,
+            headers: headers,
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(requestTimeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final body = jsonDecode(response.body);
@@ -153,7 +156,7 @@ class ApiClient {
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    
+
     try {
       return await _executeWithRetry(
         (headers) => _client.get(uri, headers: headers).timeout(requestTimeout),
@@ -174,7 +177,7 @@ class ApiClient {
     String? idempotencyKey,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    
+
     try {
       return await _executeWithRetry((headers) async {
         if (idempotencyKey != null) {
@@ -206,7 +209,7 @@ class ApiClient {
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    
+
     try {
       return await _executeWithRetry((headers) async {
         if (idempotencyKey != null) {
@@ -230,16 +233,19 @@ class ApiClient {
   }
 
   /// DELETE request
-  Future<Map<String, dynamic>> delete(String path, {String? idempotencyKey, Map<String, String>? queryParams}) async {
+  Future<Map<String, dynamic>> delete(String path,
+      {String? idempotencyKey, Map<String, String>? queryParams}) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
-    
+
     try {
       return await _executeWithRetry((headers) async {
         if (idempotencyKey != null) {
           headers['Idempotency-Key'] = idempotencyKey;
         }
-        return await _client.delete(uri, headers: headers).timeout(requestTimeout);
+        return await _client
+            .delete(uri, headers: headers)
+            .timeout(requestTimeout);
       });
     } on SocketException catch (_) {
       await _maybeQueueOffline('DELETE', path, null);
@@ -286,7 +292,9 @@ class ApiClient {
       final idempotencyKey = _newCorrelationId();
       final offlineStorage = OfflineStorageService();
       await offlineStorage.addPendingOperation(
-        path, method, body,
+        path,
+        method,
+        body,
         idempotencyKey: idempotencyKey,
       );
     } catch (_) {
@@ -301,12 +309,13 @@ class ApiClient {
     String fieldName = 'file',
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
-    
+
     return await _executeWithRetry((headers) async {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(headers);
-      request.files.add(await http.MultipartFile.fromPath(fieldName, file.path));
-      
+      request.files
+          .add(await http.MultipartFile.fromPath(fieldName, file.path));
+
       final streamedResponse =
           await _client.send(request).timeout(requestTimeout);
       return await http.Response.fromStream(streamedResponse);

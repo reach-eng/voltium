@@ -121,8 +121,9 @@ class _LanguageToggleState extends State<LanguageToggle>
                       final isSelected =
                           (index == 0 && _animation.value.dx < 0.5) ||
                               (index == 1 && _animation.value.dx >= 0.5);
-                      final textColor =
-                          isSelected ? Colors.white : vfBlue.withValues(alpha: 0.8);
+                      final textColor = isSelected
+                          ? Colors.white
+                          : vfBlue.withValues(alpha: 0.8);
 
                       return Expanded(
                         child: GestureDetector(

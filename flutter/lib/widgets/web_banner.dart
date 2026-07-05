@@ -7,7 +7,7 @@ class WebPlatformBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!PlatformInfo.isWeb) return const SizedBox.shrink();
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

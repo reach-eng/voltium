@@ -22,7 +22,7 @@ class FCMService {
   static StreamSubscription<RemoteMessage>? _foregroundSubscription;
   static final Map<String, int> _seenSecurityChallenges = <String, int>{};
   static const _securityReplayWindow = Duration(minutes: 5);
-  
+
   static String? _commandHmacSecret;
   static final _secureStorage = SecureStorageService();
 
@@ -76,7 +76,8 @@ class FCMService {
   }
 
   @visibleForTesting
-  static Future<bool> validateSecurityEnvelope(Map<String, dynamic> data) async {
+  static Future<bool> validateSecurityEnvelope(
+      Map<String, dynamic> data) async {
     final challenge = data['challenge'];
     final ts = data['ts'];
     final nonce = data['nonce'];
@@ -148,7 +149,8 @@ class FCMService {
 
   @visibleForTesting
   static void pruneExpiredChallenges() {
-    final cutoff = DateTime.now().millisecondsSinceEpoch - _securityReplayWindow.inMilliseconds;
+    final cutoff = DateTime.now().millisecondsSinceEpoch -
+        _securityReplayWindow.inMilliseconds;
     _seenSecurityChallenges.removeWhere((_, added) => added < cutoff);
   }
 
@@ -227,7 +229,7 @@ class FCMService {
       final data = message.data;
       if (data['type'] == 'SECURITY_COMMAND' &&
           await validatePayload(data, isSecurity: true)) {
-          handleSecurityCommand(message);
+        handleSecurityCommand(message);
       } else if (data['type'] == 'OVERLAY_TRIGGER' &&
           await validatePayload(data, isSecurity: false)) {
         handleOverlayTrigger(message);

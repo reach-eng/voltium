@@ -9,7 +9,8 @@ void main() {
   // `goldens/wallet_screen_default.png` does not exist yet. Run
   // `flutter test --update-goldens test/features/wallet/presentation/screens/wallet_screen_golden_test.dart`
   // locally to generate it, then commit the PNG.
-  testWidgets('WalletScreen golden test (skipped — needs --update-goldens)', (WidgetTester tester) async {
+  testWidgets('WalletScreen golden test (skipped — needs --update-goldens)',
+      (WidgetTester tester) async {
     return;
     configureGoldenSurface(tester, size: const Size(400, 800));
 
@@ -19,7 +20,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    
+
     await expectLater(
       find.byType(GoldenTestHarness),
       matchesGoldenFile('goldens/wallet_screen_default.png'),

@@ -37,11 +37,13 @@ void main() {
       expect(find.byType(RentalDetailsScreen), findsOneWidget);
     });
 
-    testWidgets('rental details screen shows rental information or loading', (tester) async {
+    testWidgets('rental details screen shows rental information or loading',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const RentalDetailsScreen()));
       await tester.pump();
 
-      final hasLoading = find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+      final hasLoading =
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
       final hasText = find.byType(Text).evaluate().isNotEmpty;
 
       expect(hasLoading || hasText, isTrue);
@@ -55,7 +57,8 @@ void main() {
   });
 
   group('Wallet Screen in Active Rental Context', () {
-    testWidgets('wallet screen accessible during active rental', (tester) async {
+    testWidgets('wallet screen accessible during active rental',
+        (tester) async {
       await tester.pumpWidget(buildTestApp(child: const WalletScreen()));
       await tester.pumpAndSettle();
       expect(find.byType(WalletScreen), findsOneWidget);

@@ -13,20 +13,32 @@ void main() {
   // ── Enums ────────────────────────────────────────────────────────────────
   group('KycStatus enum', () {
     test('has all expected values', () {
-      expect(KycStatus.values, containsAll([
-        KycStatus.pending, KycStatus.submitted, KycStatus.approved,
-        KycStatus.rejected, KycStatus.verified, KycStatus.draft,
-        KycStatus.infoRequired, KycStatus.expired,
-      ]));
+      expect(
+          KycStatus.values,
+          containsAll([
+            KycStatus.pending,
+            KycStatus.submitted,
+            KycStatus.approved,
+            KycStatus.rejected,
+            KycStatus.verified,
+            KycStatus.draft,
+            KycStatus.infoRequired,
+            KycStatus.expired,
+          ]));
     });
   });
 
   group('AccountStatus enum', () {
     test('has all expected values', () {
-      expect(AccountStatus.values, containsAll([
-        AccountStatus.preActive, AccountStatus.active,
-        AccountStatus.suspended, AccountStatus.terminated, AccountStatus.inactive,
-      ]));
+      expect(
+          AccountStatus.values,
+          containsAll([
+            AccountStatus.preActive,
+            AccountStatus.active,
+            AccountStatus.suspended,
+            AccountStatus.terminated,
+            AccountStatus.inactive,
+          ]));
     });
   });
 
@@ -120,18 +132,26 @@ void main() {
   group('RiderModel equality', () {
     test('same id and updatedAt are equal', () {
       final ts = DateTime(2024, 1, 1);
-      final m1 = RiderModel(riderId: 'r1', phone: '123', name: 'A',
-          id: 'db1', updatedAt: ts);
-      final m2 = RiderModel(riderId: 'r1', phone: '999', name: 'B',
-          id: 'db1', updatedAt: ts);
+      final m1 = RiderModel(
+          riderId: 'r1', phone: '123', name: 'A', id: 'db1', updatedAt: ts);
+      final m2 = RiderModel(
+          riderId: 'r1', phone: '999', name: 'B', id: 'db1', updatedAt: ts);
       expect(m1, equals(m2));
     });
 
     test('different updatedAt are not equal', () {
-      final m1 = RiderModel(riderId: 'r1', phone: '123', name: 'A',
-          id: 'db1', updatedAt: DateTime(2024, 1, 1));
-      final m2 = RiderModel(riderId: 'r1', phone: '123', name: 'A',
-          id: 'db1', updatedAt: DateTime(2024, 6, 1));
+      final m1 = RiderModel(
+          riderId: 'r1',
+          phone: '123',
+          name: 'A',
+          id: 'db1',
+          updatedAt: DateTime(2024, 1, 1));
+      final m2 = RiderModel(
+          riderId: 'r1',
+          phone: '123',
+          name: 'A',
+          id: 'db1',
+          updatedAt: DateTime(2024, 6, 1));
       expect(m1, isNot(equals(m2)));
     });
   });

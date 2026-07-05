@@ -5,8 +5,11 @@ class AuthChoiceScreen extends StatelessWidget {
   final VoidCallback? onCreateAccount;
   final VoidCallback? onLoginWithPhone;
 
-  const AuthChoiceScreen(
-      {super.key, this.onCreateAccount, this.onLoginWithPhone,});
+  const AuthChoiceScreen({
+    super.key,
+    this.onCreateAccount,
+    this.onLoginWithPhone,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +32,14 @@ class AuthChoiceScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 backgroundColor: AppColors.primary,
               ),
-              child: const Text('Create Account',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,),),
+              child: const Text(
+                'Create Account',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -44,11 +50,14 @@ class AuthChoiceScreen extends StatelessWidget {
                 backgroundColor: AppColors.surfaceContainer,
                 foregroundColor: AppColors.onSurface,
               ),
-              child: const Text('Login with Phone',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,),),
+              child: const Text(
+                'Login with Phone',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         ),

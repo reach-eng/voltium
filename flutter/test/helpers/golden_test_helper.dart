@@ -9,7 +9,8 @@ Widget wrapForGolden(Widget child) {
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Roboto', // Consistent font family for deterministic rendering
+        fontFamily:
+            'Roboto', // Consistent font family for deterministic rendering
       ),
       builder: (context, child) {
         return MediaQuery(
@@ -27,7 +28,8 @@ Widget wrapForGolden(Widget child) {
 }
 
 /// Helper to configure physical size for determinism across environments
-void configureGoldenSurface(WidgetTester tester, {Size size = const Size(800, 600)}) {
+void configureGoldenSurface(WidgetTester tester,
+    {Size size = const Size(800, 600)}) {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
   addTearDown(() {

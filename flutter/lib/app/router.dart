@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/app_constants.dart';
@@ -85,7 +86,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   Future<bool> _areAllPermissionsGranted() async {
     final isTestMode = AppConstants.isTestMode;
-    if (isTestMode) return true;
+    if (isTestMode || kIsWeb) return true;
 
     final location = await Permission.location.isGranted;
     final camera = await Permission.camera.isGranted;

@@ -47,7 +47,8 @@ class ReceiptPreview extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Transaction Receipt',
+                  Text(
+                    'Transaction Receipt',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -135,7 +136,8 @@ class ReceiptPreview extends StatelessWidget {
                 color: AppColors.primary,
               ),
               SizedBox(width: 4),
-              Text('Voltium',
+              Text(
+                'Voltium',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

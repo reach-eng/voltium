@@ -34,7 +34,8 @@ class EarningsChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('DAILY BREAKDOWN',
+          const Text(
+            'DAILY BREAKDOWN',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -147,8 +148,10 @@ class _BarChartPainter extends CustomPainter {
       labelPaint.layout();
       labelPaint.paint(
         canvas,
-        Offset(x + (barWidth - labelPaint.width) / 2,
-            topPadding + chartHeight + 8,),
+        Offset(
+          x + (barWidth - labelPaint.width) / 2,
+          topPadding + chartHeight + 8,
+        ),
       );
     }
   }

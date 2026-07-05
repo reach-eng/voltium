@@ -348,14 +348,16 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
           },
         ),
         if (_isExpanded)
-          ...widget.children.map((child) => ListTile(
-                leading: const SizedBox(width: 24),
-                title: Text(child.label),
-                onTap: () {
-                  child.onTap?.call();
-                  Navigator.pop(context);
-                },
-              ),),
+          ...widget.children.map(
+            (child) => ListTile(
+              leading: const SizedBox(width: 24),
+              title: Text(child.label),
+              onTap: () {
+                child.onTap?.call();
+                Navigator.pop(context);
+              },
+            ),
+          ),
       ],
     );
   }

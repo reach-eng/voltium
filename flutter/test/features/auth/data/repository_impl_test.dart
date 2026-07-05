@@ -44,14 +44,16 @@ void main() {
       expect(result.exists, true);
     });
 
-    test('sendOtp returns exists=false when backend says exists=false', () async {
+    test('sendOtp returns exists=false when backend says exists=false',
+        () async {
       when(() => mockVoltiumApiClient.postAuthSendOtp(any()))
           .thenAnswer((_) async => SendOtpResponse(exists: false));
       final result = await repository.sendOtp('9876543210');
       expect(result.exists, false);
     });
 
-    test('sendOtp defaults to exists=false when backend returns null exists', () async {
+    test('sendOtp defaults to exists=false when backend returns null exists',
+        () async {
       when(() => mockVoltiumApiClient.postAuthSendOtp(any()))
           .thenAnswer((_) async => SendOtpResponse(exists: null));
       final result = await repository.sendOtp('9876543210');
@@ -68,7 +70,9 @@ void main() {
       when(() => mockVoltiumApiClient.postAuthSendOtp(any()))
           .thenAnswer((_) async => SendOtpResponse(exists: true));
       await repository.sendOtp('9876543210');
-      final captured = verify(() => mockVoltiumApiClient.postAuthSendOtp(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postAuthSendOtp(captureAny()))
+              .captured;
       final request = captured.first as SendOtpRequest;
       expect(request.phone, '9876543210');
     });
@@ -143,7 +147,9 @@ void main() {
       when(() => mockVoltiumApiClient.postAuthVerifyOtp(any()))
           .thenAnswer((_) async => VerifyOtpResponse(token: 'tok'));
       await repository.verifyOtp('9876543210', '654321');
-      final captured = verify(() => mockVoltiumApiClient.postAuthVerifyOtp(captureAny())).captured;
+      final captured =
+          verify(() => mockVoltiumApiClient.postAuthVerifyOtp(captureAny()))
+              .captured;
       final request = captured.first as VerifyOtpRequest;
       expect(request.phone, '9876543210');
       expect(request.otp, '654321');
@@ -152,7 +158,8 @@ void main() {
     test('verifyOtp throws on api exception', () async {
       when(() => mockVoltiumApiClient.postAuthVerifyOtp(any()))
           .thenThrow(Exception('Verify error'));
-      expect(() => repository.verifyOtp('9876543210', '123456'), throwsException);
+      expect(
+          () => repository.verifyOtp('9876543210', '123456'), throwsException);
     });
 
     // logout tests
@@ -163,7 +170,8 @@ void main() {
     });
 
     test('logout handles storage exception', () async {
-      when(() => mockStorage.clearSession()).thenThrow(Exception('Storage error'));
+      when(() => mockStorage.clearSession())
+          .thenThrow(Exception('Storage error'));
       expect(() => repository.logout(), throwsException);
     });
 

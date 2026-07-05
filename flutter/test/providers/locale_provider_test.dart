@@ -19,9 +19,9 @@ void main() {
 
   test('setHindi switches to Hindi and saves to cache', () async {
     final provider = LocaleProvider();
-    
+
     await provider.setHindi();
-    
+
     expect(provider.locale.languageCode, 'hi');
     expect(provider.isHindi, isTrue);
     expect(provider.isEnglish, isFalse);
@@ -31,9 +31,9 @@ void main() {
   test('setEnglish switches to English', () async {
     final provider = LocaleProvider();
     await provider.setHindi();
-    
+
     await provider.setEnglish();
-    
+
     expect(provider.locale.languageCode, 'en');
     expect(provider.isEnglish, isTrue);
     expect(CacheService().getLocale(), 'en');

@@ -11,7 +11,8 @@ class MonitoringService {
     final maskedError = _maskPII(error.toString());
     final maskedReason = reason == null ? '' : ' reason=${_maskPII(reason)}';
     debugPrint(
-        '🚨 [Monitoring] Error logged locally: $maskedError$maskedReason',);
+      '🚨 [Monitoring] Error logged locally: $maskedError$maskedReason',
+    );
     if (kDebugMode && stackTrace != null) {
       debugPrint(stackTrace.toString());
     }
@@ -22,7 +23,8 @@ class MonitoringService {
   }
 
   static void logEvent(String name, {Map<String, dynamic>? parameters}) {
-    final safeParams = parameters?.map((key, value) => MapEntry(key, _maskPII(value.toString())));
+    final safeParams = parameters
+        ?.map((key, value) => MapEntry(key, _maskPII(value.toString())));
     debugPrint('ℹ️ [Monitoring] Event: ${_maskPII(name)} ${safeParams ?? ''}');
   }
 
@@ -32,7 +34,8 @@ class MonitoringService {
       final last4 = match.group(3);
       return '$prefix******$last4';
     }).replaceAll(
-        RegExp(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}', caseSensitive: false),
-        '***@***',);
+      RegExp(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}', caseSensitive: false),
+      '***@***',
+    );
   }
 }

@@ -46,8 +46,11 @@ Widget buildHubDropdown(
     ),
     icon: const Icon(Icons.keyboard_arrow_down, color: kOutlineColor),
     decoration: InputDecoration(
-      prefixIcon: const Icon(Icons.location_on_outlined,
-          color: kPrimaryColor, size: 20,),
+      prefixIcon: const Icon(
+        Icons.location_on_outlined,
+        color: kPrimaryColor,
+        size: 20,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
       fillColor: Colors.white,
@@ -171,12 +174,18 @@ Widget buildVehicleDropdown({
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: kPrimaryColor,),
+                          strokeWidth: 2,
+                          color: kPrimaryColor,
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      Text('Loading vehicles…',
-                          style: GoogleFonts.inter(
-                              fontSize: 14, color: kOutlineColor,),),
+                      Text(
+                        'Loading vehicles…',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: kOutlineColor,
+                        ),
+                      ),
                     ],
                   )
                 : Text(
@@ -199,8 +208,11 @@ Widget buildVehicleDropdown({
           if (vehicleSelected)
             const Icon(Icons.check_circle, color: kSuccessColor, size: 18)
           else
-            const Icon(Icons.keyboard_arrow_down,
-                color: kOutlineColor, size: 20,),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              color: kOutlineColor,
+              size: 20,
+            ),
         ],
       ),
     ),
@@ -255,7 +267,9 @@ class EmergencyContactField extends StatelessWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          color: kPrimaryColor, strokeWidth: 2,),
+                        color: kPrimaryColor,
+                        strokeWidth: 2,
+                      ),
                     )
                   : TextButton(
                       onPressed: isOtpVerified ? null : onSendOtp,
@@ -264,7 +278,9 @@ class EmergencyContactField extends StatelessWidget {
                             ? Colors.transparent
                             : kPrimaryColor.withValues(alpha: 0.1),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8,),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -401,9 +417,12 @@ Widget buildVerifyOtpButton({
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
-                  color: Colors.white, strokeWidth: 2,),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
             )
-          : Text('Verify',
+          : Text(
+              'Verify',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -548,7 +567,8 @@ class PhotoUploadCard extends StatelessWidget {
                       end: Alignment.topCenter,
                     ),
                     borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(16),),
+                      bottom: Radius.circular(16),
+                    ),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Text(
@@ -601,7 +621,8 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
           ],
         ),
         const SizedBox(height: 24),
-        Text('Pickup Verification',
+        Text(
+          'Pickup Verification',
           style: GoogleFonts.inter(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -610,7 +631,8 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
           ),
         ),
         const SizedBox(height: 8),
-        Text('Complete the verification steps to assign and pick up your vehicle',
+        Text(
+          'Complete the verification steps to assign and pick up your vehicle',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w400,
@@ -676,7 +698,8 @@ Widget buildStickyBottomBar({
           ),
         ),
         const SizedBox(height: 12),
-        Text('ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
+        Text(
+          'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 9,
@@ -692,7 +715,10 @@ Widget buildStickyBottomBar({
 
 /// Photo source dialog
 void showImageSourceDialog(
-    BuildContext context, String type, Function(String, bool) onUpload,) {
+  BuildContext context,
+  String type,
+  Function(String, bool) onUpload,
+) {
   showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(

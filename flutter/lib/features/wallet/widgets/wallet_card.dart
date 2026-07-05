@@ -76,7 +76,8 @@ class GradientWalletCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Wallet Balance',
+                      const Text(
+                        'Wallet Balance',
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
@@ -100,7 +101,8 @@ class GradientWalletCard extends StatelessWidget {
                               size: 16,
                             ),
                             SizedBox(width: 4),
-                            Text('EV Plus',
+                            Text(
+                              'EV Plus',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -255,8 +257,7 @@ class WalletActionButton extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    (color ?? AppColors.primary).withValues(alpha: 0.1),
+                color: (color ?? AppColors.primary).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(

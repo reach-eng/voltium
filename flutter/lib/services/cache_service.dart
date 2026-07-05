@@ -39,8 +39,10 @@ class CacheService {
   // ════════════════════════════════════════════════════════════════════════
 
   /// Persist a minimal rider payload (from `RiderModel.toCacheMap()`).
-  Future<void> cacheRider(Map<String, dynamic> riderData,
-      {int? ttlSeconds,}) async {
+  Future<void> cacheRider(
+    Map<String, dynamic> riderData, {
+    int? ttlSeconds,
+  }) async {
     final now = DateTime.now().toUtc();
     await _prefs?.setString(_keyRiderCache, jsonEncode(riderData));
     await _prefs?.setString(_keyRiderCacheTime, now.toIso8601String());

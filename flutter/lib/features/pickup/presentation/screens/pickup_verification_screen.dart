@@ -79,7 +79,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Failed to complete pickup. Please try again.'),),
+            content: Text('Failed to complete pickup. Please try again.'),
+          ),
         );
       }
     } finally {
@@ -89,8 +90,6 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -106,7 +105,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Ready to Roll?',
+              const Text(
+                'Ready to Roll?',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
@@ -114,13 +114,15 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text('Please review and sign the digital rental agreement before collecting your vehicle.',
+              const Text(
+                'Please review and sign the digital rental agreement before collecting your vehicle.',
                 style: TextStyle(color: AppColors.onSurfaceVariant),
               ),
               const SizedBox(height: 32),
 
               // Mock Signature Pad
-              const Text('Digital Signature',
+              const Text(
+                'Digital Signature',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -132,10 +134,12 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: const Center(
-                  child: Text('Draw your signature here',
+                  child: Text(
+                    'Draw your signature here',
                     style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: AppColors.onSurfaceMuted,),
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.onSurfaceMuted,
+                    ),
                   ),
                 ),
               ),
@@ -153,7 +157,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                     activeColor: AppColors.primary,
                   ),
                   const Expanded(
-                    child: Text('I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.',
+                    child: Text(
+                      'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.',
                       style: TextStyle(fontSize: 13, height: 1.4),
                     ),
                   ),
@@ -170,7 +175,9 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2,),
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : const Text('Complete & Start Ride'),
               ),

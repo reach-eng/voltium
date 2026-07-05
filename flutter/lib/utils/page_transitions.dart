@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppPageTransitions {
-  static Route<T> slide<T>(Widget page,
-      {Direction direction = Direction.right,}) {
+  static Route<T> slide<T>(
+    Widget page, {
+    Direction direction = Direction.right,
+  }) {
     return PageRouteBuilder<T>(
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -72,10 +74,12 @@ class AppPageTransitions {
           position: Tween<Offset>(
             begin: const Offset(0.0, 1.0),
             end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ),),
+          ).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            ),
+          ),
           child: child,
         );
       },
@@ -127,8 +131,9 @@ class SharedAxisTransition extends StatelessWidget {
       ),
     );
 
-    final slideIn =
-        Tween<Offset>(begin: Offset(forward ? 0.03 : -0.03, 0), end: Offset.zero).animate(
+    final slideIn = Tween<Offset>(
+            begin: Offset(forward ? 0.03 : -0.03, 0), end: Offset.zero)
+        .animate(
       CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
@@ -163,20 +168,30 @@ class HeroPageRoute<T> extends PageRoute<T> {
   Duration get transitionDuration => const Duration(milliseconds: 300);
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation,) {
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     return builder(context);
   }
 
   @override
-  Widget buildTransitions(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation, Widget child,) {
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return FadeTransition(opacity: animation, child: child);
   }
 }
 
-void navigateWithTransition(BuildContext context, Widget page,
-    {TransitionType type = TransitionType.slide,}) {
+void navigateWithTransition(
+  BuildContext context,
+  Widget page, {
+  TransitionType type = TransitionType.slide,
+}) {
   switch (type) {
     case TransitionType.slide:
       Navigator.push(context, AppPageTransitions.slide(page));

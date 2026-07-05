@@ -197,7 +197,8 @@ class SecurityDepositCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('SECURITY DEPOSIT',
+              const Text(
+                'SECURITY DEPOSIT',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -665,9 +666,7 @@ class TransactionHistorySection extends StatelessWidget {
                         f,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.slate500,
+                          color: isSelected ? Colors.white : AppColors.slate500,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

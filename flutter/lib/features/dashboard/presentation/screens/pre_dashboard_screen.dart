@@ -259,7 +259,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                 child: const Icon(Icons.bolt, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
-              const Text('Dashboard',
+              const Text(
+                'Dashboard',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -340,7 +341,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Rejection Remarks',
+                      const Text(
+                        'Rejection Remarks',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
@@ -421,7 +423,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
           children: [
             Icon(Icons.local_shipping, size: 22),
             SizedBox(width: 12),
-            Text('PICKUP YOUR VEHICLE',
+            Text(
+              'PICKUP YOUR VEHICLE',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,

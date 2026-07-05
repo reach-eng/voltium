@@ -84,8 +84,11 @@ class _DashboardErrorWidget extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline,
-                  color: Colors.red, size: 48,),
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 48,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Unable to connect to command center: $errorMessage',
@@ -98,7 +101,8 @@ class _DashboardErrorWidget extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text('Retry'),
               ),
@@ -120,11 +124,14 @@ class _DashboardEmptyWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('No data available',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,),),
+            const Text(
+              'No data available',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () => context.read<AppProvider>().refresh(),
@@ -158,8 +165,11 @@ class _DashboardContentWidget extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            const Icon(Icons.notifications_none_rounded,
-                size: 20, color: Colors.white,),
+            const Icon(
+              Icons.notifications_none_rounded,
+              size: 20,
+              color: Colors.white,
+            ),
             Positioned(
               right: -2,
               top: -2,
@@ -225,10 +235,14 @@ class _DashboardContentWidget extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.bolt,
-                          color: AppColors.primary, size: 32,),
+                      Icon(
+                        Icons.bolt,
+                        color: AppColors.primary,
+                        size: 32,
+                      ),
                       SizedBox(width: 8),
-                      Text('Dashboard',
+                      Text(
+                        'Dashboard',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,
@@ -246,21 +260,24 @@ class _DashboardContentWidget extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 24,),
+                horizontal: 20,
+                vertical: 24,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (isCache) _buildCacheIndicator(),
                   if (rider.returnPending || rider.intent == 'RETURN')
                     ScooterSubmissionBanner(
-                      submissionDate:
-                          rider.submissionDate?.toIso8601String(),
+                      submissionDate: rider.submissionDate?.toIso8601String(),
                       pickupHub: rider.pickupHub,
                     ),
                   DashboardProfileCard(
                     rider: rider,
                     onTap: () => AppNavigator.push(
-                        context, const RentalDetailsScreen(),),
+                      context,
+                      const RentalDetailsScreen(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   PlanCard(
@@ -280,11 +297,10 @@ class _DashboardContentWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   TeamLeaderCard(
                     teamLeaderName: rider.teamLeader,
-                    onViewDetails: () =>
-                        showTLDetailsSheet(context, rider),
+                    onViewDetails: () => showTLDetailsSheet(context, rider),
                   ),
                   const SizedBox(height: 16),
-                    ReferralCard(
+                  ReferralCard(
                     referralCode: rider.referralCode ?? 'VOLT123',
                   ),
                   const SizedBox(height: 120),

@@ -95,21 +95,29 @@ class _TutorialDialogState extends State<TutorialDialog> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.lightbulb_outline,
-                      color: AppColors.primary, size: 32,),
+                  child: const Icon(
+                    Icons.lightbulb_outline,
+                    color: AppColors.primary,
+                    size: 32,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Quick Tip',
+                const Text(
+                  'Quick Tip',
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   tip.message,
                   style: const TextStyle(
-                      fontSize: 15, color: AppColors.slate500, height: 1.5,),
+                    fontSize: 15,
+                    color: AppColors.slate500,
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -119,21 +127,25 @@ class _TutorialDialogState extends State<TutorialDialog> {
                     if (_currentIndex > 0)
                       TextButton(
                         onPressed: () => setState(() => _currentIndex--),
-                        child: const Text('PREVIOUS',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.slate400,
-                                letterSpacing: 1,),),
+                        child: const Text(
+                          'PREVIOUS',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.slate400,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       )
                     else
                       const SizedBox(width: 80),
                     Text(
                       '${_currentIndex + 1}/${widget.tips.length}',
                       style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.slate400,),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate400,
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -148,10 +160,11 @@ class _TutorialDialogState extends State<TutorialDialog> {
                             ? 'NEXT'
                             : 'GOT IT',
                         style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
-                            letterSpacing: 1,),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.primary,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
                   ],
@@ -204,7 +217,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16,),
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -219,33 +234,41 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 20,
-                                    offset: Offset(0, 10),),
+                                  color: Colors.black12,
+                                  blurRadius: 20,
+                                  offset: Offset(0, 10),
+                                ),
                               ],
                             ),
-                            child: const Icon(Icons.rate_review_outlined,
-                                color: AppColors.primary, size: 40,),
+                            child: const Icon(
+                              Icons.rate_review_outlined,
+                              color: AppColors.primary,
+                              size: 40,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 32),
                         const FadeUpWidget(
                           delay: 100,
-                          child: Text('Share Your Thoughts',
+                          child: Text(
+                            'Share Your Thoughts',
                             style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
                         const FadeUpWidget(
                           delay: 200,
-                          child: Text('Your feedback helps us improve the experience for everyone.',
+                          child: Text(
+                            'Your feedback helps us improve the experience for everyone.',
                             style: TextStyle(
-                                fontSize: 15,
-                                color: AppColors.slate500,
-                                height: 1.5,),
+                              fontSize: 15,
+                              color: AppColors.slate500,
+                              height: 1.5,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -306,18 +329,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                  ),
                 ],
               ),
               child:
                   const Icon(Icons.close, size: 18, color: Color(0xFF1E293B)),
             ),
           ),
-          const Text('Feedback',
+          const Text(
+            'Feedback',
             style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
           ),
           const SizedBox(width: 40), // Balance
         ],
@@ -366,8 +393,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           hintText: 'Tell us more about your experience...',
           hintStyle: const TextStyle(color: AppColors.slate400, fontSize: 14),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.all(20),
@@ -403,10 +431,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               height: 20,
               width: 20,
               child: CircularProgressIndicator(
-                  color: Colors.white, strokeWidth: 2,),)
-          : const Text('SUBMIT FEEDBACK',
-              style:
-                  TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),),
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+          : const Text(
+              'SUBMIT FEEDBACK',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
+            ),
     );
   }
 }
@@ -433,20 +465,29 @@ class RateAppPrompt {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.star_rounded,
-                    color: Color(0xFFFFB800), size: 64,),
+                const Icon(
+                  Icons.star_rounded,
+                  color: Color(0xFFFFB800),
+                  size: 64,
+                ),
                 const SizedBox(height: 24),
-                const Text('Enjoying Voltium?',
+                const Text(
+                  'Enjoying Voltium?',
                   style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),),
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                const Text('Take a moment to rate your experience. It helps us grow!',
+                const Text(
+                  'Take a moment to rate your experience. It helps us grow!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontSize: 15, color: AppColors.slate500, height: 1.5,),
+                    fontSize: 15,
+                    color: AppColors.slate500,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
@@ -459,19 +500,27 @@ class RateAppPrompt {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9999),),
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
                   ),
-                  child: const Text('RATE US',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, letterSpacing: 1,),),
+                  child: const Text(
+                    'RATE US',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('NOT NOW',
-                      style: TextStyle(
-                          color: AppColors.slate400,
-                          fontWeight: FontWeight.bold,),),
+                  child: const Text(
+                    'NOT NOW',
+                    style: TextStyle(
+                      color: AppColors.slate400,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),

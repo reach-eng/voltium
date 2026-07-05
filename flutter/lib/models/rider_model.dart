@@ -460,7 +460,8 @@ class RiderModel {
       isAdminLocked: json['isAdminLocked'] as bool? ?? false,
       isUninstallBlocked: json['isUninstallBlocked'] as bool? ?? false,
       isLocationMandatory: json['isLocationMandatory'] as bool? ?? false,
-      isAppsControlRestricted: json['isAppsControlRestricted'] as bool? ?? false,
+      isAppsControlRestricted:
+          json['isAppsControlRestricted'] as bool? ?? false,
       deviceAdminGranted: json['deviceAdminGranted'] as bool? ?? false,
       displayOverlayGranted: json['displayOverlayGranted'] as bool? ?? false,
       lastDeviceViolationAt: json['lastDeviceViolationAt'] != null

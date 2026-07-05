@@ -13,7 +13,8 @@ import 'package:flutter/material.dart';
 /// - 40×4 drag handle centered at top
 /// - 24px horizontal padding
 /// - 300ms ease-out animation
-Future<T?> showVoltiumSheet<T>(BuildContext context, {required Widget child, double heightFraction = 0.6}) {
+Future<T?> showVoltiumSheet<T>(BuildContext context,
+    {required Widget child, double heightFraction = 0.6}) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,

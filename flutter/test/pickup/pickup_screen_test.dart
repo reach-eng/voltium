@@ -60,8 +60,8 @@ void main() {
     testWidgets('pickup hub screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -72,8 +72,8 @@ void main() {
     testWidgets('pickup hub screen shows hub selection UI', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -90,8 +90,8 @@ void main() {
     testWidgets('pickup hub screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupHubScreen(
-          onNext: (hubId, vehicleId, teamLeader, emergencyContact,
-              photoFront, photoBack, photoLeft, photoRight, photoWithVehicle) {},
+          onNext: (hubId, vehicleId, teamLeader, emergencyContact, photoFront,
+              photoBack, photoLeft, photoRight, photoWithVehicle) {},
         ),
       ));
       await tester.pump();
@@ -115,8 +115,7 @@ void main() {
       expect(find.byType(PickupVerificationScreen), findsOneWidget);
     });
 
-    testWidgets('pickup verification screen does not overflow',
-        (tester) async {
+    testWidgets('pickup verification screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(
         child: PickupVerificationScreen(
           onNext: () {},

@@ -67,34 +67,41 @@ void main() {
   });
 
   test('removeContact updates primary if needed', () async {
-    await service.addContact(EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A', isPrimary: true));
-    await service.addContact(EmergencyContact(id: '2', name: 'B', phone: '2', relationship: 'B'));
+    await service.addContact(EmergencyContact(
+        id: '1', name: 'A', phone: '1', relationship: 'A', isPrimary: true));
+    await service.addContact(
+        EmergencyContact(id: '2', name: 'B', phone: '2', relationship: 'B'));
 
     await service.removeContact('1');
     expect(service.contacts.length, 1);
     // isPrimary remains false on the model, but primaryContact getter returns it as fallback
-    expect(service.contacts.first.isPrimary, isFalse); 
+    expect(service.contacts.first.isPrimary, isFalse);
     expect(service.primaryContact?.id, '2');
   });
 
   test('updateContact modifies data', () async {
-    await service.addContact(EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
-    await service.updateContact(EmergencyContact(id: '1', name: 'B', phone: '2', relationship: 'B'));
+    await service.addContact(
+        EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
+    await service.updateContact(
+        EmergencyContact(id: '1', name: 'B', phone: '2', relationship: 'B'));
 
     expect(service.contacts.first.name, 'B');
     expect(service.contacts.first.phone, '2');
   });
 
   test('setPrimaryContact works', () async {
-    await service.addContact(EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
-    await service.addContact(EmergencyContact(id: '2', name: 'B', phone: '2', relationship: 'B'));
+    await service.addContact(
+        EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
+    await service.addContact(
+        EmergencyContact(id: '2', name: 'B', phone: '2', relationship: 'B'));
 
     await service.setPrimaryContact('2');
     expect(service.primaryContact?.id, '2');
   });
 
   test('clearAll clears list', () async {
-    await service.addContact(EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
+    await service.addContact(
+        EmergencyContact(id: '1', name: 'A', phone: '1', relationship: 'A'));
     await service.clearAll();
     expect(service.contacts, isEmpty);
   });

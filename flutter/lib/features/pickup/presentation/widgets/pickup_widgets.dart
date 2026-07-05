@@ -85,7 +85,8 @@ class AssignmentDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ASSIGNMENT DETAILS',
+          Text(
+            'ASSIGNMENT DETAILS',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -145,10 +146,14 @@ class AssignmentDetailsCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle,
-                      color: kSuccessColor, size: 16,),
+                  const Icon(
+                    Icons.check_circle,
+                    color: kSuccessColor,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
-                  Text('Emergency contact verified successfully',
+                  Text(
+                    'Emergency contact verified successfully',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -229,10 +234,14 @@ class VehicleConditionCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.camera_alt_outlined,
-                      color: kPrimaryColor, size: 20,),
+                  const Icon(
+                    Icons.camera_alt_outlined,
+                    color: kPrimaryColor,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
-                  Text('Vehicle Condition',
+                  Text(
+                    'Vehicle Condition',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -247,7 +256,8 @@ class VehicleConditionCard extends StatelessWidget {
                   color: AppColors.errorLight,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text('MANDATORY',
+                child: Text(
+                  'MANDATORY',
                   style: GoogleFonts.inter(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -280,7 +290,10 @@ class VehicleConditionCard extends StatelessWidget {
                       photoUrl: frontPhotoUrl,
                       isUploading: isUploadingFront,
                       onTap: () => showImageSourceDialog(
-                          context, 'front', onUploadImage,),
+                        context,
+                        'front',
+                        onUploadImage,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -320,7 +333,10 @@ class VehicleConditionCard extends StatelessWidget {
                       photoUrl: rightPhotoUrl,
                       isUploading: isUploadingRight,
                       onTap: () => showImageSourceDialog(
-                          context, 'right', onUploadImage,),
+                        context,
+                        'right',
+                        onUploadImage,
+                      ),
                     ),
                   ),
                 ],
@@ -328,7 +344,8 @@ class VehicleConditionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text('Photo with Vehicle',
+          Text(
+            'Photo with Vehicle',
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -336,7 +353,8 @@ class VehicleConditionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text('Take a selfie next to the vehicle before riding',
+          Text(
+            'Take a selfie next to the vehicle before riding',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w400,

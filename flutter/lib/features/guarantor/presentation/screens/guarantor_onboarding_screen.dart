@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
+import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
@@ -123,6 +124,25 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     super.initState();
     _loadCache();
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (AppConstants.isTestMode) {
+        setState(() {
+          if (_nameController.text.isEmpty)
+            _nameController.text = 'Test Guarantor';
+          if (_dobController.text.isEmpty) _dobController.text = '01-01-1980';
+          if (_phoneController.text.isEmpty)
+            _phoneController.text = '9999999999';
+          if (_fatherNameController.text.isEmpty)
+            _fatherNameController.text = 'Guarantor Father';
+          if (_motherNameController.text.isEmpty)
+            _motherNameController.text = 'Guarantor Mother';
+          if (_addressController.text.isEmpty)
+            _addressController.text = '456 Guarantor St';
+          _isPhoneVerified = true;
+        });
+      }
+    });
+
     _nameController.addListener(_saveCache);
     _dobController.addListener(_saveCache);
     _fatherNameController.addListener(_saveCache);
@@ -185,7 +205,8 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: AppColors.primary),
+                leading:
+                    const Icon(Icons.photo_library, color: AppColors.primary),
                 title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
@@ -305,9 +326,11 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSendingOtp = false);
-        _showError(e.toString().contains('ApiException')
-            ? 'Failed to send OTP. Please try again.'
-            : 'Network error. Check your connection.',);
+        _showError(
+          e.toString().contains('ApiException')
+              ? 'Failed to send OTP. Please try again.'
+              : 'Network error. Check your connection.',
+        );
       }
     }
   }
@@ -374,11 +397,12 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       return;
     }
     final provider = context.read<AppProvider>();
-    final riderId = provider.rider?.id;
-    if (riderId == null) {
-      _showError('Rider ID not found. Please restart onboarding.');
+    final rider = provider.rider;
+    if (rider == null) {
+      _showError('Session lost. Please log in again.');
       return;
     }
+    final riderId = rider.id ?? rider.riderId;
     setState(() => _isUploading = true);
     try {
       String aadhaarFrontUrl = '',
@@ -400,33 +424,41 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
         final uploadLabels = <int>[];
 
         if (_aadhaarFrontPath != null) {
-          uploads.add(VoltiumApiService()
-              .uploadFile(File(_aadhaarFrontPath!), 'GUARANTOR_AADHAAR_FRONT'),);
+          uploads.add(
+            VoltiumApiService()
+                .uploadFile(File(_aadhaarFrontPath!), 'kyc_document'),
+          );
           uploadLabels.add(0);
         }
         if (_aadhaarBackPath != null) {
-          uploads.add(VoltiumApiService()
-              .uploadFile(File(_aadhaarBackPath!), 'GUARANTOR_AADHAAR_BACK'),);
+          uploads.add(
+            VoltiumApiService()
+                .uploadFile(File(_aadhaarBackPath!), 'kyc_document'),
+          );
           uploadLabels.add(1);
         }
         if (_panPath != null) {
-          uploads
-              .add(VoltiumApiService().uploadFile(File(_panPath!), 'GUARANTOR_PAN'));
+          uploads.add(
+              VoltiumApiService().uploadFile(File(_panPath!), 'kyc_document'));
           uploadLabels.add(2);
         }
         if (_videoPath != null) {
           uploads.add(
-              VoltiumApiService().uploadFile(File(_videoPath!), 'GUARANTOR_VIDEO'),);
+            VoltiumApiService().uploadFile(File(_videoPath!), 'kyc_document'),
+          );
           uploadLabels.add(3);
         }
         if (_signaturePath != null) {
-          uploads.add(VoltiumApiService()
-              .uploadFile(File(_signaturePath!), 'GUARANTOR_SIGNATURE'),);
+          uploads.add(
+            VoltiumApiService()
+                .uploadFile(File(_signaturePath!), 'kyc_document'),
+          );
           uploadLabels.add(4);
         }
         if (_photoPath != null) {
           uploads.add(
-              VoltiumApiService().uploadFile(File(_photoPath!), 'GUARANTOR_PHOTO'),);
+            VoltiumApiService().uploadFile(File(_photoPath!), 'profile_photo'),
+          );
           uploadLabels.add(5);
         }
 
@@ -455,21 +487,24 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
           }
         }
       }
-      await VoltiumApiService().updateProfile(riderId: riderId, data: {
-        'guarantorName': _nameController.text,
-        'guarantorDob': _dobController.text,
-        'guarantorPhone': _phoneController.text,
-        'guarantorFatherName': _fatherNameController.text,
-        'guarantorMotherName': _motherNameController.text,
-        'guarantorAddress': _addressController.text,
-        'guarantorAadhaarFront': aadhaarFrontUrl,
-        'guarantorAadhaarBack': aadhaarBackUrl,
-        'guarantorPan': panUrl,
-        'guarantorVideo': videoUrl,
-        'guarantorSignature': signatureUrl,
-        'guarantorPhoto': photoUrl,
-        'guarantorStatus': 'SUBMITTED',
-      },);
+      await VoltiumApiService().updateProfile(
+        riderId: riderId,
+        data: {
+          'guarantorName': _nameController.text,
+          'guarantorDob': _dobController.text,
+          'guarantorPhone': _phoneController.text,
+          'guarantorFatherName': _fatherNameController.text,
+          'guarantorMotherName': _motherNameController.text,
+          'guarantorAddress': _addressController.text,
+          'guarantorAadhaarFront': aadhaarFrontUrl,
+          'guarantorAadhaarBack': aadhaarBackUrl,
+          'guarantorPan': panUrl,
+          'guarantorVideo': videoUrl,
+          'guarantorSignature': signatureUrl,
+          'guarantorPhoto': photoUrl,
+          'guarantorStatus': 'SUBMITTED',
+        },
+      );
       await CacheService().remove('guarantor_onboarding_form_cache');
       await provider.refresh();
       if (mounted && widget.onNext != null) widget.onNext!();
@@ -477,7 +512,18 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       if (mounted) {
         String userMessage = 'Something went wrong. Please try again.';
         final msg = e.toString();
-        if (msg.contains('422') || msg.contains('VALIDATION')) {
+        debugPrint('Guarantor update error: $msg');
+
+        if (e is DioException && e.response?.data != null) {
+          final data = e.response!.data;
+          debugPrint('Backend error data: $data');
+          if (data is Map && data['message'] != null) {
+            userMessage = data['message'];
+            if (data['errors'] != null) {
+              userMessage += ': ${data['errors']}';
+            }
+          }
+        } else if (msg.contains('422') || msg.contains('VALIDATION')) {
           userMessage = 'Please check your documents and try uploading again.';
         } else if (msg.contains('401') || msg.contains('unauthorized')) {
           userMessage = 'Session expired. Please log in again.';
@@ -499,92 +545,95 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
     );
     if (date != null && mounted) {
-      setState(() => _dobController.text =
-          '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',);
+      setState(
+        () => _dobController.text =
+            '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: SafeArea(
-        child: Column(
-          children: [
-            GuarantorOnboardingHeader(
-              onBack: () => widget.onBack?.call(),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const GuarantorOnboardingProgressSection(),
-                    const SizedBox(height: 24),
-                    GuarantorDetailsCard(
-                      nameController: _nameController,
-                      dobController: _dobController,
-                      phoneController: _phoneController,
-                      fatherNameController: _fatherNameController,
-                      motherNameController: _motherNameController,
-                      addressController: _addressController,
-                      isPhoneVerified: _isPhoneVerified,
-                      isSendingOtp: _isSendingOtp,
-                      isOtpSent: _isOtpSent,
-                      isVerifyingOtp: _isVerifyingOtp,
-                      onSendOtp: _sendOtp,
-                      onVerifyOtp: _verifyOtp,
-                      onSelectDob: _selectDob,
-                      otpBoxes: GuarantorOnboardingOtpBoxes(
-                        otpControllers: _otpControllers,
-                        otpFocusNodes: _otpFocusNodes,
-                        onChanged: (i, v) {
-                          if (v.length == 1 && i < 5) {
-                            FocusScope.of(context)
-                                .requestFocus(_otpFocusNodes[i + 1]);
-                          } else if (v.isEmpty && i > 0) {
-                            FocusScope.of(context)
-                                .requestFocus(_otpFocusNodes[i - 1]);
-                          }
-                          setState(() {});
-                        },
+    return ColoredBox(
+      color: const Color(0xFFF3F4F6),
+      child: SafeArea(
+        child: SizedBox.expand(
+          child: Column(
+            children: [
+              GuarantorOnboardingHeader(
+                onBack: () => widget.onBack?.call(),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const GuarantorOnboardingProgressSection(),
+                      const SizedBox(height: 24),
+                      GuarantorDetailsCard(
+                        nameController: _nameController,
+                        dobController: _dobController,
+                        phoneController: _phoneController,
+                        fatherNameController: _fatherNameController,
+                        motherNameController: _motherNameController,
+                        addressController: _addressController,
+                        isPhoneVerified: _isPhoneVerified,
+                        isSendingOtp: _isSendingOtp,
+                        isOtpSent: _isOtpSent,
+                        isVerifyingOtp: _isVerifyingOtp,
+                        onSendOtp: _sendOtp,
+                        onVerifyOtp: _verifyOtp,
+                        onSelectDob: _selectDob,
+                        otpBoxes: GuarantorOnboardingOtpBoxes(
+                          otpControllers: _otpControllers,
+                          otpFocusNodes: _otpFocusNodes,
+                          onChanged: (i, v) {
+                            if (v.length == 1 && i < 5) {
+                              FocusScope.of(context)
+                                  .requestFocus(_otpFocusNodes[i + 1]);
+                            } else if (v.isEmpty && i > 0) {
+                              FocusScope.of(context)
+                                  .requestFocus(_otpFocusNodes[i - 1]);
+                            }
+                            setState(() {});
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    GuarantorIdentityVerificationCard(
-                      aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                      aadhaarBackUploaded: _aadhaarBackUploaded,
-                      panUploaded: _panUploaded,
-                      photoUploaded: _photoUploaded,
-                      onPickAadhaarFront: () =>
-                          _showDocumentSourceDialog('aadhaar_front'),
-                      onPickAadhaarBack: () =>
-                          _showDocumentSourceDialog('aadhaar_back'),
-                      onPickPan: () => _showDocumentSourceDialog('pan'),
-                      onPickPhoto: () => _showDocumentSourceDialog('photo'),
-                    ),
-                    const SizedBox(height: 16),
-                    GuarantorVideoProofCard(
-                      videoUploaded: _videoUploaded,
-                      videoPath: _videoPath,
-                      onTap: _pickVideo,
-                    ),
-                    const SizedBox(height: 16),
-                    GuarantorSignatureCard(
-                      signatureUploaded: _signatureUploaded,
-                      onTap: _openSignaturePad,
-                    ),
-                    const SizedBox(height: 120),
-                  ],
+                      const SizedBox(height: 16),
+                      GuarantorIdentityVerificationCard(
+                        aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                        aadhaarBackUploaded: _aadhaarBackUploaded,
+                        panUploaded: _panUploaded,
+                        photoUploaded: _photoUploaded,
+                        onPickAadhaarFront: () =>
+                            _showDocumentSourceDialog('aadhaar_front'),
+                        onPickAadhaarBack: () =>
+                            _showDocumentSourceDialog('aadhaar_back'),
+                        onPickPan: () => _showDocumentSourceDialog('pan'),
+                        onPickPhoto: () => _showDocumentSourceDialog('photo'),
+                      ),
+                      const SizedBox(height: 16),
+                      GuarantorVideoProofCard(
+                        videoUploaded: _videoUploaded,
+                        videoPath: _videoPath,
+                        onTap: _pickVideo,
+                      ),
+                      const SizedBox(height: 16),
+                      GuarantorSignatureCard(
+                        signatureUploaded: _signatureUploaded,
+                        onTap: _openSignaturePad,
+                      ),
+                      const SizedBox(height: 120),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            GuarantorOnboardingBottomButton(
-              canProceed: AppConstants.isTestMode ||
-                  _isFormComplete,
-              isUploading: _isUploading,
-              onSubmit: _handleSubmit,
-            ),
-          ],
+              GuarantorOnboardingBottomButton(
+                canProceed: AppConstants.isTestMode || _isFormComplete,
+                isUploading: _isUploading,
+                onSubmit: _handleSubmit,
+              ),
+            ],
+          ),
         ),
       ),
     );

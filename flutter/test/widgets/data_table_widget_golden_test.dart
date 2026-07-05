@@ -8,7 +8,8 @@ void main() {
     configureGoldenSurface(tester);
     await tester.pumpWidget(
       const GoldenTestHarness(
-        child: SizedBox(width: 100, height: 100, child: Placeholder()), // Mocked fallback
+        child: SizedBox(
+            width: 100, height: 100, child: Placeholder()), // Mocked fallback
       ),
     );
     await tester.pumpAndSettle();

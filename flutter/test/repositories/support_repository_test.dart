@@ -5,6 +5,7 @@ import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/support/data/repository_impl.dart';
 
 class MockVoltiumApiClient extends Mock implements VoltiumApiClient {}
+
 class FakeCreateTicketRequest extends Fake implements CreateTicketRequest {}
 
 void main() {
@@ -51,7 +52,8 @@ void main() {
       );
 
       expect(result['id'], 't123');
-      final captured = verify(() => mockApiClient.postSupportTickets(captureAny())).captured;
+      final captured =
+          verify(() => mockApiClient.postSupportTickets(captureAny())).captured;
       final req = captured.first as CreateTicketRequest;
       expect(req.category, 'BILLING');
       expect(req.subject, 'Issue with payment');
@@ -74,7 +76,8 @@ void main() {
 
       await repository.sendChatMessage('Hello there');
 
-      final captured = verify(() => mockApiClient.postSupportChat(captureAny())).captured;
+      final captured =
+          verify(() => mockApiClient.postSupportChat(captureAny())).captured;
       final req = captured.first as Map<String, dynamic>;
       expect(req['message'], 'Hello there');
     });

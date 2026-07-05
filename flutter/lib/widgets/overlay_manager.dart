@@ -56,14 +56,19 @@ class OverlayManager extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.system_update_rounded,
-                  color: Colors.blue, size: 64,),
+              const Icon(
+                Icons.system_update_rounded,
+                color: Colors.blue,
+                size: 64,
+              ),
               const SizedBox(height: 16),
-              const Text('Update Required',
+              const Text(
+                'Update Required',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-              const Text('A critical update is required to continue using the app. This version is no longer supported.',
+              const Text(
+                'A critical update is required to continue using the app. This version is no longer supported.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.black54),
               ),
@@ -78,7 +83,8 @@ class OverlayManager extends StatelessWidget {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: const Text('UPDATE NOW'),
                 ),
@@ -120,22 +126,29 @@ class OverlayManager extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Low Wallet Balance',
+                      const Text(
+                        'Low Wallet Balance',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold,),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         'Current balance: ₹${provider.currentBalance.toStringAsFixed(2)}. Please top up to avoid interruptions.',
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 12,),
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
                   onPressed: () => provider.setWalletBalanceWarning(false),
-                  child: const Text('DISMISS',
-                      style: TextStyle(color: Colors.white),),
+                  child: const Text(
+                    'DISMISS',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

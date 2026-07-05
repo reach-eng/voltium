@@ -49,28 +49,36 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
         return all;
       case NotificationTab.payments:
         return all
-            .where((n) =>
-                n.type == AppNotificationType.paymentReceived ||
-                n.type == AppNotificationType.paymentSent,)
+            .where(
+              (n) =>
+                  n.type == AppNotificationType.paymentReceived ||
+                  n.type == AppNotificationType.paymentSent,
+            )
             .toList();
       case NotificationTab.kyc:
         return all
-            .where((n) =>
-                n.type == AppNotificationType.system &&
-                n.title.toLowerCase().contains('kyc'),)
+            .where(
+              (n) =>
+                  n.type == AppNotificationType.system &&
+                  n.title.toLowerCase().contains('kyc'),
+            )
             .toList();
       case NotificationTab.maintenance:
         return all
-            .where((n) =>
-                n.type == AppNotificationType.system &&
-                (n.title.toLowerCase().contains('service') ||
-                    n.title.toLowerCase().contains('maintenance')),)
+            .where(
+              (n) =>
+                  n.type == AppNotificationType.system &&
+                  (n.title.toLowerCase().contains('service') ||
+                      n.title.toLowerCase().contains('maintenance')),
+            )
             .toList();
       case NotificationTab.announcements:
         return all
-            .where((n) =>
-                n.type == AppNotificationType.promo ||
-                n.type == AppNotificationType.system,)
+            .where(
+              (n) =>
+                  n.type == AppNotificationType.promo ||
+                  n.type == AppNotificationType.system,
+            )
             .toList();
     }
   }
@@ -137,7 +145,9 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                               onRefresh: () => provider.refreshEngagementData(),
                               child: ListView.builder(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 12,),
+                                  horizontal: 20,
+                                  vertical: 12,
+                                ),
                                 itemCount: filtered.length,
                                 itemBuilder: (context, index) {
                                   return FadeUpWidget(
@@ -158,16 +168,21 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                                                 BorderRadius.circular(20),
                                           ),
                                           child: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.white,
-                                              size: 24,),
+                                            Icons.delete_outline,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
                                         ),
                                         confirmDismiss: (direction) async {
                                           return await showDialog<bool>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
-                                              title: const Text('Delete Notification',),
-                                              content: const Text('Are you sure you want to delete this notification?',),
+                                              title: const Text(
+                                                'Delete Notification',
+                                              ),
+                                              content: const Text(
+                                                'Are you sure you want to delete this notification?',
+                                              ),
                                               actions: [
                                                 TextButton(
                                                   onPressed: () =>
@@ -188,8 +203,8 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                                         onDismissed: (direction) {
                                           setState(() {
                                             provider.notifications.removeWhere(
-                                                (n) =>
-                                                    n.id == filtered[index].id,);
+                                              (n) => n.id == filtered[index].id,
+                                            );
                                           });
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -201,7 +216,9 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                                           );
                                         },
                                         child: _buildNotificationCard(
-                                            filtered[index], provider,),
+                                          filtered[index],
+                                          provider,
+                                        ),
                                       ),
                                     ),
                                   );
@@ -234,7 +251,10 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
   }
 
   Widget _buildHeader(
-      BuildContext context, AppProvider provider, int unreadCount,) {
+    BuildContext context,
+    AppProvider provider,
+    int unreadCount,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -251,19 +271,26 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.arrow_back,
-                      size: 18, color: Color(0xFF1E293B),),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 18,
+                    color: Color(0xFF1E293B),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
-              const Text('Notifications',
+              const Text(
+                'Notifications',
                 style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
               ),
               if (unreadCount > 0) ...[
                 const SizedBox(width: 8),
@@ -277,9 +304,10 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                   child: Text(
                     '$unreadCount',
                     style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -297,12 +325,16 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,),
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                        ),
                       ],
                     ),
-                    child: const Icon(Icons.delete_sweep,
-                        size: 18, color: AppColors.slate500,),
+                    child: const Icon(
+                      Icons.delete_sweep,
+                      size: 18,
+                      color: AppColors.slate500,
+                    ),
                   ),
                 ),
               if (provider.notifications.any((n) => n.isRead))
@@ -312,11 +344,14 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                   key: const Key('markAllReadButton'),
                   onPressed: () => provider.markAllNotificationsRead(),
                   icon: const Icon(Icons.done_all, size: 16),
-                  label: const Text('MARK ALL READ',
-                      style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,),),
+                  label: const Text(
+                    'MARK ALL READ',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -325,7 +360,9 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
               const SizedBox(width: 4),
               InkWell(
                 onTap: () => AppNavigator.push(
-                    context, const NotificationPreferencesScreen(),),
+                  context,
+                  const NotificationPreferencesScreen(),
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -333,11 +370,16 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05), blurRadius: 10,),
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                      ),
                     ],
                   ),
-                  child: const Icon(Icons.settings_outlined,
-                      size: 18, color: AppColors.slate500,),
+                  child: const Icon(
+                    Icons.settings_outlined,
+                    size: 18,
+                    color: AppColors.slate500,
+                  ),
                 ),
               ),
             ],
@@ -356,9 +398,10 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -374,8 +417,7 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                 padding:
                     const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 decoration: BoxDecoration(
-                  color:
-                      isSelected ? AppColors.primary : Colors.transparent,
+                  color: isSelected ? AppColors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -384,8 +426,7 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                     Icon(
                       _getTabIcon(tab),
                       size: 16,
-                      color:
-                          isSelected ? Colors.white : AppColors.slate500,
+                      color: isSelected ? Colors.white : AppColors.slate500,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -393,8 +434,7 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color:
-                            isSelected ? Colors.white : AppColors.slate500,
+                        color: isSelected ? Colors.white : AppColors.slate500,
                         letterSpacing: 0.3,
                       ),
                       textAlign: TextAlign.center,
@@ -421,7 +461,9 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 20),
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 20),
               ],
             ),
             child: Icon(
@@ -434,13 +476,16 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
           Text(
             'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
             style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
           ),
           const SizedBox(height: 8),
-          const Text("You're all caught up!",
-              style: TextStyle(fontSize: 14, color: AppColors.slate500),),
+          const Text(
+            "You're all caught up!",
+            style: TextStyle(fontSize: 14, color: AppColors.slate500),
+          ),
         ],
       ),
     );
@@ -458,13 +503,16 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
           borderRadius: BorderRadius.circular(20),
           border: !notif.isRead
               ? Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.1), width: 1.5,)
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  width: 1.5,
+                )
               : null,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 8),),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         padding: const EdgeInsets.all(16),
@@ -480,8 +528,11 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                     color: categoryInfo.bgColor,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(categoryInfo.icon,
-                      color: categoryInfo.color, size: 22,),
+                  child: Icon(
+                    categoryInfo.icon,
+                    color: categoryInfo.color,
+                    size: 22,
+                  ),
                 ),
                 if (!notif.isRead)
                   Positioned(
@@ -510,15 +561,18 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                       Text(
                         categoryInfo.label.toUpperCase(),
                         style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            color: categoryInfo.color,
-                            letterSpacing: 0.5,),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: categoryInfo.color,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                       Text(
                         _formatTime(notif.createdAt),
                         style: const TextStyle(
-                            fontSize: 10, color: AppColors.slate400,),
+                          fontSize: 10,
+                          color: AppColors.slate400,
+                        ),
                       ),
                     ],
                   ),
@@ -536,7 +590,10 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
                   Text(
                     notif.message,
                     style: const TextStyle(
-                        fontSize: 12, color: AppColors.slate500, height: 1.4,),
+                      fontSize: 12,
+                      color: AppColors.slate500,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -548,7 +605,8 @@ class _SmartNotificationsScreenState extends State<SmartNotificationsScreen>
   }
 
   ({IconData icon, Color color, Color bgColor, String label}) _getCategoryInfo(
-      AppNotification notif,) {
+    AppNotification notif,
+  ) {
     final title = notif.title.toLowerCase();
     if (notif.type == AppNotificationType.paymentReceived ||
         notif.type == AppNotificationType.paymentSent ||

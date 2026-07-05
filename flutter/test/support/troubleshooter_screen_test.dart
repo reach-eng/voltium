@@ -33,7 +33,8 @@ void main() {
     testWidgets('shows category selection prompt', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      expect(find.textContaining('What issue are you experiencing?'), findsOneWidget);
+      expect(find.textContaining('What issue are you experiencing?'),
+          findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {

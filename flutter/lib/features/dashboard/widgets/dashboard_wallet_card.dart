@@ -34,8 +34,7 @@ class WalletCard extends StatelessWidget {
   }
 
   Widget _buildLowBalanceCard(bool isDailyPlan) {
-    final Color themeColor =
-        isDailyPlan ? AppColors.warning : AppColors.error;
+    final Color themeColor = isDailyPlan ? AppColors.warning : AppColors.error;
     final Color lightBgColor =
         isDailyPlan ? const Color(0xFFFFFBEB) : const Color(0xFFFEF2F2);
     final Color borderColor =
@@ -152,7 +151,8 @@ class WalletCard extends StatelessWidget {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Top Up Wallet',
+                  Text(
+                    'Top Up Wallet',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -232,7 +232,8 @@ class WalletCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Rental Recovery Streak',
+              Text(
+                'Rental Recovery Streak',
                 style: TextStyle(
                   fontSize: compact ? 12 : 14,
                   fontWeight: FontWeight.w600,

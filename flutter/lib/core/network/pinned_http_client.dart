@@ -36,7 +36,8 @@ class PinnedHttpInterceptor {
       return http.Client();
     }
 
-    final httpClient = HttpClient(context: SecurityContext(withTrustedRoots: true))
+    final httpClient = HttpClient(
+        context: SecurityContext(withTrustedRoots: true))
       ..badCertificateCallback = (X509Certificate cert, String host, int port) {
         // Calculate the SHA-256 hash of the DER-encoded certificate
         final digest = sha256.convert(cert.der);

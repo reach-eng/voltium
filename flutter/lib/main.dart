@@ -86,7 +86,8 @@ Future<void> main() async {
       details.stack,
       reason: 'FlutterError',
     );
-    PostHogService.captureError(details.exception, details.stack, reason: 'FlutterError');
+    PostHogService.captureError(details.exception, details.stack,
+        reason: 'FlutterError');
   };
 
   // ── Custom ErrorWidget Builder (skip in test mode) ─────────────────────────
@@ -95,9 +96,7 @@ Future<void> main() async {
     isTestMode = true;
     return true;
   }());
-  if (!kIsWeb &&
-      !isTestMode &&
-      !AppConstants.isTestMode) {
+  if (!kIsWeb && !isTestMode && !AppConstants.isTestMode) {
     ErrorWidget.builder = (FlutterErrorDetails details) {
       AnalyticsService()
           .trackError('ErrorWidget', details.exception.toString());
@@ -115,7 +114,8 @@ Future<void> main() async {
                   color: Colors.red,
                 ),
                 const SizedBox(height: 16),
-                const Text('Something went wrong',
+                const Text(
+                  'Something went wrong',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -194,7 +194,8 @@ Future<void> main() async {
         ProviderScope(
           child: MultiProvider(
             providers: [
-              ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
+              ChangeNotifierProvider<LocaleProvider>.value(
+                  value: localeProvider),
               ChangeNotifierProvider<AppProvider>.value(value: appProvider),
               ChangeNotifierProvider<RiderProvider>.value(
                 value: appProvider.riderProvider,

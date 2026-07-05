@@ -5,7 +5,9 @@ class FormDraftService {
   static const String _prefix = 'form_draft_';
 
   static Future<void> saveDraft(
-      String formKey, Map<String, dynamic> data,) async {
+    String formKey,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('$_prefix$formKey', jsonEncode(data));
@@ -84,8 +86,11 @@ class FormFieldValidator {
     return null;
   }
 
-  static String? minLength(String? value, int min,
-      [String fieldName = 'Field',]) {
+  static String? minLength(
+    String? value,
+    int min, [
+    String fieldName = 'Field',
+  ]) {
     if (value == null || value.length < min) {
       return '$fieldName must be at least $min characters';
     }

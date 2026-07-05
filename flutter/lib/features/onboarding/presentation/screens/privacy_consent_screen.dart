@@ -78,14 +78,16 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
                             icon: const Icon(Icons.arrow_back),
                           ),
                           const SizedBox(height: 12),
-                          Text('Privacy choices',
+                          Text(
+                            'Privacy choices',
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           const SizedBox(height: 8),
-                          Text('Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.',
+                          Text(
+                            'Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 24),

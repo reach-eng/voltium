@@ -141,7 +141,8 @@ class _AnimatedLogoSplashState extends State<AnimatedLogoSplash>
               position: _slideAnimation,
               child: Column(
                 children: [
-                  const Text('Voltium',
+                  const Text(
+                    'Voltium',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 32,
@@ -150,7 +151,8 @@ class _AnimatedLogoSplashState extends State<AnimatedLogoSplash>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text('Electric Mobility',
+                  Text(
+                    'Electric Mobility',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 16,

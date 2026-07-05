@@ -1,4 +1,3 @@
-
 class PhoneValidator {
   static final RegExp _validPrefix = RegExp(r'^[6-9]');
   static final RegExp _digitsOnly = RegExp(r'^\d+$');

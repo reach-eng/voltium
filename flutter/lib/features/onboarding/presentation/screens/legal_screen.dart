@@ -94,8 +94,9 @@ class _LegalScreenState extends State<LegalScreen>
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: FadeTransition(
                 opacity: CurvedAnimation(
-                    parent: _entryCtrl,
-                    curve: const Interval(0, 0.5, curve: Curves.easeIn),),
+                  parent: _entryCtrl,
+                  curve: const Interval(0, 0.5, curve: Curves.easeIn),
+                ),
                 child: _buildBackButton(),
               ),
             ),
@@ -113,10 +114,11 @@ class _LegalScreenState extends State<LegalScreen>
                     // Subtitle
                     FadeTransition(
                       opacity: CurvedAnimation(
-                          parent: _entryCtrl,
-                          curve:
-                              const Interval(0.2, 0.8, curve: Curves.easeIn),),
-                      child: Text('Please review and accept our legal documents to continue.',
+                        parent: _entryCtrl,
+                        curve: const Interval(0.2, 0.8, curve: Curves.easeIn),
+                      ),
+                      child: Text(
+                        'Please review and accept our legal documents to continue.',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           color: AppColors.onSurfaceVariant,
@@ -130,15 +132,23 @@ class _LegalScreenState extends State<LegalScreen>
                     // Expandable sections
                     SlideTransition(
                       position: Tween<Offset>(
-                              begin: const Offset(0, 0.3), end: Offset.zero,)
-                          .animate(CurvedAnimation(
-                              parent: _entryCtrl,
-                              curve: const Interval(0.2, 0.9,
-                                  curve: Curves.easeOutCubic,),),),
+                        begin: const Offset(0, 0.3),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: _entryCtrl,
+                          curve: const Interval(
+                            0.2,
+                            0.9,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        ),
+                      ),
                       child: FadeTransition(
                         opacity: CurvedAnimation(
-                            parent: _entryCtrl,
-                            curve: const Interval(0.2, 0.8),),
+                          parent: _entryCtrl,
+                          curve: const Interval(0.2, 0.8),
+                        ),
                         child: Column(
                           children: [
                             _buildExpandableSection(
@@ -216,13 +226,18 @@ class _LegalScreenState extends State<LegalScreen>
 
   Widget _buildHeader() {
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-          .animate(CurvedAnimation(
-              parent: _entryCtrl,
-              curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),),),
+      position:
+          Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7, curve: Curves.easeOutCubic),
+        ),
+      ),
       child: FadeTransition(
         opacity: CurvedAnimation(
-            parent: _entryCtrl, curve: const Interval(0.1, 0.7),),
+          parent: _entryCtrl,
+          curve: const Interval(0.1, 0.7),
+        ),
         child: Row(
           children: [
             // Shield card 48×48 rounded-xl glass
@@ -241,7 +256,8 @@ class _LegalScreenState extends State<LegalScreen>
               ),
             ),
             const SizedBox(width: 12),
-            Text('Agree to Terms',
+            Text(
+              'Agree to Terms',
               style: GoogleFonts.inter(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -366,12 +382,17 @@ class _LegalScreenState extends State<LegalScreen>
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
       child: SlideTransition(
         position: Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero)
-            .animate(CurvedAnimation(
-                parent: _entryCtrl,
-                curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),),),
+            .animate(
+          CurvedAnimation(
+            parent: _entryCtrl,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+          ),
+        ),
         child: FadeTransition(
           opacity: CurvedAnimation(
-              parent: _entryCtrl, curve: const Interval(0.3, 0.9),),
+            parent: _entryCtrl,
+            curve: const Interval(0.3, 0.9),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -420,7 +441,8 @@ class _LegalScreenState extends State<LegalScreen>
                           ),
                           children: [
                             const TextSpan(
-                                text: 'I have read and agree to the ',),
+                              text: 'I have read and agree to the ',
+                            ),
                             TextSpan(
                               text: 'Terms of Service',
                               style: GoogleFonts.inter(
@@ -463,7 +485,8 @@ class _LegalScreenState extends State<LegalScreen>
                       boxShadow: _accepted ? AppShadows.primaryButton : null,
                     ),
                     child: Center(
-                      child: Text('Continue',
+                      child: Text(
+                        'Continue',
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

@@ -29,8 +29,9 @@ class BiometricService {
   bool get hasFace => _availableBiometrics.contains(BiometricType.face);
   bool get hasIris => _availableBiometrics.contains(BiometricType.iris);
 
-  Future<bool> authenticate(
-      {String reason = 'Authenticate to access Voltium',}) async {
+  Future<bool> authenticate({
+    String reason = 'Authenticate to access Voltium',
+  }) async {
     if (!_isSupported) return false;
 
     try {
@@ -47,8 +48,9 @@ class BiometricService {
     }
   }
 
-  Future<bool> authenticateWithBiometricsOnly(
-      {String reason = 'Use biometric to authenticate',}) async {
+  Future<bool> authenticateWithBiometricsOnly({
+    String reason = 'Use biometric to authenticate',
+  }) async {
     if (!_isSupported) return false;
 
     try {

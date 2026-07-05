@@ -169,21 +169,41 @@ class _EmptyStatePainter extends CustomPainter {
     final body = Path()
       ..moveTo(center.dx - 25, center.dy - 20)
       ..quadraticBezierTo(
-          center.dx - 25, center.dy + 25, center.dx, center.dy + 25,)
+        center.dx - 25,
+        center.dy + 25,
+        center.dx,
+        center.dy + 25,
+      )
       ..quadraticBezierTo(
-          center.dx + 25, center.dy + 25, center.dx + 25, center.dy - 20,)
+        center.dx + 25,
+        center.dy + 25,
+        center.dx + 25,
+        center.dy - 20,
+      )
       ..close();
     canvas.drawPath(body, fillPaint);
     canvas.drawPath(body, paint);
     canvas.drawCircle(center.translate(0, 40), 6, paint);
     canvas.drawLine(
-        center.translate(-30, -20), center.translate(-30, -35), paint,);
+      center.translate(-30, -20),
+      center.translate(-30, -35),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(30, -20), center.translate(30, -35), paint,);
+      center.translate(30, -20),
+      center.translate(30, -35),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(-15, -20), center.translate(-15, -30), paint,);
+      center.translate(-15, -20),
+      center.translate(-15, -30),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(15, -20), center.translate(15, -30), paint,);
+      center.translate(15, -20),
+      center.translate(15, -30),
+      paint,
+    );
   }
 
   void _drawCalendar(Canvas canvas, Size size, Paint paint, Paint fillPaint) {
@@ -192,7 +212,10 @@ class _EmptyStatePainter extends CustomPainter {
     canvas.drawRect(rect, fillPaint);
     canvas.drawRect(rect, paint);
     canvas.drawLine(
-        center.translate(-35, -20), center.translate(35, -20), paint,);
+      center.translate(-35, -20),
+      center.translate(35, -20),
+      paint,
+    );
     canvas.drawCircle(center.translate(-20, -30), 4, paint);
     canvas.drawCircle(center.translate(20, -30), 4, paint);
   }
@@ -214,10 +237,22 @@ class _EmptyStatePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final path = Path()
       ..moveTo(center.dx, center.dy + 30)
-      ..cubicTo(center.dx - 30, center.dy, center.dx - 30, center.dy - 25,
-          center.dx, center.dy - 10,)
-      ..cubicTo(center.dx + 30, center.dy - 25, center.dx + 30, center.dy,
-          center.dx, center.dy + 30,);
+      ..cubicTo(
+        center.dx - 30,
+        center.dy,
+        center.dx - 30,
+        center.dy - 25,
+        center.dx,
+        center.dy - 10,
+      )
+      ..cubicTo(
+        center.dx + 30,
+        center.dy - 25,
+        center.dx + 30,
+        center.dy,
+        center.dx,
+        center.dy + 30,
+      );
     canvas.drawPath(path, fillPaint);
     canvas.drawPath(path, paint);
   }
@@ -236,9 +271,15 @@ class _EmptyStatePainter extends CustomPainter {
     canvas.drawCircle(center, 40, paint);
     paint.strokeWidth = 4;
     canvas.drawLine(
-        center.translate(-15, -15), center.translate(15, 15), paint,);
+      center.translate(-15, -15),
+      center.translate(15, 15),
+      paint,
+    );
     canvas.drawLine(
-        center.translate(15, -15), center.translate(-15, 15), paint,);
+      center.translate(15, -15),
+      center.translate(-15, 15),
+      paint,
+    );
   }
 
   void _drawWifi(Canvas canvas, Size size, Paint paint, Paint fillPaint) {

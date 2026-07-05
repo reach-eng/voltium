@@ -4,18 +4,21 @@ import 'package:voltium_rider/services/device_data_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
-  const permissionChannel = MethodChannel('flutter.baseflow.com/permissions/methods');
+
+  const permissionChannel =
+      MethodChannel('flutter.baseflow.com/permissions/methods');
   const geolocatorChannel = MethodChannel('flutter.baseflow.com/geolocator');
 
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(permissionChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(permissionChannel,
+            (MethodCall methodCall) async {
       return 1; // 1 = granted in permission_handler
     });
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(geolocatorChannel, (MethodCall methodCall) async {
+        .setMockMethodCallHandler(geolocatorChannel,
+            (MethodCall methodCall) async {
       if (methodCall.method == 'getCurrentPosition') {
         return {
           'latitude': 37.7749,
@@ -44,7 +47,7 @@ void main() {
 
   test('getPermissionState invokes method channel', () async {
     final service = DeviceDataService();
-    // In test environment, Platform.isWindows might be true which isn't web. 
+    // In test environment, Platform.isWindows might be true which isn't web.
     // We just want to ensure it doesn't crash
     try {
       final state = await service.getPermissionState();

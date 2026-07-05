@@ -273,4 +273,3 @@ import 'package:voltium_rider/widgets/wallet_card.dart';
 import 'package:voltium_rider/widgets/web_banner.dart';
 
 void main() {}
-

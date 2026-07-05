@@ -28,8 +28,7 @@ class MissingFirebaseConfigException implements Exception {
   final String key;
   const MissingFirebaseConfigException(this.key);
   @override
-  String toString() =>
-      'MissingFirebaseConfigException: $key is required. '
+  String toString() => 'MissingFirebaseConfigException: $key is required. '
       'Pass it via --dart-define=$key=<value> at build time. '
       'See flutter/lib/core/firebase/firebase_config.dart for the full key list.';
 }
@@ -46,8 +45,7 @@ class FirebaseConfig {
   // iOS
   static const String _iosApiKey =
       String.fromEnvironment('FIREBASE_API_KEY_IOS');
-  static const String _iosAppId =
-      String.fromEnvironment('FIREBASE_APP_ID_IOS');
+  static const String _iosAppId = String.fromEnvironment('FIREBASE_APP_ID_IOS');
   static const String _iosMessagingSenderId =
       String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID_IOS');
   static const String _iosBundleId =

@@ -37,7 +37,7 @@ void main() {
 
   test('validatePromoCode validates active promo', () async {
     await service.seedSamplePromos();
-    
+
     final promo = await service.validatePromoCode('WELCOME50');
     expect(promo, isNotNull);
     expect(promo!.discountPercent, 50);
@@ -49,7 +49,7 @@ void main() {
   test('calculateDiscount applies max discount correctly', () async {
     await service.seedSamplePromos();
     final promo = await service.validatePromoCode('WELCOME50');
-    
+
     // WELCOME50: minOrder 10000, discount 50%, maxDiscount 5000
     // Amount 12000 => 50% is 6000, but max is 5000.
     final discount = await service.calculateDiscount(promo!, 12000);

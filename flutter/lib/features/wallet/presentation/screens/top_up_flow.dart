@@ -85,7 +85,8 @@ class _TopUpFlowState extends State<TopUpFlow> {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Top-up proof submitted successfully!'),),
+                      content: Text('Top-up proof submitted successfully!'),
+                    ),
                   );
                 }
               } catch (e) {
