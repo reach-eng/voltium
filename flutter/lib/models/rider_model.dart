@@ -513,7 +513,9 @@ class RiderModel {
       planDone: json['planDone'] as bool? ?? false,
       pickupDone: json['pickupDone'] as bool? ?? false,
       accountStatus: _parseAccountStatus(json['accountStatus']),
-      lifecycleStatus: json['lifecycleStatus'] as String? ?? json['state'] as String? ?? 'NEW',
+      lifecycleStatus: json['lifecycleStatus'] as String? ??
+          json['state'] as String? ??
+          'NEW',
       isNewRider: json['isNewRider'] as bool? ?? false,
       referralCode: json['referralCode'] as String?,
       totalRewardPoints: json['totalRewardPoints'] as int? ?? 0,

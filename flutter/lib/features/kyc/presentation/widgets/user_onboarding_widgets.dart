@@ -216,7 +216,9 @@ class PersonalDetailsCard extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 filled: true,
-                fillColor: enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
+                fillColor: enabled
+                    ? AppColors.surfaceContainer
+                    : const Color(0xFFF3F4F6),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -306,7 +308,8 @@ class PersonalDetailsCard extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             filled: true,
-            fillColor: enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
+            fillColor:
+                enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -479,44 +482,47 @@ class DocTile extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
         child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color:
-              isUploaded ? const Color(0xFFF0FDF4) : AppColors.surfaceContainer,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isUploaded ? AppColors.success : const Color(0xFFD1D5DB),
-            width: isUploaded ? 1 : 2,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isUploaded
+                ? const Color(0xFFF0FDF4)
+                : AppColors.surfaceContainer,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isUploaded ? AppColors.success : const Color(0xFFD1D5DB),
+              width: isUploaded ? 1 : 2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isUploaded ? const Color(0xFFDCFCE7) : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color:
+                      isUploaded ? AppColors.success : const Color(0xFF6B7280),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isUploaded ? 'Uploaded' : label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color:
+                      isUploaded ? AppColors.success : const Color(0xFF374151),
+                ),
+              ),
+            ],
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isUploaded ? const Color(0xFFDCFCE7) : Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: isUploaded ? AppColors.success : const Color(0xFF6B7280),
-                size: 20,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isUploaded ? 'Uploaded' : label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isUploaded ? AppColors.success : const Color(0xFF374151),
-              ),
-            ),
-          ],
-        ),
-      ),
       ),
     );
   }
@@ -553,88 +559,90 @@ class SelfieCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            if (selfieUploaded && selfiePath != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(selfiePath!),
-                  height: 160,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              Container(
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainer,
+              if (selfieUploaded && selfiePath != null)
+                ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFD1D5DB), width: 2),
+                  child: Image.file(
+                    File(selfiePath!),
+                    height: 160,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                    border:
+                        Border.all(color: const Color(0xFFD1D5DB), width: 2),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Icon(
+                          Icons.photo_camera,
+                          color: Color(0xFF2563EB),
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Take Rider Photo',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Tap to capture your photo',
+                        style:
+                            TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
+              if (selfieUploaded) ...[
+                const SizedBox(height: 8),
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(24),
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.photo_camera,
-                        color: Color(0xFF2563EB),
-                        size: 28,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check, color: AppColors.success, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            'Photo Captured',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.successText,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Take Rider Photo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Tap to capture your photo',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),
-              ),
-            if (selfieUploaded) ...[
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check, color: AppColors.success, size: 14),
-                        SizedBox(width: 4),
-                        Text(
-                          'Photo Captured',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.successText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -667,93 +675,93 @@ class SignatureCard extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.draw,
-                  color: Color(0xFF2563EB),
-                  size: 18,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.draw,
+                      color: Color(0xFF2563EB),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Digital Signature',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
+              const SizedBox(height: 4),
               const Text(
-                'Digital Signature',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
+                'Sign below to authorize documentation.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                key: const Key('signatureTile'),
+                onTap: enabled ? onTap : null,
+                child: Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: signatureUploaded
+                        ? const Color(0xFFF0FDF4)
+                        : AppColors.surfaceContainer,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: signatureUploaded
+                          ? AppColors.success
+                          : const Color(0xFFD1D5DB),
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Text(
+                          signatureUploaded
+                              ? 'Signature Captured'
+                              : 'Tap to draw signature',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: signatureUploaded
+                                ? AppColors.success
+                                : const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ),
+                      if (signatureUploaded)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: AppColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Sign below to authorize documentation.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            key: const Key('signatureTile'),
-            onTap: enabled ? onTap : null,
-            child: Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: signatureUploaded
-                    ? const Color(0xFFF0FDF4)
-                    : AppColors.surfaceContainer,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: signatureUploaded
-                      ? AppColors.success
-                      : const Color(0xFFD1D5DB),
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Text(
-                      signatureUploaded
-                          ? 'Signature Captured'
-                          : 'Tap to draw signature',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: signatureUploaded
-                            ? AppColors.success
-                            : const Color(0xFF9CA3AF),
-                      ),
-                    ),
-                  ),
-                  if (signatureUploaded)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 12,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      ),
+        ),
       ),
     );
   }

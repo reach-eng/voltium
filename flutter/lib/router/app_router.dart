@@ -10,7 +10,6 @@ import '../features/onboarding/presentation/screens/privacy_consent_screen.dart'
 import '../features/onboarding/presentation/screens/permissions_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart';
-import '../features/auth/presentation/screens/auth_choice_screen.dart';
 import '../features/kyc/presentation/screens/intent_of_use_screen.dart';
 import '../features/kyc/presentation/screens/user_onboarding_screen.dart';
 import '../features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
@@ -61,14 +60,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/welcome',
       builder: (_, __) => WelcomeScreen(onContinue: () {}),
-    ),
-
-    GoRoute(
-      path: '/auth-choice',
-      builder: (_, __) => AuthChoiceScreen(
-        onCreateAccount: () {},
-        onLoginWithPhone: () {},
-      ),
     ),
 
     GoRoute(

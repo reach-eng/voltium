@@ -1,6 +1,5 @@
 enum AuthState {
   splash,
-  authChoice,
   legal,
   permissions,
   login,

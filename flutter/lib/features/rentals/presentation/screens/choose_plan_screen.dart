@@ -468,7 +468,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                 ),
                                         ],
                                       ),
-                                      if (plan.description?.isNotEmpty == true) ...[
+                                      if (plan.description?.isNotEmpty ==
+                                          true) ...[
                                         const SizedBox(height: 6),
                                         Text(
                                           plan.description ?? '',

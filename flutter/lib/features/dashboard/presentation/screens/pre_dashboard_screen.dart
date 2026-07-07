@@ -132,7 +132,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         delay: 150,
                         child: RejectionCard(
                           title: 'KYC Rejected',
-                          reason: rider.kycRejectionReason ?? 'The uploaded document was unreadable.',
+                          reason: rider.kycRejectionReason ??
+                              'The uploaded document was unreadable.',
                           buttonText: 'Update Documents',
                           onResubmit: () =>
                               widget.onStepNavigation(AuthState.userForm),
@@ -144,7 +145,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         delay: 150,
                         child: RejectionCard(
                           title: 'Plan Rejected',
-                          reason: rider.planRejectionReason ?? 'Your selected plan was rejected.',
+                          reason: rider.planRejectionReason ??
+                              'Your selected plan was rejected.',
                           buttonText: 'Reselect Plan',
                           onResubmit: () =>
                               widget.onStepNavigation(AuthState.choosePlan),
@@ -156,7 +158,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         delay: 150,
                         child: RejectionCard(
                           title: 'Deposit Rejected',
-                          reason: rider.depositRecord?.rejectionReason ?? 'Your deposit proof was rejected.',
+                          reason: rider.depositRecord?.rejectionReason ??
+                              'Your deposit proof was rejected.',
                           buttonText: 'Re-upload Proof',
                           onResubmit: () =>
                               widget.onStepNavigation(AuthState.topUpPurpose),
@@ -215,12 +218,17 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
 
                     // Wallet / TopUp Status Card (Appears after plan selected until deposit approved)
                     if (planDone && !depositDone)
-                      if (rider.depositRecord == null || rider.depositRecord!.status == DepositStatus.notSubmitted)
+                      if (rider.depositRecord == null ||
+                          rider.depositRecord!.status ==
+                              DepositStatus.notSubmitted)
                         FadeUpWidget(
                           delay: 250,
                           child: WalletCard(
                             walletBalance: rider.walletBalance,
-                            requiredPayment: (rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + (rider.activeRentalPlanSecurityDeposit ),
+                            requiredPayment: (rider.activeRentalPlanPrice > 0
+                                    ? rider.activeRentalPlanPrice
+                                    : walletMinTopup) +
+                                (rider.activeRentalPlanSecurityDeposit),
                             paymentStreak: rider.paymentStreak,
                             currentPlan: rider.currentPlan,
                             onTopUp: () =>
@@ -228,13 +236,22 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                             compact: true,
                           ),
                         )
-                      else if (rider.depositRecord!.status == DepositStatus.pending || rider.depositRecord!.status == DepositStatus.pendingVerification || rider.depositRecord!.status == DepositStatus.rejected)
+                      else if (rider.depositRecord!.status ==
+                              DepositStatus.pending ||
+                          rider.depositRecord!.status ==
+                              DepositStatus.pendingVerification ||
+                          rider.depositRecord!.status == DepositStatus.rejected)
                         FadeUpWidget(
                           delay: 250,
                           child: TopUpRequestSentCard(
                             rider: rider,
-                            topUpAmount: ((rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + rider.activeRentalPlanSecurityDeposit).toInt(),
-                            onResubmit: () => widget.onStepNavigation(AuthState.topUpPurpose),
+                            topUpAmount: ((rider.activeRentalPlanPrice > 0
+                                        ? rider.activeRentalPlanPrice
+                                        : walletMinTopup) +
+                                    rider.activeRentalPlanSecurityDeposit)
+                                .toInt(),
+                            onResubmit: () =>
+                                widget.onStepNavigation(AuthState.topUpPurpose),
                           ),
                         ),
                     const SizedBox(height: 16),

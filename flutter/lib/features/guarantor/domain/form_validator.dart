@@ -18,10 +18,10 @@ class GuarantorFormValidator {
     String? riderPhone,
   }) {
     final missing = <String>[];
-    
+
     if (name.trim().isEmpty) missing.add('Name');
     if (dob.trim().isEmpty) missing.add('DOB');
-    
+
     final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
     if (cleanPhone.isEmpty || cleanPhone.length < 10) {
       missing.add('Phone');
@@ -39,7 +39,7 @@ class GuarantorFormValidator {
     if (fatherName.trim().isEmpty) missing.add("Father's Name");
     if (motherName.trim().isEmpty) missing.add("Mother's Name");
     if (address.trim().isEmpty) missing.add('Address');
-    
+
     if (!aadhaarFrontUploaded) missing.add('Aadhaar Front');
     if (!aadhaarBackUploaded) missing.add('Aadhaar Back');
     if (!panUploaded) missing.add('PAN');

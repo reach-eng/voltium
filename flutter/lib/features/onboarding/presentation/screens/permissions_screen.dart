@@ -13,6 +13,7 @@ class _PermissionItem {
   final String name;
   final String description;
   final IconData icon;
+
   /// Whether the user MUST grant this permission to proceed past the
   /// permissions screen. `ignoreBatteryOptimizations` is not required
   /// because it lives in Android Settings (5+ taps) and only affects

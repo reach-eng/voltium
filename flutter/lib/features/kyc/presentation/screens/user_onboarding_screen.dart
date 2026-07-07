@@ -573,7 +573,10 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
             _dobController.text.isNotEmpty &&
             _addressController.text.isNotEmpty;
       case 2:
-        return _aadhaarFrontUploaded && _aadhaarBackUploaded && _panUploaded && _bankAccountController.text.isNotEmpty;
+        return _aadhaarFrontUploaded &&
+            _aadhaarBackUploaded &&
+            _panUploaded &&
+            _bankAccountController.text.isNotEmpty;
       case 3:
         return _selfieUploaded && _signatureUploaded;
       default:
@@ -583,7 +586,9 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
   bool _isFieldEditable(String fieldName) {
     final rider = context.read<AppProvider>().rider;
-    if (rider?.kycStatus != KycStatus.rejected || rider?.kycEditableFields == null || rider!.kycEditableFields!.isEmpty) {
+    if (rider?.kycStatus != KycStatus.rejected ||
+        rider?.kycEditableFields == null ||
+        rider!.kycEditableFields!.isEmpty) {
       return true;
     }
     return rider.kycEditableFields!.contains(fieldName);
@@ -642,8 +647,11 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
                           aadhaarBackEnabled: _isFieldEditable('aadhaarBack'),
                           panUploaded: _panUploaded,
                           panEnabled: _isFieldEditable('panCard'),
-                          bankDetailsDone: _bankAccountController.text.isNotEmpty,
-                          bankEnabled: _isFieldEditable('accountNumber') || _isFieldEditable('bankName') || _isFieldEditable('ifscCode'),
+                          bankDetailsDone:
+                              _bankAccountController.text.isNotEmpty,
+                          bankEnabled: _isFieldEditable('accountNumber') ||
+                              _isFieldEditable('bankName') ||
+                              _isFieldEditable('ifscCode'),
                           onPickAadhaarFront: () =>
                               _showDocumentSourceDialog('aadhaar_front'),
                           onPickAadhaarBack: () =>

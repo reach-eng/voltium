@@ -11,7 +11,6 @@ import '../main.dart' show AppShell;
 
 // Relocated screens
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/auth_choice_screen.dart';
 import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/rider_lifecycle_gate.dart';
 
@@ -25,7 +24,6 @@ import '../features/kyc/presentation/screens/intent_of_use_screen.dart';
 import '../features/kyc/presentation/screens/user_onboarding_screen.dart';
 import '../features/kyc/presentation/screens/documents_screen.dart';
 import '../features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
-
 
 import '../features/wallet/presentation/screens/top_up_amount_screen.dart';
 import '../features/wallet/presentation/screens/top_up_purpose_screen.dart';

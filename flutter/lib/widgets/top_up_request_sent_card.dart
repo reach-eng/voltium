@@ -42,7 +42,8 @@ class TopUpRequestSentCard extends StatelessWidget {
               ),
               child: Text(
                 statusText,
-                style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(color: statusColor, fontWeight: FontWeight.w600),
               ),
             ),
             if (isRejected && record?.rejectionReason != null) ...[
@@ -76,8 +77,10 @@ class TopUpRequestSentCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('₹$topUpAmount', style: const TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Total:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('₹$topUpAmount',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
             if (isRejected) ...[

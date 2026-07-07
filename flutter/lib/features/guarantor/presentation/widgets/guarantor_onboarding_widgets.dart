@@ -273,7 +273,8 @@ class GuarantorDetailsCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
-                    minimumSize: const Size(100, 52), // Override global double.infinity
+                    minimumSize:
+                        const Size(100, 52), // Override global double.infinity
                   ),
                   child: isSendingOtp
                       ? const SizedBox(

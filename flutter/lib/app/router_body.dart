@@ -45,18 +45,13 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
               }
             }
           } else {
-            state._navigateToLocal(AuthState.authChoice);
+            state._navigateToLocal(AuthState.legal);
           }
         },
       );
       break;
 
-    case AuthState.authChoice:
-      currentScreen = AuthChoiceScreen(
-        onCreateAccount: () => state._navigateToLocal(AuthState.legal),
-        onLoginWithPhone: () => state._navigateToLocal(AuthState.legal),
-      );
-      break;
+
 
     case AuthState.legal:
       currentScreen = LegalScreen(
@@ -153,8 +148,6 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         },
       );
       break;
-
-
 
     case AuthState.guarantorForm:
       currentScreen = GuarantorOnboardingScreen(

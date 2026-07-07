@@ -30,11 +30,11 @@ class ApprovalMatrixWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final rank = lifecycleRank(rider);
     final isKycRejected = rider.kycStatus == KycStatus.rejected;
     final isPlanRejected = rider.planStatus == 'REJECTED';
-    final isDepositRejected = rider.depositRecord?.status == DepositStatus.rejected;
+    final isDepositRejected =
+        rider.depositRecord?.status == DepositStatus.rejected;
 
     final List<_StepData> steps = [
       _StepData(
@@ -74,7 +74,9 @@ class ApprovalMatrixWidget extends StatelessWidget {
           isKycRejected,
         ),
         icon: Icons.shield_outlined,
-        subtitle: isKycRejected ? 'Update Documents' : (rank >= 2 && rank < 7 && !isKycRejected ? 'Under Review' : null),
+        subtitle: isKycRejected
+            ? 'Update Documents'
+            : (rank >= 2 && rank < 7 && !isKycRejected ? 'Under Review' : null),
       ),
       _StepData(
         label: 'Pickup',
@@ -130,7 +132,8 @@ class ApprovalMatrixWidget extends StatelessWidget {
   }
 
   StepStatus _kycStepStatus() {
-    if (rider.kycStatus == KycStatus.verified || rider.kycStatus == KycStatus.approved) return StepStatus.completed;
+    if (rider.kycStatus == KycStatus.verified ||
+        rider.kycStatus == KycStatus.approved) return StepStatus.completed;
     if (rider.kycStatus == KycStatus.rejected) return StepStatus.rejected;
     if (rider.kycDone ||
         (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4)) {
@@ -140,7 +143,8 @@ class ApprovalMatrixWidget extends StatelessWidget {
   }
 
   String? _kycSubtitle() {
-    if (rider.kycStatus == KycStatus.submitted || rider.kycStatus == KycStatus.pending) return 'Under Review';
+    if (rider.kycStatus == KycStatus.submitted ||
+        rider.kycStatus == KycStatus.pending) return 'Under Review';
     if (rider.kycStatus == KycStatus.rejected) return 'Update Documents';
     return null;
   }

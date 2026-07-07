@@ -85,7 +85,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
   void _loadCache() {
     final riderId = context.read<AppProvider>().rider?.id;
     if (riderId == null) return;
-    
+
     final cacheData = GuarantorCache.loadFormCache(riderId);
     if (cacheData != null) {
       try {
@@ -158,7 +158,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       final inputPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
       final cleanVerified =
           _verifiedGuarantorPhone.replaceAll(RegExp(r'\D'), '');
-      
+
       setState(() {
         if (_isPhoneVerified && inputPhone != cleanVerified) {
           _isPhoneVerified = false;
@@ -424,7 +424,9 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       );
 
       if (missing.isNotEmpty) {
-        if (missing.length == 1 && missing.first == 'Guarantor phone cannot be the same as rider phone') {
+        if (missing.length == 1 &&
+            missing.first ==
+                'Guarantor phone cannot be the same as rider phone') {
           _showError(missing.first);
         } else {
           _showError('Missing: ${missing.join(', ')}');
@@ -462,11 +464,11 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
           tasks['Aadhaar Back'] = () => VoltiumApiService()
               .uploadFile(File(_aadhaarBackPath!), 'kyc_document');
         if (_panPath != null)
-          tasks['PAN'] = () => VoltiumApiService()
-              .uploadFile(File(_panPath!), 'kyc_document');
+          tasks['PAN'] = () =>
+              VoltiumApiService().uploadFile(File(_panPath!), 'kyc_document');
         if (_videoPath != null)
-          tasks['Video'] = () => VoltiumApiService()
-              .uploadFile(File(_videoPath!), 'kyc_document');
+          tasks['Video'] = () =>
+              VoltiumApiService().uploadFile(File(_videoPath!), 'kyc_document');
         if (_signaturePath != null)
           tasks['Signature'] = () => VoltiumApiService()
               .uploadFile(File(_signaturePath!), 'kyc_document');
@@ -640,17 +642,20 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 children: [
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.error.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.error.withOpacity(0.5)),
+                      border:
+                          Border.all(color: AppColors.error.withOpacity(0.5)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 20),
+                        const Icon(Icons.warning_amber_rounded,
+                            color: AppColors.error, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(

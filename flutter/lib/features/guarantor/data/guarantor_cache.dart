@@ -6,7 +6,8 @@ class GuarantorCache {
 
   static String _getKey(String riderId) => '${_baseKey}_$riderId';
 
-  static Future<void> saveFormCache(String riderId, Map<String, dynamic> data) async {
+  static Future<void> saveFormCache(
+      String riderId, Map<String, dynamic> data) async {
     // Filter out nulls
     final cleanData = <String, dynamic>{};
     data.forEach((key, value) {
