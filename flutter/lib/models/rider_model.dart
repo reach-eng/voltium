@@ -129,6 +129,7 @@ class RiderModel {
   final DateTime? lastDeviceViolationAt;
   final int deviceViolationCount;
   final String? currentPlan;
+  final double? currentPlanPrice;
   final DateTime? planStartDate;
   final DateTime? planEndDate;
 
@@ -218,6 +219,7 @@ class RiderModel {
     this.lastDeviceViolationAt,
     this.deviceViolationCount = 0,
     this.currentPlan,
+    this.currentPlanPrice,
     this.planStartDate,
     this.planEndDate,
     this.rentalStatus = 'NONE',
@@ -310,6 +312,7 @@ class RiderModel {
     int? paymentStreak,
     String? planStatus,
     String? currentPlan,
+    double? currentPlanPrice,
     DateTime? planStartDate,
     DateTime? planEndDate,
     String? rentalStatus,
@@ -375,6 +378,7 @@ class RiderModel {
       paymentStreak: paymentStreak ?? this.paymentStreak,
       planStatus: planStatus ?? this.planStatus,
       currentPlan: currentPlan ?? this.currentPlan,
+      currentPlanPrice: currentPlanPrice ?? this.currentPlanPrice,
       planStartDate: planStartDate ?? this.planStartDate,
       planEndDate: planEndDate ?? this.planEndDate,
       rentalStatus: rentalStatus ?? this.rentalStatus,
@@ -414,6 +418,11 @@ class RiderModel {
   /// down from the backend, but mapped here for client logic.
   @JsonKey(includeFromJson: false, includeToJson: false)
   double get activeRentalPlanPrice {
+    // Use actual price from backend if available (stored in paise, convert to rupees).
+    if (currentPlanPrice != null && currentPlanPrice! > 0) {
+      return currentPlanPrice!;
+    }
+    // Fallback: derive from plan name.
     switch (currentPlan?.toUpperCase()) {
       case 'WEEKLY_MAX':
         return 1500.0;
@@ -422,7 +431,6 @@ class RiderModel {
       case 'DAILY_FLEX':
         return 250.0;
       default:
-        // Default safe fallback plan price.
         return 1500.0;
     }
   }
@@ -496,6 +504,7 @@ class RiderModel {
           : null,
       deviceViolationCount: json['deviceViolationCount'] as int? ?? 0,
       currentPlan: json['currentPlan'] as String?,
+      currentPlanPrice: _toDouble(json['currentPlanPrice']),
       planStartDate: json['planStartDate'] != null
           ? DateTime.tryParse(json['planStartDate'] as String)
           : null,
@@ -553,6 +562,7 @@ class RiderModel {
       'riderId': riderId,
       'walletBalance': walletBalance,
       'currentPlan': currentPlan,
+      'currentPlanPrice': currentPlanPrice,
       'assignedVehicle': assignedVehicle,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
@@ -582,6 +592,7 @@ class RiderModel {
       phone: cache['phone'] as String? ?? '',
       walletBalance: _toDouble(cache['walletBalance']),
       currentPlan: cache['currentPlan'] as String?,
+      currentPlanPrice: _toDouble(cache['currentPlanPrice']),
       assignedVehicle: cache['assignedVehicle'] as String?,
       accountStatus: _parseAccountStatus(cache['accountStatus']),
       lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',

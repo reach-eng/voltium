@@ -20,8 +20,7 @@ import 'package:voltium_rider/features/auth/data/repository_impl.dart';
 import 'package:voltium_rider/features/auth/domain/entity.dart';
 import 'package:voltium_rider/features/auth/domain/repository.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
-import 'package:voltium_rider/features/auth/presentation/screens/auth_choice_screen.dart';
-import 'package:voltium_rider/features/auth/presentation/screens/login_screen.dart';
+
 import 'package:voltium_rider/features/auth/presentation/screens/otp_verification_screen.dart';
 import 'package:voltium_rider/features/auth/widgets/otp_blocks.dart';
 import 'package:voltium_rider/features/auth/widgets/otp_input.dart';

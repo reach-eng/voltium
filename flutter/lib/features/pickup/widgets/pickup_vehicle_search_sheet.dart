@@ -59,10 +59,12 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
   }
 
   String _label(Map<String, dynamic> v) {
-    final id = v['vehicleId'] as String? ?? '';
+    final number = v['vehicleNumber'] as String? ??
+        v['licensePlate'] as String? ??
+        v['vehicleId'] as String? ??
+        '';
     final model = v['model'] as String? ?? '';
-    final plate = v['licensePlate'] as String? ?? '';
-    return '$id${model.isNotEmpty ? ' · $model' : ''}${plate.isNotEmpty ? ' · $plate' : ''}';
+    return '$number${model.isNotEmpty ? ' · $model' : ''}';
   }
 
   String _battery(Map<String, dynamic> v) {

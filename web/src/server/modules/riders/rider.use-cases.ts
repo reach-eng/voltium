@@ -89,6 +89,13 @@ export const riderUseCases = {
     ]);
 
     const flatRider = flattenRider(rider);
+    let assignedVehicleNumber = flatRider.assignedVehicle;
+    if (flatRider.assignedVehicle) {
+      const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+      if (v) assignedVehicleNumber = v.vehicleNumber;
+    }
+    flatRider.assignedVehicle = assignedVehicleNumber;
+
     return {
       ...flatRider,
       referralCode: rider.referralCode,
@@ -225,6 +232,13 @@ export const riderUseCases = {
     let signedRider: any = null;
     try {
       const flatRider = flattenRider(rider as any);
+      let assignedVehicleNumber = flatRider.assignedVehicle;
+      if (flatRider.assignedVehicle) {
+        const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+        if (v) assignedVehicleNumber = v.vehicleNumber;
+      }
+      flatRider.assignedVehicle = assignedVehicleNumber;
+      
       const { signRiderUrls } = await import('@/lib/sign-rider');
       signedRider = await signRiderUrls(flatRider);
     } catch {
@@ -505,7 +519,15 @@ export const riderUseCases = {
       where: { id: riderDbId },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
-    return rider ? flattenRider(rider) : null;
+    if (!rider) return null;
+    const flatRider = flattenRider(rider);
+    let assignedVehicleNumber = flatRider.assignedVehicle;
+    if (flatRider.assignedVehicle) {
+      const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
+      if (v) assignedVehicleNumber = v.vehicleNumber;
+    }
+    flatRider.assignedVehicle = assignedVehicleNumber;
+    return flatRider;
   },
 
   async getState(riderDbId: string): Promise<RiderState | null> {

@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     if ((err instanceof Error ? err.message : String(err))?.includes('Invalid file type') || (err instanceof Error ? err.message : String(err))?.includes('File too large')) {
       return errors.badRequest((err instanceof Error ? err.message : String(err)));
     }
+    console.error('[POST /api/files/request-upload]', err);
     return errors.internal('Failed to generate upload URL');
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/config/app_config.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
@@ -12,7 +13,16 @@ class MyDocumentsScreen extends StatelessWidget {
 
   Future<void> _viewDocument(BuildContext context, String? url) async {
     if (url == null || url.isEmpty) return;
-    final uri = Uri.parse(url);
+    String fullUrl = url;
+    // If the URL is a storage key (relative path like kyc/abc.jpg),
+    // construct the full URL by prepending the API base URL.
+    // Files stored by Voltium are accessible via /api/files/{storageKey}.
+    if (!url.startsWith('http')) {
+      final baseUrl = AppConfig.apiBaseUrl;
+      final path = url.startsWith('/') ? url.substring(1) : url;
+      fullUrl = '$baseUrl/api/files/$path';
+    }
+    final uri = Uri.parse(fullUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {

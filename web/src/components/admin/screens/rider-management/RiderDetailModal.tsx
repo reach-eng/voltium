@@ -38,10 +38,15 @@ import DeviceTrackingView from '../DeviceTrackingView';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 const permissions = [
-  { id: 'location', label: 'Location' },
-  { id: 'camera', label: 'Camera' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'contacts', label: 'Contacts' }
+  { id: 'locationGranted', label: 'Location' },
+  { id: 'cameraGranted', label: 'Camera' },
+  { id: 'contactsGranted', label: 'Contacts' },
+  { id: 'phoneGranted', label: 'Phone' },
+  { id: 'micGranted', label: 'Mic' },
+  { id: 'batteryGranted', label: 'Battery' },
+  { id: 'callLogsGranted', label: 'Call Logs' },
+  { id: 'deviceAdminGranted', label: 'Device Admin' },
+  { id: 'displayOverlayGranted', label: 'Display Overlay' }
 ];
 
 export function RiderDetailModal({

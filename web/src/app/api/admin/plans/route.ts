@@ -90,7 +90,8 @@ export async function DELETE(req: NextRequest) {
     await planUseCases.delete(validation.data.id, session.adminId || '');
     return success(null, 'Plan deleted');
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
     logger.error('Delete plan error:', error);
-    return errors.internal('Failed to delete plan');
+    return errors.internal(`Failed to delete plan: ${msg}`);
   }
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../providers/app_provider.dart';
 
-/// Rewards screen showing loyalty points and rewards.
 class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final rider = context.watch<AppProvider>().rider;
+    final points = rider?.totalRewardPoints ?? 0;
+
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       appBar: AppBar(
@@ -19,7 +23,11 @@ class RewardsScreen extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
           child: GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            },
             child: Container(
               width: 40,
               height: 40,
@@ -39,9 +47,96 @@ class RewardsScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: const Center(
-        child: Text('Rewards',
-            style: TextStyle(fontSize: 16, color: AppColors.slate500)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.evPurple, Color(0xFF6D28D9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.evPurple.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.star_rounded,
+                        color: Colors.white, size: 40),
+                  ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Total Points',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '$points',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Available Rewards',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Column(
+                  children: [
+                    Icon(Icons.card_giftcard,
+                        size: 64, color: AppColors.slate400),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No rewards available right now.',
+                      style: TextStyle(color: AppColors.slate500, fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Keep riding to earn more points!',
+                      style: TextStyle(color: AppColors.slate400),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

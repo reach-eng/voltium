@@ -121,18 +121,30 @@ export function flattenRider(rider: RiderWithRelations) {
     currentPlan: rider.currentPlan ?? null,
     currentPlanPrice: rider.currentPlanPrice ?? null,
     assignedVehicle: rider.assignedVehicle ?? null,
+    activeVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
     deliveryId: rider.deliveryId ?? null,
     intent: rider.intent ?? null,
     emergencyContact: rider.emergencyContact ?? null,
+    pickupHub: rider.pickupHub ?? null,
+    teamLeader: rider.teamLeader ?? null,
     planStartDate: rider.planStartDate ? new Date(rider.planStartDate as Date).toISOString() : null,
     planEndDate: rider.planEndDate ? new Date(rider.planEndDate as Date).toISOString() : null,
+    pickupPhotoFront: rider.pickupPhotoFront ?? null,
+    pickupPhotoBack: rider.pickupPhotoBack ?? null,
+    pickupPhotoLeft: rider.pickupPhotoLeft ?? null,
+    pickupPhotoRight: rider.pickupPhotoRight ?? null,
+    pickupPhotoWithVehicle: rider.pickupPhotoWithVehicle ?? null,
 
     locationGranted: rider.locationGranted ?? false,
     cameraGranted: rider.cameraGranted ?? false,
-
     contactsGranted: rider.contactsGranted ?? false,
     phoneGranted: rider.phoneGranted ?? false,
+    batteryGranted: rider.batteryGranted ?? false,
+    callLogsGranted: rider.callLogsGranted ?? false,
+    micGranted: rider.micGranted ?? false,
+    deviceAdminGranted: rider.deviceAdminGranted ?? false,
+    displayOverlayGranted: rider.displayOverlayGranted ?? false,
 
     // --- Rental Return fields ---
     returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'SUBMITTED') ?? false,
@@ -196,11 +208,24 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     pickupDone: rank >= 10,
     name: rider.fullName ?? '', // Compatibility alias
     intent: rider.intent ?? null,
+    emergencyContact: rider.emergencyContact ?? null,
+    activeVehicle: rider.assignedVehicle ?? null,
+    pickupHub: rider.pickupHub ?? null,
+    teamLeader: rider.teamLeader ?? null,
+    pickupPhotoFront: rider.pickupPhotoFront ?? null,
+    pickupPhotoBack: rider.pickupPhotoBack ?? null,
+    pickupPhotoLeft: rider.pickupPhotoLeft ?? null,
+    pickupPhotoRight: rider.pickupPhotoRight ?? null,
+    pickupPhotoWithVehicle: rider.pickupPhotoWithVehicle ?? null,
     locationGranted: rider.locationGranted ?? false,
     cameraGranted: rider.cameraGranted ?? false,
-
     contactsGranted: rider.contactsGranted ?? false,
     phoneGranted: rider.phoneGranted ?? false,
+    batteryGranted: rider.batteryGranted ?? false,
+    callLogsGranted: rider.callLogsGranted ?? false,
+    micGranted: rider.micGranted ?? false,
+    deviceAdminGranted: rider.deviceAdminGranted ?? false,
+    displayOverlayGranted: rider.displayOverlayGranted ?? false,
   };
 
   // Flatten kycProfile if present

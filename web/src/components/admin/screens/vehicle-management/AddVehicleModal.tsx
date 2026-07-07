@@ -49,14 +49,6 @@ export function AddVehicleModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label>License Plate</Label>
-                <Input
-                  placeholder="e.g. DL 01 AB 1234"
-                  value={form.licensePlate}
-                  onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Hub</Label>
                 <Select value={form.hubId} onValueChange={(v) => setForm({ ...form, hubId: v })}>
                   <SelectTrigger>

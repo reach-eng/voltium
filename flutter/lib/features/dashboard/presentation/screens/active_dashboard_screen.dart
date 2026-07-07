@@ -158,7 +158,7 @@ class _DashboardContentWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white.withValues(alpha: 0.2),
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
@@ -168,7 +168,7 @@ class _DashboardContentWidget extends StatelessWidget {
             const Icon(
               Icons.notifications_none_rounded,
               size: 20,
-              color: Colors.white,
+              color: Color(0xFF1E293B),
             ),
             Positioned(
               right: -2,

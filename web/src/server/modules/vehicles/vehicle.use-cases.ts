@@ -154,6 +154,7 @@ export const vehicleUseCases = {
       return {
         id: vehicle.id,
         vehicleId: vehicle.vehicleId,
+        vehicleNumber: vehicle.vehicleNumber,
         model: vehicle.model,
         licensePlate: vehicle.licensePlate,
         batteryLevel: vehicle.batteryLevel,

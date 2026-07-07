@@ -164,6 +164,48 @@ class WalletCard extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Rental Recovery Streak',
+                style: TextStyle(
+                  fontSize: compact ? 12 : 14,
+                  fontWeight: FontWeight.w600,
+                  color: compact
+                      ? const Color(0xFF475569)
+                      : const Color(0xFF1E293B),
+                ),
+              ),
+              Text(
+                '$paymentStreak/5 Days',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(
+              5,
+              (i) => Expanded(
+                child: Container(
+                  height: 8,
+                  margin: EdgeInsets.only(right: i < 4 ? (compact ? 4 : 6) : 0),
+                  decoration: BoxDecoration(
+                    color: i < paymentStreak
+                        ? AppColors.success
+                        : AppColors.iconBackground,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

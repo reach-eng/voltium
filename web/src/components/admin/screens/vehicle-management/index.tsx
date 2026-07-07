@@ -376,7 +376,6 @@ export default function VehicleManagement() {
                 { key: 'vehicleId', label: 'Vehicle ID' },
                 { key: 'vehicleNumber', label: 'Vehicle Number' },
                 { key: 'model', label: 'Model' },
-                { key: 'licensePlate', label: 'License Plate' },
                 { key: 'status', label: 'Status' },
                 { key: 'hubName', label: 'Hub' },
                 { key: 'batteryLevel', label: 'Battery Level' },

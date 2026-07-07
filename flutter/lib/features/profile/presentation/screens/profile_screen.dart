@@ -192,6 +192,16 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
+    String? getAvatarUrl() {
+      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+        return null;
+      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
+      const baseUrl = String.fromEnvironment('API_URL',
+          defaultValue: 'http://localhost:8081');
+      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+    }
+
+    final avatarUrl = getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
         : '?';
@@ -235,12 +245,11 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
                 alignment: Alignment.center,
-                child: (rider?.profilePhoto != null &&
-                        rider!.profilePhoto!.isNotEmpty)
+                child: avatarUrl != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(48),
                         child: CachedNetworkImage(
-                          imageUrl: rider.profilePhoto!,
+                          imageUrl: avatarUrl,
                           width: 96,
                           height: 96,
                           fit: BoxFit.cover,
@@ -335,7 +344,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'KYC: ${_capitalize(kycStatusName)}',
+                  'KYC: ${kycStatusName == 'submitted' ? 'Under Review' : _capitalize(kycStatusName)}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -433,7 +442,9 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildStatusBentos(RiderModel? rider) {
-    final String kycStatus = _capitalize(rider?.kycStatus.name ?? 'Pending');
+    final rawStatus = rider?.kycStatus.name ?? 'Pending';
+    final String kycStatus =
+        rawStatus == 'submitted' ? 'Under Review' : _capitalize(rawStatus);
     final String guarantorStatus =
         _capitalize(rider?.guarantorStatus.name ?? 'Pending');
 

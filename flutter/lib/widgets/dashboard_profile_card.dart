@@ -93,6 +93,17 @@ class DashboardProfileCard extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
+    String? getAvatarUrl() {
+      if (rider.profilePhoto == null || rider.profilePhoto!.isEmpty)
+        return null;
+      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
+      const baseUrl = String.fromEnvironment('API_URL',
+          defaultValue: 'http://localhost:8081');
+      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+    }
+
+    final avatarUrl = getAvatarUrl();
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -105,9 +116,9 @@ class DashboardProfileCard extends StatelessWidget {
             border: Border.all(color: AppColors.outlineVariant),
           ),
           child: ClipOval(
-            child: rider.profilePhoto != null && rider.profilePhoto!.isNotEmpty
+            child: avatarUrl != null
                 ? CachedNetworkImage(
-                    imageUrl: rider.profilePhoto!,
+                    imageUrl: avatarUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, __) => const Center(
                       child: SizedBox(

@@ -33,7 +33,7 @@ class SendOtpResponse {
   factory SendOtpResponse.fromJson(Map<String, dynamic> json) {
     return SendOtpResponse(
       exists: json['exists'] as bool?,
-      otp: json['otp'] as String?,
+      otp: json['otp']?.toString(),
     );
   }
 
@@ -61,7 +61,7 @@ class VerifyOtpRequest {
   factory VerifyOtpRequest.fromJson(Map<String, dynamic> json) {
     return VerifyOtpRequest(
       phone: json['phone'] as String?,
-      otp: json['otp'] as String?,
+      otp: json['otp']?.toString(),
       idToken: json['idToken'] as String?,
       referralCode: json['referralCode'] as String?,
     );
@@ -1363,7 +1363,7 @@ class VerifyPhoneRequest {
   factory VerifyPhoneRequest.fromJson(Map<String, dynamic> json) {
     return VerifyPhoneRequest(
       phone: json['phone'] as String,
-      otp: json['otp'] as String,
+      otp: json['otp'].toString(),
     );
   }
 

@@ -393,7 +393,7 @@ export default function VehicleManagement() {
                 { key: 'vehicleId', label: 'Vehicle ID' },
                 { key: 'vehicleNumber', label: 'Vehicle Number' },
                 { key: 'model', label: 'Model' },
-                { key: 'licensePlate', label: 'License Plate' },
+
                 { key: 'status', label: 'Status' },
                 { key: 'hubName', label: 'Hub' },
                 { key: 'batteryLevel', label: 'Battery Level' },
@@ -965,13 +965,6 @@ export default function VehicleManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>License Plate</Label>
-                <Input
-                  value={form.licensePlate}
-                  onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Hub</Label>
                 <Select value={form.hubId} onValueChange={(v) => setForm({ ...form, hubId: v })}>
                   <SelectTrigger>
@@ -1068,14 +1061,6 @@ export default function VehicleManagement() {
                   placeholder="e.g. Ather 450X"
                   value={form.model}
                   onChange={(e) => setForm({ ...form, model: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>License Plate</Label>
-                <Input
-                  placeholder="e.g. DL 01 AB 1234"
-                  value={form.licensePlate}
-                  onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
                 />
               </div>
               <div className="space-y-2">

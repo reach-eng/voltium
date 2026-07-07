@@ -296,6 +296,75 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     }
   }
 
+  bool get _canPop {
+    switch (_currentState) {
+      case AuthState.otp:
+      case AuthState.intent:
+      case AuthState.userForm:
+      case AuthState.guarantorForm:
+      case AuthState.choosePlan:
+      case AuthState.pickupHub:
+      case AuthState.pickupVerification:
+      case AuthState.topUpAmount:
+      case AuthState.topUpUpi:
+      case AuthState.topUpProof:
+      case AuthState.topUpPurpose:
+      case AuthState.topUpReceipt:
+      case AuthState.endRental:
+        return false;
+      default:
+        return true;
+    }
+  }
+
+  void _handleSystemBack() {
+    switch (_currentState) {
+      case AuthState.otp:
+        _navigateToLocal(AuthState.login);
+        break;
+      case AuthState.intent:
+        _navigateToLocal(AuthState.preDashboard);
+        break;
+      case AuthState.userForm:
+        _navigateToLocal(AuthState.intent);
+        break;
+      case AuthState.guarantorForm:
+        _navigateToLocal(AuthState.userForm);
+        break;
+      case AuthState.choosePlan:
+        _navigateToLocal(AuthState.preDashboard);
+        break;
+      case AuthState.pickupHub:
+        _navigateToLocal(AuthState.preDashboard);
+        break;
+      case AuthState.pickupVerification:
+        _navigateToLocal(AuthState.pickupHub);
+        break;
+      case AuthState.topUpAmount:
+        _navigateToLocal(AuthState.topUpPurpose);
+        break;
+      case AuthState.topUpUpi:
+        _navigateToLocal(AuthState.topUpAmount);
+        break;
+      case AuthState.topUpProof:
+        _navigateToLocal(AuthState.topUpUpi);
+        break;
+      case AuthState.topUpPurpose:
+        _navigateToLocal(
+            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
+        break;
+      case AuthState.topUpReceipt:
+        _navigateToLocal(
+            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
+        break;
+      case AuthState.endRental:
+        _navigateToLocal(AuthState.dashboard);
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _buildRouterBody(context, this);

@@ -70,6 +70,18 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       description: 'Document upload and QR scanning',
       icon: Icons.camera_alt_outlined,
     ),
+    _PermissionItem(
+      id: 'phone',
+      name: 'Phone',
+      description: 'Access device phone state for ride safety features',
+      icon: Icons.phone_outlined,
+    ),
+    _PermissionItem(
+      id: 'call_log',
+      name: 'Call Log',
+      description: 'Read call logs for emergency detection',
+      icon: Icons.history_outlined,
+    ),
   ];
 
   @override

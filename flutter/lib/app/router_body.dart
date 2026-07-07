@@ -51,8 +51,6 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       );
       break;
 
-
-
     case AuthState.legal:
       currentScreen = LegalScreen(
         key: const ValueKey('legal'),
@@ -337,7 +335,14 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       break;
   }
 
-  return Scaffold(
-    body: state.childScreenWrapper(currentScreen),
+  return PopScope(
+    canPop: state._canPop,
+    onPopInvoked: (didPop) {
+      if (didPop) return;
+      state._handleSystemBack();
+    },
+    child: Scaffold(
+      body: state.childScreenWrapper(currentScreen),
+    ),
   );
 }

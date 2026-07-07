@@ -65,16 +65,9 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
         bookingId: riderId,
       );
 
-      if (response['success'] == true) {
-        await provider.refreshFromApi();
-        widget.onNext();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response['message'] ?? 'Sync failed')),
-          );
-        }
-      }
+      // If we reach here, the API call was successful
+      await provider.refreshFromApi();
+      widget.onNext();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +94,7 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Spacing.lg),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -115,35 +108,30 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Please review and sign the digital rental agreement before collecting your vehicle.',
+                'Please review the digital rental agreement before collecting your vehicle.',
                 style: TextStyle(color: AppColors.onSurfaceVariant),
               ),
               const SizedBox(height: 32),
 
-              // Mock Signature Pad
-              const Text(
-                'Digital Signature',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                height: 100,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.outlineVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Draw your signature here',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.onSurfaceMuted,
-                    ),
+              // Photos status summary
+              if (widget.pickupPhotoFront != null ||
+                  widget.pickupPhotoBack != null ||
+                  widget.pickupPhotoLeft != null ||
+                  widget.pickupPhotoRight != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          color: AppColors.success, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Vehicle photos captured',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 32),
 
               // Agreement
               Row(

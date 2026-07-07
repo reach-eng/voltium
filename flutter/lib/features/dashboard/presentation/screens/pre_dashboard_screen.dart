@@ -260,9 +260,9 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                     FadeUpWidget(
                       delay: 350,
                       child: ReferralCard(
-                        referralCode: rider.riderId.isNotEmpty
-                            ? rider.riderId
-                            : 'VOLT-RD-88',
+                        referralCode: (rider.referralCode?.isNotEmpty ?? false)
+                            ? rider.referralCode!
+                            : (rider.riderId.isNotEmpty ? rider.riderId : 'VOLT-RD-88'),
                       ),
                     ),
                     const SizedBox(height: 16),

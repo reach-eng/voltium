@@ -2,6 +2,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
@@ -512,6 +513,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildAvatarSection() {
+    final rider = context.watch<AppProvider>().rider;
+    String? getAvatarUrl() {
+      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+        return null;
+      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
+      const baseUrl = String.fromEnvironment('API_URL',
+          defaultValue: 'http://localhost:8081');
+      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+    }
+
+    final avatarUrl = getAvatarUrl();
+
     return Center(
       child: Stack(
         children: [
@@ -540,11 +553,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         fit: BoxFit.cover,
                       ),
                     )
-                  : const Icon(
-                      Icons.person,
-                      size: 54,
-                      color: AppColors.slate400,
-                    ),
+                  : avatarUrl != null
+                      ? ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: avatarUrl,
+                            width: 108,
+                            height: 108,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) =>
+                                const CircularProgressIndicator(),
+                            errorWidget: (_, __, ___) => const Icon(
+                              Icons.person,
+                              size: 54,
+                              color: AppColors.slate400,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 54,
+                          color: AppColors.slate400,
+                        ),
             ),
           ),
           Positioned(

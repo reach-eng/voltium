@@ -47,13 +47,6 @@ export function EditVehicleModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label>License Plate</Label>
-                <Input
-                  value={form.licensePlate}
-                  onChange={(e) => setForm({ ...form, licensePlate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
                 <Label>Hub</Label>
                 <Select value={form.hubId} onValueChange={(v) => setForm({ ...form, hubId: v })}>
                   <SelectTrigger>
