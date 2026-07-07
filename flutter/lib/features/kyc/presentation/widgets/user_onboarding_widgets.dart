@@ -11,6 +11,12 @@ class PersonalDetailsCard extends StatelessWidget {
   final TextEditingController addressController;
   final String phone;
   final VoidCallback onSelectDob;
+  final bool nameEnabled;
+  final bool dobEnabled;
+  final bool emailEnabled;
+  final bool fatherNameEnabled;
+  final bool motherNameEnabled;
+  final bool addressEnabled;
 
   const PersonalDetailsCard({
     super.key,
@@ -22,6 +28,12 @@ class PersonalDetailsCard extends StatelessWidget {
     required this.addressController,
     required this.phone,
     required this.onSelectDob,
+    this.nameEnabled = true,
+    this.dobEnabled = true,
+    this.emailEnabled = true,
+    this.fatherNameEnabled = true,
+    this.motherNameEnabled = true,
+    this.addressEnabled = true,
   });
 
   @override
@@ -71,6 +83,7 @@ class PersonalDetailsCard extends StatelessWidget {
             'Enter full name',
             nameController,
             key: const Key('fullNameField'),
+            enabled: nameEnabled,
           ),
           const SizedBox(height: 12),
           _buildDateField(
@@ -78,6 +91,7 @@ class PersonalDetailsCard extends StatelessWidget {
             'DD-MM-YYYY',
             dobController,
             onSelectDob,
+            enabled: dobEnabled,
           ),
           const SizedBox(height: 12),
           _buildTextField(
@@ -85,6 +99,7 @@ class PersonalDetailsCard extends StatelessWidget {
             'Enter email address',
             emailController,
             key: const Key('emailField'),
+            enabled: emailEnabled,
           ),
           const SizedBox(height: 12),
           _buildPhoneField(formattedPhone),
@@ -94,6 +109,7 @@ class PersonalDetailsCard extends StatelessWidget {
             "Enter father's name",
             fatherNameController,
             key: const Key('fatherNameField'),
+            enabled: fatherNameEnabled,
           ),
           const SizedBox(height: 12),
           _buildTextField(
@@ -101,12 +117,14 @@ class PersonalDetailsCard extends StatelessWidget {
             "Enter mother's name",
             motherNameController,
             key: const Key('motherNameField'),
+            enabled: motherNameEnabled,
           ),
           const SizedBox(height: 12),
           _buildTextArea(
             'Current Address',
             'Enter your full address',
             addressController,
+            enabled: addressEnabled,
           ),
         ],
       ),
@@ -118,6 +136,7 @@ class PersonalDetailsCard extends StatelessWidget {
     String hint,
     TextEditingController controller, {
     Key? key,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,6 +153,7 @@ class PersonalDetailsCard extends StatelessWidget {
         TextFormField(
           key: key,
           controller: controller,
+          readOnly: !enabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
@@ -163,8 +183,9 @@ class PersonalDetailsCard extends StatelessWidget {
     String label,
     String hint,
     TextEditingController controller,
-    VoidCallback onTap,
-  ) {
+    VoidCallback onTap, {
+    bool enabled = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -178,7 +199,7 @@ class PersonalDetailsCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         GestureDetector(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: AbsorbPointer(
             child: TextFormField(
               key: const Key('dobField'),
@@ -195,7 +216,7 @@ class PersonalDetailsCard extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 filled: true,
-                fillColor: AppColors.surfaceContainer,
+                fillColor: enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -259,8 +280,9 @@ class PersonalDetailsCard extends StatelessWidget {
   Widget _buildTextArea(
     String label,
     String hint,
-    TextEditingController controller,
-  ) {
+    TextEditingController controller, {
+    bool enabled = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -277,13 +299,14 @@ class PersonalDetailsCard extends StatelessWidget {
           key: const Key('currentAddressField'),
           controller: controller,
           maxLines: 3,
+          readOnly: !enabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             filled: true,
-            fillColor: AppColors.surfaceContainer,
+            fillColor: enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -312,6 +335,10 @@ class IdentityVerificationCard extends StatelessWidget {
   final VoidCallback onPickAadhaarBack;
   final VoidCallback onPickPan;
   final VoidCallback onShowBankDialog;
+  final bool aadhaarFrontEnabled;
+  final bool aadhaarBackEnabled;
+  final bool panEnabled;
+  final bool bankEnabled;
 
   const IdentityVerificationCard({
     super.key,
@@ -323,6 +350,10 @@ class IdentityVerificationCard extends StatelessWidget {
     required this.onPickAadhaarBack,
     required this.onPickPan,
     required this.onShowBankDialog,
+    this.aadhaarFrontEnabled = true,
+    this.aadhaarBackEnabled = true,
+    this.panEnabled = true,
+    this.bankEnabled = true,
   });
 
   @override
@@ -376,6 +407,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   icon: Icons.upload_file,
                   isUploaded: aadhaarFrontUploaded,
                   onTap: onPickAadhaarFront,
+                  enabled: aadhaarFrontEnabled,
                   key: const Key('aadhaarFrontTile'),
                 ),
               ),
@@ -386,6 +418,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   icon: Icons.upload_file,
                   isUploaded: aadhaarBackUploaded,
                   onTap: onPickAadhaarBack,
+                  enabled: aadhaarBackEnabled,
                   key: const Key('aadhaarBackTile'),
                 ),
               ),
@@ -400,6 +433,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   icon: Icons.upload_file,
                   isUploaded: panUploaded,
                   onTap: onPickPan,
+                  enabled: panEnabled,
                   key: const Key('panTile'),
                 ),
               ),
@@ -410,6 +444,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   icon: Icons.account_balance,
                   isUploaded: bankDetailsDone,
                   onTap: onShowBankDialog,
+                  enabled: bankEnabled,
                   key: const Key('bankTile'),
                 ),
               ),
@@ -426,6 +461,7 @@ class DocTile extends StatelessWidget {
   final IconData icon;
   final bool isUploaded;
   final VoidCallback onTap;
+  final bool enabled;
 
   const DocTile({
     super.key,
@@ -433,13 +469,16 @@ class DocTile extends StatelessWidget {
     required this.icon,
     required this.isUploaded,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color:
@@ -478,6 +517,7 @@ class DocTile extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -486,12 +526,14 @@ class SelfieCard extends StatelessWidget {
   final bool selfieUploaded;
   final String? selfiePath;
   final VoidCallback onTap;
+  final bool enabled;
 
   const SelfieCard({
     super.key,
     required this.selfieUploaded,
-    required this.selfiePath,
+    this.selfiePath,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
@@ -505,10 +547,12 @@ class SelfieCard extends StatelessWidget {
       ),
       child: GestureDetector(
         key: const Key('selfieTile'),
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        onTap: enabled ? onTap : null,
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             if (selfieUploaded && selfiePath != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
@@ -591,6 +635,7 @@ class SelfieCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -598,24 +643,30 @@ class SelfieCard extends StatelessWidget {
 class SignatureCard extends StatelessWidget {
   final bool signatureUploaded;
   final VoidCallback onTap;
+  final bool enabled;
 
   const SignatureCard({
     super.key,
     required this.signatureUploaded,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Opacity(
+        opacity: enabled ? 1.0 : 0.5,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -650,7 +701,7 @@ class SignatureCard extends StatelessWidget {
           const SizedBox(height: 12),
           GestureDetector(
             key: const Key('signatureTile'),
-            onTap: onTap,
+            onTap: enabled ? onTap : null,
             child: Container(
               height: 120,
               decoration: BoxDecoration(
@@ -701,6 +752,8 @@ class SignatureCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      ),
       ),
     );
   }

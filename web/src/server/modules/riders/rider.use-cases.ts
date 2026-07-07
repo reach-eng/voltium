@@ -100,6 +100,32 @@ export const riderUseCases = {
   /**
    * Get full dashboard data for a rider.
    */
+  async rejectPlan(riderDbId: string, adminId: string, reason: string) {
+    const rider = await db.rider.findUnique({ where: { id: riderDbId } });
+    if (!rider) throw new Error('Rider not found');
+
+    await db.rider.update({
+      where: { id: riderDbId },
+      data: {
+        planDoneAt: null,
+        currentPlan: null,
+        planRejectionReason: reason,
+        lifecycleStatus: 'GUARANTOR_APPROVED',
+      },
+    });
+
+    await createAuditLog({
+      actorId: adminId,
+      actorType: 'ADMIN',
+      actionType: 'REJECT',
+      entity: 'RiderPlan',
+      entityId: riderDbId,
+      details: { reason },
+      ipAddress: '',
+      userAgent: '',
+    });
+  },
+
   async getDashboard(riderDbId: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
@@ -112,6 +138,7 @@ export const riderUseCases = {
         currentPlan: true,
         planStartDate: true,
         planEndDate: true,
+        planRejectionReason: true,
         referralCode: true,
         pickupHub: true,
         teamLeader: true,
@@ -135,6 +162,8 @@ export const riderUseCases = {
             bankName: true,
             accountNumber: true,
             ifscCode: true,
+            rejectionReason: true,
+            editableFields: true,
           },
         },
         wallet: {
@@ -156,6 +185,7 @@ export const riderUseCases = {
           },
         },
         vehicleReturns: { select: { id: true, status: true } },
+        depositRecord: true,
         vehicle: {
           select: {
             id: true,

@@ -548,6 +548,7 @@ model Rider {
   depositDoneAt           DateTime?
   kycDoneAt               DateTime?
   planDoneAt              DateTime?
+  planRejectionReason     String?
   fcmToken                String?
   isAdminLocked           Boolean                @default(false)
   lockPassword            String?

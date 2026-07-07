@@ -432,15 +432,19 @@ class PreDashboardProfileCard extends StatelessWidget {
   }
 }
 
-/// KYC Rejection Remarks card.
+/// Generic Rejection Remarks card.
 class RejectionCard extends StatelessWidget {
-  final RiderModel rider;
-  final VoidCallback? onReupload;
+  final String title;
+  final String reason;
+  final VoidCallback onResubmit;
+  final String buttonText;
 
   const RejectionCard({
     super.key,
-    required this.rider,
-    this.onReupload,
+    required this.title,
+    required this.reason,
+    required this.onResubmit,
+    this.buttonText = 'Update',
   });
 
   @override
@@ -477,9 +481,9 @@ class RejectionCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Rejection Remarks',
-                        style: TextStyle(
+                      Text(
+                        title,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: Color(0xFF0F172A),
@@ -487,10 +491,7 @@ class RejectionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        rider.kycRejectionReason != null &&
-                                rider.kycRejectionReason!.isNotEmpty
-                            ? rider.kycRejectionReason!
-                            : 'The uploaded PAN card document was blurry and unreadable. Please ensure all details are clearly visible in the new upload.',
+                        reason,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -507,7 +508,7 @@ class RejectionCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: onReupload,
+                onPressed: onResubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
                   foregroundColor: Colors.white,
@@ -517,14 +518,14 @@ class RejectionCard extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.upload_file, size: 20),
                     SizedBox(width: 8),
                     Text(
-                      'Re-upload Documents',
-                      style: TextStyle(
+                      buttonText,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),

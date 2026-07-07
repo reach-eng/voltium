@@ -33,6 +33,8 @@ class ApprovalMatrixWidget extends StatelessWidget {
 
     final rank = lifecycleRank(rider);
     final isKycRejected = rider.kycStatus == KycStatus.rejected;
+    final isPlanRejected = rider.planStatus == 'REJECTED';
+    final isDepositRejected = rider.depositRecord?.status == DepositStatus.rejected;
 
     final List<_StepData> steps = [
       _StepData(
@@ -47,20 +49,22 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'Rental Plan',
         status: _getStepStatus(
-          rank >= 4,
+          rank >= 4 && !isPlanRejected,
           rank >= 3 && rank < 4,
-          false,
+          isPlanRejected,
         ),
         icon: Icons.event_repeat_outlined,
+        subtitle: isPlanRejected ? 'Reselect Plan' : null,
       ),
       _StepData(
         label: 'Deposit',
         status: _getStepStatus(
-          rank >= 6,
+          rank >= 6 && !isDepositRejected,
           rank >= 4 && rank < 6,
-          false,
+          isDepositRejected,
         ),
         icon: Icons.account_balance_outlined,
+        subtitle: isDepositRejected ? 'Re-upload Proof' : null,
       ),
       _StepData(
         label: 'KYC',

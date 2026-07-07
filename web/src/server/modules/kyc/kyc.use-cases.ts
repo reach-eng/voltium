@@ -26,6 +26,16 @@ export const kycUseCases = {
     // Partial uploads just save data and keep current status (DRAFT)
     const existing = await kycRepository.findByRiderId(riderDbId);
 
+    if (existing?.status === 'REJECTED' && existing.editableFields && existing.editableFields.length > 0) {
+      // Filter prismaData to ONLY allow fields present in editableFields
+      const allowedKeys = new Set(existing.editableFields);
+      for (const key of Object.keys(prismaData)) {
+        if (!allowedKeys.has(key)) {
+          delete prismaData[key];
+        }
+      }
+    }
+
     const existingData = existing || {};
     const aadhaarFront = prismaData.aadhaarFront || (existingData as any).aadhaarFront;
     const aadhaarBack = prismaData.aadhaarBack || (existingData as any).aadhaarBack;

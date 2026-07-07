@@ -68,6 +68,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     action: action as any,
     rejectionReason: body.rejectionReason || body.reason,
     infoRequest: body.infoRequest || body.message,
+    editableFields: body.editableFields,
   });
 
   return success(result, `KYC ${String(action).toLowerCase()} processed`);

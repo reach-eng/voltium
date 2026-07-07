@@ -12,6 +12,23 @@ export type KycStatus =
   | 'REJECTED'
   | 'EXPIRED';
 
+export enum EditableField {
+  aadhaarFront = 'aadhaarFront',
+  aadhaarBack = 'aadhaarBack',
+  pan = 'panCard',
+  selfie = 'profilePhoto',
+  signature = 'signature',
+  name = 'fullName',
+  email = 'email',
+  dob = 'dob',
+  address = 'currentAddress',
+  fatherName = 'fatherName',
+  motherName = 'motherName',
+  bankName = 'bankName',
+  bankAccount = 'accountNumber',
+  bankIfsc = 'ifscCode'
+}
+
 export interface KycSubmission {
   riderId: string;
   aadhaarNumber: string;

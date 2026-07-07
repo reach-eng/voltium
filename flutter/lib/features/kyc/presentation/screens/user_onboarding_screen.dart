@@ -11,6 +11,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/features/kyc/presentation/widgets/user_onboarding_widgets.dart';
 import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
+import 'package:voltium_rider/models/rider_model.dart';
 
 class UserOnboardingScreen extends StatefulWidget {
   final VoidCallback? onNext;
@@ -580,6 +581,14 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
     }
   }
 
+  bool _isFieldEditable(String fieldName) {
+    final rider = context.read<AppProvider>().rider;
+    if (rider?.kycStatus != KycStatus.rejected || rider?.kycEditableFields == null || rider!.kycEditableFields!.isEmpty) {
+      return true;
+    }
+    return rider.kycEditableFields!.contains(fieldName);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -611,20 +620,30 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
                       if (_currentStep == 1)
                         PersonalDetailsCard(
                           nameController: _nameController,
+                          nameEnabled: _isFieldEditable('fullName'),
                           dobController: _dobController,
+                          dobEnabled: _isFieldEditable('dob'),
                           emailController: _emailController,
+                          emailEnabled: _isFieldEditable('email'),
                           fatherNameController: _fatherNameController,
+                          fatherNameEnabled: _isFieldEditable('fatherName'),
                           motherNameController: _motherNameController,
+                          motherNameEnabled: _isFieldEditable('motherName'),
                           addressController: _addressController,
+                          addressEnabled: _isFieldEditable('currentAddress'),
                           phone: context.read<AppProvider>().rider?.phone ?? '',
                           onSelectDob: _selectDob,
                         ),
                       if (_currentStep == 2)
                         IdentityVerificationCard(
                           aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                          aadhaarFrontEnabled: _isFieldEditable('aadhaarFront'),
                           aadhaarBackUploaded: _aadhaarBackUploaded,
+                          aadhaarBackEnabled: _isFieldEditable('aadhaarBack'),
                           panUploaded: _panUploaded,
+                          panEnabled: _isFieldEditable('panCard'),
                           bankDetailsDone: _bankAccountController.text.isNotEmpty,
+                          bankEnabled: _isFieldEditable('accountNumber') || _isFieldEditable('bankName') || _isFieldEditable('ifscCode'),
                           onPickAadhaarFront: () =>
                               _showDocumentSourceDialog('aadhaar_front'),
                           onPickAadhaarBack: () =>
@@ -636,11 +655,13 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
                         SelfieCard(
                           selfieUploaded: _selfieUploaded,
                           selfiePath: _selfiePath,
+                          enabled: _isFieldEditable('profilePhoto'),
                           onTap: () => _showDocumentSourceDialog('selfie'),
                         ),
                         const SizedBox(height: 20),
                         SignatureCard(
                           signatureUploaded: _signatureUploaded,
+                          enabled: _isFieldEditable('signature'),
                           onTap: _openSignaturePad,
                         ),
                       ],

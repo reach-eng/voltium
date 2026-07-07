@@ -13,6 +13,7 @@ import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/pre_dashboard_widgets.dart';
+import 'package:voltium_rider/widgets/top_up_request_sent_card.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import '../../../../theme/app_theme.dart';
@@ -130,9 +131,35 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                       FadeUpWidget(
                         delay: 150,
                         child: RejectionCard(
-                          rider: rider,
-                          onReupload: () =>
+                          title: 'KYC Rejected',
+                          reason: rider.kycRejectionReason ?? 'The uploaded document was unreadable.',
+                          buttonText: 'Update Documents',
+                          onResubmit: () =>
                               widget.onStepNavigation(AuthState.userForm),
+                        ),
+                      ),
+
+                    if (rider.planStatus == 'REJECTED')
+                      FadeUpWidget(
+                        delay: 150,
+                        child: RejectionCard(
+                          title: 'Plan Rejected',
+                          reason: rider.planRejectionReason ?? 'Your selected plan was rejected.',
+                          buttonText: 'Reselect Plan',
+                          onResubmit: () =>
+                              widget.onStepNavigation(AuthState.choosePlan),
+                        ),
+                      ),
+
+                    if (rider.depositRecord?.status == DepositStatus.rejected)
+                      FadeUpWidget(
+                        delay: 150,
+                        child: RejectionCard(
+                          title: 'Deposit Rejected',
+                          reason: rider.depositRecord?.rejectionReason ?? 'Your deposit proof was rejected.',
+                          buttonText: 'Re-upload Proof',
+                          onResubmit: () =>
+                              widget.onStepNavigation(AuthState.topUpPurpose),
                         ),
                       ),
 
@@ -186,20 +213,30 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Wallet Card (Appears after plan selected until deposit approved)
+                    // Wallet / TopUp Status Card (Appears after plan selected until deposit approved)
                     if (planDone && !depositDone)
-                      FadeUpWidget(
-                        delay: 250,
-                        child: WalletCard(
-                          walletBalance: rider.walletBalance,
-                          requiredPayment: (rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + (rider.activeRentalPlanSecurityDeposit ),
-                          paymentStreak: rider.paymentStreak,
-                          currentPlan: rider.currentPlan,
-                          onTopUp: () =>
-                              widget.onStepNavigation(AuthState.topUpPurpose),
-                          compact: true,
+                      if (rider.depositRecord == null || rider.depositRecord!.status == DepositStatus.notSubmitted)
+                        FadeUpWidget(
+                          delay: 250,
+                          child: WalletCard(
+                            walletBalance: rider.walletBalance,
+                            requiredPayment: (rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + (rider.activeRentalPlanSecurityDeposit ),
+                            paymentStreak: rider.paymentStreak,
+                            currentPlan: rider.currentPlan,
+                            onTopUp: () =>
+                                widget.onStepNavigation(AuthState.topUpPurpose),
+                            compact: true,
+                          ),
+                        )
+                      else if (rider.depositRecord!.status == DepositStatus.pending || rider.depositRecord!.status == DepositStatus.pendingVerification || rider.depositRecord!.status == DepositStatus.rejected)
+                        FadeUpWidget(
+                          delay: 250,
+                          child: TopUpRequestSentCard(
+                            rider: rider,
+                            topUpAmount: ((rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + rider.activeRentalPlanSecurityDeposit).toInt(),
+                            onResubmit: () => widget.onStepNavigation(AuthState.topUpPurpose),
+                          ),
                         ),
-                      ),
                     const SizedBox(height: 16),
 
                     // Referral Card

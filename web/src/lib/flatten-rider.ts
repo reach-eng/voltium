@@ -78,6 +78,8 @@ export function flattenRider(rider: RiderWithRelations) {
 
     // --- KYC Profile fields ---
     kycStatus: kycProfile?.status || 'PENDING',
+    kycRejectionReason: (kycProfile as any)?.rejectionReason ?? null,
+    kycEditableFields: (kycProfile as any)?.editableFields ?? null,
     profilePhoto: kycProfile?.profilePhoto ?? null,
     riderPhoto: kycProfile?.riderPhoto ?? null,
     signature: kycProfile?.signature ?? null,

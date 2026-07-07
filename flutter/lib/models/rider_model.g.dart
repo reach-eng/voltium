@@ -25,6 +25,7 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'aadhaarBack': instance.aadhaarBack,
       'panCard': instance.panCard,
       'kycRejectionReason': instance.kycRejectionReason,
+      'kycEditableFields': instance.kycEditableFields,
       'bankAccount': instance.bankAccount,
       'bankIfsc': instance.bankIfsc,
       'bankName': instance.bankName,
@@ -50,6 +51,8 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'currentSpeed': instance.currentSpeed,
       'batteryPercent': instance.batteryPercent,
       'planStatus': instance.planStatus,
+      'planRejectionReason': instance.planRejectionReason,
+      'depositRecord': instance.depositRecord,
       'fcmToken': instance.fcmToken,
       'isAdminLocked': instance.isAdminLocked,
       'isUninstallBlocked': instance.isUninstallBlocked,
@@ -83,10 +86,13 @@ Map<String, dynamic> _$RiderModelToJson(RiderModel instance) =>
       'pickupDone': instance.pickupDone,
       'accountStatus': _$AccountStatusEnumMap[instance.accountStatus]!,
       'lifecycleStatus': instance.lifecycleStatus,
+      'isNewRider': instance.isNewRider,
       'referralCode': instance.referralCode,
       'totalRewardPoints': instance.totalRewardPoints,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
+      'activeRentalPlanSecurityDeposit':
+          instance.activeRentalPlanSecurityDeposit,
     };
 
 const _$KycStatusEnumMap = {

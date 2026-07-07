@@ -1,6 +1,7 @@
 // Enum definitions for RiderModel field types
 
 import 'package:json_annotation/json_annotation.dart';
+import 'deposit_record.dart';
 
 part 'rider_model.g.dart';
 
@@ -72,6 +73,7 @@ class RiderModel {
   final String? aadhaarBack;
   final String? panCard;
   final String? kycRejectionReason;
+  final List<String>? kycEditableFields;
 
   // ── Bank ────────────────────────────────────────────────────────────────
   final String? bankAccount;
@@ -107,6 +109,10 @@ class RiderModel {
 
   // ── Plan ────────────────────────────────────────────────────────────────
   final String planStatus;
+  final String? planRejectionReason;
+
+  // ── Deposit Record ──────────────────────────────────────────────────────
+  final DepositRecord? depositRecord;
 
   // ── Device policy (Phase 2.6) ──────────────────────────────────────────
   // Mirrors the corresponding Prisma columns used by the FCM overlay
@@ -180,6 +186,7 @@ class RiderModel {
     this.aadhaarBack,
     this.panCard,
     this.kycRejectionReason,
+    this.kycEditableFields,
     this.bankAccount,
     this.bankIfsc,
     this.bankName,
@@ -196,8 +203,10 @@ class RiderModel {
     this.walletBalance = 0.0,
     this.securityDeposit = 0.0,
     this.depositStatus = DepositStatus.pending,
+    this.depositRecord,
     this.paymentStreak = 0,
     this.planStatus = 'NONE',
+    this.planRejectionReason,
     // Device policy defaults (Phase 2.6). Server is source of truth.
     this.fcmToken,
     this.isAdminLocked = false,
