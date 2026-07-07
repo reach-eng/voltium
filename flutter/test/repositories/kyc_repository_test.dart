@@ -83,15 +83,17 @@ void main() {
     });
 
     group('Form Cache', () {
+      const testRiderId = 'test-rider-123';
+
       setUp(() async {
-        await KycRepository.clearFormCache();
+        await KycRepository.clearFormCache(riderId: testRiderId);
       });
 
       test('saveFormCache and loadFormCache work correctly', () async {
         final data = {'name': 'John Doe', 'email': 'test@example.com'};
 
-        await KycRepository.saveFormCache(data);
-        final cached = await KycRepository.loadFormCache();
+        await KycRepository.saveFormCache(riderId: testRiderId, data: data);
+        final cached = await KycRepository.loadFormCache(riderId: testRiderId);
 
         expect(cached, isNotNull);
         expect(cached!['name'], 'John Doe');
@@ -99,10 +101,11 @@ void main() {
       });
 
       test('clearFormCache removes cached data', () async {
-        await KycRepository.saveFormCache({'name': 'John Doe'});
-        await KycRepository.clearFormCache();
+        await KycRepository.saveFormCache(
+            riderId: testRiderId, data: {'name': 'John Doe'});
+        await KycRepository.clearFormCache(riderId: testRiderId);
 
-        final cached = await KycRepository.loadFormCache();
+        final cached = await KycRepository.loadFormCache(riderId: testRiderId);
         expect(cached, isNull);
       });
     });

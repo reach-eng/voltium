@@ -29,7 +29,8 @@ void main() {
       final decoded = jsonDecode(storedJson!) as Map<String, dynamic>;
       expect(decoded['name'], 'John Doe');
       expect(decoded['isPhoneVerified'], true);
-      expect(decoded.containsKey('nullField'), isFalse, reason: 'null fields should be filtered out');
+      expect(decoded.containsKey('nullField'), isFalse,
+          reason: 'null fields should be filtered out');
     });
 
     test('loadFormCache retrieves previously saved data', () async {
@@ -37,7 +38,7 @@ void main() {
         'name': 'Jane Doe',
         'address': '456 Street',
       };
-      
+
       CacheService().setString(expectedKey, jsonEncode(data));
 
       final loadedData = GuarantorCache.loadFormCache(testRiderId);

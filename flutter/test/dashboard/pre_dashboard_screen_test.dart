@@ -12,7 +12,9 @@ import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 
 class MockRiderRepository extends Mock implements RiderRepository {}
+
 class MockRentalRepository extends Mock implements RentalRepository {}
+
 class MockFilesRepository extends Mock implements FilesRepository {}
 
 void main() {
@@ -47,7 +49,8 @@ void main() {
   }
 
   group('PreDashboardScreen Tests', () {
-    testWidgets('Shows Start Registration CTA for NEW rider (Rank 0)', (tester) async {
+    testWidgets('Shows Start Registration CTA for NEW rider (Rank 0)',
+        (tester) async {
       final rider = const RiderModel(
         id: '1',
         riderId: 'R-1',
@@ -62,7 +65,8 @@ void main() {
       expect(find.text('START REGISTRATION'), findsOneWidget);
     });
 
-    testWidgets('Shows Book Vehicle CTA for GUARANTOR_SUBMITTED (Rank 3)', (tester) async {
+    testWidgets('Shows Book Vehicle CTA for GUARANTOR_SUBMITTED (Rank 3)',
+        (tester) async {
       final rider = const RiderModel(
         id: '1',
         riderId: 'R-1',
@@ -77,7 +81,8 @@ void main() {
       expect(find.text('BOOK VEHICLE'), findsOneWidget);
     });
 
-    testWidgets('Shows Wallet TopUp for PLAN_SELECTED (Rank 4)', (tester) async {
+    testWidgets('Shows Wallet TopUp for PLAN_SELECTED (Rank 4)',
+        (tester) async {
       final rider = const RiderModel(
         id: '1',
         riderId: 'R-1',

@@ -27,14 +27,14 @@ void main() {
 
     testWidgets('Initial route is Splash', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 5));
       expect(find.byType(AppRouter), findsOneWidget);
     });
 
     testWidgets('Can navigate to GuarantorForm', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-      
+      await tester.pump(const Duration(seconds: 5));
+
       // Need a way to inject state if possible, but AuthWrapper manages it internally.
       // E2E test already verifies routing through the UI flow. This is just a structural test to ensure AppRouter works.
       expect(find.byType(AppRouter), findsOneWidget);

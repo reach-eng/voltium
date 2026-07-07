@@ -168,8 +168,7 @@ void main() {
     });
 
     // Form cache tests — scoped per rider
-    test('saveFormCache and loadFormCache roundtrip for one rider',
-        () async {
+    test('saveFormCache and loadFormCache roundtrip for one rider', () async {
       await KycRepository.saveFormCache(
         riderId: 'r1',
         data: {'name': 'Alice', 'email': 'alice@example.com'},
@@ -205,8 +204,7 @@ void main() {
         // r2 logs in on the same device and the form loads
         final r2Cache = await KycRepository.loadFormCache(riderId: 'r2');
         expect(r2Cache, isNull,
-            reason:
-                'Rider r2 must not see rider r1 cached form data — this '
+            reason: 'Rider r2 must not see rider r1 cached form data — this '
                 'would leak Aadhaar numbers and bank accounts between users.');
 
         // r1's data is still intact for r1
@@ -242,8 +240,8 @@ void main() {
       await KycRepository.clearFormCache(riderId: 'r1');
 
       expect(await KycRepository.loadFormCache(riderId: 'r1'), isNull);
-      expect((await KycRepository.loadFormCache(riderId: 'r2'))!['name'],
-          'Bob');
+      expect(
+          (await KycRepository.loadFormCache(riderId: 'r2'))!['name'], 'Bob');
     });
 
     test('loadFormCache returns a copy of the map', () async {

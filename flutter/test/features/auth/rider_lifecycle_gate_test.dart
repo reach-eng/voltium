@@ -50,13 +50,16 @@ void main() {
           lifecycleStatus: entry.key,
           accountStatus: AccountStatus.active,
         );
-        expect(lifecycleRank(rider), entry.value, reason: 'Status ${entry.key} should have rank ${entry.value}');
+        expect(lifecycleRank(rider), entry.value,
+            reason: 'Status ${entry.key} should have rank ${entry.value}');
       }
     });
   });
 
   group('RiderLifecycleGate.redirect', () {
-    RiderModel createRider(String status, {AccountStatus accountStatus = AccountStatus.active, bool pickupDone = false}) {
+    RiderModel createRider(String status,
+        {AccountStatus accountStatus = AccountStatus.active,
+        bool pickupDone = false}) {
       return RiderModel(
         riderId: '1',
         name: 'Test',
@@ -68,7 +71,8 @@ void main() {
     }
 
     test('returns terminated if accountStatus is terminated', () {
-      final rider = createRider('ACTIVE', accountStatus: AccountStatus.terminated);
+      final rider =
+          createRider('ACTIVE', accountStatus: AccountStatus.terminated);
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.terminated);
     });
 
@@ -80,7 +84,8 @@ void main() {
     });
 
     test('returns suspended if accountStatus is suspended', () {
-      final rider = createRider('ACTIVE', accountStatus: AccountStatus.suspended);
+      final rider =
+          createRider('ACTIVE', accountStatus: AccountStatus.suspended);
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.suspended);
     });
 
@@ -99,10 +104,12 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
     });
 
-    test('returns dashboard if rank >= 10 (except SUSPENDED which is caught earlier)', () {
+    test(
+        'returns dashboard if rank >= 10 (except SUSPENDED which is caught earlier)',
+        () {
       final rider = createRider('ACTIVE'); // rank 10
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
-      
+
       final rider2 = createRider('CLOSED'); // rank 13
       expect(RiderLifecycleGate.redirect(rider2), LifecycleTarget.dashboard);
     });
@@ -123,11 +130,8 @@ void main() {
 
       for (final status in preDashboardStatuses) {
         final rider = createRider(status);
-        expect(
-          RiderLifecycleGate.redirect(rider), 
-          LifecycleTarget.preDashboard, 
-          reason: 'Status $status should redirect to preDashboard'
-        );
+        expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard,
+            reason: 'Status $status should redirect to preDashboard');
       }
     });
   });
@@ -144,7 +148,8 @@ void main() {
       );
       expect(RiderLifecycleGate.canAccessDashboard(riderActive), true);
 
-      final riderNew = riderActive.copyWith(lifecycleStatus: 'NEW', pickupDone: false);
+      final riderNew =
+          riderActive.copyWith(lifecycleStatus: 'NEW', pickupDone: false);
       expect(RiderLifecycleGate.canAccessDashboard(riderNew), false);
     });
 
@@ -158,10 +163,12 @@ void main() {
       );
       expect(RiderLifecycleGate.isOnboarding(riderNew), true);
 
-      final riderProfileSubmitted = riderNew.copyWith(lifecycleStatus: 'PROFILE_SUBMITTED');
+      final riderProfileSubmitted =
+          riderNew.copyWith(lifecycleStatus: 'PROFILE_SUBMITTED');
       expect(RiderLifecycleGate.isOnboarding(riderProfileSubmitted), true);
 
-      final riderActive = riderNew.copyWith(lifecycleStatus: 'ACTIVE', pickupDone: true);
+      final riderActive =
+          riderNew.copyWith(lifecycleStatus: 'ACTIVE', pickupDone: true);
       expect(RiderLifecycleGate.isOnboarding(riderActive), false);
     });
   });

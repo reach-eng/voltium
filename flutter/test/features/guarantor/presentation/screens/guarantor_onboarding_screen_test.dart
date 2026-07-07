@@ -55,7 +55,9 @@ void main() {
         'motherName': 'Cached Mother',
         'address': 'Cached Address',
       };
-      await CacheService().setString('guarantor_onboarding_form_cache_test_rider_123', jsonEncode(cacheData));
+      await CacheService().setString(
+          'guarantor_onboarding_form_cache_test_rider_123',
+          jsonEncode(cacheData));
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -78,7 +80,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Read cache
-      final cachedStr = CacheService().getString('guarantor_onboarding_form_cache_test_rider_123');
+      final cachedStr = CacheService()
+          .getString('guarantor_onboarding_form_cache_test_rider_123');
       expect(cachedStr, isNotNull);
 
       final cacheData = jsonDecode(cachedStr!);
@@ -186,10 +189,10 @@ void main() {
       );
 
       // Cancel button visible
-      expect(find.byKey(const Key('skipGuarantorCancelButton')),
-          findsOneWidget);
-      expect(find.byKey(const Key('skipGuarantorConfirmButton')),
-          findsOneWidget);
+      expect(
+          find.byKey(const Key('skipGuarantorCancelButton')), findsOneWidget);
+      expect(
+          find.byKey(const Key('skipGuarantorConfirmButton')), findsOneWidget);
     });
 
     testWidgets('Cancelling the skip dialog does not call onNext',
@@ -208,7 +211,8 @@ void main() {
       expect(onNextCalled, isFalse);
       // Higher-deposit flag must NOT be set when user cancels
       expect(
-        CacheService().getString('voltium_requires_higher_deposit:test_rider_skip'),
+        CacheService()
+            .getString('voltium_requires_higher_deposit:test_rider_skip'),
         isNull,
       );
     });

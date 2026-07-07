@@ -3,7 +3,8 @@ import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 
 void main() {
   group('GuarantorFormValidator', () {
-    test('All fields filled + phone verified + all 6 docs uploaded is valid', () {
+    test('All fields filled + phone verified + all 6 docs uploaded is valid',
+        () {
       final missing = GuarantorFormValidator.validate(
         name: 'John',
         dob: '01/01/2000',
@@ -191,7 +192,9 @@ void main() {
         signatureUploaded: true,
         riderPhone: '1234567890',
       );
-      expect(missing.contains('Guarantor phone cannot be the same as rider phone'), isTrue);
+      expect(
+          missing.contains('Guarantor phone cannot be the same as rider phone'),
+          isTrue);
     });
 
     test('Phone < 10 digits', () {
