@@ -12,6 +12,7 @@ export const reviewKycSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT', 'REQUEST_INFO']),
   rejectionReason: z.string().max(500).optional(),
   infoRequest: z.string().max(500).optional(),
+  editableFields: z.array(z.string()).optional(),
 });
 
 export type SubmitKycDto = z.infer<typeof submitKycSchema>;

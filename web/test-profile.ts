@@ -1,0 +1,1 @@
+import { riderUseCases } from './src/server/modules/riders/rider.use-cases'; riderUseCases.getProfile('cmr97vgtj00kjripo5c2q61p9').then(p => console.log(JSON.stringify(p, null, 2))).catch(console.error).finally(() => process.exit(0));

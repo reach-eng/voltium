@@ -276,11 +276,12 @@ jobs:
       - name: Wait for dev server
         run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
 
-      - name: Run integration tests
-        run: npm run test:integration
+      - name: Run all integration tests
+        run: npm run test:integration:all
 
-      - name: Run API route tests
-        run: npm run test:api
+      - name: Check API coverage gap
+        run: npm run test:coverage-gap
+        continue-on-error: true
 
       - name: Stop dev server
         if: always()

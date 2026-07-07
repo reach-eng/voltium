@@ -65,3 +65,35 @@ export async function PUT(req: NextRequest) {
     return errors.internal('Failed to update ticket');
   }
 }
+
+export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) return adminUnauthorized();
+  if (!hasPermission(session.adminRole || '', 'tickets_manage')) return adminForbidden();
+
+  try {
+    const body = await req.json();
+    const { riderDbId, category, priority, subject, message } = body;
+    if (!riderDbId || !subject || !message) return errors.validation('Missing required fields');
+
+    const ticket = await supportUseCases.createTicket(riderDbId, {
+      riderId: riderDbId,
+      category: category || 'GENERAL',
+      priority: priority || 'LOW',
+      subject,
+      message,
+    });
+
+    await supportUseCases.logAdminAction(session.adminId || '', {
+      action: 'ticket.created_by_admin',
+      ticketId: ticket.id,
+      details: { category, priority, subject },
+    });
+
+    return success(ticket);
+  } catch (error) {
+    logger.error('POST /api/admin/tickets error:', error);
+    return errors.internal('Failed to create ticket');
+  }
+}
+

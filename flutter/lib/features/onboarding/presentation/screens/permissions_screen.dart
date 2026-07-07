@@ -13,6 +13,11 @@ class _PermissionItem {
   final String name;
   final String description;
   final IconData icon;
+  /// Whether the user MUST grant this permission to proceed past the
+  /// permissions screen. `ignoreBatteryOptimizations` is not required
+  /// because it lives in Android Settings (5+ taps) and only affects
+  /// background reliability, not core functionality.
+  final bool isRequired;
   bool isEnabled;
 
   _PermissionItem({
@@ -20,6 +25,7 @@ class _PermissionItem {
     required this.name,
     required this.description,
     required this.icon,
+    this.isRequired = true,
   }) : isEnabled = false;
 }
 
@@ -44,10 +50,18 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       icon: Icons.location_on_outlined,
     ),
     _PermissionItem(
+      id: 'notifications',
+      name: 'Notifications',
+      description: 'Receive important updates and alerts',
+      icon: Icons.notifications_active_outlined,
+    ),
+    _PermissionItem(
       id: 'battery',
-      name: 'Opt out of Battery Optimization',
-      description: 'Ensure app runs reliably in the background',
+      name: 'Battery Optimization (Recommended)',
+      description:
+          'Allow the app to run reliably in the background. You can change this later in Settings.',
       icon: Icons.battery_saver_outlined,
+      isRequired: false,
     ),
     _PermissionItem(
       id: 'camera',
@@ -94,6 +108,9 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           break;
         case 'camera':
           status = await Permission.camera.status;
+          break;
+        case 'notifications':
+          status = await Permission.notification.status;
           break;
         case 'mic':
           status = await Permission.microphone.status;
@@ -148,6 +165,9 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       case 'camera':
         status = await Permission.camera.request();
         break;
+      case 'notifications':
+        status = await Permission.notification.request();
+        break;
       case 'mic':
         status = await Permission.microphone.request();
         break;
@@ -161,12 +181,11 @@ class _PermissionsScreenState extends State<PermissionsScreen>
         status = await Permission.phone.request();
         break;
       case 'battery':
+        // Battery optimization is optional. Don't force the user into
+        // Settings; just record whether they granted it.
         status = await Permission.ignoreBatteryOptimizations.request();
         if (mounted) {
           setState(() => item.isEnabled = status.isGranted);
-        }
-        if (!status.isGranted) {
-          openAppSettings();
         }
         return;
       case 'device_admin':
@@ -346,9 +365,12 @@ class _PermissionsScreenState extends State<PermissionsScreen>
   }
 
   Widget _buildFooter() {
-    final allGranted = _permissions.every((p) => p.isEnabled);
+    // Only required permissions gate the Continue button. Battery
+    // optimization is optional (see _PermissionItem.isRequired).
+    final allRequiredGranted =
+        _permissions.where((p) => p.isRequired).every((p) => p.isEnabled);
     final isTestMode = AppConstants.isTestMode;
-    final canProceed = allGranted || isTestMode;
+    final canProceed = allRequiredGranted || isTestMode;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),

@@ -5,14 +5,15 @@ import { hasPermission } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (!hasPermission(session.adminRole || '', 'vehicles_view')) return adminForbidden();
 
   try {
+    const { id } = await context.params;
     const vehicle = await db.vehicle.findFirst({
-      where: { OR: [{ id: params.id }, { vehicleId: params.id }, { vehicleNumber: params.id }] },
+      where: { OR: [{ id: id }, { vehicleId: id }, { vehicleNumber: id }] },
       include: {
         hub: true,
         leases: {

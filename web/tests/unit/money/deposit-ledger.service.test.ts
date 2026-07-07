@@ -143,4 +143,159 @@ describe('depositLedgerService', () => {
     const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
     expect(wallet?.securityDeposit).toBe(0);
   });
+  it('should forfeit deposit', async () => {
+    await testDb.depositRecord.create({
+      data: {
+        riderId: riderDbId,
+        amountInPaise: 5000,
+        status: DepositStatus.APPROVED,
+      }
+    });
+
+    await testDb.wallet.update({
+      where: { riderId: riderDbId },
+      data: { securityDeposit: 5000 },
+    });
+
+    await depositLedgerService.forfeit({
+      riderId: riderDbId,
+      adminId: 'admin-1',
+      reason: 'Vehicle damaged',
+    });
+
+    const record = await testDb.depositRecord.findUnique({ where: { riderId: riderDbId } });
+    expect(record?.status).toBe('FORFEITED');
+    expect(record?.forfeitReason).toBe('Vehicle damaged');
+
+    const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
+    expect(wallet?.securityDeposit).toBe(0);
+  });
+
+  describe('Edge cases and State Transitions', () => {
+    it('throws DepositStateError if deposit record is missing', async () => {
+      await expect(depositLedgerService.approve({
+        riderId: 'non-existent-rider',
+        adminId: 'admin-1',
+      })).rejects.toThrow(); // Should be DepositStateError but rejects.toThrow() is sufficient
+    });
+
+    it('throws DepositStateError if wallet is missing', async () => {
+      // Create a rider without a wallet
+      const noWalletRiderId = uuidv4();
+      await testDb.rider.create({
+        data: {
+          id: noWalletRiderId,
+          riderId: `RD-${uuidv4().substring(0, 6)}`,
+          phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+          fullName: 'No Wallet Rider',
+          referralCode: `REF-${uuidv4().substring(0, 6)}`,
+        }
+      });
+      await testDb.depositRecord.create({
+        data: {
+          riderId: noWalletRiderId,
+          amountInPaise: 5000,
+          status: DepositStatus.PENDING,
+        }
+      });
+
+      await expect(depositLedgerService.approve({
+        riderId: noWalletRiderId,
+        adminId: 'admin-1',
+      })).rejects.toThrow();
+    });
+
+    it('throws DepositStateError on invalid transition (e.g. APPROVE on already APPROVED)', async () => {
+      await testDb.depositRecord.create({
+        data: {
+          riderId: riderDbId,
+          amountInPaise: 5000,
+          status: DepositStatus.APPROVED,
+        }
+      });
+
+      await expect(depositLedgerService.approve({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+      })).rejects.toThrow();
+    });
+
+    it('throws DepositStateError on REFUND of PENDING deposit', async () => {
+      await testDb.depositRecord.create({
+        data: {
+          riderId: riderDbId,
+          amountInPaise: 5000,
+          status: DepositStatus.PENDING,
+        }
+      });
+
+      await expect(depositLedgerService.refund({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+      })).rejects.toThrow();
+    });
+    
+    it('approving with a bonus credits the bonus to general balance', async () => {
+      await testDb.depositRecord.create({
+        data: {
+          riderId: riderDbId,
+          amountInPaise: 5000,
+          status: DepositStatus.PENDING,
+        }
+      });
+
+      await depositLedgerService.approve({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+        bonusAmountInPaise: 1000,
+      });
+
+      const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
+      expect(wallet?.securityDeposit).toBe(5000); // the deposit
+      expect(wallet?.balanceInPaise).toBe(1000);  // the bonus
+      
+      const entries = await walletRepository.getLedgerEntries(riderDbId);
+      // One for security deposit, one for the bonus (admin adjustment)
+      expect(entries).toHaveLength(2);
+      const bonusEntry = entries.find(e => e.category === 'ADMIN_ADJUSTMENT');
+      expect(bonusEntry).toBeDefined();
+      expect(bonusEntry?.amountInPaise).toBe(1000);
+    });
+
+    it('refunds custom amount with note', async () => {
+      await testDb.depositRecord.create({
+        data: {
+          riderId: riderDbId,
+          amountInPaise: 5000,
+          status: DepositStatus.APPROVED,
+        }
+      });
+
+      await testDb.wallet.update({
+        where: { riderId: riderDbId },
+        data: { securityDeposit: 5000 },
+      });
+
+      await depositLedgerService.refund({
+        riderId: riderDbId,
+        adminId: 'admin-1',
+        refundAmountInPaise: 2000, // partial refund
+        note: 'Partial refund due to outstanding balance',
+      });
+
+      const record = await testDb.depositRecord.findUnique({ where: { riderId: riderDbId } });
+      expect(record?.status).toBe('REFUNDED');
+      expect(record?.refundedAmountInPaise).toBe(2000);
+
+      const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
+      // Security deposit is debited by 2000, leaving 3000
+      expect(wallet?.securityDeposit).toBe(3000);
+      // General balance is credited by 2000
+      expect(wallet?.balanceInPaise).toBe(2000);
+      
+      const entries = await walletRepository.getLedgerEntries(riderDbId);
+      const creditRefund = entries.find(e => e.entryType === 'CREDIT' && e.category === 'REFUND');
+      expect(creditRefund?.note).toBe('Partial refund due to outstanding balance');
+    });
+  });
 });

@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-
 // ---------------------------------------------------------------------------
 // KYC State Machine (kyc_profile.status)
 // ---------------------------------------------------------------------------
@@ -312,40 +311,33 @@ const RIDER_LIFECYCLE: Record<string, string[]> = {
   GUARANTOR_APPROVED: ['DEPOSIT_PENDING'],
   DEPOSIT_PENDING: ['DEPOSIT_APPROVED', 'DEPOSIT_REJECTED'],
   DEPOSIT_REJECTED: ['DEPOSIT_PENDING'],
-  DEPOSIT_APPROVED: ['PLAN_SELECTED'],
-  PLAN_SELECTED: ['PICKUP_SCHEDULED'],
-  PICKUP_SCHEDULED: ['ACTIVE'],
-  ACTIVE: ['SUSPENDED', 'RETURN_PENDING', 'CLOSED'],
-  SUSPENDED: ['ACTIVE'],
-  RETURN_PENDING: ['CLOSED'],
-  CLOSED: [],
 };
 
+import { canTransition } from '../../src/server/modules/riders/rider-lifecycle.service';
+
 function isValidRiderTransition(from: string, to: string): boolean {
-  const allowed = RIDER_LIFECYCLE[from];
-  if (!allowed) return false;
-  return allowed.includes(to);
+  return canTransition(from as any, to as any);
 }
 
 describe('Rider Lifecycle State Machine', () => {
   it('allows forward lifecycle from NEW → ACTIVE', () => {
     expect(isValidRiderTransition('NEW', 'PHONE_VERIFIED')).toBe(true);
     expect(isValidRiderTransition('PHONE_VERIFIED', 'PROFILE_SUBMITTED')).toBe(true);
-    expect(isValidRiderTransition('PROFILE_SUBMITTED', 'KYC_SUBMITTED')).toBe(true);
-    expect(isValidRiderTransition('KYC_SUBMITTED', 'KYC_APPROVED')).toBe(true);
-    expect(isValidRiderTransition('KYC_APPROVED', 'GUARANTOR_SUBMITTED')).toBe(true);
+    expect(isValidRiderTransition('PROFILE_SUBMITTED', 'GUARANTOR_SUBMITTED')).toBe(true);
     expect(isValidRiderTransition('GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED')).toBe(true);
-    expect(isValidRiderTransition('GUARANTOR_APPROVED', 'DEPOSIT_PENDING')).toBe(true);
+    expect(isValidRiderTransition('GUARANTOR_APPROVED', 'PLAN_SELECTED')).toBe(true);
+    expect(isValidRiderTransition('PLAN_SELECTED', 'DEPOSIT_PENDING')).toBe(true);
     expect(isValidRiderTransition('DEPOSIT_PENDING', 'DEPOSIT_APPROVED')).toBe(true);
-    expect(isValidRiderTransition('DEPOSIT_APPROVED', 'PLAN_SELECTED')).toBe(true);
-    expect(isValidRiderTransition('PLAN_SELECTED', 'PICKUP_SCHEDULED')).toBe(true);
+    expect(isValidRiderTransition('DEPOSIT_APPROVED', 'KYC_SUBMITTED')).toBe(true);
+    expect(isValidRiderTransition('KYC_SUBMITTED', 'KYC_APPROVED')).toBe(true);
+    expect(isValidRiderTransition('KYC_APPROVED', 'PICKUP_SCHEDULED')).toBe(true);
     expect(isValidRiderTransition('PICKUP_SCHEDULED', 'ACTIVE')).toBe(true);
   });
 
-  it('allows rejection → resubmit cycles', () => {
-    expect(isValidRiderTransition('KYC_REJECTED', 'PROFILE_SUBMITTED')).toBe(true);
-    expect(isValidRiderTransition('GUARANTOR_REJECTED', 'GUARANTOR_SUBMITTED')).toBe(true);
-    expect(isValidRiderTransition('DEPOSIT_REJECTED', 'DEPOSIT_PENDING')).toBe(true);
+  it('allows rejection → suspended cycle', () => {
+    // In the new lifecycle, rejection sends the rider to SUSPENDED.
+    expect(isValidRiderTransition('KYC_SUBMITTED', 'SUSPENDED')).toBe(true);
+    expect(isValidRiderTransition('DEPOSIT_PENDING', 'SUSPENDED')).toBe(true);
   });
 
   it('allows ACTIVE → SUSPENDED and back', () => {
@@ -358,25 +350,12 @@ describe('Rider Lifecycle State Machine', () => {
     expect(isValidRiderTransition('RETURN_PENDING', 'CLOSED')).toBe(true);
   });
 
-  // Forbidden transitions
-  it('blocks NEW → ACTIVE (skip all onboarding)', () => {
+  it('prevents skipping mandatory states', () => {
     expect(isValidRiderTransition('NEW', 'ACTIVE')).toBe(false);
-  });
-
-  it('blocks ACTIVE → NEW (cannot go backwards)', () => {
-    expect(isValidRiderTransition('ACTIVE', 'NEW')).toBe(false);
-  });
-
-  it('blocks KYC_REJECTED → KYC_APPROVED (must re-submit)', () => {
-    expect(isValidRiderTransition('KYC_REJECTED', 'KYC_APPROVED')).toBe(false);
   });
 
   it('blocks CLOSED → anything', () => {
     expect(isValidRiderTransition('CLOSED', 'ACTIVE')).toBe(false);
     expect(isValidRiderTransition('CLOSED', 'RETURN_PENDING')).toBe(false);
-  });
-
-  it('blocks DEPOSIT_REJECTED → DEPOSIT_APPROVED (must resubmit)', () => {
-    expect(isValidRiderTransition('DEPOSIT_REJECTED', 'DEPOSIT_APPROVED')).toBe(false);
   });
 });

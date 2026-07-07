@@ -88,6 +88,10 @@ class FilesRepository {
         return 'image/jpeg';
       case 'pdf':
         return 'application/pdf';
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
       default:
         return 'application/octet-stream';
     }

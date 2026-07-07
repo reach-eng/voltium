@@ -41,19 +41,21 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
       return const PreDashboardSkeleton();
     }
 
-    final kycDone = rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4);
-    final kycVerified = rider.kycStatus == KycStatus.verified || rider.kycDone;
-    final kycRejected = rider.kycStatus == KycStatus.rejected;
-    final kycSubmitted = rider.kycStatus == KycStatus.submitted;
-    final depositDone = rider.depositDone ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 8);
+    final registrationDone = rider.registrationDone ||
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 3);
     final planDone = rider.planDone ||
         (rider.currentPlan?.isNotEmpty ?? false) ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 9);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4);
+    final depositDone = rider.depositDone ||
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 6);
+    final kycApproved = rider.kycDone ||
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 8);
     final pickupDone = rider.pickupDone ||
         (rider.assignedVehicle?.isNotEmpty ?? false) ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 10);
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 9);
+
+    final kycRejected = rider.kycStatus == KycStatus.rejected;
+    final kycSubmitted = rider.kycStatus == KycStatus.submitted;
 
     // Redirect to full dashboard (Screen 5) when vehicle is picked up
     if (pickupDone && !_redirected) {
@@ -85,7 +87,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                       delay: 0,
                       child: PreDashboardBanner(
                         kycRejected: kycRejected,
-                        kycVerified: kycVerified,
+                        kycVerified: kycApproved,
                         planDone: planDone,
                       ),
                     ),
@@ -96,7 +98,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                       delay: 50,
                       child: PreDashboardProfileCard(
                         rider: rider,
-                        kycVerified: kycVerified,
+                        kycVerified: kycApproved,
                         kycRejected: kycRejected,
                       ),
                     ),
@@ -134,8 +136,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         ),
                       ),
 
-                    // Active Plan Card (State 5)
-                    if (kycVerified && planDone && !pickupDone)
+                    if (planDone && !pickupDone)
                       FadeUpWidget(
                         delay: 150,
                         child: PlanCard(
@@ -145,8 +146,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         ),
                       ),
 
-                    // CTA Card (State 4 - KYC approved, plan pending)
-                    if (kycVerified && !planDone)
+                    // CTA Card (State 2 - Registration done, plan pending)
+                    if (registrationDone && !planDone)
                       FadeUpWidget(
                         delay: 150,
                         child: PreDashboardCtaCard.bookVehicle(
@@ -155,12 +156,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         ),
                       ),
 
-                    // Start Registration CTA (State 1 - initial, no KYC started)
-                    if (!kycDone &&
-                        !kycRejected &&
-                        !kycSubmitted &&
-                        !planDone &&
-                        !pickupDone)
+                    // Start Registration CTA (State 1 - initial, no registration started)
+                    if (!registrationDone && !kycRejected && !kycSubmitted)
                       FadeUpWidget(
                         delay: 160,
                         child: PreDashboardCtaCard.startRegistration(
@@ -178,8 +175,8 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         context,
                         rider,
                         depositDone,
-                        kycDone,
-                        kycVerified,
+                        registrationDone,
+                        kycApproved,
                         kycRejected,
                         kycSubmitted,
                         planDone,
@@ -189,21 +186,20 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Wallet Card
-                    FadeUpWidget(
-                      delay: 250,
-                      child: WalletCard(
-                        walletBalance: rider.walletBalance,
-                        requiredPayment: rider.activeRentalPlanPrice > 0
-                            ? rider.activeRentalPlanPrice
-                            : walletMinTopup,
-                        paymentStreak: rider.paymentStreak,
-                        currentPlan: rider.currentPlan,
-                        onTopUp: () =>
-                            widget.onStepNavigation(AuthState.topUpPurpose),
-                        compact: true,
+                    // Wallet Card (Appears after plan selected until deposit approved)
+                    if (planDone && !depositDone)
+                      FadeUpWidget(
+                        delay: 250,
+                        child: WalletCard(
+                          walletBalance: rider.walletBalance,
+                          requiredPayment: (rider.activeRentalPlanPrice > 0 ? rider.activeRentalPlanPrice : walletMinTopup) + (rider.activeRentalPlanSecurityDeposit ),
+                          paymentStreak: rider.paymentStreak,
+                          currentPlan: rider.currentPlan,
+                          onTopUp: () =>
+                              widget.onStepNavigation(AuthState.topUpPurpose),
+                          compact: true,
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 16),
 
                     // Referral Card
@@ -441,21 +437,21 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
     BuildContext context,
     RiderModel rider,
     bool depositDone,
-    bool kycDone,
-    bool kycVerified,
+    bool registrationDone,
+    bool kycApproved,
     bool kycRejected,
     bool kycSubmitted,
     bool planDone,
     bool pickupDone,
     AppProvider provider,
   ) {
-    // Screen 3b: KYC Rejection (when kycRejected)
+    // Screen 4: KYC Rejection
     if (kycRejected) {
       return _buildRejectionCard(context, rider);
     }
 
-    // Screen 4: Pickup Vehicle CTA (when planDone && !pickupDone)
-    if (planDone && !pickupDone) {
+    // Screen 5: Pickup Vehicle CTA (when deposit & KYC are done)
+    if (depositDone && kycApproved && !pickupDone) {
       return _buildPickupButton(context);
     }
 

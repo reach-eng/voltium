@@ -10,6 +10,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  serverExternalPackages: ['pino', 'pino-pretty'],
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',

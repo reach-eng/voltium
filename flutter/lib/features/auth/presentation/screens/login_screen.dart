@@ -367,7 +367,8 @@ class _LoginScreenState extends State<LoginScreen>
                       key: const Key('phoneInput'),
                       controller: _phoneController,
                       focusNode: _phoneFocusNode,
-                      keyboardType: TextInputType.text,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),

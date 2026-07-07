@@ -359,6 +359,8 @@ export const riderUseCases = {
     const guarantorData: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(input)) {
+      if (value === undefined || value === null) continue;
+
       if (SAFE_RIDER_FIELDS.has(key)) {
         riderData[key] = typeof value === 'string' ? sanitizeText(value) : value;
       } else if (SAFE_KYC_FIELDS.has(key)) {
@@ -437,6 +439,35 @@ export const riderUseCases = {
         },
         update: { ...(guarantorData as any), status: 'SUBMITTED' },
       });
+    }
+
+    // Advance lifecycle based on submissions
+    const currentRider = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+    
+    if (currentRider) {
+      // 1. If Guarantor data is present, move from PROFILE_SUBMITTED to GUARANTOR_SUBMITTED (Guarantor Form completed)
+      if (Object.keys(guarantorData).length > 0) {
+        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+        if (freshStatus?.lifecycleStatus === 'PROFILE_SUBMITTED') {
+          await transitionRiderStatus(riderDbId, 'GUARANTOR_SUBMITTED');
+        }
+      }
+
+      // 2. If KYC data is present, move from DEPOSIT_APPROVED to KYC_SUBMITTED (KYC Form completed)
+      if (Object.keys(kycData).length > 0) {
+        if (currentRider.lifecycleStatus === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PHONE_VERIFIED');
+        }
+        
+        const freshStatus = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
+        if (freshStatus?.lifecycleStatus === 'PHONE_VERIFIED' || freshStatus?.lifecycleStatus === 'NEW') {
+          await transitionRiderStatus(riderDbId, 'PROFILE_SUBMITTED');
+        }
+        
+        if (freshStatus?.lifecycleStatus === 'DEPOSIT_APPROVED') {
+          await transitionRiderStatus(riderDbId, 'KYC_SUBMITTED');
+        }
+      }
     }
 
     // Return updated profile

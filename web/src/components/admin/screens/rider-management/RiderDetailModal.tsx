@@ -637,7 +637,7 @@ export function RiderDetailModal({
                             isEditing={isEditing}
                             field="guarantorStatus"
                             type="select"
-                            options={['PENDING', 'SUBMITTED', 'VERIFIED', 'APPROVED', 'REJECTED']}
+                            options={['PENDING', 'VERIFIED', 'APPROVED', 'REJECTED']}
                             onEdit={(v) => setEditForm({ ...editForm, guarantorStatus: v })}
                           />
                         </div>
@@ -734,11 +734,6 @@ export function RiderDetailModal({
                         </h4>
                         <div className="space-y-3">
                           {[
-                            {
-                              label: 'Registration',
-                              key: 'registrationDone',
-                              dateKey: 'registrationDoneAt',
-                            },
                             { label: 'Deposit', key: 'depositDone', dateKey: 'depositDoneAt' },
                             { label: 'KYC', key: 'kycDone', dateKey: 'kycDoneAt' },
                             { label: 'Plan', key: 'planDone', dateKey: 'planDoneAt' },

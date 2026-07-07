@@ -42,6 +42,9 @@ export async function POST(req: NextRequest) {
     if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'Plan is not active') {
       return errors.badRequest('Plan is not active');
     }
+    if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INVALID_STATE_FOR_PLAN_SELECTION') {
+      return errors.badRequest('Invalid state for plan selection. Please complete previous steps.');
+    }
     if (
       err instanceof Error &&
       ((err instanceof Error ? err.message : String(err)) === 'Rider not found' || (err instanceof Error ? err.message : String(err)) === 'Plan not found')

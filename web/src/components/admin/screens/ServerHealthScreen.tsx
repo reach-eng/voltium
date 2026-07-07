@@ -43,12 +43,24 @@ export default function ServerHealthScreen() {
         databaseStatus: dbInfo?.status === 'healthy' ? 'RUNNING' : 'DOWN',
         databasePool: `Migrations pending: ${dbInfo?.pendingMigrations ?? 0}`,
         localStorage:
-          storage?.status === 'healthy' ? `Writable (${storage.storageRoot})` : 'Not Writable',
-        localStorageStatus: storage?.status === 'healthy' ? 'WRITABLE' : 'ERROR',
-        backupStorage: 'Configured & Active',
-        backupStorageStatus: 'WRITABLE',
-        secondaryBackup: 'Secondary root check active',
-        secondaryBackupStatus: 'CONNECTED',
+          storage?.checks?.uploads?.writable
+            ? `Writable (${storage.storageRoot})`
+            : 'Not Writable',
+        localStorageStatus: storage?.checks?.uploads?.writable ? 'WRITABLE' : 'ERROR',
+        backupStorage: storage?.checks?.backups?.writable
+          ? 'Configured & Active'
+          : 'Not Writable',
+        backupStorageStatus: storage?.checks?.backups?.writable ? 'WRITABLE' : 'ERROR',
+        secondaryBackup: storage?.checks?.secondary
+          ? storage.checks.secondary.writable
+            ? 'Secondary root check active'
+            : `Not connected (${storage.secondaryBackupRoot})`
+          : 'Not configured',
+        secondaryBackupStatus: storage?.checks?.secondary
+          ? storage.checks.secondary.writable
+            ? 'CONNECTED'
+            : 'DISCONNECTED'
+          : 'N/A',
         freeDiskGb: freeGb,
         totalDiskGb: totalGb,
         cpuUsage: usagePercent ? `${usagePercent}% (Disk Usage)` : 'Disk Metrics unavailable',
@@ -229,7 +241,9 @@ export default function ServerHealthScreen() {
                   className={
                     health?.secondaryBackupStatus === 'CONNECTED'
                       ? 'bg-emerald-600 text-white'
-                      : 'bg-muted text-muted-foreground'
+                      : health?.secondaryBackupStatus === 'DISCONNECTED'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-muted text-muted-foreground'
                   }
                 >
                   {health?.secondaryBackupStatus ?? '—'}

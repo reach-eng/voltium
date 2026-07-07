@@ -85,4 +85,24 @@ describe('Rider API Coverage Integration Tests', () => {
     });
     expect([200, 201, 204, 400, 404, 422]).toContain(status);
   });
+
+  describe('Negative Scenarios (400, 401, 403, 404)', () => {
+    it('returns 401/403 for unauthenticated access', async () => {
+      const res = await fetch(`${BASE}/api/rider/dashboard`);
+      expect(res.status).toBeGreaterThanOrEqual(401);
+    });
+
+    it('returns 404 for unknown rider routes', async () => {
+      const { status } = await api('/api/rider/unknown-route-xyz');
+      expect(status).toBe(404);
+    });
+
+    it('returns 400/422 for malformed sync payload', async () => {
+      const { status } = await api('/api/rider/sync/pickup', {
+        method: 'POST',
+        body: JSON.stringify({ invalid: 'data' }), // missing required fields
+      });
+      expect(status).toBeGreaterThanOrEqual(400);
+    });
+  });
 });

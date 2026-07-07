@@ -160,11 +160,12 @@ export async function middleware(request: NextRequest) {
   // ── CORS ────────────────────────────────────────────────────────────────
   const origin = request.headers.get('origin');
   const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) ?? [];
+  const isLocalhost = origin && origin.startsWith('http://localhost:');
 
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && (allowedOrigins.includes(origin) || !isProd || isLocalhost)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-correlation-id, Idempotency-Key, Api-Version, Accept, Origin, X-Requested-With');
     response.headers.set('Access-Control-Allow-Credentials', 'true');
     response.headers.set('Access-Control-Max-Age', '86400');
   }
@@ -187,7 +188,8 @@ export async function middleware(request: NextRequest) {
     try {
       const originHost = new URL(origin).host;
       const host = request.headers.get('host');
-      if (host && originHost !== host) {
+      const isLocalhostOrigin = originHost.startsWith('localhost:') || originHost === 'localhost';
+      if (host && originHost !== host && !allowedOrigins.includes(origin) && !isLocalhostOrigin) {
         return rejectCsrf('CSRF validation failed: origin mismatch');
       }
     } catch {

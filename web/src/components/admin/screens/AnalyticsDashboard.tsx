@@ -131,7 +131,7 @@ export default function AnalyticsDashboard() {
     if (!data) return;
     const rows = [
       'Ryd Financial Report',
-      `Generated: ${formatDateTimeDDMMYYYY()}`,
+      `Generated: ${formatDateTimeDDMMYYYY(new Date().toISOString())}`,
       '',
       'Key Metrics',
       `MRR,${data.overview.currentMRR}`,

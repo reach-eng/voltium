@@ -49,12 +49,6 @@ const pinoInstance = pino({
   formatters: {
     log: (obj) => maskSensitiveData(obj) as Record<string, unknown>,
   },
-  ...(process.env.NODE_ENV !== 'production' && {
-    transport: {
-      target: 'pino-pretty',
-      options: { colorize: true }
-    }
-  })
 });
 
 export const logger = {

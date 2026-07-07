@@ -193,6 +193,8 @@ async function checkScheduledBackups(): Promise<void> {
 let running = false;
 const activeJobs = new Set<Promise<any>>();
 
+let globalAbortController: AbortController | null = null;
+
 export async function startWorkers(injectedClock: typeof clock = clock): Promise<void> {
   if (running) {
     logger.warn('[Workers] Already running');
@@ -200,6 +202,7 @@ export async function startWorkers(injectedClock: typeof clock = clock): Promise
   }
 
   running = true;
+  globalAbortController = new AbortController();
   logger.info('[Workers] Starting all workers', {
     workerCount: WORKERS.length,
     scheduledTaskCount: SCHEDULED_TASKS.length,
@@ -302,11 +305,23 @@ async function runReaperLoop(injectedClock: typeof clock): Promise<void> {
 
 export function stopWorkers(): void {
   running = false;
+  if (globalAbortController) {
+    globalAbortController.abort();
+  }
   logger.info('[Workers] Stopping all workers');
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    if (!running || !globalAbortController) {
+      return resolve();
+    }
+    const timeout = setTimeout(resolve, ms);
+    globalAbortController.signal.addEventListener('abort', () => {
+      clearTimeout(timeout);
+      resolve();
+    }, { once: true });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -323,6 +338,8 @@ const isDirectRun =
   process.argv.length >= 2 &&
   (process.argv[1]?.endsWith('workers/index.ts') ||
     process.argv[1]?.endsWith('workers/index.js') ||
+    process.argv[1]?.endsWith('workers\\index.ts') ||
+    process.argv[1]?.endsWith('workers\\index.js') ||
     process.argv[1]?.endsWith('workers\\\\index.ts') ||
     process.argv[1]?.endsWith('workers\\\\index.js') ||
     process.argv[1]?.endsWith('workers.js') ||

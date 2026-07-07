@@ -11,7 +11,7 @@
 import { db } from '@/lib/db';
 import { validateRentalTransition, RentalStateError } from './rental-state-machine';
 import type { RentalStatus } from './rental.types';
-import { validateRiderTransition } from '@/server/modules/riders/rider-lifecycle.state-machine';
+import { validateTransition as validateRiderTransition } from '@/server/modules/riders/rider-lifecycle.service';
 import { Prisma } from '@prisma/client';
 
 export const rentalRepository = {

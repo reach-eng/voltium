@@ -317,7 +317,7 @@ export default function IncidentManagementScreen() {
     const report = [
       `${BRAND_DOMAIN} Incident Report`,
       `Incident ID: ${incident.incidentId}`,
-      `Generated: ${formatDateTimeDDMMYYYY()}`,
+      `Generated: ${formatDateTimeDDMMYYYY(new Date().toISOString())}`,
       '',
       'Details',
       `Title,${incident.title}`,
@@ -563,7 +563,10 @@ export default function IncidentManagementScreen() {
 
       {/* Create Incident Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          className="sm:max-w-lg max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
@@ -694,7 +697,10 @@ export default function IncidentManagementScreen() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">

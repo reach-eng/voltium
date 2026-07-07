@@ -49,8 +49,7 @@ export async function signRiderUrlsWithProvider(rider: any, storage: any) {
     const url = signedRider[field];
     if (
       url &&
-      typeof url === 'string' &&
-      (url.startsWith('http') || url.startsWith('/api/files'))
+      typeof url === 'string'
     ) {
       if (signedCache.has(url)) {
         signedRider[field] = signedCache.get(url)!;
@@ -77,8 +76,7 @@ export async function signRiderUrlsWithProvider(rider: any, storage: any) {
         const url = signedRider.returnPhotos[key];
         if (
           url &&
-          typeof url === 'string' &&
-          (url.startsWith('http') || url.startsWith('/api/files'))
+          typeof url === 'string'
         ) {
           try {
             signedRider.returnPhotos[key] = await storage.getSignedReadUrl(url);

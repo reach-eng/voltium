@@ -92,6 +92,29 @@ export default function TeamLeaderManagement() {
   const [bulkDeleteTargets, setBulkDeleteTargets] = useState<string[] | null>(null);
   const PAGE_SIZE = 21;
 
+  const [statsModalOpen, setStatsModalOpen] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [selectedTlStats, setSelectedTlStats] = useState<any>(null);
+
+  const viewStats = async (leader: TeamLeader) => {
+    setStatsModalOpen(true);
+    setStatsLoading(true);
+    setSelectedTlStats(null);
+    try {
+      const res = await fetch(`/api/admin/team-leaders/${leader.id}/riders`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setSelectedTlStats({ leader, data: json.data });
+        }
+      }
+    } catch {
+      toast.error('Failed to load stats');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -619,6 +642,14 @@ export default function TeamLeaderManagement() {
                         ) : null}
                         {l.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="dark:text-white"
+                        onClick={() => viewStats(l)}
+                      >
+                        Drivers & Stats
+                      </Button>
                       <div className="flex gap-1">
                         <Button
                           variant="ghost"
@@ -802,6 +833,99 @@ export default function TeamLeaderManagement() {
           </div>
         </div>
       )}
+      {/* Stats Modal */}
+      <Dialog open={statsModalOpen} onOpenChange={setStatsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedTlStats ? `${selectedTlStats.leader.name}'s Drivers & Stats` : 'Drivers & Stats'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto min-h-0 pr-2">
+            {statsLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : selectedTlStats ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 text-center">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">Total Riders</p>
+                    <p className="text-2xl font-black mt-1">{selectedTlStats.data.stats.totalRiders}</p>
+                  </div>
+                  <div className="bg-destructive/5 p-4 rounded-xl border border-destructive/20 text-center">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">Churned</p>
+                    <p className="text-2xl font-black mt-1 text-destructive">{selectedTlStats.data.stats.churned}</p>
+                  </div>
+                  <div className="bg-red-500/5 p-4 rounded-xl border border-red-500/20 text-center">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">Overdue Rent</p>
+                    <p className="text-2xl font-black mt-1 text-red-600">{selectedTlStats.data.stats.overdueRent}</p>
+                  </div>
+                  <div className="bg-orange-500/5 p-4 rounded-xl border border-orange-500/20 text-center">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">Upcoming Rent</p>
+                    <p className="text-2xl font-black mt-1 text-orange-600">{selectedTlStats.data.stats.upcomingRent}</p>
+                  </div>
+                  <div className="bg-emerald-500/5 p-4 rounded-xl border border-emerald-500/20 text-center">
+                    <p className="text-xs font-bold uppercase text-muted-foreground">Timely Rent</p>
+                    <p className="text-2xl font-black mt-1 text-emerald-600">{selectedTlStats.data.stats.timelyRent}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold mb-3">Drivers List</h3>
+                  <div className="rounded-xl border shadow-sm overflow-hidden">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-muted/50 text-xs uppercase font-medium text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">Rider</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Wallet Balance</th>
+                          <th className="px-4 py-3">Scooter Overdue</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {selectedTlStats.data.riders.map((r: any) => (
+                          <tr key={r.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-foreground">{r.fullName || 'Unknown'}</div>
+                              <div className="text-xs text-muted-foreground">{r.riderId} • {r.phone}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline">{r.lifecycleStatus}</Badge>
+                            </td>
+                            <td className="px-4 py-3 font-medium">
+                              <span className={r.isOverdue ? 'text-destructive' : r.isUpcoming ? 'text-orange-500' : 'text-emerald-500'}>
+                                ₹{(r.balance / 100).toFixed(2)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">
+                              {r.hasOverdueScooter ? (
+                                <Badge variant="destructive">Yes</Badge>
+                              ) : (
+                                <span className="text-muted-foreground">No</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                        {selectedTlStats.data.riders.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                              No riders found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter className="mt-4 pt-4 border-t">
+            <Button variant="outline" onClick={() => setStatsModalOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

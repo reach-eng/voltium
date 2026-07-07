@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:voltium_rider/models/plan_model.dart';
 import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 class ChoosePlanScreen extends StatefulWidget {
@@ -29,6 +30,10 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
   }
 
   Future<void> _fetchPlans() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final response = await VoltiumApiService().fetchPlans();
       if (!mounted) return;
@@ -62,7 +67,9 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      print('FETCH PLANS ERROR: $e');
+      print(stack);
       if (!mounted) return;
       setState(() {
         _error = 'Connection error. Please try again.';
@@ -77,7 +84,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
     setState(() => _isSubmitting = true);
     try {
       final provider = context.read<AppProvider>();
-      final riderId = provider.rider?.id;
+      final riderId = provider.riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -94,24 +101,19 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         securityDeposit: securityDeposit,
       );
 
-      if (response['success'] == true) {
-        // Refresh profile to update planDone flag
-        await provider.refreshFromApi();
-        widget.onNext();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['message'] ?? 'Subscription failed'),
-            ),
-          );
-        }
-      }
+      // If no exception was thrown, the API call succeeded.
+      // Refresh profile to update planDone flag
+      await provider.refreshFromApi();
+      widget.onNext();
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Failed to subscribe. Please try again.';
+        if (e is ApiException) {
+          errorMessage = e.message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to subscribe. Check your balance.'),
+          SnackBar(
+            content: Text(errorMessage),
           ),
         );
       }
@@ -466,10 +468,10 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                 ),
                                         ],
                                       ),
-                                      if (plan.description.isNotEmpty) ...[
+                                      if (plan.description?.isNotEmpty == true) ...[
                                         const SizedBox(height: 6),
                                         Text(
-                                          plan.description,
+                                          plan.description ?? '',
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: isSelected
@@ -605,7 +607,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                       ),
                                     )
                                   : const Text(
-                                      'Confirm New Plan',
+                                      'Confirm Plan',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,

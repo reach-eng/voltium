@@ -104,7 +104,7 @@ export function flattenRider(rider: RiderWithRelations) {
     guarantorName: guarantor?.name ?? null,
     guarantorRelation: guarantor?.relation ?? null,
     guarantorDob: guarantor?.dob ?? null,
-    guarantorPhone: maskPhone(guarantor?.phone ?? null),
+    guarantorPhone: guarantor?.phone ?? null,
     guarantorAadhaarFront: guarantor?.aadhaarFront ?? null,
     guarantorAadhaarBack: guarantor?.aadhaarBack ?? null,
     guarantorPan: guarantor?.pan ?? null,
@@ -120,8 +120,17 @@ export function flattenRider(rider: RiderWithRelations) {
     currentPlanPrice: rider.currentPlanPrice ?? null,
     assignedVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
+    deliveryId: rider.deliveryId ?? null,
+    intent: rider.intent ?? null,
+    emergencyContact: rider.emergencyContact ?? null,
     planStartDate: rider.planStartDate ? new Date(rider.planStartDate as Date).toISOString() : null,
     planEndDate: rider.planEndDate ? new Date(rider.planEndDate as Date).toISOString() : null,
+
+    locationGranted: rider.locationGranted ?? false,
+    cameraGranted: rider.cameraGranted ?? false,
+
+    contactsGranted: rider.contactsGranted ?? false,
+    phoneGranted: rider.phoneGranted ?? false,
 
     // --- Rental Return fields ---
     returnPending: rider.vehicleReturns?.some((v: any) => v.status === 'SUBMITTED') ?? false,
@@ -184,6 +193,12 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     planDone: rank >= 9,
     pickupDone: rank >= 10,
     name: rider.fullName ?? '', // Compatibility alias
+    intent: rider.intent ?? null,
+    locationGranted: rider.locationGranted ?? false,
+    cameraGranted: rider.cameraGranted ?? false,
+
+    contactsGranted: rider.contactsGranted ?? false,
+    phoneGranted: rider.phoneGranted ?? false,
   };
 
   // Flatten kycProfile if present
@@ -222,7 +237,7 @@ export function flattenRiderPartial(rider: RiderPartial & Record<string, unknown
     result.guarantorName = g.name ?? null;
     result.guarantorRelation = g.relation ?? null;
     result.guarantorDob = g.dob ?? null;
-    result.guarantorPhone = maskPhone((g.phone as string) ?? null);
+    result.guarantorPhone = (g.phone as string) ?? null;
     result.guarantorFatherName = g.fatherName ?? null;
     result.guarantorMotherName = g.motherName ?? null;
     result.guarantorAadhaarFront = g.aadhaarFront ?? null;

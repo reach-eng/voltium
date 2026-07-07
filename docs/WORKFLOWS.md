@@ -9,9 +9,8 @@
 ### Rider Lifecycle (Top-Level)
 
 ```
-NEW → PHONE_VERIFIED → PROFILE_SUBMITTED → KYC_SUBMITTED → KYC_APPROVED
-→ GUARANTOR_SUBMITTED → GUARANTOR_APPROVED → DEPOSIT_PENDING
-→ DEPOSIT_APPROVED → PLAN_SELECTED → PICKUP_SCHEDULED → ACTIVE
+NEW → PHONE_VERIFIED → PROFILE_SUBMITTED → KYC_SUBMITTED → PLAN_SELECTED
+→ DEPOSIT_PENDING → DEPOSIT_APPROVED → KYC_APPROVED → PICKUP_SCHEDULED → ACTIVE
 ```
 
 ### Active Rider States
@@ -104,7 +103,7 @@ ACTIVE → RETURN_PENDING → CLOSED
 | 1 | Admin UI | View KYC documents | — |
 | 2 | Admin UI | Approve or reject with reason | — |
 | 3 | API | Update KYC status | → KYC_APPROVED / KYC_REJECTED |
-| 4 | API | Update rider lifecycle | `state: KYC_APPROVED` or revert |
+| 4 | API | Update rider lifecycle | `state: PICKUP_SCHEDULED` (if deposit is also approved) or revert |
 | 5 | API | Send notification to rider | — |
 | 6 | Audit | Log admin action | — |
 
@@ -115,9 +114,9 @@ ACTIVE → RETURN_PENDING → CLOSED
 
 ---
 
-## 6. Guarantor Submission
+## 6. Guarantor Submission (DEPRECATED)
 
-**Trigger**: Rider submits guarantor details
+**Trigger**: Rider submits guarantor details (Workflow deprecated, skipped in app)
 
 | Step | Component | Action | Status Change |
 |------|-----------|--------|---------------|
@@ -133,9 +132,9 @@ ACTIVE → RETURN_PENDING → CLOSED
 
 ---
 
-## 7. Guarantor Approval/Rejection
+## 7. Guarantor Approval/Rejection (DEPRECATED)
 
-**Trigger**: Admin reviews guarantor submission
+**Trigger**: Admin reviews guarantor submission (Workflow deprecated)
 
 | Step | Component | Action | Status Change |
 |------|-----------|--------|---------------|
@@ -183,6 +182,7 @@ ACTIVE → RETURN_PENDING → CLOSED
 | 5 | Wallet | Update wallet balance | `wallet.balanceInPaise += amount` |
 | 6 | Audit | Log admin action | — |
 | 7 | API | Send notification to rider | — |
+| 8 | API | Update rider lifecycle | `state: KYC_APPROVED` (if KYC was already approved) |
 
 **Actors**: Admin (FINANCE_ADMIN role)
 **API Routes**: `POST /api/admin/transactions` (approve/reject)
@@ -305,7 +305,7 @@ ACTIVE → RETURN_PENDING → CLOSED
 | 2 | Flutter | Select plan (daily/weekly/monthly) | — |
 | 3 | API | Subscribe rider to plan | `rider.currentPlan: set` |
 | 4 | API | Create rental lease | `lease.status: BOOKED` |
-| 5 | API | Update rider lifecycle | → PLAN_SELECTED |
+| 5 | API | Update rider lifecycle | → DEPOSIT_PENDING |
 
 **Actors**: Rider
 **API Routes**: Rental booking routes

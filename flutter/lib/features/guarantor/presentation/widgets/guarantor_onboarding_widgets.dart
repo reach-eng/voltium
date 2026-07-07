@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/features/kyc/presentation/widgets/user_onboarding_widgets.dart'
     show DocTile;
@@ -228,8 +229,11 @@ class GuarantorDetailsCard extends StatelessWidget {
                 key: const Key('guarantorPhoneField'),
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
+                maxLength: 10,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 enabled: !isPhoneVerified,
                 decoration: InputDecoration(
+                  counterText: '',
                   hintText: 'Enter 10-digit number',
                   hintStyle:
                       const TextStyle(color: AppColors.slate400, fontSize: 14),
@@ -269,6 +273,7 @@ class GuarantorDetailsCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
+                    minimumSize: const Size(100, 52), // Override global double.infinity
                   ),
                   child: isSendingOtp
                       ? const SizedBox(
@@ -321,36 +326,41 @@ class GuarantorDetailsCard extends StatelessWidget {
           const SizedBox(height: 8),
           otpBoxes,
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              key: const Key('verifyOtpButton'),
-              onPressed: isVerifyingOtp ? null : onVerifyOtp,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: isVerifyingOtp
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    key: const Key('verifyOtpButton'),
+                    onPressed: isVerifyingOtp ? null : onVerifyOtp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                  : const Text(
-                      'VERIFY OTP',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      elevation: 0,
                     ),
-            ),
+                    child: isVerifyingOtp
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'VERIFY OTP',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ],
@@ -708,7 +718,11 @@ class GuarantorOnboardingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      height: 56,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Row(
@@ -719,7 +733,7 @@ class GuarantorOnboardingHeader extends StatelessWidget {
             ),
             const Expanded(
               child: Text(
-                'Onboarding',
+                'Guarantor\'s Onboarding',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
@@ -727,6 +741,7 @@ class GuarantorOnboardingHeader extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.only(right: 8),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -759,21 +774,11 @@ class GuarantorOnboardingProgressSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5E7EB),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: 1.0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.success,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              height: 8,
+              color: AppColors.success,
             ),
           ),
           const SizedBox(height: 24),
@@ -847,13 +852,17 @@ class GuarantorOnboardingOtpBoxes extends StatelessWidget {
 class GuarantorOnboardingBottomButton extends StatelessWidget {
   final bool canProceed;
   final bool isUploading;
+  final String uploadProgressText;
   final VoidCallback? onSubmit;
+  final VoidCallback? onSkip;
 
   const GuarantorOnboardingBottomButton({
     super.key,
     required this.canProceed,
     required this.isUploading,
+    this.uploadProgressText = '',
     this.onSubmit,
+    this.onSkip,
   });
 
   @override
@@ -861,45 +870,82 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          key: const Key('completeOnboardingButton'),
-          onPressed: canProceed && !isUploading ? onSubmit : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canProceed ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
-            disabledBackgroundColor: const Color(0xFF9CA3AF),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: isUploading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+      child: Row(
+        children: [
+          if (onSkip != null) ...[
+            SizedBox(
+              height: 52,
+              child: TextButton(
+                key: const Key('skipGuarantorButton'),
+                onPressed: isUploading ? null : onSkip,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF6B7280),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'FINISH SETUP',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.check, color: Colors.white, size: 18),
-                  ],
                 ),
-        ),
+                child: const Text('Skip'),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                key: const Key('completeOnboardingButton'),
+                onPressed: (!isUploading && canProceed) ? onSubmit : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  disabledBackgroundColor: const Color(0xFF9CA3AF),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+                child: isUploading
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          if (uploadProgressText.isNotEmpty) ...[
+                            const SizedBox(width: 12),
+                            Text(
+                              uploadProgressText,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'FINISH SETUP',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.check, color: Colors.white, size: 18),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

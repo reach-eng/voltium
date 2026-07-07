@@ -24,7 +24,7 @@ import 'package:voltium_rider/services/cache_service.dart';
 /// - Gradient "Verify & Proceed" + ArrowRight, pill 56px
 
 class OtpVerificationScreen extends StatefulWidget {
-  final VoidCallback? onNext;
+  final void Function(bool isNewRider)? onNext;
   final String phoneNumber;
   final bool isLogin;
   final VoidCallback? onBack;
@@ -136,6 +136,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           await VoltiumApiService().verifyOtp(phone: phone, otp: code);
       if (mounted) {
         final token = response['token'] as String?;
+        final isNewRider = response['isNewRider'] as bool? ?? false;
         if (token != null && !PlatformInfo.isWeb) {
           await SecureStorageService().setToken(token);
           // Persist the FCM command secret (BLOCKER 1.1).
@@ -149,7 +150,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         final rider = RiderModel.fromJson(response);
         await CacheService().cacheRider(rider.toCacheMap());
         context.read<AppProvider>().setRider(rider);
-        widget.onNext?.call();
+        widget.onNext?.call(isNewRider);
       }
     } catch (e) {
       if (mounted) {
@@ -390,7 +391,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                 key: ValueKey('otp_box_$index'),
                                 controller: _controllers[index],
                                 focusNode: _focusNodes[index],
-                                keyboardType: TextInputType.text,
+                                keyboardType: TextInputType.number,
                                 textAlign: TextAlign.center,
                                 maxLength: 1,
                                 obscureText: false,

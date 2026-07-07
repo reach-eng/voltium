@@ -83,7 +83,7 @@ export const JobQueue = {
         WHERE "eventType" = ${type}
           AND status = 'PENDING'
           AND attempts < "maxAttempts"
-          AND ("readyAt" IS NULL OR "readyAt" <= ${now}::timestamptz)
+          AND ("readyAt" IS NULL OR "readyAt" <= ${now.toISOString()}::timestamp)
         ORDER BY "createdAt" ASC
         LIMIT ${concurrency}
         FOR UPDATE SKIP LOCKED

@@ -1,6 +1,6 @@
 'use client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import GuarantorManagement from './GuarantorManagement';
+
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,6 +116,7 @@ interface KycRider {
   lifecycleStatus: string;
   profilePhoto: string | null;
   riderPhoto: string | null;
+  riderVideo: string | null;
   aadhaarFront: string | null;
   aadhaarBack: string | null;
   aadhaarNumber: string | null;
@@ -167,6 +168,7 @@ const kycDocuments = [
   { key: 'aadhaarBack' as const, label: 'Aadhaar Back' },
   { key: 'panCard' as const, label: 'PAN Card' },
   { key: 'signature' as const, label: 'Signature' },
+  { key: 'profilePhoto' as const, label: 'Rider Photo' },
 ];
 
 function getCompletion(rider: KycRider): number {
@@ -1014,155 +1016,26 @@ function KycManagementTab() {
                   </div>
                 </div>
 
-                {/* Guarantor Details */}
+                {/* Registration */}
                 <div className="space-y-4 pt-4 border-t">
                   <h4 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4" />
-                    Guarantor Verification
+                    Registration Info
                   </h4>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">
-                        Guarantor Info
-                      </p>
-                      <p className="text-sm font-medium">
-                        {selectedRider.guarantorName || 'Not Linked'}
-                      </p>
-                      {selectedRider.guarantorPhone && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-xs text-muted-foreground font-mono">
-                            {selectedRider.guarantorPhone}
-                          </p>
-                          {selectedRider.guarantorStatus === 'VERIFIED' ||
-                          selectedRider.guarantorStatus === 'APPROVED' ||
-                          selectedRider.guarantorStatus === 'SUBMITTED' ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[8px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 h-4 px-1.5"
-                            >
-                              Phone Verified
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-[8px] bg-amber-500/10 text-amber-600 border-amber-500/20 h-4 px-1.5"
-                            >
-                              Unverified
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      {selectedRider.guarantorRelation && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {selectedRider.guarantorRelation}
-                        </p>
-                      )}
-                      {selectedRider.guarantorDob && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          DOB: {selectedRider.guarantorDob}
-                        </p>
-                      )}
-                      {selectedRider.guarantorFatherName && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Father: {selectedRider.guarantorFatherName}
-                        </p>
-                      )}
-                      {selectedRider.guarantorMotherName && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Mother: {selectedRider.guarantorMotherName}
-                        </p>
-                      )}
-                      {selectedRider.guarantorAddress && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Address: {selectedRider.guarantorAddress}
-                        </p>
-                      )}
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] mt-2 ${getKycBadge(selectedRider.guarantorStatus)}`}
-                      >
-                        {selectedRider.guarantorStatus}
-                      </Badge>
-
-                      {selectedRider.sharedGuarantorWith?.length > 0 && (
-                        <div className="mt-3 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                          <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">
-                            Shared Guarantor With
-                          </p>
-                          <div className="flex flex-wrap gap-1">
-                            {selectedRider.sharedGuarantorWith.map((name, i) => (
-                              <Badge
-                                key={i}
-                                variant="outline"
-                                className="text-[8px] bg-white border-amber-200 text-amber-700"
-                              >
-                                {name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">
-                        Registration
-                      </p>
-                      <p className="text-sm font-medium">
-                        {formatDateDDMMYYYY(selectedRider.createdAt)}
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] mt-2 border-primary/20 text-primary bg-primary/5 dark:bg-primary/10 uppercase"
-                      >
-                        {selectedRider.lifecycleStatus}
-                      </Badge>
-                    </div>
+                  <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                      Registration Date
+                    </p>
+                    <p className="text-sm font-medium">
+                      {formatDateDDMMYYYY(selectedRider.createdAt)}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] mt-2 border-primary/20 text-primary bg-primary/5 dark:bg-primary/10 uppercase"
+                    >
+                      {selectedRider.lifecycleStatus}
+                    </Badge>
                   </div>
-
-                  {/* Guarantor Documents */}
-                  {selectedRider.guarantorName && (
-                    <div className="grid grid-cols-1 gap-4 pt-2">
-                      {[
-                        {
-                          label: 'Guarantor Aadhaar Front',
-                          url: selectedRider.guarantorAadhaarFront,
-                        },
-                        {
-                          label: 'Guarantor Aadhaar Back',
-                          url: selectedRider.guarantorAadhaarBack,
-                        },
-                        { label: 'Guarantor PAN', url: selectedRider.guarantorPan },
-                        { label: 'Guarantor Signature', url: selectedRider.guarantorSignature },
-                        { label: 'Guarantor Photo', url: selectedRider.guarantorPhoto },
-                      ].map((gdoc) => (
-                        <MediaPreview key={gdoc.label} src={gdoc.url} label={gdoc.label} />
-                      ))}
-
-                      {/* Video Verification */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                          Guarantor Video Verification
-                        </label>
-                        <div className="aspect-video w-full rounded-xl border bg-black overflow-hidden flex items-center justify-center relative shadow-inner">
-                          {selectedRider.guarantorVideo ? (
-                            <video
-                              src={selectedRider.guarantorVideo}
-                              controls
-                              className="w-full h-full"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center gap-2 text-white/40">
-                              <VideoOff className="w-8 h-8" />
-                              <span className="text-[10px] uppercase font-bold tracking-widest">
-                                No Video Uploaded
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -1244,15 +1117,9 @@ export default function KycManagement() {
           <TabsTrigger value="kyc" className="text-xs px-5 font-semibold">
             KYC Review
           </TabsTrigger>
-          <TabsTrigger value="guarantors" className="text-xs px-5 font-semibold">
-            Guarantors
-          </TabsTrigger>
         </TabsList>
         <TabsContent value="kyc">
           <KycManagementTab />
-        </TabsContent>
-        <TabsContent value="guarantors">
-          <GuarantorManagement />
         </TabsContent>
       </Tabs>
     </div>

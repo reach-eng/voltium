@@ -60,8 +60,9 @@ export const kycUseCases = {
       }
       case 'REJECT': {
         const rejectionReason = review.rejectionReason || '';
+        const editableFields = review.editableFields || [];
         return db.$transaction(async (tx: Prisma.TransactionClient) => {
-          const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason);
+          const result = await kycRepository.rejectKyc(riderDbId, reviewerId, rejectionReason, editableFields);
           await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
             riderId: riderDbId,
             type: 'KYC_REJECTED',

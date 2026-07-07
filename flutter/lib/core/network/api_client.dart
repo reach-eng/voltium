@@ -328,7 +328,11 @@ class ApiClient {
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (body['success'] == true) {
-        return body['data'] as Map<String, dynamic>;
+        final data = body['data'];
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+        return body;
       }
       return body;
     }

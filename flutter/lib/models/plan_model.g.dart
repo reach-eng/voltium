@@ -9,7 +9,7 @@ part of 'plan_model.dart';
 PlanModel _$PlanModelFromJson(Map<String, dynamic> json) => PlanModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      description: json['description'] as String,
+      description: json['description'] as String?,
       price: (json['price'] as num).toDouble(),
       durationDays: (json['durationDays'] as num).toInt(),
       features: (json['features'] as List<dynamic>?)

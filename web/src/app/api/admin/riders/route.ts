@@ -51,6 +51,7 @@ const updateRiderSchema = z.object({
   kycStatus: z.enum(['PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED', 'INFO_REQUIRED']).optional(),
   profilePhoto: z.string().url().optional().or(z.literal('')),
   riderPhoto: z.string().url().optional().or(z.literal('')),
+  riderVideo: z.string().url().optional().or(z.literal('')),
   signature: z.string().url().optional().or(z.literal('')),
   aadhaarFront: z.string().url().optional().or(z.literal('')),
   aadhaarBack: z.string().url().optional().or(z.literal('')),
@@ -63,6 +64,7 @@ const updateRiderSchema = z.object({
   accountNumber: z.string().max(30).optional(),
   ifscCode: z.string().max(11).optional(),
   rejectionReason: z.string().max(500).optional(),
+  editableFields: z.array(z.string()).optional(),
   // Wallet fields
   walletBalance: z.number().optional(),
   // Guarantor fields

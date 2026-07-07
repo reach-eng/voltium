@@ -29,8 +29,11 @@ void main() {
     mockFilesRepository = MockFilesRepository();
     repository = KycRepository(mockVoltiumApiClient, mockFilesRepository);
 
-    // Clear static cache before each test
-    KycRepository.clearFormCache();
+    // Clear all cached riders before each test so tests don't leak
+    // state to each other.
+    KycRepository.clearFormCache(riderId: 'r1');
+    KycRepository.clearFormCache(riderId: 'r2');
+    KycRepository.clearFormCache(riderId: 'r3');
   });
 
   group('KycRepository', () {
@@ -164,72 +167,109 @@ void main() {
       );
     });
 
-    // Form cache tests
-    test('saveFormCache saves data correctly', () async {
-      await KycRepository.saveFormCache({'name': 'Test'});
-      final cache = await KycRepository.loadFormCache();
+    // Form cache tests — scoped per rider
+    test('saveFormCache and loadFormCache roundtrip for one rider',
+        () async {
+      await KycRepository.saveFormCache(
+        riderId: 'r1',
+        data: {'name': 'Alice', 'email': 'alice@example.com'},
+      );
+      final cache = await KycRepository.loadFormCache(riderId: 'r1');
       expect(cache, isNotNull);
-      expect(cache!['name'], 'Test');
+      expect(cache!['name'], 'Alice');
+      expect(cache['email'], 'alice@example.com');
     });
 
-    test('loadFormCache returns null when empty', () async {
-      await KycRepository.clearFormCache();
-      final cache = await KycRepository.loadFormCache();
+    test('loadFormCache returns null for an unknown rider', () async {
+      await KycRepository.saveFormCache(
+        riderId: 'r1',
+        data: {'name': 'Alice'},
+      );
+      final cache = await KycRepository.loadFormCache(riderId: 'unknown-rider');
       expect(cache, isNull);
     });
 
     test(
-        'saveFormCache ignores null values gracefully or maps them appropriately',
-        () async {
-      // Dart's Map.from will fail if casting nulls to strings if strict type.
-      // Assuming KycRepository maps String? appropriately. Wait, the method takes Map<String, String?>
-      // and converts using Map<String, String>.from which throws if nulls are present? Let's check runtime.
-      try {
+      'SECURITY: form cache is scoped per rider — r2 cannot see r1 data',
+      () async {
+        // r1 fills the form with sensitive PII
         await KycRepository.saveFormCache(
-            {'name': 'Test', 'empty': 'null-val'});
-        final cache = await KycRepository.loadFormCache();
-        expect(cache!['empty'], 'null-val');
-      } catch (e) {
-        // Just verify it doesn't crash on normal inputs.
-      }
+          riderId: 'r1',
+          data: {
+            'name': 'Alice',
+            'aadhaarFrontPath': '/uploads/r1-aadhaar.jpg',
+            'bankAccount': '1234567890',
+          },
+        );
+
+        // r2 logs in on the same device and the form loads
+        final r2Cache = await KycRepository.loadFormCache(riderId: 'r2');
+        expect(r2Cache, isNull,
+            reason:
+                'Rider r2 must not see rider r1 cached form data — this '
+                'would leak Aadhaar numbers and bank accounts between users.');
+
+        // r1's data is still intact for r1
+        final r1Cache = await KycRepository.loadFormCache(riderId: 'r1');
+        expect(r1Cache!['name'], 'Alice');
+        expect(r1Cache['aadhaarFrontPath'], '/uploads/r1-aadhaar.jpg');
+        expect(r1Cache['bankAccount'], '1234567890');
+      },
+    );
+
+    test('saveFormCache ignores null values', () async {
+      await KycRepository.saveFormCache(
+        riderId: 'r1',
+        data: {'name': 'Alice', 'empty': null, 'email': ''},
+      );
+      final cache = await KycRepository.loadFormCache(riderId: 'r1');
+      expect(cache!['name'], 'Alice');
+      // null values are dropped
+      expect(cache.containsKey('empty'), false);
+      // empty strings are kept
+      expect(cache['email'], '');
     });
 
-    test('clearFormCache clears data', () async {
-      await KycRepository.saveFormCache({'key': 'val'});
-      await KycRepository.clearFormCache();
-      final cache = await KycRepository.loadFormCache();
-      expect(cache, isNull);
+    test('clearFormCache clears data for one rider only', () async {
+      await KycRepository.saveFormCache(
+        riderId: 'r1',
+        data: {'name': 'Alice'},
+      );
+      await KycRepository.saveFormCache(
+        riderId: 'r2',
+        data: {'name': 'Bob'},
+      );
+      await KycRepository.clearFormCache(riderId: 'r1');
+
+      expect(await KycRepository.loadFormCache(riderId: 'r1'), isNull);
+      expect((await KycRepository.loadFormCache(riderId: 'r2'))!['name'],
+          'Bob');
     });
 
-    test('loadFormCache returns a copy of the map to prevent external mutation',
-        () async {
-      await KycRepository.saveFormCache({'key': 'val'});
-      final cache1 = await KycRepository.loadFormCache();
+    test('loadFormCache returns a copy of the map', () async {
+      await KycRepository.saveFormCache(
+        riderId: 'r1',
+        data: {'key': 'val'},
+      );
+      final cache1 = await KycRepository.loadFormCache(riderId: 'r1');
       cache1!['key'] = 'new_val';
-      final cache2 = await KycRepository.loadFormCache();
-      expect(cache2!['key'], 'val');
+      final cache2 = await KycRepository.loadFormCache(riderId: 'r1');
+      expect(cache2!['key'], 'val',
+          reason: 'External mutation must not affect the cache');
     });
 
-    test('saveFormCache copies the map to prevent external mutation', () async {
+    test('saveFormCache copies the input map', () async {
       final input = <String, String?>{'key': 'val'};
-      await KycRepository.saveFormCache(input);
+      await KycRepository.saveFormCache(riderId: 'r1', data: input);
       input['key'] = 'new_val';
-      final cache = await KycRepository.loadFormCache();
+      final cache = await KycRepository.loadFormCache(riderId: 'r1');
       expect(cache!['key'], 'val');
     });
 
-    test('multiple saveFormCache calls overwrite previous cache', () async {
-      await KycRepository.saveFormCache({'first': '1'});
-      await KycRepository.saveFormCache({'second': '2'});
-      final cache = await KycRepository.loadFormCache();
-      expect(cache!['first'], isNull);
-      expect(cache['second'], '2');
-    });
-
     test('clearFormCache is idempotent', () async {
-      await KycRepository.clearFormCache();
-      await KycRepository.clearFormCache();
-      final cache = await KycRepository.loadFormCache();
+      await KycRepository.clearFormCache(riderId: 'r1');
+      await KycRepository.clearFormCache(riderId: 'r1');
+      final cache = await KycRepository.loadFormCache(riderId: 'r1');
       expect(cache, isNull);
     });
   });

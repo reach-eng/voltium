@@ -29,15 +29,32 @@ export async function POST(request: NextRequest) {
     // The DB expectations in deviceComplianceUseCases.syncState:
     // database keys: locationGranted, batteryGranted, contactsGranted, callLogsGranted, micGranted, cameraGranted, phoneGranted, deviceAdminGranted, displayOverlayGranted
     const dbPermissions: Record<string, boolean> = {};
-    if (typeof permissions.location === 'boolean') dbPermissions.locationGranted = permissions.location;
-    if (typeof permissions.battery === 'boolean') dbPermissions.batteryGranted = permissions.battery;
-    if (typeof permissions.contacts === 'boolean') dbPermissions.contactsGranted = permissions.contacts;
-    if (typeof permissions.callLog === 'boolean') dbPermissions.callLogsGranted = permissions.callLog;
-    if (typeof permissions.mic === 'boolean') dbPermissions.micGranted = permissions.mic;
-    if (typeof permissions.camera === 'boolean') dbPermissions.cameraGranted = permissions.camera;
-    if (typeof permissions.phone === 'boolean') dbPermissions.phoneGranted = permissions.phone;
-    if (typeof permissions.deviceAdmin === 'boolean') dbPermissions.deviceAdminGranted = permissions.deviceAdmin;
-    if (typeof permissions.displayOverApps === 'boolean') dbPermissions.displayOverlayGranted = permissions.displayOverApps;
+    if (typeof permissions.locationGranted === 'boolean') dbPermissions.locationGranted = permissions.locationGranted;
+    else if (typeof permissions.location === 'boolean') dbPermissions.locationGranted = permissions.location;
+
+    if (typeof permissions.batteryGranted === 'boolean') dbPermissions.batteryGranted = permissions.batteryGranted;
+    else if (typeof permissions.battery === 'boolean') dbPermissions.batteryGranted = permissions.battery;
+
+    if (typeof permissions.contactsGranted === 'boolean') dbPermissions.contactsGranted = permissions.contactsGranted;
+    else if (typeof permissions.contacts === 'boolean') dbPermissions.contactsGranted = permissions.contacts;
+
+    if (typeof permissions.callLogsGranted === 'boolean') dbPermissions.callLogsGranted = permissions.callLogsGranted;
+    else if (typeof permissions.callLog === 'boolean') dbPermissions.callLogsGranted = permissions.callLog;
+
+    if (typeof permissions.micGranted === 'boolean') dbPermissions.micGranted = permissions.micGranted;
+    else if (typeof permissions.mic === 'boolean') dbPermissions.micGranted = permissions.mic;
+
+    if (typeof permissions.cameraGranted === 'boolean') dbPermissions.cameraGranted = permissions.cameraGranted;
+    else if (typeof permissions.camera === 'boolean') dbPermissions.cameraGranted = permissions.camera;
+
+    if (typeof permissions.phoneGranted === 'boolean') dbPermissions.phoneGranted = permissions.phoneGranted;
+    else if (typeof permissions.phone === 'boolean') dbPermissions.phoneGranted = permissions.phone;
+
+    if (typeof permissions.deviceAdminGranted === 'boolean') dbPermissions.deviceAdminGranted = permissions.deviceAdminGranted;
+    else if (typeof permissions.deviceAdmin === 'boolean') dbPermissions.deviceAdminGranted = permissions.deviceAdmin;
+
+    if (typeof permissions.displayOverlayGranted === 'boolean') dbPermissions.displayOverlayGranted = permissions.displayOverlayGranted;
+    else if (typeof permissions.displayOverApps === 'boolean') dbPermissions.displayOverlayGranted = permissions.displayOverApps;
 
     await deviceComplianceUseCases.syncState(riderDbId, dbPermissions);
 

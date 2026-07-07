@@ -92,6 +92,7 @@ enum TransactionPurpose {
   TOP_UP
   SECURITY_DEPOSIT
   RENT_PAYMENT
+  ONBOARDING
   REWARD
   REFUND
   REVERSAL
@@ -157,6 +158,7 @@ enum AuditActionType {
   PERMISSION_CHANGE
   ROLE_CHANGE
   SYSTEM_CONFIG
+  SYSTEM_JOB
 }
 
 enum LedgerEntryType {
@@ -233,6 +235,7 @@ enum NotificationType {
   PROMOTION
   PAYMENT
   VEHICLE
+  BIRTHDAY_WISH
   SOS
   SYSTEM
 
@@ -483,17 +486,24 @@ model Shift {
   leases      RentalLease[]
 }
 
+/// RentalPlan represents a recurring subscription. 
+/// The `durationDays` represents the billing cycle length, which is strictly hardcoded
+/// based on `type` (DAILY = 1, WEEKLY = 7, MONTHLY = 30) in the backend use-cases.
 model RentalPlan {
-  id           String         @id @default(cuid())
-  name         String
-  type         RentalPlanType
-  price        Int
-  durationDays Int
-  description  String?
-  isActive     Boolean        @default(true)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
+  id                   String         @id @default(cuid())
+  name                 String
+  type                 RentalPlanType
+  price                Int
+  durationDays         Int
+  description          String?
+  isActive             Boolean        @default(true)
+  securityDeposit      Int            @default(0)
+  isSecurityRefundable Boolean        @default(true)
+  refundableAfterDays  Int?
+  additionalInfo       String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
 
   @@map("rental_plans")
 }
@@ -635,6 +645,7 @@ model KycProfile {
   accountNumber   String?
   ifscCode        String?
   rejectionReason String?
+  editableFields  String[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   rider           Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)

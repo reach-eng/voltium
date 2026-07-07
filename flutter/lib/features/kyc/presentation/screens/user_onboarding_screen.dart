@@ -37,6 +37,7 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
   bool _isUploading = false;
   String _uploadProgressText = '';
+  int _currentStep = 1;
 
   bool _aadhaarFrontUploaded = false;
   bool _aadhaarBackUploaded = false;
@@ -51,6 +52,8 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
   String? _signaturePath;
 
   void _saveCache() {
+    final riderId = context.read<AppProvider>().rider?.id;
+    if (riderId == null) return;
     final cacheData = {
       'name': _nameController.text,
       'email': _emailController.text,
@@ -67,11 +70,13 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
       'selfiePath': _selfiePath,
       'signaturePath': _signaturePath,
     };
-    KycRepository.saveFormCache(cacheData);
+    KycRepository.saveFormCache(riderId: riderId, data: cacheData);
   }
 
   void _loadCache() {
-    KycRepository.loadFormCache().then((cacheData) {
+    final riderId = context.read<AppProvider>().rider?.id;
+    if (riderId == null) return;
+    KycRepository.loadFormCache(riderId: riderId).then((cacheData) {
       if (cacheData == null) return;
       setState(() {
         _nameController.text = cacheData['name'] ?? '';
@@ -182,11 +187,19 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
   }
 
   Future<void> _selectDob() async {
+    // Default to 25 years ago — most riders are young adults. The
+    // user can scroll back or forward. Also widen the firstDate to
+    // 1940 so older users (born 1950–1970) don't have to scroll far.
+    final now = DateTime.now();
+    final defaultInitial =
+        DateTime(now.year - 25, now.month, now.day).isAfter(now)
+            ? DateTime(now.year - 25, 1, 1)
+            : DateTime(now.year - 25, now.month, now.day);
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
+      initialDate: defaultInitial,
+      firstDate: DateTime(1940),
+      lastDate: now,
     );
     if (date != null && mounted) {
       setState(
@@ -234,6 +247,40 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
     }
   }
 
+  void _showDocumentSourceDialog(String type) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickDocument(type, true);
+                },
+              ),
+              ListTile(
+                leading:
+                    const Icon(Icons.photo_library, color: AppColors.primary),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickDocument(type, false);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _openSignaturePad() async {
     final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const SignaturePadScreen()),
@@ -249,20 +296,20 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
 
   bool get _isFormComplete {
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    return _nameController.text.isNotEmpty &&
-        _dobController.text.isNotEmpty &&
-        emailRegex.hasMatch(_emailController.text) &&
-        _fatherNameController.text.isNotEmpty &&
-        _motherNameController.text.isNotEmpty &&
-        _addressController.text.isNotEmpty &&
+    return _nameController.text.trim().isNotEmpty &&
+        _dobController.text.trim().isNotEmpty &&
+        emailRegex.hasMatch(_emailController.text.trim()) &&
+        _fatherNameController.text.trim().isNotEmpty &&
+        _motherNameController.text.trim().isNotEmpty &&
+        _addressController.text.trim().isNotEmpty &&
         _aadhaarFrontUploaded &&
         _aadhaarBackUploaded &&
         _panUploaded &&
         _selfieUploaded &&
         _signatureUploaded &&
-        _bankNameController.text.isNotEmpty &&
-        _bankAccountController.text.length >= 9 &&
-        _bankIfscController.text.length >= 8;
+        _bankNameController.text.trim().isNotEmpty &&
+        _bankAccountController.text.trim().length >= 6 &&
+        _bankIfscController.text.trim().length >= 8;
   }
 
   void _showBankDetailsDialog() {
@@ -309,7 +356,28 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
   Future<void> _handleNext() async {
     final isTestMode = AppConstants.isTestMode;
     if (!isTestMode && !_isFormComplete) {
-      _showError('Please complete all fields and documents before continuing.');
+      final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+      final missing = <String>[];
+      if (_nameController.text.trim().isEmpty) missing.add('Name');
+      if (_dobController.text.trim().isEmpty) missing.add('DOB');
+      if (!emailRegex.hasMatch(_emailController.text.trim()))
+        missing.add('Valid Email');
+      if (_fatherNameController.text.trim().isEmpty)
+        missing.add('Father\'s Name');
+      if (_motherNameController.text.trim().isEmpty)
+        missing.add('Mother\'s Name');
+      if (_addressController.text.trim().isEmpty) missing.add('Address');
+      if (!_aadhaarFrontUploaded) missing.add('Aadhaar Front');
+      if (!_aadhaarBackUploaded) missing.add('Aadhaar Back');
+      if (!_panUploaded) missing.add('PAN');
+      if (!_selfieUploaded) missing.add('Selfie');
+      if (!_signatureUploaded) missing.add('Signature');
+      if (_bankNameController.text.trim().isEmpty ||
+          _bankAccountController.text.trim().length < 6 ||
+          _bankIfscController.text.trim().length < 8)
+        missing.add('Bank Details');
+
+      _showError('Missing: ${missing.join(', ')}');
       return;
     }
 
@@ -401,9 +469,12 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
         selfieUrl: selfieUrl,
         signatureUrl: signatureUrl,
       );
-      await KycRepository.clearFormCache();
+      await KycRepository.clearFormCache(riderId: riderId);
       await provider.refresh();
-      if (mounted && widget.onNext != null) widget.onNext!();
+
+      if (mounted) {
+        widget.onNext?.call();
+      }
     } catch (e) {
       if (mounted) {
         String userMessage = 'Something went wrong. Please try again.';
@@ -437,16 +508,96 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
     }
   }
 
+  Widget _buildStepIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildDot(1),
+          _buildLine(),
+          _buildDot(2),
+          _buildLine(),
+          _buildDot(3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int step) {
+    final isActive = _currentStep >= step;
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isActive ? AppColors.primary : AppColors.surfaceContainer,
+        border: isActive ? null : Border.all(color: AppColors.divider),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$step',
+        style: TextStyle(
+          color: isActive ? Colors.white : AppColors.onSurfaceVariant,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLine() {
+    return Container(
+      width: 40,
+      height: 2,
+      color: AppColors.divider,
+    );
+  }
+
+  void _onBottomButtonPressed() {
+    if (_currentStep < 3) {
+      setState(() {
+        _currentStep++;
+      });
+    } else {
+      _handleNext();
+    }
+  }
+
+  bool get _canProceedCurrentStep {
+    if (AppConstants.isTestMode) return true;
+    switch (_currentStep) {
+      case 1:
+        return _nameController.text.isNotEmpty &&
+            _dobController.text.isNotEmpty &&
+            _addressController.text.isNotEmpty;
+      case 2:
+        return _aadhaarFrontUploaded && _aadhaarBackUploaded && _panUploaded && _bankAccountController.text.isNotEmpty;
+      case 3:
+        return _selfieUploaded && _signatureUploaded;
+      default:
+        return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: const Color(0xFFF5F5F7),
-      child: SafeArea(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
+      body: SafeArea(
         child: SizedBox.expand(
           child: Column(
             children: [
               UserOnboardingAppBar(
-                onBack: () => widget.onBack?.call(),
+                onBack: () {
+                  if (_currentStep > 1) {
+                    setState(() {
+                      _currentStep--;
+                    });
+                  } else {
+                    widget.onBack?.call();
+                  }
+                },
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -456,78 +607,52 @@ class _UserOnboardingScreenState extends State<UserOnboardingScreen> {
                     children: [
                       const UserOnboardingHeader(),
                       const SizedBox(height: 20),
-                      PersonalDetailsCard(
-                        nameController: _nameController,
-                        dobController: _dobController,
-                        emailController: _emailController,
-                        fatherNameController: _fatherNameController,
-                        motherNameController: _motherNameController,
-                        addressController: _addressController,
-                        phone: context.read<AppProvider>().rider?.phone ?? '',
-                        onSelectDob: _selectDob,
-                      ),
-                      const SizedBox(height: 20),
-                      IdentityVerificationCard(
-                        aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                        aadhaarBackUploaded: _aadhaarBackUploaded,
-                        panUploaded: _panUploaded,
-                        bankDetailsDone: _bankAccountController.text.isNotEmpty,
-                        onPickAadhaarFront: () =>
-                            _pickDocument('aadhaar_front', false),
-                        onPickAadhaarBack: () =>
-                            _pickDocument('aadhaar_back', false),
-                        onPickPan: () => _pickDocument('pan', false),
-                        onShowBankDialog: () => _showBankDetailsDialog(),
-                      ),
-                      const SizedBox(height: 20),
-                      SelfieCard(
-                        selfieUploaded: _selfieUploaded,
-                        selfiePath: _selfiePath,
-                        onTap: () async {
-                          final source = await showDialog<ImageSource>(
-                            context: context,
-                            builder: (ctx) => SimpleDialog(
-                              title: const Text('Take Selfie'),
-                              children: [
-                                SimpleDialogOption(
-                                  onPressed: () =>
-                                      Navigator.pop(ctx, ImageSource.camera),
-                                  child: const ListTile(
-                                    leading: Icon(Icons.camera_alt),
-                                    title: Text('Camera'),
-                                  ),
-                                ),
-                                SimpleDialogOption(
-                                  onPressed: () =>
-                                      Navigator.pop(ctx, ImageSource.gallery),
-                                  child: const ListTile(
-                                    leading: Icon(Icons.photo_library),
-                                    title: Text('Gallery'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (source != null) {
-                            _pickDocument(
-                                'selfie', source == ImageSource.camera);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      SignatureCard(
-                        signatureUploaded: _signatureUploaded,
-                        onTap: _openSignaturePad,
-                      ),
+                      _buildStepIndicator(),
+                      if (_currentStep == 1)
+                        PersonalDetailsCard(
+                          nameController: _nameController,
+                          dobController: _dobController,
+                          emailController: _emailController,
+                          fatherNameController: _fatherNameController,
+                          motherNameController: _motherNameController,
+                          addressController: _addressController,
+                          phone: context.read<AppProvider>().rider?.phone ?? '',
+                          onSelectDob: _selectDob,
+                        ),
+                      if (_currentStep == 2)
+                        IdentityVerificationCard(
+                          aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                          aadhaarBackUploaded: _aadhaarBackUploaded,
+                          panUploaded: _panUploaded,
+                          bankDetailsDone: _bankAccountController.text.isNotEmpty,
+                          onPickAadhaarFront: () =>
+                              _showDocumentSourceDialog('aadhaar_front'),
+                          onPickAadhaarBack: () =>
+                              _showDocumentSourceDialog('aadhaar_back'),
+                          onPickPan: () => _showDocumentSourceDialog('pan'),
+                          onShowBankDialog: () => _showBankDetailsDialog(),
+                        ),
+                      if (_currentStep == 3) ...[
+                        SelfieCard(
+                          selfieUploaded: _selfieUploaded,
+                          selfiePath: _selfiePath,
+                          onTap: () => _showDocumentSourceDialog('selfie'),
+                        ),
+                        const SizedBox(height: 20),
+                        SignatureCard(
+                          signatureUploaded: _signatureUploaded,
+                          onTap: _openSignaturePad,
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
               UserOnboardingBottomButton(
-                canProceed: AppConstants.isTestMode || _isFormComplete,
+                canProceed: _canProceedCurrentStep,
                 isUploading: _isUploading,
                 uploadProgressText: _uploadProgressText,
-                onNext: _handleNext,
+                onNext: _onBottomButtonPressed,
               ),
             ],
           ),

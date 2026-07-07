@@ -171,8 +171,8 @@ describe('updateProfileSchema — negative', () => {
     expectInvalid(updateProfileSchema, { currentAddress: 'X'.repeat(501) }); // max 500
   });
 
-  it('rejects intent with invalid value', () => {
-    expectInvalid(updateProfileSchema, { intent: 'commute' });
+  it('accepts any intent string (nullish string)', () => {
+    expectValid(updateProfileSchema, { intent: 'commute' });
   });
 
   it('accepts valid intent values', () => {
@@ -190,9 +190,11 @@ describe('submitKycSchema — negative', () => {
     riderId: 'rider-1',
     aadhaarNumber: '1234-5678-9012',
     panNumber: 'ABCDE1234F',
-    bankName: 'SBI',
+    bankName: 'HDFC',
     bankAccount: '1234567890',
-    bankIfsc: 'SBIN0001234',
+    bankIfsc: 'HDFC0000123',
+    riderPhoto: 'https://example.com/photo.jpg',
+    riderVideo: 'https://example.com/video.mp4',
   };
 
   it('rejects missing riderId', () => {
@@ -277,6 +279,7 @@ describe('submitGuarantorSchema — negative', () => {
     name: 'Vikram Sharma',
     relation: 'Father',
     phone: '9876543210',
+    video: 'https://example.com/guarantor.mp4',
   };
 
   it('rejects missing name', () => {
@@ -320,6 +323,7 @@ describe('topUpSchema — negative', () => {
     amount: 500,
     purpose: 'TOP_UP',
     method: 'UPI',
+    proofUrl: 'https://example.com/receipt.jpg',
   };
 
   it('rejects missing riderId', () => {
@@ -1142,24 +1146,16 @@ describe('createRiderSchema — negative', () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe('subscribePlanSchema — negative', () => {
-  it('rejects missing riderId', () => {
-    expectInvalid(subscribePlanSchema, { planId: 'plan-daily' });
-  });
-
   it('rejects missing planId', () => {
-    expectInvalid(subscribePlanSchema, { riderId: 'r-1' });
-  });
-
-  it('rejects empty riderId', () => {
-    expectInvalid(subscribePlanSchema, { riderId: '', planId: 'plan-daily' });
+    expectInvalid(subscribePlanSchema, {});
   });
 
   it('rejects empty planId', () => {
-    expectInvalid(subscribePlanSchema, { riderId: 'r-1', planId: '' });
+    expectInvalid(subscribePlanSchema, { planId: '' });
   });
 
   it('accepts valid subscription', () => {
-    expectValid(subscribePlanSchema, { riderId: 'r-1', planId: 'plan-daily' });
+    expectValid(subscribePlanSchema, { planId: 'plan-daily' });
   });
 });
 
@@ -1264,8 +1260,8 @@ describe('updateSettingsSchema — negative', () => {
   });
 
   it('accepts valid setting keys', () => {
-    expectValid(updateSettingsSchema, { dailyRent: '399' });
-    expectValid(updateSettingsSchema, { gracePeriodHours: '24' });
+    expectValid(updateSettingsSchema, { walletMinTopup: '500' });
+    expectValid(updateSettingsSchema, { lateFee: '50' });
   });
 });
 

@@ -65,4 +65,37 @@ describe('Daily Engagement Job', () => {
     expect(result2.paymentReminders).toBe(0);
     expect(result2.referralLeaderboard).toBe(0);
   });
+
+  it('should continue processing even if a notification fails', async () => {
+    clock.set({ now: () => new Date('2026-06-30T10:00:00Z') }); // 2026-06-30
+    
+    const riderId1 = uuidv4();
+    await testDb.rider.create({ data: { id: riderId1, riderId: uuidv4(), referralCode: uuidv4().slice(0, 8), phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`, dob: '30-06-1990', lifecycleStatus: 'ACTIVE', fullName: 'FailRider' } });
+    await testDb.wallet.create({ data: { riderId: riderId1, balanceInPaise: 100 } });
+
+    vi.mocked(notificationService.notifyBirthdayWish).mockRejectedValueOnce(new Error('FCM Failed'));
+
+    const result = await dailyEngagementJob.process({ id: 'test' });
+    expect(result.birthdays).toBe(1); // the loop completed and incremented it
+  });
+});
+
+import { msUntilNext0600IST } from '../../../src/server/workers/jobs/daily-engagement.job';
+
+describe('msUntilNext0600IST', () => {
+  it('should return milliseconds to 06:00 IST today if current time is before 06:00 IST', () => {
+    // 00:00 UTC = 05:30 IST. 06:00 IST is 00:30 UTC.
+    const now = new Date('2026-06-29T00:00:00Z');
+    const msUntil = msUntilNext0600IST(now);
+    // 30 mins * 60 * 1000 = 1800000 ms
+    expect(msUntil).toBe(1800000);
+  });
+
+  it('should return milliseconds to 06:00 IST tomorrow if current time is after 06:00 IST', () => {
+    // 01:00 UTC = 06:30 IST. Next 06:00 IST is tomorrow 00:30 UTC.
+    const now = new Date('2026-06-29T01:00:00Z');
+    const msUntil = msUntilNext0600IST(now);
+    // 23 hours 30 mins = 23.5 * 3600 * 1000 = 84600000 ms
+    expect(msUntil).toBe(84600000);
+  });
 });

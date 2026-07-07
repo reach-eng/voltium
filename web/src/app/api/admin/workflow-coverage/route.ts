@@ -10,9 +10,12 @@ interface WorkflowStatus {
   detail: string;
 }
 
-async function checkApi(url: string): Promise<boolean> {
+async function checkApi(url: string, cookie: string | null): Promise<boolean> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(5000),
+      headers: cookie ? { cookie } : undefined,
+    });
     return res.ok;
   } catch {
     return false;
@@ -27,67 +30,68 @@ export async function GET(req: NextRequest) {
     }
 
     const baseUrl = new URL(req.url).origin;
+    const cookie = req.headers.get('cookie');
 
     // Check backend API health per workflow group
     const workflowChecks: WorkflowStatus[] = [
       {
         id: 'riders',
         label: 'Riders',
-        status: (await checkApi(`${baseUrl}/api/admin/riders?limit=1`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/riders?limit=1`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/riders',
       },
       {
         id: 'kyc',
         label: 'KYC',
-        status: (await checkApi(`${baseUrl}/api/admin/kyc`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/kyc`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/kyc',
       },
       {
         id: 'rentals',
         label: 'Rentals',
-        status: (await checkApi(`${baseUrl}/api/admin/rentals?limit=1`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/rentals?limit=1`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/rentals',
       },
       {
         id: 'vehicles',
         label: 'Vehicles',
-        status: (await checkApi(`${baseUrl}/api/admin/vehicles?limit=1`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/vehicles?limit=1`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/vehicles',
       },
       {
         id: 'hubs',
         label: 'Hubs',
-        status: (await checkApi(`${baseUrl}/api/admin/hubs`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/hubs`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/hubs',
       },
       {
         id: 'transactions',
         label: 'Finance',
-        status: (await checkApi(`${baseUrl}/api/admin/transactions?limit=1`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/transactions?limit=1`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/transactions',
       },
       {
         id: 'tickets',
         label: 'Support Tickets',
-        status: (await checkApi(`${baseUrl}/api/admin/tickets?limit=1`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/tickets?limit=1`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/tickets',
       },
       {
         id: 'offers',
         label: 'Offers & Coupons',
-        status: (await checkApi(`${baseUrl}/api/admin/offers`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/offers`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/offers',
       },
       {
         id: 'jobs',
         label: 'Background Jobs',
-        status: (await checkApi(`${baseUrl}/api/admin/jobs`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/admin/jobs`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/admin/jobs',
       },
       {
         id: 'health',
         label: 'Server Health',
-        status: (await checkApi(`${baseUrl}/api/health/worker`)) ? 'green' : 'red',
+        status: (await checkApi(`${baseUrl}/api/health/worker`, cookie)) ? 'green' : 'red',
         detail: 'GET /api/health/worker',
       },
     ];

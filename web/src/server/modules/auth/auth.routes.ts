@@ -28,7 +28,7 @@ export async function POST_verifyOtp(request: NextRequest) {
     return errors.validation(validation.error);
   }
 
-  const result = await authUseCases.verifyOtp(validation.data);
+  const result = await authUseCases.verifyOtp(validation.data as any);
 
   const response = success(
     { riderId: result.riderId, isNewRider: result.isNewRider },

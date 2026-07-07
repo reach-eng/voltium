@@ -11,21 +11,21 @@ import '../main.dart' show AppShell;
 
 // Relocated screens
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/screens/auth_choice_screen.dart';
+import '../features/auth/presentation/screens/otp_verification_screen.dart';
 import '../features/auth/presentation/rider_lifecycle_gate.dart';
 
 import '../features/onboarding/presentation/screens/splash_screen.dart';
 import '../features/onboarding/presentation/screens/legal_screen.dart';
 import '../features/onboarding/presentation/screens/legal_page_screen.dart';
-import '../features/onboarding/presentation/screens/privacy_consent_screen.dart';
+
 import '../features/onboarding/presentation/screens/permissions_screen.dart';
 
 import '../features/kyc/presentation/screens/intent_of_use_screen.dart';
 import '../features/kyc/presentation/screens/user_onboarding_screen.dart';
 import '../features/kyc/presentation/screens/documents_screen.dart';
-
 import '../features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
+
 
 import '../features/wallet/presentation/screens/top_up_amount_screen.dart';
 import '../features/wallet/presentation/screens/top_up_purpose_screen.dart';
@@ -62,6 +62,7 @@ class AppRouter extends StatefulWidget {
 
 class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   AuthState _currentState = AuthState.splash;
+
   bool _isTransitioning = false;
   bool _isSignUpFlow = true;
   String _phone = '';
@@ -84,15 +85,20 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   String? _pickupPhotoRight;
   String? _pickupPhotoWithVehicle;
 
-  Future<bool> _areAllPermissionsGranted() async {
+  /// Required permissions gate. `ignoreBatteryOptimizations` is NOT
+  /// included here because it requires a multi-tap detour into Android
+  /// Settings and is only a recommendation. Users who skip it on the
+  /// permissions screen can still use the app; the app just won't be
+  /// excluded from battery optimization.
+  Future<bool> _areAllRequiredPermissionsGranted() async {
     final isTestMode = AppConstants.isTestMode;
     if (isTestMode || kIsWeb) return true;
 
     final location = await Permission.location.isGranted;
     final camera = await Permission.camera.isGranted;
-    final ignoreBattery = await Permission.ignoreBatteryOptimizations.isGranted;
+    final notifications = await Permission.notification.isGranted;
 
-    return location && camera && ignoreBattery;
+    return location && camera && notifications;
   }
 
   @override
@@ -149,14 +155,13 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     final provider = context.read<AppProvider>();
     await provider.checkSystemPermissions();
     if (!mounted) return;
-    final allGranted = await _areAllPermissionsGranted();
-    if (!allGranted &&
+    final allRequiredGranted = await _areAllRequiredPermissionsGranted();
+    if (!allRequiredGranted &&
         _currentState != AuthState.splash &&
         _currentState != AuthState.permissions &&
         _currentState != AuthState.legal &&
-        _currentState != AuthState.privacyConsent &&
         _currentState != AuthState.otp) {
-      _navigateToLocal(AuthState.privacyConsent);
+      _navigateToLocal(AuthState.permissions);
     }
   }
 
@@ -167,11 +172,9 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
     final isUnauthenticatedState = _currentState == AuthState.splash ||
         _currentState == AuthState.legal ||
-        _currentState == AuthState.privacyConsent ||
         _currentState == AuthState.permissions ||
         _currentState == AuthState.login ||
-        _currentState == AuthState.otp ||
-        _currentState == AuthState.authChoice;
+        _currentState == AuthState.otp;
 
     if (provider.rider != null && !isUnauthenticatedState) {
       final r = provider.rider!;
@@ -281,8 +284,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
     switch (target) {
       case LifecycleTarget.intent:
         return AuthState.intent;
-      case LifecycleTarget.kycForm:
-        return AuthState.userForm;
       case LifecycleTarget.guarantorForm:
         return AuthState.guarantorForm;
       case LifecycleTarget.preDashboard:

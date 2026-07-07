@@ -46,4 +46,73 @@ describe('Outbox Service', () => {
     const count = await testDb.outboxEvent.count();
     expect(count).toBe(0);
   });
+  it('should get outbox stats', async () => {
+    await testDb.outboxEvent.createMany({
+      data: [
+        { eventType: 'ADMIN_ACTION', payload: '{}', status: 'PENDING' },
+        { eventType: 'ADMIN_ACTION', payload: '{}', status: 'PROCESSING' },
+        { eventType: 'ADMIN_ACTION', payload: '{}', status: 'COMPLETED' },
+        { eventType: 'ADMIN_ACTION', payload: '{}', status: 'FAILED' },
+        { eventType: 'ADMIN_ACTION', payload: '{}', status: 'FAILED' },
+      ],
+    });
+
+    const stats = await OutboxService.getStats();
+    expect(stats).toEqual({
+      pending: 1,
+      processing: 1,
+      completed: 1,
+      failed: 2,
+    });
+  });
+
+  it('should retry failed events', async () => {
+    await testDb.outboxEvent.create({
+      data: {
+        eventType: 'ADMIN_ACTION',
+        payload: '{}',
+        status: 'FAILED',
+        attempts: 3,
+        error: 'Network error',
+      },
+    });
+
+    const retriedCount = await OutboxService.retryFailed();
+    expect(retriedCount).toBe(1);
+
+    const event = await testDb.outboxEvent.findFirst();
+    expect(event?.status).toBe('PENDING');
+    expect(event?.attempts).toBe(0);
+    expect(event?.error).toBeNull();
+  });
+
+  it('should emit an event within a transaction', async () => {
+    await testDb.$transaction(async (tx) => {
+      const eventId = await OutboxService.emit(
+        OutboxEventTypes.ADMIN_ACTION,
+        { test: 'tx' },
+        3,
+        tx
+      );
+      expect(eventId).toBeDefined();
+    });
+
+    const count = await testDb.outboxEvent.count({
+      where: { status: 'PENDING' },
+    });
+    expect(count).toBe(1);
+  });
+
+  it('should throw an error if emit fails', async () => {
+    // Force a failure by omitting required fields or passing an invalid transaction
+    const badTx = {
+      outboxEvent: {
+        create: () => Promise.reject(new Error('Simulated DB Error')),
+      },
+    } as any;
+
+    await expect(
+      OutboxService.emit(OutboxEventTypes.ADMIN_ACTION, {}, 3, badTx)
+    ).rejects.toThrow('Simulated DB Error');
+  });
 });

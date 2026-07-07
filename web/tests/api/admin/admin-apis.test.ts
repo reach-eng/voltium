@@ -95,4 +95,24 @@ describe('Admin API Coverage Integration Tests', () => {
     // We expect 200 or 404 or 405, but we check if it handles it.
     expect([200, 404, 405]).toContain(status);
   });
+
+  describe('Negative Scenarios (400, 401, 403, 404)', () => {
+    it('returns 401/403 for unauthenticated access', async () => {
+      const res = await fetch(`${BASE}/api/admin/admins`);
+      expect(res.status).toBeGreaterThanOrEqual(401);
+    });
+
+    it('returns 404 for unknown admin routes', async () => {
+      const { status } = await api('/api/admin/unknown-route-xyz');
+      expect(status).toBe(404);
+    });
+
+    it('returns 400/422 for malformed requests', async () => {
+      const { status } = await api('/api/admin/admins', {
+        method: 'POST',
+        body: JSON.stringify({ invalid: 'data' }), // missing required fields
+      });
+      expect(status).toBeGreaterThanOrEqual(400);
+    });
+  });
 });

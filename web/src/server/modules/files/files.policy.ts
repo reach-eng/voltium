@@ -9,7 +9,7 @@ export const filePolicy = {
   },
 
   canViewFile(
-    actor: { role: string; permissions?: string[]; riderDbId?: string },
+    actor: { role: string; adminRole?: string; permissions?: string[]; riderDbId?: string },
     fileRecord: { ownerId: string; purpose: string; visibility: string }
   ): boolean {
     if (actor.role === 'rider') {
@@ -17,6 +17,7 @@ export const filePolicy = {
     }
 
     if (actor.role === 'admin') {
+      if (actor.adminRole === 'SUPER_ADMIN') return true;
       const permissionMap: Record<string, string> = {
         kyc_document: 'files_view_kyc',
         profile_photo: 'files_view_kyc',

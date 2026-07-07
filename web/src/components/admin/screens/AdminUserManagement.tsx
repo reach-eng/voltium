@@ -399,7 +399,7 @@ function AdminUsersTab() {
             <DialogTitle>{editingId ? 'Edit Admin' : 'Add New Admin'}</DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 pr-4 -mr-4">
+          <div className="flex-1 pr-4 -mr-4 overflow-y-auto min-h-0">
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -497,7 +497,7 @@ function AdminUsersTab() {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+            </div>
 
           <DialogFooter className="pt-4 border-t mt-4">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

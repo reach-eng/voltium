@@ -31,6 +31,7 @@ export interface KycReview {
   action: 'APPROVE' | 'REJECT' | 'REQUEST_INFO';
   rejectionReason?: string;
   infoRequest?: string;
+  editableFields?: string[];
 }
 
 export interface KycRecord {
@@ -43,4 +44,5 @@ export interface KycRecord {
   reviewedAt?: Date;
   reviewedBy?: string;
   rejectionReason?: string;
+  editableFields?: string[];
 }

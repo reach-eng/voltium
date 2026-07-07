@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const result = await fileUseCases.confirmUpload(
       data.fileRecordId,
       data.sizeBytes,
-      data.checksum
+      data.checksum as string | undefined
     );
 
     return success(result, 'File upload confirmed');

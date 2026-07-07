@@ -63,8 +63,12 @@ interface RentalPlan {
   name: string;
   type: string;
   price: number;
+  securityDeposit: number;
+  isSecurityRefundable: boolean;
+  refundableAfterDays: number | null;
   durationDays: number;
   description: string | null;
+  additionalInfo: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -116,8 +120,11 @@ export default function RentalManagement() {
     name: '',
     type: 'DAILY',
     price: '',
-    durationDays: '',
+    securityDeposit: '0',
+    isSecurityRefundable: true,
+    refundableAfterDays: '',
     description: '',
+    additionalInfo: '',
     isActive: true,
   });
   const [deletePlanId, setDeletePlanId] = useState<string | null>(null);
@@ -195,8 +202,11 @@ export default function RentalManagement() {
       name: plan.name,
       type: plan.type,
       price: String(plan.price),
-      durationDays: String(plan.durationDays),
+      securityDeposit: String(plan.securityDeposit || 0),
+      isSecurityRefundable: plan.isSecurityRefundable ?? true,
+      refundableAfterDays: plan.refundableAfterDays ? String(plan.refundableAfterDays) : '',
       description: plan.description || '',
+      additionalInfo: plan.additionalInfo || '',
       isActive: plan.isActive,
     });
     setPlanDialog(true);
@@ -208,26 +218,35 @@ export default function RentalManagement() {
       name: '',
       type: 'DAILY',
       price: '',
-      durationDays: '',
+      securityDeposit: '0',
+      isSecurityRefundable: true,
+      refundableAfterDays: '',
       description: '',
+      additionalInfo: '',
       isActive: true,
     });
     setPlanDialog(true);
   }
 
   async function handleSavePlan() {
-    if (!form.name || !form.price || !form.durationDays) return;
+    if (!form.name || !form.price) return;
     setSaving(true);
     try {
       const method = editingPlan ? 'PUT' : 'POST';
+      const baseBody = {
+        ...form,
+        price: Number(form.price),
+        securityDeposit: Number(form.securityDeposit),
+        refundableAfterDays: form.refundableAfterDays ? Number(form.refundableAfterDays) : null,
+        durationDays: form.type === 'DAILY' ? 1 : form.type === 'WEEKLY' ? 7 : 30,
+      };
+
       const body = editingPlan
         ? {
             id: editingPlan.id,
-            ...form,
-            price: Number(form.price),
-            durationDays: Number(form.durationDays),
+            ...baseBody,
           }
-        : { ...form, price: Number(form.price), durationDays: Number(form.durationDays) };
+        : baseBody;
 
       const res = await fetch('/api/admin/plans', {
         method,
@@ -495,10 +514,28 @@ export default function RentalManagement() {
                       <p className="text-xs text-muted-foreground">{plan.description}</p>
                     )}
 
+                    <div className="pt-2 mt-2 border-t border-border/40 space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Security Deposit:</span>
+                        <span className="font-medium text-foreground">₹{plan.securityDeposit?.toLocaleString('en-IN') ?? 0}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Refundable:</span>
+                        <span className="font-medium text-foreground">
+                          {plan.isSecurityRefundable ? `Yes${plan.refundableAfterDays ? ` (after ${plan.refundableAfterDays} days)` : ''}` : 'No'}
+                        </span>
+                      </div>
+                      {plan.additionalInfo && (
+                        <div className="text-xs mt-2 text-muted-foreground italic">
+                          "{plan.additionalInfo}"
+                        </div>
+                      )}
+                    </div>
+
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full mt-2"
                       onClick={() => openEdit(plan)}
                     >
                       <Edit className="w-3 h-3 mr-1" />
@@ -654,14 +691,40 @@ export default function RentalManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Duration (Days) *</Label>
+                <Label>Security Deposit (₹) *</Label>
                 <Input
                   type="number"
-                  placeholder="1"
-                  value={form.durationDays}
-                  onChange={(e) => setForm({ ...form, durationDays: e.target.value })}
+                  placeholder="0"
+                  value={form.securityDeposit}
+                  onChange={(e) => setForm({ ...form, securityDeposit: e.target.value })}
                 />
               </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={form.isSecurityRefundable}
+                onCheckedChange={(v) => setForm({ ...form, isSecurityRefundable: v })}
+              />
+              <Label>Security is Refundable</Label>
+            </div>
+            {form.isSecurityRefundable && (
+              <div className="space-y-2">
+                <Label>Refundable After (Days)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 30"
+                  value={form.refundableAfterDays}
+                  onChange={(e) => setForm({ ...form, refundableAfterDays: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Duration (Days)</Label>
+              <Input
+                type="text"
+                disabled
+                value={form.type === 'DAILY' ? '1' : form.type === 'WEEKLY' ? '7' : '30'}
+              />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
@@ -669,6 +732,14 @@ export default function RentalManagement() {
                 placeholder="Brief plan description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Additional Info</Label>
+              <Input
+                placeholder="Extra details about the plan"
+                value={form.additionalInfo}
+                onChange={(e) => setForm({ ...form, additionalInfo: e.target.value })}
               />
             </div>
             <div className="flex items-center gap-3">
@@ -685,7 +756,7 @@ export default function RentalManagement() {
             </Button>
             <Button
               onClick={handleSavePlan}
-              disabled={!form.name || !form.price || !form.durationDays || saving}
+              disabled={!form.name || !form.price || saving}
             >
               {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
               {editingPlan ? 'Save Changes' : 'Create Plan'}

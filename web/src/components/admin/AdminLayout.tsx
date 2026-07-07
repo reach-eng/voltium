@@ -6,7 +6,6 @@ import AdminSidebar from './AdminSidebar';
 import CommandPalette from './CommandPalette';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster as SonnerToaster } from 'sonner';
 import { Menu, Search, ChevronRight, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,7 @@ const loadAdminScreen = (path: string) =>
 // Dynamically loaded admin screens (split chunks for better performance)
 const sectionMap: Record<string, React.ComponentType> = {
   overview: loadAdminScreen('DashboardOverview'),
-  riders: loadAdminScreen('RiderManagement'),
+  riders: loadAdminScreen('rider-management'),
   kyc: loadAdminScreen('KycManagement'),
   rentals: loadAdminScreen('RentalManagement'),
   vehicles: loadAdminScreen('VehicleManagement'),
@@ -66,7 +65,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   'business-settings': loadAdminScreen('SettingsManagement'),
   settings: loadAdminScreen('SystemSettingsScreen'),
   'server-health': loadAdminScreen('ServerHealthScreen'),
-  'data-management': loadAdminScreen('DataManagementScreen'),
+  'data-management': loadAdminScreen('data-management'),
   'background-jobs': loadAdminScreen('BackgroundJobsScreen'),
 };
 
@@ -165,6 +164,16 @@ export default function AdminLayout() {
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [session, setSession] = useState<any>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+  const [visitedSections, setVisitedSections] = useState<Set<string>>(new Set([activeSection]));
+
+  useEffect(() => {
+    setVisitedSections((prev) => {
+      if (prev.has(activeSection)) return prev;
+      const next = new Set(prev);
+      next.add(activeSection);
+      return next;
+    });
+  }, [activeSection]);
 
   useEffect(() => {
     fetch('/api/admin/auth/me', { credentials: 'include' })
@@ -342,23 +351,29 @@ export default function AdminLayout() {
 
             {/* Dark mode toggle */}
             <ThemeToggle />
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex items-center gap-2 h-8 px-3"
+              onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || 'http://localhost:8080', '_blank')}
+            >
+              Rider App
+            </Button>
           </div>
         </header>
 
         {/* Page Content */}
         <ScrollArea className="flex-1 h-full min-h-0" data-admin-scroll="true">
           <div className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
+            {Array.from(visitedSections).map((section) => (
+              <div
+                key={section}
+                className={activeSection === section ? 'block animate-in fade-in slide-in-from-bottom-2 duration-300' : 'hidden'}
               >
-                <AdminSectionRenderer section={activeSection} session={session} />
-              </motion.div>
-            </AnimatePresence>
+                <AdminSectionRenderer section={section} session={session} />
+              </div>
+            ))}
           </div>
         </ScrollArea>
       </main>

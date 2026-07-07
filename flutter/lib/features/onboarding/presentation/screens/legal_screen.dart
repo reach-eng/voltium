@@ -1,6 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
+import 'legal_page_screen.dart';
 
 /// Matches web LegalConsentScreen.tsx exactly:
 /// - bg #f7f9fb
@@ -434,35 +437,51 @@ class _LegalScreenState extends State<LegalScreen>
                     Expanded(
                       child: RichText(
                         text: TextSpan(
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.onSurfaceVariant,
-                            height: 1.6,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.6,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'I have read and agree to the ',
+                              ),
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(),
+                                    );
+                                  },
+                              ),
+                              const TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(),
+                                    );
+                                  },
+                              ),
+                            ],
                           ),
-                          children: [
-                            const TextSpan(
-                              text: 'I have read and agree to the ',
-                            ),
-                            TextSpan(
-                              text: 'Terms of Service',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
                     ),
                   ],
                 ),

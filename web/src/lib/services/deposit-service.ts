@@ -152,7 +152,7 @@ export async function approveDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.approve',
+    action: 'APPROVE',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId },
@@ -201,7 +201,7 @@ export async function rejectDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.reject',
+    action: 'REJECT',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, reason },
@@ -266,7 +266,7 @@ export async function refundDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.refund',
+    action: 'REFUND',
     entity: 'depositRecord',
     entityId: riderId,
     details: { riderId, refundAmountInPaise: params.refundAmountInPaise },
@@ -316,10 +316,10 @@ export async function forfeitDeposit(params: {
 
   createAuditLog({
     actorId: adminId,
-    action: 'deposit.forfeit',
+    action: 'UPDATE',
     entity: 'depositRecord',
     entityId: riderId,
-    details: { riderId, reason },
+    details: { riderId, reason, subAction: 'forfeit' },
   }).catch(() => {});
 
   logger.info('[DepositService] Deposit forfeited', { riderId, adminId, reason });

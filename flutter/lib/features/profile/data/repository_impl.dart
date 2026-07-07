@@ -12,11 +12,9 @@ class RiderRepositoryImpl implements RiderRepository {
 
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
-    final response = await _apiClient.getRiderProfile();
-    return {
-      'data': response.toJson(),
-      'rider': response.toJson(),
-    };
+    final response = await _client.get('/api/rider/profile');
+    print('GET_RIDER_PROFILE_RESPONSE: $response');
+    return response;
   }
 
   @override

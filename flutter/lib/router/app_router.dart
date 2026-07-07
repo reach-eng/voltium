@@ -101,7 +101,7 @@ final GoRouter appRouter = GoRouter(
         return OtpVerificationScreen(
           phoneNumber: phone,
           onBack: () {},
-          onNext: () {},
+          onNext: (isNewRider) {},
         );
       },
     ),

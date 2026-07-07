@@ -16,7 +16,7 @@ export const monitoringUseCases = {
     ] = await Promise.all([
       db.rider.count(),
       db.rider.count({ where: { lifecycleStatus: 'ACTIVE' } }),
-      db.kycProfile.count({ where: { status: 'SUBMITTED' } }),
+      db.kycProfile.count({ where: { status: 'PENDING' } }),
       db.depositRecord.count({ where: { status: 'PENDING_VERIFICATION' } }),
       db.supportTicket.count({ where: { status: 'OPEN' } }),
       db.transaction.count({

@@ -9,7 +9,6 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
     setupFiles: [path.resolve(__dirname, './tests/setup-env.ts')],
     globalSetup: ['./tests/global-setup.ts'],
-    globalTeardown: ['./tests/global-teardown.ts'],
     css: false,
     testTimeout: 60000,
     hookTimeout: 120000,

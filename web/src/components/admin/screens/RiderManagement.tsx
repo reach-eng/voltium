@@ -84,6 +84,8 @@ import { BRAND_DOMAIN } from '@/lib/branding';
 import DeviceTrackingView from './DeviceTrackingView';
 import { ExportButton } from '../export-button';
 import { AdminErrorBoundary } from '../error-boundary';
+import { getStorageProvider } from '@/lib/storage';
+import AdjustWalletModal from './rider-management/AdjustWalletModal';
 import { logger } from '@/lib/logger';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
@@ -365,6 +367,7 @@ export default function RiderManagement() {
   const [total, setTotal] = useState(0);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showAdjustWallet, setShowAdjustWallet] = useState(false);
   const [editForm, setEditForm] = useState<{ [key: string]: any }>({});
   const [saving, setSaving] = useState(false);
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -632,6 +635,8 @@ export default function RiderManagement() {
           kycStatus: statusMap[action],
           rejectionReason:
             action === 'reject' || action === 'info_required' ? kycRejectionReason : undefined,
+          editableFields:
+            action === 'reject' || action === 'info_required' ? Array.from(selectedKycDocs) : undefined,
         }),
       });
       if (res.ok) {
@@ -1562,6 +1567,46 @@ export default function RiderManagement() {
                           />
                         )}
                       </div>
+                      
+                      <div className="space-y-2">
+                        <MediaPreview
+                          src={selectedRider.riderPhoto}
+                          label="Rider Photo *"
+                          onDelete={() => handleDeleteKycDoc('riderPhoto')}
+                          selected={selectedKycDocs.has('riderPhoto')}
+                          onSelect={() => toggleKycDoc('riderPhoto')}
+                        />
+                        {isEditing && (
+                          <Input
+                            value={editForm.riderPhoto || ''}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, riderPhoto: e.target.value })
+                            }
+                            placeholder="Rider photo URL"
+                            className="h-8 text-xs"
+                          />
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <MediaPreview
+                          src={selectedRider.riderVideo}
+                          label="Rider Video *"
+                          onDelete={() => handleDeleteKycDoc('riderVideo')}
+                          selected={selectedKycDocs.has('riderVideo')}
+                          onSelect={() => toggleKycDoc('riderVideo')}
+                        />
+                        {isEditing && (
+                          <Input
+                            value={editForm.riderVideo || ''}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, riderVideo: e.target.value })
+                            }
+                            placeholder="Rider video URL"
+                            className="h-8 text-xs"
+                          />
+                        )}
+                      </div>
 
                       <div className="space-y-2">
                         <MediaPreview
@@ -1944,22 +1989,21 @@ export default function RiderManagement() {
                             Current Wallet Balance
                           </Label>
                         </div>
-                        <div className="flex items-center text-4xl font-black tracking-tighter">
-                          <span className="text-emerald-500 opacity-50 mr-2">₹</span>
-                          {isEditing ? (
-                            <Input
-                              type="number"
-                              value={editForm.walletBalance || 0}
-                              onChange={(e) =>
-                                setEditForm({ ...editForm, walletBalance: Number(e.target.value) })
-                              }
-                              className="bg-transparent border-none text-4xl font-black h-auto p-0 focus-visible:ring-0 w-full"
-                            />
-                          ) : (
+                        <div className="flex items-center text-4xl font-black tracking-tighter justify-between">
+                          <div>
+                            <span className="text-emerald-500 opacity-50 mr-2">₹</span>
                             <span>
                               {(selectedRider.walletBalance || 0).toLocaleString('en-IN')}
                             </span>
-                          )}
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-xl border-emerald-500/20 text-emerald-600 hover:bg-emerald-50"
+                            onClick={() => setShowAdjustWallet(true)}
+                          >
+                            Adjust Balance
+                          </Button>
                         </div>
                       </div>
                       <div className="p-10 rounded-[2.5rem] bg-blue-500/5 border border-blue-500/10 shadow-sm transition-all hover:shadow-lg hover:shadow-blue-500/5">
@@ -2454,6 +2498,19 @@ export default function RiderManagement() {
               <X className="w-3 h-3" />
             </Button>
           </div>
+        )}
+
+        {selectedRider && (
+          <AdjustWalletModal
+            isOpen={showAdjustWallet}
+            onClose={() => setShowAdjustWallet(false)}
+            riderId={selectedRider.id}
+            currentBalance={selectedRider.walletBalance || 0}
+            onSuccess={(newBalance) => {
+              setSelectedRider({ ...selectedRider, walletBalance: newBalance });
+              setRiders(riders.map((r) => (r.id === selectedRider.id ? { ...r, walletBalance: newBalance } : r)));
+            }}
+          />
         )}
       </div>
     </AdminErrorBoundary>

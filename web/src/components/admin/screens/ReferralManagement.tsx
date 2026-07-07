@@ -21,6 +21,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
   Users,
   UserCheck,
   TrendingUp,
@@ -28,6 +36,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -60,6 +69,14 @@ export default function ReferralManagement() {
   const [referralBonus, setReferralBonus] = useState(500);
   const [summary, setSummary] = useState({ totalLeads: 0, activeRiders: 0, totalEarnings: 0 });
 
+  // Manual Referral State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [riders, setRiders] = useState<{ id: string; fullName: string; riderId: string }[]>([]);
+  const [riderSearch, setRiderSearch] = useState('');
+  const [referrerId, setReferrerId] = useState('');
+  const [refereeId, setRefereeId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -67,6 +84,62 @@ export default function ReferralManagement() {
     }, 500);
     return () => clearTimeout(handler);
   }, [search]);
+
+  const fetchRiders = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', '50');
+      if (riderSearch) params.set('search', riderSearch);
+      const res = await fetch(`/api/admin/riders?${params}`);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json.success && json.data) {
+        setRiders(json.data.riders || []);
+      }
+    } catch {
+      logger.error('Failed to fetch riders');
+    }
+  }, [riderSearch]);
+
+  useEffect(() => {
+    if (showCreateModal) fetchRiders();
+  }, [showCreateModal, riderSearch, fetchRiders]);
+
+  const handleCreateReferral = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!referrerId || !refereeId) {
+      toast.error('Please select both Referrer and Referee');
+      return;
+    }
+    if (referrerId === refereeId) {
+      toast.error('Referrer and Referee cannot be the same person');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await fetch('/api/admin/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referrerId, refereeId }),
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        toast.success('Referral processed successfully!');
+        setReferrerId('');
+        setRefereeId('');
+        setShowCreateModal(false);
+        fetchReferrals();
+      } else {
+        toast.error(json.message || 'Failed to process referral');
+      }
+    } catch {
+      toast.error('An error occurred');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchReferrals = useCallback(async () => {
     try {
@@ -141,12 +214,69 @@ export default function ReferralManagement() {
 
   return (
     <div className="space-y-6 px-4">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground tracking-tight">Referral Intelligence</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Track conversions, payment updates, and earnings distribution.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">Referral Intelligence</h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Track conversions, payment updates, and earnings distribution.
+          </p>
+        </div>
+        <Button onClick={() => setShowCreateModal(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Issue Referral
+        </Button>
       </div>
+
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Issue Manual Referral</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateReferral} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Referrer (Who is receiving the bonus?)</Label>
+              <Input
+                placeholder="Search referrer..."
+                value={riderSearch}
+                onChange={(e) => setRiderSearch(e.target.value)}
+                className="mb-2"
+              />
+              <Select value={referrerId} onValueChange={setReferrerId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Referrer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {riders.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.fullName} ({r.riderId})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Referee (Who joined?)</Label>
+              <Select value={refereeId} onValueChange={setRefereeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Referee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {riders.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.fullName} ({r.riderId})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Process Referral
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

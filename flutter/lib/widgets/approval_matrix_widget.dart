@@ -30,34 +30,34 @@ class ApprovalMatrixWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final kycStatus = _kycStepStatus();
-    final kycSubtitle = _kycSubtitle();
+
+    final rank = lifecycleRank(rider);
+    final isKycRejected = rider.kycStatus == KycStatus.rejected;
 
     final List<_StepData> steps = [
       _StepData(
         label: 'Registration',
         status: _getStepStatus(
-          rider.registrationDone ||
-              rider.name.isNotEmpty ||
-              (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 2),
-          !(rider.registrationDone ||
-              rider.name.isNotEmpty ||
-              (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 2)),
+          rank >= 3,
+          rank < 3,
           false,
         ),
         icon: Icons.person_add_outlined,
       ),
       _StepData(
+        label: 'Rental Plan',
+        status: _getStepStatus(
+          rank >= 4,
+          rank >= 3 && rank < 4,
+          false,
+        ),
+        icon: Icons.event_repeat_outlined,
+      ),
+      _StepData(
         label: 'Deposit',
         status: _getStepStatus(
-          rider.depositDone ||
-              (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 8),
-          (rider.registrationDone ||
-                  rider.name.isNotEmpty ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 2)) &&
-              !rider.depositDone &&
-              !(rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 8),
+          rank >= 6,
+          rank >= 4 && rank < 6,
           false,
         ),
         icon: Icons.account_balance_outlined,
@@ -65,48 +65,18 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'KYC',
         status: _getStepStatus(
-          kycStatus == StepStatus.completed,
-          (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 8)) &&
-              kycStatus != StepStatus.completed &&
-              kycStatus != StepStatus.rejected,
-          kycStatus == StepStatus.rejected,
+          rank >= 7,
+          rank >= 6 && rank < 7 && !isKycRejected,
+          isKycRejected,
         ),
         icon: Icons.shield_outlined,
-        subtitle: kycSubtitle,
-      ),
-      _StepData(
-        label: 'Rental Plan',
-        status: _getStepStatus(
-          rider.planDone ||
-              (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 9),
-          kycStatus == StepStatus.completed &&
-              (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 8)) &&
-              !(rider.planDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 9)),
-          false,
-        ),
-        icon: Icons.event_repeat_outlined,
+        subtitle: isKycRejected ? 'Update Documents' : (rank >= 2 && rank < 7 && !isKycRejected ? 'Under Review' : null),
       ),
       _StepData(
         label: 'Pickup',
         status: _getStepStatus(
-          rider.pickupDone ||
-              (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 10),
-          (rider.planDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 9)) &&
-              kycStatus == StepStatus.completed &&
-              (rider.depositDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 8)) &&
-              !(rider.pickupDone ||
-                  (rider.lifecycleStatus.isNotEmpty &&
-                      lifecycleRank(rider) >= 10)),
+          rank >= 8,
+          rank >= 7 && rank < 8,
           false,
         ),
         icon: Icons.electric_scooter_outlined,
@@ -156,7 +126,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
   }
 
   StepStatus _kycStepStatus() {
-    if (rider.kycStatus == KycStatus.verified) return StepStatus.completed;
+    if (rider.kycStatus == KycStatus.verified || rider.kycStatus == KycStatus.approved) return StepStatus.completed;
     if (rider.kycStatus == KycStatus.rejected) return StepStatus.rejected;
     if (rider.kycDone ||
         (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4)) {
@@ -166,7 +136,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
   }
 
   String? _kycSubtitle() {
-    if (rider.kycStatus == KycStatus.submitted) return 'Under Review';
+    if (rider.kycStatus == KycStatus.submitted || rider.kycStatus == KycStatus.pending) return 'Under Review';
     if (rider.kycStatus == KycStatus.rejected) return 'Update Documents';
     return null;
   }

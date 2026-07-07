@@ -23,6 +23,7 @@ describe('Rent Reminders Job', () => {
     await testDb.walletLedger.deleteMany();
     await testDb.transaction.deleteMany();
     await testDb.rentalLease.deleteMany();
+
     await testDb.wallet.deleteMany();
     await testDb.rider.deleteMany();
     clock.reset();
@@ -37,7 +38,7 @@ describe('Rent Reminders Job', () => {
     await testDb.hub.create({
       data: {
         id: hubId,
-        name: 'Test Hub',
+        name: `Test Hub ${uuidv4()}`,
         isActive: true,
         location: '0101000020E610000000000000000000000000000000000000'
       }
@@ -46,7 +47,7 @@ describe('Rent Reminders Job', () => {
     const shift = await testDb.shift.create({
       data: {
         id: uuidv4(),
-        name: 'Morning',
+        name: `Morning ${uuidv4().slice(0, 8)}`,
         startTime: '10:00',
         endTime: '18:00',
       }
@@ -56,7 +57,7 @@ describe('Rent Reminders Job', () => {
     await testDb.rentalPlan.create({
       data: {
         id: planId,
-        name: 'Test Plan',
+        name: `Test Plan ${uuidv4().slice(0, 8)}`,
         price: 5000,
         type: 'MONTHLY',
         durationDays: 30,
@@ -67,8 +68,8 @@ describe('Rent Reminders Job', () => {
     await testDb.vehicle.create({
       data: {
         id: vehicleId,
-        vehicleId: uuidv4().slice(0, 8),
-        vehicleNumber: `TEST-${uuidv4().slice(0,4)}`,
+        vehicleId: uuidv4().slice(0, 10),
+        vehicleNumber: `TEST-${uuidv4().slice(0, 8)}`,
         model: 'TestModel',
         hubId,
         status: 'AVAILABLE'

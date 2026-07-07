@@ -4,25 +4,17 @@ import { getFeatureFlags } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
 
 const MONETARY_KEYS = new Set([
-  'dailyRent',
-  'weeklyRent',
-  'monthlyRent',
-  'securityDeposit',
   'walletMinTopup',
   'lateFee',
   'referralBonus',
 ]);
-const PUBLIC_SETTINGS = ['securityDeposit', 'walletMinTopup', 'lateFee', 'referralBonus'];
+const PUBLIC_SETTINGS = ['walletMinTopup', 'lateFee', 'referralBonus'];
 
 export const settingUseCases = {
   async getAll() {
     const [flags, settings] = await Promise.all([getFeatureFlags(), db.setting.findMany()]);
 
     const DEFAULT_SETTINGS: Record<string, string> = {
-      dailyRent: '29900',
-      weeklyRent: '149900',
-      monthlyRent: '499900',
-      securityDeposit: '150000',
       walletMinTopup: '150000',
       lateFee: '10000',
       referralBonus: '20000',

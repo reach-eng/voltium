@@ -39,7 +39,8 @@ const mocks = vi.hoisted(() => {
     // whose attempts < maxAttempts, marks them PROCESSING, and returns
     // them.
     claim: vi.fn(
-      async (type: string, now: Date, concurrency: number) => {
+      async (type: string, nowArg: Date | string, concurrency: number) => {
+        const now = new Date(nowArg);
         const picked: string[] = [];
         for (const [id, row] of store) {
           if (picked.length >= concurrency) break;

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { api, generateRandomPhone, riderLogin, adminLogin } from '../helpers';
+import { db } from '../../../src/lib/db';
 
 describe('Guarantor Workflow Integration', () => {
   // 1. Rider can submit guarantor details
@@ -19,6 +20,7 @@ describe('Guarantor Workflow Integration', () => {
         fatherName: 'Grandfather Name',
         motherName: 'Grandmother Name',
         address: 'Delhi, India',
+        video: 'https://example.com/video.mp4',
       },
     });
 
@@ -78,6 +80,7 @@ describe('Guarantor Workflow Integration', () => {
         relation: 'Father',
         phone: '9876543210',
         guarantorAadhaarFront: 'uploads/guar-aadhaar.jpg',
+        video: 'https://example.com/video.mp4',
       },
     });
 
@@ -97,6 +100,7 @@ describe('Guarantor Workflow Integration', () => {
         name: 'Guarantor Name',
         relation: 'Father',
         phone: '9876543210',
+        video: 'https://example.com/video.mp4',
       },
     });
 
@@ -125,7 +129,19 @@ describe('Guarantor Workflow Integration', () => {
   it('7. Authorized admin can approve guarantor', async () => {
     const cookie = await adminLogin();
     const phone = generateRandomPhone();
-    const { id } = await riderLogin(phone);
+    const { token, id } = await riderLogin(phone);
+
+    await api('/api/rider/guarantor', {
+      method: 'POST',
+      token,
+      json: {
+        riderId: id,
+        name: 'Guarantor Name',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/video.mp4',
+      },
+    });
 
     const { status } = await api('/api/admin/guarantors', {
       method: 'POST',
@@ -143,7 +159,19 @@ describe('Guarantor Workflow Integration', () => {
   it('8. Authorized admin can reject guarantor with reason', async () => {
     const cookie = await adminLogin();
     const phone = generateRandomPhone();
-    const { id } = await riderLogin(phone);
+    const { token, id } = await riderLogin(phone);
+
+    await api('/api/rider/guarantor', {
+      method: 'POST',
+      token,
+      json: {
+        riderId: id,
+        name: 'Guarantor Name',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/video.mp4',
+      },
+    });
 
     const { status } = await api('/api/admin/guarantors', {
       method: 'POST',
@@ -163,6 +191,18 @@ describe('Guarantor Workflow Integration', () => {
     const cookie = await adminLogin();
     const phone = generateRandomPhone();
     const { token, id } = await riderLogin(phone);
+
+    await api('/api/rider/guarantor', {
+      method: 'POST',
+      token,
+      json: {
+        riderId: id,
+        name: 'Guarantor Name',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/video.mp4',
+      },
+    });
 
     await api('/api/admin/guarantors', {
       method: 'POST',
@@ -186,6 +226,18 @@ describe('Guarantor Workflow Integration', () => {
     const cookie = await adminLogin();
     const phone = generateRandomPhone();
     const { token, id } = await riderLogin(phone);
+
+    await api('/api/rider/guarantor', {
+      method: 'POST',
+      token,
+      json: {
+        riderId: id,
+        name: 'Guarantor Name',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/video.mp4',
+      },
+    });
 
     await api('/api/admin/guarantors', {
       method: 'POST',
@@ -217,5 +269,107 @@ describe('Guarantor Workflow Integration', () => {
 
     expect(status).toBe(200);
     expect(body.success).toBe(true);
+  });
+
+  // 12. Guarantor fields via PUT /api/rider/profile
+  it('12. Guarantor fields via PUT /api/rider/profile upsert guarantor record', async () => {
+    const phone = generateRandomPhone();
+    const { token } = await riderLogin(phone);
+
+    // To hit this, rider must be at PROFILE_SUBMITTED for lifecycle advancement to GUARANTOR_SUBMITTED
+    // But it works regardless for just upserting data
+    const { status, body } = await api('/api/rider/profile', {
+      method: 'PUT',
+      token,
+      json: {
+        guarantorName: 'Routed Guarantor',
+        guarantorPhone: '9999999999',
+        guarantorRelation: 'Brother',
+      },
+    });
+
+    expect(status).toBe(200);
+
+    const getRes = await api('/api/rider/profile', {
+      method: 'GET',
+      token,
+    });
+    expect(getRes.body.data.guarantorName).toBe('Routed Guarantor');
+    expect(getRes.body.data.guarantorPhone).toBe('9999999999');
+    expect(getRes.body.data.guarantorRelation).toBe('Brother');
+  });
+
+  // 13. Protected fields (walletBalance) stripped from guarantor update
+  it('13. Protected fields stripped from guarantor update', async () => {
+    const phone = generateRandomPhone();
+    const { token } = await riderLogin(phone);
+
+    await api('/api/rider/profile', {
+      method: 'PUT',
+      token,
+      json: {
+        guarantorName: 'Secure Guarantor',
+        walletBalance: 9999, // Malicious update
+      },
+    });
+
+    const getRes = await api('/api/rider/profile', {
+      method: 'GET',
+      token,
+    });
+    
+    // Ensure wallet wasn't modified
+    expect(getRes.body.data.walletBalance).toBe(0);
+    expect(getRes.body.data.guarantorName).toBe('Secure Guarantor');
+  });
+
+  // 14. Guarantor + rider fields in same PUT request
+  it('14. Guarantor + rider fields in same PUT request update both', async () => {
+    const phone = generateRandomPhone();
+    const { token } = await riderLogin(phone);
+
+    await api('/api/rider/profile', {
+      method: 'PUT',
+      token,
+      json: {
+        fullName: 'Updated Rider',
+        guarantorName: 'Updated Guarantor',
+      },
+    });
+
+    const getRes = await api('/api/rider/profile', {
+      method: 'GET',
+      token,
+    });
+    
+    expect(getRes.body.data.fullName).toBe('Updated Rider');
+    expect(getRes.body.data.guarantorName).toBe('Updated Guarantor');
+  });
+
+  // 15. Auto-advance: PROFILE_SUBMITTED -> GUARANTOR_SUBMITTED on guarantor submit
+  it('15. Auto-advance: PROFILE_SUBMITTED -> GUARANTOR_SUBMITTED on guarantor submit', async () => {
+    const phone = generateRandomPhone();
+    const { token } = await riderLogin(phone);
+
+    // New riders start at PROFILE_SUBMITTED by default, so we can just submit guarantor directly.
+
+
+    // 2. Submit guarantor via profile endpoint
+    await api('/api/rider/profile', {
+      method: 'PUT',
+      token,
+      json: {
+        guarantorName: 'Advance Guarantor',
+        guarantorPhone: '8888888888',
+      },
+    });
+
+    // 3. Check lifecycle status
+    const getRes = await api('/api/rider/profile', {
+      method: 'GET',
+      token,
+    });
+    
+    expect(getRes.body.data.lifecycleStatus).toBe('GUARANTOR_SUBMITTED');
   });
 });

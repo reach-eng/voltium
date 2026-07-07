@@ -127,4 +127,17 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
     // consumed the injected clock and fake timers allowed smooth shutdown.
     expect(true).toBe(true);
   }, 120_000);
+
+  it('should be able to start and stop workers', async () => {
+    // Start workers
+    const workersPromise = startWorkers(customClock);
+    
+    // Stop them immediately
+    stopWorkers();
+    
+    // Wait for them to exit
+    await workersPromise;
+
+    expect(true).toBe(true);
+  });
 });

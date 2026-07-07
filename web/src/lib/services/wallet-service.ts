@@ -59,7 +59,7 @@ export async function creditWallet(
   const { riderId, walletId, amountInPaise, category, txnId, idempotencyKey, actorId, note } =
     params;
 
-  if (amountInPaise <= 0) {
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`creditWallet: amountInPaise must be > 0, got ${amountInPaise}`);
   }
 
@@ -134,7 +134,7 @@ export async function debitWallet(
     allowNegative = false,
   } = params;
 
-  if (amountInPaise <= 0) {
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
     throw new WalletServiceError(`debitWallet: amountInPaise must be > 0, got ${amountInPaise}`);
   }
 
@@ -220,6 +220,10 @@ export async function creditSecurityDeposit(
 ): Promise<void> {
   const { riderId, walletId, amountInPaise, txnId, actorId, note } = params;
 
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+    throw new WalletServiceError(`creditSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
+
   await tx.wallet.update({
     where: { id: walletId },
     data: {
@@ -264,6 +268,10 @@ export async function debitSecurityDeposit(
 ): Promise<void> {
   const { riderId, walletId, amountInPaise, category, newDepositStatus, txnId, actorId, note } =
     params;
+
+  if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) {
+    throw new WalletServiceError(`debitSecurityDeposit: amountInPaise must be > 0, got ${amountInPaise}`);
+  }
 
   await tx.wallet.update({
     where: { id: walletId },

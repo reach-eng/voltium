@@ -92,4 +92,16 @@ describe('Rider Endpoints', () => {
     });
     expect(status).toBeGreaterThanOrEqual(400);
   });
+
+  describe('Negative Scenarios (400, 401, 403, 404)', () => {
+    it('returns 401/403 for unauthenticated access', async () => {
+      const res = await fetch(`${BASE}/api/rider/settings`);
+      expect(res.status).toBeGreaterThanOrEqual(401);
+    });
+
+    it('returns 404 for unknown rider endpoints', async () => {
+      const { status } = await api('/api/rider/unknown-endpoint-xyz');
+      expect(status).toBe(404);
+    });
+  });
 });

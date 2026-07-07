@@ -67,7 +67,7 @@ export const guarantorRepository = {
         },
       });
       await tx.rider.updateMany({
-        where: { id: riderDbId, lifecycleStatus: { in: ['KYC_APPROVED'] } },
+        where: { id: riderDbId, lifecycleStatus: { in: ['PROFILE_SUBMITTED'] } },
         data: { lifecycleStatus: 'GUARANTOR_SUBMITTED' },
       });
       return decryptGuarantorData(guarantor);
@@ -89,7 +89,7 @@ export const guarantorRepository = {
         data: { status: 'APPROVED' },
       });
       await tx.rider.updateMany({
-        where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_SUBMITTED', 'KYC_APPROVED'] } },
+        where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_SUBMITTED'] } },
         data: { lifecycleStatus: 'GUARANTOR_APPROVED' },
       });
       return decryptGuarantorData(guarantor);

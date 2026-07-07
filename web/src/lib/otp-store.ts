@@ -138,6 +138,7 @@ export async function verifyOtp(
   code: string
 ): Promise<{ valid: boolean; error?: string }> {
   const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
+  console.log('[DEBUG OTP]', { isDev, env: process.env.ENABLE_TEST_OTP, code });
   if (isDev && code === '111111') return { valid: true };
 
   if (shouldUseDatabaseStore()) {

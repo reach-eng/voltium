@@ -100,7 +100,7 @@ class RiderProvider extends ChangeNotifier {
     final cached = CacheService().getCachedRider();
     if (cached != null) {
       _rider = RiderModel.fromCacheMap(cached);
-      _riderId = _rider?.id;
+      _riderId = _rider?.riderId.isNotEmpty == true ? _rider?.riderId : _rider?.id;
       _phone = _rider?.phone;
       _dataState = DataState.fromCache;
       notifyListeners();
@@ -130,6 +130,7 @@ class RiderProvider extends ChangeNotifier {
       final payload = response['data'] ?? response['rider'] ?? response;
       if (payload != null && (payload as Map).isNotEmpty) {
         _rider = RiderModel.fromJson(payload as Map<String, dynamic>);
+        _riderId = _rider?.riderId.isNotEmpty == true ? _rider?.riderId : _rider?.id;
         await CacheService().cacheRider(_rider!.toCacheMap());
         _dataState = DataState.fresh;
         _errorMessage = null;
@@ -322,8 +323,6 @@ class RiderProvider extends ChangeNotifier {
     switch (target) {
       case LifecycleTarget.intent:
         return AuthState.intent;
-      case LifecycleTarget.kycForm:
-        return AuthState.userForm;
       case LifecycleTarget.guarantorForm:
         return AuthState.guarantorForm;
       case LifecycleTarget.preDashboard:

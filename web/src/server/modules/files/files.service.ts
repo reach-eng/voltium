@@ -97,7 +97,7 @@ export const fileService = {
   },
 
   canViewFile(
-    actor: { role: string; permissions?: string[]; riderDbId?: string },
+    actor: { role: string; adminRole?: string; permissions?: string[]; riderDbId?: string },
     fileRecord: { ownerId: string; purpose: string; visibility: string }
   ): boolean {
     return filePolicy.canViewFile(actor, fileRecord);

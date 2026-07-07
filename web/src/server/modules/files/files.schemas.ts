@@ -19,8 +19,8 @@ export const requestUploadUrlSchema = z.object({
 export const confirmUploadSchema = z.object({
   fileRecordId: z.string().min(1),
   sizeBytes: z.number().positive(),
-  checksum: z.string().optional(),
-  idempotencyKey: z.string().optional(),
+  checksum: z.string().nullish(),
+  idempotencyKey: z.string().nullish(),
 });
 
 export const requestReadUrlSchema = z.object({

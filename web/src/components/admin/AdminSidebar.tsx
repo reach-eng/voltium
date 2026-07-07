@@ -170,7 +170,9 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
                 key={item.id}
                 data-nav-id={item.id}
                 variant="ghost"
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => {
+                  setActiveSection(item.id);
+                }}
                 className={`w-full justify-start gap-3 h-10 px-3 font-normal transition-colors ${
                   isActive
                     ? 'bg-primary/10 text-primary hover:bg-primary/15'

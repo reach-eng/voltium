@@ -148,7 +148,7 @@ export const kycRepository = {
     });
   },
 
-  async rejectKyc(riderDbId: string, reviewerId: string, reason: string) {
+  async rejectKyc(riderDbId: string, reviewerId: string, reason: string, editableFields: string[] = []) {
     // Read current status to validate transition
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
@@ -161,7 +161,7 @@ export const kycRepository = {
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
       const kyc = await tx.kycProfile.update({
         where: { riderId: riderDbId },
-        data: { status: 'REJECTED', rejectionReason: reason },
+        data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
       await tx.rider.updateMany({
         where: { id: riderDbId },

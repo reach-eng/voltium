@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import WalletDepositManagement from './WalletDepositManagement';
+import RiderSelector from '../RiderSelector';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,6 +69,7 @@ interface Transaction {
   createdAt: string;
   approvedAt: string | null;
   proofUrl: string | null;
+  breakdowns?: Array<{ item: string; amount: number; id: string }>;
   rider?: {
     id: string;
     riderId: string;
@@ -157,6 +159,13 @@ export default function TransactionManagement() {
   const [actionLoading, setActionLoading] = useState(false);
   const [creditWallet, setCreditWallet] = useState(false);
   const [walletCreditAmount, setWalletCreditAmount] = useState(0);
+  
+  const [deductDialog, setDeductDialog] = useState(false);
+  const [deductRiderId, setDeductRiderId] = useState('');
+  const [deductAmount, setDeductAmount] = useState('');
+  const [deductReason, setDeductReason] = useState('');
+  const [deductLoading, setDeductLoading] = useState(false);
+
   const mountedRef = useRef(true);
 
   const fetchTransactions = useCallback(async () => {
@@ -165,6 +174,8 @@ export default function TransactionManagement() {
       const params = new URLSearchParams();
       if (tab === 'TOP_UP') {
         params.set('type', 'TOP_UP');
+      } else if (tab === 'DEBIT') {
+        params.set('type', 'DEBIT');
       } else if (tab !== 'all') {
         params.set('status', tab.toUpperCase());
       }
@@ -214,6 +225,37 @@ export default function TransactionManagement() {
       mountedRef.current = false;
     };
   }, []);
+
+  async function handleDeduct() {
+    if (!deductRiderId || !deductAmount || !deductReason) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    setDeductLoading(true);
+    try {
+      const res = await fetch(`/api/admin/riders/${deductRiderId}/wallet-adjust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'DEBIT',
+          amount: Number(deductAmount),
+          reason: deductReason,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message || 'Failed to deduct');
+      toast.success('Amount deducted successfully');
+      setDeductDialog(false);
+      setDeductRiderId('');
+      setDeductAmount('');
+      setDeductReason('');
+      fetchTransactions();
+    } catch (err: any) {
+      toast.error(err.message || 'An error occurred');
+    } finally {
+      setDeductLoading(false);
+    }
+  }
 
   async function handleAction() {
     if (!confirmAction) return;
@@ -400,6 +442,9 @@ export default function TransactionManagement() {
                   { key: 'createdAt', label: 'Date' },
                 ]}
               />
+              <Button onClick={() => setDeductDialog(true)}>
+                Deduct from Wallet
+              </Button>
             </div>
 
             {/* Tab Filters */}
@@ -414,6 +459,9 @@ export default function TransactionManagement() {
                   </TabsTrigger>
                   <TabsTrigger value="TOP_UP" className="text-xs px-4">
                     Top-ups
+                  </TabsTrigger>
+                  <TabsTrigger value="DEBIT" className="text-xs px-4">
+                    Deductions
                   </TabsTrigger>
                   <TabsTrigger value="approved" className="text-xs px-4">
                     Approved
@@ -652,7 +700,19 @@ export default function TransactionManagement() {
                                 {formatINR(tx.amount)}
                               </TableCell>
                               <TableCell className="text-xs">
-                                {(tx.purpose || '').replace('_', ' ')}
+                                <div className="flex flex-col gap-1">
+                                  <span>{(tx.purpose || '').replace('_', ' ')}</span>
+                                  {tx.breakdowns && tx.breakdowns.length > 0 && (
+                                    <div className="text-[10px] text-muted-foreground mt-1 p-1 bg-muted/20 rounded">
+                                      {tx.breakdowns.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between w-32">
+                                          <span>{item.item}:</span>
+                                          <span className="font-mono">{formatINR(item.amount)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </TableCell>
                               <TableCell className="text-xs text-muted-foreground">
                                 {tx.method || '-'}
@@ -1040,10 +1100,54 @@ export default function TransactionManagement() {
                 </Button>
               </div>
             )}
+
+            {/* Deduct Dialog */}
+            <Dialog open={deductDialog} onOpenChange={setDeductDialog}>
+              <DialogContent className="sm:max-w-[450px]">
+                <DialogHeader>
+                  <DialogTitle>Deduct from Wallet</DialogTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Deduct amount from a rider's wallet for damage, penalty, or missing items.
+                  </p>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Select Rider</Label>
+                    <RiderSelector value={deductRiderId} onChange={setDeductRiderId} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Amount (₹)</Label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 500"
+                      value={deductAmount}
+                      onChange={(e) => setDeductAmount(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reason for Deduction</Label>
+                    <Input
+                      placeholder="e.g. Vehicle Damage, Helmet missing"
+                      value={deductReason}
+                      onChange={(e) => setDeductReason(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDeductDialog(false)} disabled={deductLoading}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleDeduct} disabled={deductLoading || !deductRiderId || !deductAmount || !deductReason}>
+                    {deductLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Confirm Deduction
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </TabsContent>
 
-        <TabsContent value="wallet">
+        <TabsContent value="wallet" className="space-y-6">
           <WalletDepositManagement />
         </TabsContent>
       </Tabs>

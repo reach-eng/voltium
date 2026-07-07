@@ -83,9 +83,10 @@ export const scheduledBackupJob = {
       await createAuditLog({
         actorId: 'SYSTEM',
         actorType: 'SYSTEM',
-        action: 'backup.scheduled_started',
+        action: 'SYSTEM_JOB',
         entity: 'BackupSchedule',
         entityId: schedule.id,
+        details: { event: 'backup.scheduled_started' },
       });
 
       try {
@@ -124,10 +125,10 @@ export const scheduledBackupJob = {
         await createAuditLog({
           actorId: 'SYSTEM',
           actorType: 'SYSTEM',
-          action: 'backup.scheduled_completed',
+          action: 'SYSTEM_JOB',
           entity: 'BackupJob',
           entityId: result.id,
-          details: { backupId: result.backupId, sizeBytes: result.sizeBytes },
+          details: { event: 'backup.scheduled_completed', backupId: result.backupId, sizeBytes: result.sizeBytes },
         });
 
         return { ran: true };
@@ -152,10 +153,10 @@ export const scheduledBackupJob = {
         await createAuditLog({
           actorId: 'SYSTEM',
           actorType: 'SYSTEM',
-          action: 'backup.scheduled_failed',
+          action: 'SYSTEM_JOB',
           entity: 'BackupSchedule',
           entityId: schedule.id,
-          details: { error: (err instanceof Error ? err.message : String(err)) },
+          details: { event: 'backup.scheduled_failed', error: (err instanceof Error ? err.message : String(err)) },
         });
 
         // Send FCM alert notification to admins via a dedicated topic

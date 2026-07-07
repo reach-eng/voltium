@@ -168,3 +168,6 @@ Rules:
 - `npm run test:coverage` — web unit + coverage report
 - `flutter test` — Flutter unit + widget
 - `flutter test --coverage` — Flutter with coverage
+
+## Business Logic Rules
+- **Rental Plans (Recurring Subscriptions)**: A plan's durationDays is strictly determined by its 	ype (DAILY = 1, WEEKLY = 7, MONTHLY = 30). This ensures recurring billing cycles are mathematically consistent. The backend automatically calculates this on create/update, overriding any manual input.

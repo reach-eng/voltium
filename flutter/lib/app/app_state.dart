@@ -1,14 +1,14 @@
 enum AuthState {
   splash,
+  authChoice,
   legal,
-  privacyConsent,
   permissions,
   login,
   otp,
   intent,
   userForm,
   guarantorForm,
-  authChoice,
+
   dashboard,
   preDashboard,
   choosePlan,

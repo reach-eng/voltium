@@ -12,11 +12,11 @@ import { useAdminStore } from '@/store/admin';
 function OperationsOverviewTab() {
   const setActiveSection = useAdminStore((s) => s.setActiveSection);
   const [stats] = useState({
-    activeRentals: 42,
-    pendingKyc: 5,
-    pendingDeposits: 3,
-    availableVehicles: 18,
-    openTickets: 4,
+    activeRentals: 0,
+    pendingKyc: 0,
+    pendingDeposits: 0,
+    availableVehicles: 0,
+    openTickets: 0,
   });
 
   return (
@@ -96,36 +96,8 @@ function OperationsOverviewTab() {
             <CardTitle>Action Items Checklist</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3 p-3 border rounded-xl bg-amber-500/5 border-amber-200">
-              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-              <div className="flex-1 text-sm">
-                <span className="font-bold">KYC Validation Queue:</span> 5 riders are waiting for
-                guarantor field verification.
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-amber-200 text-amber-700 hover:bg-amber-500/10"
-                onClick={() => setActiveSection('kyc')}
-              >
-                Resolve
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 border rounded-xl bg-rose-500/5 border-rose-200">
-              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
-              <div className="flex-1 text-sm">
-                <span className="font-bold">Overdue Returns:</span> V-1002 is overdue by 3 days.
-                Contact team leader for inspection.
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-rose-200 text-rose-700 hover:bg-rose-500/10"
-                onClick={() => setActiveSection('rentals')}
-              >
-                View details
-              </Button>
+            <div className="flex items-center justify-center p-6 text-sm text-muted-foreground border rounded-xl border-dashed">
+              No action items currently pending.
             </div>
           </CardContent>
         </Card>
@@ -135,24 +107,8 @@ function OperationsOverviewTab() {
             <CardTitle>Hub Utilization Status</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>Koramangala Hub</span>
-                <span className="font-bold">85% (17/20)</span>
-              </div>
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: '85%' }}></div>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>HSR Layout Hub</span>
-                <span className="font-bold">45% (9/20)</span>
-              </div>
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-600" style={{ width: '45%' }}></div>
-              </div>
+            <div className="flex items-center justify-center p-6 text-sm text-muted-foreground border rounded-xl border-dashed">
+              No hub utilization data available.
             </div>
           </CardContent>
         </Card>

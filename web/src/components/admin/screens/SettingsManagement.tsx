@@ -14,10 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { Save, IndianRupee, Bell, Zap, Phone, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface Settings {
-  dailyRent: string;
-  weeklyRent: string;
-  monthlyRent: string;
-  securityDeposit: string;
   walletMinTopup: string;
   lateFee: string;
   referralBonus: string;
@@ -34,10 +30,6 @@ interface Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  dailyRent: '299',
-  weeklyRent: '1499',
-  monthlyRent: '4999',
-  securityDeposit: '1500',
   walletMinTopup: '1500',
   lateFee: '100',
   referralBonus: '500',
@@ -163,26 +155,6 @@ function BusinessSettingsTab() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
-                {
-                  key: 'dailyRent' as const,
-                  label: 'Daily Rent',
-                  help: 'Base price for daily rental plan',
-                },
-                {
-                  key: 'weeklyRent' as const,
-                  label: 'Weekly Rent',
-                  help: 'Base price for weekly rental plan',
-                },
-                {
-                  key: 'monthlyRent' as const,
-                  label: 'Monthly Rent',
-                  help: 'Base price for monthly rental plan',
-                },
-                {
-                  key: 'securityDeposit' as const,
-                  label: 'Security Deposit',
-                  help: 'One-time refundable deposit',
-                },
                 {
                   key: 'walletMinTopup' as const,
                   label: 'Wallet Min Top-up',

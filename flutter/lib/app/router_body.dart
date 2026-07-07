@@ -5,25 +5,14 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
   Widget currentScreen;
 
   switch (state._currentState) {
-    case AuthState.authChoice:
-      currentScreen = AuthChoiceScreen(
-        key: const ValueKey('authChoice'),
-        onCreateAccount: () {
-          state._navigateToLocal(AuthState.legal);
-        },
-        onLoginWithPhone: () {
-          state._navigateToLocal(AuthState.privacyConsent);
-        },
-      );
-      break;
-
     case AuthState.splash:
       currentScreen = SplashScreen(
         key: const ValueKey('splash'),
         onComplete: () async {
-          final allGranted = await state._areAllPermissionsGranted();
-          if (!allGranted) {
-            state._navigateToLocal(AuthState.privacyConsent);
+          final allRequiredGranted =
+              await state._areAllRequiredPermissionsGranted();
+          if (!allRequiredGranted) {
+            state._navigateToLocal(AuthState.permissions);
             return;
           }
           final cachedRider = CacheService().getCachedRider();
@@ -56,31 +45,22 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
               }
             }
           } else {
-            state._navigateToLocal(AuthState.login);
+            state._navigateToLocal(AuthState.authChoice);
           }
         },
+      );
+      break;
+
+    case AuthState.authChoice:
+      currentScreen = AuthChoiceScreen(
+        onCreateAccount: () => state._navigateToLocal(AuthState.legal),
+        onLoginWithPhone: () => state._navigateToLocal(AuthState.legal),
       );
       break;
 
     case AuthState.legal:
       currentScreen = LegalScreen(
         key: const ValueKey('legal'),
-        onNext: () {
-          if (state._postOtpTargetState != null) {
-            final target = state._postOtpTargetState!;
-            state.updatePostOtpTarget(null);
-            state._navigateToLocal(target);
-          } else {
-            state._navigateToLocal(AuthState.privacyConsent);
-          }
-        },
-      );
-      break;
-
-    case AuthState.privacyConsent:
-      currentScreen = PrivacyConsentScreen(
-        key: const ValueKey('privacyConsent'),
-        onBack: () => state._navigateToLocal(AuthState.legal),
         onNext: () {
           state._navigateToLocal(AuthState.permissions);
         },
@@ -129,7 +109,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         key: const ValueKey('otp'),
         phoneNumber: state._phone,
         onBack: () => state._navigateToLocal(AuthState.login),
-        onNext: () {
+        onNext: (bool isNewRider) {
           final provider = context.read<AppProvider>();
           final rider = provider.rider;
 
@@ -140,8 +120,16 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
 
           final nextState = state
               ._lifecycleTargetToAuthState(RiderLifecycleGate.redirect(rider));
-          state.updatePostOtpTarget(nextState);
-          state._navigateToLocal(AuthState.legal);
+
+          if (isNewRider) {
+            // Brand-new rider: they already saw legal before login.
+            // Go straight to their lifecycle target (intent/userForm).
+            state._navigateToLocal(nextState);
+          } else {
+            // Returning rider: bypass legal (already accepted) and
+            // go straight to their lifecycle target.
+            state._navigateToLocal(nextState);
+          }
         },
       );
       break;
@@ -165,6 +153,8 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         },
       );
       break;
+
+
 
     case AuthState.guarantorForm:
       currentScreen = GuarantorOnboardingScreen(
@@ -355,19 +345,6 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
   }
 
   return Scaffold(
-    body: Stack(
-      children: [
-        Positioned.fill(
-          child: state.childScreenWrapper(currentScreen),
-        ),
-        if (state._isTransitioning)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-          ),
-      ],
-    ),
+    body: state.childScreenWrapper(currentScreen),
   );
 }

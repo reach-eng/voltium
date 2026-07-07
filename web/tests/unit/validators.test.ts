@@ -4,6 +4,7 @@ import {
   topUpSchema,
   updateProfileSchema,
   registerTokenSchema,
+  submitGuarantorSchema,
 } from '../../src/lib/validators';
 import fc from 'fast-check';
 
@@ -72,6 +73,63 @@ describe('Phase 1: Foundational Schema Validation', () => {
         bankIfsc: 'HDFC_000123', // Invalid format
       });
       expect(result.success).toBe(false);
+    });
+    test('should fail if riderPhoto or riderVideo is missing', () => {
+      const result = submitKycSchema.safeParse({
+        riderId: 'test-123',
+        aadhaarNumber: '1234-5678-1234',
+        panNumber: 'ABCDE1234F',
+        bankName: 'HDFC',
+        bankAccount: '1234567890',
+        bankIfsc: 'HDFC0001234',
+        // missing riderPhoto and riderVideo
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.some(e => e.path.includes('riderPhoto'))).toBe(true);
+        expect(result.error.issues.some(e => e.path.includes('riderVideo'))).toBe(true);
+      }
+    });
+
+    test('should pass when all mandatory fields including media are provided', () => {
+      const result = submitKycSchema.safeParse({
+        riderId: 'test-123',
+        aadhaarNumber: '1234-5678-1234',
+        panNumber: 'ABCDE1234F',
+        bankName: 'HDFC',
+        bankAccount: '1234567890',
+        bankIfsc: 'HDFC0001234',
+        riderPhoto: 'https://example.com/photo.jpg',
+        riderVideo: 'https://example.com/video.mp4',
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('Guarantor Validators (submitGuarantorSchema)', () => {
+    test('should fail if guarantor video is missing', () => {
+      const result = submitGuarantorSchema.safeParse({
+        riderId: 'test-123',
+        name: 'John Doe',
+        relation: 'Father',
+        phone: '9876543210',
+        // missing video
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.some(e => e.path.includes('video'))).toBe(true);
+      }
+    });
+
+    test('should pass with guarantor video provided', () => {
+      const result = submitGuarantorSchema.safeParse({
+        riderId: 'test-123',
+        name: 'John Doe',
+        relation: 'Father',
+        phone: '9876543210',
+        video: 'https://example.com/guarantor.mp4',
+      });
+      expect(result.success).toBe(true);
     });
   });
 

@@ -17,6 +17,7 @@ import {
   Lock,
   Trash2,
   Key,
+  UserPlus,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { hasPermission } from '@/lib/permissions';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import RiderSelector from '@/components/admin/RiderSelector';
 
 interface Contact {
   name: string;
@@ -72,7 +74,11 @@ interface DeviceData {
   };
 }
 
-export default function DeviceTrackingView({ riderId }: { riderId: string }) {
+export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?: string }) {
+  const [selectedRiderId, setSelectedRiderId] = useState<string | undefined>(riderIdProp);
+  const riderId = riderIdProp ?? selectedRiderId;
+  const isStandalone = !riderIdProp;
+
   const [data, setData] = useState<DeviceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState<'contacts' | 'calls' | 'location'>('calls');
@@ -108,6 +114,10 @@ export default function DeviceTrackingView({ riderId }: { riderId: string }) {
   };
 
   const fetchData = async () => {
+    if (!riderId) {
+      setLoading(false);
+      return;
+    }
     if (session && !hasPermission(session, 'device_tracking_view')) {
       setLoading(false);
       return;
@@ -133,8 +143,11 @@ export default function DeviceTrackingView({ riderId }: { riderId: string }) {
   }, []);
 
   useEffect(() => {
-    if (session) {
+    if (session && riderId) {
       fetchData();
+    } else if (!riderId) {
+      setLoading(false);
+      setData(null);
     }
   }, [riderId, session]);
 
@@ -266,9 +279,52 @@ export default function DeviceTrackingView({ riderId }: { riderId: string }) {
     );
   }
 
+  if (!riderId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold tracking-tight">Device Tracking</h2>
+          <p className="text-muted-foreground text-sm">
+            Select a rider to view device telemetry and security controls.
+          </p>
+        </div>
+        <RiderSelector value="" onChange={(id) => setSelectedRiderId(id)} />
+        <div className="flex flex-col items-center justify-center py-20 bg-muted/10 rounded-2xl border border-dashed text-muted-foreground">
+          <MapPin className="w-10 h-10 mb-4 opacity-20" />
+          <p className="text-sm font-bold">No rider selected</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            Search and select a rider above to view their device data.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-6">
+        {isStandalone && (
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-2xl font-bold tracking-tight">Device Tracking</h2>
+              <p className="text-muted-foreground text-sm">
+                Viewing device telemetry and security controls.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedRiderId(undefined);
+                setData(null);
+              }}
+              className="rounded-xl"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Change Rider
+            </Button>
+          </div>
+        )}
         <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50">
           {[
             { id: 'calls', label: 'Call Register', icon: Phone },

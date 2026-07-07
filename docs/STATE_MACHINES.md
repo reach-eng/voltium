@@ -23,15 +23,7 @@ KYC_SUBMITTED
   ├────► KYC_REJECTED ──► PROFILE_SUBMITTED (re-upload)
   │
   ▼
-KYC_APPROVED
-  │
-  ▼
-GUARANTOR_SUBMITTED
-  │
-  ├────► GUARANTOR_REJECTED ──► GUARANTOR_SUBMITTED (re-submit)
-  │
-  ▼
-GUARANTOR_APPROVED
+PLAN_SELECTED
   │
   ▼
 DEPOSIT_PENDING
@@ -42,7 +34,7 @@ DEPOSIT_PENDING
 DEPOSIT_APPROVED
   │
   ▼
-PLAN_SELECTED
+KYC_APPROVED
   │
   ▼
 PICKUP_SCHEDULED
@@ -64,19 +56,15 @@ ACTIVE
 | NEW                 | PHONE_VERIFIED        | OTP login success            | Create rider record            |
 | PHONE_VERIFIED      | PROFILE_SUBMITTED     | Profile form submit          | Update rider fields            |
 | PROFILE_SUBMITTED   | KYC_SUBMITTED         | KYC document upload          | Create KYC profile             |
-| KYC_SUBMITTED       | KYC_APPROVED          | Admin approve KYC            | Lock KYC fields                |
+| KYC_SUBMITTED       | PLAN_SELECTED         | Rider selects plan           | Create rental lease            |
 | KYC_SUBMITTED       | KYC_REJECTED          | Admin reject KYC             | Set rejection reason           |
 | KYC_REJECTED        | PROFILE_SUBMITTED     | Rider clears rejection       | Reset KYC profile              |
-| KYC_APPROVED        | GUARANTOR_SUBMITTED   | Guarantor form submit        | Create guarantor record        |
-| GUARANTOR_SUBMITTED | GUARANTOR_APPROVED    | Admin approve guarantor      | Lock guarantor fields          |
-| GUARANTOR_SUBMITTED | GUARANTOR_REJECTED    | Admin reject guarantor       | Set rejection reason           |
-| GUARANTOR_REJECTED  | GUARANTOR_SUBMITTED   | Rider re-submits             | Reset guarantor profile        |
-| GUARANTOR_APPROVED  | DEPOSIT_PENDING       | Deposit submitted            | Create DepositRecord           |
+| PLAN_SELECTED       | DEPOSIT_PENDING       | Deposit submitted            | Create DepositRecord           |
 | DEPOSIT_PENDING     | DEPOSIT_APPROVED      | Admin approve deposit        | Credit wallet, ledger entry    |
 | DEPOSIT_PENDING     | DEPOSIT_REJECTED      | Admin reject deposit         | Set rejection reason           |
 | DEPOSIT_REJECTED    | DEPOSIT_PENDING       | Rider re-submits             | Reset deposit                  |
-| DEPOSIT_APPROVED    | PLAN_SELECTED         | Rider selects plan           | Create rental lease            |
-| PLAN_SELECTED       | PICKUP_SCHEDULED      | Rider schedules pickup       | Vehicle reserved               |
+| DEPOSIT_APPROVED    | KYC_APPROVED          | Admin approve KYC            | Lock KYC fields                |
+| KYC_APPROVED        | PICKUP_SCHEDULED      | Rider schedules pickup       | Vehicle reserved               |
 | PICKUP_SCHEDULED    | ACTIVE                | Pickup completed             | Assign vehicle, start rental   |
 | ACTIVE              | SUSPENDED             | Admin suspension             | Disable app access             |
 | SUSPENDED           | ACTIVE                | Admin reinstatement           | Re-enable app access           |
@@ -119,29 +107,6 @@ SUBMITTED
 | REJECTED      | SUBMITTED     | Rider re-submits      |
 | INFO_REQUIRED | SUBMITTED     | Rider provides info   |
 | APPROVED      | EXPIRED       | Time-based expiry     |
-
----
-
-## 3. Guarantor Status (`guarantor.status`)
-
-```text
-DRAFT
-  │
-  ▼
-SUBMITTED
-  │
-  ├────► APPROVED
-  │
-  ├────► REJECTED ──► SUBMITTED (re-submit)
-  │
-  └────► INFO_REQUIRED ──► SUBMITTED (re-submit with info)
-```
-
-### Additional Transition
-
-| From     | To       | Trigger                    |
-|----------|----------|----------------------------|
-| APPROVED | REPLACED | Rider requests replacement |
 
 ---
 

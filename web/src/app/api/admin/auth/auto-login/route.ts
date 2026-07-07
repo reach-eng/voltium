@@ -36,6 +36,15 @@ export async function POST(request: NextRequest) {
       return error('Database or authentication service unavailable', 'SERVICE_UNAVAILABLE', 503);
     }
 
+    let permissions: string[] = [];
+    try {
+      if (admin.permissions) {
+        permissions = JSON.parse(admin.permissions as string);
+      }
+    } catch (e) {
+      logger.error('Failed to parse admin permissions', { adminId: admin.id, error: e });
+    }
+
     const sessionToken = await createSessionToken({
       riderId: admin.id,
       riderDbId: admin.id,
@@ -44,6 +53,7 @@ export async function POST(request: NextRequest) {
       adminRole: admin.role,
       adminId: admin.id,
       tokenVersion: admin.tokenVersion,
+      adminPermissions: permissions,
     });
 
     logger.info('[Admin Auto-Login]', { adminId: admin.id, role: admin.role });

@@ -33,25 +33,26 @@ RiderModel makeRider({
 
 void main() {
   group('RiderLifecycleGate.redirect', () {
-    test('new rider with no intent → intent screen', () {
+    test('new rider with no intent → preDashboard', () {
       final rider = makeRider(registrationDone: false, intent: null);
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });
 
-    test('rider with empty intent → intent screen', () {
+    test('rider with empty intent → preDashboard', () {
       final rider = makeRider(intent: '');
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });
 
-    test('rider with intent but KYC not done → kycForm', () {
+    test('rider with intent but KYC not done → preDashboard', () {
       final rider = makeRider(kycDone: false);
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.kycForm);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });
 
     test('rider with KYC done but guarantor pending → guarantorForm', () {
       final rider = makeRider(
         kycDone: true,
         guarantorStatus: GuarantorStatus.pending,
+        lifecycleStatus: 'PROFILE_SUBMITTED',
       );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });

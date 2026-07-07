@@ -74,6 +74,97 @@ describe('walletService', () => {
     expect(balance).toBe(8000);
   });
 
+  it('accumulates multiple sequential credits correctly', async () => {
+    await walletService.creditBalance(riderDbId, 1000, 'TOPUP_APPROVED');
+    await walletService.creditBalance(riderDbId, 2000, 'TOPUP_APPROVED');
+    await walletService.creditBalance(riderDbId, 3000, 'TOPUP_APPROVED');
+
+    const balance = await walletService.getBalance(riderDbId);
+    expect(balance).toBe(6000);
+
+    const ledger = await walletRepository.getLedgerEntries(riderDbId);
+    expect(ledger.length).toBe(3);
+  });
+
+  it('debit down to exactly zero', async () => {
+    await walletService.creditBalance(riderDbId, 5000, 'TOPUP_APPROVED');
+    const balance = await walletService.debitBalance(riderDbId, 5000, 'RENT_DEBIT');
+    expect(balance).toBe(0);
+  });
+
+  it('passes metadata fields (actorId, note) to ledger', async () => {
+    const note = 'Test note';
+
+    await walletService.creditBalance(riderDbId, 5000, 'TOPUP_APPROVED', {
+      note,
+    });
+
+    const ledger = await walletRepository.getLedgerEntries(riderDbId);
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0].note).toBe(note);
+  });
+
+
+  describe('LedgerEntryType to category mapping', () => {
+    const creditTypes: Array<string> = [
+      'TOPUP_SUBMITTED',
+      'TOPUP_APPROVED',
+      'DEPOSIT_CREDIT',
+      'REWARD_CREDIT',
+    ];
+
+    const debitTypes: Array<string> = [
+      'RENT_DEBIT',
+      'FINE_DEBIT',
+    ];
+
+    for (const type of creditTypes) {
+      it(`creditBalance with type ${type} creates a CREDIT ledger entry`, async () => {
+        await walletService.creditBalance(riderDbId, 1000, type as any);
+        const ledger = await walletRepository.getLedgerEntries(riderDbId);
+        expect(ledger.length).toBeGreaterThanOrEqual(1);
+        const last = ledger[0];
+        expect(last.entryType).toBe('CREDIT');
+        expect(last.amountInPaise).toBe(1000);
+      });
+    }
+
+    for (const type of debitTypes) {
+      it(`debitBalance with type ${type} creates a DEBIT ledger entry`, async () => {
+        await walletService.creditBalance(riderDbId, 5000, 'TOPUP_APPROVED');
+        await walletService.debitBalance(riderDbId, 1000, type as any);
+        const ledger = await walletRepository.getLedgerEntries(riderDbId);
+        const debitEntry = ledger.find(e => e.entryType === 'DEBIT');
+        expect(debitEntry).toBeDefined();
+        expect(debitEntry!.amountInPaise).toBe(1000);
+      });
+    }
+
+    it('creditBalance with REVERSAL type creates a CREDIT ledger entry', async () => {
+      await walletService.creditBalance(riderDbId, 2000, 'REVERSAL' as any);
+      const ledger = await walletRepository.getLedgerEntries(riderDbId);
+      expect(ledger[0].entryType).toBe('CREDIT');
+    });
+
+    it('creditBalance with ADMIN_ADJUSTMENT creates a CREDIT ledger entry', async () => {
+      await walletService.creditBalance(riderDbId, 500, 'ADMIN_ADJUSTMENT' as any);
+      const ledger = await walletRepository.getLedgerEntries(riderDbId);
+      expect(ledger[0].entryType).toBe('CREDIT');
+    });
+
+    it('creditBalance with DEPOSIT_REFUND type creates a CREDIT ledger entry', async () => {
+      await walletService.creditBalance(riderDbId, 3000, 'DEPOSIT_REFUND' as any);
+      const ledger = await walletRepository.getLedgerEntries(riderDbId);
+      expect(ledger[0].entryType).toBe('CREDIT');
+    });
+
+    it('creditBalance with TOPUP_REJECTED type creates a CREDIT ledger entry', async () => {
+      await walletService.creditBalance(riderDbId, 100, 'TOPUP_REJECTED' as any);
+      const ledger = await walletRepository.getLedgerEntries(riderDbId);
+      expect(ledger[0].entryType).toBe('CREDIT');
+    });
+  });
+
   it('fuzz testing creditBalance with extreme or invalid amounts', async () => {
     // Only test valid extreme amounts? Wait, if we pass negative amounts it should throw.
     // walletService accepts amount as parameter. What if it's negative, infinity or NaN?
@@ -112,4 +203,27 @@ describe('walletService', () => {
       { numRuns: 20 }
     );
   });
+
+  describe('verifyIntegrity', () => {
+    it('should verify integrity successfully when there is no drift', async () => {
+      await walletService.creditBalance(riderDbId, 5000, 'TOPUP_APPROVED');
+      const result = await walletService.verifyIntegrity(riderDbId);
+      expect(result.ok).toBe(true);
+      expect(result.drift).toBe(0);
+    });
+
+    it('should return ok=false for non-existent rider wallet', async () => {
+      const result = await walletService.verifyIntegrity('invalid-rider');
+      expect(result.ok).toBe(false);
+      expect(result.walletBalance).toBe(0);
+    });
+  });
+
+  describe('backfillOpeningBalance', () => {
+    it('should backfill opening balance', async () => {
+      await expect(walletService.backfillOpeningBalance(riderDbId)).resolves.toBeUndefined();
+    });
+  });
 });
+
+

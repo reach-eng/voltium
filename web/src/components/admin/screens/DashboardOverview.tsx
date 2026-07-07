@@ -280,7 +280,7 @@ export default function DashboardOverview() {
     if (!stats) return;
     const report = [
       `${BRAND_SHORT} Dashboard Report`,
-      `Generated: ${formatDateTimeDDMMYYYY()}`,
+      `Generated: ${formatDateTimeDDMMYYYY(new Date().toISOString())}`,
       '',
       'Key Metrics',
       `Active Riders,${stats.activeRiders}`,
@@ -334,7 +334,7 @@ export default function DashboardOverview() {
     );
   }
 
-  const today = formatDateDDMMYYYY();
+  const today = formatDateDDMMYYYY(new Date().toISOString());
   const trendData = stats?.trend || [];
   const secondaryStats = stats
     ? [

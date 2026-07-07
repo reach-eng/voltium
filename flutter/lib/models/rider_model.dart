@@ -147,11 +147,12 @@ class RiderModel {
   final bool planDone;
   final bool pickupDone;
 
-  // ── Account ─────────────────────────────────────────────────────────────
+  // ── Account ──────────────────────────────────────────────────────────────────
   final AccountStatus accountStatus;
   final String lifecycleStatus;
+  final bool isNewRider;
 
-  // ── Referral & Rewards ───────────────────────────────────────────────────
+  // ── Referral & Rewards ───────────────────────────────────────────────────────
   final String? referralCode;
   final int totalRewardPoints;
 
@@ -222,6 +223,7 @@ class RiderModel {
     this.pickupDone = false,
     this.accountStatus = AccountStatus.preActive,
     this.lifecycleStatus = 'NEW',
+    this.isNewRider = false,
     this.referralCode,
     this.totalRewardPoints = 0,
     this.createdAt,
@@ -313,6 +315,7 @@ class RiderModel {
     bool? pickupDone,
     AccountStatus? accountStatus,
     String? lifecycleStatus,
+    bool? isNewRider,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? intent,
@@ -377,6 +380,7 @@ class RiderModel {
       pickupDone: pickupDone ?? this.pickupDone,
       accountStatus: accountStatus ?? this.accountStatus,
       lifecycleStatus: lifecycleStatus ?? this.lifecycleStatus,
+      isNewRider: isNewRider ?? this.isNewRider,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       intent: intent ?? this.intent,
@@ -410,6 +414,20 @@ class RiderModel {
         return 250.0;
       default:
         // Default safe fallback plan price.
+        return 1500.0;
+    }
+  }
+
+  double get activeRentalPlanSecurityDeposit {
+    switch (currentPlan?.toUpperCase()) {
+      case 'WEEKLY_MAX':
+        return 1500.0;
+      case 'WEEKLY_BASIC':
+        return 1000.0;
+      case 'DAILY_FLEX':
+        return 500.0;
+      default:
+        // Default safe fallback plan security deposit.
         return 1500.0;
     }
   }
@@ -486,7 +504,8 @@ class RiderModel {
       planDone: json['planDone'] as bool? ?? false,
       pickupDone: json['pickupDone'] as bool? ?? false,
       accountStatus: _parseAccountStatus(json['accountStatus']),
-      lifecycleStatus: json['lifecycleStatus'] as String? ?? 'NEW',
+      lifecycleStatus: json['lifecycleStatus'] as String? ?? json['state'] as String? ?? 'NEW',
+      isNewRider: json['isNewRider'] as bool? ?? false,
       referralCode: json['referralCode'] as String?,
       totalRewardPoints: json['totalRewardPoints'] as int? ?? 0,
       createdAt: json['createdAt'] != null
@@ -526,6 +545,7 @@ class RiderModel {
       'assignedVehicle': assignedVehicle,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
+      'isNewRider': isNewRider,
       'kycStatus': kycStatus.name,
       'rentalStatus': rentalStatus,
       'name': name,
@@ -554,6 +574,7 @@ class RiderModel {
       assignedVehicle: cache['assignedVehicle'] as String?,
       accountStatus: _parseAccountStatus(cache['accountStatus']),
       lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',
+      isNewRider: _toBool(cache['isNewRider']) ?? false,
       kycStatus: _parseKycStatus(cache['kycStatus']),
       rentalStatus: cache['rentalStatus'] as String? ?? 'NONE',
       returnPending: _toBool(cache['returnPending']) ?? false,

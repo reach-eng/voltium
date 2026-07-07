@@ -9,10 +9,10 @@ export const verifyOtpSchema = z
     phone: z
       .string()
       .regex(/^\d{10}$/, 'Phone must be 10 digits')
-      .optional(),
-    otp: z.string().length(6, 'OTP must be 6 digits').optional(),
-    idToken: z.string().optional(),
-    referralCode: z.string().max(20).optional(),
+      .nullish(),
+    otp: z.string().length(6, 'OTP must be 6 digits').nullish(),
+    idToken: z.string().nullish(),
+    referralCode: z.string().max(20).nullish(),
   })
   .refine((data) => data.idToken || (data.phone && data.otp), {
     message: 'Either idToken or phone and otp are required',
@@ -21,58 +21,58 @@ export const verifyOtpSchema = z
 
 // ==================== RIDER PROFILE ====================
 export const updateProfileSchema = z.object({
-  riderId: z.string().min(1, 'Rider ID required').optional(),
-  fullName: z.string().min(2).max(100).optional(),
-  email: z.string().email('Invalid email').optional().or(z.literal('')),
-  fatherName: z.string().max(100).optional(),
-  motherName: z.string().max(100).optional(),
-  currentAddress: z.string().max(500).optional(),
-  emergencyContact: z.string().max(20).optional(),
+  riderId: z.string().min(1, 'Rider ID required').nullish(),
+  fullName: z.string().min(2).max(100).nullish(),
+  email: z.string().email('Invalid email').nullish().or(z.literal('')),
+  fatherName: z.string().max(100).nullish(),
+  motherName: z.string().max(100).nullish(),
+  currentAddress: z.string().max(500).nullish(),
+  emergencyContact: z.string().max(20).nullish(),
   dob: z
     .string()
     .regex(/^\d{2}-\d{2}-\d{4}$/, 'DOB must be dd-mm-yyyy')
-    .optional(),
-  intent: z.enum(['deliver', 'personal']).optional(),
+    .nullish(),
+  intent: z.string().nullish(),
   // KYC Urls
-  profilePhoto: z.string().optional().or(z.literal('')),
-  riderPhoto: z.string().optional().or(z.literal('')),
-  signature: z.string().optional().or(z.literal('')),
-  aadhaarFront: z.string().optional().or(z.literal('')),
-  aadhaarBack: z.string().optional().or(z.literal('')),
-  panCard: z.string().optional().or(z.literal('')),
-  bankName: z.string().optional().or(z.literal('')),
-  bankAccount: z.string().optional().or(z.literal('')),
-  bankIfsc: z.string().optional().or(z.literal('')),
-  selfie: z.string().optional().or(z.literal('')),
+  profilePhoto: z.string().nullish().or(z.literal('')),
+  riderPhoto: z.string().nullish().or(z.literal('')),
+  signature: z.string().nullish().or(z.literal('')),
+  aadhaarFront: z.string().nullish().or(z.literal('')),
+  aadhaarBack: z.string().nullish().or(z.literal('')),
+  panCard: z.string().nullish().or(z.literal('')),
+  bankName: z.string().nullish().or(z.literal('')),
+  bankAccount: z.string().nullish().or(z.literal('')),
+  bankIfsc: z.string().nullish().or(z.literal('')),
+  selfie: z.string().nullish().or(z.literal('')),
   // Vehicle Return Fields
-  returnPending: z.boolean().optional(),
-  returnPhotos: z.array(z.string().url()).optional(),
-  returnReason: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  returnPending: z.boolean().nullish(),
+  returnPhotos: z.array(z.string().url()).nullish(),
+  returnReason: z.string().nullish(),
+  latitude: z.number().nullish(),
+  longitude: z.number().nullish(),
   // Guarantor Fields
-  guarantorName: z.string().optional(),
-  guarantorPhone: z.string().optional(),
-  guarantorRelation: z.string().optional(),
-  guarantorDob: z.string().optional(),
-  guarantorFatherName: z.string().optional(),
-  guarantorMotherName: z.string().optional(),
-  guarantorAddress: z.string().optional(),
-  guarantorAadhaarFront: z.string().optional(),
-  guarantorAadhaarBack: z.string().optional(),
-  guarantorPan: z.string().optional(),
-  guarantorVideo: z.string().optional(),
-  guarantorSignature: z.string().optional(),
-  guarantorPhoto: z.string().optional(),
-  guarantorStatus: z.string().optional(),
-  // Permission State Fields
-  locationGranted: z.boolean().optional(),
-  batteryGranted: z.boolean().optional(),
-  contactsGranted: z.boolean().optional(),
-  callLogsGranted: z.boolean().optional(),
-  micGranted: z.boolean().optional(),
-  cameraGranted: z.boolean().optional(),
-  phoneGranted: z.boolean().optional(),
+  guarantorName: z.string().nullish(),
+  guarantorPhone: z.string().nullish(),
+  guarantorRelation: z.string().nullish(),
+  guarantorDob: z.string().nullish(),
+  guarantorFatherName: z.string().nullish(),
+  guarantorMotherName: z.string().nullish(),
+  guarantorAddress: z.string().nullish(),
+  guarantorAadhaarFront: z.string().nullish(),
+  guarantorAadhaarBack: z.string().nullish(),
+  guarantorPan: z.string().nullish(),
+  guarantorVideo: z.string().nullish(),
+  guarantorSignature: z.string().nullish(),
+  guarantorPhoto: z.string().nullish(),
+  guarantorStatus: z.enum(['PENDING', 'DRAFT', 'SUBMITTED', 'INFO_REQUIRED', 'APPROVED', 'REJECTED']).nullish(),
+  // Permissions
+  locationGranted: z.boolean().nullish(),
+  batteryGranted: z.boolean().nullish(),
+  contactsGranted: z.boolean().nullish(),
+  callLogsGranted: z.boolean().nullish(),
+  micGranted: z.boolean().nullish(),
+  cameraGranted: z.boolean().nullish(),
+  phoneGranted: z.boolean().nullish(),
 });
 
 // ==================== KYC ====================
@@ -87,6 +87,8 @@ export const submitKycSchema = z.object({
   aadhaarBack: z.string().optional().or(z.literal('')),
   panCard: z.string().optional().or(z.literal('')),
   profilePhoto: z.string().optional().or(z.literal('')),
+  riderPhoto: z.string().url('Rider photo is required'),
+  riderVideo: z.string().url('Rider video is required'),
   signature: z.string().optional().or(z.literal('')),
 });
 
@@ -105,7 +107,7 @@ export const submitGuarantorSchema = z.object({
   aadhaarFront: z.string().optional().or(z.literal('')),
   aadhaarBack: z.string().optional().or(z.literal('')),
   pan: z.string().optional().or(z.literal('')),
-  video: z.string().optional().or(z.literal('')),
+  video: z.string().url('Video is required'),
   signature: z.string().optional().or(z.literal('')),
 });
 
@@ -117,7 +119,7 @@ export const topUpSchema = z.object({
   method: z.enum(['UPI', 'CASH', 'CARD']),
   reason: z.string().max(200).optional(),
   upiRef: z.string().max(50).optional().nullable(),
-  proofUrl: z.string().min(1).optional().nullable(),
+  proofUrl: z.string().min(1, 'Proof of payment is required'),
 });
 
 // ==================== TICKETS ====================
@@ -135,7 +137,7 @@ export const createRiderSchema = z.object({
   phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
   fullName: z.string().min(2).max(100).optional(),
   email: z.string().email().optional().or(z.literal('')),
-  intent: z.enum(['deliver', 'personal']).optional(),
+  intent: z.string().optional(),
   lifecycleStatus: z
     .enum([
       'NEW',
@@ -162,8 +164,12 @@ export const createPlanSchema = z.object({
   name: z.string().min(2).max(100),
   type: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']),
   price: z.number().positive('Price must be positive'),
-  durationDays: z.number().int().positive(),
+  securityDeposit: z.number().min(0).default(0),
+  isSecurityRefundable: z.boolean().default(true),
+  refundableAfterDays: z.number().int().min(0).optional().nullable(),
+  durationDays: z.number().int().positive().optional(),
   description: z.string().max(500).optional(),
+  additionalInfo: z.string().max(1000).optional().nullable(),
 });
 
 export const updatePlanSchema = createPlanSchema.partial().extend({
@@ -311,10 +317,6 @@ export const updateLegalSchema = z.object({
 
 // ==================== ADMIN - SETTINGS (UPSERT) ====================
 const VALID_SETTING_KEYS = [
-  'dailyRent',
-  'weeklyRent',
-  'monthlyRent',
-  'securityDeposit',
   'walletMinTopup',
   'lateFee',
   'referralBonus',
@@ -352,7 +354,6 @@ export const approveTransactionSchema = z.object({
 
 // ==================== RIDER - PLANS ====================
 export const subscribePlanSchema = z.object({
-  riderId: z.string().min(1, 'Rider ID is required'),
   planId: z.string().min(1, 'Plan ID is required'),
 });
 

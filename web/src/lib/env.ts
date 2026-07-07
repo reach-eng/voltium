@@ -13,13 +13,14 @@ const envSchema = z.object({
     .string()
     .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').optional(),
-  ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000'),
+  ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
   CRON_SECRET: z.string().optional(),
   WORKER_SECRET: z.string().optional(),
 
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
   NEXT_PUBLIC_API_BASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_FLUTTER_WEB_URL: z.string().url().default('http://localhost:8080'),
 
   // Integrations
   SMS_PROVIDER: z.enum(['mock', 'msg91']).default('mock'),
@@ -94,6 +95,7 @@ const parseTarget = isServer
       APP_ENV: process.env.APP_ENV,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+      NEXT_PUBLIC_FLUTTER_WEB_URL: process.env.NEXT_PUBLIC_FLUTTER_WEB_URL,
       NEXT_PUBLIC_ENABLE_KYC: process.env.NEXT_PUBLIC_ENABLE_KYC,
       NEXT_PUBLIC_ENABLE_GUARANTOR: process.env.NEXT_PUBLIC_ENABLE_GUARANTOR,
       NEXT_PUBLIC_ENABLE_REWARDS: process.env.NEXT_PUBLIC_ENABLE_REWARDS,

@@ -57,6 +57,7 @@ const KYC_FIELDS = new Set([
   'accountNumber',
   'ifscCode',
   'rejectionReason',
+  'editableFields',
 ]);
 
 const WALLET_FIELDS = new Set([

@@ -47,8 +47,8 @@ export const FILE_UPLOAD_RULES: Record<
   { allowedMimeTypes: string[]; maxSizeBytes: number }
 > = {
   kyc_document: {
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-    maxSizeBytes: 5 * 1024 * 1024,
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf', 'video/mp4', 'video/quicktime'],
+    maxSizeBytes: 25 * 1024 * 1024,
   },
   profile_photo: {
     allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],

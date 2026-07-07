@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await authUseCases.verifyOtp(validation.data);
+    const result = await authUseCases.verifyOtp(validation.data as any);
 
     if (
       process.env.NODE_ENV === 'development' &&
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = success(
-      { ...result.riderData, token: result.token },
+      { ...result.riderData, token: result.token, isNewRider: result.isNewRider },
       'OTP verified successfully',
       200,
       undefined,

@@ -138,11 +138,9 @@ vi.mock('@/lib/services/deposit-service', () => ({
   upsertDepositRecord: () => Promise.resolve(undefined),
 }));
 vi.mock('isomorphic-dompurify', () => ({
-  default: () => ({
-    sanitize: (s: string) => s,
-    addHook: () => {},
-    isValidTag: () => true,
-  }),
+  sanitize: (s: string) => s,
+  addHook: () => {},
+  isValidTag: () => true,
 }));
 
 // ===========================================================================
@@ -267,7 +265,8 @@ describe('KYC — Review (Approve / Reject / Request Info)', () => {
     expect(mockKycRepository.rejectKyc).toHaveBeenCalledWith(
       'rider-123',
       'admin-1',
-      'Blurry document'
+      'Blurry document',
+      []
     );
   });
 

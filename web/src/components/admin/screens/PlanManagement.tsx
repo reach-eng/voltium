@@ -14,6 +14,7 @@ interface RentalPlan {
   name: string;
   type: string;
   price: number;
+  securityDeposit: number;
   durationDays: number;
   isActive: boolean;
   description: string;
@@ -150,6 +151,9 @@ export default function PlanManagement() {
                   <span className="text-xs font-normal text-muted-foreground">
                     / {plan.durationDays} day(s)
                   </span>
+                </div>
+                <div className="text-sm font-semibold text-blue-600">
+                  Security Deposit: ₹{(plan.securityDeposit || 0).toLocaleString('en-IN')}
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 h-10">
                   {plan.description}

@@ -88,4 +88,19 @@ describe('Public Routes', () => {
     });
     expect(status).toBeGreaterThanOrEqual(400);
   });
+
+  describe('Negative Scenarios (400, 404)', () => {
+    it('returns 404 for unknown public routes', async () => {
+      const { status } = await api('/api/unknown-public-route-xyz');
+      expect(status).toBe(404);
+    });
+
+    it('returns 400 for malformed JSON payload in public routes', async () => {
+      const { status } = await api('/api/support/chat', { 
+        method: 'POST', 
+        body: 'invalid json' 
+      });
+      expect(status).toBeGreaterThanOrEqual(400);
+    });
+  });
 });

@@ -41,6 +41,7 @@ export const kycDocuments = [
   { key: 'aadhaarBack' as const, label: 'Aadhaar Back' },
   { key: 'panCard' as const, label: 'PAN Card' },
   { key: 'signature' as const, label: 'Signature' },
+  { key: 'profilePhoto' as const, label: 'Rider Photo' },
 ];
 
 function getCompletion(rider: KycRider): number {
@@ -95,7 +96,7 @@ export function KycReviewsTab() {
         params.set('kycStatus', 'INFO_REQUIRED');
       } else if (tab === 'pending') {
         params.append('kycStatus', 'PENDING');
-        params.append('kycStatus', 'SUBMITTED');
+        
       } else if (tab !== 'all') {
         params.set('kycStatus', tab.toUpperCase());
       }
@@ -621,7 +622,7 @@ export function KycReviewsTab() {
                               <Eye className="w-4 h-4" />
                             </Button>
                             {rider.kycStatus === 'PENDING' ||
-                            rider.kycStatus === 'SUBMITTED' ||
+                            
                             rider.kycStatus === 'INFO_REQUIRED' ? (
                               <>
                                 <Button

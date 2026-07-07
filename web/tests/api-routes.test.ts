@@ -174,7 +174,7 @@ describe('POST /api/auth/verify-otp', () => {
     expect(body.success).toBe(true);
     expect(body.data.phone).toBe(uniquePhone);
     expect(body.data.riderId).toMatch(/^VF-RD-/);
-    expect(body.data.accountStatus).toBe('PRE_ACTIVE');
+    expect(body.data.accountStatus).toBe('INACTIVE');
   });
 
   it('rejects missing OTP (validation)', async () => {
@@ -453,6 +453,7 @@ describe('POST /api/transaction/topup', () => {
         amount: 500,
         purpose: 'TOP_UP',
         method: 'UPI',
+        proofUrl: 'https://example.com/proof.jpg',
       }),
     });
 
@@ -498,7 +499,7 @@ describe('POST /api/transaction/topup', () => {
       }),
     });
 
-    expect(status).toBe(404);
+    expect(status).toBe(401);
     expect(body.success).toBe(false);
   });
 });

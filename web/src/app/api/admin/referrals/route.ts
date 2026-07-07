@@ -23,3 +23,39 @@ export async function GET(req: NextRequest) {
     return errors.internal('Failed to fetch referrals');
   }
 }
+
+export async function POST(req: NextRequest) {
+  const session = await requireAdmin();
+  if (!session) return adminUnauthorized();
+  if (!hasPermission(session.adminRole || '', 'rewards_manage')) return adminForbidden();
+
+  try {
+    const body = await req.json();
+    const { referrerId, refereeId } = body;
+
+    if (!referrerId || !refereeId) {
+      return errors.badRequest('Referrer ID and Referee ID are required');
+    }
+
+    const { db } = await import('@/lib/db');
+    
+    // Find referrer to get their code
+    const referrer = await db.rider.findUnique({
+      where: { id: referrerId },
+      select: { referralCode: true }
+    });
+
+    if (!referrer || !referrer.referralCode) {
+      return errors.badRequest('Referrer not found or has no referral code');
+    }
+
+    // Process the reward
+    await referralUseCases.processReferralReward(refereeId, referrer.referralCode);
+
+    return success({ message: 'Referral processed successfully' });
+  } catch (error) {
+    logger.error('POST /api/admin/referrals error:', error);
+    return errors.internal('Failed to process referral');
+  }
+}
+

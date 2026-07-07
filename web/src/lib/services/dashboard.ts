@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { paiseToRupees } from '@/lib/flatten-rider';
+import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
 export const getDashboardStats = async () => {
   const [
@@ -79,7 +80,6 @@ export const getRevenueTrend = async (days = 7) => {
     GROUP BY DATE("createdAt")
     ORDER BY date ASC
   `;
-import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
 
   for (const row of result) {
     const key = row.date;

@@ -6,14 +6,14 @@ import type { Prisma } from '@prisma/client';
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const session = await requirePermission('admin:write');
   if (!session) {
     return errors.forbidden('Insufficient permissions to delete rider data');
   }
 
-  const riderId = params.id;
+  const { id: riderId } = await context.params;
 
   const rider = await db.rider.findUnique({
     where: { id: riderId },

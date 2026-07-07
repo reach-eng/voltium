@@ -15,10 +15,7 @@ enum LifecycleTarget {
   /// Rider needs to complete registration / intent of use.
   intent,
 
-  /// Rider needs to complete KYC.
-  kycForm,
-
-  /// Rider needs to add guarantor.
+  /// Rider needs to fill Guarantor form.
   guarantorForm,
 
   /// Rider needs to complete deposit / plan selection.
@@ -46,7 +43,7 @@ class RiderLifecycleGate {
   static LifecycleTarget redirect(RiderModel rider) {
     // Account status overrides everything
     if (rider.accountStatus == AccountStatus.terminated ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 14)) {
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 13)) {
       return LifecycleTarget.terminated;
     }
     if (rider.accountStatus == AccountStatus.suspended ||
@@ -54,32 +51,24 @@ class RiderLifecycleGate {
       return LifecycleTarget.suspended;
     }
 
-    // Fully onboarded — go to dashboard
-    if (rider.pickupDone ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 10)) {
-      return LifecycleTarget.dashboard;
-    }
+    final rank = lifecycleRank(rider);
 
-    // Not registered or no intent — go to intent screen
-    if (rider.intent == null ||
-        rider.intent!.isEmpty ||
-        !(rider.registrationDone ||
-            (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 2))) {
-      return LifecycleTarget.intent;
-    }
-
-    // KYC not done — go to KYC form
-    if (!(rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4))) {
-      return LifecycleTarget.kycForm;
-    }
-
-    // Guarantor pending — go to guarantor form
-    if (rider.guarantorStatus == GuarantorStatus.pending) {
+    // If rider only submitted profile (rank 2), they need guarantor form
+    if (rank == 2) {
       return LifecycleTarget.guarantorForm;
     }
 
-    // Everything done but no pickup — pre-dashboard
+    // Fully onboarded — go to dashboard
+    if (rider.pickupDone || (rider.lifecycleStatus.isNotEmpty && rank >= 10)) {
+      return LifecycleTarget.dashboard;
+    }
+
+    // If rider hasn't submitted profile (rank < 2), they need intent/rider form
+    if (rank < 2) {
+      return LifecycleTarget.intent;
+    }
+
+    // Everyone else goes to pre-dashboard (entry point)
     return LifecycleTarget.preDashboard;
   }
 
@@ -92,7 +81,6 @@ class RiderLifecycleGate {
   static bool isOnboarding(RiderModel rider) {
     final target = redirect(rider);
     return target == LifecycleTarget.intent ||
-        target == LifecycleTarget.kycForm ||
         target == LifecycleTarget.guarantorForm ||
         target == LifecycleTarget.preDashboard;
   }

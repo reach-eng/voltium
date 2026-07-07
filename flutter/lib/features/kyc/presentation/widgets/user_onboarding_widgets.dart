@@ -451,6 +451,7 @@ class DocTile extends StatelessWidget {
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -852,10 +853,9 @@ class UserOnboardingBottomButton extends StatelessWidget {
         height: 52,
         child: ElevatedButton(
           key: const Key('nextOnboardingButton'),
-          onPressed: canProceed && !isUploading ? onNext : null,
+          onPressed: !isUploading ? onNext : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                canProceed ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
+            backgroundColor: const Color(0xFF2563EB),
             disabledBackgroundColor: const Color(0xFF9CA3AF),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -891,7 +891,7 @@ class UserOnboardingBottomButton extends StatelessWidget {
                   children: [
                     Text(
                       canProceed
-                          ? 'NEXT: ADD GUARANTOR'
+                          ? 'SUBMIT REGISTRATION'
                           : 'COMPLETE ALL FIELDS',
                       style: const TextStyle(
                         fontSize: 15,
