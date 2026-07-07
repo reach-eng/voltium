@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/features/onboarding/presentation/screens/privacy_consent_screen.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import '../../../../providers/theme_provider.dart';
+import '../../../../providers/locale_provider.dart';
+import '../../../onboarding/presentation/screens/privacy_consent_screen.dart';
 
 class AppSettingsScreen extends StatefulWidget {
   const AppSettingsScreen({super.key});

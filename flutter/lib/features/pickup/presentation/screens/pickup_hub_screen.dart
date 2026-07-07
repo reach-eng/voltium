@@ -112,20 +112,28 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       _selectedVehicleLabel = null;
     });
     try {
+      print('Fetching vehicles for hub: $hubId');
       final response = await VoltiumApiService().fetchVehicles(hubId);
+      print('Fetch response: $response');
       if (!mounted) return;
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>? ?? {};
-        final list = data['vehicles'] as List<dynamic>? ?? [];
-        setState(() {
-          _vehicles = list
-              .map((v) => v as Map<String, dynamic>)
-              .where((v) => v['status'] == 'AVAILABLE')
-              .toList();
-        });
-      }
-    } catch (_) {
-      // silently ignore; user can retry by changing hub
+      // The API wraps the response in { success, data }. The data may
+      // be a list directly (GET /api/vehicles) or nested under a key.
+      final data = response['data'];
+      final rawList = data is List
+          ? data
+          : (data is Map ? data['vehicles'] : response['vehicles']);
+      final list = (rawList as List<dynamic>?) ?? [];
+      print('Vehicle list length: ${list.length}');
+      setState(() {
+        _vehicles = list
+            .map((v) => v as Map<String, dynamic>)
+            .where((v) => v['status'] == 'AVAILABLE')
+            .toList();
+      });
+      print('Available vehicles: ${_vehicles.length}');
+    } catch (e) {
+      print('Fetch error: $e');
+      _showError('Failed to fetch vehicles: $e');
     } finally {
       if (mounted) setState(() => _isLoadingVehicles = false);
     }
@@ -248,24 +256,24 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     });
 
     try {
+      print('Sending OTP to $digits');
       final response = await VoltiumApiService().sendOtp(phone: digits);
+      print('OTP send response: $response');
       if (!mounted) return;
-      if (response['success'] == true) {
-        setState(() {
-          _isOtpSent = true;
-          _isOtpVerified = false;
-        });
-        _showSuccess('OTP sent to emergency contact');
-        final testOtp = response['data']?['otp'];
-        if (testOtp != null) {
-          _otpController.text = testOtp.toString();
-        }
-      } else {
-        _showError(response['message'] ?? 'Failed to send OTP');
+      setState(() {
+        _isOtpSent = true;
+        _isOtpVerified = false;
+      });
+      _showSuccess('OTP sent to emergency contact');
+      // API response is { success, data: { exists, otp } }
+      final testOtp = response['data'] is Map ? (response['data'] as Map)['otp'] : null;
+      if (testOtp != null) {
+        _otpController.text = testOtp.toString();
       }
     } catch (e) {
+      print('OTP send error: $e');
       if (!mounted) return;
-      _showError('Failed to send OTP. Please try again.');
+      _showError('Failed to send OTP. Please try again. $e');
     } finally {
       if (mounted) setState(() => _isSendingOtp = false);
     }
@@ -287,12 +295,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       final response =
           await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
       if (!mounted) return;
-      if (response['success'] == true) {
-        setState(() => _isOtpVerified = true);
-        _showSuccess('Emergency contact verified successfully ✓');
-      } else {
-        _showError(response['message'] ?? 'Invalid OTP');
-      }
+      setState(() => _isOtpVerified = true);
+      _showSuccess('Emergency contact verified successfully ✓');
     } catch (e) {
       if (!mounted) return;
       _showError('OTP verification failed. Please try again.');
@@ -441,9 +445,9 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
 
     return Scaffold(
       backgroundColor: kSurfaceColor,
-      body: Stack(
+      body: Column(
         children: [
-          Positioned.fill(
+          Expanded(
             child: SingleChildScrollView(
               child: Column(
                 children: [

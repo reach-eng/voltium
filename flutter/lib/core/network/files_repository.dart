@@ -48,18 +48,22 @@ class FilesRepository {
       final uploadUri = Uri.parse(finalUploadUrl);
 
       final token = await _client.storage.getSessionToken();
-      final uploadResponse = await http.put(
-        uploadUri,
-        headers: {
-          'Content-Type': mimeType,
-          'Content-Length': fileBytes.length.toString(),
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: fileBytes,
-      );
+      final uploadResponse = await http
+          .put(
+            uploadUri,
+            headers: {
+              'Content-Type': mimeType,
+              'Content-Length': fileBytes.length.toString(),
+              if (token != null) 'Authorization': 'Bearer $token',
+            },
+            body: fileBytes,
+          )
+          .timeout(const Duration(seconds: 120),
+              onTimeout: () => throw Exception('Upload timed out after 120s'));
 
       if (uploadResponse.statusCode < 200 || uploadResponse.statusCode >= 300) {
-        throw Exception('Failed to upload file to signed URL');
+        throw Exception(
+            'Failed to upload file to signed URL (status ${uploadResponse.statusCode})');
       }
 
       // Step 3: Confirm upload

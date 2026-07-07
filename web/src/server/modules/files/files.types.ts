@@ -3,7 +3,10 @@ export type FileCategory =
   | 'profile_photo'
   | 'vehicle_photo'
   | 'payment_proof'
-  | 'support_attachment';
+  | 'support_attachment'
+  | 'pickup_verification'
+  | 'RETURN_PHOTO'
+  | 'TOPUP_PROOF';
 
 export enum FileOwnerType {
   RIDER = 'RIDER',
@@ -66,6 +69,22 @@ export const FILE_UPLOAD_RULES: Record<
     allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf', 'video/mp4'],
     maxSizeBytes: 10 * 1024 * 1024,
   },
+  pickup_verification: {
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    maxSizeBytes: 10 * 1024 * 1024,
+  },
+  RETURN_PHOTO: {
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    maxSizeBytes: 10 * 1024 * 1024,
+  },
+  TOPUP_PROOF: {
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+    maxSizeBytes: 10 * 1024 * 1024,
+  },
+  vehicle_return: {
+    allowedMimeTypes: ['image/jpeg', 'image/png'],
+    maxSizeBytes: 10 * 1024 * 1024,
+  },
 };
 
 export const FILE_PURPOSE_MAP: Record<FileCategory, string> = {
@@ -74,4 +93,8 @@ export const FILE_PURPOSE_MAP: Record<FileCategory, string> = {
   vehicle_photo: 'vehicle_photo',
   payment_proof: 'payment_proof',
   support_attachment: 'support_attachment',
+  pickup_verification: 'pickup_verification',
+  RETURN_PHOTO: 'RETURN_PHOTO',
+  TOPUP_PROOF: 'TOPUP_PROOF',
+  vehicle_return: 'vehicle_return',
 };

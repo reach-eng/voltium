@@ -125,7 +125,7 @@ class EmergencyContactsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              initialValue: relationship,
+              value: relationship,
               items: ['Parent', 'Spouse', 'Sibling', 'Friend', 'Other']
                   .map((r) => DropdownMenuItem(value: r, child: Text(r)))
                   .toList(),
