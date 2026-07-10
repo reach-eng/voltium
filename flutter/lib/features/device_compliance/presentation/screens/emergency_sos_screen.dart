@@ -10,7 +10,8 @@ class EmergencySOSScreen extends ConsumerWidget {
   const EmergencySOSScreen({super.key});
 
   Future<void> _callNumber(String number) async {
-    final uri = Uri.parse('tel:$number');
+    final sanitizedNumber = number.replaceAll(RegExp(r'[^\d+]'), '');
+    final uri = Uri.parse('tel:$sanitizedNumber');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }

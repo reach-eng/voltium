@@ -4,10 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
 import '../../../../theme/app_theme.dart';
 import 'create_ticket_screen.dart';
+
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
@@ -15,7 +15,8 @@ class SupportCenterScreen extends ConsumerStatefulWidget {
   const SupportCenterScreen({super.key});
 
   @override
-  ConsumerState<SupportCenterScreen> createState() => _SupportCenterScreenState();
+  ConsumerState<SupportCenterScreen> createState() =>
+      _SupportCenterScreenState();
 }
 
 class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
@@ -27,40 +28,22 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
         backgroundColor: AppColors.iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Support Center',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-        leadingWidth: 68,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: UnconstrainedBox(
-            child: GestureDetector(
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20),
-              ),
-            ),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
+        titleSpacing: 20,
+        title: Text(
+          'Support Center',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF1E293B),
+            letterSpacing: -0.5,
           ),
         ),
       ),
-      body: Consumer(builder: (context, ref, child) { final rider = ref.watch(appProvider.select((p) => p.rider));
+      body: Consumer(
+        builder: (context, ref, child) {
+          final rider = ref.watch(appProvider.select((p) => p.rider));
           final tlName = rider?.teamLeader;
           final tlPhone = rider?.emergencyContact;
           return SingleChildScrollView(
@@ -68,12 +51,80 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'How can we help you?',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                SearchAnchor(
+                  builder: (BuildContext context, SearchController controller) {
+                    return SearchBar(
+                      controller: controller,
+                      padding: const WidgetStatePropertyAll<EdgeInsets>(
+                          EdgeInsets.symmetric(horizontal: 16.0)),
+                      onTap: () {
+                        controller.openView();
+                      },
+                      onChanged: (_) {
+                        controller.openView();
+                      },
+                      leading:
+                          const Icon(Icons.search, color: AppColors.slate500),
+                      hintText: 'Search FAQs, topics...',
+                      elevation: const WidgetStatePropertyAll(0),
+                      backgroundColor:
+                          WidgetStatePropertyAll(Colors.grey.shade100),
+                    );
+                  },
+                  suggestionsBuilder:
+                      (BuildContext context, SearchController controller) {
+                    final keyword = controller.text.toLowerCase();
+                    final staticFaqs = [
+                      'How to lock the scooter?',
+                      'Payment failed',
+                      'Report a damaged vehicle',
+                      'Refund policy'
+                    ];
+                    final matches = staticFaqs
+                        .where((f) => f.toLowerCase().contains(keyword))
+                        .toList();
+                    return matches.map((faq) => ListTile(
+                          title: Text(faq),
+                          leading: const Icon(Icons.help_outline),
+                          onTap: () {
+                            controller.closeView(faq);
+                            AppNavigator.push(context, const FaqScreen());
+                          },
+                        ));
+                  },
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.battery_alert, color: Color(0xFFD97706)),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Active Ride: Low Battery',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF92400E)),
+                            ),
+                            Text(
+                              'Your scooter is below 15%. Tap here for nearby hubs.',
+                              style: TextStyle(
+                                  fontSize: 12, color: Color(0xFF92400E)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right, color: Color(0xFF92400E)),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -87,7 +138,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                     actionIcon: Icons.call,
                     color: AppColors.primary,
                     onTap: tlPhone != null && tlPhone.isNotEmpty
-                        ? () => launchUrl(Uri.parse('tel:$tlPhone'))
+                        ? () {
+                            final sanitized = tlPhone.replaceAll(RegExp(r'[^\d+]'), '');
+                            launchUrl(Uri.parse('tel:$sanitized'));
+                          }
                         : null,
                   ),
                 if (tlName != null && tlName.isNotEmpty)
@@ -194,16 +248,6 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         'Troubleshoot',
                         () => AppNavigator.push(
                             context, const TroubleshooterScreen())),
-                    _buildQuickChip(
-                        Icons.notifications_outlined,
-                        'Notifications',
-                        () => AppNavigator.push(
-                            context, const NotificationsScreen())),
-                    _buildQuickChip(
-                        Icons.tune_outlined,
-                        'Notification Settings',
-                        () => AppNavigator.push(
-                            context, const NotificationPreferencesScreen())),
                   ],
                 ),
               ],

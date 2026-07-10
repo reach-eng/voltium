@@ -149,7 +149,8 @@ class TlDetailsScreen extends ConsumerWidget {
           ),
           GestureDetector(
             onTap: () async {
-              final uri = Uri.parse('tel:$phone');
+              final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+              final uri = Uri.parse('tel:$sanitized');
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri);
               }
