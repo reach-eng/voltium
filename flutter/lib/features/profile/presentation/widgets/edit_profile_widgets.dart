@@ -177,10 +177,10 @@ class EditProfileAdminNote extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFFED7AA)),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.info_outline, color: AppColors.warningDark, size: 22),
-          SizedBox(width: 16),
+          const Icon(Icons.info_outline, color: AppColors.warningDark, size: 22),
+          const SizedBox(width: 16),
           Expanded(
             child: Text(
               'Profile changes require admin approval before becoming active.',

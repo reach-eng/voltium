@@ -708,8 +708,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         color: AppColors.slate500,
                         height: 1.5,
                       ),
-                      children: const [
-                        TextSpan(
+                      children: [
+                        const TextSpan(
                           text:
                               'If you have any questions about our policies, please contact our support team at ',
                         ),
@@ -720,7 +720,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                             color: AppColors.primary,
                           ),
                         ),
-                        TextSpan(text: ' or call '),
+                        const TextSpan(text: ' or call '),
                         TextSpan(
                           text: _kSupportPhone,
                           style: GoogleFonts.inter(
@@ -728,7 +728,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                             color: AppColors.primary,
                           ),
                         ),
-                        TextSpan(text: '.'),
+                        const TextSpan(text: '.'),
                       ],
                     ),
                   ),

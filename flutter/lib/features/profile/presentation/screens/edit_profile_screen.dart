@@ -372,8 +372,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 icon: Icons.emergency_outlined,
                                 keyboardType: TextInputType.phone,
                               ),
-                              const Padding(
-                                padding: EdgeInsets.only(left: 4, top: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4, top: 4),
                                 child: Text(
                                   'Changes to emergency contact require admin approval.',
                                   style: GoogleFonts.inter(
@@ -444,7 +444,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text(
+                                : Text(
                                     'SUBMIT FOR APPROVAL',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontWeight: FontWeight.w900,
@@ -507,7 +507,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Edit Profile',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 22,
@@ -611,8 +611,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
           child: Text(
             'Guarantor Phone',
             style: GoogleFonts.inter(
@@ -779,7 +779,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Verify',
                           style: GoogleFonts.inter(
                             fontSize: 11,
@@ -801,11 +801,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               color: const Color(0xFFDCFCE7),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: AppColors.success, size: 14),
-                SizedBox(width: 6),
+                const Icon(Icons.check_circle, color: AppColors.success, size: 14),
+                const SizedBox(width: 6),
                 Text(
                   'Phone verified',
                   style: GoogleFonts.inter(
