@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 
 class TutorialTip {
@@ -102,18 +103,18 @@ class _TutorialDialogState extends State<TutorialDialog> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Quick Tip',
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   tip.message,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
                     color: AppColors.slate500,
                     height: 1.5,
@@ -127,9 +128,9 @@ class _TutorialDialogState extends State<TutorialDialog> {
                     if (_currentIndex > 0)
                       TextButton(
                         onPressed: () => setState(() => _currentIndex--),
-                        child: const Text(
+                        child: Text(
                           'PREVIOUS',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
                             color: AppColors.slate400,
@@ -141,7 +142,7 @@ class _TutorialDialogState extends State<TutorialDialog> {
                       const SizedBox(width: 80),
                     Text(
                       '${_currentIndex + 1}/${widget.tips.length}',
-                      style: const TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppColors.slate400,
@@ -159,7 +160,7 @@ class _TutorialDialogState extends State<TutorialDialog> {
                         _currentIndex < widget.tips.length - 1
                             ? 'NEXT'
                             : 'GOT IT',
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.primary,
@@ -248,23 +249,23 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        const FadeUpWidget(
+                        FadeUpWidget(
                           delay: 100,
                           child: Text(
                             'Share Your Thoughts',
-                            style: TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
+                              color: const Color(0xFF1E293B),
                             ),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const FadeUpWidget(
+                        FadeUpWidget(
                           delay: 200,
                           child: Text(
                             'Your feedback helps us improve the experience for everyone.',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               fontSize: 15,
                               color: AppColors.slate500,
                               height: 1.5,
@@ -338,12 +339,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const Icon(Icons.close, size: 18, color: Color(0xFF1E293B)),
             ),
           ),
-          const Text(
+          Text(
             'Feedback',
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: const Color(0xFF1E293B),
             ),
           ),
           const SizedBox(width: 40), // Balance
@@ -388,10 +389,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       child: TextFormField(
         controller: _commentController,
         maxLines: 4,
-        style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
+        style: GoogleFonts.inter(fontSize: 15, color: const Color(0xFF1E293B)),
         decoration: InputDecoration(
           hintText: 'Tell us more about your experience...',
-          hintStyle: const TextStyle(color: AppColors.slate400, fontSize: 14),
+          hintStyle: GoogleFonts.inter(color: AppColors.slate400, fontSize: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -414,7 +415,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 await Future.delayed(const Duration(milliseconds: 1000));
               }
               widget.onSubmit();
-              if (mounted) Navigator.pop(context);
             }
           : null,
       style: ElevatedButton.styleFrom(
@@ -435,9 +435,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 strokeWidth: 2,
               ),
             )
-          : const Text(
+          : Text(
               'SUBMIT FEEDBACK',
-              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, letterSpacing: 1.2),
             ),
     );
   }
@@ -471,19 +471,19 @@ class RateAppPrompt {
                   size: 64,
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Enjoying Voltium?',
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'Take a moment to rate your experience. It helps us grow!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
                     color: AppColors.slate500,
                     height: 1.5,
@@ -503,9 +503,9 @@ class RateAppPrompt {
                       borderRadius: BorderRadius.circular(9999),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'RATE US',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1,
                     ),
@@ -514,9 +514,9 @@ class RateAppPrompt {
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'NOT NOW',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: AppColors.slate400,
                       fontWeight: FontWeight.bold,
                     ),
