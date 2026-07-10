@@ -187,26 +187,28 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     hintStyle:
                         GoogleFonts.inter(color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFFF1F5F9),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF0053C1), width: 2),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter a subject';
+                    }
+                    if (value.trim().length < 5) {
+                      return 'Subject must be at least 5 characters';
                     }
                     return null;
                   },
@@ -231,26 +233,28 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     hintStyle:
                         GoogleFonts.inter(color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: const Color(0xFFF1F5F9),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppColors.outlineVariant),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primary),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF0053C1), width: 2),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter a message';
+                    }
+                    if (value.trim().length < 10) {
+                      return 'Message must be at least 10 characters';
                     }
                     return null;
                   },
