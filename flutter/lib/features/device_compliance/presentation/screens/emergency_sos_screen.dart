@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -26,9 +27,9 @@ class EmergencySOSScreen extends ConsumerWidget {
         backgroundColor: AppColors.iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Emergency SOS',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        title: Text('Emergency SOS',
+            style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -40,8 +41,8 @@ class EmergencySOSScreen extends ConsumerWidget {
                 }
               },
               child: Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -88,13 +89,13 @@ class EmergencySOSScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'SOS',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 48,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: 2,
                     ),
                   ),
@@ -102,9 +103,9 @@ class EmergencySOSScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Press and hold to trigger an emergency alert',
-              style: TextStyle(color: AppColors.slate500, fontSize: 16),
+              style: GoogleFonts.inter(color: AppColors.slate500, fontSize: 16),
             ),
             const SizedBox(height: 64),
             // Personal emergency contact (from profile).
@@ -191,10 +192,10 @@ class EmergencySOSScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(title,
-                            style: const TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         Text(number,
-                            style: const TextStyle(color: AppColors.slate500)),
+                            style: GoogleFonts.inter(color: AppColors.slate500)),
                       ],
                     ),
                   ),
@@ -206,9 +207,9 @@ class EmergencySOSScreen extends ConsumerWidget {
                   Icon(icon, color: color, size: 32),
                   const SizedBox(height: 12),
                   Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
                   Text(number,
-                      style: const TextStyle(color: AppColors.slate500)),
+                      style: GoogleFonts.inter(color: AppColors.slate500)),
                   const SizedBox(height: 8),
                   Icon(Icons.call, color: color, size: 18),
                 ],
