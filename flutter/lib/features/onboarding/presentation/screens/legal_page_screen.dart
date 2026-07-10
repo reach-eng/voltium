@@ -456,7 +456,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         signerName.isNotEmpty
                                             ? signerName[0].toUpperCase()
                                             : '?',
-                                        style: const TextStyle(
+                                        style: GoogleFonts.inter(
                                           color: Colors.white,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w800,
@@ -715,7 +715,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         ),
                         TextSpan(
                           text: _kSupportEmail,
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -723,7 +723,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         TextSpan(text: ' or call '),
                         TextSpan(
                           text: _kSupportPhone,
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
