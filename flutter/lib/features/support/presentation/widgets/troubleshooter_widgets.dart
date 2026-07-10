@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -65,20 +66,20 @@ class CategoryCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1A1A2E),
-                                ),
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
                       ),
                       if (description != null) ...[
                         const SizedBox(height: 4),
                         Text(
                           description!,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: const Color(0xFF6B7280),
-                                  ),
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.slate500,
+                          ),
                         ),
                       ],
                     ],
@@ -133,19 +134,20 @@ class QuestionCard extends StatelessWidget {
             Text(
               question,
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                color: const Color(0xFF1A1A2E),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: const Color(0xFF1E293B),
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               'Answer honestly for the most accurate diagnosis.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: const Color(0xFF9CA3AF),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: AppColors.slate500,
               ),
             ),
           ],
@@ -182,9 +184,9 @@ class ActionButtons extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.check_circle_outline, size: 20),
-              label: const Text(
+              label: Text(
                 'Yes',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
           ),
@@ -203,9 +205,9 @@ class ActionButtons extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.cancel_outlined, size: 20),
-              label: const Text(
+              label: Text(
                 'No',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
           ),
@@ -239,9 +241,10 @@ class PathSummary extends StatelessWidget {
               const Icon(Icons.history, size: 18, color: Color(0xFF9CA3AF)),
           title: Text(
             'Your answers (${path.length})',
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: GoogleFonts.inter(
+              fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
+              color: AppColors.slate500,
             ),
           ),
           children: [
@@ -269,8 +272,9 @@ class PathSummary extends StatelessWidget {
                     Expanded(
                       child: Text(
                         answer.question,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF4B5563),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF1E293B),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -319,8 +323,9 @@ class ResolutionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
                 color: titleColor,
               ),
             ),
@@ -328,8 +333,9 @@ class ResolutionCard extends StatelessWidget {
             Text(
               resolution,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: const Color(0xFF1A1A2E),
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                color: const Color(0xFF1E293B),
                 height: 1.5,
               ),
             ),
@@ -385,8 +391,9 @@ class PathStep extends StatelessWidget {
               children: [
                 Text(
                   answer.question,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF4B5563),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -402,7 +409,8 @@ class PathStep extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       answer.answer ? 'Yes' : 'No',
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: answer.answer
                             ? Colors.green.shade700
@@ -468,9 +476,9 @@ class TroubleshooterStepCounter extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             'Step $currentStep of $totalSteps',
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: vfBlue,
             ),
           ),
@@ -557,9 +565,10 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   'Diagnostic path taken',
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A1A2E),
+                    color: const Color(0xFF1E293B),
                   ),
                 ),
               ],
@@ -627,7 +636,7 @@ class TroubleshooterSupportTicketButton extends StatelessWidget {
             : const Icon(Icons.send_rounded, size: 18),
         label: Text(
           isSubmitting ? 'Submitting...' : 'Create Support Ticket',
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15),
         ),
       ),
     );
@@ -657,9 +666,9 @@ class TroubleshooterSosButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         icon: const Icon(Icons.warning_amber_rounded, size: 22),
-        label: const Text(
+        label: Text(
           'Emergency SOS',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16),
         ),
       ),
     );

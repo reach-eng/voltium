@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
@@ -304,7 +305,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt,
+      backgroundColor: AppColors.iconBackground,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: AnimatedSwitcher(
@@ -331,9 +332,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             : _mode == _Mode.question
                 ? _selectedCategory?.label ?? 'Troubleshooter'
                 : 'Result',
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
+        style: GoogleFonts.plusJakartaSans(
+          fontWeight: FontWeight.w800,
           fontSize: 18,
+          color: Colors.white,
         ),
       ),
       backgroundColor: vfBlue,
@@ -372,17 +374,20 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           const SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1A1A2E),
-                ),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1E293B),
+              letterSpacing: -0.5,
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             'Select a category and we will guide you through a step‑by‑step diagnosis.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF6B7280),
-                ),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.slate500,
+            ),
           ),
           const SizedBox(height: 20),
           ...troubleshooterCategories.map(
@@ -561,9 +566,9 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text(
+                label: Text(
                   'Troubleshoot Another Issue',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
