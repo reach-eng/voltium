@@ -10,6 +10,7 @@ part 'rider_rental.g.dart';
 class RiderRental {
   final String rentalStatus;
   final String? assignedVehicle;
+  final String? vehicleModel;
   final String? pickupHub;
   final String? teamLeader;
   final String? emergencyContact;
@@ -31,6 +32,7 @@ class RiderRental {
   const RiderRental({
     this.rentalStatus = 'NONE',
     this.assignedVehicle,
+    this.vehicleModel,
     this.pickupHub,
     this.teamLeader,
     this.emergencyContact,
@@ -49,6 +51,7 @@ class RiderRental {
   RiderRental copyWith({
     String? rentalStatus,
     String? assignedVehicle,
+    String? vehicleModel,
     String? pickupHub,
     String? teamLeader,
     String? emergencyContact,
@@ -66,6 +69,7 @@ class RiderRental {
     return RiderRental(
       rentalStatus: rentalStatus ?? this.rentalStatus,
       assignedVehicle: assignedVehicle ?? this.assignedVehicle,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
       pickupHub: pickupHub ?? this.pickupHub,
       teamLeader: teamLeader ?? this.teamLeader,
       emergencyContact: emergencyContact ?? this.emergencyContact,

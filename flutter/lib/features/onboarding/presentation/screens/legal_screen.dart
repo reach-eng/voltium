@@ -211,8 +211,8 @@ class _LegalScreenState extends State<LegalScreen>
     return GestureDetector(
       onTap: widget.onBack ?? () => Navigator.maybePop(context),
       child: Container(
-        width: 40,
-        height: 40,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(999),
@@ -403,9 +403,11 @@ class _LegalScreenState extends State<LegalScreen>
               GestureDetector(
                 key: const Key('acceptCheckbox'),
                 onTap: _toggleAccepted,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     // Custom gradient checkbox 24×24 rounded-lg
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
@@ -458,7 +460,9 @@ class _LegalScreenState extends State<LegalScreen>
                                 ..onTap = () {
                                   AppNavigator.push(
                                     context,
-                                    const LegalPageScreen(),
+                                    const LegalPageScreen(
+                                      documentType: LegalDocumentType.terms,
+                                    ),
                                   );
                                 },
                             ),
@@ -475,7 +479,9 @@ class _LegalScreenState extends State<LegalScreen>
                                 ..onTap = () {
                                   AppNavigator.push(
                                     context,
-                                    const LegalPageScreen(),
+                                    const LegalPageScreen(
+                                      documentType: LegalDocumentType.privacy,
+                                    ),
                                   );
                                 },
                             ),
@@ -485,6 +491,7 @@ class _LegalScreenState extends State<LegalScreen>
                     ),
                   ],
                 ),
+              ),
               ),
 
               const SizedBox(height: 20),

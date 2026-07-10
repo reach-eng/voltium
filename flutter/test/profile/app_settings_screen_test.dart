@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/app_settings_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 
 Widget buildTestApp() {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-    ],
-    child: const MaterialApp(home: AppSettingsScreen()),
+  return ProviderScope(overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+    ], child: const MaterialApp(home: AppSettingsScreen()),
   );
 }
 

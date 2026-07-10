@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_contacts_screen.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 Widget buildTestApp() {
-  return ChangeNotifierProvider(
-    create: (_) => EmergencyContactsService(),
-    child: const MaterialApp(home: EmergencyContactsScreen()),
+  return ProviderScope(overrides: [ emergencyContactsService.overrideWith((ref) => EmergencyContactsService()) ], child: const MaterialApp(home: EmergencyContactsScreen()),
   );
 }
 

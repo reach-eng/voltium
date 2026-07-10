@@ -64,7 +64,7 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.posthog.com https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.firebasestorage.app; font-src 'self' data:; connect-src 'self' https://app.posthog.com wss://*.firebasedatabase.app https://*.firebasedatabase.app; frame-src 'none';"
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.posthog.com https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://*.firebasestorage.app; font-src 'self' data:; connect-src 'self' https://app.posthog.com wss://*.firebasedatabase.app https://*.firebasedatabase.app; frame-src 'self' https://www.openstreetmap.org https://maps.google.com;"
           }
         ]
       }

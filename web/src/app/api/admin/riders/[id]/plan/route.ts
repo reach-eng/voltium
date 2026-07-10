@@ -4,13 +4,13 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
   if (!hasPermission(session.adminRole || '', 'riders_manage')) return adminForbidden();
 
   try {
-    const { id: riderId } = params;
+    const { id: riderId } = await params;
     const body = await req.json();
     const { action, reason } = body;
 

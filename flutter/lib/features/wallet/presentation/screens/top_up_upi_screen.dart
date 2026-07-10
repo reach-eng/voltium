@@ -2,11 +2,12 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 /// Matches web TopUpUpiScreen.tsx:
 /// - Gradient header with back btn + "Step 3 of 3" + "Top Up"
@@ -18,7 +19,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 /// - Yellow "Note" box
 /// - Gradient "Submit Proof" pill button
 
-class TopUpUpiScreen extends StatefulWidget {
+class TopUpUpiScreen extends ConsumerStatefulWidget {
   final int amount;
   final String purpose;
   final VoidCallback? onSubmit;
@@ -35,10 +36,10 @@ class TopUpUpiScreen extends StatefulWidget {
   });
 
   @override
-  State<TopUpUpiScreen> createState() => _TopUpUpiScreenState();
+  ConsumerState<TopUpUpiScreen> createState() => _TopUpUpiScreenState();
 }
 
-class _TopUpUpiScreenState extends State<TopUpUpiScreen>
+class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     with SingleTickerProviderStateMixin {
   File? _imageFile;
   bool _isSubmitting = false;
@@ -80,8 +81,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
           await VoltiumApiService().uploadFile(_imageFile!, 'TOPUP_PROOF');
       if (!mounted) return;
 
-      final provider = context.read<AppProvider>();
-      final riderId = provider.rider?.id;
+      final provider = ref.read(appProvider);
+      final riderId = ref.watch(appProvider).riderId;
       if (riderId == null) throw Exception('Not logged in');
 
       await provider.topUpWallet(
@@ -178,8 +179,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
             child: GestureDetector(
               onTap: widget.onBack ?? () => Navigator.maybePop(context),
               child: Container(
-                width: 36,
-                height: 36,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -244,7 +245,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                 Text(
                   'TOP-UP AMOUNT',
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
                     letterSpacing: 1.2,
@@ -264,15 +265,18 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
             GestureDetector(
               key: const Key('editAmountLink'),
               onTap: widget.onEditAmount,
-              child: Text(
-                'Edit',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColors.primary.withValues(alpha: 0.3),
-                  decorationThickness: 2,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                child: Text(
+                  'Edit',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                    decoration: TextDecoration.underline,
+                    decorationColor: AppColors.primary.withValues(alpha: 0.3),
+                    decorationThickness: 2,
+                  ),
                 ),
               ),
             ),
@@ -327,7 +331,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                   Text(
                     'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.onSurfaceVariant,
                       height: 1.5,
                     ),
@@ -423,7 +427,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                           'Ensure the photo shows both the rider and team member or the payment receipt',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
-                            fontSize: 10,
+                            fontSize: 13,
                             color: AppColors.onSurfaceVariant,
                             height: 1.4,
                           ),
@@ -452,8 +456,8 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                       key: const Key('removeProofButton'),
                       onTap: () => setState(() => _imageFile = null),
                       child: Container(
-                        width: 28,
-                        height: 28,
+                        width: 44,
+                        height: 44,
                         decoration: const BoxDecoration(
                           color: Color(0xFFBA1A1A),
                           shape: BoxShape.circle,
@@ -468,7 +472,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                         child: const Icon(
                           Icons.close,
                           color: Colors.white,
-                          size: 16,
+                          size: 24,
                         ),
                       ),
                     ),
@@ -488,7 +492,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
                   Text(
                     'Photo uploaded successfully',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: const Color(0xFF16A34A),
                       fontWeight: FontWeight.w500,
                     ),
@@ -516,7 +520,7 @@ class _TopUpUpiScreenState extends State<TopUpUpiScreen>
         child: RichText(
           text: TextSpan(
             style: GoogleFonts.inter(
-              fontSize: 12,
+              fontSize: 14,
               color: AppColors.warningText,
               height: 1.5,
             ),

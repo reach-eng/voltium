@@ -157,7 +157,7 @@ export const rentalRepository = {
           data: {
             lifecycleStatus: 'ACTIVE',
             vehicleId: lease.vehicleId,
-            assignedVehicle: lease.vehicle.vehicleId,
+            assignedVehicle: lease.vehicle.vehicleNumber,
             pickedUpAt: new Date(),
           },
         });

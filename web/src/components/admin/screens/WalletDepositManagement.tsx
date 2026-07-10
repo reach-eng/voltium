@@ -84,12 +84,12 @@ export default function WalletDepositManagement() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search ledger entries..."
-              className="pl-8"
+              className="pl-8 h-11 text-base rounded-xl"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="gap-2" onClick={handleExport}>
+          <Button variant="outline" size="default" className="gap-2 h-11 px-5 rounded-xl" onClick={handleExport}>
             <FileDown className="h-4 w-4" /> Export CSV
           </Button>
         </div>

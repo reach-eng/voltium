@@ -347,7 +347,7 @@ export default function DashboardOverview() {
     : [];
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-4 max-w-full">
       {/* Greeting Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -374,22 +374,22 @@ export default function DashboardOverview() {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-11 w-11 transition-all duration-200"
             onClick={() => fetchData()}
             disabled={refreshing}
             title="Refresh dashboard"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             variant="outline"
-            size="sm"
-            className="rounded-full px-4 h-9"
+            size="default"
+            className="rounded-full px-5 h-11 font-medium transition-all duration-200"
             onClick={handleExportReport}
           >
             Export Report
           </Button>
-          <Button size="sm" className="rounded-full px-4 h-9" onClick={handleSystemHealth}>
+          <Button size="default" className="rounded-full px-5 h-11 font-medium transition-all duration-200" onClick={handleSystemHealth}>
             System Health
           </Button>
         </div>
@@ -397,7 +397,7 @@ export default function DashboardOverview() {
 
       {/* SOS Alert */}
       {sosCount > 0 && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-500" role="alert" aria-live="assertive">
           <Card className="rounded-2xl border-rose-500/20 bg-rose-500/5 shadow-lg shadow-rose-500/10 overflow-hidden ring-1 ring-rose-500/20">
             <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -441,7 +441,7 @@ export default function DashboardOverview() {
           return (
             <Card
               key={card.key}
-              className="h-full rounded-2xl border-border/50 shadow-sm hover:border-primary/30 transition-all duration-300 cursor-pointer group"
+              className="h-full rounded-2xl border-border/50 shadow-sm hover:border-primary/30 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group"
               onClick={() => setActiveSection(card.route)}
             >
               <CardContent className="p-5 relative">
@@ -450,7 +450,7 @@ export default function DashboardOverview() {
                     <p className="text-sm font-medium text-muted-foreground truncate">
                       {card.label}
                     </p>
-                    <h3 className="text-2xl font-bold tracking-tight text-foreground">
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground font-mono tabular-nums">
                       {card.format
                         ? formatINR(value as number)
                         : (value as number).toLocaleString('en-IN')}
@@ -493,12 +493,12 @@ export default function DashboardOverview() {
               <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#0369a1" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#0369a1" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorRiders" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.15} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
@@ -530,7 +530,8 @@ export default function DashboardOverview() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'var(--card)',
+                    backgroundColor: 'color-mix(in srgb, var(--card) 80%, transparent)',
+                    backdropFilter: 'blur(12px)',
                     borderColor: 'var(--border)',
                     borderRadius: '12px',
                     fontSize: '12px',
@@ -614,7 +615,7 @@ export default function DashboardOverview() {
                     </TableRow>
                   ) : (
                     recentTransactions.map((tx) => (
-                      <TableRow key={tx.id} className="hover:bg-muted/20 transition-colors">
+                      <TableRow key={tx.id} className="hover:bg-muted/50 cursor-pointer transition-all duration-200 group">
                         <TableCell className="font-semibold px-6">
                           {tx.rider?.fullName || tx.rider?.name || 'Unknown'}
                         </TableCell>
@@ -679,7 +680,7 @@ export default function DashboardOverview() {
                     </TableRow>
                   ) : (
                     recentTickets.map((ticket) => (
-                      <TableRow key={ticket.id} className="hover:bg-muted/20 transition-colors">
+                      <TableRow key={ticket.id} className="hover:bg-muted/50 cursor-pointer transition-all duration-200 group">
                         <TableCell className="font-mono text-xs px-6 opacity-60">
                           #{ticket.ticketId}
                         </TableCell>

@@ -145,7 +145,7 @@ class RaiseTicketCard extends StatelessWidget {
           const Text(
             'ISSUE TYPE',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               color: Colors.white60,
               letterSpacing: 1.2,
@@ -187,7 +187,7 @@ class RaiseTicketCard extends StatelessWidget {
           const Text(
             'DESCRIPTION',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               color: Colors.white60,
               letterSpacing: 1.2,
@@ -238,7 +238,7 @@ class RaiseTicketCard extends StatelessWidget {
           const Text(
             'ATTACH PHOTOS (MAX 5)',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               color: Colors.white60,
               letterSpacing: 1.2,
@@ -435,7 +435,7 @@ class TicketListItem extends StatelessWidget {
                           child: Text(
                             ticket.status.replaceAll('_', ' '),
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 12,
                               fontWeight: FontWeight.w900,
                               color: statusColor,
                             ),
@@ -455,7 +455,7 @@ class TicketListItem extends StatelessWidget {
                         Text(
                           '${ticket.createdAt.day} ${_getMonth(ticket.createdAt.month)}',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: AppColors.slate500,
                           ),
                         ),
@@ -463,7 +463,7 @@ class TicketListItem extends StatelessWidget {
                         Text(
                           '• ${ticket.ticketId}',
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             color: AppColors.slate400,
                             fontFamily: 'monospace',
                           ),

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
@@ -16,21 +15,23 @@ import 'package:voltium_rider/features/referrals/presentation/screens/referral_s
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 import 'package:voltium_rider/features/workflows/presentation/screens/rider_workflow_hub_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
-class ProfileScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor:
           AppColors.iconBackground, // Very light gray-blue background
       appBar: _buildAppBar(context),
-      body: Consumer<AppProvider>(
-        builder: (context, provider, _) {
-          final rider = provider.rider;
+      body: Consumer(
+        builder: (context, innerRef, _) {
+          final rider = innerRef.watch(appProvider).rider;
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Column(
@@ -44,7 +45,7 @@ class ProfileScreen extends StatelessWidget {
                 const Text(
                   'Personal Details',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                     color: Color(0xFF475569), // slate-600
                     letterSpacing: 1.2,
@@ -65,7 +66,7 @@ class ProfileScreen extends StatelessWidget {
                   const Text(
                     'Guarantor Details',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF475569),
                       letterSpacing: 1.2,
@@ -81,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
                 const Text(
                   'QUICK LINKS',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                     color: Color(0xFF475569), // slate-600
                     letterSpacing: 1.2,
@@ -110,6 +111,10 @@ class ProfileScreen extends StatelessWidget {
                   onWorkflowHubTap: () {
                     AppNavigator.push(context, const RiderWorkflowHubScreen());
                   },
+                  onFeedbackTap: () {
+                    AppNavigator.push(context,
+                        FeedbackScreen(onSubmit: () => Navigator.pop(context)));
+                  },
                 ),
                 const SizedBox(height: 24),
                 FadeUpWidget(
@@ -125,7 +130,7 @@ class ProfileScreen extends StatelessWidget {
                   delay: 800,
                   child: ProfileLogoutButton(
                     onTap: () {
-                      provider.logout();
+                      innerRef.read(appProvider).logout();
                     },
                   ),
                 ),
@@ -148,8 +153,8 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.only(left: 20.0),
         child: UnconstrainedBox(
           child: Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -197,16 +202,15 @@ class ProfileScreen extends StatelessWidget {
         return null;
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://localhost:8081');
-      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+          defaultValue: 'http://127.0.0.1:8081');
+      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
     final avatarUrl = getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
         : '?';
-    final String riderId = rider?.riderId ?? 'NOT-ASSIGNED';
-    final String kycStatusName = rider?.kycStatus.name ?? 'PENDING';
+    final String kycStatusName = rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
     final bool isVerified =
         kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
@@ -253,6 +257,8 @@ class ProfileScreen extends StatelessWidget {
                           width: 96,
                           height: 96,
                           fit: BoxFit.cover,
+                          memCacheWidth: 192,
+                          memCacheHeight: 192,
                           placeholder: (_, __) => const SizedBox(
                             width: 96,
                             height: 96,
@@ -304,24 +310,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.iconBackground, // slate-100
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              riderId,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'monospace',
-                color: Color(0xFF475569),
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isVerified
@@ -344,9 +332,9 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'KYC: ${kycStatusName == 'submitted' ? 'Under Review' : _capitalize(kycStatusName)}',
+                  'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color:
                         isVerified ? AppColors.success : AppColors.warningDark,
@@ -436,6 +424,31 @@ class ProfileScreen extends StatelessWidget {
               value: rider?.emergencyContact ?? 'Not provided',
             ),
           ),
+          if (rider?.assignedVehicle != null &&
+              rider!.assignedVehicle!.isNotEmpty &&
+              rider.assignedVehicle != 'Not Assigned') ...[
+            const CustomDivider(),
+            ProfileDetailRow(
+              icon: Icons.directions_car_outlined,
+              title: 'Vehicle',
+              value: [
+                rider.assignedVehicle,
+                if (rider.vehicleModel != null &&
+                    rider.vehicleModel!.isNotEmpty)
+                  rider.vehicleModel,
+              ].where((e) => e != null && e.isNotEmpty).join(' · '),
+            ),
+          ],
+          if (rider?.teamLeader != null &&
+              rider!.teamLeader!.isNotEmpty &&
+              rider.teamLeader != 'Not Assigned') ...[
+            const CustomDivider(),
+            ProfileDetailRow(
+              icon: Icons.supervisor_account_outlined,
+              title: 'Team Leader',
+              value: rider.teamLeader!,
+            ),
+          ],
         ],
       ),
     );

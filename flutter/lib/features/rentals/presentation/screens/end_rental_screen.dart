@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 /// Matches web EndRentalScreen.tsx exactly:
 /// - Light bg, glass back btn + "End Rental" header
@@ -19,17 +20,17 @@ import 'package:voltium_rider/utils/app_constants.dart';
 /// - "Confirm Return" red pill CTA (disabled until all photos + checkbox)
 /// - Success state: green check circle + "Request Submitted!"
 
-class EndRentalScreen extends StatefulWidget {
+class EndRentalScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onSuccess;
 
   const EndRentalScreen({super.key, this.onBack, this.onSuccess});
 
   @override
-  State<EndRentalScreen> createState() => _EndRentalScreenState();
+  ConsumerState<EndRentalScreen> createState() => _EndRentalScreenState();
 }
 
-class _EndRentalScreenState extends State<EndRentalScreen>
+class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     with SingleTickerProviderStateMixin {
   final _odometerCtrl = TextEditingController();
   final Map<String, XFile?> _photos = {
@@ -81,7 +82,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
     setState(() => _submitting = true);
 
     try {
-      final rider = context.read<AppProvider>().rider;
+      final rider = ref.read(appProvider).rider;
       final riderId = rider?.riderId ?? '';
       final List<String> photoUrls = [];
       for (final entry in _photos.entries) {
@@ -184,8 +185,8 @@ class _EndRentalScreenState extends State<EndRentalScreen>
                   GestureDetector(
                     onTap: widget.onBack ?? () => Navigator.maybePop(context),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 44,
+                      height: 44,
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
@@ -317,7 +318,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
         Text(
           'RETURN INSPECTION',
           style: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w800,
             color: AppColors.onSurface,
             letterSpacing: 1.2,
@@ -409,7 +410,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           Text(
             'ODOMETER READING',
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.onSurfaceVariant,
               letterSpacing: 1.2,
@@ -608,7 +609,7 @@ class _EndRentalScreenState extends State<EndRentalScreen>
           Text(
             'Please take all inspection photos to continue',
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12,
               color: AppColors.error,
             ),
             textAlign: TextAlign.center,

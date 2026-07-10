@@ -154,7 +154,7 @@ class EditProfileSectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w900,
           color: AppColors.slate500,
           letterSpacing: 1.2,

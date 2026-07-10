@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppGradients {
   /// Primary brand gradient: #0053C1 → #2F6DDE (135deg)
   static const LinearGradient primary = LinearGradient(
-    colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
+    colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -21,7 +21,7 @@ class AppGradients {
   );
 
   static const LinearGradient loadingBar = LinearGradient(
-    colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
+    colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
@@ -48,10 +48,10 @@ class AppShadows {
     ),
   ];
 
-  /// Primary button shadow: shadow-[0px_8px_24px_rgba(0,83,193,0.25)]
+  /// Primary button shadow
   static const List<BoxShadow> primaryButton = [
     BoxShadow(
-      color: Color(0x400053C1),
+      color: Color(0x402563EB),
       blurRadius: 24,
       offset: Offset(0, 8),
     ),
@@ -66,10 +66,10 @@ class AppShadows {
     ),
   ];
 
-  /// Checkbox accepted shadow: 0px 2px 8px rgba(0,83,193,0.25)
+  /// Checkbox accepted shadow
   static const List<BoxShadow> checkboxAccepted = [
     BoxShadow(
-      color: Color(0x400053C1),
+      color: Color(0x402563EB),
       blurRadius: 8,
       offset: Offset(0, 2),
     ),

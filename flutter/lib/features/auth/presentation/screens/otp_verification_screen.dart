@@ -8,7 +8,7 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -136,7 +136,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           await VoltiumApiService().verifyOtp(phone: phone, otp: code);
       if (mounted) {
         final token = response['token'] as String?;
-        final isNewRider = response['isNewRider'] as bool? ?? false;
+        final isNewRider = response['isNewRider'] as bool? ?? true;
         if (token != null && !PlatformInfo.isWeb) {
           await SecureStorageService().setToken(token);
           // Persist the FCM command secret (BLOCKER 1.1).
@@ -149,6 +149,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         // VerifyOtpResponse is flat, so we can pass it directly
         final rider = RiderModel.fromJson(response);
         await CacheService().cacheRider(rider.toCacheMap());
+        if (!mounted) return;
         context.read<AppProvider>().setRider(rider);
         widget.onNext?.call(isNewRider);
       }
@@ -224,8 +225,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     child: GestureDetector(
                       onTap: widget.onBack ?? () => Navigator.maybePop(context),
                       child: Container(
-                        width: 40,
-                        height: 40,
+                        width: 44,
+                        height: 44,
                         decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
@@ -456,16 +457,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                         GestureDetector(
                           key: const Key('resendCodeButton'),
                           onTap: _resendCountdown <= 0 ? _handleResend : null,
-                          child: Text(
-                            _resendCountdown > 0
-                                ? 'Resend in ${_resendCountdown}s'
-                                : 'Resend Code',
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: _resendCountdown > 0
-                                  ? AppColors.onSurfaceDisabled
-                                  : AppColors.primary,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            child: Text(
+                              _resendCountdown > 0
+                                  ? 'Resend in ${_resendCountdown}s'
+                                  : 'Resend Code',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: _resendCountdown > 0
+                                    ? AppColors.onSurfaceDisabled
+                                    : AppColors.primary,
+                              ),
                             ),
                           ),
                         ),

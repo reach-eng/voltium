@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/providers/connectivity_provider.dart';
+import 'package:voltium_rider/core/network/connectivity_provider.dart';
 
 void main() {
   test('ConnectivityProvider initializes correctly', () {

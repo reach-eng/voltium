@@ -572,12 +572,18 @@ export const adminRiderUseCases = {
       assignedTl = activeTl ? activeTl.name : 'Amit Sharma';
     }
 
+    let assignedVehicleString = 'VF-ASSIGNED-BY-ADMIN';
+    if (data.vehicleId) {
+      const v = await db.vehicle.findUnique({ where: { id: data.vehicleId } });
+      if (v) assignedVehicleString = v.vehicleNumber;
+    }
+
     await transitionRiderStatus(riderId, 'ACTIVE');
     const result = await db.rider.update({
       where: { id: riderId },
       data: {
         pickedUpAt: new Date(),
-        assignedVehicle: data.vehicleId || 'VF-ASSIGNED-BY-ADMIN',
+        assignedVehicle: assignedVehicleString,
         pickupHub: data.hubId || 'Central Hub',
         teamLeader: assignedTl,
       },

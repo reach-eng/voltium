@@ -1,26 +1,27 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/providers/app_provider.dart';
-import 'top_up_purpose_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
+
 import 'top_up_amount_screen.dart';
 import 'top_up_proof_screen.dart';
 
-class TopUpFlow extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TopUpFlow extends ConsumerStatefulWidget {
   const TopUpFlow({super.key});
 
   @override
-  State<TopUpFlow> createState() => _TopUpFlowState();
+  ConsumerState<TopUpFlow> createState() => _TopUpFlowState();
 }
 
-class _TopUpFlowState extends State<TopUpFlow> {
+class _TopUpFlowState extends ConsumerState<TopUpFlow> {
   final PageController _pageController = PageController();
 
   int _amount = 2000;
   File? _proofImage;
-  // ignore: unused_field
-  TopUpPurpose _purpose = TopUpPurpose.topUp;
+
 
   void _nextPage() {
     _pageController.nextPage(
@@ -44,21 +45,16 @@ class _TopUpFlowState extends State<TopUpFlow> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = ref.watch(appProvider);
     return Scaffold(
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          TopUpPurposeScreen(
-            onBack: () => Navigator.pop(context),
-            onPurposeSelected: (purpose) => setState(() => _purpose = purpose),
-            onContinue: (purpose) {
-              setState(() => _purpose = purpose);
-              _nextPage();
-            },
-          ),
           TopUpAmountScreen(
-            onBack: _prevPage,
+            securityDeposit: ref.watch(appProvider).rider?.activeRentalPlanSecurityDeposit.toInt(),
+            rentalPrice: ref.watch(appProvider).rider?.activeRentalPlanPrice.toInt(),
+            onBack: () => Navigator.pop(context),
             onAmountChanged: (amount) => setState(() => _amount = amount),
             onProceed: (amount) {
               setState(() => _amount = amount);
@@ -72,7 +68,7 @@ class _TopUpFlowState extends State<TopUpFlow> {
             onImageSelected: (img) => setState(() => _proofImage = img),
             onSubmit: (img) async {
               setState(() => _proofImage = img);
-              final provider = Provider.of<AppProvider>(context, listen: false);
+              final provider = ref.read(appProvider);
 
               try {
                 await provider.topUpWallet(
@@ -82,10 +78,22 @@ class _TopUpFlowState extends State<TopUpFlow> {
                   image: _proofImage,
                 );
                 if (context.mounted) {
-                  Navigator.pop(context);
+                  final nav = Navigator.of(context);
+                  nav.pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Top-up proof submitted successfully!'),
+                    SnackBar(
+                      content:
+                          const Text('Top-up proof submitted successfully!'),
+                      action: SnackBarAction(
+                        label: 'Rate Us',
+                        textColor: Colors.white,
+                        onPressed: () {
+                          nav.push(MaterialPageRoute(
+                            builder: (ctx) => FeedbackScreen(
+                                onSubmit: () => Navigator.pop(ctx)),
+                          ));
+                        },
+                      ),
                     ),
                   );
                 }

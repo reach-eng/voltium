@@ -1,19 +1,21 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/widgets/pickup_vehicle_search_sheet.dart';
 import 'package:voltium_rider/features/pickup/presentation/widgets/pickup_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
-class PickupHubScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class PickupHubScreen extends ConsumerStatefulWidget {
   final Function(
     String hubId,
     String vehicleId,
@@ -30,10 +32,10 @@ class PickupHubScreen extends StatefulWidget {
   const PickupHubScreen({super.key, required this.onNext, this.onBack});
 
   @override
-  State<PickupHubScreen> createState() => _PickupHubScreenState();
+  ConsumerState<PickupHubScreen> createState() => _PickupHubScreenState();
 }
 
-class _PickupHubScreenState extends State<PickupHubScreen> {
+class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
   final ImageCompressionService _compressionService = ImageCompressionService();
   List<HubModel> _hubs = [];
   bool _isLoading = true;
@@ -63,6 +65,73 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     'right': PhotoUploadEntry(),
     'with_vehicle': PhotoUploadEntry(),
   };
+
+  int _currentStep = 1;
+
+  Widget _buildStepIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20, top: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildDot(1),
+          _buildLine(),
+          _buildDot(2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int step) {
+    final isActive = _currentStep >= step;
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isActive ? AppColors.primary : const Color(0xFFF3F4F6),
+        border: isActive ? null : Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$step',
+        style: TextStyle(
+          color: isActive ? Colors.white : const Color(0xFF4B5563),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLine() {
+    return Container(
+      width: 40,
+      height: 2,
+      color: const Color(0xFFE5E7EB),
+    );
+  }
+
+  bool get _canProceedCurrentStep {
+    if (_currentStep == 1) {
+      return _selectedHubId != null &&
+          _selectedTeamLeader != null &&
+          _selectedVehicleId != null &&
+          _isOtpVerified;
+    } else {
+      return _photos.values.every((p) => p.photoUrl != null);
+    }
+  }
+
+  void _onBottomButtonPressed() {
+    if (_currentStep < 2) {
+      setState(() {
+        _currentStep++;
+      });
+    } else {
+      _submitForm();
+    }
+  }
 
   @override
   void dispose() {
@@ -98,7 +167,11 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Connection error. Please try again.';
+        if (e is ApiException) {
+          _error = e.message;
+        } else {
+          _error = 'Connection error: $e';
+        }
         _isLoading = false;
       });
     }
@@ -236,9 +309,9 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       return;
     }
 
-    final provider = context.read<AppProvider>();
-    final riderPhone = provider.rider?.phone ?? '';
-    final guarantorPhone = provider.rider?.guarantorPhone ?? '';
+    final provider = ref.read(appProvider);
+    final riderPhone = ref.watch(appProvider).rider?.phone ?? '';
+    final guarantorPhone = ref.watch(appProvider).rider?.guarantorPhone ?? '';
 
     if (digits == riderPhone) {
       _showError('Emergency contact cannot be the same as your phone number');
@@ -266,7 +339,8 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
       });
       _showSuccess('OTP sent to emergency contact');
       // API response is { success, data: { exists, otp } }
-      final testOtp = response['data'] is Map ? (response['data'] as Map)['otp'] : null;
+      final testOtp =
+          response['data'] is Map ? (response['data'] as Map)['otp'] : null;
       if (testOtp != null) {
         _otpController.text = testOtp.toString();
       }
@@ -292,8 +366,7 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
     setState(() => _isVerifyingOtp = true);
 
     try {
-      final response =
-          await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
+      await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
       if (!mounted) return;
       setState(() => _isOtpVerified = true);
       _showSuccess('Emergency contact verified successfully ✓');
@@ -451,73 +524,90 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  buildCurtainHeader(onBack: () => widget.onBack?.call()),
+                  buildCurtainHeader(
+                    title: 'Pickup Verification',
+                    subtitle: 'Complete the verification steps to assign and pick up your vehicle',
+                    onBack: () {
+                      if (_currentStep > 1) {
+                        setState(() {
+                          _currentStep--;
+                        });
+                      } else {
+                        widget.onBack?.call();
+                      }
+                    },
+                  ),
                   Transform.translate(
                     offset: const Offset(0, -32),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         children: [
-                          AssignmentDetailsCard(
-                            selectedHubId: _selectedHubId,
-                            hubs: _hubs,
-                            onHubChanged: (val) {
-                              setState(() {
-                                _selectedHubId = val;
-                                _selectedVehicleId = null;
-                                _selectedVehicleLabel = null;
-                              });
-                              if (val != null) _fetchVehicles(val);
-                            },
-                            selectedTeamLeader: _selectedTeamLeader,
-                            onTeamLeaderChanged: (val) =>
-                                setState(() => _selectedTeamLeader = val),
-                            isHubSelected: _selectedHubId != null,
-                            selectedVehicleId: _selectedVehicleId,
-                            selectedVehicleLabel: _selectedVehicleLabel,
-                            isLoadingVehicles: _isLoadingVehicles,
-                            vehicleCount: _vehicles.length,
-                            onVehicleTap: _showVehicleSearchSheet,
-                            emergencyContactController:
-                                _emergencyContactController,
-                            isOtpSent: _isOtpSent,
-                            isOtpVerified: _isOtpVerified,
-                            isSendingOtp: _isSendingOtp,
-                            onSendOtp: _sendEmergencyOtp,
-                            onEmergencyContactChanged: (val) {
-                              if (_isOtpSent) {
-                                setState(() => _isOtpSent = false);
-                              }
-                              if (_isOtpVerified) {
-                                setState(() => _isOtpVerified = false);
-                              }
-                            },
-                            otpController: _otpController,
-                            isVerifyingOtp: _isVerifyingOtp,
-                            onVerifyOtp: _verifyEmergencyOtp,
-                          ),
-                          const SizedBox(height: 24),
-                          VehicleConditionCard(
-                            frontImagePath: _photos['front']!.imagePath,
-                            frontPhotoUrl: _photos['front']!.photoUrl,
-                            isUploadingFront: _photos['front']!.isUploading,
-                            backImagePath: _photos['back']!.imagePath,
-                            backPhotoUrl: _photos['back']!.photoUrl,
-                            isUploadingBack: _photos['back']!.isUploading,
-                            leftImagePath: _photos['left']!.imagePath,
-                            leftPhotoUrl: _photos['left']!.photoUrl,
-                            isUploadingLeft: _photos['left']!.isUploading,
-                            rightImagePath: _photos['right']!.imagePath,
-                            rightPhotoUrl: _photos['right']!.photoUrl,
-                            isUploadingRight: _photos['right']!.isUploading,
-                            withVehicleImagePath:
-                                _photos['with_vehicle']!.imagePath,
-                            withVehiclePhotoUrl:
-                                _photos['with_vehicle']!.photoUrl,
-                            isUploadingWithVehicle:
-                                _photos['with_vehicle']!.isUploading,
-                            onUploadImage: _uploadImage,
-                          ),
+                          _buildStepIndicator(),
+                          if (_currentStep == 1) ...[
+                            AssignmentDetailsCard(
+                              selectedHubId: _selectedHubId,
+                              hubs: _hubs,
+                              onHubChanged: (val) {
+                                setState(() {
+                                  _selectedHubId = val;
+                                  _selectedVehicleId = null;
+                                  _selectedVehicleLabel = null;
+                                });
+                                if (val != null) _fetchVehicles(val);
+                              },
+                              selectedTeamLeader: _selectedTeamLeader,
+                              onTeamLeaderChanged: (val) =>
+                                  setState(() => _selectedTeamLeader = val),
+                              isHubSelected: _selectedHubId != null,
+                              selectedVehicleId: _selectedVehicleId,
+                              selectedVehicleLabel: _selectedVehicleLabel,
+                              isLoadingVehicles: _isLoadingVehicles,
+                              vehicleCount: _vehicles.length,
+                              onVehicleTap: _showVehicleSearchSheet,
+                              emergencyContactController:
+                                  _emergencyContactController,
+                              isOtpSent: _isOtpSent,
+                              isOtpVerified: _isOtpVerified,
+                              isSendingOtp: _isSendingOtp,
+                              onSendOtp: _sendEmergencyOtp,
+                              onEmergencyContactChanged: (val) {
+                                if (_isOtpSent) {
+                                  setState(() => _isOtpSent = false);
+                                }
+                                if (_isOtpVerified) {
+                                  setState(() => _isOtpVerified = false);
+                                }
+                              },
+                              otpController: _otpController,
+                              isVerifyingOtp: _isVerifyingOtp,
+                              onVerifyOtp: _verifyEmergencyOtp,
+                            ),
+                          ],
+                          if (_currentStep == 2) ...[
+                            const SizedBox(height: 24),
+                            VehicleConditionCard(
+                              frontImagePath: _photos['front']!.imagePath,
+                              frontPhotoUrl: _photos['front']!.photoUrl,
+                              isUploadingFront: _photos['front']!.isUploading,
+                              backImagePath: _photos['back']!.imagePath,
+                              backPhotoUrl: _photos['back']!.photoUrl,
+                              isUploadingBack: _photos['back']!.isUploading,
+                              leftImagePath: _photos['left']!.imagePath,
+                              leftPhotoUrl: _photos['left']!.photoUrl,
+                              isUploadingLeft: _photos['left']!.isUploading,
+                              rightImagePath: _photos['right']!.imagePath,
+                              rightPhotoUrl: _photos['right']!.photoUrl,
+                              isUploadingRight: _photos['right']!.isUploading,
+                              withVehicleImagePath:
+                                  _photos['with_vehicle']!.imagePath,
+                              withVehiclePhotoUrl:
+                                  _photos['with_vehicle']!.photoUrl,
+                              isUploadingWithVehicle:
+                                  _photos['with_vehicle']!.isUploading,
+                              onUploadImage: _uploadImage,
+                            ),
+                          ],
                           const SizedBox(height: 140),
                         ],
                       ),
@@ -528,8 +618,9 @@ class _PickupHubScreenState extends State<PickupHubScreen> {
             ),
           ),
           buildStickyBottomBar(
-            isFormValid: _isFormValid,
-            onSubmit: _submitForm,
+            isFormValid: _canProceedCurrentStep,
+            buttonText: _currentStep < 2 ? 'NEXT STEP' : 'FINISH SETUP',
+            onSubmit: _onBottomButtonPressed,
           ),
         ],
       ),

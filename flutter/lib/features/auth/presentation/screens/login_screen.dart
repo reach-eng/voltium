@@ -8,7 +8,6 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
-import 'package:voltium_rider/utils/app_constants.dart';
 
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -106,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
     try {
       final referralCode = _referralController.text.trim();
-      final response = await VoltiumApiService().sendOtp(
+      await VoltiumApiService().sendOtp(
         phone: digits,
         referralCode: referralCode.isNotEmpty ? referralCode : null,
       );

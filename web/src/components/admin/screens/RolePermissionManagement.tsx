@@ -45,7 +45,7 @@ export default function RolePermissionManagement() {
             Map system operations to roles instead of hardcoding validation rules.
           </p>
         </div>
-        <Button className="bg-primary text-white" onClick={handleSave}>
+        <Button className="bg-primary text-white h-11 px-5 rounded-xl" onClick={handleSave}>
           Save Permissions Matrix
         </Button>
       </div>
@@ -102,7 +102,7 @@ export default function RolePermissionManagement() {
                     <div>
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
                         defaultChecked={
                           selectedRole === 'OPERATIONS_ADMIN' ||
                           (selectedRole === 'KYC_REVIEWER' && p.key.startsWith('kyc')) ||

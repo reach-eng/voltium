@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
+import 'premium_cards.dart';
 
 /// Pre-Dashboard state banner showing current onboarding status.
 class PreDashboardBanner extends StatelessWidget {
@@ -211,7 +212,9 @@ class PreDashboardProfileCard extends StatelessWidget {
   }
 
   Widget _buildRejectedProfile() {
-    return Container(
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -327,7 +330,7 @@ class PreDashboardProfileCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildNormalProfile() {
@@ -339,7 +342,9 @@ class PreDashboardProfileCard extends StatelessWidget {
     final Color badgeBorder =
         kycVerified ? const Color(0xFFBBF7D0) : const Color(0xFFFED7AA);
 
-    return Container(
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -412,7 +417,7 @@ class PreDashboardProfileCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildPlaceholder(RiderModel rider) {

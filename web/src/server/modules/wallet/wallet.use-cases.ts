@@ -219,18 +219,31 @@ export const walletUseCases = {
     const idempotencyKey = `approve:${transactionId}`;
 
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      await walletLedgerService.credit(
-        {
-          riderId: txn.riderId,
-          amountInPaise: txn.amount,
-          category: txn.purpose === 'SECURITY_DEPOSIT' ? 'SECURITY_DEPOSIT' : 'TOP_UP',
-          txnId: txn.id,
-          idempotencyKey,
-          actorId: adminId,
-          note: `Admin approved ${txn.purpose.toLowerCase()}`,
-        },
-        tx
-      );
+      if (txn.purpose === 'SECURITY_DEPOSIT') {
+        await walletLedgerService.creditSecurityDeposit(
+          {
+            riderId: txn.riderId,
+            amountInPaise: txn.amount,
+            txnId: txn.id,
+            actorId: adminId,
+            note: `Admin approved security deposit`,
+          },
+          tx
+        );
+      } else {
+        await walletLedgerService.credit(
+          {
+            riderId: txn.riderId,
+            amountInPaise: txn.amount,
+            category: 'TOP_UP',
+            txnId: txn.id,
+            idempotencyKey,
+            actorId: adminId,
+            note: `Admin approved top up`,
+          },
+          tx
+        );
+      }
 
       await tx.transaction.update({
         where: { id: transactionId },
@@ -240,6 +253,13 @@ export const walletUseCases = {
           approvedBy: adminId || null,
         },
       });
+
+      if (txn.purpose === 'SECURITY_DEPOSIT') {
+        await tx.rider.updateMany({
+          where: { id: txn.riderId, lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] } },
+          data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
+        });
+      }
 
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {
         riderId: txn.riderId,

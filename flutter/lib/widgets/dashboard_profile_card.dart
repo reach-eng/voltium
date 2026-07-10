@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
-
+import 'premium_cards.dart';
 /// Profile card with vehicle details for the Active Dashboard.
 class DashboardProfileCard extends StatelessWidget {
   final RiderModel rider;
@@ -12,25 +12,9 @@ class DashboardProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
+    return PremiumDoubleBezelCard.interactive(
+      onTap: onTap,
+      child: Row(
             children: [
               _buildAvatar(),
               const SizedBox(width: 16),
@@ -48,38 +32,32 @@ class DashboardProfileCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'ID: ${rider.riderId.isEmpty ? 'VF-RD-000' : rider.riderId}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.slate500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      (rider.assignedVehicle == null ||
-                              rider.assignedVehicle!.isEmpty ||
-                              rider.assignedVehicle == 'Not Assigned')
-                          ? 'DL-8C-AB-1234'
-                          : rider.assignedVehicle!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.slate500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      (rider.pickupHub == null ||
-                              rider.pickupHub!.isEmpty ||
-                              rider.pickupHub == 'Not Assigned')
-                          ? 'BattSwap Delhi'
-                          : rider.pickupHub!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.slate500,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.electric_scooter, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            (rider.assignedVehicle == null ||
+                                    rider.assignedVehicle!.isEmpty ||
+                                    rider.assignedVehicle == 'Not Assigned')
+                                ? 'UNASSIGNED'
+                                : rider.assignedVehicle!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -87,8 +65,6 @@ class DashboardProfileCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 
@@ -98,8 +74,8 @@ class DashboardProfileCard extends StatelessWidget {
         return null;
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://localhost:8081');
-      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+          defaultValue: 'http://127.0.0.1:8081');
+      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
     final avatarUrl = getAvatarUrl();
@@ -119,7 +95,11 @@ class DashboardProfileCard extends StatelessWidget {
             child: avatarUrl != null
                 ? CachedNetworkImage(
                     imageUrl: avatarUrl,
+                    width: 72,
+                    height: 72,
                     fit: BoxFit.cover,
+                    memCacheWidth: 144,
+                    memCacheHeight: 144,
                     placeholder: (_, __) => const Center(
                       child: SizedBox(
                         width: 20,
@@ -152,22 +132,7 @@ class DashboardProfileCard extends StatelessWidget {
                   ),
           ),
         ),
-        Positioned(
-          bottom: -2,
-          right: -2,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            padding: const EdgeInsets.all(2),
-            child: const Icon(
-              Icons.check_circle,
-              color: AppColors.primary,
-              size: 20,
-            ),
-          ),
-        ),
+        // Checkmark removed to simplify and strictly contain avatar, name, and vehicle.
       ],
     );
   }

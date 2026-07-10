@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
+import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../providers/support_provider.dart';
+import 'create_ticket_screen.dart';
 
-class SupportCenterScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class SupportCenterScreen extends ConsumerStatefulWidget {
   const SupportCenterScreen({super.key});
 
   @override
-  State<SupportCenterScreen> createState() => _SupportCenterScreenState();
+  ConsumerState<SupportCenterScreen> createState() => _SupportCenterScreenState();
 }
 
-class _SupportCenterScreenState extends State<SupportCenterScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<SupportProvider>().refreshFaqs();
-      }
-    });
-  }
-
+class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,38 +30,41 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
         title: const Text('Support Center',
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
-          child: GestureDetector(
-            onTap: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4))
-                ],
+          child: UnconstrainedBox(
+            child: GestureDetector(
+              onTap: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4))
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back,
+                    color: Color(0xFF1E293B), size: 20),
               ),
-              child: const Icon(Icons.arrow_back,
-                  color: Color(0xFF1E293B), size: 20),
             ),
           ),
         ),
       ),
-      body: Consumer<SupportProvider>(
-        builder: (context, provider, child) {
-          final faqs = provider.faqs;
+      body: Consumer(builder: (context, ref, child) { final rider = ref.watch(appProvider.select((p) => p.rider));
+          final tlName = rider?.teamLeader;
+          final tlPhone = rider?.emergencyContact;
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -74,6 +75,44 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1E293B),
                   ),
+                ),
+                const SizedBox(height: 24),
+                // Team Leader card
+                if (tlName != null && tlName.isNotEmpty)
+                  _buildContactCard(
+                    icon: Icons.person_outline,
+                    title: 'Your Team Leader',
+                    subtitle: tlName,
+                    actionLabel: 'Call',
+                    actionIcon: Icons.call,
+                    color: AppColors.primary,
+                    onTap: tlPhone != null && tlPhone.isNotEmpty
+                        ? () => launchUrl(Uri.parse('tel:$tlPhone'))
+                        : null,
+                  ),
+                if (tlName != null && tlName.isNotEmpty)
+                  const SizedBox(height: 12),
+                // Email us
+                _buildContactCard(
+                  icon: Icons.email_outlined,
+                  title: 'Email Us',
+                  subtitle: 'support@voltium.in',
+                  actionLabel: 'Send',
+                  actionIcon: Icons.open_in_new,
+                  color: const Color(0xFF1B60DA),
+                  onTap: () =>
+                      launchUrl(Uri.parse('mailto:support@voltium.in')),
+                ),
+                const SizedBox(height: 12),
+                // Call us
+                _buildContactCard(
+                  icon: Icons.phone_outlined,
+                  title: 'Call Us',
+                  subtitle: '+91-9876543210',
+                  actionLabel: 'Call',
+                  actionIcon: Icons.call,
+                  color: AppColors.success,
+                  onTap: () => launchUrl(Uri.parse('tel:9876543210')),
                 ),
                 const SizedBox(height: 24),
                 Container(
@@ -111,10 +150,11 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton(
+                          key: const Key('createTicketButton'),
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Creating ticket coming soon'),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const CreateTicketScreen(),
                               ),
                             );
                           },
@@ -132,60 +172,147 @@ class _SupportCenterScreenState extends State<SupportCenterScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                // Quick Help section
                 const Text(
-                  'Frequently Asked Questions',
+                  'Quick Help',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1E293B),
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (faqs.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text('No FAQs available.',
-                          style: TextStyle(color: AppColors.slate500)),
-                    ),
-                  )
-                else
-                  ...faqs.map((faq) => Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: Colors.grey.withValues(alpha: 0.1)),
-                        ),
-                        child: ExpansionTile(
-                          shape: const Border(),
-                          title: Text(
-                            faq.question,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                              child: Text(
-                                faq.answer,
-                                style: const TextStyle(
-                                  color: AppColors.slate500,
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      )),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _buildQuickChip(Icons.help_outline, 'FAQ',
+                        () => AppNavigator.push(context, const FaqScreen())),
+                    _buildQuickChip(
+                        Icons.build_circle_outlined,
+                        'Troubleshoot',
+                        () => AppNavigator.push(
+                            context, const TroubleshooterScreen())),
+                    _buildQuickChip(
+                        Icons.notifications_outlined,
+                        'Notifications',
+                        () => AppNavigator.push(
+                            context, const NotificationsScreen())),
+                    _buildQuickChip(
+                        Icons.tune_outlined,
+                        'Notification Settings',
+                        () => AppNavigator.push(
+                            context, const NotificationPreferencesScreen())),
+                  ],
+                ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildQuickChip(IconData icon, String label, VoidCallback onTap) {
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AppColors.primary, size: 18),
+              const SizedBox(width: 8),
+              Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: Color(0xFF1E293B))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String actionLabel,
+    required IconData actionIcon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(subtitle,
+                    style: const TextStyle(
+                        color: AppColors.slate500, fontSize: 12)),
+              ],
+            ),
+          ),
+          if (onTap != null)
+            InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(actionIcon, color: color, size: 16),
+                    const SizedBox(width: 6),
+                    Text(actionLabel,
+                        style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
@@ -69,23 +70,18 @@ Widget wrapInApp({
   required Widget child,
   AppProvider? provider,
 }) {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ChangeNotifierProvider<AppProvider>(
-        create: (_) => provider ?? _MockAppProvider(),
-      ),
-    ],
-    child: MaterialApp(
+  return ProviderScope(overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      appProvider.overrideWith((ref) => provider ?? _MockAppProvider()),
+    ], child: MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: child,
-    ),
+      home: child,),
   );
 }
 

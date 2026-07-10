@@ -80,7 +80,7 @@ export default function AuditLogScreen() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search logs..."
-              className="pl-8"
+              className="pl-8 h-11 text-base rounded-xl"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

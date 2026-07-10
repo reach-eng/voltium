@@ -3,9 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -15,20 +16,17 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 /// - TroubleshooterScreen: categories, selection, navigation
 
 Widget wrapWithProviders(Widget child) {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-    ],
-    child: MaterialApp(
+  return ProviderScope(overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+    ], child: MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: child,
-    ),
+      home: child,),
   );
 }
 
@@ -81,12 +79,10 @@ void main() {
     testWidgets('back button pops navigation', (tester) async {
       final navigatorKey = GlobalKey<NavigatorState>();
       await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => LocaleProvider()),
-            ChangeNotifierProvider(create: (_) => ThemeProvider()),
-          ],
-          child: MaterialApp(
+        ProviderScope(overrides: [
+            localeProviderRef.overrideWith((ref) => LocaleProvider()),
+            themeProviderRef.overrideWith((ref) => ThemeProvider()),
+          ], child: MaterialApp(
             navigatorKey: navigatorKey,
             home: const Scaffold(body: SupportCenterScreen()),
           ),

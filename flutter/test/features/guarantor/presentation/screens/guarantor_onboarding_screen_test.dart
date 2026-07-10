@@ -3,9 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
 import '../../../../helpers/golden_test_helper.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 
@@ -17,19 +18,17 @@ void main() {
     });
 
     Widget createTestWidget({VoidCallback? onNext}) {
-      final appProvider = AppProvider();
-      appProvider.riderProvider.setRider(const RiderModel(
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
         id: 'test_rider_123',
         riderId: 'test_rider_123',
         name: 'Test Rider',
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-        ],
-        child: MaterialApp(
+      return ProviderScope(overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ], child: MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),
@@ -97,19 +96,17 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final appProvider = AppProvider();
-      appProvider.riderProvider.setRider(const RiderModel(
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
         id: 'test_rider_banner',
         riderId: 'test_rider_banner',
         name: 'Test Rider',
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-        ],
-        child: const MaterialApp(
+      return ProviderScope(overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ], child: const MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(),
           ),
@@ -143,19 +140,17 @@ void main() {
     });
 
     Widget createTestWidget({VoidCallback? onNext}) {
-      final appProvider = AppProvider();
-      appProvider.riderProvider.setRider(const RiderModel(
+      final testAppProvider = AppProvider();
+      testAppProvider.riderProvider.setRider(const RiderModel(
         id: 'test_rider_skip',
         riderId: 'test_rider_skip',
         name: 'Test Rider',
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-        ],
-        child: MaterialApp(
+      return ProviderScope(overrides: [
+          appProvider.overrideWith((ref) => testAppProvider),
+        ], child: MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),

@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import '../../../../theme/app_theme.dart';
 
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 enum IntentType { delivery, personal }
 
-class IntentOfUseScreen extends StatefulWidget {
+class IntentOfUseScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
 
   const IntentOfUseScreen({super.key, this.onNext, this.onBack});
 
   @override
-  State<IntentOfUseScreen> createState() => _IntentOfUseScreenState();
+  ConsumerState<IntentOfUseScreen> createState() => _IntentOfUseScreenState();
 }
 
-class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
+class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
   IntentType? _selectedIntent;
 
   @override
@@ -173,23 +174,38 @@ class _IntentOfUseScreenState extends State<IntentOfUseScreen> {
                                 _selectedIntent == IntentType.delivery
                                     ? 'deliver'
                                     : 'personal';
+                            final provider = ref.read(appProvider);
+                            final riderId =
+                                ref.watch(appProvider).riderId ?? ref.watch(appProvider).rider?.id;
+                            final messenger = ScaffoldMessenger.of(context);
+                            if (riderId == null) {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Rider session not ready. Please try again.'),
+                                ),
+                              );
+                              return;
+                            }
                             try {
-                              final provider = context.read<AppProvider>();
-                              final riderId = provider.rider?.id;
-                              if (riderId != null) {
-                                await VoltiumApiService().updateProfile(
-                                  riderId: riderId,
-                                  data: {'intent': intentStr},
-                                );
-                                await provider.refresh();
-                              }
-                            } catch (e) {
-                              debugPrint('Error saving intent: $e');
+                              await VoltiumApiService().updateProfile(
+                                riderId: riderId,
+                                data: {'intent': intentStr},
+                              );
+                              await provider.refresh();
+                            } catch (_) {
+                              if (!mounted) return;
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Couldn\'t save your selection. Please try again.'),
+                                ),
+                              );
+                              return;
                             }
                           }
-                          if (widget.onNext != null) {
-                            widget.onNext!();
-                          }
+                          if (!mounted) return;
+                          widget.onNext?.call();
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

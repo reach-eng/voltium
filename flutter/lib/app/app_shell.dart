@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/active_dashboard_screen.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/profile_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
-import 'package:voltium_rider/providers/connectivity_provider.dart';
-import 'package:voltium_rider/providers/notification_provider.dart';
-import 'package:voltium_rider/providers/support_provider.dart';
+import 'package:voltium_rider/core/network/connectivity_provider.dart';
+import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/services/monitoring_service.dart';
 import 'package:voltium_rider/widgets/animated_bottom_nav.dart';
 import 'package:voltium_rider/widgets/shell_banners.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class LazyScreenWrapper extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+class LazyScreenWrapper extends ConsumerStatefulWidget {
   final Widget child;
   final bool isVisible;
 
@@ -23,10 +24,10 @@ class LazyScreenWrapper extends StatefulWidget {
   });
 
   @override
-  State<LazyScreenWrapper> createState() => _LazyScreenWrapperState();
+  ConsumerState<LazyScreenWrapper> createState() => _LazyScreenWrapperState();
 }
 
-class _LazyScreenWrapperState extends State<LazyScreenWrapper> {
+class _LazyScreenWrapperState extends ConsumerState<LazyScreenWrapper> {
   bool _initialized = false;
 
   @override
@@ -56,12 +57,12 @@ class _LazyScreenWrapperState extends State<LazyScreenWrapper> {
   }
 }
 
-class OfflineBanner extends StatelessWidget {
+class OfflineBanner extends ConsumerWidget {
   const OfflineBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isOnline = context.watch<ConnectivityProvider>().isOnline;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(connectivityProvider).isOnline;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -95,14 +96,14 @@ class OfflineBanner extends StatelessWidget {
 }
 
 /// Shell widget with bottom navigation and screen routing.
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
   late final PageController _pageController;
 
@@ -172,8 +173,8 @@ class _AppShellState extends State<AppShell> {
           MonitoringService.logInfo('Navigation: Switched to tab $index');
         },
         badgeCounts: {
-          0: context.watch<NotificationProvider>().unreadCount,
-          2: context.watch<SupportProvider>().tickets.where((t) {
+          0: ref.watch(notificationProvider).unreadCount,
+          2: ref.watch(supportProvider).tickets.where((t) {
             final s = t.status.toUpperCase();
             return s == 'OPEN' || s == 'PENDING';
           }).length,

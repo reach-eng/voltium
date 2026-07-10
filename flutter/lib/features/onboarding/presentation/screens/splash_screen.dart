@@ -112,14 +112,6 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 128,
                           height: 128,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.primaryGradientEnd,
-                                Color(0xFF1A1C2E)
-                              ],
-                            ),
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
@@ -130,9 +122,14 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child:
-                                Icon(Icons.bolt, color: Colors.white, size: 64),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32),
+                            child: Image.asset(
+                              'assets/logo.png',
+                              width: 128,
+                              height: 128,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),
@@ -227,7 +224,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const Text(
                         'CONNECTING TO GRID',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           color: AppColors.slate400,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 2.0,

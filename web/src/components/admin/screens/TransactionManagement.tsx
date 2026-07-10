@@ -442,7 +442,7 @@ export default function TransactionManagement() {
                   { key: 'createdAt', label: 'Date' },
                 ]}
               />
-              <Button onClick={() => setDeductDialog(true)}>
+              <Button onClick={() => setDeductDialog(true)} size="default" className="h-11 px-5 rounded-xl">
                 Deduct from Wallet
               </Button>
             </div>
@@ -451,22 +451,22 @@ export default function TransactionManagement() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Tabs value={tab} onValueChange={setTab}>
                 <TabsList className="bg-muted/30 p-1">
-                  <TabsTrigger value="all" className="text-xs px-4">
+                  <TabsTrigger value="all" className="h-10 px-4 text-xs">
                     All
                   </TabsTrigger>
-                  <TabsTrigger value="pending" className="text-xs px-4">
+                  <TabsTrigger value="pending" className="h-10 px-4 text-xs">
                     Pending
                   </TabsTrigger>
-                  <TabsTrigger value="TOP_UP" className="text-xs px-4">
+                  <TabsTrigger value="TOP_UP" className="h-10 px-4 text-xs">
                     Top-ups
                   </TabsTrigger>
-                  <TabsTrigger value="DEBIT" className="text-xs px-4">
+                  <TabsTrigger value="DEBIT" className="h-10 px-4 text-xs">
                     Deductions
                   </TabsTrigger>
-                  <TabsTrigger value="approved" className="text-xs px-4">
+                  <TabsTrigger value="approved" className="h-10 px-4 text-xs">
                     Approved
                   </TabsTrigger>
-                  <TabsTrigger value="rejected" className="text-xs px-4">
+                  <TabsTrigger value="rejected" className="h-10 px-4 text-xs">
                     Rejected
                   </TabsTrigger>
                 </TabsList>
@@ -478,26 +478,26 @@ export default function TransactionManagement() {
                     placeholder="Search rider or ID..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10 h-9 rounded-xl border-muted-foreground/20 text-sm"
+                    className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base"
                   />
                 </div>
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9 w-36 text-xs"
+                  className="h-11 w-40 text-sm rounded-xl"
                 />
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9 w-36 text-xs"
+                  className="h-11 w-40 text-sm rounded-xl"
                 />
                 {(search || startDate || endDate) && (
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs text-muted-foreground"
+                    size="default"
+                    className="h-11 text-sm text-muted-foreground"
                     onClick={() => {
                       setSearch('');
                       setStartDate('');
@@ -533,33 +533,33 @@ export default function TransactionManagement() {
                         </span>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                          size="default"
+                          className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                           disabled={bulkLoading}
                           onClick={() => handleBulkAction('approve')}
                           title="Approve All"
                         >
                           {bulkLoading ? (
-                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                           ) : (
-                            <CheckCircle className="w-3 h-3 mr-1" />
+                            <CheckCircle className="w-4 h-4 mr-1.5" />
                           )}{' '}
                           Approve
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+                          size="default"
+                          className="h-10 text-sm px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
                           disabled={bulkLoading}
                           onClick={() => setBulkRejectDialog(true)}
                           title="Reject All"
                         >
-                          <XCircleIcon className="w-3 h-3 mr-1" /> Reject
+                          <XCircleIcon className="w-4 h-4 mr-1.5" /> Reject
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs px-2 hover:bg-muted-foreground/10 transition-all duration-200"
+                          size="default"
+                          className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
                           onClick={() => {
                             const header = 'ID,Rider,Phone,Type,Amount,Purpose,Status,Date';
                             const rows = transactions
@@ -591,7 +591,7 @@ export default function TransactionManagement() {
                             URL.revokeObjectURL(url);
                           }}
                         >
-                          <Download className="w-3 h-3 mr-1" /> Export
+                          <Download className="w-4 h-4 mr-1.5" /> Export
                         </Button>
                         {lastAction && (
                           <>
@@ -748,34 +748,35 @@ export default function TransactionManagement() {
                                 <div className="flex items-center justify-end gap-1">
                                   <Button
                                     variant="ghost"
-                                    size="sm"
+                                    size="icon"
+                                    className="h-10 w-10"
                                     onClick={() => setSelectedTx(tx)}
                                     title="View Details"
                                     aria-label="View transaction details"
                                   >
-                                    <Eye className="w-4 h-4" />
+                                    <Eye className="w-5 h-5" />
                                   </Button>
                                   {tx.status === 'PENDING' && (
                                     <>
                                       <Button
-                                        size="sm"
+                                        size="icon"
                                         variant="ghost"
-                                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                                        className="h-10 w-10 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
                                         onClick={() => setConfirmAction({ tx, action: 'approve' })}
                                         title="Approve"
                                         aria-label="Approve transaction"
                                       >
-                                        <CheckCircle className="w-4 h-4" />
+                                        <CheckCircle className="w-5 h-5" />
                                       </Button>
                                       <Button
-                                        size="sm"
+                                        size="icon"
                                         variant="ghost"
-                                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-500/10"
+                                        className="h-10 w-10 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10"
                                         onClick={() => setConfirmAction({ tx, action: 'reject' })}
                                         title="Reject"
                                         aria-label="Reject transaction"
                                       >
-                                        <XCircleIcon className="w-4 h-4" />
+                                        <XCircleIcon className="w-5 h-5" />
                                       </Button>
                                     </>
                                   )}
@@ -800,7 +801,8 @@ export default function TransactionManagement() {
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="default"
+                    className="h-10 px-4"
                     disabled={page <= 1}
                     onClick={() => setPage((p) => p - 1)}
                   >
@@ -811,7 +813,8 @@ export default function TransactionManagement() {
                   </span>
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="default"
+                    className="h-10 px-4"
                     disabled={page >= totalPages}
                     onClick={() => setPage((p) => p + 1)}
                   >
@@ -933,8 +936,8 @@ export default function TransactionManagement() {
                                 rel="noopener noreferrer"
                                 className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
                               >
-                                <Button variant="secondary" size="sm" className="gap-2">
-                                  <Download className="w-4 h-4" />
+                                <Button variant="secondary" size="default" className="h-11 px-5 gap-2">
+                                  <Download className="w-5 h-5" />
                                   Download Original
                                 </Button>
                               </a>
@@ -1065,6 +1068,8 @@ export default function TransactionManagement() {
                 <DialogFooter className="pt-6">
                   <Button
                     variant="outline"
+                    size="default"
+                    className="h-11"
                     onClick={() => {
                       setBulkRejectDialog(false);
                       setBulkRejectReason('');
@@ -1074,6 +1079,8 @@ export default function TransactionManagement() {
                   </Button>
                   <Button
                     variant="destructive"
+                    size="default"
+                    className="h-11"
                     onClick={() => {
                       handleBulkAction('reject', bulkRejectReason);
                       setBulkRejectDialog(false);

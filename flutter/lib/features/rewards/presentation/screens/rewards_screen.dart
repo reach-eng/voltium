@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../providers/app_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
-class RewardsScreen extends StatelessWidget {
+class RewardsScreen extends ConsumerWidget {
   const RewardsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(appProvider).rider;
     final points = rider?.totalRewardPoints ?? 0;
 
     return Scaffold(
@@ -20,29 +20,32 @@ class RewardsScreen extends StatelessWidget {
         title: const Text('Rewards',
             style: TextStyle(
                 fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
-          child: GestureDetector(
-            onTap: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4))
-                ],
+          child: UnconstrainedBox(
+            child: GestureDetector(
+              onTap: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4))
+                  ],
+                ),
+                child: const Icon(Icons.arrow_back,
+                    color: Color(0xFF1E293B), size: 20),
               ),
-              child: const Icon(Icons.arrow_back,
-                  color: Color(0xFF1E293B), size: 20),
             ),
           ),
         ),

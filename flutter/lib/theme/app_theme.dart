@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // Brand Colors
-  static const Color primary = Color(0xFF0053C1);
-  static const Color primaryLight = Color(0xFFB1CFF5);
-  static const Color primaryLighter = Color(0xFFE3EDFA);
-  static const Color primaryDark = Color(0xFF003899);
-  static const Color primaryGradientEnd = Color(0xFF2F6DDE);
+  static const Color primary = Color(0xFF2563EB);
+  static const Color primaryLight = Color(0xFF60A5FA);
+  static const Color primaryLighter = Color(0xFFDBEAFE);
+  static const Color primaryDark = Color(0xFF1D4ED8);
+  static const Color primaryGradientEnd = Color(0xFF3B82F6);
 
   // Status & Semantic Colors
   static const Color success = Color(0xFF10B981); // emerald-500
@@ -69,7 +69,7 @@ class AppColors {
 class AppGradients {
   /// Primary brand gradient: #0053C1 → #2F6DDE (135deg)
   static const LinearGradient primary = LinearGradient(
-    colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
+    colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -212,7 +212,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      textTheme: GoogleFonts.interTextTheme(),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         primary: AppColors.primary,
@@ -228,7 +228,7 @@ class AppTheme {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: AppColors.primary),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -242,9 +242,9 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          minimumSize: const Size(double.infinity, 56),
-          textStyle: GoogleFonts.inter(
-            fontSize: 15,
+          minimumSize: const Size(double.infinity, 60),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -253,12 +253,12 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 60),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          textStyle: GoogleFonts.inter(
-            fontSize: 15,
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -266,7 +266,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -274,22 +274,22 @@ class AppTheme {
         fillColor: Colors.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
           vertical: Spacing.md,
         ),
-        labelStyle: GoogleFonts.inter(),
-        hintStyle: GoogleFonts.inter(color: AppColors.onSurfaceDisabled),
+        labelStyle: GoogleFonts.plusJakartaSans(),
+        hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceDisabled),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
@@ -311,7 +311,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
@@ -328,7 +328,7 @@ class AppTheme {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: AppColors.primary),
-        titleTextStyle: GoogleFonts.inter(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           color: darkColors.onSurface,
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -342,27 +342,27 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 60),
           textStyle:
-              GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
+              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(double.infinity, 60),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           textStyle:
-              GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700),
+              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.inter(fontWeight: FontWeight.bold),
+          textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -370,22 +370,22 @@ class AppTheme {
         fillColor: Colors.transparent,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: darkColors.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: darkColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
           vertical: Spacing.md,
         ),
-        labelStyle: GoogleFonts.inter(),
-        hintStyle: GoogleFonts.inter(color: AppColors.onSurfaceMuted),
+        labelStyle: GoogleFonts.plusJakartaSans(),
+        hintStyle: GoogleFonts.plusJakartaSans(color: darkColors.onSurfaceMuted),
       ),
       cardTheme: CardThemeData(
         color: darkColors.card,
@@ -408,9 +408,33 @@ class AppTheme {
 class _DarkColors {
   const _DarkColors();
 
+  // Surfaces
   final Color surface = const Color(0xFF0F172A);
-  final Color onSurface = const Color(0xFFF1F5F9);
+  final Color surfaceAlt = const Color(0xFF1E293B);
   final Color card = const Color(0xFF1E293B);
   final Color inputFill = const Color(0xFF1E293B);
+  final Color iconBackground = const Color(0xFF1E293B);
+
+  // Text
+  final Color onSurface = const Color(0xFFF1F5F9);
+  final Color onSurfaceVariant = const Color(0xFF94A3B8);
+  final Color onSurfaceMuted = const Color(0xFF64748B);
+
+  // Borders & Dividers
   final Color divider = const Color(0xFF334155);
+  final Color outline = const Color(0xFF475569);
+  final Color outlineVariant = const Color(0xFF334155);
+  final Color inputBorder = const Color(0xFF475569);
+
+  // Status colors (slightly adjusted for dark bg contrast)
+  final Color success = const Color(0xFF34D399);
+  final Color successLight = const Color(0xFF064E3B);
+  final Color error = const Color(0xFFFCA5A5);
+  final Color errorLight = const Color(0xFF7F1D1D);
+  final Color warning = const Color(0xFFFBBF24);
+  final Color warningLight = const Color(0xFF78350F);
+
+  // Slate
+  final Color slate400 = const Color(0xFF94A3B8);
+  final Color slate500 = const Color(0xFF64748B);
 }

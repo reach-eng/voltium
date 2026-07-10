@@ -357,8 +357,8 @@ export default function TeamLeaderManagement() {
             Manage field team leaders and supervisors
           </p>
         </div>
-        <Button onClick={() => openDialog()} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Add Team Leader
+        <Button onClick={() => openDialog()} size="default" className="rounded-xl h-11 px-5">
+          <Plus className="h-5 w-5 mr-1.5" /> Add Team Leader
         </Button>
       </div>
 
@@ -370,7 +370,7 @@ export default function TeamLeaderManagement() {
             placeholder="Search by name, phone, or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-9 rounded-xl border-muted-foreground/20 text-sm"
+            className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base"
           />
         </div>
         <Select
@@ -380,7 +380,7 @@ export default function TeamLeaderManagement() {
             setPage(1);
           }}
         >
-          <SelectTrigger className="h-9 w-40 rounded-xl border-muted-foreground/20 text-sm">
+          <SelectTrigger className="h-11 w-40 rounded-xl border-muted-foreground/20 text-base">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -392,14 +392,14 @@ export default function TeamLeaderManagement() {
         {(search || activeFilter !== 'ALL') && (
           <Button
             variant="ghost"
-            size="sm"
-            className="h-8 text-xs text-muted-foreground"
+            size="default"
+            className="h-11 text-sm text-muted-foreground px-4"
             onClick={() => {
               setSearch('');
               setActiveFilter('ALL');
             }}
           >
-            <X className="w-3 h-3 mr-1" /> Clear
+            <X className="w-4 h-4 mr-1.5" /> Clear
           </Button>
         )}
         {selectedIds.size > 0 && (
@@ -409,42 +409,42 @@ export default function TeamLeaderManagement() {
             </span>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => handleBulkAction('activate')}
               title="Activate All"
             >
               {bulkLoading ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-3 h-3 mr-1" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5" />
               )}{' '}
               Activate
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => handleBulkAction('deactivate')}
               title="Deactivate All"
             >
-              <Ban className="w-3 h-3 mr-1" /> Deactivate
+              <Ban className="w-4 h-4 mr-1.5" /> Deactivate
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => setBulkDeleteTargets(Array.from(selectedIds))}
             >
-              <Trash2 className="w-3 h-3 mr-1" /> Delete
+              <Trash2 className="w-4 h-4 mr-1.5" /> Delete
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-muted-foreground/10 transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
               onClick={() => {
                 const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
                 const header = [
@@ -482,7 +482,7 @@ export default function TeamLeaderManagement() {
                 URL.revokeObjectURL(url);
               }}
             >
-              <Download className="w-3 h-3 mr-1" /> Export
+              <Download className="w-4 h-4 mr-1.5" /> Export
             </Button>
             {lastAction && (
               <>

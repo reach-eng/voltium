@@ -1,8 +1,9 @@
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../gen/app_localizations.dart';
-import '../providers/locale_provider.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
 import '../theme/app_theme.dart';
 
 /// A reusable animated segmented control for toggling between English and Hindi.
@@ -11,17 +12,17 @@ import '../theme/app_theme.dart';
 /// Voltium brand colour (`#0053c1`). When the user taps an option the
 /// [LocaleProvider] is updated and [onLocaleChanged] is invoked so the parent
 /// can react (e.g. show a snackbar).
-class LanguageToggle extends StatefulWidget {
+class LanguageToggle extends ConsumerStatefulWidget {
   const LanguageToggle({super.key, this.onLocaleChanged});
 
   /// Optional callback invoked after the locale has been changed.
   final ValueChanged<Locale>? onLocaleChanged;
 
   @override
-  State<LanguageToggle> createState() => _LanguageToggleState();
+  ConsumerState<LanguageToggle> createState() => _LanguageToggleState();
 }
 
-class _LanguageToggleState extends State<LanguageToggle>
+class _LanguageToggleState extends ConsumerState<LanguageToggle>
     with SingleTickerProviderStateMixin {
   /// Controls the animated position of the selection indicator.
   late final AnimationController _controller;
@@ -40,8 +41,8 @@ class _LanguageToggleState extends State<LanguageToggle>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Start in the correct position based on current locale.
-    final localeProvider = context.read<LocaleProvider>();
-    if (localeProvider.isHindi) {
+    final localeProv = ref.read(localeProviderRef);
+    if (ref.watch(localeProviderRef).isHindi) {
       _controller.value = 1.0;
     }
   }
@@ -58,14 +59,14 @@ class _LanguageToggleState extends State<LanguageToggle>
   }
 
   Future<void> _onTap(int index) async {
-    final localeProvider = context.read<LocaleProvider>();
+    final localeProv = ref.read(localeProviderRef);
 
-    if (index == 0 && !localeProvider.isEnglish) {
-      await localeProvider.setEnglish();
+    if (index == 0 && !ref.read(localeProviderRef).isEnglish) {
+      await ref.read(localeProviderRef).setEnglish();
       _controller.reverse();
       widget.onLocaleChanged?.call(const Locale('en'));
-    } else if (index == 1 && !localeProvider.isHindi) {
-      await localeProvider.setHindi();
+    } else if (index == 1 && !ref.watch(localeProviderRef).isHindi) {
+      await ref.read(localeProviderRef).setHindi();
       _controller.forward();
       widget.onLocaleChanged?.call(const Locale('hi'));
     }

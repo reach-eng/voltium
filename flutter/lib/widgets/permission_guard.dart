@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 
-class PermissionGuard extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class PermissionGuard extends ConsumerWidget {
   const PermissionGuard({super.key});
 
   String _permissionName(String id) {
@@ -54,13 +55,13 @@ class PermissionGuard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final hasViolation =
-        context.select<AppProvider, bool>((p) => p.hasPermissionViolation);
+        ref.watch(appProvider.select((p) => p.hasPermissionViolation));
     if (!hasViolation) return const SizedBox.shrink();
 
     final permId =
-        context.select<AppProvider, String?>((p) => p.violationPermissionId) ??
+        ref.watch(appProvider.select((p) => p.violationPermissionId)) ??
             'unknown';
     final permName = _permissionName(permId);
     final icon = _permissionIcon(permId);
@@ -169,7 +170,7 @@ class PermissionGuard extends StatelessWidget {
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () =>
-                          context.read<AppProvider>().clearViolation(),
+                          ref.read(appProvider).clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
                         style: TextStyle(

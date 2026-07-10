@@ -1,9 +1,16 @@
 import type { Metadata, Viewport } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { SkipLink } from '@/components/ui/skip-link';
 import { Providers } from './providers';
 import { SITE_TITLE, META_DESCRIPTION, FAVICON_PATH } from '@/lib/branding';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
+});
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -42,6 +49,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          as="style"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
         {process.env.NODE_ENV === 'production' && (
           <script
             dangerouslySetInnerHTML={{
@@ -60,7 +77,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className={`antialiased max-w-full overflow-x-hidden ${plusJakartaSans.className}`} suppressHydrationWarning>
         <SkipLink />
         <Providers>{children}</Providers>
         <Toaster />

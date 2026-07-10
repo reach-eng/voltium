@@ -1,4 +1,5 @@
 import 'package:universal_io/io.dart';
+import 'package:flutter/foundation.dart';
 import '../core/network/api_client.dart';
 import '../core/network/generated/api_client.dart';
 import '../core/network/generated/api_models.dart' as gen;
@@ -14,12 +15,15 @@ class VoltiumApiService {
 
   static VoltiumApiService? _instance;
 
-  static set instance(VoltiumApiService? val) => _instance = val;
-
   factory VoltiumApiService() {
     _instance ??= VoltiumApiService.withClient(ApiClient());
     return _instance!;
   }
+
+  /// Override the singleton instance for testing only.
+  /// Do not use in production code (F-025).
+  @visibleForTesting
+  static set instance(VoltiumApiService? val) => _instance = val;
 
   VoltiumApiService.withClient(ApiClient client)
       : _client = client,
@@ -165,11 +169,26 @@ class VoltiumApiService {
     required String vehicleId,
     required String hubId,
     required String bookingId,
+    String? teamLeader,
+    String? emergencyContact,
+    String? pickupPhotoFront,
+    String? pickupPhotoBack,
+    String? pickupPhotoLeft,
+    String? pickupPhotoRight,
+    String? pickupPhotoWithVehicle,
   }) async {
     return _apiClient.postRiderSyncPickup({
       'vehicleId': vehicleId,
       'hubId': hubId,
       'bookingId': bookingId,
+      if (teamLeader != null) 'teamLeader': teamLeader,
+      if (emergencyContact != null) 'emergencyContact': emergencyContact,
+      if (pickupPhotoFront != null) 'pickupPhotoFront': pickupPhotoFront,
+      if (pickupPhotoBack != null) 'pickupPhotoBack': pickupPhotoBack,
+      if (pickupPhotoLeft != null) 'pickupPhotoLeft': pickupPhotoLeft,
+      if (pickupPhotoRight != null) 'pickupPhotoRight': pickupPhotoRight,
+      if (pickupPhotoWithVehicle != null)
+        'pickupPhotoWithVehicle': pickupPhotoWithVehicle,
     });
   }
 

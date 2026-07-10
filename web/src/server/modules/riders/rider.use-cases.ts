@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { flattenRider } from '@/lib/flatten-rider';
 import { sanitizeText } from '@/lib/sanitize';
 import { logger } from '@/lib/logger';
+import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
@@ -79,6 +80,7 @@ export const riderUseCases = {
         wallet: true,
         guarantor: true,
         vehicleReturns: true,
+        vehicle: { select: { vehicleNumber: true, model: true } },
       },
     });
     if (!rider) return null;
@@ -90,14 +92,22 @@ export const riderUseCases = {
 
     const flatRider = flattenRider(rider);
     let assignedVehicleNumber = flatRider.assignedVehicle;
-    if (flatRider.assignedVehicle) {
+    let vehicleModel: string | null = null;
+    if (rider.vehicle) {
+      assignedVehicleNumber = rider.vehicle.vehicleNumber;
+      vehicleModel = rider.vehicle.model;
+    } else if (flatRider.assignedVehicle) {
       const v = await db.vehicle.findUnique({ where: { vehicleId: flatRider.assignedVehicle } });
-      if (v) assignedVehicleNumber = v.vehicleNumber;
+      if (v) {
+        assignedVehicleNumber = v.vehicleNumber;
+        vehicleModel = v.model;
+      }
     }
     flatRider.assignedVehicle = assignedVehicleNumber;
 
     return {
       ...flatRider,
+      vehicleModel,
       referralCode: rider.referralCode,
       unreadNotificationCount,
       totalRewardPoints: rewardAggregates._sum.points || 0,
@@ -124,12 +134,10 @@ export const riderUseCases = {
     await createAuditLog({
       actorId: adminId,
       actorType: 'ADMIN',
-      actionType: 'REJECT',
+      action: 'REJECT',
       entity: 'RiderPlan',
       entityId: riderDbId,
       details: { reason },
-      ipAddress: '',
-      userAgent: '',
     });
   },
 

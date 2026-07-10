@@ -2,6 +2,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 import 'deposit_record.dart';
+import '../utils/app_constants.dart';
 
 part 'rider_model.g.dart';
 
@@ -136,6 +137,7 @@ class RiderModel {
   // ── Rental ──────────────────────────────────────────────────────────────
   final String rentalStatus;
   final String? assignedVehicle;
+  final String? vehicleModel;
   final String? pickupHub;
   final String? teamLeader;
   final String? emergencyContact;
@@ -224,6 +226,7 @@ class RiderModel {
     this.planEndDate,
     this.rentalStatus = 'NONE',
     this.assignedVehicle,
+    this.vehicleModel,
     this.pickupHub,
     this.teamLeader,
     this.emergencyContact,
@@ -317,6 +320,7 @@ class RiderModel {
     DateTime? planEndDate,
     String? rentalStatus,
     String? assignedVehicle,
+    String? vehicleModel,
     String? pickupHub,
     String? teamLeader,
     String? emergencyContact,
@@ -383,6 +387,7 @@ class RiderModel {
       planEndDate: planEndDate ?? this.planEndDate,
       rentalStatus: rentalStatus ?? this.rentalStatus,
       assignedVehicle: assignedVehicle ?? this.assignedVehicle,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
       pickupHub: pickupHub ?? this.pickupHub,
       teamLeader: teamLeader ?? this.teamLeader,
       emergencyContact: emergencyContact ?? this.emergencyContact,
@@ -414,40 +419,25 @@ class RiderModel {
     );
   }
 
+  /// Returns (rentalPrice, securityDeposit) fallback values for the current plan.
+  (double, double) get _planFallbacks => (
+        AppConstants.getPlanPrice(currentPlan),
+        AppConstants.getPlanSecurityDeposit(currentPlan),
+      );
+
   /// Helper to get the price of the active rental plan. Ideally this should come
   /// down from the backend, but mapped here for client logic.
   @JsonKey(includeFromJson: false, includeToJson: false)
   double get activeRentalPlanPrice {
-    // Use actual price from backend if available (stored in paise, convert to rupees).
+    // Use actual price from backend if available (already converted from paise in fromJson).
     if (currentPlanPrice != null && currentPlanPrice! > 0) {
       return currentPlanPrice!;
     }
-    // Fallback: derive from plan name.
-    switch (currentPlan?.toUpperCase()) {
-      case 'WEEKLY_MAX':
-        return 1500.0;
-      case 'WEEKLY_BASIC':
-        return 1000.0;
-      case 'DAILY_FLEX':
-        return 250.0;
-      default:
-        return 1500.0;
-    }
+    return _planFallbacks.$1;
   }
 
-  double get activeRentalPlanSecurityDeposit {
-    switch (currentPlan?.toUpperCase()) {
-      case 'WEEKLY_MAX':
-        return 1500.0;
-      case 'WEEKLY_BASIC':
-        return 1000.0;
-      case 'DAILY_FLEX':
-        return 500.0;
-      default:
-        // Default safe fallback plan security deposit.
-        return 1500.0;
-    }
-  }
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  double get activeRentalPlanSecurityDeposit => _planFallbacks.$2;
 
   // ── fromJson ────────────────────────────────────────────────────────────
 
@@ -504,7 +494,7 @@ class RiderModel {
           : null,
       deviceViolationCount: json['deviceViolationCount'] as int? ?? 0,
       currentPlan: json['currentPlan'] as String?,
-      currentPlanPrice: _toDouble(json['currentPlanPrice']),
+      currentPlanPrice: _toDouble(json['currentPlanPrice'], convertPaise: true),
       planStartDate: json['planStartDate'] != null
           ? DateTime.tryParse(json['planStartDate'] as String)
           : null,
@@ -513,6 +503,7 @@ class RiderModel {
           : null,
       rentalStatus: json['rentalStatus'] as String? ?? 'NONE',
       assignedVehicle: json['assignedVehicle'] as String?,
+      vehicleModel: json['vehicleModel'] as String?,
       pickupHub: json['pickupHub'] as String?,
       teamLeader: json['teamLeader'] as String?,
       emergencyContact: json['emergencyContact'] as String?,
@@ -561,9 +552,14 @@ class RiderModel {
       'id': id,
       'riderId': riderId,
       'walletBalance': walletBalance,
+      'securityDeposit': securityDeposit,
       'currentPlan': currentPlan,
       'currentPlanPrice': currentPlanPrice,
       'assignedVehicle': assignedVehicle,
+      'vehicleModel': vehicleModel,
+      'pickupHub': pickupHub,
+      'teamLeader': teamLeader,
+      'emergencyContact': emergencyContact,
       'accountStatus': accountStatus.name,
       'lifecycleStatus': lifecycleStatus,
       'isNewRider': isNewRider,
@@ -579,6 +575,9 @@ class RiderModel {
       'kycDone': kycDone,
       'planDone': planDone,
       'pickupDone': pickupDone,
+      'planStartDate': planStartDate?.toIso8601String(),
+      'planEndDate': planEndDate?.toIso8601String(),
+      'paymentStreak': paymentStreak,
     };
   }
 
@@ -590,10 +589,45 @@ class RiderModel {
       riderId: cache['riderId'] as String? ?? '',
       name: cache['name'] as String? ?? '',
       phone: cache['phone'] as String? ?? '',
+      email: cache['email'] as String?,
+      fatherName: cache['fatherName'] as String?,
+      motherName: cache['motherName'] as String?,
+      dob: cache['dob'] != null
+          ? DateTime.tryParse(cache['dob'] as String)
+          : null,
+      currentAddress: cache['currentAddress'] as String?,
+      emergencyContact: cache['emergencyContact'] as String?,
+      profilePhoto: cache['profilePhoto'] as String?,
       walletBalance: _toDouble(cache['walletBalance']),
+      securityDeposit: _toDouble(cache['securityDeposit']),
       currentPlan: cache['currentPlan'] as String?,
       currentPlanPrice: _toDouble(cache['currentPlanPrice']),
       assignedVehicle: cache['assignedVehicle'] as String?,
+      vehicleModel: cache['vehicleModel'] as String?,
+      pickupHub: cache['pickupHub'] as String?,
+      teamLeader: cache['teamLeader'] as String?,
+      paymentStreak: cache['paymentStreak'] as int? ?? 0,
+      planStartDate: cache['planStartDate'] != null
+          ? DateTime.tryParse(cache['planStartDate'] as String)
+          : null,
+      planEndDate: cache['planEndDate'] != null
+          ? DateTime.tryParse(cache['planEndDate'] as String)
+          : null,
+      guarantorName: cache['guarantorName'] as String?,
+      guarantorPhone: cache['guarantorPhone'] as String?,
+      guarantorAddress: cache['guarantorAddress'] as String?,
+      guarantorStatus: _parseGuarantorStatus(cache['guarantorStatus']),
+      guarantorPhoto: cache['guarantorPhoto'] as String?,
+      depositStatus: _parseDepositStatus(cache['depositStatus']),
+      aadhaarFront: cache['aadhaarFront'] as String?,
+      aadhaarBack: cache['aadhaarBack'] as String?,
+      panCard: cache['panCard'] as String?,
+      signature: cache['signature'] as String?,
+      guarantorAadhaarFront: cache['guarantorAadhaarFront'] as String?,
+      guarantorAadhaarBack: cache['guarantorAadhaarBack'] as String?,
+      guarantorPan: cache['guarantorPan'] as String?,
+      guarantorVideo: cache['guarantorVideo'] as String?,
+      guarantorSignature: cache['guarantorSignature'] as String?,
       accountStatus: _parseAccountStatus(cache['accountStatus']),
       lifecycleStatus: cache['lifecycleStatus'] as String? ?? 'NEW',
       isNewRider: _toBool(cache['isNewRider']) ?? false,
@@ -627,12 +661,20 @@ class RiderModel {
     return null;
   }
 
-  static double _toDouble(dynamic value) {
+  static double _toDouble(dynamic value, {bool convertPaise = false}) {
     if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
+    double d;
+    if (value is double) {
+      d = value;
+    } else if (value is int) {
+      d = value.toDouble();
+    } else if (value is String) {
+      d = double.tryParse(value) ?? 0.0;
+    } else {
+      d = 0.0;
+    }
+    // Backend stores monetary values in paise; convert to rupees.
+    return convertPaise ? d / 100 : d;
   }
 
   static DateTime? _parseDate(dynamic value) {

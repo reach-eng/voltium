@@ -5,12 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:crypto/crypto.dart';
 import 'package:meta/meta.dart';
 import 'dart:developer' as developer;
-import '../providers/device_policy_provider.dart';
-import '../providers/wallet_provider.dart';
-import '../providers/support_provider.dart';
-import '../providers/rider_provider.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class FCMService {
   static const _channel =

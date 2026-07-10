@@ -1,22 +1,23 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
-class EditProfileScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
@@ -24,6 +25,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _motherNameController;
   late TextEditingController _dobController;
   late TextEditingController _addressController;
+
+  late TextEditingController _emergencyContactController;
 
   late TextEditingController _gNameController;
   late TextEditingController _gPhoneController;
@@ -85,7 +88,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final rider = context.read<AppProvider>().rider;
+    final rider = ref.read(appProvider).rider;
     _nameController = TextEditingController(text: rider?.name ?? '');
     _emailController = TextEditingController(text: rider?.email ?? '');
     _phoneController = TextEditingController(text: rider?.phone ?? '');
@@ -101,6 +104,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
     _addressController =
         TextEditingController(text: rider?.currentAddress ?? '');
+    _emergencyContactController =
+        TextEditingController(text: rider?.emergencyContact ?? '');
 
     _gNameController = TextEditingController(text: rider?.guarantorName ?? '');
     _gPhoneController =
@@ -125,6 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _motherNameController,
       _dobController,
       _addressController,
+      _emergencyContactController,
       _gNameController,
       _gPhoneController,
       _gAddressController,
@@ -146,7 +152,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
       return;
     }
-    final rider = context.read<AppProvider>().rider;
+    final rider = ref.read(appProvider).rider;
     if (phone == rider?.phone) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -231,8 +237,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    final provider = context.read<AppProvider>();
-    final rider = provider.rider;
+    final provider = ref.read(appProvider);
+    final rider = ref.watch(appProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -248,6 +254,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           'motherName': _motherNameController.text,
           'dob': _dobController.text.isNotEmpty ? _dobController.text : null,
           'currentAddress': _addressController.text,
+          'emergencyContact': _emergencyContactController.text,
           'guarantorName': _gNameController.text,
           'guarantorPhone': _gPhoneController.text,
           'guarantorAddress': _gAddressController.text,
@@ -375,6 +382,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 controller: _addressController,
                                 icon: Icons.home_outlined,
                               ),
+                              const SizedBox(height: 16),
+                              EditProfileTextField(
+                                key: const Key('editEmergencyContactField'),
+                                label: 'Emergency Contact Number',
+                                controller: _emergencyContactController,
+                                icon: Icons.emergency_outlined,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4, top: 4),
+                                child: Text(
+                                  'Changes to emergency contact require admin approval.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.slate500,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -480,7 +506,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           InkWell(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -513,14 +539,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildAvatarSection() {
-    final rider = context.watch<AppProvider>().rider;
+    final rider = ref.watch(appProvider).rider;
     String? getAvatarUrl() {
       if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
         return null;
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://localhost:8081');
-      return '$baseUrl/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+          defaultValue: 'http://127.0.0.1:8081');
+      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
     final avatarUrl = getAvatarUrl();
@@ -609,7 +635,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Text(
             'Guarantor Phone',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColors.slate500,
             ),
@@ -697,7 +723,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       : Text(
                           _isGOtpSent ? 'Resend' : 'Send OTP',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),

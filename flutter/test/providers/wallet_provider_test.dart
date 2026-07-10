@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/providers/wallet_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/core/network/files_repository.dart';

@@ -51,7 +51,7 @@ class StatusTile extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: AppColors.slate500,
                   letterSpacing: 0.8,
@@ -193,7 +193,7 @@ class ProfileDetailRow extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: AppColors.slate500,
                 ),
               ),
@@ -226,7 +226,8 @@ class ProfileGuarantorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isApproved = rider.guarantorStatus == GuarantorStatus.verified;
+    final isApproved = rider.guarantorStatus == GuarantorStatus.verified ||
+        rider.guarantorStatus == GuarantorStatus.approved;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -330,7 +331,7 @@ class ProfileGuarantorCard extends StatelessWidget {
                 child: Text(
                   _capitalize(rider.guarantorStatus.name),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color:
                         isApproved ? AppColors.success : AppColors.warningDark,
@@ -470,6 +471,7 @@ class ProfileQuickLinks extends StatelessWidget {
   final VoidCallback onAppSettingsTap;
   final VoidCallback onLegalTap;
   final VoidCallback onWorkflowHubTap;
+  final VoidCallback onFeedbackTap;
 
   const ProfileQuickLinks({
     super.key,
@@ -480,6 +482,7 @@ class ProfileQuickLinks extends StatelessWidget {
     required this.onAppSettingsTap,
     required this.onLegalTap,
     required this.onWorkflowHubTap,
+    required this.onFeedbackTap,
   });
 
   @override
@@ -555,6 +558,18 @@ class ProfileQuickLinks extends StatelessWidget {
             iconBgColor: const Color(0xFFEFF6FF),
             title: 'Workflow & Services',
             onTap: onWorkflowHubTap,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FadeUpWidget(
+          delay: 575,
+          child: QuickLinkItem(
+            key: const Key('feedbackLink'),
+            icon: Icons.rate_review_outlined,
+            iconColor: const Color(0xFF7E22CE),
+            iconBgColor: const Color(0xFFF3E8FF),
+            title: 'Feedback',
+            onTap: onFeedbackTap,
           ),
         ),
         const SizedBox(height: 8),

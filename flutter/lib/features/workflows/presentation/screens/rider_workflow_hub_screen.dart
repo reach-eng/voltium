@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/intent_of_use_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/user_onboarding_screen.dart';
@@ -19,9 +18,7 @@ import 'package:voltium_rider/features/support/presentation/screens/support_chec
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_preferences_screen.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/smart_notifications_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/app_settings_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
@@ -31,13 +28,14 @@ import 'package:voltium_rider/features/device_compliance/presentation/screens/em
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_contacts_screen.dart';
 import '../../../../theme/app_theme.dart';
 
-class RiderWorkflowHubScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class RiderWorkflowHubScreen extends ConsumerWidget {
   const RiderWorkflowHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
-    final riderId = rider?.id ?? rider?.riderId ?? 'local';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final riderId = ref.read(appProvider).riderId ?? 'local';
 
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
@@ -197,23 +195,7 @@ class RiderWorkflowHubScreen extends StatelessWidget {
                 Icons.notifications_outlined,
                 () => AppNavigator.push(
                   context,
-                  const NotificationCenterScreen(),
-                ),
-              ),
-              _Tile(
-                'Smart notifications',
-                Icons.tips_and_updates_outlined,
-                () => AppNavigator.push(
-                  context,
-                  const SmartNotificationsScreen(),
-                ),
-              ),
-              _Tile(
-                'Notification preferences',
-                Icons.tune_outlined,
-                () => AppNavigator.push(
-                  context,
-                  const NotificationPreferencesScreen(),
+                  const NotificationsScreen(),
                 ),
               ),
             ],
@@ -257,14 +239,14 @@ class RiderWorkflowHubScreen extends StatelessWidget {
   }
 }
 
-class _Section extends StatelessWidget {
+class _Section extends ConsumerWidget {
   final String title;
   final List<_Tile> children;
 
   const _Section({required this.title, required this.children});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(16),
@@ -302,7 +284,7 @@ class _Section extends StatelessWidget {
   }
 }
 
-class _Tile extends StatelessWidget {
+class _Tile extends ConsumerWidget {
   final String title;
   final IconData icon;
   final VoidCallback onTap;
@@ -310,7 +292,7 @@ class _Tile extends StatelessWidget {
   const _Tile(this.title, this.icon, this.onTap);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Material(
       color: const Color(0xFFF8FAFC),
       borderRadius: BorderRadius.circular(18),

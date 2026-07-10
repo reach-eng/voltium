@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 /// Searchable vehicle picker modal bottom sheet.
@@ -50,21 +51,22 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
       _filtered = q.isEmpty
           ? widget.vehicles
           : widget.vehicles.where((v) {
-              final id = (v['vehicleId'] as String? ?? '').toLowerCase();
+              final number =
+                  (v['vehicleNumber'] as String? ?? '').toLowerCase();
               final model = (v['model'] as String? ?? '').toLowerCase();
               final plate = (v['licensePlate'] as String? ?? '').toLowerCase();
-              return id.contains(q) || model.contains(q) || plate.contains(q);
+              return number.contains(q) ||
+                  model.contains(q) ||
+                  plate.contains(q);
             }).toList();
     });
   }
 
   String _label(Map<String, dynamic> v) {
-    final number = v['vehicleNumber'] as String? ??
-        v['licensePlate'] as String? ??
-        v['vehicleId'] as String? ??
-        '';
+    final number =
+        v['vehicleNumber'] as String? ?? v['licensePlate'] as String? ?? '';
     final model = v['model'] as String? ?? '';
-    return '$number${model.isNotEmpty ? ' · $model' : ''}';
+    return '$number${model.isNotEmpty ? ' • $model' : ''}';
   }
 
   String _battery(Map<String, dynamic> v) {
@@ -209,7 +211,9 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                         final v = _filtered[i];
                         final isSelected = v['id'] == widget.selectedId;
                         final battery = _battery(v);
-                        return ListTile(
+                        return FluidStaggeredItem(
+                          index: i,
+                          child: ListTile(
                           onTap: () {
                             widget.onSelected(v['id'] as String, _label(v));
                             Navigator.of(ctx).pop();
@@ -234,7 +238,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                             ),
                           ),
                           title: Text(
-                            v['vehicleId'] as String? ?? '',
+                            v['vehicleNumber'] as String? ?? '',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -281,7 +285,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                 ),
                             ],
                           ),
-                        );
+                        ));
                       },
                     ),
             ),

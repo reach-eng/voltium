@@ -844,7 +844,10 @@ export default function RentalManagement() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeletePlan}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeletePlan();
+              }}
               className="bg-destructive text-destructive-foreground"
             >
               Delete

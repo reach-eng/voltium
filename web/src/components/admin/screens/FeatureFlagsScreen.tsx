@@ -147,7 +147,7 @@ export default function FeatureFlagsScreen() {
           <Shield className="h-5 w-5" />
           <h2 className="text-xl font-semibold">Feature Flags</h2>
         </div>
-        <Button variant="outline" size="sm" onClick={loadFlags}>
+        <Button variant="outline" size="default" onClick={loadFlags} className="h-11 px-5 rounded-xl">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -217,16 +217,17 @@ export default function FeatureFlagsScreen() {
                         type="number"
                         value={entry.value}
                         onChange={(e) => updateNumericFlag(key, e.target.value)}
-                        className="w-20"
+                        className="w-24 h-11 text-base rounded-xl"
                         disabled={saving === key}
                       />
                       <Button
-                        size="sm"
+                        size="icon"
                         variant="outline"
+                        className="h-11 w-11"
                         onClick={() => updateNumericFlag(key, entry.value)}
                         disabled={saving === key}
                       >
-                        <Save className="h-3 w-3" />
+                        <Save className="h-4 w-4" />
                       </Button>
                     </div>
                   )}

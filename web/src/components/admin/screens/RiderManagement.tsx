@@ -770,7 +770,7 @@ export default function RiderManagement() {
               placeholder="Search by name, rider ID, or phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 rounded-xl bg-background border-muted-foreground/20 focus:border-primary"
+              className="pl-10 h-11 rounded-xl bg-background border-muted-foreground/20 focus:border-primary text-base"
             />
             {searching && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -787,46 +787,46 @@ export default function RiderManagement() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                  className="h-10 text-xs px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                   disabled={bulkLoading}
                   onClick={() => handleBulkAction('updateStatus', 'POST_ACTIVE')}
                   title="Approve (Ctrl+K)"
                 >
                   {bulkLoading ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                   ) : (
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    <CheckCircle2 className="w-4 h-4 mr-1.5" />
                   )}{' '}
                   Approve
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+                  className="h-10 text-xs px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
                   disabled={bulkLoading}
                   onClick={() => handleBulkAction('updateStatus', 'SUSPENDED')}
                   title="Suspend (Ctrl+R)"
                 >
                   {bulkLoading ? (
-                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                   ) : (
-                    <Ban className="w-3 h-3 mr-1" />
+                    <Ban className="w-4 h-4 mr-1.5" />
                   )}{' '}
                   Suspend
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+                  className="h-10 text-xs px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
                   disabled={bulkLoading}
                   onClick={() => setBulkDeleteOpen(true)}
                 >
-                  <Trash2 className="w-3 h-3 mr-1" /> Delete
+                  <Trash2 className="w-4 h-4 mr-1.5" /> Delete
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs px-2 hover:bg-muted-foreground/10 transition-all duration-200"
+                  className="h-10 text-xs px-3 hover:bg-muted-foreground/10 transition-all duration-200"
                   onClick={() => {
                     const header = 'Rider ID,Name,Phone,State,KYC Status';
                     const rows = riders
@@ -851,7 +851,7 @@ export default function RiderManagement() {
                     URL.revokeObjectURL(url);
                   }}
                 >
-                  <Download className="w-3 h-3 mr-1" /> Export
+                  <Download className="w-4 h-4 mr-1.5" /> Export
                 </Button>
                 {lastAction && (
                   <>
@@ -859,34 +859,34 @@ export default function RiderManagement() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs px-2 hover:bg-muted/10 transition-all duration-200"
+                      className="h-10 text-xs px-3 hover:bg-muted/10 transition-all duration-200"
                       disabled={bulkLoading}
                       onClick={handleUndo}
                       title="Undo (Ctrl+Z)"
                     >
-                      <Undo2 className="w-3 h-3 mr-1" /> Undo
+                      <Undo2 className="w-4 h-4 mr-1.5" /> Undo
                     </Button>
                   </>
                 )}
                 <div className="w-px h-4 bg-border/50 mx-1" />
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-7 w-7 p-0 hover:bg-muted-foreground/10"
+                  size="icon"
+                  className="h-10 w-10 p-0 hover:bg-muted-foreground/10"
                   onClick={() => setSelectedIds(new Set())}
                   title="Clear selection"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             )}
             <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl h-10 px-4"
+              variant="default"
+              size="default"
+              className="rounded-xl h-11 px-5"
               onClick={() => setShowAddDialog(true)}
             >
-              <UserPlus className="w-4 h-4 mr-2" /> Add Rider
+              <UserPlus className="w-5 h-5 mr-2" /> Add Rider
             </Button>
             {exportProgress !== null && (
               <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-lg">

@@ -131,24 +131,6 @@ class ApprovalMatrixWidget extends StatelessWidget {
     );
   }
 
-  StepStatus _kycStepStatus() {
-    if (rider.kycStatus == KycStatus.verified ||
-        rider.kycStatus == KycStatus.approved) return StepStatus.completed;
-    if (rider.kycStatus == KycStatus.rejected) return StepStatus.rejected;
-    if (rider.kycDone ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 4)) {
-      return StepStatus.completed;
-    }
-    return StepStatus.pending;
-  }
-
-  String? _kycSubtitle() {
-    if (rider.kycStatus == KycStatus.submitted ||
-        rider.kycStatus == KycStatus.pending) return 'Under Review';
-    if (rider.kycStatus == KycStatus.rejected) return 'Update Documents';
-    return null;
-  }
-
   StepStatus _getStepStatus(bool isCompleted, bool isNext, bool isRejected) {
     if (isRejected) return StepStatus.rejected;
     if (isCompleted) return StepStatus.completed;

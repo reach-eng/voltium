@@ -1,8 +1,3 @@
-// Voltium — Unified Prisma Schema
-// Single source of truth for all environments.
-// Uses PostgreSQL in all environments (local, staging, production).
-// Migrations managed via: npx prisma migrate deploy
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,9 +7,1025 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Enums
-// ═══════════════════════════════════════════════════════════════════════════
+model Admin {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  password     String
+  name         String
+  role         AdminRole      @default(OPERATIONS_ADMIN)
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  permissions  String         @default("[]")
+  tokenVersion Int            @default(1)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  sessions     AdminSession[]
+  backupJobs   BackupJob[]
+
+  @@index([role])
+  @@index([email])
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  adminId   String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model RolePermission {
+  id         String   @id @default(cuid())
+  role       String
+  permission String
+  createdAt  DateTime @default(now())
+
+  @@unique([role, permission])
+  @@index([role])
+  @@index([permission])
+}
+
+model Hub {
+  id        String    @id @default(cuid())
+  name      String
+  location  String?
+  city      String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  vehicles  Vehicle[]
+
+  @@index([isActive])
+}
+
+model Vehicle {
+  id             String          @id @default(cuid())
+  vehicleId      String          @unique
+  vehicleNumber  String          @unique
+  model          String
+  licensePlate   String?
+  batteryLevel   Int             @default(100)
+  batteryPartner String?
+  status         VehicleStatus   @default(AVAILABLE)
+  hubId          String
+  assignedAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  incidents      Incident[]
+  leases         RentalLease[]   @relation("VehicleLeases")
+  riders         Rider[]
+  tickets        SupportTicket[] @relation("VehicleTickets")
+  hub            Hub             @relation(fields: [hubId], references: [id])
+  returns        VehicleReturn[] @relation("VehicleReturns")
+
+  @@index([status])
+  @@index([hubId])
+  @@index([vehicleId])
+  @@index([hubId, status])
+}
+
+model Shift {
+  id          String        @id @default(cuid())
+  name        String
+  startTime   String
+  endTime     String
+  parts       String?
+  maxBookings Int           @default(5)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  leases      RentalLease[]
+}
+
+/// RentalPlan represents a recurring subscription. 
+/// The `durationDays` represents the billing cycle length, which is strictly hardcoded
+/// based on `type` (DAILY = 1, WEEKLY = 7, MONTHLY = 30) in the backend use-cases.
+model RentalPlan {
+  id                   String         @id @default(cuid())
+  name                 String
+  type                 RentalPlanType
+  price                Int
+  durationDays         Int
+  description          String?
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  deletedAt            DateTime?
+  securityDeposit      Int            @default(0)
+  additionalInfo       String?
+  isSecurityRefundable Boolean        @default(true)
+  refundableAfterDays  Int?
+
+  @@map("rental_plans")
+}
+
+model Rider {
+  id                      String                 @id @default(cuid())
+  riderId                 String                 @unique
+  phone                   String                 @unique
+  fullName                String?
+  email                   String?
+  fatherName              String?
+  motherName              String?
+  dob                     String?
+  currentAddress          String?
+  tokenVersion            Int                    @default(1)
+  intent                  String?
+  lifecycleStatus         RiderLifecycleStatus   @default(NEW)
+  vehicleId               String?
+  deliveryId              String?
+  assignedVehicle         String?
+  pickupHub               String?
+  currentPlan             String?
+  planStartDate           DateTime?
+  planEndDate             DateTime?
+  preferredShift          String?
+  teamLeader              String?
+  emergencyContact        String?
+  referralCode            String                 @unique
+  referredBy              String?
+  locationGranted         Boolean                @default(false)
+  batteryGranted          Boolean                @default(false)
+  contactsGranted         Boolean                @default(false)
+  callLogsGranted         Boolean                @default(false)
+  micGranted              Boolean                @default(false)
+  cameraGranted           Boolean                @default(false)
+  phoneGranted            Boolean                @default(false)
+  pickedUpAt              DateTime?
+  registrationDoneAt      DateTime?
+  depositDoneAt           DateTime?
+  kycDoneAt               DateTime?
+  planDoneAt              DateTime?
+  fcmToken                String?
+  isAdminLocked           Boolean                @default(false)
+  lockPassword            String?
+  isUninstallBlocked      Boolean                @default(true)
+  isLocationMandatory     Boolean                @default(true)
+  isAppsControlRestricted Boolean                @default(true)
+  deviceAdminGranted      Boolean                @default(false)
+  displayOverlayGranted   Boolean                @default(false)
+  lastDeviceViolationAt   DateTime?
+  deviceViolationCount    Int                    @default(0)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  deletedAt               DateTime?
+  currentPlanPrice        Int?
+  pickupPhotoFront        String?
+  pickupPhotoBack         String?
+  pickupPhotoLeft         String?
+  pickupPhotoRight        String?
+  pickupPhotoWithVehicle  String?
+  lastKnownLat            Float?
+  lastKnownLng            Float?
+  lastLocationAt          DateTime?
+  batteryLevel            Int                    @default(100)
+  planRejectionReason     String?
+  announcements           AnnouncementDelivery[]
+  depositRecord           DepositRecord?
+  deviceViolations        DeviceViolation[]
+  guarantor               Guarantor?
+  incidents               Incident[]
+  kycProfile              KycProfile?
+  notifications           Notification[]
+  leases                  RentalLease[]
+  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id])
+  earnings                RiderEarning[]
+  score                   RiderScore?
+  tickets                 SupportTicket[]
+  trafficFines            TrafficFine[]
+  transactions            Transaction[]
+  deviceCallLogs          UserCallLog[]
+  deviceContacts          UserContact[]
+  deviceLocations         UserLocation[]
+  vehicleReturns          VehicleReturn[]
+  wallet                  Wallet?
+  walletLedger            WalletLedger[]
+  rewards                 Reward[]
+
+  @@index([lifecycleStatus])
+  @@index([phone])
+  @@index([riderId])
+  @@index([referralCode])
+  @@index([referredBy])
+  @@index([teamLeader])
+  @@index([phone, lifecycleStatus])
+}
+
+model VehicleReturn {
+  id               String              @id @default(cuid())
+  riderId          String
+  vehicleId        String
+  status           VehicleReturnStatus @default(SUBMITTED)
+  photoFront       String?
+  photoBack        String?
+  photoLeft        String?
+  photoRight       String?
+  photoSpeedometer String?
+  latitude         Float?
+  longitude        Float?
+  reason           String?
+  rejectionReason  String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([riderId, status])
+}
+
+model KycProfile {
+  id              String    @id @default(cuid())
+  riderId         String    @unique
+  status          KycStatus @default(PENDING)
+  profilePhoto    String?
+  riderPhoto      String?
+  signature       String?
+  aadhaarFront    String?
+  aadhaarBack     String?
+  aadhaarNumber   String?
+  panCard         String?
+  panNumber       String?
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  editableFields  String[]
+  rider           Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([riderId])
+  @@index([status, riderId])
+}
+
+model Guarantor {
+  id           String          @id @default(cuid())
+  riderId      String          @unique
+  status       GuarantorStatus @default(PENDING)
+  name         String?
+  relation     String?
+  dob          String?
+  phone        String?
+  aadhaarFront String?
+  aadhaarBack  String?
+  pan          String?
+  video        String?
+  signature    String?
+  address      String?
+  photo        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+  fatherName   String?
+  motherName   String?
+  rider        Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([status])
+}
+
+model Wallet {
+  id              String         @id @default(cuid())
+  riderId         String         @unique
+  balanceInPaise  Int            @default(0)
+  securityDeposit Int            @default(0)
+  depositStatus   DepositStatus  @default(NOT_SUBMITTED)
+  paymentStreak   Int            @default(0)
+  version         Int            @default(1)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  rider           Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  ledgerEntries   WalletLedger[]
+
+  @@index([riderId])
+  @@index([depositStatus])
+}
+
+model WalletLedger {
+  id             String          @id @default(cuid())
+  walletId       String
+  riderId        String
+  txnId          String?
+  entryType      LedgerEntryType
+  category       LedgerCategory
+  amountInPaise  Int
+  balanceAfter   Int
+  idempotencyKey String?         @unique
+  note           String?
+  actorId        String?
+  createdAt      DateTime        @default(now())
+  rider          Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  txn            Transaction?    @relation(fields: [txnId], references: [id])
+  wallet         Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([riderId])
+  @@index([txnId])
+  @@index([category])
+  @@index([createdAt])
+  @@index([riderId, createdAt])
+}
+
+model DepositRecord {
+  id                    String        @id @default(cuid())
+  riderId               String        @unique
+  transactionId         String?       @unique
+  amountInPaise         Int           @default(0)
+  status                DepositStatus @default(PENDING)
+  paidAt                DateTime?
+  approvedAt            DateTime?
+  approvedBy            String?
+  rejectedAt            DateTime?
+  rejectedBy            String?
+  rejectionReason       String?
+  refundedAt            DateTime?
+  refundedBy            String?
+  refundedAmountInPaise Int?
+  forfeitedAt           DateTime?
+  forfeitedBy           String?
+  forfeitReason         String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  rider                 Rider         @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  transaction           Transaction?  @relation(fields: [transactionId], references: [id])
+
+  @@index([status])
+  @@index([riderId])
+}
+
+model RentalLease {
+  id         String       @id @default(cuid())
+  vehicleId  String
+  riderId    String
+  shiftId    String
+  leaseDate  String
+  startTime  String
+  endTime    String?
+  status     RentalStatus @default(BOOKED)
+  basePrice  Int
+  finalPrice Int
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  rider      Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  shift      Shift        @relation(fields: [shiftId], references: [id])
+  vehicle    Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, shiftId, leaseDate])
+  @@index([riderId, leaseDate])
+  @@index([vehicleId, leaseDate])
+  @@index([status])
+  @@index([riderId, status])
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
+model Transaction {
+  id              String                 @id @default(cuid())
+  riderId         String
+  type            TransactionType
+  amount          Int
+  purpose         TransactionPurpose
+  reason          String?
+  method          String?
+  status          TransactionStatus      @default(PENDING)
+  upiRef          String?
+  receipt         String?
+  proofUrl        String?
+  remark          String?
+  description     String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  idempotencyKey  String?                @unique
+  reversedTxnId   String?
+  createdAt       DateTime               @default(now())
+  depositRecord   DepositRecord?
+  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  breakdowns      TransactionBreakdown[]
+  ledgerEntries   WalletLedger[]
+
+  @@index([status])
+  @@index([riderId])
+  @@index([purpose])
+  @@index([createdAt])
+  @@index([idempotencyKey])
+  @@index([riderId, status])
+  @@index([riderId, createdAt])
+}
+
+model TransactionBreakdown {
+  id            String        @id @default(cuid())
+  transactionId String
+  label         String
+  amount        Int
+  type          BreakdownType @default(CHARGE)
+  sortOrder     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  transaction   Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model SupportTicket {
+  id               String              @id @default(cuid())
+  ticketId         String              @unique
+  riderId          String
+  vehicleId        String?
+  category         TicketCategory
+  priority         TicketPriority      @default(MEDIUM)
+  subject          String
+  message          String
+  status           SupportTicketStatus @default(OPEN)
+  troubleshootPath String?
+  assignedTo       String?
+  resolvedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  deletedAt        DateTime?
+  attachments      String?
+  rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle?            @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Cascade)
+  messages         TicketMessage[]
+
+  @@index([status])
+  @@index([riderId])
+  @@index([priority])
+  @@index([assignedTo])
+  @@index([riderId, status])
+}
+
+model TicketMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  senderId    String
+  senderType  SenderType
+  message     String
+  attachments String?
+  createdAt   DateTime      @default(now())
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([senderId])
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  riderId   String
+  title     String
+  message   String
+  type      NotificationType
+  priority  NotificationPriority @default(NORMAL)
+  deepLink  String?
+  isRead    Boolean              @default(false)
+  createdAt DateTime             @default(now())
+  rider     Rider                @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([isRead])
+  @@index([type])
+  @@index([priority])
+  @@index([riderId, isRead])
+}
+
+model NotificationDelivery {
+  id             String                     @id @default(cuid())
+  notificationId String
+  riderId        String
+  channel        String
+  status         NotificationDeliveryStatus @default(PENDING)
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  error          String?
+  createdAt      DateTime                   @default(now())
+
+  @@index([riderId])
+  @@index([status])
+  @@index([notificationId])
+}
+
+model AuditLog {
+  id        String          @id @default(cuid())
+  actorId   String
+  actorType ActorType       @default(ADMIN)
+  action    AuditActionType
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@index([actorId, createdAt])
+  @@index([entity, entityId, action])
+}
+
+model SyncQueue {
+  id         String     @id @default(cuid())
+  riderId    String
+  actionType String
+  payload    String
+  endpoint   String
+  method     HttpMethod @default(POST)
+  status     SyncStatus @default(PENDING)
+  retryCount Int        @default(0)
+  createdAt  DateTime   @default(now())
+  syncedAt   DateTime?
+
+  @@index([riderId])
+  @@index([status])
+}
+
+model FileRecord {
+  id           String         @id @default(cuid())
+  ownerType    FileOwnerType  @default(RIDER)
+  ownerId      String
+  purpose      String
+  storageKey   String         @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int            @default(0)
+  checksum     String?
+  visibility   FileVisibility @default(PRIVATE)
+  status       FileStatus     @default(PENDING_UPLOAD)
+  metadata     String?
+  createdAt    DateTime       @default(now())
+  uploadedAt   DateTime?
+  reviewedAt   DateTime?
+  reviewedBy   String?
+
+  @@index([ownerType, ownerId])
+  @@index([ownerId])
+  @@index([purpose])
+  @@index([status])
+  @@index([ownerId, status])
+  @@index([ownerId, purpose])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String?
+  validFrom   DateTime
+  validUntil  DateTime
+  isActive    Boolean  @default(true)
+  isSponsored Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("offers")
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  description   String
+  discountType  DiscountType
+  discountValue Int
+  minAmount     Int?
+  maxUses       Int?
+  currentUses   Int          @default(0)
+  validFrom     DateTime
+  validUntil    DateTime
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("coupons")
+}
+
+model Reward {
+  id        String   @id @default(cuid())
+  riderId   String
+  title     String
+  points    Int
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@map("rewards")
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+/// Admin-editable system settings with metadata.
+/// Use this for app configuration that should not require file edits (APP_PUBLIC_URL, etc.).
+/// The older Setting model is kept for internal KV pairs (maintenance mode, backup locks).
+model SystemSetting {
+  id               String   @id @default(cuid())
+  key              String   @unique
+  value            String
+  valueType        String   @default("STRING")
+  category         String
+  isSecret         Boolean  @default(false)
+  isEditable       Boolean  @default(true)
+  description      String?
+  updatedByAdminId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([category])
+  @@index([key])
+  @@map("system_settings")
+}
+
+model LegalDocument {
+  id        String   @id @default(cuid())
+  type      String   @unique
+  title     String
+  content   String
+  updatedAt DateTime @updatedAt
+
+  @@map("legal_documents")
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model TeamLeader {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("team_leaders")
+}
+
+model Announcement {
+  id              String                 @id @default(cuid())
+  title           String
+  message         String
+  channel         String
+  targetAudience  String
+  targetIds       String                 @default("[]")
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  status          AnnouncementStatus     @default(DRAFT)
+  totalRecipients Int                    @default(0)
+  deliveredCount  Int                    @default(0)
+  readCount       Int                    @default(0)
+  createdBy       String
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  deliveries      AnnouncementDelivery[]
+}
+
+model AnnouncementDelivery {
+  id             String                     @id @default(cuid())
+  announcementId String
+  riderId        String
+  status         AnnouncementDeliveryStatus @default(PENDING)
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime                   @default(now())
+  announcement   Announcement               @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  rider          Rider                      @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([announcementId])
+  @@index([riderId])
+  @@index([status])
+}
+
+model Incident {
+  id                   String           @id @default(cuid())
+  incidentId           String           @unique
+  riderId              String?
+  vehicleId            String?
+  type                 IncidentType
+  severity             IncidentSeverity @default(MEDIUM)
+  title                String
+  description          String
+  location             String?
+  latitude             Float?
+  longitude            Float?
+  photos               String           @default("[]")
+  status               IncidentStatus   @default(OPEN)
+  assignedTo           String?
+  resolution           String?
+  resolvedAt           DateTime?
+  resolvedBy           String?
+  insuranceClaim       Boolean          @default(false)
+  insuranceClaimNumber String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  rider                Rider?           @relation(fields: [riderId], references: [id])
+  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id])
+
+  @@index([riderId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([type])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model RiderEarning {
+  id          String   @id @default(cuid())
+  riderId     String
+  date        DateTime
+  platform    String?
+  amount      Float
+  trips       Int      @default(0)
+  distance    Float?
+  hoursOnline Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  rider       Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([date])
+  @@index([platform])
+  @@index([riderId, date])
+}
+
+model RiderScore {
+  id             String    @id @default(cuid())
+  riderId        String    @unique
+  paymentScore   Float     @default(0)
+  kycScore       Float     @default(0)
+  activityScore  Float     @default(0)
+  supportScore   Float     @default(0)
+  compositeScore Float     @default(0)
+  riskLevel      RiskLevel @default(LOW)
+  lastCalculated DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  rider          Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([compositeScore])
+  @@index([riskLevel])
+}
+
+model TrafficFine {
+  id              String     @id @default(cuid())
+  riderId         String
+  vehicleId       String?
+  fineId          String     @unique
+  amount          Float
+  location        String?
+  violationType   String
+  violationDate   DateTime
+  dueDate         DateTime
+  status          FineStatus @default(PENDING)
+  paymentProofUrl String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  rider           Rider      @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([fineId])
+  @@index([status])
+}
+
+model DeviceViolation {
+  id           String          @id @default(cuid())
+  riderId      String
+  permissionId String
+  status       ViolationStatus @default(ACTIVE)
+  reportedAt   DateTime        @default(now())
+  resolvedAt   DateTime?
+  rider        Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([status])
+  @@index([riderId, status])
+}
+
+model UserContact {
+  id        String   @id @default(cuid())
+  riderId   String
+  name      String
+  phone     String
+  email     String?
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+}
+
+model UserCallLog {
+  id        String   @id @default(cuid())
+  riderId   String
+  number    String
+  name      String?
+  type      String
+  duration  Int
+  timestamp DateTime
+  createdAt DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([riderId, timestamp])
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  riderId   String
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  speed     Float?
+  isMocked  Boolean  @default(false)
+  timestamp DateTime @default(now())
+  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@index([riderId])
+  @@index([riderId, timestamp])
+}
+
+model OtpCode {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  codeHash    String
+  salt        String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  verified    Boolean  @default(false)
+  resendCount Int      @default(1)
+  lastSentAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([phone])
+}
+
+model RateLimitBucket {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  points    Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@index([key])
+}
+
+model OutboxEvent {
+  id          String            @id @default(cuid())
+  eventType   String
+  payload     String
+  status      OutboxEventStatus @default(PENDING)
+  attempts    Int               @default(0)
+  maxAttempts Int               @default(3)
+  error       String?
+  createdAt   DateTime          @default(now())
+  processedAt DateTime?
+  /// Phase 3.4: @updatedAt is managed by Prisma. The reaper uses
+  /// it to find rows that have been stuck in PROCESSING for more
+  /// than the reaper cutoff.
+  updatedAt   DateTime          @updatedAt
+  /// Phase 3.4: readyAt is the earliest time the job may be claimed
+  /// after a failure (exponential backoff). NULL = eligible now.
+  /// See prisma/migrations/20260626000000_add_outbox_readyAt/.
+  readyAt     DateTime?
+
+  @@index([status])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([status, eventType])
+  @@index([status, eventType, readyAt])
+  @@index([status, updatedAt])
+}
+
+model ReconciliationReport {
+  id              String   @id @default(cuid())
+  reportDate      String   @unique
+  totalWallets    Int
+  matched         Int
+  mismatched      Int
+  totalLedgerSum  Int
+  totalWalletSum  Int
+  drift           Int
+  mismatchDetails String   @default("[]")
+  createdAt       DateTime @default(now())
+
+  @@index([reportDate])
+  @@index([createdAt])
+}
+
+model BackupSchedule {
+  id                  String    @id @default(cuid())
+  enabled             Boolean   @default(true)
+  frequency           String    @default("DAILY")
+  timeOfDay           String    @default("02:00")
+  timezone            String    @default("Asia/Kolkata")
+  dayOfWeek           Int?
+  dayOfMonth          Int?
+  includeDatabase     Boolean   @default(true)
+  includeUploads      Boolean   @default(true)
+  includeLogs         Boolean   @default(false)
+  primaryBackupRoot   String
+  secondaryBackupRoot String?
+  keepDaily           Int       @default(7)
+  keepWeekly          Int       @default(4)
+  keepMonthly         Int       @default(6)
+  keepManual          Int?
+  minimumFreeDiskGb   Int       @default(20)
+  lastRunAt           DateTime?
+  nextRunAt           DateTime?
+  lastStatus          String?
+  lastError           String?
+  updatedByAdminId    String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([enabled])
+  @@index([nextRunAt])
+}
+
+model BackupJob {
+  id               String       @id @default(cuid())
+  type             String
+  scheduleType     String?
+  status           String
+  backupPath       String?
+  databasePath     String?
+  filesPath        String?
+  manifestPath     String?
+  checksumPath     String?
+  sizeBytes        BigInt?
+  fileCount        Int?
+  errorMessage     String?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdByAdminId String?
+  createdAt        DateTime     @default(now())
+  createdByAdmin   Admin?       @relation(fields: [createdByAdminId], references: [id])
+  restoreJobs      RestoreJob[]
+
+  @@index([status])
+  @@index([type])
+  @@index([scheduleType])
+  @@index([createdAt])
+  @@index([createdByAdminId])
+}
+
+model RestoreJob {
+  id                 String    @id @default(cuid())
+  backupJobId        String
+  status             String
+  requestedByAdminId String
+  approvedByAdminId  String?
+  errorMessage       String?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime  @default(now())
+  backupJob          BackupJob @relation(fields: [backupJobId], references: [id])
+
+  @@index([backupJobId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model IdempotencyKey {
+  id        String            @id @default(cuid())
+  key       String            @unique
+  response  String?
+  expiresAt DateTime
+  createdAt DateTime          @default(now())
+  status    IdempotencyStatus @default(PROCESSING)
+
+  @@index([expiresAt])
+  @@index([status])
+}
 
 enum RiderLifecycleStatus {
   NEW
@@ -92,12 +1103,12 @@ enum TransactionPurpose {
   TOP_UP
   SECURITY_DEPOSIT
   RENT_PAYMENT
-  ONBOARDING
   REWARD
   REFUND
   REVERSAL
   ADMIN_ADJUSTMENT
   FORFEITURE
+  ONBOARDING
 }
 
 enum RentalStatus {
@@ -235,9 +1246,9 @@ enum NotificationType {
   PROMOTION
   PAYMENT
   VEHICLE
-  BIRTHDAY_WISH
   SOS
   SYSTEM
+  BIRTHDAY_WISH
 
   @@map("notification_type")
 }
@@ -381,1086 +1392,10 @@ enum SenderType {
   @@map("sender_type")
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Models
-// ═══════════════════════════════════════════════════════════════════════════
-
-// ── Admin & Auth ──────────────────────────────────────────────────────────
-
-model Admin {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  password     String
-  name         String
-  role         AdminRole      @default(OPERATIONS_ADMIN)
-  isActive     Boolean        @default(true)
-  lastLoginAt  DateTime?
-  permissions  String         @default("[]")
-  tokenVersion Int            @default(1)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  sessions     AdminSession[]
-  backupJobs   BackupJob[]
-
-  @@index([role])
-  @@index([email])
-}
-
-model AdminSession {
-  id        String   @id @default(cuid())
-  adminId   String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
-
-  @@index([adminId])
-  @@index([token])
-  @@index([expiresAt])
-}
-
-model RolePermission {
-  id         String   @id @default(cuid())
-  role       String
-  permission String
-  createdAt  DateTime @default(now())
-
-  @@unique([role, permission])
-  @@index([role])
-  @@index([permission])
-}
-
-// ── Hubs & Vehicles ───────────────────────────────────────────────────────
-
-model Hub {
-  id        String    @id @default(cuid())
-  name      String
-  location  String?
-  city      String?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  vehicles  Vehicle[]
-
-  @@index([isActive])
-}
-
-model Vehicle {
-  id             String          @id @default(cuid())
-  vehicleId      String          @unique
-  vehicleNumber  String          @unique
-  model          String
-  licensePlate   String?
-  batteryLevel   Int             @default(100)
-  batteryPartner String?
-  status         VehicleStatus   @default(AVAILABLE)
-  hubId          String
-  assignedAt     DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-  hub            Hub             @relation(fields: [hubId], references: [id])
-  riders         Rider[]
-  leases         RentalLease[]   @relation("VehicleLeases")
-  tickets        SupportTicket[] @relation("VehicleTickets")
-  returns        VehicleReturn[] @relation("VehicleReturns")
-  incidents      Incident[]
-
-  @@index([status])
-  @@index([hubId])
-  @@index([vehicleId])
-  @@index([hubId, status])
-}
-
-model Shift {
-  id          String        @id @default(cuid())
-  name        String
-  startTime   String
-  endTime     String
-  parts       String? // JSON array: [{startTime: "08:00", endTime: "10:00"}, ...]
-  maxBookings Int           @default(5)
-  isActive    Boolean       @default(true)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?
-  leases      RentalLease[]
-}
-
-/// RentalPlan represents a recurring subscription. 
-/// The `durationDays` represents the billing cycle length, which is strictly hardcoded
-/// based on `type` (DAILY = 1, WEEKLY = 7, MONTHLY = 30) in the backend use-cases.
-model RentalPlan {
-  id                   String         @id @default(cuid())
-  name                 String
-  type                 RentalPlanType
-  price                Int
-  durationDays         Int
-  description          String?
-  isActive             Boolean        @default(true)
-  securityDeposit      Int            @default(0)
-  isSecurityRefundable Boolean        @default(true)
-  refundableAfterDays  Int?
-  additionalInfo       String?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  deletedAt            DateTime?
-
-  @@map("rental_plans")
-}
-
-// ── Rider ─────────────────────────────────────────────────────────────────
-
-model Rider {
-  id             String  @id @default(cuid())
-  riderId        String  @unique
-  phone          String  @unique
-  fullName       String?
-  email          String?
-  fatherName     String?
-  motherName     String?
-  dob            String?
-  currentAddress String?
-  tokenVersion   Int     @default(1)
-
-  intent                  String?
-  lifecycleStatus         RiderLifecycleStatus   @default(NEW)
-  vehicleId               String?
-  deliveryId              String?
-  assignedVehicle         String?
-  pickupHub               String?
-  currentPlan             String?
-  planStartDate           DateTime?
-  planEndDate             DateTime?
-  preferredShift          String?
-  teamLeader              String?
-  emergencyContact        String?
-  referralCode            String                 @unique
-  referredBy              String?
-  locationGranted         Boolean                @default(false)
-  batteryGranted          Boolean                @default(false)
-  contactsGranted         Boolean                @default(false)
-  callLogsGranted         Boolean                @default(false)
-  micGranted              Boolean                @default(false)
-  cameraGranted           Boolean                @default(false)
-  phoneGranted            Boolean                @default(false)
-  pickedUpAt              DateTime?
-  registrationDoneAt      DateTime?
-  depositDoneAt           DateTime?
-  kycDoneAt               DateTime?
-  planDoneAt              DateTime?
-  planRejectionReason     String?
-  fcmToken                String?
-  isAdminLocked           Boolean                @default(false)
-  lockPassword            String?
-  isUninstallBlocked      Boolean                @default(true)
-  isLocationMandatory     Boolean                @default(true)
-  isAppsControlRestricted Boolean                @default(true)
-  deviceAdminGranted      Boolean                @default(false)
-  displayOverlayGranted   Boolean                @default(false)
-  lastDeviceViolationAt   DateTime?
-  deviceViolationCount    Int                    @default(0)
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  deletedAt               DateTime?
-  currentPlanPrice        Int?
-  pickupPhotoFront        String?
-  pickupPhotoBack         String?
-  pickupPhotoLeft         String?
-  pickupPhotoRight        String?
-  pickupPhotoWithVehicle  String?
-  lastKnownLat            Float?
-  lastKnownLng            Float?
-  lastLocationAt          DateTime?
-  batteryLevel            Int                    @default(100)
-  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id])
-  guarantor               Guarantor?
-  kycProfile              KycProfile?
-  notifications           Notification[]
-  leases                  RentalLease[]
-  tickets                 SupportTicket[]
-  transactions            Transaction[]
-  deviceCallLogs          UserCallLog[]
-  deviceContacts          UserContact[]
-  deviceLocations         UserLocation[]
-  vehicleReturns          VehicleReturn[]
-  wallet                  Wallet?
-  rewards                 Reward[]
-  announcements           AnnouncementDelivery[]
-  incidents               Incident[]
-  earnings                RiderEarning[]
-  score                   RiderScore?
-  deviceViolations        DeviceViolation[]
-  trafficFines            TrafficFine[]
-  walletLedger            WalletLedger[]
-  depositRecord           DepositRecord?
-
-  @@index([lifecycleStatus])
-  @@index([phone])
-  @@index([riderId])
-  @@index([referralCode])
-  @@index([referredBy])
-  @@index([teamLeader])
-  @@index([phone, lifecycleStatus])
-}
-
-model VehicleReturn {
-  id               String              @id @default(cuid())
-  riderId          String
-  vehicleId        String
-  status           VehicleReturnStatus @default(SUBMITTED)
-  photoFront       String?
-  photoBack        String?
-  photoLeft        String?
-  photoRight       String?
-  photoSpeedometer String?
-  latitude         Float?
-  longitude        Float?
-  reason           String?
-  rejectionReason  String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  vehicle          Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([vehicleId])
-  @@index([status])
-  @@index([riderId, status])
-}
-
-// ── KYC ───────────────────────────────────────────────────────────────────
-
-model KycProfile {
-  id              String    @id @default(cuid())
-  riderId         String    @unique
-  status          KycStatus @default(PENDING)
-  profilePhoto    String?
-  riderPhoto      String?
-  signature       String?
-  aadhaarFront    String?
-  aadhaarBack     String?
-  aadhaarNumber   String?
-  panCard         String?
-  panNumber       String?
-  bankName        String?
-  accountNumber   String?
-  ifscCode        String?
-  rejectionReason String?
-  editableFields  String[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  rider           Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([status])
-  @@index([riderId])
-  @@index([status, riderId])
-}
-
-// ── Guarantor ─────────────────────────────────────────────────────────────
-
-model Guarantor {
-  id           String          @id @default(cuid())
-  riderId      String          @unique
-  status       GuarantorStatus @default(PENDING)
-  name         String?
-  relation     String?
-  dob          String?
-  phone        String?
-  aadhaarFront String?
-  aadhaarBack  String?
-  pan          String?
-  video        String?
-  signature    String?
-  address      String?
-  photo        String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  deletedAt    DateTime?
-  fatherName   String?
-  motherName   String?
-  rider        Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([status])
-}
-
-// ── Wallet & Deposit ──────────────────────────────────────────────────────
-
-model Wallet {
-  id              String         @id @default(cuid())
-  riderId         String         @unique
-  balanceInPaise  Int            @default(0)
-  securityDeposit Int            @default(0)
-  depositStatus   DepositStatus  @default(NOT_SUBMITTED)
-  paymentStreak   Int            @default(0)
-  version         Int            @default(1)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  rider           Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  ledgerEntries   WalletLedger[]
-
-  @@index([riderId])
-  @@index([depositStatus])
-}
-
-// Append-only double-entry ledger. Every wallet mutation MUST create a row here.
-// balanceInPaise on Wallet is the derived/cached sum; this table is the source of truth.
-model WalletLedger {
-  id             String          @id @default(cuid())
-  walletId       String
-  riderId        String
-  txnId          String? // links back to Transaction (optional for system entries)
-  entryType      LedgerEntryType // CREDIT | DEBIT
-  category       LedgerCategory // TOP_UP | SECURITY_DEPOSIT | RENT_PAYMENT | REWARD | etc.
-  amountInPaise  Int
-  balanceAfter   Int // snapshot of balanceInPaise immediately after this entry
-  idempotencyKey String?         @unique
-  note           String?
-  actorId        String? // admin ID if admin-triggered; null for system/rider actions
-  createdAt      DateTime        @default(now())
-
-  wallet Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  rider  Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  txn    Transaction? @relation(fields: [txnId], references: [id], onDelete: SetNull)
-
-  @@index([walletId])
-  @@index([riderId])
-  @@index([txnId])
-  @@index([category])
-  @@index([createdAt])
-  @@index([riderId, createdAt])
-}
-
-// Full lifecycle record for security deposit per rider.
-model DepositRecord {
-  id                    String        @id @default(cuid())
-  riderId               String        @unique
-  transactionId         String?       @unique
-  amountInPaise         Int           @default(0)
-  status                DepositStatus @default(PENDING)
-  paidAt                DateTime?
-  approvedAt            DateTime?
-  approvedBy            String?
-  rejectedAt            DateTime?
-  rejectedBy            String?
-  rejectionReason       String?
-  refundedAt            DateTime?
-  refundedBy            String?
-  refundedAmountInPaise Int?
-  forfeitedAt           DateTime?
-  forfeitedBy           String?
-  forfeitReason         String?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-
-  rider       Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-
-  @@index([status])
-  @@index([riderId])
-}
-
-// ── Rental ────────────────────────────────────────────────────────────────
-
-model RentalLease {
-  id         String       @id @default(cuid())
-  vehicleId  String
-  riderId    String
-  shiftId    String
-  leaseDate  String
-  startTime  String
-  endTime    String?
-  status     RentalStatus @default(BOOKED)
-  basePrice  Int
-  finalPrice Int
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  vehicle    Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
-  rider      Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  shift      Shift        @relation(fields: [shiftId], references: [id])
-
-  @@unique([vehicleId, shiftId, leaseDate])
-  @@index([riderId, leaseDate])
-  @@index([vehicleId, leaseDate])
-  @@index([status])
-  @@index([riderId, status])
-  @@index([createdAt])
-  @@index([status, createdAt])
-}
-
-// ── Transaction ───────────────────────────────────────────────────────────
-
-model Transaction {
-  id              String                 @id @default(cuid())
-  riderId         String
-  type            TransactionType // CREDIT | DEBIT
-  amount          Int // in paise
-  purpose         TransactionPurpose // TOP_UP | SECURITY_DEPOSIT | RENT_PAYMENT | etc.
-  reason          String?
-  method          String?
-  status          TransactionStatus      @default(PENDING)
-  upiRef          String?
-  receipt         String?
-  proofUrl        String?
-  remark          String?
-  description     String?
-  approvedBy      String?
-  approvedAt      DateTime?
-  rejectionReason String?
-  idempotencyKey  String?                @unique
-  reversedTxnId   String?
-  createdAt       DateTime               @default(now())
-  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  breakdowns      TransactionBreakdown[]
-  ledgerEntries   WalletLedger[]
-  depositRecord   DepositRecord?
-
-  @@index([status])
-  @@index([riderId])
-  @@index([purpose])
-  @@index([createdAt])
-  @@index([idempotencyKey])
-  @@index([riderId, status])
-  @@index([riderId, createdAt])
-}
-
-model TransactionBreakdown {
-  id            String        @id @default(cuid())
-  transactionId String
-  label         String
-  amount        Int
-  type          BreakdownType @default(CHARGE)
-  sortOrder     Int           @default(0)
-  createdAt     DateTime      @default(now())
-  transaction   Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
-}
-
-// ── Support ───────────────────────────────────────────────────────────────
-
-model SupportTicket {
-  id               String              @id @default(cuid())
-  ticketId         String              @unique
-  riderId          String
-  vehicleId        String?
-  category         TicketCategory
-  priority         TicketPriority      @default(MEDIUM)
-  subject          String
-  message          String
-  status           SupportTicketStatus @default(OPEN)
-  troubleshootPath String?
-  assignedTo       String?
-  resolvedAt       DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  deletedAt        DateTime?
-  attachments      String?
-  rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  vehicle          Vehicle?            @relation("VehicleTickets", fields: [vehicleId], references: [id], onDelete: Cascade)
-  messages         TicketMessage[]
-
-  @@index([status])
-  @@index([riderId])
-  @@index([priority])
-  @@index([assignedTo])
-  @@index([riderId, status])
-}
-
-model TicketMessage {
-  id          String        @id @default(cuid())
-  ticketId    String
-  senderId    String
-  senderType  SenderType
-  message     String
-  attachments String?
-  createdAt   DateTime      @default(now())
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-
-  @@index([ticketId])
-  @@index([senderId])
-}
-
-// ── Notification ──────────────────────────────────────────────────────────
-
-model Notification {
-  id        String               @id @default(cuid())
-  riderId   String
-  title     String
-  message   String
-  type      NotificationType
-  priority  NotificationPriority @default(NORMAL)
-  deepLink  String?
-  isRead    Boolean              @default(false)
-  createdAt DateTime             @default(now())
-  rider     Rider                @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([isRead])
-  @@index([type])
-  @@index([priority])
-  @@index([riderId, isRead])
-}
-
-model NotificationDelivery {
-  id             String                     @id @default(cuid())
-  notificationId String
-  riderId        String
-  channel        String // PUSH | SMS | EMAIL | IN_APP
-  status         NotificationDeliveryStatus @default(PENDING)
-  sentAt         DateTime?
-  deliveredAt    DateTime?
-  error          String?
-  createdAt      DateTime                   @default(now())
-
-  @@index([riderId])
-  @@index([status])
-  @@index([notificationId])
-}
-
-// ── Audit ─────────────────────────────────────────────────────────────────
-
-model AuditLog {
-  id        String          @id @default(cuid())
-  actorId   String
-  actorType ActorType       @default(ADMIN)
-  action    AuditActionType
-  entity    String
-  entityId  String?
-  details   String?
-  ipAddress String?
-  userAgent String?
-  expiresAt DateTime?
-  createdAt DateTime        @default(now())
-
-  @@index([entity, entityId])
-  @@index([actorId])
-  @@index([action])
-  @@index([createdAt])
-  @@index([expiresAt])
-  @@index([actorId, createdAt])
-  @@index([entity, entityId, action])
-}
-
-// ── Sync ──────────────────────────────────────────────────────────────────
-
-model SyncQueue {
-  id         String     @id @default(cuid())
-  riderId    String
-  actionType String
-  payload    String
-  endpoint   String
-  method     HttpMethod @default(POST)
-  status     SyncStatus @default(PENDING)
-  retryCount Int        @default(0)
-  createdAt  DateTime   @default(now())
-  syncedAt   DateTime?
-
-  @@index([riderId])
-  @@index([status])
-}
-
-// ── Files ─────────────────────────────────────────────────────────────────
-
 enum FileOwnerType {
   RIDER
   ADMIN
   SYSTEM
-}
-
-model FileRecord {
-  id           String         @id @default(cuid())
-  ownerType    FileOwnerType  @default(RIDER)
-  ownerId      String
-  purpose      String
-  storageKey   String         @unique
-  originalName String
-  mimeType     String
-  sizeBytes    Int            @default(0)
-  checksum     String?
-  visibility   FileVisibility @default(PRIVATE)
-  status       FileStatus     @default(PENDING_UPLOAD)
-  metadata     String?
-  createdAt    DateTime       @default(now())
-  uploadedAt   DateTime?
-  reviewedAt   DateTime?
-  reviewedBy   String?
-
-  @@index([ownerType, ownerId])
-  @@index([ownerId])
-  @@index([purpose])
-  @@index([status])
-  @@index([ownerId, status])
-  @@index([ownerId, purpose])
-}
-
-// ── Offers & Coupons ──────────────────────────────────────────────────────
-
-model Offer {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  icon        String?
-  validFrom   DateTime
-  validUntil  DateTime
-  isActive    Boolean  @default(true)
-  isSponsored Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("offers")
-}
-
-model Coupon {
-  id            String       @id @default(cuid())
-  code          String       @unique
-  description   String
-  discountType  DiscountType
-  discountValue Int
-  minAmount     Int?
-  maxUses       Int?
-  currentUses   Int          @default(0)
-  validFrom     DateTime
-  validUntil    DateTime
-  isActive      Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@map("coupons")
-}
-
-// ── Rewards ───────────────────────────────────────────────────────────────
-
-model Reward {
-  id        String   @id @default(cuid())
-  riderId   String
-  title     String
-  points    Int
-  createdAt DateTime @default(now())
-  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@map("rewards")
-}
-
-// ── Settings & Legal ──────────────────────────────────────────────────────
-
-model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  updatedAt DateTime @updatedAt
-
-  @@map("settings")
-}
-
-/// Admin-editable system settings with metadata.
-/// Use this for app configuration that should not require file edits (APP_PUBLIC_URL, etc.).
-/// The older Setting model is kept for internal KV pairs (maintenance mode, backup locks).
-model SystemSetting {
-  id               String   @id @default(cuid())
-  key              String   @unique
-  value            String
-  valueType        String   @default("STRING") // STRING, BOOLEAN, NUMBER, JSON, PATH, URL
-  category         String // APP_URLS, STORAGE, BACKUP, SECURITY, SERVER
-  isSecret         Boolean  @default(false)
-  isEditable       Boolean  @default(true)
-  description      String?
-  updatedByAdminId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([category])
-  @@index([key])
-  @@map("system_settings")
-}
-
-model LegalDocument {
-  id        String   @id @default(cuid())
-  type      String   @unique
-  title     String
-  content   String
-  updatedAt DateTime @updatedAt
-
-  @@map("legal_documents")
-}
-
-model Faq {
-  id        String   @id @default(cuid())
-  question  String
-  answer    String
-  category  String?
-  order     Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("faqs")
-}
-
-// ── Team Leaders ──────────────────────────────────────────────────────────
-
-model TeamLeader {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("team_leaders")
-}
-
-// ── Announcement ──────────────────────────────────────────────────────────
-
-model Announcement {
-  id              String                 @id @default(cuid())
-  title           String
-  message         String
-  channel         String
-  targetAudience  String
-  targetIds       String                 @default("[]")
-  scheduledAt     DateTime?
-  sentAt          DateTime?
-  status          AnnouncementStatus     @default(DRAFT)
-  totalRecipients Int                    @default(0)
-  deliveredCount  Int                    @default(0)
-  readCount       Int                    @default(0)
-  createdBy       String
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  deliveries      AnnouncementDelivery[]
-}
-
-model AnnouncementDelivery {
-  id             String                     @id @default(cuid())
-  announcementId String
-  riderId        String
-  status         AnnouncementDeliveryStatus @default(PENDING)
-  deliveredAt    DateTime?
-  readAt         DateTime?
-  createdAt      DateTime                   @default(now())
-  announcement   Announcement               @relation(fields: [announcementId], references: [id], onDelete: Cascade)
-  rider          Rider                      @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([announcementId])
-  @@index([riderId])
-  @@index([status])
-}
-
-// ── Incident ──────────────────────────────────────────────────────────────
-
-model Incident {
-  id                   String           @id @default(cuid())
-  incidentId           String           @unique
-  riderId              String?
-  vehicleId            String?
-  type                 IncidentType
-  severity             IncidentSeverity @default(MEDIUM)
-  title                String
-  description          String
-  location             String?
-  latitude             Float?
-  longitude            Float?
-  photos               String           @default("[]")
-  status               IncidentStatus   @default(OPEN)
-  assignedTo           String?
-  resolution           String?
-  resolvedAt           DateTime?
-  resolvedBy           String?
-  insuranceClaim       Boolean          @default(false)
-  insuranceClaimNumber String?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  rider                Rider?           @relation(fields: [riderId], references: [id])
-  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id])
-
-  @@index([riderId])
-  @@index([vehicleId])
-  @@index([status])
-  @@index([type])
-  @@index([severity])
-  @@index([createdAt])
-}
-
-// ── Rider Earnings ────────────────────────────────────────────────────────
-
-model RiderEarning {
-  id          String   @id @default(cuid())
-  riderId     String
-  date        DateTime
-  platform    String?
-  amount      Float
-  trips       Int      @default(0)
-  distance    Float?
-  hoursOnline Float?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  rider       Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([date])
-  @@index([platform])
-  @@index([riderId, date])
-}
-
-// ── Rider Score ───────────────────────────────────────────────────────────
-
-model RiderScore {
-  id             String    @id @default(cuid())
-  riderId        String    @unique
-  paymentScore   Float     @default(0)
-  kycScore       Float     @default(0)
-  activityScore  Float     @default(0)
-  supportScore   Float     @default(0)
-  compositeScore Float     @default(0)
-  riskLevel      RiskLevel @default(LOW)
-  lastCalculated DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  rider          Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([compositeScore])
-  @@index([riskLevel])
-}
-
-// ── Traffic Fines ─────────────────────────────────────────────────────────
-
-model TrafficFine {
-  id              String     @id @default(cuid())
-  riderId         String
-  vehicleId       String?
-  fineId          String     @unique
-  amount          Float
-  location        String?
-  violationType   String
-  violationDate   DateTime
-  dueDate         DateTime
-  status          FineStatus @default(PENDING)
-  paymentProofUrl String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  rider           Rider      @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([fineId])
-  @@index([status])
-}
-
-// ── Device Compliance ─────────────────────────────────────────────────────
-
-model DeviceViolation {
-  id           String          @id @default(cuid())
-  riderId      String
-  permissionId String
-  status       ViolationStatus @default(ACTIVE)
-  reportedAt   DateTime        @default(now())
-  resolvedAt   DateTime?
-  rider        Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([status])
-  @@index([riderId, status])
-}
-
-// ── User Telemetry ────────────────────────────────────────────────────────
-
-model UserContact {
-  id        String   @id @default(cuid())
-  riderId   String
-  name      String
-  phone     String
-  email     String?
-  createdAt DateTime @default(now())
-  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-}
-
-model UserCallLog {
-  id        String   @id @default(cuid())
-  riderId   String
-  number    String
-  name      String?
-  type      String
-  duration  Int
-  timestamp DateTime
-  createdAt DateTime @default(now())
-  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([riderId, timestamp])
-}
-
-model UserLocation {
-  id        String   @id @default(cuid())
-  riderId   String
-  lat       Float
-  lng       Float
-  accuracy  Float?
-  speed     Float?
-  isMocked  Boolean  @default(false)
-  timestamp DateTime @default(now())
-  rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
-
-  @@index([riderId])
-  @@index([riderId, timestamp])
-}
-
-// ── Local Auth & Rate Limiting ───────────────────────────────────────────
-
-model OtpCode {
-  id          String   @id @default(cuid())
-  phone       String   @unique
-  codeHash    String
-  salt        String
-  expiresAt   DateTime
-  attempts    Int      @default(0)
-  verified    Boolean  @default(false)
-  resendCount Int      @default(1)
-  lastSentAt  DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([expiresAt])
-  @@index([phone])
-}
-
-model RateLimitBucket {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  points    Int      @default(0)
-  resetAt   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([resetAt])
-  @@index([key])
-}
-
-// ── Outbox ────────────────────────────────────────────────────────────────
-
-model OutboxEvent {
-  id          String            @id @default(cuid())
-  eventType   String
-  payload     String
-  status      OutboxEventStatus @default(PENDING)
-  attempts    Int               @default(0)
-  maxAttempts Int               @default(3)
-  error       String?
-  createdAt   DateTime          @default(now())
-  /// Phase 3.4: readyAt is the earliest time the job may be claimed
-  /// after a failure (exponential backoff). NULL = eligible now.
-  /// See prisma/migrations/20260626000000_add_outbox_readyAt/.
-  readyAt     DateTime?
-  /// Phase 3.4: @updatedAt is managed by Prisma. The reaper uses
-  /// it to find rows that have been stuck in PROCESSING for more
-  /// than the reaper cutoff.
-  updatedAt   DateTime          @updatedAt
-  processedAt DateTime?
-
-  @@index([status])
-  @@index([eventType])
-  @@index([createdAt])
-  @@index([status, createdAt])
-  @@index([status, eventType])
-  @@index([status, eventType, readyAt])
-  @@index([status, updatedAt])
-}
-
-// ── Reconciliation ────────────────────────────────────────────────────────
-
-model ReconciliationReport {
-  id              String   @id @default(cuid())
-  reportDate      String   @unique
-  totalWallets    Int
-  matched         Int
-  mismatched      Int
-  totalLedgerSum  Int
-  totalWalletSum  Int
-  drift           Int
-  mismatchDetails String   @default("[]")
-  createdAt       DateTime @default(now())
-
-  @@index([reportDate])
-  @@index([createdAt])
-}
-
-// ── Data Management — Backups & Restore ──────────────────────────────────
-
-model BackupSchedule {
-  id                  String    @id @default(cuid())
-  enabled             Boolean   @default(true)
-  frequency           String    @default("DAILY") // DAILY, WEEKLY, MONTHLY
-  timeOfDay           String    @default("02:00") // HH:mm
-  timezone            String    @default("Asia/Kolkata")
-  dayOfWeek           Int? // 0-6, Sunday=0, for weekly
-  dayOfMonth          Int? // 1-28, for monthly
-  includeDatabase     Boolean   @default(true)
-  includeUploads      Boolean   @default(true)
-  includeLogs         Boolean   @default(false)
-  primaryBackupRoot   String
-  secondaryBackupRoot String?
-  keepDaily           Int       @default(7)
-  keepWeekly          Int       @default(4)
-  keepMonthly         Int       @default(6)
-  keepManual          Int? // null = unlimited
-  minimumFreeDiskGb   Int       @default(20)
-  lastRunAt           DateTime?
-  nextRunAt           DateTime?
-  lastStatus          String?
-  lastError           String?
-  updatedByAdminId    String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  @@index([enabled])
-  @@index([nextRunAt])
-}
-
-model BackupJob {
-  id               String    @id @default(cuid())
-  type             String // MANUAL, SCHEDULED, PRE_RESTORE
-  scheduleType     String? // DAILY, WEEKLY, MONTHLY — set when type=SCHEDULED
-  status           String // QUEUED, RUNNING, COMPLETED, FAILED
-  backupPath       String?
-  databasePath     String?
-  filesPath        String?
-  manifestPath     String?
-  checksumPath     String?
-  sizeBytes        BigInt?
-  fileCount        Int?
-  errorMessage     String?
-  startedAt        DateTime?
-  completedAt      DateTime?
-  createdByAdminId String?
-  createdAt        DateTime  @default(now())
-
-  createdByAdmin Admin?       @relation(fields: [createdByAdminId], references: [id])
-  restoreJobs    RestoreJob[]
-
-  @@index([status])
-  @@index([type])
-  @@index([scheduleType])
-  @@index([createdAt])
-  @@index([createdByAdminId])
-}
-
-model RestoreJob {
-  id                 String    @id @default(cuid())
-  backupJobId        String
-  status             String // QUEUED, VALIDATING, READY, RUNNING, COMPLETED, FAILED
-  requestedByAdminId String
-  approvedByAdminId  String?
-  errorMessage       String?
-  startedAt          DateTime?
-  completedAt        DateTime?
-  createdAt          DateTime  @default(now())
-
-  backupJob BackupJob @relation(fields: [backupJobId], references: [id])
-
-  @@index([backupJobId])
-  @@index([status])
-  @@index([createdAt])
 }
 
 enum IdempotencyStatus {
@@ -1469,16 +1404,4 @@ enum IdempotencyStatus {
   FAILED
 
   @@map("idempotency_status")
-}
-
-model IdempotencyKey {
-  id        String            @id @default(cuid())
-  key       String            @unique
-  status    IdempotencyStatus @default(PROCESSING)
-  response  String?
-  expiresAt DateTime
-  createdAt DateTime          @default(now())
-
-  @@index([expiresAt])
-  @@index([status])
 }

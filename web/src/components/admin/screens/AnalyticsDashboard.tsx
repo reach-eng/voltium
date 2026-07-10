@@ -241,19 +241,19 @@ export default function AnalyticsDashboard() {
           <Button
             variant="ghost"
             size="icon"
-            className="rounded-full h-9 w-9"
+            className="rounded-full h-11 w-11 transition-all duration-200"
             onClick={() => fetchData()}
             disabled={refreshing}
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             variant="outline"
-            size="sm"
-            className="rounded-full px-4 h-9"
+            size="default"
+            className="rounded-full px-5 h-11 font-medium transition-all duration-200"
             onClick={handleExport}
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="w-5 h-5 mr-2" />
             Export Report
           </Button>
         </div>
@@ -336,10 +336,12 @@ export default function AnalyticsDashboard() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'var(--card)',
+                      backgroundColor: 'color-mix(in srgb, var(--card) 80%, transparent)',
+                      backdropFilter: 'blur(12px)',
                       borderColor: 'var(--border)',
                       borderRadius: '12px',
                       fontSize: '12px',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     }}
                     formatter={(value: number) => formatINR(value)}
                   />
@@ -389,10 +391,12 @@ export default function AnalyticsDashboard() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'var(--card)',
+                      backgroundColor: 'color-mix(in srgb, var(--card) 80%, transparent)',
+                      backdropFilter: 'blur(12px)',
                       borderColor: 'var(--border)',
                       borderRadius: '12px',
                       fontSize: '12px',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     }}
                   />
                   <Bar

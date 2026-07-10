@@ -8,11 +8,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/rider_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import '../helpers/test_helpers.dart';
 
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

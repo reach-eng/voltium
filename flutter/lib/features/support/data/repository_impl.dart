@@ -24,7 +24,7 @@ class SupportRepositoryImpl implements SupportRepository {
     String subject,
     String message, {
     String riderId = '',
-    String priority = 'NORMAL',
+    String priority = 'MEDIUM',
   }) async {
     final request = CreateTicketRequest(
       riderId: riderId,

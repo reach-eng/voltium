@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/app_constants.dart';
 import '../utils/toast.dart';
 
-import '../providers/app_provider.dart';
+import '../core/state/app_provider.dart';
+import '../core/state/riverpod_providers.dart';
 import '../services/cache_service.dart';
 import '../main.dart' show AppShell;
 
@@ -26,7 +28,7 @@ import '../features/kyc/presentation/screens/documents_screen.dart';
 import '../features/guarantor/presentation/screens/guarantor_onboarding_screen.dart';
 
 import '../features/wallet/presentation/screens/top_up_amount_screen.dart';
-import '../features/wallet/presentation/screens/top_up_purpose_screen.dart';
+
 import '../features/wallet/presentation/screens/top_up_receipt_screen.dart';
 import '../features/wallet/presentation/screens/top_up_upi_screen.dart';
 import '../features/wallet/presentation/screens/top_up_proof_screen.dart';
@@ -44,6 +46,8 @@ import '../features/pickup/presentation/screens/vehicle_photos_screen.dart';
 import '../features/dashboard/presentation/screens/pre_dashboard_screen.dart';
 
 import '../features/support/presentation/screens/faq_screen.dart';
+import '../features/support/presentation/screens/feedback_screen.dart';
+import '../utils/app_navigator.dart';
 
 import '../features/referrals/presentation/screens/referral_screen.dart';
 
@@ -61,7 +65,6 @@ class AppRouter extends StatefulWidget {
 class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   AuthState _currentState = AuthState.splash;
 
-  bool _isTransitioning = false;
   bool _isSignUpFlow = true;
   String _phone = '';
   AuthState _startupState = AuthState.splash;
@@ -69,8 +72,9 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   AuthState? _postOtpTargetState;
 
   // Top-up flow state
-  TopUpPurpose _topUpPurpose = TopUpPurpose.topUp;
-  int _topUpAmount = 0;
+  int _topUpAmount = 2000;
+  int? _topUpSecurityDeposit;
+  int? _topUpRentalPrice;
 
   // Pickup flow state
   String? _pickupHubId;
@@ -88,6 +92,10 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   /// Settings and is only a recommendation. Users who skip it on the
   /// permissions screen can still use the app; the app just won't be
   /// excluded from battery optimization.
+  ///
+  /// `phone` is also optional — it is shown in the permissions UI for
+  /// ride-safety transparency but the app degrades gracefully when the
+  /// runner grants location/camera/notifications only.
   Future<bool> _areAllRequiredPermissionsGranted() async {
     final isTestMode = AppConstants.isTestMode;
     if (isTestMode || kIsWeb) return true;
@@ -132,9 +140,9 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
         _checkPermissionsOnResume();
         riderProvider.setPollingActive();
         riderProvider.refreshFromApi();
-        if (riderProvider.rider?.id != null) {
+        if (riderProvider.riderId != null) {
           provider.walletProvider.refreshTransactions(
-            riderId: riderProvider.rider!.id!,
+            riderId: riderProvider.riderId!,
           );
         }
         break;
@@ -192,7 +200,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
               _currentState == AuthState.pickupHub ||
               _currentState == AuthState.pickupVerification ||
               _currentState == AuthState.pickupSuccess ||
-              _currentState == AuthState.topUpPurpose ||
               _currentState == AuthState.topUpAmount ||
               _currentState == AuthState.topUpUpi ||
               _currentState == AuthState.topUpProof ||
@@ -230,24 +237,15 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   }
 
   void _navigateToLocal(AuthState nextState) {
-    updateTransition(true);
-    _currentState = nextState;
-    if (nextState == AuthState.preDashboard) _isOnboarding = true;
-    if (nextState == AuthState.dashboard) _isOnboarding = false;
+    setState(() {
+      _currentState = nextState;
+      if (nextState == AuthState.preDashboard) _isOnboarding = true;
+      if (nextState == AuthState.dashboard) _isOnboarding = false;
+    });
 
     if (nextState != AuthState.splash) {
       CacheService().setString('voltium_saved_auth_state', nextState.name);
     }
-
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        updateTransition(false);
-      }
-    });
-  }
-
-  void updateTransition(bool value) {
-    setState(() => _isTransitioning = value);
   }
 
   void updatePostOtpTarget(AuthState? target) {
@@ -308,7 +306,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       case AuthState.topUpAmount:
       case AuthState.topUpUpi:
       case AuthState.topUpProof:
-      case AuthState.topUpPurpose:
       case AuthState.topUpReceipt:
       case AuthState.endRental:
         return false;
@@ -341,7 +338,8 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
         _navigateToLocal(AuthState.pickupHub);
         break;
       case AuthState.topUpAmount:
-        _navigateToLocal(AuthState.topUpPurpose);
+        _navigateToLocal(
+            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
         break;
       case AuthState.topUpUpi:
         _navigateToLocal(AuthState.topUpAmount);
@@ -349,10 +347,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       case AuthState.topUpProof:
         _navigateToLocal(AuthState.topUpUpi);
         break;
-      case AuthState.topUpPurpose:
-        _navigateToLocal(
-            _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);
-        break;
+
       case AuthState.topUpReceipt:
         _navigateToLocal(
             _isOnboarding ? AuthState.preDashboard : AuthState.dashboard);

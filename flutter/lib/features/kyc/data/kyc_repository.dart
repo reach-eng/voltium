@@ -48,6 +48,8 @@ class KycRepository {
       aadhaarBack: aadhaarBackUrl,
       panCard: panUrl,
       selfie: selfieUrl,
+      profilePhoto: selfieUrl,
+      riderPhoto: selfieUrl,
       signature: signatureUrl,
     ));
   }

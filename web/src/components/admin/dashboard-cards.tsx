@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface SparklineProps {
   data: number[];
@@ -91,7 +92,14 @@ export function DashboardCard({
   const isNegative = change && change < 0;
 
   return (
-    <Card className={cn('relative overflow-hidden', className)}>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className={cn('h-full', className)}
+    >
+      <Card className="relative overflow-hidden h-full shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         {icon && <div className="text-muted-foreground">{icon}</div>}
@@ -123,7 +131,8 @@ export function DashboardCard({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -138,7 +147,14 @@ interface StatCardProps {
 
 export function StatCard({ title, value, description, icon, trend, trendValue }: StatCardProps) {
   return (
-    <Card>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="h-full"
+    >
+      <Card className="h-full shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
@@ -163,7 +179,8 @@ export function StatCard({ title, value, description, icon, trend, trendValue }:
           {icon && <div className="p-3 rounded-lg bg-primary/10 text-primary">{icon}</div>}
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -177,8 +194,12 @@ interface MetricCardProps {
 
 export function MetricCard({ label, value, subValue, icon, color }: MetricCardProps) {
   return (
-    <div
-      className="p-4 rounded-xl border bg-card text-card-foreground"
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="p-4 rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-300 h-full"
       style={{ borderLeftColor: color, borderLeftWidth: 4 }}
     >
       <div className="flex items-center justify-between">
@@ -187,6 +208,6 @@ export function MetricCard({ label, value, subValue, icon, color }: MetricCardPr
       </div>
       <div className="text-2xl font-bold mt-2">{value}</div>
       {subValue && <div className="text-sm text-muted-foreground mt-1">{subValue}</div>}
-    </div>
+    </motion.div>
   );
 }

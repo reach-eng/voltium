@@ -1,15 +1,16 @@
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class EmergencyContactsScreen extends StatelessWidget {
+class EmergencyContactsScreen extends ConsumerWidget {
   const EmergencyContactsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final contacts = context.watch<EmergencyContactsService>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final service = ref.watch(emergencyContactsService);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -33,25 +34,25 @@ class EmergencyContactsScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: contacts.contacts.isEmpty
+      body: service.contacts.isEmpty
           ? _buildEmptyState(context, isDark)
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: contacts.contacts.length,
+              itemCount: service.contacts.length,
               itemBuilder: (context, index) {
-                final contact = contacts.contacts[index];
+                final contact = service.contacts[index];
                 return _ContactCard(
                   contact: contact,
                   isDark: isDark,
                   onCall: () => _callContact(contact.phone),
-                  onSetPrimary: () => contacts.setPrimaryContact(contact.id),
-                  onDelete: () => contacts.removeContact(contact.id),
+                  onSetPrimary: () => service.setPrimaryContact(contact.id),
+                  onDelete: () => service.removeContact(contact.id),
                 );
               },
             ),
-      floatingActionButton: contacts.contacts.length < 5
+      floatingActionButton: service.contacts.length < 5
           ? FloatingActionButton.extended(
-              onPressed: () => _showAddContactDialog(context, contacts),
+              onPressed: () => _showAddContactDialog(context, service),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add),
               label: const Text('Add Contact'),
@@ -164,7 +165,7 @@ class EmergencyContactsScreen extends StatelessWidget {
   }
 }
 
-class _ContactCard extends StatelessWidget {
+class _ContactCard extends ConsumerWidget {
   final EmergencyContact contact;
   final bool isDark;
   final VoidCallback onCall;
@@ -180,7 +181,7 @@ class _ContactCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(

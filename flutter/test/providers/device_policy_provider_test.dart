@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/providers/device_policy_provider.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

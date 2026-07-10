@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
+import 'premium_cards.dart';
 
 /// Reusable referral card with green gradient, code display, and copy/share actions.
 class ReferralCard extends StatelessWidget {
@@ -18,8 +19,10 @@ class ReferralCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.success, AppColors.successDark],
@@ -96,10 +99,10 @@ class ReferralCard extends StatelessWidget {
                     Text(
                       'YOUR CODE',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: Colors.white.withValues(alpha: 0.8),
-                        letterSpacing: 1.0,
+                        letterSpacing: 1.2,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -119,13 +122,20 @@ class ReferralCard extends StatelessWidget {
                     InkWell(
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: referralCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Referral code copied!'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
                         onCopy?.call();
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.copy,
@@ -146,10 +156,10 @@ class ReferralCard extends StatelessWidget {
                         onShare?.call();
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.share,
@@ -165,6 +175,6 @@ class ReferralCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

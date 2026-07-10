@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../theme/app_theme.dart';
+import '../screens/top_up_flow.dart';
 
 class TransactionListTile extends StatelessWidget {
   const TransactionListTile({super.key, required this.tx});
@@ -10,20 +11,48 @@ class TransactionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String type = tx['type'] ?? 'OTHER';
-    final String purpose = tx['purpose'] ?? '';
-    final double amount = (tx['amount'] ?? 0).toDouble();
-    final String status = tx['status'] ?? 'pending';
-    final String dateStr = tx['createdAt'] ?? '';
-
+    // Support both TransactionModel objects and raw maps.
+    final String type = tx is TransactionModel
+        ? tx.type.name.toUpperCase()
+        : (tx['type'] ?? 'OTHER').toString();
+    final String purpose = tx is TransactionModel
+        ? (tx.purpose ?? '')
+        : (tx['purpose'] ?? '').toString();
+    final double amount =
+        tx is TransactionModel ? tx.amount : (tx['amount'] ?? 0).toDouble();
+    final String status = tx is TransactionModel
+        ? tx.status.name
+        : (tx['status'] ?? 'pending').toString();
+    final String dateStr = tx is TransactionModel
+        ? (tx.createdAt?.toIso8601String() ?? '')
+        : (tx['createdAt'] ?? '').toString();
+    final String remark = tx is TransactionModel
+        ? (tx.remark ?? '')
+        : (tx['remark'] ?? '').toString();
     final isCredit = type == 'CREDIT' || type.contains('TOPUP');
 
-    Color statusTextColor = AppColors.warningDark; // Amber
+    // Determine display label.
+    String displayLabel;
+    if (!isCredit && purpose.toUpperCase() == 'RENTAL') {
+      displayLabel = 'Rent';
+    } else if (purpose.toUpperCase() == 'SECURITY_DEPOSIT') {
+      displayLabel = 'Security';
+    } else if (!isCredit && remark.isNotEmpty) {
+      displayLabel = 'Deduction';
+    } else {
+      displayLabel = purpose.isNotEmpty ? purpose : type;
+    }
+
+    // Status colors.
+    Color statusTextColor = AppColors.warningDark;
     Color statusBgColor = const Color(0xFFFFFBEB);
 
-    if (status == 'rejected' || status == 'failed' || !isCredit) {
+    if (status == 'rejected' || status == 'failed') {
       statusTextColor = const Color(0xFFDC2626);
       statusBgColor = const Color(0xFFFEF2F2);
+    } else if (status == 'pending') {
+      statusTextColor = AppColors.warningDark;
+      statusBgColor = const Color(0xFFFFFBEB);
     } else if (status == 'approved' || status == 'success') {
       if (purpose.contains('REWARD')) {
         statusTextColor = AppColors.warning;
@@ -31,9 +60,12 @@ class TransactionListTile extends StatelessWidget {
       } else if (purpose.contains('REFUND')) {
         statusTextColor = const Color(0xFF1B60DA);
         statusBgColor = const Color(0xFFEFF6FF);
-      } else if (type.contains('TOPUP') || type == 'CREDIT') {
+      } else if (isCredit) {
         statusTextColor = const Color(0xFF16A34A);
         statusBgColor = const Color(0xFFDCFCE7);
+      } else {
+        statusTextColor = const Color(0xFF1B60DA);
+        statusBgColor = const Color(0xFFEFF6FF);
       }
     }
 
@@ -62,7 +94,7 @@ class TransactionListTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      purpose.isNotEmpty ? purpose : type,
+                      displayLabel,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -78,12 +110,24 @@ class TransactionListTile extends StatelessWidget {
                           size: 12,
                         ),
                       ),
+                    // Show deduction reason if applicable.
+                    if (!isCredit && remark.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Text(
+                          '($remark)',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.slate500,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Text(
                   dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: AppColors.slate500,
                   ),
                 ),
@@ -113,7 +157,7 @@ class TransactionListTile extends StatelessWidget {
                 child: Text(
                   status.toUpperCase(),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w900,
                     color: statusTextColor,
                   ),
@@ -200,7 +244,7 @@ class SecurityDepositCard extends StatelessWidget {
               const Text(
                 'SECURITY DEPOSIT',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: AppColors.slate500,
                   letterSpacing: 1.0,
@@ -217,7 +261,7 @@ class SecurityDepositCard extends StatelessWidget {
                 child: Text(
                   isRefundable ? 'Refundable' : 'Non-Refundable',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: isRefundable
                         ? const Color(0xFF16A34A)
@@ -421,17 +465,46 @@ class WalletBalanceCard extends StatelessWidget {
                   );
                 }),
               ),
-              if (streak > 0)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '$streak day streak! Keep going to unlock premium tiers.',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 10,
+                  if (streak > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        '$streak day streak! Keep going to unlock premium tiers.',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const TopUpFlow(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.add_card, size: 18),
+                      label: const Text(
+                        'Top Up Wallet',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
-                ),
             ],
           ),
         ],
@@ -566,14 +639,12 @@ class TransactionHistorySection extends StatelessWidget {
   final List<TransactionModel> transactions;
   final String selectedFilter;
   final ValueChanged<String> onFilterChanged;
-  final VoidCallback onDeleteHistory;
 
   const TransactionHistorySection({
     super.key,
     required this.transactions,
     required this.selectedFilter,
     required this.onFilterChanged,
-    required this.onDeleteHistory,
   });
 
   @override
@@ -581,21 +652,27 @@ class TransactionHistorySection extends StatelessWidget {
     final filtered = transactions.where((tx) {
       if (selectedFilter == 'All') return true;
       if (selectedFilter == 'Approved') {
-        return tx.status == TransactionStatus.success;
+        return tx.status == TransactionStatus.approved ||
+            tx.status == TransactionStatus.success;
+      }
+      if (selectedFilter == 'Pending') {
+        return tx.status == TransactionStatus.pending;
       }
       if (selectedFilter == 'Rejected') {
-        return tx.status == TransactionStatus.failed;
+        return tx.status == TransactionStatus.rejected ||
+            tx.status == TransactionStatus.failed;
       }
-      if (selectedFilter == 'Damage') {
-        return (tx.purpose ?? '').toUpperCase() == 'DAMAGE';
-      }
-      if (selectedFilter == 'Cash') return tx.remark?.toUpperCase() == 'CASH';
-      if (selectedFilter == 'UPI') return tx.upiRef != null;
       if (selectedFilter == 'Rent') {
-        return tx.purpose?.toUpperCase() == 'RENTAL';
+        return (tx.purpose ?? '').toUpperCase() == 'RENTAL' &&
+            tx.type == TransactionType.debit;
       }
       if (selectedFilter == 'Security') {
-        return tx.purpose?.toUpperCase() == 'SECURITY_DEPOSIT';
+        return (tx.purpose ?? '').toUpperCase() == 'SECURITY_DEPOSIT';
+      }
+      if (selectedFilter == 'Deduction') {
+        return tx.type == TransactionType.debit &&
+            (tx.purpose ?? '').toUpperCase() != 'RENTAL' &&
+            (tx.remark != null && tx.remark!.isNotEmpty);
       }
       return true;
     }).toList();
@@ -627,23 +704,21 @@ class TransactionHistorySection extends StatelessWidget {
                   color: AppColors.onSurfaceAlt,
                 ),
               ),
-              IconButton(
-                onPressed: onDeleteHistory,
-                icon: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.redAccent,
-                  size: 20,
-                ),
-                tooltip: 'Delete History',
-              ),
             ],
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children:
-                  ['All', 'Approved', 'Rejected', 'Rent', 'Security'].map((f) {
+              children: [
+                'All',
+                'Approved',
+                'Pending',
+                'Rejected',
+                'Rent',
+                'Security',
+                'Deduction'
+              ].map((f) {
                 final isSelected = selectedFilter == f;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -654,7 +729,7 @@ class TransactionHistorySection extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 8,
+                        vertical: 14,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected

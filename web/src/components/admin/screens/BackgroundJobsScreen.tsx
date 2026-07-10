@@ -165,7 +165,8 @@ export default function BackgroundJobsScreen() {
             variant="outline" 
             onClick={() => fetchJobsData()} 
             disabled={loading}
-            className="self-start md:self-center border-slate-700 hover:bg-slate-800 text-white bg-slate-900/50 backdrop-blur-sm transition-all duration-300 gap-2 shrink-0"
+            size="default"
+            className="self-start md:self-center border-slate-700 hover:bg-slate-800 text-white bg-slate-900/50 backdrop-blur-sm transition-all duration-300 gap-2 shrink-0 h-11 px-5 rounded-xl"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh Status
           </Button>
@@ -286,7 +287,7 @@ export default function BackgroundJobsScreen() {
                       placeholder="Search reports..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 pr-4 rounded-xl border-slate-200 focus-visible:ring-indigo-500"
+                      className="pl-9 pr-4 h-11 text-base rounded-xl border-slate-200 focus-visible:ring-indigo-500"
                     />
                   </div>
                 </div>

@@ -361,7 +361,7 @@ export default function OfferManagement() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Select value={offerFilter} onValueChange={setOfferFilter}>
-                <SelectTrigger className="h-9 w-32 rounded-xl border-muted-foreground/20 text-sm">
+                <SelectTrigger className="h-11 w-32 rounded-xl border-muted-foreground/20 text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -373,16 +373,16 @@ export default function OfferManagement() {
               {offerFilter !== 'ALL' && (
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs text-muted-foreground"
+                  size="default"
+                  className="h-11 text-sm text-muted-foreground"
                   onClick={() => setOfferFilter('ALL')}
                 >
-                  <X className="w-3 h-3 mr-1" /> Clear
+                  <X className="w-4 h-4 mr-1.5" /> Clear
                 </Button>
               )}
             </div>
-            <Button onClick={() => openOfferDialog()} size="sm">
-              <Plus className="h-4 w-4 mr-1" /> Add Offer
+            <Button onClick={() => openOfferDialog()} size="default" className="h-11 px-5 rounded-xl">
+              <Plus className="h-5 w-5 mr-1" /> Add Offer
             </Button>
           </div>
           {loading ? (
@@ -467,20 +467,21 @@ export default function OfferManagement() {
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-10 w-10"
                             aria-label="Edit offer"
                             onClick={() => openOfferDialog(o)}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-700"
+                            size="icon"
+                            className="h-10 w-10 text-red-500 hover:text-red-700 hover:bg-red-50"
                             aria-label="Delete offer"
                             onClick={() => deleteOffer(o.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -499,11 +500,11 @@ export default function OfferManagement() {
                 placeholder="Search by code or description..."
                 value={couponSearch}
                 onChange={(e) => setCouponSearch(e.target.value)}
-                className="pl-10 h-9 rounded-xl border-muted-foreground/20 text-sm"
+                className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base"
               />
             </div>
-            <Button onClick={() => openCouponDialog()} size="sm">
-              <Plus className="h-4 w-4 mr-1" /> Add Coupon
+            <Button onClick={() => openCouponDialog()} size="default" className="h-11 px-5 rounded-xl">
+              <Plus className="h-5 w-5 mr-1" /> Add Coupon
             </Button>
           </div>
           <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
@@ -613,20 +614,21 @@ export default function OfferManagement() {
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size="icon"
+                              className="h-10 w-10"
                               aria-label="Edit coupon"
                               onClick={() => openCouponDialog(c)}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="text-red-500"
+                              size="icon"
+                              className="h-10 w-10 text-red-500 hover:text-red-700 hover:bg-red-50"
                               aria-label="Delete coupon"
                               onClick={() => deleteCoupon(c.id)}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>

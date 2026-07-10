@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
 void main() {

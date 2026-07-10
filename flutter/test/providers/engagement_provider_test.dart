@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/providers/engagement_provider.dart';
+import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

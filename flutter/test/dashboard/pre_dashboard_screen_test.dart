@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/pre_dashboard_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
-import 'package:voltium_rider/providers/rider_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
@@ -29,20 +30,10 @@ void main() {
   });
 
   Widget createScreenWithRider(RiderModel rider, Function(AuthState) onNav) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AppProvider>(
-          create: (_) => AppProvider(),
-        ),
-        ChangeNotifierProvider<RiderProvider>(
-          create: (_) => RiderProvider(
-            riderRepository: mockRiderRepo,
-            rentalRepository: mockRentalRepo,
-            filesRepository: mockFilesRepo,
-          )..setRider(rider),
-        ),
-      ],
-      child: MaterialApp(
+    return ProviderScope(overrides: [
+        appProvider.overrideWith((ref) => AppProvider()),
+        riderProvider.overrideWith((ref) => RiderProvider(riderRepository: mockRiderRepo, rentalRepository: mockRentalRepo, filesRepository: mockFilesRepo)..setRider(rider)),
+      ], child: MaterialApp(
         home: PreDashboardScreen(onStepNavigation: onNav),
       ),
     );

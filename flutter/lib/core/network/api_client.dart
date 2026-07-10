@@ -18,6 +18,8 @@ class ApiClient {
       PinnedHttpInterceptor.createClient();
   static ApiClient? _sharedInstance;
   static const Duration requestTimeout = Duration(seconds: 30);
+  static const int shortRetryMaxAttempts = 3;
+  static const Duration shortRetryBaseDelay = Duration(milliseconds: 200);
   static final Random _requestRandom = Random.secure();
 
   final http.Client _client;
@@ -26,6 +28,12 @@ class ApiClient {
 
   String get baseUrl => _baseUrl;
   SecureStorageService get storage => _storage;
+
+  /// Single-flight guard for token refresh. While a refresh is in progress,
+  /// concurrent 401-handlers `_await` this Future instead of issuing their
+  /// own refresh call, so we never rotate the refresh token out from under
+  /// in-flight requests (F-019).
+  Future<bool>? _refreshInFlight;
 
   factory ApiClient({
     http.Client? client,
@@ -63,7 +71,7 @@ class ApiClient {
     if (kReleaseMode) {
       throw Exception('API_URL must be provided for release builds');
     }
-    return 'http://localhost:8081';
+    return 'http://127.0.0.1:8081';
   }
 
   /// Get auth headers with session token
@@ -95,58 +103,141 @@ class ApiClient {
         '-${hex.substring(20, 32)}';
   }
 
+  /// Performs a single token refresh. Concurrent callers receive the same
+  /// in-flight Future via [_refreshInFlight] rather than racing each other.
+  /// On refresh failure we explicitly do NOT call `_storage.clearAll()`;
+  /// clearing the refresh token would log the user out as a side-effect of
+  /// one transient failed request (F-019).
   Future<bool> _refreshToken() async {
-    final refreshToken = await _storage.getRefreshToken();
-    if (refreshToken == null) return false;
+    final pending = _refreshInFlight;
+    if (pending != null) return pending;
 
+    final completer = Completer<bool>();
+    _refreshInFlight = completer.future;
     try {
-      final uri = Uri.parse('$_baseUrl/api/auth/refresh');
-      final headers = {
-        'Content-Type': 'application/json',
-        'x-correlation-id': _newCorrelationId(),
-      };
-
-      final response = await _client
-          .post(
-            uri,
-            headers: headers,
-            body: jsonEncode({'refreshToken': refreshToken}),
-          )
-          .timeout(requestTimeout);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final body = jsonDecode(response.body);
-        if (body['success'] == true) {
-          final data = body['data'];
-          await _storage.saveSessionToken(data['token']);
-          await _storage.setRefreshToken(data['refreshToken']);
-          return true;
-        }
+      final refreshToken = await _storage.getRefreshToken();
+      if (refreshToken == null) {
+        completer.complete(false);
+        return completer.future;
       }
-      // If refresh failed, clear tokens
-      await _storage.clearAll();
-      return false;
-    } catch (_) {
-      return false;
+
+      try {
+        final uri = Uri.parse('$_baseUrl/api/auth/refresh');
+        final headers = {
+          'Content-Type': 'application/json',
+          'x-correlation-id': _newCorrelationId(),
+        };
+
+        final response = await _client
+            .post(
+              uri,
+              headers: headers,
+              body: jsonEncode({'refreshToken': refreshToken}),
+            )
+            .timeout(requestTimeout);
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final body = _safeJsonDecode(response.body);
+          if (body is Map<String, dynamic> && body['success'] == true) {
+            final data = body['data'];
+            if (data is Map<String, dynamic>) {
+              final token = data['token'] as String?;
+              if (token == null || token.isEmpty) {
+                completer.complete(false);
+                return completer.future;
+              }
+              await _storage.saveSessionToken(token);
+              final newRefresh = data['refreshToken'] as String?;
+              if (newRefresh != null && newRefresh.isNotEmpty) {
+                await _storage.setRefreshToken(newRefresh);
+              }
+              completer.complete(true);
+              return completer.future;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('ApiClient: refresh failed: $e');
+      }
+
+      completer.complete(false);
+      return completer.future;
+    } finally {
+      _refreshInFlight = null;
     }
   }
 
+  /// Safely decode a JSON body, returning `null` on parse failure rather
+  /// than throwing an unhandled `FormatException` (F-019).
+  static dynamic _safeJsonDecode(String body) {
+    if (body.isEmpty) return null;
+    try {
+      return jsonDecode(body);
+    } on FormatException catch (e) {
+      debugPrint('ApiClient: non-JSON response body: $e');
+      return null;
+    }
+  }
+
+  /// Executes a request with full retry reliability:
+  /// - Single-flight token refresh on 401
+  /// - Transient retry: timeouts / 5xx / network errors get exponential
+  ///   backoff up to [shortRetryMaxAttempts].
+  ///
+  /// On 401 for non-web clients the refresh token is kept; if refresh
+  /// ultimately fails we return a 401 to the caller instead of wiping
+  /// stored credentials.
   Future<Map<String, dynamic>> _executeWithRetry(
     Future<http.Response> Function(Map<String, String> headers) request,
   ) async {
-    final headers = await _getHeaders();
-    http.Response response = await request(headers);
-
-    // If 401 and not web (web uses cookies for refresh), try to refresh
-    if (response.statusCode == 401 && !PlatformInfo.isWeb) {
-      final refreshed = await _refreshToken();
-      if (refreshed) {
-        final newHeaders = await _getHeaders();
-        response = await request(newHeaders);
+    for (var attempt = 0; attempt < shortRetryMaxAttempts; attempt++) {
+      final headers = await _getHeaders();
+      http.Response response;
+      try {
+        response = await request(headers);
+      } on TimeoutException {
+        if (attempt < shortRetryMaxAttempts - 1) {
+          await _backoffBeforeRetry(attempt);
+          continue;
+        }
+        rethrow;
+      } on SocketException {
+        if (attempt < shortRetryMaxAttempts - 1) {
+          await _backoffBeforeRetry(attempt);
+          continue;
+        }
+        rethrow;
       }
-    }
 
-    return _handleResponse(response);
+      // 401: only try once to refresh, on non-web. Refresh failures do
+      // not destroy stored credentials.
+      if (response.statusCode == 401 && !PlatformInfo.isWeb && attempt == 0) {
+        final refreshed = await _refreshToken();
+        if (refreshed) {
+          continue; // re-issue with new headers
+        }
+        // Fall through: caller will see the 401 and can react.
+      } else if (response.statusCode >= 500 &&
+          attempt < shortRetryMaxAttempts - 1) {
+        await _backoffBeforeRetry(attempt);
+        continue;
+      }
+
+      return _handleResponse(response);
+    }
+    // Unreachable; loop exits via return above.
+    throw StateError('ApiClient: retry loop exited unexpectedly');
+  }
+
+  /// Exponential backoff with a small jitter to avoid synchronised retries
+  /// from a fleet of clients hitting a recovering server.
+  Future<void> _backoffBeforeRetry(int attempt) async {
+    final base = shortRetryBaseDelay.inMilliseconds * (1 << attempt);
+    final jittered =
+        Random().nextInt(shortRetryBaseDelay.inMilliseconds).toDouble();
+    await Future<void>.delayed(
+      Duration(milliseconds: base + jittered.toInt()),
+    );
   }
 
   /// GET request
@@ -324,7 +415,10 @@ class ApiClient {
 
   /// Handle API response, standardize errors
   Map<String, dynamic> _handleResponse(http.Response response) {
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final decoded = _safeJsonDecode(response.body);
+    final body = decoded is Map<String, dynamic>
+        ? decoded
+        : (decoded == null ? <String, dynamic>{} : {'data': decoded});
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (body['success'] == true) {
@@ -338,7 +432,10 @@ class ApiClient {
     }
 
     final error = body['error'] as Map<String, dynamic>?;
-    final message = error?['message'] as String? ?? 'Unknown error';
+    final message = error?['message'] as String? ??
+        (response.statusCode >= 500
+            ? 'Server error (${response.statusCode}). Please try again.'
+            : 'Unknown error');
     final code = error?['code'] as String? ?? body['code'] as String?;
     throw ApiException(
       message,

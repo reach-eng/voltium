@@ -1,44 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 /// Notifications Screen Widget Tests
 void main() {
   Widget buildTestApp({required Widget child}) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: MaterialApp(
+    return ProviderScope(overrides: [
+        appProvider.overrideWith((ref) => AppProvider()),
+        localeProviderRef.overrideWith((ref) => LocaleProvider()),
+        themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      ], child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: child,
-      ),
+        home: child,),
     );
   }
 
-  group('Notification Center Screen', () {
-    testWidgets('notification center renders without error', (tester) async {
-      await tester
-          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+  group('Notification Screen', () {
+    testWidgets('notification screen renders without error', (tester) async {
+      await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
       await tester.pumpAndSettle();
-      expect(find.byType(NotificationCenterScreen), findsOneWidget);
+      expect(find.byType(NotificationsScreen), findsOneWidget);
     });
 
-    testWidgets('notification center shows empty state or list',
+    testWidgets('notification screen shows empty state or list',
         (tester) async {
-      await tester
-          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+      await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
       await tester.pumpAndSettle();
 
       // Either shows notifications or an empty state
@@ -56,9 +54,8 @@ void main() {
       expect(hasListView || hasEmptyText || hasText, isTrue);
     });
 
-    testWidgets('notification center does not overflow', (tester) async {
-      await tester
-          .pumpWidget(buildTestApp(child: const NotificationCenterScreen()));
+    testWidgets('notification screen does not overflow', (tester) async {
+      await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });

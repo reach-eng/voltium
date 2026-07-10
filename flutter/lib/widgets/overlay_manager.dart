@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'locked_overlay.dart';
 import 'permission_guard.dart';
 
-class OverlayManager extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+
+class OverlayManager extends ConsumerWidget {
   final Widget child;
 
   const OverlayManager({super.key, required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AppProvider>(
-      builder: (context, provider, _) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(appProvider);
+
         return Stack(
           children: [
             child,
@@ -32,8 +34,7 @@ class OverlayManager extends StatelessWidget {
               _buildBalanceBanner(context, provider),
           ],
         );
-      },
-    );
+      
   }
 
   Widget _buildAdminLockOverlay(BuildContext context, AppProvider provider) {

@@ -365,7 +365,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                       'Camera or gallery',
                       style: GoogleFonts.inter(
                         color: AppColors.slate500,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -414,7 +414,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       child: RichText(
         text: TextSpan(
           style: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 14,
             height: 1.5,
             color: AppColors.warningText, // Amber text color
           ),

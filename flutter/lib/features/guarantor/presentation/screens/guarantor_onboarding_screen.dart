@@ -1,32 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
 import 'package:dio/dio.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
+import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/services/cache_service.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/features/guarantor/presentation/widgets/guarantor_onboarding_widgets.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 
-class GuarantorOnboardingScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
 
   const GuarantorOnboardingScreen({super.key, this.onNext, this.onBack});
 
   @override
-  State<GuarantorOnboardingScreen> createState() =>
+  ConsumerState<GuarantorOnboardingScreen> createState() =>
       _GuarantorOnboardingScreenState();
 }
 
-class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
+class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingScreen> {
   final ImageCompressionService _compressionService = ImageCompressionService();
   final _nameController = TextEditingController();
   final _dobController = TextEditingController();
@@ -37,6 +40,8 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
 
   bool _isUploading = false;
   String _uploadProgressText = '';
+  int _currentStep = 1;
+
   bool _isSendingOtp = false;
   bool _isVerifyingOtp = false;
   bool _isOtpSent = false;
@@ -61,7 +66,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
   String? _photoPath;
 
   void _saveCache() {
-    final riderId = context.read<AppProvider>().rider?.id;
+    final riderId = ref.read(appProvider).riderId;
     if (riderId == null) return;
     final cacheData = {
       'name': _nameController.text,
@@ -83,7 +88,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
   }
 
   void _loadCache() {
-    final riderId = context.read<AppProvider>().rider?.id;
+    final riderId = ref.read(appProvider).riderId;
     if (riderId == null) return;
 
     final cacheData = GuarantorCache.loadFormCache(riderId);
@@ -300,8 +305,8 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     }
 
     // Prevent guarantor phone from being the same as rider phone
-    final provider = context.read<AppProvider>();
-    if (phone == provider.rider?.phone) {
+    final provider = ref.read(appProvider);
+    if (phone == ref.watch(appProvider).rider?.phone) {
       _showError('Guarantor phone cannot be the same as your phone');
       return;
     }
@@ -389,7 +394,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
       photoUploaded: _photoUploaded,
       videoUploaded: _videoUploaded,
       signatureUploaded: _signatureUploaded,
-      riderPhone: context.read<AppProvider>().rider?.phone,
+      riderPhone: ref.read(appProvider).rider?.phone,
     );
     return missing.isEmpty;
   }
@@ -402,8 +407,8 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
 
   Future<void> _handleSubmit() async {
     final isTestMode = AppConstants.isTestMode;
-    final provider = context.read<AppProvider>();
-    final rider = provider.rider;
+    final provider = ref.read(appProvider);
+    final rider = ref.watch(appProvider).rider;
 
     if (!isTestMode) {
       final missing = GuarantorFormValidator.validate(
@@ -496,6 +501,18 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
         videoUrl = results['Video'] ?? '';
         signatureUrl = results['Signature'] ?? '';
         photoUrl = results['Photo'] ?? '';
+
+        // Cache guarantor documents locally.
+        if (_aadhaarFrontPath != null)
+          DocumentLocalCache.save('guarantorAadhaarFront', _aadhaarFrontPath!);
+        if (_aadhaarBackPath != null)
+          DocumentLocalCache.save('guarantorAadhaarBack', _aadhaarBackPath!);
+        if (_panPath != null)
+          DocumentLocalCache.save('guarantorPan', _panPath!);
+        if (_videoPath != null)
+          DocumentLocalCache.save('guarantorVideo', _videoPath!);
+        if (_signaturePath != null)
+          DocumentLocalCache.save('guarantorSignature', _signaturePath!);
       }
 
       if (mounted) {
@@ -598,7 +615,7 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     // Persist the higher-deposit flag in cache so the pre-dashboard
     // can read it. The backend does not have a `requiresHigherDeposit`
     // field yet, so this is a local signal only.
-    final riderId = context.read<AppProvider>().rider?.id;
+    final riderId = ref.read(appProvider).riderId;
     if (riderId != null) {
       await CacheService()
           .setString('voltium_requires_higher_deposit:$riderId', 'true');
@@ -609,6 +626,85 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
     await CacheService().remove('guarantor_onboarding_form_cache');
 
     if (mounted) widget.onNext?.call();
+  }
+
+  Widget _buildStepIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildDot(1),
+          _buildLine(),
+          _buildDot(2),
+          _buildLine(),
+          _buildDot(3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int step) {
+    final isActive = _currentStep >= step;
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isActive ? AppColors.primary : const Color(0xFFF3F4F6),
+        border: isActive ? null : Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$step',
+        style: TextStyle(
+          color: isActive ? Colors.white : const Color(0xFF4B5563),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLine() {
+    return Container(
+      width: 40,
+      height: 2,
+      color: const Color(0xFFE5E7EB),
+    );
+  }
+
+  void _onBottomButtonPressed() {
+    if (_currentStep < 3) {
+      setState(() {
+        _currentStep++;
+      });
+    } else {
+      _handleSubmit();
+    }
+  }
+
+  bool get _canProceedCurrentStep {
+    if (AppConstants.isTestMode) return true;
+    switch (_currentStep) {
+      case 1:
+        return _nameController.text.isNotEmpty &&
+            _dobController.text.isNotEmpty &&
+            _phoneController.text.isNotEmpty &&
+            _isPhoneVerified &&
+            _fatherNameController.text.isNotEmpty &&
+            _motherNameController.text.isNotEmpty &&
+            _addressController.text.isNotEmpty;
+      case 2:
+        return _aadhaarFrontUploaded &&
+            _aadhaarBackUploaded &&
+            _panUploaded &&
+            _photoUploaded;
+      case 3:
+        return _videoUploaded && _signatureUploaded;
+      default:
+        return false;
+    }
   }
 
   Future<void> _selectDob() async {
@@ -630,131 +726,110 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
   Widget build(BuildContext context) {
     debugPrint('GuarantorOnboardingScreen: build called');
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: SafeArea(
-        child: Column(
-          children: [
-            GuarantorOnboardingHeader(
-              onBack: () => widget.onBack?.call(),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+      backgroundColor: kSurfaceColor,
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
                 children: [
-                  Container(
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: AppColors.error.withOpacity(0.5)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.warning_amber_rounded,
-                            color: AppColors.error, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Important: The Guarantor assumes full legal and financial liability for the vehicle during the rental period.',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.error,
-                              height: 1.4,
-                              fontWeight: FontWeight.w500,
+                  buildCurtainHeader(
+                    title: 'Guarantor Details',
+                    subtitle: 'Add a guarantor for additional security',
+                    onBack: () {
+                      if (_currentStep > 1) {
+                        setState(() {
+                          _currentStep--;
+                        });
+                      } else {
+                        widget.onBack?.call();
+                      }
+                    },
+                  ),
+                  Transform.translate(
+                    offset: const Offset(0, -32),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          _buildStepIndicator(),
+                          if (_currentStep == 1) ...[
+                            const _GuarantorLiabilityBanner(),
+                            const SizedBox(height: 24),
+                            GuarantorDetailsCard(
+                              nameController: _nameController,
+                              dobController: _dobController,
+                              phoneController: _phoneController,
+                              fatherNameController: _fatherNameController,
+                              motherNameController: _motherNameController,
+                              addressController: _addressController,
+                              isPhoneVerified: _isPhoneVerified,
+                              isSendingOtp: _isSendingOtp,
+                              isOtpSent: _isOtpSent,
+                              isVerifyingOtp: _isVerifyingOtp,
+                              onSendOtp: _sendOtp,
+                              onVerifyOtp: _verifyOtp,
+                              onSelectDob: _selectDob,
+                              otpBoxes: GuarantorOnboardingOtpBoxes(
+                                otpControllers: _otpControllers,
+                                otpFocusNodes: _otpFocusNodes,
+                                onChanged: (i, v) {
+                                  if (v.length == 1 && i < 5) {
+                                    FocusScope.of(context)
+                                        .requestFocus(_otpFocusNodes[i + 1]);
+                                  } else if (v.isEmpty && i > 0) {
+                                    FocusScope.of(context)
+                                        .requestFocus(_otpFocusNodes[i - 1]);
+                                  }
+                                  setState(() {});
+                                },
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
+                          ],
+                          if (_currentStep == 2) ...[
+                            GuarantorIdentityVerificationCard(
+                              aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                              aadhaarBackUploaded: _aadhaarBackUploaded,
+                              panUploaded: _panUploaded,
+                              photoUploaded: _photoUploaded,
+                              onPickAadhaarFront: () =>
+                                  _showDocumentSourceDialog('aadhaar_front'),
+                              onPickAadhaarBack: () =>
+                                  _showDocumentSourceDialog('aadhaar_back'),
+                              onPickPan: () => _showDocumentSourceDialog('pan'),
+                              onPickPhoto: () => _showDocumentSourceDialog('photo'),
+                            ),
+                          ],
+                          if (_currentStep == 3) ...[
+                            GuarantorVideoProofCard(
+                              videoUploaded: _videoUploaded,
+                              videoPath: _videoPath,
+                              onTap: _pickVideo,
+                            ),
+                            const SizedBox(height: 24),
+                            GuarantorSignatureCard(
+                              signatureUploaded: _signatureUploaded,
+                              onTap: _openSignaturePad,
+                            ),
+                          ],
+                          const SizedBox(height: 120),
+                        ],
+                      ),
                     ),
                   ),
-                  const GuarantorOnboardingProgressSection(),
-                  const SizedBox(height: 16),
-                  // Bug 25: explicit legal-liability disclosure so the user
-                  // understands what they are signing up their guarantor
-                  // for. Without this, a rider could tap "Complete" without
-                  // realising the guarantor is taking on real financial
-                  // liability.
-                  const _GuarantorLiabilityBanner(),
-                  const SizedBox(height: 24),
-                  GuarantorDetailsCard(
-                    nameController: _nameController,
-                    dobController: _dobController,
-                    phoneController: _phoneController,
-                    fatherNameController: _fatherNameController,
-                    motherNameController: _motherNameController,
-                    addressController: _addressController,
-                    isPhoneVerified: _isPhoneVerified,
-                    isSendingOtp: _isSendingOtp,
-                    isOtpSent: _isOtpSent,
-                    isVerifyingOtp: _isVerifyingOtp,
-                    onSendOtp: _sendOtp,
-                    onVerifyOtp: _verifyOtp,
-                    onSelectDob: _selectDob,
-                    otpBoxes: GuarantorOnboardingOtpBoxes(
-                      otpControllers: _otpControllers,
-                      otpFocusNodes: _otpFocusNodes,
-                      onChanged: (i, v) {
-                        if (v.length == 1 && i < 5) {
-                          FocusScope.of(context)
-                              .requestFocus(_otpFocusNodes[i + 1]);
-                        } else if (v.isEmpty && i > 0) {
-                          FocusScope.of(context)
-                              .requestFocus(_otpFocusNodes[i - 1]);
-                        }
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GuarantorIdentityVerificationCard(
-                      aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                      aadhaarBackUploaded: _aadhaarBackUploaded,
-                      panUploaded: _panUploaded,
-                      photoUploaded: _photoUploaded,
-                      onPickAadhaarFront: () =>
-                          _showDocumentSourceDialog('aadhaar_front'),
-                      onPickAadhaarBack: () =>
-                          _showDocumentSourceDialog('aadhaar_back'),
-                      onPickPan: () => _showDocumentSourceDialog('pan'),
-                      onPickPhoto: () => _showDocumentSourceDialog('photo'),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GuarantorVideoProofCard(
-                      videoUploaded: _videoUploaded,
-                      videoPath: _videoPath,
-                      onTap: _pickVideo,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GuarantorSignatureCard(
-                      signatureUploaded: _signatureUploaded,
-                      onTap: _openSignaturePad,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
-            GuarantorOnboardingBottomButton(
-              canProceed: AppConstants.isTestMode || _isFormComplete,
-              isUploading: _isUploading,
-              uploadProgressText: _uploadProgressText,
-              onSubmit: _handleSubmit,
-              onSkip: _handleSkip,
-            ),
-          ],
-        ),
+          ),
+          GuarantorOnboardingBottomButton(
+            canProceed: _canProceedCurrentStep,
+            isUploading: _isUploading,
+            uploadProgressText: _uploadProgressText,
+            buttonText: _currentStep < 3 ? 'NEXT STEP' : 'FINISH SETUP',
+            onSubmit: _onBottomButtonPressed,
+            onSkip: _currentStep == 1 ? _handleSkip : null,
+          ),
+        ],
       ),
     );
   }
@@ -767,11 +842,11 @@ class _GuarantorOnboardingScreenState extends State<GuarantorOnboardingScreen> {
 /// "Complete" without realising the guarantor is taking on real
 /// financial liability. This banner is a short, scannable disclosure
 /// that names the risk and points to the full terms.
-class _GuarantorLiabilityBanner extends StatelessWidget {
+class _GuarantorLiabilityBanner extends ConsumerWidget {
   const _GuarantorLiabilityBanner();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       key: const Key('guarantorLiabilityBanner'),
       margin: const EdgeInsets.symmetric(horizontal: 16),

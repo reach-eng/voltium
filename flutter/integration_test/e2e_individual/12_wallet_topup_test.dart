@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:voltium_rider/screens/wallet_screen.dart';
+import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
 import 'package:voltium_rider/screens/top_up_purpose_screen.dart';
 import '../helpers/test_helpers.dart';
 

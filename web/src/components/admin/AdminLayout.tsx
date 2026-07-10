@@ -38,7 +38,7 @@ const loadAdminScreen = (path: string) =>
 // Dynamically loaded admin screens (split chunks for better performance)
 const sectionMap: Record<string, React.ComponentType> = {
   overview: loadAdminScreen('DashboardOverview'),
-  riders: loadAdminScreen('rider-management'),
+  riders: loadAdminScreen('RiderManagement'),
   kyc: loadAdminScreen('KycManagement'),
   rentals: loadAdminScreen('RentalManagement'),
   vehicles: loadAdminScreen('VehicleManagement'),
@@ -223,7 +223,7 @@ export default function AdminLayout() {
 
   if (isAuthorized === null) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex items-center justify-center min-h-dvh bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm font-medium text-muted-foreground">Verifying authorization...</p>
@@ -258,7 +258,7 @@ export default function AdminLayout() {
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background p-6 text-center">
+      <div className="flex flex-col items-center justify-center min-h-dvh bg-background p-6 text-center">
         <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-8">
           <ShieldAlert className="w-10 h-10 text-primary" />
         </div>
@@ -293,7 +293,7 @@ export default function AdminLayout() {
 
   return (
     <AdminErrorBoundary>
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex min-h-dvh bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block shrink-0 h-full overflow-hidden">
         <AdminSidebar collapsed={sidebarCollapsed} />
@@ -313,7 +313,7 @@ export default function AdminLayout() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="h-14 border-b bg-card flex items-center px-4 gap-3 shrink-0">
+        <header className="h-16 border-b bg-card flex items-center px-6 gap-4 shrink-0 transition-colors duration-200">
           {/* Mobile menu button */}
           <Button
             variant="ghost"
@@ -330,23 +330,23 @@ export default function AdminLayout() {
           </h1>
           {breadcrumbs.map((bc, i) => (
             <span key={i} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-4 h-4" />
               <span className="truncate">{bc.label}</span>
             </span>
           ))}
 
-          {/* Search trigger + dark mode (placed in the middle band, not far right) */}
-          <div className="ml-auto mr-[230px] flex items-center gap-1.5">
+          {/* Search trigger + dark mode */}
+          <div className="ml-auto mr-[230px] flex items-center gap-2">
             {/* Command palette trigger */}
             <Button
               variant="outline"
-              size="sm"
-              className="hidden sm:flex items-center gap-2 h-8 px-3 text-xs text-muted-foreground"
+              size="default"
+              className="hidden sm:flex items-center gap-2 h-10 px-4 text-sm text-muted-foreground transition-colors"
               onClick={() => setCommandPaletteOpen(true)}
             >
-              <Search className="w-3 h-3" />
+              <Search className="w-4 h-4" />
               Search...
-              <kbd className="ml-1 bg-muted px-1 py-0.5 rounded text-[10px] font-mono">⌘K</kbd>
+              <kbd className="ml-2 bg-muted px-1.5 py-0.5 rounded text-[10px] font-mono font-medium">⌘K</kbd>
             </Button>
 
             {/* Dark mode toggle */}
@@ -354,8 +354,8 @@ export default function AdminLayout() {
             
             <Button
               variant="outline"
-              size="sm"
-              className="hidden sm:flex items-center gap-2 h-8 px-3"
+              size="default"
+              className="hidden sm:flex items-center gap-2 h-10 px-4 font-medium transition-colors"
               onClick={() => window.open(process.env.NEXT_PUBLIC_FLUTTER_WEB_URL || 'http://localhost:8080', '_blank')}
             >
               Rider App
@@ -365,7 +365,7 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <ScrollArea className="flex-1 h-full min-h-0" data-admin-scroll="true">
-          <div className="p-6">
+          <div className="p-4 md:p-5">
             {Array.from(visitedSections).map((section) => (
               <div
                 key={section}

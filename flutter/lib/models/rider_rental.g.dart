@@ -9,6 +9,7 @@ part of 'rider_rental.dart';
 RiderRental _$RiderRentalFromJson(Map<String, dynamic> json) => RiderRental(
       rentalStatus: json['rentalStatus'] as String? ?? 'NONE',
       assignedVehicle: json['assignedVehicle'] as String?,
+      vehicleModel: json['vehicleModel'] as String?,
       pickupHub: json['pickupHub'] as String?,
       teamLeader: json['teamLeader'] as String?,
       emergencyContact: json['emergencyContact'] as String?,
@@ -30,6 +31,7 @@ Map<String, dynamic> _$RiderRentalToJson(RiderRental instance) =>
     <String, dynamic>{
       'rentalStatus': instance.rentalStatus,
       'assignedVehicle': instance.assignedVehicle,
+      'vehicleModel': instance.vehicleModel,
       'pickupHub': instance.pickupHub,
       'teamLeader': instance.teamLeader,
       'emergencyContact': instance.emergencyContact,

@@ -230,7 +230,7 @@ function AdminUsersTab() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-10 h-10 rounded-xl border-muted-foreground/20 text-sm shadow-sm"
+            className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base shadow-sm"
           />
           {search && (
             <button
@@ -244,8 +244,8 @@ function AdminUsersTab() {
             </button>
           )}
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="rounded-xl h-10 px-4">
-          <Plus className="h-4 w-4 mr-1" /> Add New Admin
+        <Button onClick={() => setDialogOpen(true)} className="rounded-xl h-11 px-5">
+          <Plus className="h-5 w-5 mr-1.5" /> Add New Admin
         </Button>
       </div>
 
@@ -321,8 +321,8 @@ function AdminUsersTab() {
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
+                        size="icon"
+                        className="h-10 w-10"
                         onClick={() => handleEdit(a)}
                       >
                         <UserCog className="h-4 w-4" />
@@ -330,7 +330,7 @@ function AdminUsersTab() {
                       <Button
                         variant={a.isActive ? 'outline' : 'default'}
                         size="sm"
-                        className="text-xs h-8"
+                        className="text-sm h-10 px-3"
                         onClick={() => toggleActive(a)}
                       >
                         {a.isActive ? 'Deactivate' : 'Activate'}
@@ -355,10 +355,10 @@ function AdminUsersTab() {
           <div className="flex items-center gap-2 mx-auto sm:mx-0">
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="h-8 px-2 rounded-lg"
+              className="h-10 w-10 rounded-lg"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -367,10 +367,10 @@ function AdminUsersTab() {
             </div>
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
               onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={page === pagination.totalPages}
-              className="h-8 px-2 rounded-lg"
+              className="h-10 w-10 rounded-lg"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

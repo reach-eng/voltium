@@ -132,7 +132,7 @@ export const rentalUseCases = {
         data: {
           lifecycleStatus: 'PICKUP_SCHEDULED',
           vehicleId,
-          assignedVehicle: vehicle.vehicleId,
+          assignedVehicle: vehicle.vehicleNumber,
         },
       });
 
@@ -260,7 +260,7 @@ export const rentalUseCases = {
           pickedUpAt: new Date(),
           lifecycleStatus: 'ACTIVE',
           vehicleId: vehicle.id,
-          assignedVehicle: vehicle.vehicleId,
+          assignedVehicle: vehicle.vehicleNumber,
           pickupHub: resolvedHubName,
           teamLeader: teamLeader || null,
           emergencyContact: emergencyContact || null,

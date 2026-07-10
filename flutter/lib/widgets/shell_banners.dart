@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/lifecycle_rank.dart';
 
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 /// Global banners that match the web app's SuspensionBanner and SyncBanner.
 /// These should be placed inside the global AppShell to remain visible across screens.
 
-class SyncBanner extends StatelessWidget {
+class SyncBanner extends ConsumerWidget {
   const SyncBanner({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final isOnline = context.select<AppProvider, bool>((p) => p.isOnline);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = ref.watch(appProvider.select((p) => p.isOnline));
     final pendingCount =
-        context.select<AppProvider, int>((p) => p.pendingSyncCount);
+        ref.watch(appProvider.select((p) => p.pendingSyncCount));
 
     if (isOnline && pendingCount == 0) return const SizedBox.shrink();
 
@@ -94,19 +95,19 @@ class SyncBanner extends StatelessWidget {
   }
 }
 
-class SuspensionBanner extends StatefulWidget {
+class SuspensionBanner extends ConsumerStatefulWidget {
   const SuspensionBanner({super.key});
 
   @override
-  State<SuspensionBanner> createState() => _SuspensionBannerState();
+  ConsumerState<SuspensionBanner> createState() => _SuspensionBannerState();
 }
 
-class _SuspensionBannerState extends State<SuspensionBanner> {
+class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    final rider = context.select<AppProvider, RiderModel?>((p) => p.rider);
+    final rider = ref.watch(appProvider.select((p) => p.rider));
     if (rider == null) return const SizedBox.shrink();
 
     // Mirroring web's getSuspensionReasons logic

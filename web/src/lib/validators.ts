@@ -170,6 +170,7 @@ export const createPlanSchema = z.object({
   durationDays: z.number().int().positive().optional(),
   description: z.string().max(500).optional(),
   additionalInfo: z.string().max(1000).optional().nullable(),
+  isActive: z.boolean().optional(),
 });
 
 export const updatePlanSchema = createPlanSchema.partial().extend({

@@ -39,7 +39,8 @@ class _AppBottomNavState extends State<AppBottomNav>
   late Animation<double> _fadeAnim;
 
   static const _tabs = [
-    _TabInfo(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home'),
+    _TabInfo(
+        icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
     _TabInfo(
       icon: Icons.account_balance_wallet_outlined,
       activeIcon: Icons.account_balance_wallet,

@@ -120,7 +120,8 @@ function BusinessSettingsTab() {
         <Button
           onClick={saveSettings}
           disabled={saving || !isDirty}
-          className={!isDirty ? 'opacity-60' : ''}
+          size="default"
+          className={!isDirty ? 'opacity-60 h-11 px-5 rounded-xl' : 'h-11 px-5 rounded-xl'}
         >
           {saving ? (
             'Saving...'
@@ -182,7 +183,7 @@ function BusinessSettingsTab() {
                       type="number"
                       value={settings[key]}
                       onChange={(e) => updateSetting(key, e.target.value)}
-                      className="pl-7"
+                      className="pl-7 h-11 text-base rounded-xl"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">{help}</p>
@@ -231,7 +232,7 @@ function BusinessSettingsTab() {
                 type="number"
                 value={settings.gracePeriodHours}
                 onChange={(e) => updateSetting('gracePeriodHours', e.target.value)}
-                className="w-32"
+                className="w-32 h-11 text-base rounded-xl"
               />
             </div>
           </CardContent>
@@ -293,7 +294,7 @@ function BusinessSettingsTab() {
                       type="number"
                       value={settings[key]}
                       onChange={(e) => updateSetting(key, e.target.value)}
-                      className={prefix ? 'pl-7' : suffix ? 'pr-14' : ''}
+                      className={prefix ? 'pl-7 h-11 text-base rounded-xl' : suffix ? 'pr-14 h-11 text-base rounded-xl' : 'h-11 text-base rounded-xl'}
                     />
                     {suffix && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-medium">
@@ -377,6 +378,7 @@ function BusinessSettingsTab() {
                   value={settings.supportEmail}
                   onChange={(e) => updateSetting('supportEmail', e.target.value)}
                   placeholder="support@example.com"
+                  className="h-11 text-base rounded-xl"
                 />
                 <p className="text-xs text-muted-foreground">
                   Riders use this for email support queries
@@ -390,6 +392,7 @@ function BusinessSettingsTab() {
                   value={settings.supportPhone}
                   onChange={(e) => updateSetting('supportPhone', e.target.value)}
                   placeholder="+91 98765 43210"
+                  className="h-11 text-base rounded-xl"
                 />
                 <p className="text-xs text-muted-foreground">WhatsApp / call support number</p>
               </div>

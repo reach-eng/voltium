@@ -130,9 +130,23 @@ export const kycRepository = {
         where: { riderId: riderDbId },
         data: { status: 'APPROVED' },
       });
+      await tx.rider.update({
+        where: { id: riderDbId },
+        data: { kycDoneAt: new Date() },
+      });
       await tx.rider.updateMany({
-        where: { id: riderDbId, lifecycleStatus: { in: ['KYC_SUBMITTED', 'PROFILE_SUBMITTED'] } },
-        data: { lifecycleStatus: 'KYC_APPROVED', kycDoneAt: new Date() },
+        where: { 
+          id: riderDbId, 
+          lifecycleStatus: { 
+            in: [
+              'NEW', 'PHONE_VERIFIED', 'PROFILE_SUBMITTED', 
+              'GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 
+              'PLAN_SELECTED', 'DEPOSIT_PENDING', 
+              'DEPOSIT_APPROVED', 'KYC_SUBMITTED'
+            ] 
+          } 
+        },
+        data: { lifecycleStatus: 'KYC_APPROVED' },
       });
 
       // BLOCKER 2.7: notification is dispatched by the outbox worker

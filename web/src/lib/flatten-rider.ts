@@ -42,33 +42,33 @@ export function flattenRider(rider: RiderWithRelations) {
     NEW: 0,
     PHONE_VERIFIED: 1,
     PROFILE_SUBMITTED: 2,
-    KYC_SUBMITTED: 3,
-    KYC_APPROVED: 4,
-    GUARANTOR_SUBMITTED: 5,
-    GUARANTOR_APPROVED: 6,
-    DEPOSIT_PENDING: 7,
-    DEPOSIT_APPROVED: 8,
-    PLAN_SELECTED: 9,
-    PICKUP_SCHEDULED: 10,
-    ACTIVE: 11,
-    SUSPENDED: 12,
-    RETURN_PENDING: 13,
-    CLOSED: 14,
+    GUARANTOR_SUBMITTED: 3,
+    GUARANTOR_APPROVED: 3,
+    PLAN_SELECTED: 4,
+    DEPOSIT_PENDING: 5,
+    DEPOSIT_APPROVED: 6,
+    KYC_SUBMITTED: 7,
+    KYC_APPROVED: 8,
+    PICKUP_SCHEDULED: 9,
+    ACTIVE: 10,
+    SUSPENDED: 11,
+    RETURN_PENDING: 12,
+    CLOSED: 13,
   };
   const rank = lifecycleRank[lifecycleStatus] ?? 0;
-  const registrationDone = rank >= 2;
-  const kycDone = rank >= 4;
-  const depositDone = rank >= 8;
-  const planDone = rank >= 9;
-  const pickupDone = rank >= 10;
+  const registrationDone = rank >= 3;
+  const kycDone = rank >= 8 || kycProfile?.status === 'APPROVED';
+  const depositDone = rank >= 6;
+  const planDone = rank >= 4;
+  const pickupDone = rank >= 9;
 
   return {
     ...rest,
     lifecycleStatus,
     state: lifecycleStatus,
-    accountStatus: rank >= 11 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
-    rentalStatus: rank >= 11 ? 'ACTIVE' : 'NONE',
-    planStatus: rank >= 9 ? 'ACTIVE' : 'NONE',
+    accountStatus: rank >= 10 ? 'ACTIVE' : rank >= 2 ? 'PRE_ACTIVE' : 'INACTIVE',
+    rentalStatus: rank >= 10 ? 'ACTIVE' : 'NONE',
+    planStatus: rank >= 4 ? 'ACTIVE' : 'NONE',
     registrationDone,
     kycDone,
     depositDone,
@@ -123,6 +123,7 @@ export function flattenRider(rider: RiderWithRelations) {
     assignedVehicle: rider.assignedVehicle ?? null,
     activeVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
+    vehicleModel: (rider as any).vehicle?.model ?? null,
     deliveryId: rider.deliveryId ?? null,
     intent: rider.intent ?? null,
     emergencyContact: rider.emergencyContact ?? null,

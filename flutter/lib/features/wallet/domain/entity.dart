@@ -85,7 +85,9 @@ class TransactionEntity {
   factory TransactionEntity.fromJson(Map<String, dynamic> json) {
     return TransactionEntity(
       id: json['id'] as String,
-      amountInPaise: (json['amount'] as num?)?.toInt() ?? 0,
+      amountInPaise: ((json['amount'] as num?) ?? 0).toDouble() > 0
+          ? (((json['amount'] as num?) ?? 0).toDouble() * 100).toInt()
+          : 0,
       type: json['type'] as String? ?? 'CREDIT',
       purpose: json['purpose'] as String? ?? '',
       status: json['status'] as String? ?? 'PENDING',

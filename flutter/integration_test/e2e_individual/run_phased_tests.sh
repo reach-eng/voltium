@@ -7,12 +7,32 @@
 # Prerequisites:
 #   - Emulator running (default: emulator-5554)
 #   - Backend running at http://localhost:8081
-#   - /Users/amreenfarooq/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081
+#   - adb on PATH (or ANDROID_HOME set). The script auto-detects common
+#     SDK install locations on macOS, Linux, and Windows.
 
 DEVICE="${1:-emulator-5554}"
 DRIVER="test_driver/integration_test.dart"
 API_URL="http://localhost:8081"
 TEST_DIR="integration_test/e2e_individual"
+
+# Locate the adb binary cross-platform. On macOS dev boxes the path is
+# hard-coded under /Users/...; elsewhere we fall back to the local
+# Android SDK install or whatever `adb` resolves to on the PATH (CI,
+# Linux, Windows Git-Bash).
+if [ -x "/Users/amreenfarooq/Library/Android/sdk/platform-tools/adb" ]; then
+  ADB="/Users/amreenfarooq/Library/Android/sdk/platform-tools/adb"
+elif command -v adb >/dev/null 2>&1; then
+  ADB="$(command -v adb)"
+elif [ -x "$HOME/Library/Android/sdk/platform-tools/adb" ]; then
+  ADB="$HOME/Library/Android/sdk/platform-tools/adb"
+elif [ -x "/opt/android-sdk/platform-tools/adb" ]; then
+  ADB="/opt/android-sdk/platform-tools/adb"
+elif [ -x "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" ]; then
+  ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"
+else
+  echo "adb not found. Set ANDROID_HOME or add platform-tools to PATH."
+  exit 1
+fi
 
 SHARD_INDEX=0
 SHARD_COUNT=1
@@ -121,7 +141,8 @@ fi
 echo "========================================"
 echo ""
 
-/Users/amreenfarooq/Library/Android/sdk/platform-tools/adb reverse tcp:8081 tcp:8081
+# Ensure the device can reach this host's dev server (cross-platform via $ADB).
+"$ADB" reverse tcp:8081 tcp:8081
 
 for test_file in "${ALL_TESTS[@]}"; do
   if [ -f "$test_file" ]; then

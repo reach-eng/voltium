@@ -519,58 +519,61 @@ function KycManagementTab() {
           <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border border-primary/20 rounded-lg">
             <span className="text-sm font-medium text-primary">{selectedIds.size} selected</span>
             <Button
-              size="sm"
+              size="default"
               onClick={() => handleBulkAction('approve')}
               disabled={bulkLoading}
-              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700"
+              className="h-10 text-sm px-4 bg-emerald-600 hover:bg-emerald-700 transition-all duration-200"
               title="Approve All (Ctrl+K)"
             >
               {bulkLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <ShieldCheck className="w-3 h-3" />
+                <ShieldCheck className="w-4 h-4 mr-1.5" />
               )}
+              Approve All
             </Button>
             <Button
-              size="sm"
+              size="default"
               variant="outline"
               onClick={() => handleBulkAction('info_required')}
               disabled={bulkLoading}
-              className="h-8 text-xs border-orange-500/30 text-orange-600"
+              className="h-10 text-sm px-4 border-orange-500/30 text-orange-600 transition-all duration-200"
               title="Needs Correction"
             >
               {bulkLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <ShieldAlert className="w-3 h-3" />
+                <ShieldAlert className="w-4 h-4 mr-1.5" />
               )}
+              Needs Correction
             </Button>
             <Button
-              size="sm"
+              size="default"
               variant="destructive"
               onClick={() => handleBulkAction('reject')}
               disabled={bulkLoading}
-              className="h-8 text-xs"
+              className="h-10 text-sm px-4 transition-all duration-200"
               title="Reject All (Ctrl+R)"
             >
               {bulkLoading ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <ShieldX className="w-3 h-3" />
+                <ShieldX className="w-4 h-4 mr-1.5" />
               )}
+              Reject All
             </Button>
             {lastAction && (
               <>
                 <div className="w-px h-4 bg-border/50 mx-1" />
                 <Button
-                  size="sm"
+                  size="default"
                   variant="outline"
                   onClick={handleUndo}
                   disabled={bulkLoading}
-                  className="h-8 text-xs"
+                  className="h-10 text-sm px-4 transition-all duration-200"
                   title="Undo (Ctrl+Z)"
                 >
-                  <Undo2 className="w-3 h-3 mr-1" /> Undo
+                  <Undo2 className="w-4 h-4 mr-1.5" /> Undo
                 </Button>
               </>
             )}
@@ -1013,6 +1016,59 @@ function KycManagementTab() {
                         {selectedRider.ifscCode || '—'}
                       </p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Guarantor Details */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" />
+                    Guarantor Details
+                  </h4>
+                  <div className="bg-muted/30 rounded-xl p-3 border border-border/50 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Name</p>
+                        <p className="text-sm font-medium">{selectedRider.guarantorName || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Phone</p>
+                        <p className="text-sm font-medium font-mono">{selectedRider.guarantorPhone || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Status</p>
+                        <Badge variant="outline" className="text-[10px] uppercase">
+                          {selectedRider.guarantorStatus || '—'}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">Address</p>
+                        <p className="text-sm font-medium">{selectedRider.guarantorAddress || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Guarantor Documents Grid */}
+                  <div className="grid grid-cols-1 gap-4 pt-2">
+                    {[
+                      { key: 'guarantorAadhaarFront', label: 'Guarantor Aadhaar Front' },
+                      { key: 'guarantorAadhaarBack', label: 'Guarantor Aadhaar Back' },
+                      { key: 'guarantorPan', label: 'Guarantor PAN Card' },
+                      { key: 'guarantorPhoto', label: 'Guarantor Photo' },
+                      { key: 'guarantorSignature', label: 'Guarantor Signature' },
+                      { key: 'guarantorVideo', label: 'Guarantor Video', type: 'video' }
+                    ].map((doc) => {
+                      const url = selectedRider[doc.key as keyof typeof selectedRider] as string | null;
+                      if (!url) return null;
+                      return (
+                        <div key={doc.key} className="space-y-2">
+                          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            {doc.label}
+                          </label>
+                          <MediaPreview src={url} label={doc.label} type={doc.type as any || 'image'} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 

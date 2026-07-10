@@ -11,16 +11,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart';
 
 import 'gen/app_localizations.dart';
-import 'providers/locale_provider.dart';
-import 'providers/app_provider.dart';
-import 'providers/theme_provider.dart';
-import 'providers/rider_provider.dart';
-import 'providers/wallet_provider.dart';
-import 'providers/support_provider.dart';
-import 'providers/engagement_provider.dart';
-import 'providers/device_policy_provider.dart';
-import 'providers/connectivity_provider.dart';
-import 'providers/notification_provider.dart';
+import 'core/localization/locale_provider.dart';
+import 'core/state/app_provider.dart';
+import 'theme/theme_provider.dart';
+import 'core/state/rider_provider.dart';
+import 'features/wallet/presentation/providers/wallet_provider.dart';
+import 'features/support/presentation/providers/support_provider.dart';
+import 'features/dashboard/presentation/providers/engagement_provider.dart';
+import 'features/device_compliance/presentation/providers/device_policy_provider.dart';
+import 'core/network/connectivity_provider.dart';
+import 'features/notifications/presentation/providers/notification_provider.dart';
+import 'core/state/riverpod_providers.dart';
+import 'services/emergency_contacts_service.dart';
 import 'services/cache_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/analytics_service.dart';
@@ -163,7 +165,7 @@ Future<void> main() async {
         localeProvider.setHindi();
       }
 
-      final appProvider = AppProvider();
+      final appInstance = AppProvider();
       final themeProvider = ThemeProvider();
 
       if (PlatformInfo.supportsFCM) {
@@ -172,10 +174,10 @@ Future<void> main() async {
             options: DefaultFirebaseOptions.currentPlatform,
           );
           await FCMService.initialize(
-            devicePolicy: appProvider.devicePolicyProvider,
-            wallet: appProvider.walletProvider,
-            support: appProvider.supportProvider,
-            rider: appProvider.riderProvider,
+            devicePolicy: appInstance.devicePolicyProvider,
+            wallet: appInstance.walletProvider,
+            support: appInstance.supportProvider,
+            rider: appInstance.riderProvider,
           );
         } catch (e) {
           debugPrint('Failed to initialize Firebase: $e');
@@ -184,36 +186,59 @@ Future<void> main() async {
       AnalyticsService().track(AnalyticsEvent.appOpened);
 
       // ── Connect connectivity stream to AppProvider ──────────────────────
-      appProvider.connectivityProvider
+      appInstance.connectivityProvider
           .bindConnectivityService(ConnectivityService());
+
+      final emergencyContactsServiceInstance = EmergencyContactsService();
 
       runApp(
         // ProviderScope is the root of Riverpod's dependency injection.
         // Existing ChangeNotifierProviders are bridged via legacy.MultiProvider
         // so both Provider and Riverpod patterns work during migration.
         ProviderScope(
+          overrides: [
+            appProvider.overrideWith((ref) => appInstance),
+            riderProvider.overrideWith(
+                (ref) => appInstance.riderProvider),
+            walletProvider.overrideWith(
+                (ref) => appInstance.walletProvider),
+            supportProvider.overrideWith(
+                (ref) => appInstance.supportProvider),
+            engagementProvider.overrideWith(
+                (ref) => appInstance.engagementProvider),
+            devicePolicyProvider.overrideWith(
+                (ref) => appInstance.devicePolicyProvider),
+            connectivityProvider.overrideWith(
+                (ref) => appInstance.connectivityProvider),
+            localeProviderRef.overrideWith((ref) => localeProvider),
+            themeProviderRef.overrideWith((ref) => themeProvider),
+            notificationProvider
+                .overrideWith((ref) => NotificationProvider()),
+            emergencyContactsService.overrideWith(
+                (ref) => emergencyContactsServiceInstance),
+          ],
           child: MultiProvider(
             providers: [
               ChangeNotifierProvider<LocaleProvider>.value(
                   value: localeProvider),
-              ChangeNotifierProvider<AppProvider>.value(value: appProvider),
+              ChangeNotifierProvider<AppProvider>.value(value: appInstance),
               ChangeNotifierProvider<RiderProvider>.value(
-                value: appProvider.riderProvider,
+                value: appInstance.riderProvider,
               ),
               ChangeNotifierProvider<WalletProvider>.value(
-                value: appProvider.walletProvider,
+                value: appInstance.walletProvider,
               ),
               ChangeNotifierProvider<SupportProvider>.value(
-                value: appProvider.supportProvider,
+                value: appInstance.supportProvider,
               ),
               ChangeNotifierProvider<EngagementProvider>.value(
-                value: appProvider.engagementProvider,
+                value: appInstance.engagementProvider,
               ),
               ChangeNotifierProvider<DevicePolicyProvider>.value(
-                value: appProvider.devicePolicyProvider,
+                value: appInstance.devicePolicyProvider,
               ),
               ChangeNotifierProvider<ConnectivityProvider>.value(
-                value: appProvider.connectivityProvider,
+                value: appInstance.connectivityProvider,
               ),
               ChangeNotifierProvider(create: (_) => NotificationProvider()),
               ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),

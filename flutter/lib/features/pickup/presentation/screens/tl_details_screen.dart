@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class TlDetailsScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TlDetailsScreen extends ConsumerWidget {
   const TlDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(appProvider).rider;
     final tlName = (rider?.teamLeader == null ||
             rider!.teamLeader!.isEmpty ||
             rider.teamLeader == 'Not Assigned')

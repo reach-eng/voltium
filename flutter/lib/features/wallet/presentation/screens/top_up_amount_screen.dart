@@ -1,37 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 
-class TopUpAmountScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TopUpAmountScreen extends ConsumerStatefulWidget {
   final Function(int)? onProceed;
   final VoidCallback? onBack;
   final Function(int)? onAmountChanged;
+  final int? securityDeposit;
+  final int? rentalPrice;
 
   const TopUpAmountScreen({
     super.key,
     this.onProceed,
     this.onBack,
     this.onAmountChanged,
+    this.securityDeposit,
+    this.rentalPrice,
   });
 
   @override
-  State<TopUpAmountScreen> createState() => _TopUpAmountScreenState();
+  ConsumerState<TopUpAmountScreen> createState() => _TopUpAmountScreenState();
 }
 
-class _TopUpAmountScreenState extends State<TopUpAmountScreen>
+class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     with SingleTickerProviderStateMixin {
-  int _selectedAmount = 1000;
-  final _customAmountCtrl = TextEditingController(text: '1000');
+  late int _selectedAmount;
+  late final TextEditingController _customAmountCtrl;
   late final AnimationController _entryCtrl;
 
-  final List<int> _quickAmounts = [500, 1000, 2000, 5000];
+  late final List<int> _quickAmounts;
 
   @override
   void initState() {
     super.initState();
+    // Prefill with plan's security deposit + rental price if provided
+    final planTotal = (widget.securityDeposit ?? 0) + (widget.rentalPrice ?? 0);
+    _selectedAmount = planTotal > 0 ? planTotal : 1000;
+    _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
+
+    // Generate quick amounts based on plan total if available
+    if (planTotal > 0) {
+      _quickAmounts = [
+        planTotal,
+        (planTotal * 1.5).round(),
+        (planTotal * 2).round(),
+        (planTotal * 3).round(),
+      ];
+    } else {
+      _quickAmounts = [500, 1000, 2000, 5000];
+    }
+
     _entryCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -191,24 +213,21 @@ class _TopUpAmountScreenState extends State<TopUpAmountScreen>
                     const SizedBox(height: 24),
 
                     // Balance info row
-                    Consumer<AppProvider>(
-                      builder: (context, provider, _) {
-                        final currentBalance =
-                            provider.rider?.walletBalance ?? 0.0;
+                    Consumer(builder: (context, ref, _) { final currentBalance = ref.watch(appProvider.select((p) => p.rider))?.walletBalance ?? 0.0;
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Current Balance: ₹${currentBalance.toInt()}',
                               style: GoogleFonts.inter(
-                                fontSize: 13,
+                                fontSize: 14,
                                 color: const Color(0xFF475569),
                               ),
                             ),
                             Text(
                               'Min: ₹100',
                               style: GoogleFonts.inter(
-                                fontSize: 13,
+                                fontSize: 14,
                                 color: AppColors.slate500,
                               ),
                             ),

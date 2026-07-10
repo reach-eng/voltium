@@ -2,11 +2,12 @@ import 'package:universal_io/io.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 /// TL Details bottom sheet
 void showTLDetailsSheet(BuildContext context, RiderModel rider) {
@@ -589,7 +590,7 @@ Future<void> startVehicleReturnWorkflow(
       ),
     );
 
-    final success = await context.read<AppProvider>().submitVehicleReturn(
+    final success = await ProviderScope.containerOf(context).read(appProvider).submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
         );
@@ -675,7 +676,7 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
 
 void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
   final updated = rider.copyWith(intent: newIntent);
-  context.read<AppProvider>().updateRider(updated);
+  ProviderScope.containerOf(context).read(appProvider).updateRider(updated);
   Navigator.pop(context);
   ScaffoldMessenger.of(context).showSnackBar(
     const SnackBar(
@@ -685,7 +686,7 @@ void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
   );
 }
 
-class _IntentOption extends StatelessWidget {
+class _IntentOption extends ConsumerWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -697,7 +698,7 @@ class _IntentOption extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
       title: Text(label),
       leading: Icon(

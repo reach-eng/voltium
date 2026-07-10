@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import '../../../../core/platform/platform_info.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class _PermissionItem {
   final String id;
@@ -30,16 +32,16 @@ class _PermissionItem {
   }) : isEnabled = false;
 }
 
-class PermissionsScreen extends StatefulWidget {
+class PermissionsScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
 
   const PermissionsScreen({super.key, this.onNext});
 
   @override
-  State<PermissionsScreen> createState() => _PermissionsScreenState();
+  ConsumerState<PermissionsScreen> createState() => _PermissionsScreenState();
 }
 
-class _PermissionsScreenState extends State<PermissionsScreen>
+class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _entryCtrl;
 
@@ -58,11 +60,10 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     ),
     _PermissionItem(
       id: 'battery',
-      name: 'Battery Optimization (Recommended)',
-      description:
-          'Allow the app to run reliably in the background. You can change this later in Settings.',
+      name: 'Battery Optimization',
+      description: 'Allow the app to run reliably in the background.',
       icon: Icons.battery_saver_outlined,
-      isRequired: false,
+      isRequired: true,
     ),
     _PermissionItem(
       id: 'camera',
@@ -77,10 +78,28 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       icon: Icons.phone_outlined,
     ),
     _PermissionItem(
+      id: 'contacts',
+      name: 'Contacts',
+      description: 'Access contacts for emergency SOS and referrals',
+      icon: Icons.contacts_outlined,
+    ),
+    _PermissionItem(
       id: 'call_log',
       name: 'Call Log',
-      description: 'Read call logs for emergency detection',
-      icon: Icons.history_outlined,
+      description: 'Access call logs for ride safety features',
+      icon: Icons.call_outlined,
+    ),
+    _PermissionItem(
+      id: 'mic',
+      name: 'Microphone',
+      description: 'Required for audio recording and verification',
+      icon: Icons.mic_outlined,
+    ),
+    _PermissionItem(
+      id: 'device_admin',
+      name: 'Device Admin',
+      description: 'Required for fleet security and remote lock features',
+      icon: Icons.security_outlined,
     ),
   ];
 
@@ -107,7 +126,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     if (state == AppLifecycleState.resumed) {
       // Re-check permissions when user returns to app
       _checkInitialStatuses();
-      context.read<AppProvider>().checkSystemPermissions();
+      ref.read(appProvider).checkSystemPermissions();
     }
   }
 
@@ -131,10 +150,10 @@ class _PermissionsScreenState extends State<PermissionsScreen>
         case 'contacts':
           status = await Permission.contacts.status;
           break;
-        case 'call_log':
+        case 'phone':
           status = await Permission.phone.status;
           break;
-        case 'phone':
+        case 'call_log':
           status = await Permission.phone.status;
           break;
         case 'battery':
@@ -142,7 +161,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           break;
         case 'device_admin':
           if (!mounted) return;
-          perm.isEnabled = context.read<AppProvider>().isAdminActive;
+          perm.isEnabled = ref.read(appProvider).isAdminActive;
           continue;
         default:
           status = PermissionStatus.denied;
@@ -174,6 +193,21 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     switch (item.id) {
       case 'location':
         status = await Permission.location.request();
+        if (status.isGranted) {
+          final accuracy = await Geolocator.getLocationAccuracy();
+          if (accuracy != LocationAccuracyStatus.precise) {
+            status = PermissionStatus.denied;
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Precise location is required. Please enable it in Settings.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            await openAppSettings();
+          }
+        }
         break;
       case 'camera':
         status = await Permission.camera.request();
@@ -187,22 +221,18 @@ class _PermissionsScreenState extends State<PermissionsScreen>
       case 'contacts':
         status = await Permission.contacts.request();
         break;
+      case 'phone':
       case 'call_log':
         status = await Permission.phone.request();
         break;
-      case 'phone':
-        status = await Permission.phone.request();
-        break;
       case 'battery':
-        // Battery optimization is optional. Don't force the user into
-        // Settings; just record whether they granted it.
         status = await Permission.ignoreBatteryOptimizations.request();
         if (mounted) {
           setState(() => item.isEnabled = status.isGranted);
         }
         return;
       case 'device_admin':
-        await context.read<AppProvider>().requestDeviceAdmin();
+        await ref.read(appProvider).requestDeviceAdmin();
         return;
       default:
         status = PermissionStatus.granted;
@@ -226,11 +256,11 @@ class _PermissionsScreenState extends State<PermissionsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final appProvider = context.watch<AppProvider>();
+    final appProv = ref.watch(appProvider);
 
     // Sync reactive state to local list
     for (var p in _permissions) {
-      if (p.id == 'device_admin') p.isEnabled = appProvider.isAdminActive;
+      if (p.id == 'device_admin') p.isEnabled = appProv.isAdminActive;
     }
 
     return Scaffold(
@@ -310,13 +340,19 @@ class _PermissionsScreenState extends State<PermissionsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  perm.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF141B2B),
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        perm.name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF141B2B),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -340,7 +376,10 @@ class _PermissionsScreenState extends State<PermissionsScreen>
     return GestureDetector(
       key: Key('allow${perm.id.capitalize()}Button'),
       onTap: () => _togglePermission(perm),
-      child: AnimatedContainer(
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 48,
         height: 24,
@@ -374,7 +413,7 @@ class _PermissionsScreenState extends State<PermissionsScreen>
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildFooter() {

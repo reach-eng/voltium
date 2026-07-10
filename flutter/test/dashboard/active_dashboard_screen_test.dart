@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/dashboard/presentation/screens/active_dashboard_screen.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 class _TestAppProvider extends AppProvider {
@@ -18,13 +19,11 @@ class _TestAppProvider extends AppProvider {
 }
 
 Widget buildTestApp() {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ChangeNotifierProvider<AppProvider>(create: (_) => _TestAppProvider()),
-    ],
-    child: const MaterialApp(
+  return ProviderScope(overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      appProvider.overrideWith((ref) => _TestAppProvider()),
+    ], child: const MaterialApp(
       localizationsDelegates: [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

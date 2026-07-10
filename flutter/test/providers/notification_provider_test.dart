@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voltium_rider/providers/notification_provider.dart';
+import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 
 void main() {

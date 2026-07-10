@@ -91,11 +91,12 @@ export function ExportButton({
   return (
     <Button
       variant="outline"
-      size="sm"
+      size="default"
+      className="h-10 px-4 rounded-xl transition-all duration-200"
       onClick={handleExport}
       disabled={!data || data.length === 0}
     >
-      <Download className="w-4 h-4 mr-2" />
+      <Download className="w-4 h-4 mr-1.5" />
       Export
     </Button>
   );

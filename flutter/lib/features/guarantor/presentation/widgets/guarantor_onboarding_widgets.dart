@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/features/kyc/presentation/widgets/user_onboarding_widgets.dart'
     show DocTile;
+import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 
 class GuarantorDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
@@ -41,61 +43,63 @@ class GuarantorDetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurfaceContainer,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Guarantor Details',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+          Text(
+            'GUARANTOR DETAILS',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor,
+              letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           _buildTextField(
             'Full Name',
             'Enter guarantor\'s full name',
             nameController,
             key: const Key('guarantorFullNameField'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildDateField(
             'Date of Birth',
             'DD-MM-YYYY',
             dobController,
             onSelectDob,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildPhoneField(context),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildTextField(
             'Father\'s Name',
             'Enter father\'s name',
             fatherNameController,
             key: const Key('guarantorFatherNameField'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildTextField(
             'Mother\'s Name',
             'Enter mother\'s name',
             motherNameController,
             key: const Key('guarantorMotherNameField'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildTextArea(
             'Current Address',
             'Enter full address',
@@ -115,36 +119,39 @@ class GuarantorDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate500,
-          ),
-        ),
+        buildInputLabel(label.toUpperCase()),
         const SizedBox(height: 8),
         TextFormField(
           key: key,
           controller: controller,
+          style: GoogleFonts.inter(
+            color: kOnSurfaceColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.slate400, fontSize: 14),
+            hintStyle: GoogleFonts.inter(
+              color: kOutlineColor.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.outlineVariant),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.outlineVariant),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.info),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
           ),
         ),
@@ -161,14 +168,7 @@ class GuarantorDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate500,
-          ),
-        ),
+        buildInputLabel(label.toUpperCase()),
         const SizedBox(height: 8),
         GestureDetector(
           onTap: onTap,
@@ -176,30 +176,40 @@ class GuarantorDetailsCard extends StatelessWidget {
             child: TextFormField(
               key: const Key('guarantorDobField'),
               controller: controller,
+              style: GoogleFonts.inter(
+                color: kOnSurfaceColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle:
-                    const TextStyle(color: AppColors.slate400, fontSize: 14),
+                hintStyle: GoogleFonts.inter(
+                  color: kOutlineColor.withValues(alpha: 0.7),
+                  fontSize: 14,
+                ),
                 prefixIcon: const Icon(
                   Icons.calendar_today,
                   size: 18,
-                  color: AppColors.slate500,
+                  color: kOutlineColor,
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                  borderSide:
+                      const BorderSide(color: kOutlineVariantColor, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                  borderSide:
+                      const BorderSide(color: kOutlineVariantColor, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.info),
+                  borderSide:
+                      const BorderSide(color: kPrimaryColor, width: 1.5),
                 ),
               ),
             ),
@@ -213,14 +223,7 @@ class GuarantorDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Guarantor Phone Number',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate500,
-          ),
-        ),
+        buildInputLabel('GUARANTOR PHONE NUMBER'),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -232,28 +235,36 @@ class GuarantorDetailsCard extends StatelessWidget {
                 maxLength: 10,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 enabled: !isPhoneVerified,
+                style: GoogleFonts.inter(
+                  color: kOnSurfaceColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   counterText: '',
                   hintText: 'Enter 10-digit number',
-                  hintStyle:
-                      const TextStyle(color: AppColors.slate400, fontSize: 14),
+                  hintStyle: GoogleFonts.inter(
+                    color: kOutlineColor.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide:
-                        const BorderSide(color: AppColors.outlineVariant),
+                        const BorderSide(color: kOutlineVariantColor, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide:
-                        const BorderSide(color: AppColors.outlineVariant),
+                        const BorderSide(color: kOutlineVariantColor, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.info),
+                    borderSide:
+                        const BorderSide(color: kPrimaryColor, width: 1.5),
                   ),
                 ),
               ),
@@ -376,37 +387,41 @@ class GuarantorDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate500,
-          ),
-        ),
+        buildInputLabel(label.toUpperCase()),
         const SizedBox(height: 8),
         TextFormField(
           key: const Key('guarantorAddressField'),
           controller: controller,
           maxLines: 3,
+          style: GoogleFonts.inter(
+            color: kOnSurfaceColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.slate400, fontSize: 14),
+            hintStyle: GoogleFonts.inter(
+              color: kOutlineColor.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.outlineVariant),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.outlineVariant),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.info),
+              borderSide:
+                  const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
           ),
         ),
@@ -440,36 +455,41 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurfaceContainer,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Documents Upload',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+          Text(
+            'DOCUMENTS UPLOAD',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Clear photos only. Max 5MB each.',
-            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: kOutlineColor,
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -538,36 +558,41 @@ class GuarantorVideoProofCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurfaceContainer,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Consent Video (Compulsory)',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+          Text(
+            'CONSENT VIDEO (COMPULSORY)',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Record a 5-sec video holding ID, saying "I agree to be the guarantor for [Rider Name]"',
-            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: kOutlineColor,
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           GestureDetector(
             key: const Key('guarantorVideoTile'),
             onTap: onTap,
@@ -575,13 +600,13 @@ class GuarantorVideoProofCard extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 color: videoUploaded
-                    ? const Color(0xFFECFDF5)
+                    ? kSuccessColor.withValues(alpha: 0.1)
                     : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: videoUploaded
-                      ? AppColors.success
-                      : AppColors.outlineVariant,
+                      ? kSuccessColor
+                      : kOutlineVariantColor,
                   width: videoUploaded ? 1 : 2,
                 ),
               ),
@@ -592,19 +617,19 @@ class GuarantorVideoProofCard extends StatelessWidget {
                     Icon(
                       videoUploaded ? Icons.check_circle : Icons.videocam,
                       color: videoUploaded
-                          ? AppColors.success
-                          : AppColors.slate400,
+                          ? kSuccessColor
+                          : kOutlineColor,
                       size: 36,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       videoUploaded ? 'Video Recorded' : 'Record Consent Video',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: videoUploaded
-                            ? AppColors.success
-                            : const Color(0xFF1E293B),
+                            ? kSuccessColor
+                            : kOnSurfaceColor,
                       ),
                     ),
                   ],
@@ -631,36 +656,41 @@ class GuarantorSignatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kSurfaceContainer,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Guarantor Signature',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+          Text(
+            'GUARANTOR SIGNATURE',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Sign on screen to authorize details.',
-            style: TextStyle(fontSize: 12, color: AppColors.slate500),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: kOutlineColor,
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           GestureDetector(
             key: const Key('guarantorSignatureTile'),
             onTap: onTap,
@@ -668,13 +698,13 @@ class GuarantorSignatureCard extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 color: signatureUploaded
-                    ? const Color(0xFFECFDF5)
+                    ? kSuccessColor.withValues(alpha: 0.1)
                     : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: signatureUploaded
-                      ? AppColors.success
-                      : AppColors.outlineVariant,
+                      ? kSuccessColor
+                      : kOutlineVariantColor,
                   width: signatureUploaded ? 1 : 2,
                 ),
               ),
@@ -685,19 +715,19 @@ class GuarantorSignatureCard extends StatelessWidget {
                     Icon(
                       signatureUploaded ? Icons.check_circle : Icons.draw,
                       color: signatureUploaded
-                          ? AppColors.success
-                          : AppColors.slate400,
+                          ? kSuccessColor
+                          : kOutlineColor,
                       size: 36,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       signatureUploaded ? 'Signature Saved' : 'Draw Signature',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: signatureUploaded
-                            ? AppColors.success
-                            : const Color(0xFF1E293B),
+                            ? kSuccessColor
+                            : kOnSurfaceColor,
                       ),
                     ),
                   ],
@@ -748,11 +778,11 @@ class GuarantorOnboardingHeader extends StatelessWidget {
                 children: [
                   Text(
                     'Step',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                   ),
                   Text(
                     '2/2',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -854,6 +884,7 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
   final bool canProceed;
   final bool isUploading;
   final String uploadProgressText;
+  final String buttonText;
   final VoidCallback? onSubmit;
   final VoidCallback? onSkip;
 
@@ -862,6 +893,7 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
     required this.canProceed,
     required this.isUploading,
     this.uploadProgressText = '',
+    this.buttonText = 'FINISH SETUP',
     this.onSubmit,
     this.onSkip,
   });
@@ -869,81 +901,109 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      child: Row(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 16,
+        bottom: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (onSkip != null) ...[
-            SizedBox(
-              height: 52,
-              child: TextButton(
-                key: const Key('skipGuarantorButton'),
-                onPressed: isUploading ? null : onSkip,
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6B7280),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              if (onSkip != null) ...[
+                SizedBox(
+                  height: 48,
+                  child: TextButton(
+                    key: const Key('skipGuarantorButton'),
+                    onPressed: isUploading ? null : onSkip,
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF6B7280),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text('Skip', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                   ),
                 ),
-                child: const Text('Skip'),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                key: const Key('completeOnboardingButton'),
-                onPressed: (!isUploading && canProceed) ? onSubmit : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  disabledBackgroundColor: const Color(0xFF9CA3AF),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: isUploading
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          ),
-                          if (uploadProgressText.isNotEmpty) ...[
-                            const SizedBox(width: 12),
-                            Text(
-                              uploadProgressText,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ],
-                      )
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'FINISH SETUP',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Icon(Icons.check, color: Colors.white, size: 18),
-                        ],
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    key: const Key('completeOnboardingButton'),
+                    onPressed: (!isUploading && canProceed) ? onSubmit : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrimaryColor,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: AppColors.outlineVariant,
+                      disabledForegroundColor: AppColors.slate400,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    child: isUploading
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              if (uploadProgressText.isNotEmpty) ...[
+                                const SizedBox(width: 12),
+                                Text(
+                                  uploadProgressText,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          )
+                        : Text(
+                            buttonText,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor.withValues(alpha: 0.7),
+              letterSpacing: 1.0,
             ),
           ),
         ],

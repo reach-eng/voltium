@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/rider_model.dart';
-import '../models/deposit_record.dart';
+import '../theme/app_theme.dart';
 
 class TopUpRequestSentCard extends StatelessWidget {
   final RiderModel rider;
@@ -8,98 +8,152 @@ class TopUpRequestSentCard extends StatelessWidget {
   final VoidCallback onResubmit;
 
   const TopUpRequestSentCard({
-    Key? key,
+    super.key,
     required this.rider,
     required this.topUpAmount,
     required this.onResubmit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final record = rider.depositRecord;
     final isRejected = record?.status == DepositStatus.rejected;
     final statusText = isRejected ? 'Rejected' : 'Awaiting Admin Approval';
-    final statusColor = isRejected ? Colors.red : Colors.orange;
+    final statusColor = isRejected ? AppColors.error : AppColors.warning;
+    final statusBg = isRejected ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB);
+    final iconColor = isRejected ? AppColors.error : AppColors.warning;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Top-up Request Sent',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.outlineVariant),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A0F172A),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Top-up Request',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
               ),
-              child: Text(
-                statusText,
-                style:
-                    TextStyle(color: statusColor, fontWeight: FontWeight.w600),
-              ),
-            ),
-            if (isRejected && record?.rejectionReason != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Reason: ${record!.rejectionReason}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            ],
-            const SizedBox(height: 16),
-            const Text(
-              'Breakdown:',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Security Deposit:'),
-                Text('₹${rider.securityDeposit}'),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Rental Charges:'),
-                Text('₹${topUpAmount - rider.securityDeposit}'),
-              ],
-            ),
-            const Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('₹$topUpAmount',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            if (isRejected) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onResubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  statusText.toUpperCase(),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
                   ),
-                  child: const Text('Resubmit'),
                 ),
               ),
             ],
+          ),
+          if (isRejected && record?.rejectionReason != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Reason: ${record!.rejectionReason}',
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+          const SizedBox(height: 16),
+          _buildRow('Security Deposit', '₹${rider.securityDeposit}'),
+          const SizedBox(height: 8),
+          _buildRow('Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: AppColors.outlineVariant),
+          ),
+          _buildRow('Total Pending', '₹$topUpAmount', isBold: true),
+          if (isRejected) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onResubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text(
+                  'Resubmit Request',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
+    );
+  }
+
+  Widget _buildRow(String label, String value, {bool isBold = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: isBold ? const Color(0xFF1E293B) : AppColors.slate500,
+            fontSize: isBold ? 14 : 13,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: const Color(0xFF1E293B),
+            fontSize: isBold ? 16 : 14,
+            fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

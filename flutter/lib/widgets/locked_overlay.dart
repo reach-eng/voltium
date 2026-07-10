@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/voltium_api_service.dart';
 import '../core/platform/platform_info.dart';
 
-class LockedOverlay extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class LockedOverlay extends ConsumerStatefulWidget {
   const LockedOverlay({super.key});
 
   @override
-  State<LockedOverlay> createState() => _LockedOverlayState();
+  ConsumerState<LockedOverlay> createState() => _LockedOverlayState();
 }
 
-class _LockedOverlayState extends State<LockedOverlay>
+class _LockedOverlayState extends ConsumerState<LockedOverlay>
     with WidgetsBindingObserver {
   final TextEditingController _passwordController = TextEditingController();
   String _error = '';
@@ -43,7 +44,7 @@ class _LockedOverlayState extends State<LockedOverlay>
       final data = response['data'] as Map<String, dynamic>? ?? response;
       final adminLocked = data['isAdminLocked'] as bool?;
       if (mounted) {
-        final provider = context.read<AppProvider>();
+        final provider = ref.read(appProvider);
         if (adminLocked == true && !provider.lockedByAdmin) {
           provider.setLockedByAdmin(true);
         } else if (adminLocked == false && provider.lockedByAdmin) {
@@ -60,6 +61,10 @@ class _LockedOverlayState extends State<LockedOverlay>
     final password = _passwordController.text.trim();
     if (password.isEmpty) {
       setState(() => _error = 'Please enter password.');
+      return;
+    }
+    if (!RegExp(r'^\d{12}$').hasMatch(password)) {
+      setState(() => _error = 'Password must be a 12 digit number.');
       return;
     }
 
@@ -80,7 +85,7 @@ class _LockedOverlayState extends State<LockedOverlay>
 
       if (mounted) {
         if (isValid) {
-          final provider = context.read<AppProvider>();
+          final provider = ref.read(appProvider);
           provider.setLockedByAdmin(false);
           _passwordController.clear();
           setState(() {
@@ -110,7 +115,7 @@ class _LockedOverlayState extends State<LockedOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final isLocked = context.select<AppProvider, bool>((p) => p.lockedByAdmin);
+    final isLocked = ref.watch(appProvider.select((p) => p.lockedByAdmin));
     if (!isLocked) return const SizedBox.shrink();
 
     if (PlatformInfo.isWeb) {
@@ -204,8 +209,9 @@ class _LockedOverlayState extends State<LockedOverlay>
                       children: [
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
-                          keyboardType: TextInputType.text,
+                          obscureText: false,
+                          keyboardType: TextInputType.number,
+                          maxLength: 12,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,

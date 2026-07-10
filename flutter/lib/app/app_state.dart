@@ -19,7 +19,6 @@ enum AuthState {
   endRental,
   faq,
   vehiclePhotos,
-  topUpPurpose,
   topUpAmount,
   topUpUpi,
   topUpProof,

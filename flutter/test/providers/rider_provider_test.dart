@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:voltium_rider/providers/rider_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';

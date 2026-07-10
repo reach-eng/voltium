@@ -590,7 +590,11 @@ class PhotoUploadCard extends StatelessWidget {
 }
 
 /// Curtain header for pickup hub screen
-Widget buildCurtainHeader({VoidCallback? onBack}) {
+Widget buildCurtainHeader({
+  required String title,
+  required String subtitle,
+  VoidCallback? onBack,
+}) {
   return Container(
     width: double.infinity,
     decoration: const BoxDecoration(
@@ -622,7 +626,7 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
         ),
         const SizedBox(height: 24),
         Text(
-          'Pickup Verification',
+          title,
           style: GoogleFonts.inter(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -632,7 +636,7 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
         ),
         const SizedBox(height: 8),
         Text(
-          'Complete the verification steps to assign and pick up your vehicle',
+          subtitle,
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w400,

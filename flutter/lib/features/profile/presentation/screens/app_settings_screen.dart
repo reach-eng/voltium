@@ -1,21 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import '../../../../providers/theme_provider.dart';
-import '../../../../providers/locale_provider.dart';
-import '../../../onboarding/presentation/screens/privacy_consent_screen.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import '../../../onboarding/presentation/screens/legal_page_screen.dart';
 
-class AppSettingsScreen extends StatefulWidget {
+class AppSettingsScreen extends ConsumerStatefulWidget {
   const AppSettingsScreen({super.key});
 
   @override
-  State<AppSettingsScreen> createState() => _AppSettingsScreenState();
+  ConsumerState<AppSettingsScreen> createState() => _AppSettingsScreenState();
 }
 
-class _AppSettingsScreenState extends State<AppSettingsScreen> {
+class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
   bool _twoFactor = true;
   bool _notifications = true;
+
+  static const String _keyPush = 'notif_push';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationPreference();
+  }
+
+  Future<void> _loadNotificationPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        _notifications = prefs.getBool(_keyPush) ?? true;
+      });
+    } catch (e) {
+      debugPrint('Failed to load notification preference: $e');
+    }
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    setState(() => _notifications = value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyPush, value);
+      await NotificationService().refreshNotificationPreference();
+    } catch (e) {
+      debugPrint('Failed to save notification preference: $e');
+    }
+  }
 
   Future<void> _launchUrl(String url) async {
     try {
@@ -76,10 +110,10 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final localeProvider = context.watch<LocaleProvider>();
-    final isDark = themeProvider.isDarkMode;
-    final currentLocale = localeProvider.locale.languageCode;
+    final themeProv = ref.watch(themeProviderRef);
+    final localeProv = ref.watch(localeProviderRef);
+    final isDark = themeProv.isDarkMode;
+    final currentLocale = localeProv.locale.languageCode;
 
     return Scaffold(
       backgroundColor:
@@ -87,18 +121,38 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leadingWidth: 68,
         leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_back,
-                color:
-                    isDark ? AppColors.iconBackground : const Color(0xFF1E293B),
-                size: 20,
+          padding: const EdgeInsets.only(left: 20),
+          child: UnconstrainedBox(
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              onPressed: () => Navigator.pop(context),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => Navigator.pop(context),
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: isDark
+                        ? AppColors.iconBackground
+                        : const Color(0xFF1E293B),
+                    size: 20,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -126,7 +180,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   iconBgColor: const Color(0xFFEFF6FF),
                   title: 'Notifications',
                   value: _notifications,
-                  onChanged: (v) => setState(() => _notifications = v),
+                  onChanged: _toggleNotifications,
                   isDark: isDark,
                 ),
                 _buildDivider(isDark: isDark),
@@ -139,7 +193,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                       : AppColors.iconBackground,
                   title: 'Dark Mode',
                   value: isDark,
-                  onChanged: (v) => themeProvider.setDarkMode(v),
+                  onChanged: (v) => themeProv.setDarkMode(v),
                   isDark: isDark,
                 ),
                 _buildDivider(isDark: isDark),
@@ -150,7 +204,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   iconBgColor: const Color(0xFFECFDF5),
                   title: 'Language',
                   trailing: currentLocale == 'hi' ? 'Hindi' : 'English',
-                  onTap: () => _showLanguageDialog(context, localeProvider),
+                  onTap: () => _showLanguageDialog(context, localeProv),
                   isDark: isDark,
                 ),
               ],
@@ -251,13 +305,12 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
                   icon: Icons.tune_outlined,
                   iconColor: AppColors.success,
                   iconBgColor: const Color(0xFFECFDF5),
-                  title: 'Privacy Choices',
+                  title: 'Privacy Policy',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => PrivacyConsentScreen(
-                          onBack: () => Navigator.maybePop(context),
-                          onNext: () => Navigator.maybePop(context),
+                        builder: (_) => const LegalPageScreen(
+                          documentType: LegalDocumentType.privacy,
                         ),
                       ),
                     );

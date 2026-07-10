@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'troubleshooter_screen.dart';
 import '../../../../theme/app_theme.dart';
 
-class SupportChecklistScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class SupportChecklistScreen extends ConsumerStatefulWidget {
   const SupportChecklistScreen({super.key});
 
   @override
-  State<SupportChecklistScreen> createState() => _SupportChecklistScreenState();
+  ConsumerState<SupportChecklistScreen> createState() => _SupportChecklistScreenState();
 }
 
-class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
+class _SupportChecklistScreenState extends ConsumerState<SupportChecklistScreen> {
   late List<bool> _checkedItems;
 
   @override
   void initState() {
     super.initState();
     final checklist =
-        context.read<AppProvider>().supportConfig?.ticketChecklist ?? [];
+        ref.read(appProvider).supportConfig?.ticketChecklist ?? [];
     _checkedItems = List<bool>.filled(checklist.length, false);
   }
 
@@ -27,7 +28,7 @@ class _SupportChecklistScreenState extends State<SupportChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
+    final provider = ref.watch(appProvider);
     final checklist = provider.supportConfig?.ticketChecklist ?? [];
 
     return Scaffold(

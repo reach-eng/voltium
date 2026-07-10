@@ -272,7 +272,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   Text(
                     'Estimated time: Within 24 hours',
                     style: GoogleFonts.inter(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
@@ -304,7 +304,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
               child: Text(
                 'Balance will update after admin approval. You\'ll receive a notification once it\'s done.',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
+                  fontSize: 14,
                   color: AppColors.onSurfaceVariant,
                   height: 1.5,
                 ),

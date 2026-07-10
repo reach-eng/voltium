@@ -88,7 +88,7 @@ class AssignmentDetailsCard extends StatelessWidget {
           Text(
             'ASSIGNMENT DETAILS',
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w800,
               color: kOutlineColor,
               letterSpacing: 1.5,
@@ -259,7 +259,7 @@ class VehicleConditionCard extends StatelessWidget {
                 child: Text(
                   'MANDATORY',
                   style: GoogleFonts.inter(
-                    fontSize: 9,
+                    fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: AppColors.error,
                     letterSpacing: 0.5,
@@ -356,7 +356,7 @@ class VehicleConditionCard extends StatelessWidget {
           Text(
             'Take a selfie next to the vehicle before riding',
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w400,
               color: kOutlineColor,
             ),

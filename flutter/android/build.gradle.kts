@@ -42,10 +42,8 @@ subprojects {
             }
         }
         project.tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-            kotlinOptions {
-                languageVersion = "1.9"
-                apiVersion = "1.9"
-                jvmTarget = "17"
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             }
         }
     }

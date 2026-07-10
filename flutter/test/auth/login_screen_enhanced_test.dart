@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/auth/presentation/screens/login_screen.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/locale_provider.dart';
-import 'package:voltium_rider/providers/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 
 /// Enhanced LoginScreen widget tests covering:
 /// - Basic rendering & layout
@@ -15,12 +16,10 @@ import 'package:voltium_rider/providers/theme_provider.dart';
 /// - Accessibility semantics
 
 Widget buildTestApp({Function(String)? onNext, bool isSignUp = false}) {
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (_) => LocaleProvider()),
-      ChangeNotifierProvider(create: (_) => ThemeProvider()),
-    ],
-    child: MaterialApp(
+  return ProviderScope(overrides: [
+      localeProviderRef.overrideWith((ref) => LocaleProvider()),
+      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+    ], child: MaterialApp(
       home: LoginScreen(onNext: onNext, isSignUp: isSignUp),
     ),
   );

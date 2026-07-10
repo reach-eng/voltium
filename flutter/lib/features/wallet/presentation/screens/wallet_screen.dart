@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:voltium_rider/widgets/top_up_request_sent_card.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/models/transaction_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'top_up_flow.dart';
 import 'package:voltium_rider/features/wallet/presentation/widgets/wallet_widgets.dart';
 
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 /// Wallet screen for the Voltium Rider App.
 ///
 /// Shows the available balance, payment streak, top-up / history actions,
 /// and a list of recent transactions. All user-facing strings come from
-class WalletScreen extends StatefulWidget {
+class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
 
   @override
-  State<WalletScreen> createState() => _WalletScreenState();
+  ConsumerState<WalletScreen> createState() => _WalletScreenState();
 }
 
-class _WalletScreenState extends State<WalletScreen> {
+class _WalletScreenState extends ConsumerState<WalletScreen> {
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AppProvider>().refreshTransactions();
+      ref.read(appProvider).refreshTransactions();
     });
   }
 
@@ -35,12 +37,11 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rider = context.select<AppProvider, RiderModel?>((p) => p.rider);
-    final transactions = context
-        .select<AppProvider, List<TransactionModel>>((p) => p.transactions);
+    final rider = ref.watch(appProvider.select((p) => p.rider));
+    final transactions =
+        ref.watch(appProvider.select((p) => p.transactions));
     final isRefreshing =
-        context.select<AppProvider, bool>((p) => p.isRefreshingTransactions);
-    final appProvider = context.read<AppProvider>();
+        ref.watch(appProvider.select((p) => p.isRefreshingTransactions));
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       body: Column(
@@ -65,11 +66,11 @@ class _WalletScreenState extends State<WalletScreen> {
                 InkWell(
                   key: const Key('refreshButton'),
                   onTap: () {
-                    context.read<AppProvider>().refresh();
-                    context.read<AppProvider>().refreshTransactions();
+                    ref.read(appProvider).refresh();
+                    ref.read(appProvider).refreshTransactions();
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
@@ -88,8 +89,8 @@ class _WalletScreenState extends State<WalletScreen> {
             child: RefreshIndicator(
               color: AppColors.primary,
               onRefresh: () async {
-                await appProvider.refresh();
-                await appProvider.refreshTransactions();
+                await ref.read(appProvider).refresh();
+                await ref.read(appProvider).refreshTransactions();
               },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
@@ -99,7 +100,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   // Balance card.
                   FadeUpWidget(
                     delay: 100,
-                    child: WalletBalanceCard(rider: rider),
+                    child: WalletBalanceCard(
+                      rider: rider,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -109,18 +112,23 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: SecurityDepositCard(rider: rider),
                   ),
                   const SizedBox(height: 12),
-
-                  // Action buttons: Top Up & History.
-                  FadeUpWidget(
-                    delay: 300,
-                    child: WalletActionButtons(
-                      onTopUp: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const TopUpFlow()),
+                  if (rider != null &&
+                      (rider.depositStatus == DepositStatus.pendingVerification ||
+                          rider.depositStatus == DepositStatus.rejected)) ...[
+                    FadeUpWidget(
+                      delay: 300,
+                      child: TopUpRequestSentCard(
+                        rider: rider,
+                        topUpAmount: rider.depositRecord != null 
+                            ? (rider.depositRecord!.amountInPaise / 100).round() 
+                            : 0,
+                        onResubmit: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const TopUpFlow()),
+                        ),
                       ),
-                      onHistory: () {},
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 12),
+                  ],
 
                   // Recent transactions with filters.
                   FadeUpWidget(
@@ -130,40 +138,12 @@ class _WalletScreenState extends State<WalletScreen> {
                       selectedFilter: _selectedFilter,
                       onFilterChanged: (f) =>
                           setState(() => _selectedFilter = f),
-                      onDeleteHistory: () =>
-                          _confirmDeleteHistory(context, appProvider),
                     ),
                   ),
                   if (isRefreshing) const SizedBox.shrink(),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDeleteHistory(BuildContext context, AppProvider provider) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete History?'),
-        content: const Text(
-          'This will clear your local transaction history. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await provider.deleteTransactionHistory();
-              if (context.mounted) Navigator.pop(context);
-            },
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),

@@ -1,22 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/config/app_config.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/services/document_local_cache.dart';
+import 'package:universal_io/io.dart';
 import '../../../../theme/app_theme.dart';
 
-class MyDocumentsScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class MyDocumentsScreen extends ConsumerWidget {
   const MyDocumentsScreen({super.key});
 
-  Future<void> _viewDocument(BuildContext context, String? url) async {
+  Future<void> _viewDocument(BuildContext context, String? url,
+      {String? cacheKey}) async {
     if (url == null || url.isEmpty) return;
+
+    // Prefer local cached file if available (from onboarding upload).
+    if (cacheKey != null) {
+      final localPath = await DocumentLocalCache.get(cacheKey);
+      if (localPath != null && File(localPath).existsSync()) {
+        final uri = Uri.file(localPath);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+    }
+
+    // Fallback to network download.
     String fullUrl = url;
-    // If the URL is a storage key (relative path like kyc/abc.jpg),
-    // construct the full URL by prepending the API base URL.
-    // Files stored by Voltium are accessible via /api/files/{storageKey}.
     if (!url.startsWith('http')) {
       final baseUrl = AppConfig.apiBaseUrl;
       final path = url.startsWith('/') ? url.substring(1) : url;
@@ -35,7 +50,7 @@ class MyDocumentsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.iconBackground, // mesh-gradient equivalent bg
       appBar: AppBar(
@@ -47,8 +62,8 @@ class MyDocumentsScreen extends StatelessWidget {
           padding: const EdgeInsets.only(left: 20.0),
           child: UnconstrainedBox(
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -85,9 +100,9 @@ class MyDocumentsScreen extends StatelessWidget {
         ),
         centerTitle: false,
       ),
-      body: Consumer<AppProvider>(
-        builder: (context, provider, child) {
-          final rider = provider.rider;
+      body: Consumer(
+        builder: (context, ref, child) {
+          final rider = ref.watch(appProvider).rider;
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
@@ -118,21 +133,25 @@ class MyDocumentsScreen extends StatelessWidget {
                     label: 'Aadhaar Card (Front)',
                     url: rider?.aadhaarFront,
                     icon: Icons.description_outlined,
+                    cacheKey: 'aadhaarFront',
                   ),
                   _DocModel(
                     label: 'Aadhaar Card (Back)',
                     url: rider?.aadhaarBack,
                     icon: Icons.description_outlined,
+                    cacheKey: 'aadhaarBack',
                   ),
                   _DocModel(
                     label: 'PAN Card',
                     url: rider?.panCard,
                     icon: Icons.badge_outlined,
+                    cacheKey: 'panCard',
                   ),
                   _DocModel(
                     label: 'Digital Signature',
                     url: rider?.signature,
                     icon: Icons.gesture_outlined,
+                    cacheKey: 'signature',
                   ),
                 ],
                 150,
@@ -159,27 +178,32 @@ class MyDocumentsScreen extends StatelessWidget {
                     label: "Guarantor's Aadhaar (Front)",
                     url: rider?.guarantorAadhaarFront,
                     icon: Icons.shield_outlined,
+                    cacheKey: 'guarantorAadhaarFront',
                   ),
                   _DocModel(
                     label: "Guarantor's Aadhaar (Back)",
                     url: rider?.guarantorAadhaarBack,
                     icon: Icons.shield_outlined,
+                    cacheKey: 'guarantorAadhaarBack',
                   ),
                   _DocModel(
                     label: "Guarantor's PAN Card",
                     url: rider?.guarantorPan,
                     icon: Icons.contact_mail_outlined,
+                    cacheKey: 'guarantorPan',
                   ),
                   _DocModel(
                     label: "Verification Video",
                     url: rider?.guarantorVideo,
                     icon: Icons.videocam_outlined,
                     isVideo: true,
+                    cacheKey: 'guarantorVideo',
                   ),
                   _DocModel(
                     label: "Guarantor's Signature",
                     url: rider?.guarantorSignature,
                     icon: Icons.gesture_outlined,
+                    cacheKey: 'guarantorSignature',
                   ),
                 ],
                 450,
@@ -245,7 +269,7 @@ class MyDocumentsScreen extends StatelessWidget {
                       Text(
                         'SECURITY PROFILE',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.successText,
                           letterSpacing: 1.2,
@@ -290,7 +314,7 @@ class MyDocumentsScreen extends StatelessWidget {
                 ? 'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'
                 : 'Your verification is in progress. Some documents may still be under review by our safety team.',
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               color: AppColors.slate500,
               height: 1.5,
               fontWeight: FontWeight.w500,
@@ -307,7 +331,7 @@ class MyDocumentsScreen extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w900,
             color: AppColors.slate500,
             letterSpacing: 1.2,
@@ -322,7 +346,7 @@ class MyDocumentsScreen extends StatelessWidget {
         Text(
           '$count FILES',
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w900,
             color: AppColors.primary,
           ),
@@ -379,7 +403,7 @@ class MyDocumentsScreen extends StatelessWidget {
   Widget _buildDocItem(BuildContext context, _DocModel doc) {
     final bool isVideo = doc.isVideo;
     return InkWell(
-      onTap: () => _viewDocument(context, doc.url),
+      onTap: () => _viewDocument(context, doc.url, cacheKey: doc.cacheKey),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -431,7 +455,7 @@ class MyDocumentsScreen extends StatelessWidget {
                       const Text(
                         'VERIFIED',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.success,
                           letterSpacing: 1,
@@ -450,7 +474,7 @@ class MyDocumentsScreen extends StatelessWidget {
                       Text(
                         isVideo ? 'VIDEO' : 'IMAGE',
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.slate500,
                           letterSpacing: 1,
@@ -518,7 +542,7 @@ class MyDocumentsScreen extends StatelessWidget {
                 const Text(
                   'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     color: AppColors.primary,
                     height: 1.5,
                     fontWeight: FontWeight.w500,
@@ -533,7 +557,7 @@ class MyDocumentsScreen extends StatelessWidget {
                       Text(
                         'CONTACT SUPPORT',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.primary,
                           letterSpacing: 1.2,
@@ -562,11 +586,13 @@ class _DocModel {
   final String? url;
   final IconData icon;
   final bool isVideo;
+  final String? cacheKey;
 
   _DocModel({
     required this.label,
     this.url,
     required this.icon,
     this.isVideo = false,
+    this.cacheKey,
   });
 }

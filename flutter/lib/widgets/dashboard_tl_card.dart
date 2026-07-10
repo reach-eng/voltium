@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'premium_cards.dart';
 
 /// Team Leader card widget for the Active Dashboard.
 class TeamLeaderCard extends StatelessWidget {
@@ -16,8 +17,10 @@ class TeamLeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -118,6 +121,6 @@ class TeamLeaderCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

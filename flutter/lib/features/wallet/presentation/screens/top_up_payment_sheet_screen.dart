@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
-import '../../../../providers/rider_provider.dart';
-import '../../../../providers/wallet_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import '../../../../widgets/animated_checkmark.dart';
 
-class TopUpPaymentSheetScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+class TopUpPaymentSheetScreen extends ConsumerStatefulWidget {
   final int amount;
   final String purpose;
   final VoidCallback onBack;
@@ -23,11 +24,11 @@ class TopUpPaymentSheetScreen extends StatefulWidget {
   });
 
   @override
-  State<TopUpPaymentSheetScreen> createState() =>
+  ConsumerState<TopUpPaymentSheetScreen> createState() =>
       _TopUpPaymentSheetScreenState();
 }
 
-class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
+class _TopUpPaymentSheetScreenState extends ConsumerState<TopUpPaymentSheetScreen>
     with WidgetsBindingObserver {
   bool _isProcessing = false;
   bool _isSuccess = false;
@@ -106,8 +107,8 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
 
     if (!mounted) return;
 
-    final riderId = context.read<RiderProvider>().riderId ?? '';
-    await context.read<WalletProvider>().topUpWallet(
+    final riderId = ref.read(riderProvider).riderId ?? '';
+    await ref.read(walletProvider).topUpWallet(
           amount: widget.amount.toDouble(),
           method: 'UPI',
           upiRef: 'AUTO_UPI',
@@ -180,8 +181,8 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                   key: const Key('backButton'),
                   onTap: widget.onBack,
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 44,
+                    height: 44,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -235,7 +236,7 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                             ? 'WALLET TOP-UP'
                             : 'SECURITY DEPOSIT',
                         style: GoogleFonts.inter(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w900,
                           color: AppColors.primary,
                           letterSpacing: 1.2,
@@ -254,7 +255,7 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                       Text(
                         'Instant activation via UPI',
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
@@ -330,7 +331,7 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                       Text(
                         'Scan QR to Pay with any app',
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.onSurface,
                         ),
@@ -339,7 +340,7 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                       Text(
                         'BHIM, GPay, PhonePe, Paytm, etc.',
                         style: GoogleFonts.inter(
-                          fontSize: 11,
+                          fontSize: 13,
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
@@ -356,7 +357,7 @@ class _TopUpPaymentSheetScreenState extends State<TopUpPaymentSheetScreen>
                       Text(
                         'Waiting for payment confirmation...',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

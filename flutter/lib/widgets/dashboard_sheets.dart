@@ -2,12 +2,13 @@ import 'package:universal_io/io.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/rider_model.dart';
-import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/toast.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 /// TL Details bottom sheet
 void showTLDetailsSheet(BuildContext context, RiderModel rider) {
@@ -95,7 +96,15 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                   const Spacer(),
                   IconButton(
                     key: const Key('callTeamLeaderButton'),
-                    onPressed: () {},
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Calling Team Leader...'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.call, color: Color(0xFF16A34A)),
                   ),
                 ],
@@ -587,7 +596,7 @@ Future<void> startVehicleReturnWorkflow(
       ),
     );
 
-    final success = await context.read<AppProvider>().submitVehicleReturn(
+    final success = await ProviderScope.containerOf(context, listen: false).read(appProvider).submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
         );
@@ -669,12 +678,12 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
 
 void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
   final updated = rider.copyWith(intent: newIntent);
-  context.read<AppProvider>().updateRider(updated);
+  ProviderScope.containerOf(context, listen: false).read(appProvider).updateRider(updated);
   Navigator.pop(context);
   Toast.success(context, 'Intent updated successfully');
 }
 
-class _IntentOption extends StatelessWidget {
+class _IntentOption extends ConsumerWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -686,7 +695,7 @@ class _IntentOption extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
       title: Text(label),
       leading: Icon(

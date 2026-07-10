@@ -6,7 +6,8 @@ export type FileCategory =
   | 'support_attachment'
   | 'pickup_verification'
   | 'RETURN_PHOTO'
-  | 'TOPUP_PROOF';
+  | 'TOPUP_PROOF'
+  | 'vehicle_return';
 
 export enum FileOwnerType {
   RIDER = 'RIDER',

@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import {
   Activity,
   AlertOctagon,
@@ -165,23 +166,38 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
             const isActive = activeSection === item.id;
             const Icon = iconMap[item.icon];
 
-            const button = (
+            const buttonContent = (
               <Button
-                key={item.id}
-                data-nav-id={item.id}
                 variant="ghost"
-                onClick={() => {
-                  setActiveSection(item.id);
-                }}
-                className={`w-full justify-start gap-3 h-10 px-3 font-normal transition-colors ${
+                className={`w-full justify-start gap-3 h-11 px-4 font-medium transition-colors duration-200 relative z-10 ${
                   isActive
-                    ? 'bg-primary/10 text-primary hover:bg-primary/15'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 } ${collapsed ? 'px-0 justify-center' : ''}`}
               >
-                {Icon && <Icon className="w-[18px] h-[18px] shrink-0" />}
+                {Icon && <Icon className="w-5 h-5 shrink-0" />}
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </Button>
+            );
+
+            const button = (
+              <motion.div
+                key={item.id}
+                data-nav-id={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className="relative cursor-pointer"
+                whileTap={{ scale: 0.98 }}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-nav-indicator"
+                    className="absolute inset-0 bg-primary/10 rounded-md"
+                    initial={false}
+                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                  />
+                )}
+                {buttonContent}
+              </motion.div>
             );
 
             if (collapsed) {
@@ -208,9 +224,9 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
       <div className="p-3 shrink-0">
         <Button
           variant="ghost"
-          size="sm"
+          size="default"
           onClick={toggleSidebar}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-muted-foreground hover:text-foreground h-11 transition-colors duration-200"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />

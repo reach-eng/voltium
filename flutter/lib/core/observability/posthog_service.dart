@@ -2,9 +2,6 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 class PostHogService {
-  static const String _postHogApiKey =
-      'phc_placeholder'; // To be replaced via env
-
   static Future<void> initialize() async {
     if (kIsWeb) return; // For now focus on mobile app
     // PostHog SDK init is deferred until a real API key is provided via

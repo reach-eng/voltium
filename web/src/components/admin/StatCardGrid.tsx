@@ -3,6 +3,20 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, Bike, IndianRupee, ShieldAlert, Clock, AlertTriangle, MessageSquare, CalendarDays } from 'lucide-react';
 import { useAdminStore } from '@/store/admin';
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 350, damping: 25 } }
+};
 
 interface DashboardStats {
   totalRiders: number;
@@ -48,7 +62,12 @@ export default function StatCardGrid({ stats }: StatCardGridProps) {
   const setActiveSection = useAdminStore((s) => s.setActiveSection);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr">
+    <motion.div 
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       {statCards.map((card) => {
         const value = (stats?.[card.key as keyof DashboardStats] as number) ?? 0;
         const Icon = card.icon;
@@ -58,32 +77,38 @@ export default function StatCardGrid({ stats }: StatCardGridProps) {
             : '';
 
         return (
-          <Card
-            key={card.key}
-            className="h-full rounded-2xl border-border/50 shadow-sm hover:border-primary/30 transition-all duration-300 cursor-pointer group"
-            onClick={() => setActiveSection(card.route)}
+          <motion.div 
+            key={card.key} 
+            variants={itemVariants} 
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+            className="h-full"
           >
-            <CardContent className="p-5 relative">
-              <div className="flex items-center justify-between relative z-10">
-                <div className="space-y-1 min-w-0">
-                  <p className="text-sm font-medium text-muted-foreground truncate">
-                    {card.label}
-                  </p>
-                  <h3 className="text-2xl font-bold tracking-tight text-foreground">
-                    {card.format
-                      ? formatINR(value)
-                      : value.toLocaleString('en-IN')}
-                  </h3>
-                  {kycInfo && <p className="text-xs text-muted-foreground">{kycInfo}</p>}
+            <Card
+              className="h-full rounded-2xl border-border/50 shadow-sm hover:border-primary/30 hover:shadow-md transition-all duration-300 cursor-pointer group"
+              onClick={() => setActiveSection(card.route)}
+            >
+              <CardContent className="p-5 relative">
+                <div className="flex items-center justify-between relative z-10">
+                  <div className="space-y-1 min-w-0">
+                    <p className="text-sm font-medium text-muted-foreground truncate">
+                      {card.label}
+                    </p>
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground">
+                      {card.format
+                        ? formatINR(value)
+                        : value.toLocaleString('en-IN')}
+                    </h3>
+                    {kycInfo && <p className="text-xs text-muted-foreground">{kycInfo}</p>}
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-primary" />
+                  </div>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

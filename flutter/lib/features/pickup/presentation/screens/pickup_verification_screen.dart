@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class PickupVerificationScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class PickupVerificationScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
   final VoidCallback? onBack;
   final String hubId;
@@ -33,11 +34,11 @@ class PickupVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<PickupVerificationScreen> createState() =>
+  ConsumerState<PickupVerificationScreen> createState() =>
       _PickupVerificationScreenState();
 }
 
-class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
+class _PickupVerificationScreenState extends ConsumerState<PickupVerificationScreen> {
   bool _isLoading = false;
   bool _agreedToTerms = false;
 
@@ -48,8 +49,8 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final provider = context.read<AppProvider>();
-      final riderId = provider.rider?.id;
+      final provider = ref.read(appProvider);
+      final riderId = ref.watch(appProvider).riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -59,10 +60,17 @@ class _PickupVerificationScreenState extends State<PickupVerificationScreen> {
         return;
       }
 
-      final response = await VoltiumApiService().syncPickup(
+      await VoltiumApiService().syncPickup(
         vehicleId: widget.vehicleId,
         hubId: widget.hubId,
         bookingId: riderId,
+        teamLeader: widget.teamLeader,
+        emergencyContact: widget.emergencyContact,
+        pickupPhotoFront: widget.pickupPhotoFront,
+        pickupPhotoBack: widget.pickupPhotoBack,
+        pickupPhotoLeft: widget.pickupPhotoLeft,
+        pickupPhotoRight: widget.pickupPhotoRight,
+        pickupPhotoWithVehicle: widget.pickupPhotoWithVehicle,
       );
 
       // If we reach here, the API call was successful

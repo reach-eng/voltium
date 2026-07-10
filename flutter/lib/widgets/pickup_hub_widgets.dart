@@ -357,35 +357,40 @@ class OtpGrid extends StatelessWidget {
           ),
         ),
         IgnorePointer(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(6, (index) {
-              final text = controller.text;
-              final char = text.length > index ? text[index] : '';
-              final isFocused = text.length == index;
+          child: AnimatedBuilder(
+            animation: controller,
+            builder: (context, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(6, (index) {
+                  final text = controller.text;
+                  final char = text.length > index ? text[index] : '';
+                  final isFocused = text.length == index;
 
-              return Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isFocused ? kPrimaryColor : kOutlineVariantColor,
-                    width: isFocused ? 2.0 : 1.0,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  char,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: kOnSurfaceColor,
-                  ),
-                ),
+                  return Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isFocused ? kPrimaryColor : kOutlineVariantColor,
+                        width: isFocused ? 2.0 : 1.0,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      char,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: kOnSurfaceColor,
+                      ),
+                    ),
+                  );
+                }),
               );
-            }),
+            },
           ),
         ),
       ],
@@ -590,7 +595,11 @@ class PhotoUploadCard extends StatelessWidget {
 }
 
 /// Curtain header for pickup hub screen
-Widget buildCurtainHeader({VoidCallback? onBack}) {
+Widget buildCurtainHeader({
+  required String title,
+  required String subtitle,
+  VoidCallback? onBack,
+}) {
   return Container(
     width: double.infinity,
     decoration: const BoxDecoration(
@@ -622,7 +631,7 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
         ),
         const SizedBox(height: 24),
         Text(
-          'Pickup Verification',
+          title,
           style: GoogleFonts.inter(
             fontSize: 28,
             fontWeight: FontWeight.w800,
@@ -632,7 +641,7 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
         ),
         const SizedBox(height: 8),
         Text(
-          'Complete the verification steps to assign and pick up your vehicle',
+          subtitle,
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w400,
@@ -648,6 +657,7 @@ Widget buildCurtainHeader({VoidCallback? onBack}) {
 Widget buildStickyBottomBar({
   required bool isFormValid,
   required VoidCallback? onSubmit,
+  String buttonText = 'Confirm & Proceed',
 }) {
   return Container(
     decoration: BoxDecoration(
@@ -689,10 +699,10 @@ Widget buildStickyBottomBar({
               ),
             ),
             child: Text(
-              'Next: Final Confirmation',
+              buttonText,
               style: GoogleFonts.inter(
                 fontSize: 15,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

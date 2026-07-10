@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import '../../../../theme/app_theme.dart';
 
 part 'legal_page_content.dart';
@@ -30,11 +30,19 @@ const _kSupportPhone = '+91 1800-889-VOLT';
 // =============================================================================
 
 class LegalPageScreen extends StatefulWidget {
-  const LegalPageScreen({super.key});
+  /// Optional type filter. When null, shows every document.
+  /// When set, shows only the matching section (terms-only = ['terms'], etc.).
+  final LegalDocumentType? documentType;
+
+  const LegalPageScreen({super.key, this.documentType});
 
   @override
   State<LegalPageScreen> createState() => _LegalPageScreenState();
 }
+
+/// Filters which legal documents are shown on the page.
+/// `null` (or [all]) shows everything; a specific value shows only that doc.
+enum LegalDocumentType { all, terms, privacy, refund, guarantor }
 
 class _LegalPageScreenState extends State<LegalPageScreen>
     with TickerProviderStateMixin {
@@ -59,6 +67,26 @@ class _LegalPageScreenState extends State<LegalPageScreen>
   }
 
   String get _currentDate => DateFormat('dd MMMM yyyy').format(DateTime.now());
+
+  /// Sections the screen should show, based on the constructor filter.
+  List<_LegalSection> get _visibleSections {
+    final type = widget.documentType;
+    if (type == null || type == LegalDocumentType.all) return _sections;
+    return _sections.where((s) {
+      switch (type) {
+        case LegalDocumentType.terms:
+          return s.id == 'terms';
+        case LegalDocumentType.privacy:
+          return s.id == 'privacy';
+        case LegalDocumentType.refund:
+          return s.id == 'refund';
+        case LegalDocumentType.guarantor:
+          return s.id == 'guarantor';
+        case LegalDocumentType.all:
+          return true;
+      }
+    }).toList();
+  }
 
   // ── PDF Generation ─────────────────────────────────────────────────────────
 
@@ -311,9 +339,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
               child: ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _sections.length,
+                itemCount: _visibleSections.length,
                 itemBuilder: (context, index) {
-                  final section = _sections[index];
+                  final section = _visibleSections[index];
                   final isExpanded = _expandedIndices.contains(index);
                   final isGuarantor = section.id == 'guarantor';
                   final signerName = isGuarantor
@@ -444,7 +472,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                           const Text(
                                             'SIGNED BY',
                                             style: TextStyle(
-                                              fontSize: 9,
+                                              fontSize: 12,
                                               fontWeight: FontWeight.w900,
                                               color: AppColors.slate400,
                                               letterSpacing: 1.2,
@@ -470,7 +498,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         const Text(
                                           'DATE',
                                           style: TextStyle(
-                                            fontSize: 9,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.w900,
                                             color: AppColors.slate400,
                                             letterSpacing: 1.2,
@@ -639,7 +667,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                       ),
 
                       // Separator between sections
-                      if (index < _sections.length - 1)
+                      if (index < _visibleSections.length - 1)
                         Container(
                           height: 1,
                           color: AppColors.iconBackground,
@@ -665,7 +693,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                   const Text(
                     'NEED HELP?',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                       color: AppColors.slate500,
                       letterSpacing: 1.2,
@@ -715,6 +743,29 @@ class _LegalPageScreenState extends State<LegalPageScreen>
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final type = widget.documentType;
+    String title;
+    if (type == null || type == LegalDocumentType.all) {
+      title = 'Legal';
+    } else {
+      switch (type) {
+        case LegalDocumentType.terms:
+          title = 'Terms of Service';
+          break;
+        case LegalDocumentType.privacy:
+          title = 'Privacy Policy';
+          break;
+        case LegalDocumentType.refund:
+          title = 'Refund Policy';
+          break;
+        case LegalDocumentType.guarantor:
+          title = "Guarantor's Agreement";
+          break;
+        case LegalDocumentType.all:
+          title = 'Legal';
+          break;
+      }
+    }
     return AppBar(
       backgroundColor: AppColors.iconBackground,
       surfaceTintColor: Colors.transparent,
@@ -724,8 +775,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
         padding: const EdgeInsets.only(left: 20.0),
         child: UnconstrainedBox(
           child: Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -756,9 +807,9 @@ class _LegalPageScreenState extends State<LegalPageScreen>
           ),
         ),
       ),
-      title: const Text(
-        'Legal',
-        style: TextStyle(
+      title: Text(
+        title,
+        style: const TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
           color: Color(0xFF1E293B),

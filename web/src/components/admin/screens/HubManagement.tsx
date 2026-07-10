@@ -323,8 +323,8 @@ export default function HubManagement() {
             Manage pickup and fleet hub locations
           </p>
         </div>
-        <Button onClick={() => openDialog()} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Add Hub
+        <Button onClick={() => openDialog()} size="default" className="rounded-xl h-11 px-5">
+          <Plus className="h-5 w-5 mr-1.5" /> Add Hub
         </Button>
       </div>
 
@@ -336,20 +336,20 @@ export default function HubManagement() {
             placeholder="Search by name, location, or city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 rounded-xl border-muted-foreground/20"
+            className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base"
           />
         </div>
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
           <TabsList className="bg-muted/30 p-1 rounded-xl">
-            <TabsTrigger value="ALL" className="rounded-lg text-xs font-bold uppercase h-8 px-3">
+            <TabsTrigger value="ALL" className="rounded-lg text-xs font-bold uppercase h-10 px-4">
               All
             </TabsTrigger>
-            <TabsTrigger value="ACTIVE" className="rounded-lg text-xs font-bold uppercase h-8 px-3">
+            <TabsTrigger value="ACTIVE" className="rounded-lg text-xs font-bold uppercase h-10 px-4">
               Active
             </TabsTrigger>
             <TabsTrigger
               value="INACTIVE"
-              className="rounded-lg text-xs font-bold uppercase h-8 px-3"
+              className="rounded-lg text-xs font-bold uppercase h-10 px-4"
             >
               Inactive
             </TabsTrigger>
@@ -362,42 +362,42 @@ export default function HubManagement() {
             </span>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => handleBulkAction('activate')}
               title="Activate All"
             >
               {bulkLoading ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-3 h-3 mr-1" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5" />
               )}{' '}
               Activate
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => handleBulkAction('deactivate')}
               title="Deactivate All"
             >
-              <Ban className="w-3 h-3 mr-1" /> Deactivate
+              <Ban className="w-4 h-4 mr-1.5" /> Deactivate
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
               disabled={bulkLoading}
               onClick={() => setBulkDeleteTargets(Array.from(selectedIds))}
             >
-              <Trash2 className="w-3 h-3 mr-1" /> Delete
+              <Trash2 className="w-4 h-4 mr-1.5" /> Delete
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 text-xs px-2 hover:bg-muted-foreground/10 transition-all duration-200"
+              size="default"
+              className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
               onClick={() => {
                 const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
                 const header =
@@ -436,7 +436,7 @@ export default function HubManagement() {
                 URL.revokeObjectURL(url);
               }}
             >
-              <Download className="w-3 h-3 mr-1" /> Export
+              <Download className="w-4 h-4 mr-1.5" /> Export
             </Button>
             {lastAction && (
               <>
@@ -599,20 +599,21 @@ export default function HubManagement() {
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        className="h-10 w-10"
                         aria-label="Edit hub"
                         onClick={() => openDialog(hub)}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="text-red-500"
+                        size="icon"
+                        className="h-10 w-10 text-red-500"
                         aria-label="Delete hub"
                         onClick={() => setDeleteTarget(hub.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>

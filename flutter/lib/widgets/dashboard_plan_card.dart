@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/date_helpers.dart';
+import 'premium_cards.dart';
 
 /// Reusable active plan card with blue gradient.
 /// Displays subscription name, time remaining, and next recharge date.
@@ -17,7 +18,9 @@ class PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -164,6 +167,6 @@ class PlanCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

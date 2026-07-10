@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
-class VehiclePhotosScreen extends StatelessWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class VehiclePhotosScreen extends ConsumerWidget {
   const VehiclePhotosScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(appProvider).rider;
     final vehicle = rider?.assignedVehicle ?? 'Not Assigned';
     final pickupPhoto = rider?.pickupPhotoFront;
 
@@ -54,8 +55,8 @@ class VehiclePhotosScreen extends StatelessWidget {
           GestureDetector(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -113,7 +114,7 @@ class VehiclePhotosScreen extends StatelessWidget {
                 Text(
                   'ASSIGNED VEHICLE',
                   style: GoogleFonts.inter(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurfaceVariant,
                     letterSpacing: 1.0,
@@ -143,7 +144,7 @@ class VehiclePhotosScreen extends StatelessWidget {
         Text(
           'PICKUP PHOTOS',
           style: GoogleFonts.inter(
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: FontWeight.w800,
             color: AppColors.onSurface,
             letterSpacing: 1.2,

@@ -9,7 +9,7 @@ import { fcmService } from '@/lib/fcm';
 import { validateBody, riderActionSchema } from '@/lib/validators';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
-import { generateRandomPassword } from '@/lib/utils';
+import { generateRandomPassword, generateNumericPassword } from '@/lib/utils';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 
 export async function POST(req: NextRequest) {
@@ -119,7 +119,7 @@ async function handleSecurityAction(
       break;
 
     case 'ADMIN_LOCK': {
-      const newPassword = generateRandomPassword(8);
+      const newPassword = generateNumericPassword(12);
       dbUpdate.isAdminLocked = true;
       dbUpdate.lockPassword = newPassword;
       // Pin is NOT sent via FCM — the lock screen on the device
@@ -139,7 +139,7 @@ async function handleSecurityAction(
         if (!valid) return errors.unauthorized('Invalid recovery password');
       }
       dbUpdate.isAdminLocked = false;
-      dbUpdate.lockPassword = generateRandomPassword(8);
+      dbUpdate.lockPassword = generateNumericPassword(12);
       if (rider.fcmToken) fcmResult = await fcmService.sendUnlockDevice(rider.fcmToken);
       else fcmResult = { success: true };
       break;

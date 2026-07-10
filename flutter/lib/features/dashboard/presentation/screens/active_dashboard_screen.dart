@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/widgets/cards.dart';
@@ -16,18 +15,22 @@ import 'package:voltium_rider/widgets/dashboard_tl_card.dart';
 import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
 import 'package:voltium_rider/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
+import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
+
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 
 /// Active Dashboard screen for the Voltium Rider App.
 ///
 /// Displays the rider's status, subscription details, assigned vehicle, and referral widget.
-class ActiveDashboardScreen extends StatefulWidget {
+class ActiveDashboardScreen extends ConsumerStatefulWidget {
   const ActiveDashboardScreen({super.key});
 
   @override
-  State<ActiveDashboardScreen> createState() => _ActiveDashboardScreenState();
+  ConsumerState<ActiveDashboardScreen> createState() => _ActiveDashboardScreenState();
 }
 
-class _ActiveDashboardScreenState extends State<ActiveDashboardScreen> {
+class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,15 +44,15 @@ class _ActiveDashboardScreenState extends State<ActiveDashboardScreen> {
   }
 }
 
-class _DashboardStateWidget extends StatelessWidget {
+class _DashboardStateWidget extends ConsumerWidget {
   const _DashboardStateWidget();
 
   @override
-  Widget build(BuildContext context) {
-    final rider = context.select((AppProvider p) => p.rider);
-    final dataState = context.select((AppProvider p) => p.dataState);
-    final isRefreshing = context.select((AppProvider p) => p.isRefreshing);
-    final errorMessage = context.select((AppProvider p) => p.errorMessage);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final rider = ref.watch(appProvider.select((p) => p.rider));
+    final dataState = ref.watch(appProvider.select((p) => p.dataState));
+    final isRefreshing = ref.watch(appProvider.select((p) => p.isRefreshing));
+    final errorMessage = ref.watch(appProvider.select((p) => p.errorMessage));
 
     final isCache = dataState == DataState.fromCache;
 
@@ -71,12 +74,12 @@ class _DashboardStateWidget extends StatelessWidget {
   }
 }
 
-class _DashboardErrorWidget extends StatelessWidget {
+class _DashboardErrorWidget extends ConsumerWidget {
   final String? errorMessage;
   const _DashboardErrorWidget({this.errorMessage});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -97,7 +100,7 @@ class _DashboardErrorWidget extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: () => context.read<AppProvider>().refresh(),
+                onPressed: () => ref.read(appProvider).refresh(),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
@@ -114,11 +117,11 @@ class _DashboardErrorWidget extends StatelessWidget {
   }
 }
 
-class _DashboardEmptyWidget extends StatelessWidget {
+class _DashboardEmptyWidget extends ConsumerWidget {
   const _DashboardEmptyWidget();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: GlassCard(
         child: Column(
@@ -134,7 +137,7 @@ class _DashboardEmptyWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => context.read<AppProvider>().refresh(),
+              onPressed: () => ref.read(appProvider).refresh(),
               icon: const Icon(Icons.refresh),
               label: const Text('Initialize System'),
             ),
@@ -145,7 +148,7 @@ class _DashboardEmptyWidget extends StatelessWidget {
   }
 }
 
-class _DashboardContentWidget extends StatelessWidget {
+class _DashboardContentWidget extends ConsumerWidget {
   final RiderModel rider;
   const _DashboardContentWidget({required this.rider});
 
@@ -153,10 +156,10 @@ class _DashboardContentWidget extends StatelessWidget {
     return InkWell(
       key: const Key('notificationBell'),
       onTap: () {
-        AppNavigator.push(context, const NotificationCenterScreen());
+        AppNavigator.push(context, const NotificationsScreen());
       },
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.2),
           shape: BoxShape.circle,
@@ -215,45 +218,48 @@ class _DashboardContentWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final walletMinTopup = context.select((AppProvider p) => p.walletMinTopup);
-    final dataState = context.select((AppProvider p) => p.dataState);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walletMinTopup = ref.watch(appProvider.select((p) => p.walletMinTopup));
+    final dataState = ref.watch(appProvider.select((p) => p.dataState));
     final isCache = dataState == DataState.fromCache;
 
     return RefreshIndicator(
       color: AppColors.primary,
       backgroundColor: Colors.white,
-      onRefresh: () => context.read<AppProvider>().refresh(),
+      onRefresh: () => ref.read(appProvider).refresh(),
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(
-                        Icons.bolt,
-                        color: AppColors.primary,
-                        size: 32,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Dashboard',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                          letterSpacing: -0.5,
+          SliverSafeArea(
+            bottom: false,
+            sliver: SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.bolt,
+                          color: AppColors.primary,
+                          size: 32,
                         ),
-                      ),
-                    ],
-                  ),
-                  _buildNotificationBell(context),
-                ],
+                        SizedBox(width: 8),
+                        Text(
+                          'Dashboard',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    _buildNotificationBell(context),
+                  ],
+                ),
               ),
             ),
           ),
@@ -279,12 +285,12 @@ class _DashboardContentWidget extends StatelessWidget {
                       const RentalDetailsScreen(),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   PlanCard(
                     currentPlan: rider.currentPlan,
                     planEndDate: rider.planEndDate,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   WalletCard(
                     walletBalance: rider.walletBalance,
                     requiredPayment: rider.activeRentalPlanPrice > 0
@@ -292,18 +298,21 @@ class _DashboardContentWidget extends StatelessWidget {
                         : walletMinTopup,
                     paymentStreak: rider.paymentStreak,
                     currentPlan: rider.currentPlan,
-                    onTopUp: () {},
+                    planEndDate: rider.planEndDate,
+                    onTopUp: () {
+                      AppNavigator.push(context, const TopUpFlow());
+                    },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TeamLeaderCard(
                     teamLeaderName: rider.teamLeader,
                     onViewDetails: () => showTLDetailsSheet(context, rider),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   ReferralCard(
                     referralCode: rider.referralCode ?? 'VOLT123',
                   ),
-                  const SizedBox(height: 120),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
                 ],
               ),
             ),

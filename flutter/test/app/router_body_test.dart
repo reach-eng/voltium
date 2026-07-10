@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/app/router.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
 void main() {
@@ -15,11 +16,9 @@ void main() {
 
     Widget createTestWidget() {
       final appProvider = AppProvider();
-      return MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppProvider>.value(value: appProvider),
-        ],
-        child: const MaterialApp(
+      return ProviderScope(overrides: [
+          appProvider.overrideWith((ref) => appProvider),
+        ], child: const MaterialApp(
           home: AppRouter(),
         ),
       );

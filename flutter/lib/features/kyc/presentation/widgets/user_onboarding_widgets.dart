@@ -1,5 +1,7 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
 class PersonalDetailsCard extends StatelessWidget {
@@ -43,41 +45,33 @@ class PersonalDetailsCard extends StatelessWidget {
         : phone;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: kSurfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: Color(0xFF2563EB),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Personal Details',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ],
+          Text(
+            'Personal Details',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: kOnSurfaceColor,
+              letterSpacing: -0.2,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _buildTextField(
             'Full Name',
             'Enter full name',
@@ -141,37 +135,40 @@ class PersonalDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 6),
+        buildInputLabel(label.toUpperCase()),
+        const SizedBox(height: 8),
         TextFormField(
           key: key,
           controller: controller,
           readOnly: !enabled,
+          style: GoogleFonts.inter(
+            color: kOnSurfaceColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            hintStyle: GoogleFonts.inter(
+              color: kOutlineColor.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: AppColors.surfaceContainer,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
           ),
         ),
@@ -189,47 +186,48 @@ class PersonalDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 6),
+        buildInputLabel(label.toUpperCase()),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: enabled ? onTap : null,
           child: AbsorbPointer(
             child: TextFormField(
               key: const Key('dobField'),
               controller: controller,
+              style: GoogleFonts.inter(
+                color: kOnSurfaceColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle:
-                    const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                hintStyle: GoogleFonts.inter(
+                  color: kOutlineColor.withValues(alpha: 0.7),
+                  fontSize: 14,
+                ),
                 prefixIcon: const Icon(
                   Icons.calendar_today,
                   size: 18,
-                  color: Color(0xFF6B7280),
+                  color: kOutlineColor,
                 ),
                 contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
-                fillColor: enabled
-                    ? AppColors.surfaceContainer
-                    : const Color(0xFFF3F4F6),
+                fillColor: enabled ? Colors.white : const Color(0xFFF3F4F6),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: kOutlineVariantColor, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: kOutlineVariantColor, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF2563EB)),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: kPrimaryColor, width: 1.5),
                 ),
               ),
             ),
@@ -243,32 +241,25 @@ class PersonalDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Phone Number',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 6),
+        buildInputLabel('PHONE NUMBER'),
+        const SizedBox(height: 8),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: kOutlineVariantColor),
           ),
           child: Row(
             children: [
-              const Icon(Icons.phone, size: 16, color: Color(0xFF9CA3AF)),
-              const SizedBox(width: 8),
+              const Icon(Icons.phone, size: 18, color: kOutlineColor),
+              const SizedBox(width: 12),
               Text(
                 phone,
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: Color(0xFF6B7280),
+                  color: kOutlineColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -288,39 +279,40 @@ class PersonalDetailsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
-          ),
-        ),
-        const SizedBox(height: 6),
+        buildInputLabel(label.toUpperCase()),
+        const SizedBox(height: 8),
         TextFormField(
-          key: const Key('currentAddressField'),
           controller: controller,
           maxLines: 3,
           readOnly: !enabled,
+          style: GoogleFonts.inter(
+            color: kOnSurfaceColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            hintStyle: GoogleFonts.inter(
+              color: kOutlineColor.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor:
-                enabled ? AppColors.surfaceContainer : const Color(0xFFF3F4F6),
+            fillColor: Colors.white,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: kOutlineVariantColor, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
           ),
         ),
@@ -362,46 +354,38 @@ class IdentityVerificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: kSurfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.badge_outlined,
-                  color: Color(0xFF4F46E5),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Identity Verification',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
-                ),
-              ),
-            ],
+          Text(
+            'Identity Verification',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: kOnSurfaceColor,
+              letterSpacing: -0.2,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Clear photos only. Max 5MB each.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -482,15 +466,15 @@ class DocTile extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
             color: isUploaded
-                ? const Color(0xFFF0FDF4)
-                : AppColors.surfaceContainer,
+                ? kSuccessColor.withValues(alpha: 0.1)
+                : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isUploaded ? AppColors.success : const Color(0xFFD1D5DB),
-              width: isUploaded ? 1 : 2,
+              color: isUploaded ? kSuccessColor : kOutlineVariantColor,
+              width: 1,
             ),
           ),
           child: Column(
@@ -499,25 +483,23 @@ class DocTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isUploaded ? const Color(0xFFDCFCE7) : Colors.white,
+                  color: isUploaded ? kSuccessColor.withValues(alpha: 0.2) : Colors.white,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   icon,
-                  color:
-                      isUploaded ? AppColors.success : const Color(0xFF6B7280),
+                  color: isUploaded ? kSuccessColor : kOutlineColor,
                   size: 20,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 isUploaded ? 'Uploaded' : label,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color:
-                      isUploaded ? AppColors.success : const Color(0xFF374151),
+                  fontWeight: FontWeight.w600,
+                  color: isUploaded ? kSuccessColor : kOutlineColor,
                 ),
               ),
             ],
@@ -545,12 +527,20 @@ class SelfieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: kSurfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
       ),
+      padding: const EdgeInsets.all(24),
       child: GestureDetector(
         key: const Key('selfieTile'),
         onTap: enabled ? onTap : null,
@@ -559,6 +549,16 @@ class SelfieCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                'Rider Photo',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: kOnSurfaceColor,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 24),
               if (selfieUploaded && selfiePath != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -569,46 +569,48 @@ class SelfieCard extends StatelessWidget {
                   ),
                 )
               else
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: const Color(0xFFD1D5DB), width: 2),
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kOutlineVariantColor, width: 1),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: const Icon(
+                            Icons.photo_camera,
+                            color: kOutlineColor,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Take Rider Photo',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: kOutlineColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Tap to capture your photo',
+                          style: GoogleFonts.inter(
+                            fontSize: 12, 
+                            color: kOutlineColor.withValues(alpha: 0.7)
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: const Icon(
-                          Icons.photo_camera,
-                          color: Color(0xFF2563EB),
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Take Rider Photo',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Tap to capture your photo',
-                        style:
-                            TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
-                      ),
-                    ],
-                  ),
-                ),
               if (selfieUploaded) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -667,46 +669,38 @@ class SignatureCard extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            color: kSurfaceContainer,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+            border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
           ),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.draw,
-                      color: Color(0xFF2563EB),
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Digital Signature',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                ],
+              Text(
+                'Digital Signature',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: kOnSurfaceColor,
+                  letterSpacing: -0.2,
+                ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Sign below to authorize documentation.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               GestureDetector(
                 key: const Key('signatureTile'),
                 onTap: enabled ? onTap : null,
@@ -714,13 +708,14 @@ class SignatureCard extends StatelessWidget {
                   height: 120,
                   decoration: BoxDecoration(
                     color: signatureUploaded
-                        ? const Color(0xFFF0FDF4)
-                        : AppColors.surfaceContainer,
-                    borderRadius: BorderRadius.circular(8),
+                        ? kSuccessColor.withValues(alpha: 0.1)
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: signatureUploaded
-                          ? AppColors.success
-                          : const Color(0xFFD1D5DB),
+                          ? kSuccessColor
+                          : kOutlineVariantColor,
+                      width: 1,
                     ),
                   ),
                   child: Stack(
@@ -730,11 +725,12 @@ class SignatureCard extends StatelessWidget {
                           signatureUploaded
                               ? 'Signature Captured'
                               : 'Tap to draw signature',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 14,
+                            fontWeight: FontWeight.w600,
                             color: signatureUploaded
-                                ? AppColors.success
-                                : const Color(0xFF9CA3AF),
+                                ? kSuccessColor
+                                : kOutlineColor,
                           ),
                         ),
                       ),
@@ -767,125 +763,6 @@ class SignatureCard extends StatelessWidget {
   }
 }
 
-class UserOnboardingAppBar extends StatelessWidget {
-  final VoidCallback? onBack;
-
-  const UserOnboardingAppBar({super.key, this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-            onPressed: onBack,
-          ),
-          const Expanded(
-            child: Text(
-              'Onboarding',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Step',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                ),
-                Text(
-                  '1/2',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class UserOnboardingHeader extends StatelessWidget {
-  const UserOnboardingHeader({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 6,
-          decoration: BoxDecoration(
-            color: const Color(0xFFE5E7EB),
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: screenWidth * 0.45,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: screenWidth * 0.45,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Almost there!',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'We need a few more details to set up your fleet profile securely.',
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        ),
-      ],
-    );
-  }
-}
 
 class UserOnboardingBottomButton extends StatelessWidget {
   final bool canProceed;
@@ -904,71 +781,89 @@ class UserOnboardingBottomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          key: const Key('nextOnboardingButton'),
-          onPressed: !isUploading ? onNext : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            disabledBackgroundColor: const Color(0xFF9CA3AF),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: isUploading
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    ),
-                    if (uploadProgressText.isNotEmpty) ...[
-                      const SizedBox(width: 12),
-                      Text(
-                        uploadProgressText,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      canProceed
-                          ? 'SUBMIT REGISTRATION'
-                          : 'COMPLETE ALL FIELDS',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.arrow_forward,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ],
-                ),
+        border: const Border(
+          top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 16,
+        bottom: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              key: const Key('nextOnboardingButton'),
+              onPressed: !isUploading && canProceed ? onNext : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.outlineVariant,
+                disabledForegroundColor: AppColors.slate400,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: isUploading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        if (uploadProgressText.isNotEmpty) ...[
+                          const SizedBox(width: 12),
+                          Text(
+                            uploadProgressText,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    )
+                  : Text(
+                      'Confirm & Proceed',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: kOutlineColor.withValues(alpha: 0.7),
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
       ),
     );
   }

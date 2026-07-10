@@ -41,8 +41,15 @@ class WalletRepositoryImpl implements WalletRepository {
     int limit = 20,
   }) async {
     final response = await _apiClient.getTransactionHistory(page, limit);
-    final List<dynamic> data =
-        response['data'] ?? response['transactions'] ?? [];
+    List<dynamic> data = [];
+    if (response['data'] is Map<String, dynamic> &&
+        response['data']['transactions'] is List) {
+      data = response['data']['transactions'] as List<dynamic>;
+    } else if (response['data'] is List) {
+      data = response['data'] as List<dynamic>;
+    } else if (response['transactions'] is List) {
+      data = response['transactions'] as List<dynamic>;
+    }
     return data
         .map((e) => TransactionEntity.fromJson(e as Map<String, dynamic>))
         .toList();

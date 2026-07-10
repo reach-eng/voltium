@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
@@ -66,6 +67,7 @@ class _NotificationPreferencesScreenState
       await prefs.setBool(_keyKyc, _kycEnabled);
       await prefs.setBool(_keyMaintenance, _maintenanceEnabled);
       await prefs.setBool(_keyAnnouncements, _announcementsEnabled);
+      await NotificationService().refreshNotificationPreference();
 
       if (mounted) {
         setState(() => _isLoading = false);

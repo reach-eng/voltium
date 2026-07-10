@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/providers/support_provider.dart';
+import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/features/support/domain/repository.dart';
 import 'package:voltium_rider/models/support_model.dart';
 

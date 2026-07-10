@@ -540,8 +540,8 @@ export default function TicketManagement() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setCreateModalOpen(true)}>
-              <MessageSquare className="mr-2 h-4 w-4" /> Create Ticket
+            <Button onClick={() => setCreateModalOpen(true)} size="default" className="rounded-xl h-11 px-5">
+              <MessageSquare className="mr-1.5 h-5 w-5" /> Create Ticket
             </Button>
             <ExportButton
             data={tickets.map((t) => ({
@@ -580,13 +580,13 @@ export default function TicketManagement() {
               placeholder="Search ticket ID, subject, or rider..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-9 rounded-xl border-muted-foreground/20 text-sm"
+              className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base"
             />
           </div>
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-9 px-3 rounded-xl border border-muted-foreground/20 bg-background text-sm"
+            className="h-11 px-3 rounded-xl border border-muted-foreground/20 bg-background text-base"
           >
             <option value="ALL">All Priorities</option>
             <option value="CRITICAL">Critical</option>
@@ -597,8 +597,8 @@ export default function TicketManagement() {
           {search || priorityFilter !== 'ALL' ? (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 text-xs text-muted-foreground"
+              size="default"
+              className="h-11 text-sm px-4 text-muted-foreground"
               onClick={() => {
                 setSearch('');
                 setPriorityFilter('ALL');
@@ -617,53 +617,53 @@ export default function TicketManagement() {
               </span>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                size="default"
+                className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                 disabled={bulkLoading}
                 onClick={() => setBulkStatusDialog(true)}
                 title="Change Status"
               >
                 {bulkLoading ? (
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                 ) : (
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  <CheckCircle2 className="w-4 h-4 mr-1.5" />
                 )}{' '}
                 Status
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                size="default"
+                className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                 disabled={bulkLoading}
                 onClick={() => setBulkAssignDialog(true)}
                 title="Assign To"
               >
-                <UserPlus className="w-3 h-3 mr-1" /> Assign
+                <UserPlus className="w-4 h-4 mr-1.5" /> Assign
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                size="default"
+                className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                 disabled={bulkLoading}
                 onClick={() => setBulkPriorityDialog(true)}
                 title="Change Priority"
               >
-                <AlertTriangle className="w-3 h-3 mr-1" /> Priority
+                <AlertTriangle className="w-4 h-4 mr-1.5" /> Priority
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                size="default"
+                className="h-10 text-sm px-3 hover:bg-primary/10 hover:text-primary transition-all duration-200"
                 disabled={bulkLoading}
                 onClick={() => handleBulkAction('closeResolved')}
                 title="Close Resolved"
               >
-                <Ban className="w-3 h-3 mr-1" /> Close Resolved
+                <Ban className="w-4 h-4 mr-1.5" /> Close Resolved
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs px-2 hover:bg-muted-foreground/10 transition-all duration-200"
+                size="default"
+                className="h-10 text-sm px-3 hover:bg-muted-foreground/10 transition-all duration-200"
                 onClick={() => {
                   const header =
                     'Ticket #,Rider,Phone,Category,Priority,Subject,Status,Assigned,Created';
@@ -697,7 +697,7 @@ export default function TicketManagement() {
                   URL.revokeObjectURL(url);
                 }}
               >
-                <Download className="w-3 h-3 mr-1" /> Export
+                <Download className="w-4 h-4 mr-1.5" /> Export
               </Button>
               {lastAction && (
                 <>
@@ -727,19 +727,19 @@ export default function TicketManagement() {
             </div>
           )}
           <TabsList className="bg-muted/30 p-1 rounded-xl">
-            <TabsTrigger value="all" className="rounded-lg text-xs font-bold h-8 px-3">
+            <TabsTrigger value="all" className="rounded-lg text-xs font-bold h-10 px-4">
               All ({statusCounts.all || 0})
             </TabsTrigger>
-            <TabsTrigger value="OPEN" className="rounded-lg text-xs font-bold h-8 px-3">
+            <TabsTrigger value="OPEN" className="rounded-lg text-xs font-bold h-10 px-4">
               Open ({statusCounts.OPEN || 0})
             </TabsTrigger>
-            <TabsTrigger value="IN_PROGRESS" className="rounded-lg text-xs font-bold h-8 px-3">
+            <TabsTrigger value="IN_PROGRESS" className="rounded-lg text-xs font-bold h-10 px-4">
               In Progress ({statusCounts.IN_PROGRESS || 0})
             </TabsTrigger>
-            <TabsTrigger value="RESOLVED" className="rounded-lg text-xs font-bold h-8 px-3">
+            <TabsTrigger value="RESOLVED" className="rounded-lg text-xs font-bold h-10 px-4">
               Resolved ({statusCounts.RESOLVED || 0})
             </TabsTrigger>
-            <TabsTrigger value="CLOSED" className="rounded-lg text-xs font-bold h-8 px-3">
+            <TabsTrigger value="CLOSED" className="rounded-lg text-xs font-bold h-10 px-4">
               Closed ({statusCounts.CLOSED || 0})
             </TabsTrigger>
           </TabsList>
@@ -820,7 +820,8 @@ export default function TicketManagement() {
                         <TableCell>
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size="icon"
+                            className="h-10 w-10"
                             onClick={() => openDetail(t)}
                             title="View Details"
                           >
@@ -845,7 +846,8 @@ export default function TicketManagement() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
+                className="h-10 px-4"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => p - 1)}
               >
@@ -856,7 +858,8 @@ export default function TicketManagement() {
               </span>
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
+                className="h-10 px-4"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
@@ -966,7 +969,8 @@ export default function TicketManagement() {
                     />
                     <div className="flex justify-end">
                       <Button
-                        size="sm"
+                        size="default"
+                        className="h-10 px-5"
                         onClick={handleSendReply}
                         disabled={
                           replyLoading || !replyMessage.trim() || selectedTicket.status === 'CLOSED'

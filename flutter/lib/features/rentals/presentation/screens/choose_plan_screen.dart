@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/plan_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
-class ChoosePlanScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class ChoosePlanScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
   final VoidCallback? onBack;
 
   const ChoosePlanScreen({super.key, required this.onNext, this.onBack});
 
   @override
-  State<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
+  ConsumerState<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
 }
 
-class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
+class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   List<PlanModel> _plans = [];
   bool _isLoading = true;
   String? _error;
@@ -47,7 +49,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
 
           // Pre-select the plan matching current plan if any, otherwise default to first plan
           final currentPlanName =
-              context.read<AppProvider>().rider?.currentPlan;
+              ref.read(appProvider).rider?.currentPlan;
           if (currentPlanName != null && currentPlanName.isNotEmpty) {
             final matchingIndex = _plans.indexWhere(
               (p) => p.name.toLowerCase() == currentPlanName.toLowerCase(),
@@ -68,11 +70,15 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         });
       }
     } catch (e, stack) {
-      print('FETCH PLANS ERROR: $e');
-      print(stack);
+      debugPrint('FETCH PLANS ERROR: $e');
+      debugPrint('$stack');
       if (!mounted) return;
       setState(() {
-        _error = 'Connection error. Please try again.';
+        if (e is ApiException) {
+          _error = e.message;
+        } else {
+          _error = 'Connection error: $e';
+        }
         _isLoading = false;
       });
     }
@@ -83,8 +89,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final provider = context.read<AppProvider>();
-      final riderId = provider.riderId;
+      final provider = ref.read(appProvider);
+      final riderId = ref.watch(appProvider).riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -93,9 +99,11 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
         }
         return;
       }
-      final hubId = provider.rider?.pickupHub ?? '';
-      const securityDeposit = 1000.0;
-      final response = await VoltiumApiService().subscribePlan(
+      final hubId = ref.watch(appProvider).rider?.pickupHub ?? '';
+      final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
+      final securityDeposit =
+          AppConstants.getPlanSecurityDeposit(selectedPlan.name);
+      await VoltiumApiService().subscribePlan(
         hubId: hubId,
         planId: _selectedPlanId!,
         securityDeposit: securityDeposit,
@@ -120,13 +128,6 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  String _getDurationLabel(int days) {
-    if (days == 1) return 'day';
-    if (days == 7) return 'week';
-    if (days == 30) return 'month';
-    return '$days days';
   }
 
   String _formatPrice(double price) {
@@ -173,7 +174,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
       child: Text(
         'BEST VALUE',
         style: TextStyle(
-          fontSize: 9,
+          fontSize: 12,
           fontWeight: FontWeight.w800,
           color: isSelected ? Colors.white : const Color(0xFF7E22CE),
           letterSpacing: 0.5,
@@ -245,7 +246,8 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                 onTap: () => widget.onBack?.call(),
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
-                                  padding: const EdgeInsets.all(12),
+                                  width: 44,
+                                  height: 44,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(12),
@@ -300,7 +302,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                             final plan = _plans[index];
                             final isSelected = _selectedPlanId == plan.id;
                             final currentPlanName =
-                                context.read<AppProvider>().rider?.currentPlan;
+                                ref.read(appProvider).rider?.currentPlan;
                             final isCurrentPlan = currentPlanName != null &&
                                 plan.name.toLowerCase() ==
                                     currentPlanName.toLowerCase();
@@ -364,7 +366,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                                             ? 'CURRENT PLAN'
                                                             : 'SELECTED PLAN',
                                                         style: TextStyle(
-                                                          fontSize: 11,
+                                                          fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w800,
                                                           color: Colors.white
@@ -548,7 +550,7 @@ class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
                                             ),
                                             TextSpan(
                                               text:
-                                                  ' / ${_getDurationLabel(plan.durationDays)}',
+                                                  ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'premium_cards.dart';
 
 /// Reusable wallet card used across dashboard screens.
 /// Supports a low-balance warning variant and a normal variant.
@@ -8,6 +9,7 @@ class WalletCard extends StatelessWidget {
   final double requiredPayment;
   final int paymentStreak;
   final String? currentPlan;
+  final DateTime? planEndDate;
   final VoidCallback? onTopUp;
   final bool compact;
 
@@ -17,13 +19,21 @@ class WalletCard extends StatelessWidget {
     required this.requiredPayment,
     required this.paymentStreak,
     this.currentPlan,
+    this.planEndDate,
     this.onTopUp,
     this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isLowBalance = walletBalance < (0.25 * requiredPayment);
+    final now = DateTime.now();
+    final daysUntilDue = planEndDate?.difference(now).inDays;
+    // Only show insufficient balance if balance < plan cost AND rent is due
+    // within the next 3 days (or is already overdue).
+    final bool dueIn3Days =
+        daysUntilDue != null && daysUntilDue <= 3;
+    final bool isLowBalance =
+        requiredPayment > 0 && (walletBalance < requiredPayment) && dueIn3Days;
     final bool isDailyPlan =
         currentPlan?.toLowerCase().contains('daily') ?? false;
 
@@ -40,8 +50,10 @@ class WalletCard extends StatelessWidget {
     final Color borderColor =
         isDailyPlan ? const Color(0xFFFDE68A) : const Color(0xFFFECACA);
 
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -208,12 +220,14 @@ class WalletCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildNormalCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return PremiumDoubleBezelCard(
+      padding: EdgeInsets.zero,
+      child: Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -324,6 +338,6 @@ class WalletCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

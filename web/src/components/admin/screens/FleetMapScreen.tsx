@@ -158,7 +158,11 @@ export default function FleetMapScreen() {
         }
         setLastUpdated(new Date());
       } catch (error) {
-        logger.error('Failed to fetch fleet data', { error });
+        if (!isBackground) {
+          logger.error('Failed to fetch fleet data', { error });
+        } else {
+          logger.warn('Background fetch for fleet data failed', { error });
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -245,7 +249,7 @@ export default function FleetMapScreen() {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full h-9 w-9"
+          className="rounded-full h-11 w-11 hover:bg-primary/10"
           onClick={() => fetchData()}
           disabled={refreshing}
         >
@@ -317,7 +321,7 @@ export default function FleetMapScreen() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Name, Phone, ID..."
-                  className="pl-9 h-9 text-sm rounded-xl"
+                  className="pl-9 h-11 text-base rounded-xl"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -326,7 +330,7 @@ export default function FleetMapScreen() {
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Hub</Label>
               <Select value={hubFilter} onValueChange={setHubFilter}>
-                <SelectTrigger className="h-9 text-sm">
+                <SelectTrigger className="h-11 text-base">
                   <SelectValue placeholder="All Hubs" />
                 </SelectTrigger>
                 <SelectContent>
@@ -342,7 +346,7 @@ export default function FleetMapScreen() {
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-9 text-sm">
+                <SelectTrigger className="h-11 text-base">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -385,7 +389,7 @@ export default function FleetMapScreen() {
                     <button
                       key={rider.id}
                       onClick={() => setSelectedRider(rider)}
-                      className={`relative group flex flex-col items-center justify-center p-2 rounded-xl border transition-all hover:scale-105 hover:shadow-md ${
+                      className={`relative group flex flex-col items-center justify-center p-2 min-h-[64px] rounded-xl border transition-all hover:scale-105 hover:shadow-md ${
                         isLowBattery
                           ? 'border-rose-500/30 bg-rose-500/5 hover:border-rose-500/50'
                           : status === 'active'
@@ -489,14 +493,15 @@ export default function FleetMapScreen() {
                   </div>
                   <div className="flex gap-2 pt-2">
                     <Button
-                      className="flex-1"
+                      size="default"
+                      className="flex-1 h-11"
                       onClick={() => window.open(`tel:${selectedRider.phone}`)}
                     >
-                      <Phone className="w-4 h-4 mr-2" />
+                      <Phone className="w-5 h-5 mr-2" />
                       Call
                     </Button>
-                    <Button variant="outline" className="flex-1">
-                      <User className="w-4 h-4 mr-2" />
+                    <Button variant="outline" size="default" className="flex-1 h-11">
+                      <User className="w-5 h-5 mr-2" />
                       View Profile
                     </Button>
                   </div>

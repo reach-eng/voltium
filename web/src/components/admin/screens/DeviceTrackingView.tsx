@@ -184,7 +184,7 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
       case 'ADMIN_LOCK':
         title = 'Admin Override Lock';
         message =
-          'This will generate a one-time alphanumeric password and lockdown the device. Continue?';
+          'This will generate a 12-digit numeric password and lockdown the device. Continue?';
         break;
       case 'UNLOCK_DEVICE':
         title = 'Unlock Device';
@@ -313,14 +313,14 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
             </div>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
               onClick={() => {
                 setSelectedRiderId(undefined);
                 setData(null);
               }}
-              className="rounded-xl"
+              className="rounded-xl h-11 px-5"
             >
-              <UserPlus className="w-4 h-4 mr-2" />
+              <UserPlus className="w-5 h-5 mr-2" />
               Change Rider
             </Button>
           </div>
@@ -334,7 +334,7 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
             <button
               key={tab.id}
               onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 ${
+              className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg text-xs font-bold transition-all duration-300 ${
                 activeSubTab === tab.id
                   ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
                   : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
@@ -361,7 +361,7 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                 {data?.callLogs.map((call, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-3 rounded-xl border bg-card/50 hover:border-primary/30 transition-all duration-300"
+                    className="flex items-center justify-between p-2.5 rounded-xl border bg-card/50 hover:border-primary/30 transition-all duration-300 group"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -382,20 +382,20 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-foreground/90">
+                        <p className="text-sm font-bold text-foreground/90 tabular-nums">
                           {call.name || call.number}
                         </p>
-                        <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/60">
+                        <p className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground/60 tabular-nums">
                           {call.number}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase">
+                      <div className="flex items-center justify-end gap-1 text-[10px] font-mono text-muted-foreground uppercase tabular-nums">
                         <Clock className="w-3 h-3" />
                         {Math.floor(call.duration / 60)}m {call.duration % 60}s
                       </div>
-                      <p className="text-[10px] text-muted-foreground/50 mt-1">
+                      <p className="text-[10px] text-muted-foreground/50 mt-1 font-mono tabular-nums">
                         {formatDateTimeDDMMYYYY(call.timestamp)}
                       </p>
                     </div>
@@ -424,9 +424,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {filteredContacts.map((contact, i) => (
-                  <div key={i} className="p-3 rounded-xl border bg-card/50 flex flex-col gap-1">
+                  <div key={i} className="p-2.5 rounded-xl border bg-card/50 flex flex-col gap-1 hover:border-primary/30 transition-colors">
                     <p className="text-xs font-bold text-foreground/90 truncate">{contact.name}</p>
-                    <p className="text-[10px] font-bold text-primary">{contact.phone}</p>
+                    <p className="text-[10px] font-mono tabular-nums text-primary">{contact.phone}</p>
                     {contact.email && (
                       <p className="text-[10px] text-muted-foreground truncate">{contact.email}</p>
                     )}
@@ -450,12 +450,42 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                 </h4>
                 <Badge className="bg-emerald-500 text-white border-0">Live Active</Badge>
               </div>
-              <div className="aspect-video w-full rounded-2xl bg-muted/30 border-2 border-dashed border-muted flex flex-col items-center justify-center text-muted-foreground group">
-                <MapPin className="w-10 h-10 mb-4 opacity-20 group-hover:scale-110 transition-transform duration-500 text-primary" />
-                <p className="text-sm font-bold">Interactive Map Integration</p>
-                <p className="text-[10px] uppercase font-bold tracking-widest opacity-40 mt-1">
-                  Real-time coordinates active
-                </p>
+              <div className="aspect-video w-full rounded-2xl bg-slate-900 border-2 border-slate-800 flex flex-col items-center justify-center text-slate-400 group overflow-hidden relative p-6 shadow-[inset_0_0_100px_rgba(16,185,129,0.05)] dark:shadow-[inset_0_0_100px_rgba(16,185,129,0.1)]">
+                {/* Radar Grid & Sweep Animation */}
+                <div className="absolute inset-0 pointer-events-none opacity-20">
+                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full scale-150" />
+                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full scale-100" />
+                  <div className="absolute inset-0 border border-emerald-500/30 rounded-full scale-50" />
+                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-emerald-500/30" />
+                  <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-emerald-500/30" />
+                  {data?.locations && data.locations.length > 0 && (
+                    <div className="absolute inset-0 origin-center animate-[spin_4s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(16,185,129,0.4) 100%)' }} />
+                  )}
+                </div>
+
+                {data?.locations && data.locations.length > 0 ? (
+                  <>
+                    <div className="relative z-10 flex flex-col items-center justify-center bg-slate-900/80 p-6 rounded-2xl backdrop-blur-sm border border-slate-800 shadow-xl">
+                      <MapPin className="w-12 h-12 mb-4 text-emerald-400 animate-pulse drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+                      <p className="text-3xl font-black text-white font-mono tabular-nums tracking-wider" style={{ textShadow: '0 0 10px rgba(255,255,255,0.2)' }}>
+                        {data.locations[0].lat.toFixed(6)}, {data.locations[0].lng.toFixed(6)}
+                      </p>
+                      <p className="text-[10px] uppercase font-bold tracking-widest mt-4 text-emerald-400 bg-emerald-900/50 px-4 py-2 rounded-full flex items-center gap-2 border border-emerald-800/50">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Telemetry Active
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative z-10 flex flex-col items-center justify-center">
+                      <MapPin className="w-10 h-10 mb-4 opacity-40 group-hover:scale-110 transition-transform duration-500 text-emerald-500" />
+                      <p className="text-sm font-bold text-slate-300">No Location Data</p>
+                      <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mt-1">
+                        Awaiting first GPS ping
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="space-y-2">
                 {data?.locations.map((loc, i) => (
@@ -471,14 +501,13 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                         <p className="text-xs font-mono font-bold">
                           {loc.lat.toFixed(6)}, {loc.lng.toFixed(6)}
                         </p>
-                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase">
-                          Accuracy: {loc.accuracy?.toFixed(1) || '0'}m · Speed: {loc.speed || '0'}{' '}
-                          km/h
+                        <p className="text-[10px] font-mono tabular-nums text-muted-foreground/60 uppercase mt-0.5">
+                          Accuracy: {loc.accuracy?.toFixed(1) || '0'}m · Speed: {loc.speed || '0'} km/h
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <p className="text-[10px] text-muted-foreground font-bold">
+                      <p className="text-[10px] text-muted-foreground font-mono tabular-nums font-bold">
                         {new Date(loc.timestamp).toLocaleTimeString()}
                       </p>
                       {loc.isMocked && (
@@ -548,14 +577,14 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                       <p className="text-[10px] text-muted-foreground mt-1">
                         {data?.rider?.isAdminLocked
                           ? `Recovery Password: ${data.rider.lockPassword}`
-                          : 'Lock device with a one-time alphanumeric password.'}
+                          : 'Lock device with a 12-digit numeric password.'}
                       </p>
                     </div>
                     <div className="flex gap-2 w-full">
                       <Button
-                        size="sm"
+                        size="default"
                         variant={data?.rider?.isAdminLocked ? 'secondary' : 'outline'}
-                        className="flex-1 text-[10px] font-bold uppercase tracking-widest h-8 border-amber-500/30 text-amber-600"
+                        className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 border-amber-500/30 text-amber-600"
                         onClick={() => triggerSecurityAction('ADMIN_LOCK')}
                         disabled={isActionPending}
                       >
@@ -569,13 +598,13 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                               placeholder="Recovery Code"
                               value={unlockPasswordInput}
                               onChange={(e) => setUnlockPasswordInput(e.target.value)}
-                              className="h-8 pl-8 text-[10px] font-mono bg-background/50"
+                              className="h-11 pl-8 text-[11px] font-mono bg-background/50"
                             />
                           </div>
                           <Button
-                            size="sm"
+                            size="default"
                             variant="outline"
-                            className="w-full text-[10px] font-bold uppercase tracking-widest h-8 bg-amber-500 text-white border-0 hover:bg-amber-600"
+                            className="w-full text-[10px] font-bold uppercase tracking-widest h-11 bg-amber-500 text-white border-0 hover:bg-amber-600"
                             onClick={() =>
                               triggerSecurityAction('UNLOCK_DEVICE', {
                                 password: unlockPasswordInput,
@@ -609,18 +638,18 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                     <div className="flex flex-col gap-2 w-full">
                       <div className="flex gap-2">
                         <Button
-                          size="sm"
+                          size="default"
                           variant="outline"
-                          className="flex-1 text-[10px] font-bold uppercase tracking-widest h-8 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                           onClick={() => triggerSecurityAction('DISABLE_CAMERA')}
                           disabled={isActionPending}
                         >
                           Off Cam
                         </Button>
                         <Button
-                          size="sm"
+                          size="default"
                           variant="outline"
-                          className="flex-1 text-[10px] font-bold uppercase tracking-widest h-8 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                          className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                           onClick={() => triggerSecurityAction('ENFORCE_PASSCODE')}
                           disabled={isActionPending}
                         >
@@ -629,9 +658,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                       </div>
                       <div className="flex flex-col gap-2">
                         <Button
-                          size="sm"
+                          size="default"
                           variant="outline"
-                          className={`w-full text-[10px] font-bold uppercase tracking-widest h-8 transition-all ${
+                          className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                             data?.rider?.isUninstallBlocked
                               ? 'bg-blue-500 text-white border-0 hover:bg-blue-600 hover:text-white shadow-sm'
                               : 'border-blue-500/30 text-blue-600 hover:bg-blue-50 hover:text-blue-700'
@@ -648,9 +677,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                             : 'Uninstall allowed'}
                         </Button>
                         <Button
-                          size="sm"
+                          size="default"
                           variant="outline"
-                          className={`w-full text-[10px] font-bold uppercase tracking-widest h-8 transition-all ${
+                          className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                             data?.rider?.isAppsControlRestricted
                               ? 'bg-indigo-500 text-white border-0 hover:bg-indigo-600 hover:text-white shadow-sm'
                               : 'border-indigo-500/30 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700'
@@ -686,18 +715,18 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                     </div>
                     <div className="flex flex-col gap-2 w-full">
                       <Button
-                        size="sm"
+                        size="default"
                         variant="outline"
-                        className="w-full text-[10px] font-bold uppercase tracking-widest h-8 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                        className="w-full text-[10px] font-bold uppercase tracking-widest h-11 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
                         onClick={() => triggerSecurityAction('CHECK_LOCATION_INTEGRITY')}
                         disabled={isActionPending}
                       >
                         Verify GPS
                       </Button>
                       <Button
-                        size="sm"
+                        size="default"
                         variant="outline"
-                        className={`w-full text-[10px] font-bold uppercase tracking-widest h-8 transition-all ${
+                        className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                           data?.rider?.isLocationMandatory
                             ? 'bg-emerald-500 text-white border-0 hover:bg-emerald-600 hover:text-white shadow-sm'
                             : 'border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
@@ -716,8 +745,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                 </CardContent>
               </Card>
 
-              <Card className="bg-rose-500/5 border-rose-500/20 border-dashed hover:bg-rose-500/10 transition-colors col-span-full">
-                <CardContent className="py-4">
+              <Card className="bg-rose-500/5 border-rose-500/30 hover:bg-rose-500/10 transition-all col-span-full relative overflow-hidden group hover:border-rose-500/60 shadow-sm">
+                <div className="absolute top-0 left-0 right-0 h-1 opacity-70 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#f43f5e_10px,#f43f5e_20px)] transition-opacity duration-300 group-hover:opacity-100" />
+                <CardContent className="py-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600">
@@ -731,9 +761,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                       </div>
                     </div>
                     <Button
-                      size="sm"
+                      size="default"
                       variant="destructive"
-                      className="px-8 text-[10px] font-bold uppercase tracking-widest h-10 shadow-lg shadow-rose-500/20"
+                      className="px-8 text-[11px] font-bold uppercase tracking-widest h-11 shadow-lg shadow-rose-500/20"
                       onClick={() => triggerSecurityAction('FACTORY_RESET')}
                       disabled={isActionPending}
                     >

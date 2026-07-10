@@ -209,7 +209,7 @@ export default function CommandPalette() {
                     key={item.id}
                     onClick={() => handleSelect(item)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-all relative ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 min-h-[44px] text-sm transition-all relative ${
                       isSelected
                         ? 'bg-primary/10 text-primary'
                         : 'text-foreground hover:bg-muted/50'

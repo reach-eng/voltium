@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
-import 'package:voltium_rider/features/dashboard/widgets/dashboard_plan_card.dart';
-import 'package:voltium_rider/features/dashboard/widgets/dashboard_referral_card.dart';
+import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
+import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
+import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 
 /// Widget tests for dashboard sub-widgets:
 /// - WalletCard: normal vs low-balance variants, streak display, top-up action

@@ -9,18 +9,48 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = SplashScreen(
         key: const ValueKey('splash'),
         onComplete: () async {
+          // Capture provider reference BEFORE any await so we don't
+          // touch BuildContext across an async gap (lint guard).
+          final provider = ProviderScope.containerOf(context).read(appProvider);
+          final cachedRider = CacheService().getCachedRider();
           final allRequiredGranted =
               await state._areAllRequiredPermissionsGranted();
-          if (!allRequiredGranted) {
-            state._navigateToLocal(AuthState.permissions);
-            return;
-          }
-          final cachedRider = CacheService().getCachedRider();
+
           if (cachedRider != null && cachedRider['id'] != null) {
+            if (!allRequiredGranted) {
+              state._navigateToLocal(AuthState.permissions);
+              return;
+            }
+            // F-001: Validate cached auth state against current rider data
+            // before restoring. The rider object held by AppProvider is
+            // the source of truth and reflects any backend-side changes
+            // since the last cached snapshot (e.g., pickup flipped to
+            // false, lifecycle status terminated, etc.).
+            final liveRider = provider.rider;
+            final cachedPickupDone = cachedRider['pickupDone'] == true ||
+                cachedRider['pickupDone'] == 'true';
+            final livePickupDone = liveRider?.pickupDone == true;
+
+            // If the cached rider says dashboard but the live rider has
+            // terminal/non-onboarded lifecycle, drop the cached target —
+            // let the lifecycle gate reroute from a known safe screen.
+            const cachedStateStrEnumProblemLifecycles = {
+              'SUSPENDED',
+              'TERMINATED',
+            };
+            final isStaleLifecycle = liveRider != null &&
+                cachedStateStrEnumProblemLifecycles
+                    .contains(liveRider.lifecycleStatus.toUpperCase());
+
+            // If intake data has materially drifted, drop any saved state.
+            final cacheIsStale = (cachedPickupDone != livePickupDone) ||
+                liveRider == null ||
+                isStaleLifecycle;
+
             final savedStateStr =
                 CacheService().getString('voltium_saved_auth_state');
             AuthState? restoredState;
-            if (savedStateStr != null) {
+            if (savedStateStr != null && !cacheIsStale) {
               try {
                 restoredState = AuthState.values.firstWhere(
                   (e) => e.name == savedStateStr,
@@ -28,6 +58,11 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
               } catch (e) {
                 debugPrint('AppRouter: failed to restore saved auth state: $e');
               }
+            } else if (cacheIsStale) {
+              debugPrint(
+                  'AppRouter: discarding stale cached state — pickupDone: '
+                  'cached=$cachedPickupDone live=$livePickupDone, '
+                  'lifecycle=${liveRider?.lifecycleStatus ?? 'null'}');
             }
 
             if (restoredState != null &&
@@ -36,9 +71,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
                 restoredState != AuthState.otp) {
               state._navigateToLocal(restoredState);
             } else {
-              final isPickupDone = cachedRider['pickupDone'] == true ||
-                  cachedRider['pickupDone'] == 'true';
-              if (isPickupDone) {
+              if (isPickupDone(liveRider, cachedRider)) {
                 state._navigateToLocal(AuthState.dashboard);
               } else {
                 state._navigateToLocal(AuthState.preDashboard);
@@ -103,7 +136,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
         phoneNumber: state._phone,
         onBack: () => state._navigateToLocal(AuthState.login),
         onNext: (bool isNewRider) {
-          final provider = context.read<AppProvider>();
+          final provider = ProviderScope.containerOf(context).read(appProvider);
           final rider = provider.rider;
 
           if (rider == null) {
@@ -232,7 +265,30 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
     case AuthState.pickupSuccess:
       currentScreen = PickupSuccessScreen(
         key: const ValueKey('pickupSuccess'),
-        onFinish: () => state._navigateToLocal(AuthState.dashboard),
+        onFinish: () {
+          state._navigateToLocal(AuthState.dashboard);
+          // Show feedback prompt after onboarding completes
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                      'Welcome to Voltium! How was your experience?'),
+                  action: SnackBarAction(
+                    label: 'Rate Us',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      AppNavigator.push(
+                          context,
+                          FeedbackScreen(
+                              onSubmit: () => Navigator.pop(context)));
+                    },
+                  ),
+                ),
+              );
+            }
+          });
+        },
       );
       break;
 
@@ -260,23 +316,15 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = const VehiclePhotosScreen(key: ValueKey('vehiclePhotos'));
       break;
 
-    case AuthState.topUpPurpose:
-      currentScreen = TopUpPurposeScreen(
-        key: const ValueKey('topUpPurpose'),
+    case AuthState.topUpAmount:
+      final rider = ProviderScope.containerOf(context).read(appProvider).rider;
+      currentScreen = TopUpAmountScreen(
+        key: const ValueKey('topUpAmount'),
+        securityDeposit: rider?.activeRentalPlanSecurityDeposit.toInt(),
+        rentalPrice: rider?.activeRentalPlanPrice.toInt(),
         onBack: () => state._navigateToLocal(
           state._isOnboarding ? AuthState.preDashboard : AuthState.dashboard,
         ),
-        onContinue: (purpose) {
-          state._topUpPurpose = purpose;
-          state._navigateToLocal(AuthState.topUpAmount);
-        },
-      );
-      break;
-
-    case AuthState.topUpAmount:
-      currentScreen = TopUpAmountScreen(
-        key: const ValueKey('topUpAmount'),
-        onBack: () => state._navigateToLocal(AuthState.topUpPurpose),
         onProceed: (amount) {
           state._topUpAmount = amount;
           state._navigateToLocal(AuthState.topUpUpi);
@@ -288,9 +336,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = TopUpUpiScreen(
         key: const ValueKey('topUpUpi'),
         amount: state._topUpAmount,
-        purpose: state._topUpPurpose == TopUpPurpose.topUp
-            ? 'TOP_UP'
-            : 'SECURITY_DEPOSIT',
+        purpose: state._isOnboarding ? 'SECURITY_DEPOSIT' : 'TOP_UP',
         onBack: () => state._navigateToLocal(AuthState.topUpAmount),
         onSubmit: () => state._navigateToLocal(AuthState.topUpProof),
         onEditAmount: () => state._navigateToLocal(AuthState.topUpAmount),
@@ -313,12 +359,32 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = TopUpReceiptScreen(
         key: const ValueKey('topUpReceipt'),
         amount: state._topUpAmount,
-        purpose: state._topUpPurpose == TopUpPurpose.topUp
-            ? 'TOP_UP'
-            : 'SECURITY_DEPOSIT',
-        onBackToDashboard: () => state._navigateToLocal(
-          state._isOnboarding ? AuthState.preDashboard : AuthState.dashboard,
-        ),
+        purpose: state._isOnboarding ? 'SECURITY_DEPOSIT' : 'TOP_UP',
+        onBackToDashboard: () {
+          state._navigateToLocal(
+            state._isOnboarding ? AuthState.preDashboard : AuthState.dashboard,
+          );
+          // Show feedback prompt after wallet top-up
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('How was your top-up experience?'),
+                  action: SnackBarAction(
+                    label: 'Rate Us',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      AppNavigator.push(
+                          context,
+                          FeedbackScreen(
+                              onSubmit: () => Navigator.pop(context)));
+                    },
+                  ),
+                ),
+              );
+            }
+          });
+        },
       );
       break;
 
@@ -345,4 +411,13 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       body: state.childScreenWrapper(currentScreen),
     ),
   );
+}
+
+/// Returns true when the rider has, by either cached snapshot or live
+/// provider data, completed vehicle pickup. Used by the splash-screen
+/// callback when deciding whether to land on dashboard or pre-dashboard.
+bool isPickupDone(dynamic liveRider, Map<String, dynamic> cachedRider) {
+  if (liveRider != null && liveRider.pickupDone == true) return true;
+  return cachedRider['pickupDone'] == true ||
+      cachedRider['pickupDone'] == 'true';
 }

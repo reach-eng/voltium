@@ -149,8 +149,8 @@ export default function SystemSettingsScreen() {
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
         <Settings2 className="w-12 h-12 mb-3 opacity-40" />
         <p className="text-sm">Could not load system settings</p>
-        <Button variant="outline" size="sm" className="mt-4" onClick={fetchSettings}>
-          <RefreshCw className="w-3 h-3 mr-1" /> Retry
+        <Button variant="outline" size="default" className="mt-4 h-11 px-5 rounded-xl" onClick={fetchSettings}>
+          <RefreshCw className="w-4 h-4 mr-1.5" /> Retry
         </Button>
       </div>
     );
@@ -225,27 +225,27 @@ export default function SystemSettingsScreen() {
                     {setting.isSecret ? (
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
+                        size="icon"
+                        className="h-10 w-10 p-0"
                         onClick={() => setShowSecrets((prev) => ({ ...prev, [key]: !prev[key] }))}
                       >
                         {showSecrets[key] ? (
-                          <EyeOff className="w-3 h-3 text-muted-foreground" />
+                          <EyeOff className="w-4 h-4 text-muted-foreground" />
                         ) : (
-                          <Eye className="w-3 h-3 text-muted-foreground" />
+                          <Eye className="w-4 h-4 text-muted-foreground" />
                         )}
                       </Button>
                     ) : null}
                     <Button
-                      size="sm"
-                      className="h-7 text-xs"
+                      size="default"
+                      className="h-10 px-4 text-sm"
                       onClick={() => handleSave(key)}
                       disabled={saving[key] || !isSuperAdmin}
                     >
                       {saving[key] ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
                       ) : (
-                        <Save className="w-3 h-3 mr-1" />
+                        <Save className="w-4 h-4 mr-1.5" />
                       )}
                       Save
                     </Button>
@@ -259,7 +259,7 @@ export default function SystemSettingsScreen() {
                         : (editValues[key] ?? '')
                     }
                     onChange={(e) => setEditValues((prev) => ({ ...prev, [key]: e.target.value }))}
-                    className="text-sm font-mono"
+                    className="text-base font-mono h-11 rounded-xl"
                     placeholder={`Enter ${formatKeyLabel(key).toLowerCase()}`}
                     type={
                       setting.isSecret && !showSecrets[key]
@@ -365,8 +365,8 @@ export default function SystemSettingsScreen() {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={fetchSettings}>
-          <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+        <Button variant="outline" size="default" className="h-11 px-5 rounded-xl" onClick={fetchSettings}>
+          <RefreshCw className="w-4 h-4 mr-1.5" /> Refresh
         </Button>
       </div>
     </div>

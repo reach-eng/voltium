@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
-import 'package:voltium_rider/providers/rider_provider.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
@@ -14,28 +13,31 @@ import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/pre_dashboard_widgets.dart';
 import 'package:voltium_rider/widgets/top_up_request_sent_card.dart';
-import 'package:voltium_rider/features/notifications/presentation/screens/notification_center_screen.dart';
+import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import '../../../../theme/app_theme.dart';
 
-class PreDashboardScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/state/app_provider.dart';
+
+class PreDashboardScreen extends ConsumerStatefulWidget {
   final Function(AuthState) onStepNavigation;
 
   const PreDashboardScreen({super.key, required this.onStepNavigation});
 
   @override
-  State<PreDashboardScreen> createState() => _PreDashboardScreenState();
+  ConsumerState<PreDashboardScreen> createState() => _PreDashboardScreenState();
 }
 
-class _PreDashboardScreenState extends State<PreDashboardScreen> {
+class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   bool _redirected = false;
 
   @override
   Widget build(BuildContext context) {
     final walletMinTopup =
-        context.select<AppProvider, double>((p) => p.walletMinTopup);
-    final rider = context.select<RiderProvider, RiderModel?>((p) => p.rider);
-    final appProvider = context.read<AppProvider>();
+        ref.watch(appProvider.select((p) => p.walletMinTopup));
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final appProv = ref.read(appProvider);
     debugPrint('PreDashboardScreen: currentPlan = ${rider?.currentPlan}');
 
     if (rider == null) {
@@ -77,7 +79,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
           // Main Content
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () => context.read<AppProvider>().refreshFromApi(),
+              onRefresh: () => ref.read(appProvider).refreshFromApi(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -162,7 +164,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                               'Your deposit proof was rejected.',
                           buttonText: 'Re-upload Proof',
                           onResubmit: () =>
-                              widget.onStepNavigation(AuthState.topUpPurpose),
+                              widget.onStepNavigation(AuthState.topUpAmount),
                         ),
                       ),
 
@@ -211,7 +213,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                         kycSubmitted,
                         planDone,
                         pickupDone,
-                        appProvider,
+                        ref.read(appProvider),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -231,8 +233,9 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                                 (rider.activeRentalPlanSecurityDeposit),
                             paymentStreak: rider.paymentStreak,
                             currentPlan: rider.currentPlan,
+                            planEndDate: rider.planEndDate,
                             onTopUp: () =>
-                                widget.onStepNavigation(AuthState.topUpPurpose),
+                                widget.onStepNavigation(AuthState.topUpAmount),
                             compact: true,
                           ),
                         )
@@ -251,7 +254,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                                     rider.activeRentalPlanSecurityDeposit)
                                 .toInt(),
                             onResubmit: () =>
-                                widget.onStepNavigation(AuthState.topUpPurpose),
+                                widget.onStepNavigation(AuthState.topUpAmount),
                           ),
                         ),
                     const SizedBox(height: 16),
@@ -262,7 +265,9 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                       child: ReferralCard(
                         referralCode: (rider.referralCode?.isNotEmpty ?? false)
                             ? rider.referralCode!
-                            : (rider.riderId.isNotEmpty ? rider.riderId : 'VOLT-RD-88'),
+                            : (rider.riderId.isNotEmpty
+                                ? rider.riderId
+                                : 'VOLT-RD-88'),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -289,9 +294,11 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
   }
 
   Widget _buildHeader(RiderModel rider) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 52, 20, 14),
-      decoration: const BoxDecoration(
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+        decoration: const BoxDecoration(
         color: Colors.white,
       ),
       child: Row(
@@ -329,7 +336,7 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                   size: 22,
                 ),
                 onPressed: () async {
-                  await context.read<AppProvider>().logout();
+                  await ref.read(appProvider).logout();
                   widget.onStepNavigation(AuthState.permissions);
                 },
               ),
@@ -341,14 +348,14 @@ class _PreDashboardScreenState extends State<PreDashboardScreen> {
                 ),
                 onPressed: () => AppNavigator.push(
                   context,
-                  const NotificationCenterScreen(),
+                  const NotificationsScreen(),
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildRejectionCard(BuildContext context, RiderModel rider) {

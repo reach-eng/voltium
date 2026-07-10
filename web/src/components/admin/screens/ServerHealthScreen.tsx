@@ -94,7 +94,7 @@ export default function ServerHealthScreen() {
             Monitor local laptop service status, storage path permissions, and resource metrics.
           </p>
         </div>
-        <Button variant="outline" onClick={fetchHealth} disabled={loading} className="gap-2">
+        <Button variant="outline" size="default" onClick={fetchHealth} disabled={loading} className="gap-2 h-11 px-5 rounded-xl">
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh Checks
         </Button>
       </div>
@@ -154,7 +154,7 @@ export default function ServerHealthScreen() {
       ) : !health ? (
         <div className="py-8 text-center text-red-500">
           Failed to load health data.{' '}
-          <Button variant="link" onClick={fetchHealth} className="p-0 h-auto text-xs">
+          <Button variant="link" onClick={fetchHealth} className="p-0 h-11 px-2 text-sm">
             Retry
           </Button>
         </div>

@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/models/support_model.dart';
-import 'package:voltium_rider/providers/app_provider.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 
-class FaqScreen extends StatefulWidget {
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class FaqScreen extends ConsumerStatefulWidget {
   const FaqScreen({super.key});
 
   @override
-  State<FaqScreen> createState() => _FaqScreenState();
+  ConsumerState<FaqScreen> createState() => _FaqScreenState();
 }
 
-class _FaqScreenState extends State<FaqScreen> {
+class _FaqScreenState extends ConsumerState<FaqScreen> {
   String _searchQuery = '';
   String _activeCategory = 'All';
   String? _expandedId;
@@ -34,7 +35,7 @@ class _FaqScreenState extends State<FaqScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final faqItems = context.select<AppProvider, List<FaqItem>>((p) => p.faqs);
+    final faqItems = ref.watch(appProvider.select((p) => p.faqs));
 
     final categories = ['All', ...faqItems.map((f) => f.category).toSet()];
 
@@ -152,7 +153,7 @@ class _FaqScreenState extends State<FaqScreen> {
             key: const Key('backButton'),
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -373,7 +374,7 @@ class _FaqScreenState extends State<FaqScreen> {
                   ),
                   Text(
                     'Our team is available 24/7 for you.',
-                    style: TextStyle(fontSize: 11, color: AppColors.slate500),
+                    style: TextStyle(fontSize: 12, color: AppColors.slate500),
                   ),
                 ],
               ),
@@ -419,7 +420,7 @@ class _FaqScreenState extends State<FaqScreen> {
     Color text,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration:
           BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
       child: Row(
