@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -32,9 +33,9 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => widget.onBack?.call(),
         ),
-        title: const Text(
+        title: Text(
           'Intent of Use',
-          style: TextStyle(
+          style: GoogleFonts.plusJakartaSans(
             color: AppColors.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w800, // Bold as in image
@@ -56,15 +57,15 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                     // Header text
                     RichText(
                       textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(
+                      text: TextSpan(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           color: AppColors.onSurface,
                           height: 1.1,
-                          fontFamily: 'Inter',
+                          letterSpacing: -0.5,
                         ),
-                        children: [
+                        children: const [
                           TextSpan(text: 'How will you use\n'),
                           TextSpan(
                             text: 'Voltium',
@@ -75,10 +76,10 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Select your primary usage to help us customize your experience and support.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: AppColors.onSurfaceVariant,
                         fontSize: 15,
                         height: 1.4,
@@ -125,7 +126,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                           width: 1,
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
@@ -137,7 +138,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                           Expanded(
                             child: Text(
                               'Switching between types is possible later through account settings, though commercial access may require additional verification.',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: AppColors.onSurfaceVariant,
                                 fontSize: 13,
                                 height: 1.4,
@@ -175,8 +176,8 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                                     ? 'deliver'
                                     : 'personal';
                             final provider = ref.read(appProvider);
-                            final riderId =
-                                ref.watch(appProvider).riderId ?? ref.watch(appProvider).rider?.id;
+                            final riderId = ref.watch(appProvider).riderId ??
+                                ref.watch(appProvider).rider?.id;
                             final messenger = ScaffoldMessenger.of(context);
                             if (riderId == null) {
                               messenger.showSnackBar(
@@ -217,11 +218,11 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Confirm Selection',
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -295,7 +296,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: isSelected ? Colors.white : AppColors.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -304,7 +305,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                   const SizedBox(height: 8),
                   Text(
                     description,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       color: isSelected
                           ? Colors.white.withValues(alpha: 0.85)
                           : AppColors.onSurfaceVariant,

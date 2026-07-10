@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/consent_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
@@ -200,7 +201,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Precise location is required. Please enable it in Settings.'),
+                  content: Text(
+                      'Precise location is required. Please enable it in Settings.'),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -272,28 +274,50 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
                 child: Column(
-                  children: _permissions.asMap().entries.map((entry) {
-                    final delay = 0.1 + entry.key * 0.06;
-                    final animation = CurvedAnimation(
-                      parent: _entryCtrl,
-                      curve: Interval(
-                        delay.clamp(0.0, 0.9),
-                        (delay + 0.3).clamp(0.0, 1.0),
-                        curve: Curves.easeOutCubic,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      'Permissions',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF1E293B),
+                        letterSpacing: -0.5,
                       ),
-                    );
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please allow the following permissions to ensure safety and functionality.',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ..._permissions.asMap().entries.map((entry) {
+                      final delay = 0.1 + entry.key * 0.06;
+                      final animation = CurvedAnimation(
+                        parent: _entryCtrl,
+                        curve: Interval(
+                          delay.clamp(0.0, 0.9),
+                          (delay + 0.3).clamp(0.0, 1.0),
+                          curve: Curves.easeOutCubic,
+                        ),
+                      );
 
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.15),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: _buildPermissionCard(entry.value),
-                      ),
-                    );
-                  }).toList(),
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.15),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: _buildPermissionCard(entry.value),
+                        ),
+                      );
+                    }).toList(),
+                  ],
                 ),
               ),
             ),
@@ -345,10 +369,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                     Flexible(
                       child: Text(
                         perm.name,
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF141B2B),
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF141B2B),
                         ),
                       ),
                     ),
@@ -357,9 +381,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 const SizedBox(height: 4),
                 Text(
                   perm.description,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: Color(0xFF4B5563),
+                    color: const Color(0xFF4B5563),
                   ),
                 ),
               ],
@@ -374,46 +398,48 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
   Widget _buildToggle(_PermissionItem perm) {
     return GestureDetector(
-      key: Key('allow${perm.id.capitalize()}Button'),
-      onTap: () => _togglePermission(perm),
-      child: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 48,
-        height: 24,
-        decoration: BoxDecoration(
-          color: perm.isEnabled ? AppColors.primary : const Color(0xFFD1D5DB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            AnimatedAlign(
-              duration: const Duration(milliseconds: 200),
-              alignment:
-                  perm.isEnabled ? Alignment.centerRight : Alignment.centerLeft,
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 2,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
-                ),
-              ),
+        key: Key('allow${perm.id.capitalize()}Button'),
+        onTap: () => _togglePermission(perm),
+        child: Container(
+          color: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 48,
+            height: 24,
+            decoration: BoxDecoration(
+              color:
+                  perm.isEnabled ? AppColors.primary : const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
-        ),
-      ),
-    ));
+            child: Stack(
+              children: [
+                AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  alignment: perm.isEnabled
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 2,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 
   Widget _buildFooter() {
@@ -465,9 +491,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             children: [
               Text(
                 'Continue',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w800,
                   color: canProceed ? Colors.white : const Color(0xFF9CA3AF),
                 ),
               ),

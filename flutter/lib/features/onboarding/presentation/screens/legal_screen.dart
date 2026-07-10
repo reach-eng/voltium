@@ -408,90 +408,90 @@ class _LegalScreenState extends State<LegalScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                    // Custom gradient checkbox 24×24 rounded-lg
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 24,
-                      height: 24,
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        gradient: _accepted ? AppGradients.primary : null,
-                        color: _accepted ? null : AppColors.divider,
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow:
-                            _accepted ? AppShadows.checkboxAccepted : null,
+                      // Custom gradient checkbox 24×24 rounded-lg
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 24,
+                        height: 24,
+                        margin: const EdgeInsets.only(top: 2),
+                        decoration: BoxDecoration(
+                          gradient: _accepted ? AppGradients.primary : null,
+                          color: _accepted ? null : AppColors.divider,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          boxShadow:
+                              _accepted ? AppShadows.checkboxAccepted : null,
+                        ),
+                        child: _accepted
+                            ? ScaleTransition(
+                                scale: CurvedAnimation(
+                                  parent: _checkCtrl,
+                                  curve: Curves.elasticOut,
+                                ),
+                                child: const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : null,
                       ),
-                      child: _accepted
-                          ? ScaleTransition(
-                              scale: CurvedAnimation(
-                                parent: _checkCtrl,
-                                curve: Curves.elasticOut,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.6,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'I have read and agree to the ',
                               ),
-                              child: const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.white,
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(
+                                        documentType: LegalDocumentType.terms,
+                                      ),
+                                    );
+                                  },
                               ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.onSurfaceVariant,
-                            height: 1.6,
+                              const TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    AppNavigator.push(
+                                      context,
+                                      const LegalPageScreen(
+                                        documentType: LegalDocumentType.privacy,
+                                      ),
+                                    );
+                                  },
+                              ),
+                            ],
                           ),
-                          children: [
-                            const TextSpan(
-                              text: 'I have read and agree to the ',
-                            ),
-                            TextSpan(
-                              text: 'Terms of Service',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  AppNavigator.push(
-                                    context,
-                                    const LegalPageScreen(
-                                      documentType: LegalDocumentType.terms,
-                                    ),
-                                  );
-                                },
-                            ),
-                            const TextSpan(text: ' and '),
-                            TextSpan(
-                              text: 'Privacy Policy',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  AppNavigator.push(
-                                    context,
-                                    const LegalPageScreen(
-                                      documentType: LegalDocumentType.privacy,
-                                    ),
-                                  );
-                                },
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               ),
 
               const SizedBox(height: 20),

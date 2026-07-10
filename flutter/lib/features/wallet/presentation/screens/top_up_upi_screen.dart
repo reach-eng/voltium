@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
@@ -65,8 +66,12 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
       setState(() => _imageFile = File('/data/local/tmp/mock_proof.png'));
       return;
     }
+
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source == null) return;
+
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null && mounted) {
       setState(() => _imageFile = File(pickedFile.path));
     }
@@ -198,12 +203,19 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Step 3 of 3',
-                  style: GoogleFonts.inter(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    ' Step 2 of 2 ',
+                    style: GoogleFonts.inter(
+                      color: AppColors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -266,7 +278,8 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
               key: const Key('editAmountLink'),
               onTap: widget.onEditAmount,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 16.0, horizontal: 12.0),
                 child: Text(
                   'Edit',
                   style: GoogleFonts.inter(
@@ -544,6 +557,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     return GestureDetector(
       key: const Key('submitProofButton'),
       onTap: canSubmit ? _handleSubmit : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 56,

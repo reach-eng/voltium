@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 
 class SignaturePadScreen extends StatefulWidget {
@@ -69,27 +70,27 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Draw Signature',
-          style: TextStyle(
-            color: Color(0xFF111827),
+          style: GoogleFonts.plusJakartaSans(
+            color: const Color(0xFF111827),
             fontWeight: FontWeight.w600,
           ),
         ),
         actions: [
           TextButton(
             onPressed: _clear,
-            child: const Text(
+            child: Text(
               'Clear',
-              style: TextStyle(color: Color(0xFF2563EB)),
+              style: GoogleFonts.inter(color: const Color(0xFF2563EB)),
             ),
           ),
           TextButton(
             onPressed: _save,
-            child: const Text(
+            child: Text(
               'Save',
-              style: TextStyle(
-                color: Color(0xFF2563EB),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF2563EB),
                 fontWeight: FontWeight.w600,
               ),
             ),

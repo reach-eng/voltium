@@ -1,6 +1,7 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -155,20 +156,18 @@ class PersonalDetailsCard extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: const Color(0xFFF1F5F9),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: kOutlineVariantColor, width: 1),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: kOutlineVariantColor, width: 1),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
             ),
           ),
         ),
@@ -213,21 +212,18 @@ class PersonalDetailsCard extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
-                fillColor: enabled ? Colors.white : const Color(0xFFF3F4F6),
+                fillColor: enabled ? const Color(0xFFF1F5F9) : const Color(0xFFE2E8F0),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: kOutlineVariantColor, width: 1),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: kOutlineVariantColor, width: 1),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: kPrimaryColor, width: 1.5),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(color: kPrimaryColor, width: 2),
                 ),
               ),
             ),
@@ -247,9 +243,8 @@ class PersonalDetailsCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: kOutlineVariantColor),
+            color: const Color(0xFFE2E8F0), // Disabled slate look
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
@@ -299,21 +294,19 @@ class PersonalDetailsCard extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: kOutlineVariantColor, width: 1),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: kOutlineVariantColor, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
-            ),
+                    fillColor: const Color(0xFFF1F5F9),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+                    ),
           ),
         ),
       ],
@@ -383,7 +376,8 @@ class IdentityVerificationCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Clear photos only. Max 5MB each.',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+            style:
+                GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
           Row(
@@ -461,50 +455,69 @@ class DocTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget content = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isUploaded
+            ? kSuccessColor.withValues(alpha: 0.1)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isUploaded
+                  ? kSuccessColor.withValues(alpha: 0.2)
+                  : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              isUploaded ? Icons.check_circle : icon,
+              color: isUploaded ? kSuccessColor : const Color(0xFF94A3B8),
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isUploaded ? 'Uploaded' : label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isUploaded ? kSuccessColor : const Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!isUploaded) {
+      content = Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+        ),
+        child: content,
+      );
+    } else {
+      content = Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: kSuccessColor, width: 1.5),
+        ),
+        child: content,
+      );
+    }
+
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          decoration: BoxDecoration(
-            color: isUploaded
-                ? kSuccessColor.withValues(alpha: 0.1)
-                : const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isUploaded ? kSuccessColor : kOutlineVariantColor,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isUploaded ? kSuccessColor.withValues(alpha: 0.2) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: isUploaded ? kSuccessColor : kOutlineColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                isUploaded ? 'Uploaded' : label,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isUploaded ? kSuccessColor : kOutlineColor,
-                ),
-              ),
-            ],
-          ),
-        ),
+        child: content,
       ),
     );
   }
@@ -569,48 +582,47 @@ class SelfieCard extends StatelessWidget {
                   ),
                 )
               else
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: kOutlineVariantColor, width: 1),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: const Icon(
-                            Icons.photo_camera,
-                            color: kOutlineColor,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Take Rider Photo',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: kOutlineColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Tap to capture your photo',
-                          style: GoogleFonts.inter(
-                            fontSize: 12, 
-                            color: kOutlineColor.withValues(alpha: 0.7)
-                          ),
-                        ),
-                      ],
-                    ),
+                Container(
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: kOutlineVariantColor, width: 1),
                   ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: const Icon(
+                          Icons.photo_camera,
+                          color: kOutlineColor,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Take Rider Photo',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: kOutlineColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tap to capture your photo',
+                        style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: kOutlineColor.withValues(alpha: 0.7)),
+                      ),
+                    ],
+                  ),
+                ),
               if (selfieUploaded) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -698,7 +710,8 @@ class SignatureCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 'Sign below to authorize documentation.',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+                style: GoogleFonts.inter(
+                    fontSize: 12, color: const Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               GestureDetector(
@@ -762,7 +775,6 @@ class SignatureCard extends StatelessWidget {
     );
   }
 }
-
 
 class UserOnboardingBottomButton extends StatelessWidget {
   final bool canProceed;
@@ -888,25 +900,30 @@ class UserOnboardingDialogField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: kOnSurfaceColor),
         ),
         const SizedBox(height: 4),
         TextFormField(
           controller: controller,
+          style: GoogleFonts.inter(
+            color: kOnSurfaceColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+            hintStyle: GoogleFonts.inter(color: kOutlineColor.withValues(alpha: 0.7), fontSize: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderSide: const BorderSide(color: kOutlineVariantColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              borderSide: const BorderSide(color: kOutlineVariantColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF2563EB)),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

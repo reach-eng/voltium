@@ -6,6 +6,7 @@ import 'package:universal_io/io.dart';
 import 'package:dio/dio.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -29,7 +30,8 @@ class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
       _GuarantorOnboardingScreenState();
 }
 
-class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingScreen> {
+class _GuarantorOnboardingScreenState
+    extends ConsumerState<GuarantorOnboardingScreen> {
   final ImageCompressionService _compressionService = ImageCompressionService();
   final _nameController = TextEditingController();
   final _dobController = TextEditingController();
@@ -66,6 +68,7 @@ class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingS
   String? _photoPath;
 
   void _saveCache() {
+    setState(() {});
     final riderId = ref.read(appProvider).riderId;
     if (riderId == null) return;
     final cacheData = {
@@ -197,38 +200,11 @@ class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingS
     super.dispose();
   }
 
-  void _showDocumentSourceDialog(String type) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-                title: const Text('Take a Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickDocument(type, true);
-                },
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.photo_library, color: AppColors.primary),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickDocument(type, false);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  Future<void> _showDocumentSourceDialog(String type) async {
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source != null) {
+      _pickDocument(type, source == ImageSource.camera);
+    }
   }
 
   Future<void> _pickDocument(String type, bool useCamera) async {
@@ -583,30 +559,73 @@ class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingS
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Skip Guarantor?'),
-        content: const Text(
-          'Without a guarantor, you will be required to pay a higher '
-          'security deposit (₹5,000 instead of ₹2,000) when you select '
-          'a plan.\n\n'
-          'You can add a guarantor later from Profile → Settings.\n\n'
-          'Do you want to continue without a guarantor?',
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-        actions: [
-          TextButton(
-            key: const Key('skipGuarantorCancelButton'),
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Skip Guarantor?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF141B2B),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Without a guarantor, you will be required to pay a higher '
+                'security deposit (₹5,000 instead of ₹2,000) when you select '
+                'a plan.\n\n'
+                'You can add a guarantor later from Profile → Settings.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: const Color(0xFF4B5563),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    key: const Key('skipGuarantorCancelButton'),
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF6B7280),
+                      textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    key: const Key('skipGuarantorConfirmButton'),
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Skip',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            key: const Key('skipGuarantorConfirmButton'),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
-            ),
-            child: const Text('Skip'),
-          ),
-        ],
+        ),
       ),
     );
 
@@ -797,7 +816,8 @@ class _GuarantorOnboardingScreenState extends ConsumerState<GuarantorOnboardingS
                               onPickAadhaarBack: () =>
                                   _showDocumentSourceDialog('aadhaar_back'),
                               onPickPan: () => _showDocumentSourceDialog('pan'),
-                              onPickPhoto: () => _showDocumentSourceDialog('photo'),
+                              onPickPhoto: () =>
+                                  _showDocumentSourceDialog('photo'),
                             ),
                           ],
                           if (_currentStep == 3) ...[

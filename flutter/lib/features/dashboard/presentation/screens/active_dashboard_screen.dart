@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
@@ -17,6 +18,8 @@ import 'package:voltium_rider/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 
@@ -27,7 +30,8 @@ class ActiveDashboardScreen extends ConsumerStatefulWidget {
   const ActiveDashboardScreen({super.key});
 
   @override
-  ConsumerState<ActiveDashboardScreen> createState() => _ActiveDashboardScreenState();
+  ConsumerState<ActiveDashboardScreen> createState() =>
+      _ActiveDashboardScreenState();
 }
 
 class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
@@ -39,6 +43,22 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
         children: [
           _DashboardStateWidget(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          // TODO: Implement scan/find vehicle action
+        },
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+        label: const Text(
+          'Scan to Ride',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
     );
   }
@@ -219,7 +239,8 @@ class _DashboardContentWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final walletMinTopup = ref.watch(appProvider.select((p) => p.walletMinTopup));
+    final walletMinTopup =
+        ref.watch(appProvider.select((p) => p.walletMinTopup));
     final dataState = ref.watch(appProvider.select((p) => p.dataState));
     final isCache = dataState == DataState.fromCache;
 
@@ -230,38 +251,29 @@ class _DashboardContentWidget extends ConsumerWidget {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverSafeArea(
-            bottom: false,
-            sliver: SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(
-                          Icons.bolt,
-                          color: AppColors.primary,
-                          size: 32,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Dashboard',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF1E293B),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    _buildNotificationBell(context),
-                  ],
-                ),
+          SliverAppBar(
+            backgroundColor: AppColors.iconBackground,
+            surfaceTintColor: Colors.transparent,
+            pinned: false,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            centerTitle: false,
+            titleSpacing: 20,
+            title: Text(
+              'Dashboard',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF1E293B),
+                letterSpacing: -0.5,
               ),
             ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: _buildNotificationBell(context),
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -304,13 +316,23 @@ class _DashboardContentWidget extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: 12),
+                  ReferralCard(
+                    referralCode: rider.referralCode ?? 'VOLT123',
+                  ),
+                  const SizedBox(height: 12),
                   TeamLeaderCard(
                     teamLeaderName: rider.teamLeader,
                     onViewDetails: () => showTLDetailsSheet(context, rider),
-                  ),
-                  const SizedBox(height: 12),
-                  ReferralCard(
-                    referralCode: rider.referralCode ?? 'VOLT123',
+                    onCall: () async {
+                      final phone = (rider.emergencyContact == null ||
+                              rider.emergencyContact!.isEmpty)
+                          ? '+91 98765 12345'
+                          : rider.emergencyContact!;
+                      final uri = Uri.parse('tel:$phone');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
                 ],

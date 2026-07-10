@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/app/app_state.dart';
@@ -295,67 +296,68 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
 
   Widget _buildHeader(RiderModel rider) {
     return SafeArea(
-      bottom: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
-        decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
+        bottom: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.bolt, color: Colors.white, size: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child:
+                        const Icon(Icons.bolt, color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Dashboard',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              const Text(
-                'Dashboard',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    key: const Key('preDashboardLogoutButton'),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: AppColors.error,
+                      size: 22,
+                    ),
+                    onPressed: () async {
+                      await ref.read(appProvider).logout();
+                      widget.onStepNavigation(AuthState.permissions);
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications_outlined,
+                      color: Color(0xFF475569),
+                      size: 22,
+                    ),
+                    onPressed: () => AppNavigator.push(
+                      context,
+                      const NotificationsScreen(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          Row(
-            children: [
-              IconButton(
-                key: const Key('preDashboardLogoutButton'),
-                icon: const Icon(
-                  Icons.logout,
-                  color: AppColors.error,
-                  size: 22,
-                ),
-                onPressed: () async {
-                  await ref.read(appProvider).logout();
-                  widget.onStepNavigation(AuthState.permissions);
-                },
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.notifications_outlined,
-                  color: Color(0xFF475569),
-                  size: 22,
-                ),
-                onPressed: () => AppNavigator.push(
-                  context,
-                  const NotificationsScreen(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget _buildRejectionCard(BuildContext context, RiderModel rider) {
@@ -398,12 +400,12 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Rejection Remarks',
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: const Color(0xFF0F172A),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -412,10 +414,10 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                                 rider.kycRejectionReason!.isNotEmpty
                             ? rider.kycRejectionReason!
                             : 'The uploaded PAN card document was blurry and unreadable. Please ensure all details are clearly visible in the new upload.',
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF334155),
+                          color: const Color(0xFF334155),
                           height: 1.4,
                         ),
                       ),
@@ -438,14 +440,14 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.upload_file, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'Re-upload Documents',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
@@ -475,14 +477,14 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
           elevation: 8,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.local_shipping, size: 22),
             SizedBox(width: 12),
             Text(
               'PICKUP YOUR VEHICLE',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2,

@@ -590,7 +590,9 @@ Future<void> startVehicleReturnWorkflow(
       ),
     );
 
-    final success = await ProviderScope.containerOf(context).read(appProvider).submitVehicleReturn(
+    final success = await ProviderScope.containerOf(context)
+        .read(appProvider)
+        .submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
         );

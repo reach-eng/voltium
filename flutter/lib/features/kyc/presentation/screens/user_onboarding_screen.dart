@@ -23,7 +23,8 @@ class UserOnboardingScreen extends ConsumerStatefulWidget {
   const UserOnboardingScreen({super.key, this.onNext, this.onBack});
 
   @override
-  ConsumerState<UserOnboardingScreen> createState() => _UserOnboardingScreenState();
+  ConsumerState<UserOnboardingScreen> createState() =>
+      _UserOnboardingScreenState();
 }
 
 class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
@@ -649,16 +650,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                               motherNameController: _motherNameController,
                               motherNameEnabled: _isFieldEditable('motherName'),
                               addressController: _addressController,
-                              addressEnabled: _isFieldEditable('currentAddress'),
+                              addressEnabled:
+                                  _isFieldEditable('currentAddress'),
                               phone: ref.read(appProvider).rider?.phone ?? '',
                               onSelectDob: _selectDob,
                             ),
                           if (_currentStep == 2)
                             IdentityVerificationCard(
                               aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                              aadhaarFrontEnabled: _isFieldEditable('aadhaarFront'),
+                              aadhaarFrontEnabled:
+                                  _isFieldEditable('aadhaarFront'),
                               aadhaarBackUploaded: _aadhaarBackUploaded,
-                              aadhaarBackEnabled: _isFieldEditable('aadhaarBack'),
+                              aadhaarBackEnabled:
+                                  _isFieldEditable('aadhaarBack'),
                               panUploaded: _panUploaded,
                               panEnabled: _isFieldEditable('panCard'),
                               bankDetailsDone:

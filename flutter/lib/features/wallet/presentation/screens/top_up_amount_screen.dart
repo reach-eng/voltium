@@ -80,6 +80,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   bool get _canProceed => _finalAmount >= 100;
 
   void _selectQuickAmount(int amount) {
+    HapticFeedback.lightImpact();
     setState(() {
       _selectedAmount = amount;
       _customAmountCtrl.text = amount.toString();
@@ -213,7 +214,12 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                     const SizedBox(height: 24),
 
                     // Balance info row
-                    Consumer(builder: (context, ref, _) { final currentBalance = ref.watch(appProvider.select((p) => p.rider))?.walletBalance ?? 0.0;
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final currentBalance = ref
+                                .watch(appProvider.select((p) => p.rider))
+                                ?.walletBalance ??
+                            0.0;
                         return Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -293,12 +299,19 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             ],
           ),
           const SizedBox(height: 24),
-          Text(
-            'Step 2 of 3',
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              ' Step 1 of 2 ',
+              style: GoogleFonts.inter(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -319,6 +332,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     return GestureDetector(
       key: const Key('proceedToPaymentButton'),
       onTap: _canProceed ? () => widget.onProceed?.call(_finalAmount) : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 56,
