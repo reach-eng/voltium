@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../utils/app_constants.dart';
@@ -21,7 +22,6 @@ class RentalDetailsScreen extends ConsumerWidget {
     final hub = rider?.pickupHub ?? 'Not Assigned';
     final tl = rider?.teamLeader ?? 'Not Assigned';
     final startDate = rider?.planStartDate;
-    // Calculate end date from plan start + duration if planEndDate is missing
     final endDate = rider?.planEndDate ??
         _calculateEndDate(rider?.planStartDate, rider?.currentPlan);
     final streak = rider?.paymentStreak ?? 0;
@@ -31,14 +31,17 @@ class RentalDetailsScreen extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.iconBackground, // Subtle light background
       appBar: AppBar(
         backgroundColor: AppColors.iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Rental Details',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        centerTitle: true,
+        title: Text('Rental Details',
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1E293B))),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -75,13 +78,9 @@ class RentalDetailsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFF142B5B)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: AppGradients.primary,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -97,78 +96,100 @@ class RentalDetailsScreen extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'CURRENT PLAN',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: Colors.white70,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           status.toUpperCase(),
-                          style: const TextStyle(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     plan,
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    '₹${price.toStringAsFixed(0)} / cycle',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '₹${price.toStringAsFixed(0)}',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        ' / cycle',
+                        style: GoogleFonts.inter(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            const SizedBox(height: 32),
+            Text(
               'Rental Information',
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
+                color: const Color(0xFF1E293B),
               ),
             ),
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  )
+                ],
               ),
               child: Column(
                 children: [
-                  _buildDetailRow(Icons.calendar_today, 'Start Date',
+                  _buildDetailRow(Icons.calendar_today_rounded, 'Start Date',
                       startDate != null ? dateFormat.format(startDate) : 'N/A'),
-                  const Divider(height: 1),
-                  _buildDetailRow(Icons.event_busy, 'End Date',
+                  const Divider(height: 1, color: AppColors.iconBackground),
+                  _buildDetailRow(Icons.event_busy_rounded, 'End Date',
                       endDate != null ? dateFormat.format(endDate) : 'N/A'),
-                  const Divider(height: 1),
+                  const Divider(height: 1, color: AppColors.iconBackground),
                   if (endDate != null) ...[
                     _buildDetailRow(Icons.timer_outlined, 'Days Remaining',
                         '${endDate.difference(DateTime.now()).inDays.clamp(0, 999)} Days',
@@ -176,35 +197,35 @@ class RentalDetailsScreen extends ConsumerWidget {
                             endDate.difference(DateTime.now()).inDays <= 3
                                 ? AppColors.error
                                 : AppColors.primary),
-                    const Divider(height: 1),
+                    const Divider(height: 1, color: AppColors.iconBackground),
                   ],
                   _buildDetailRow(
-                      Icons.electric_moped, 'Assigned Vehicle', vehicle),
-                  const Divider(height: 1),
+                      Icons.electric_moped_rounded, 'Assigned Vehicle', vehicle),
+                  const Divider(height: 1, color: AppColors.iconBackground),
                   _buildDetailRow(
-                      Icons.store_mall_directory_outlined, 'Pickup Hub', hub),
-                  const Divider(height: 1),
-                  _buildDetailRow(Icons.person_outline, 'Team Leader', tl),
-                  const Divider(height: 1),
-                  _buildDetailRow(Icons.account_balance_wallet_outlined,
+                      Icons.store_mall_directory_rounded, 'Pickup Hub', hub),
+                  const Divider(height: 1, color: AppColors.iconBackground),
+                  _buildDetailRow(Icons.person_rounded, 'Team Leader', tl),
+                  const Divider(height: 1, color: AppColors.iconBackground),
+                  _buildDetailRow(Icons.account_balance_wallet_rounded,
                       'Wallet Balance', '₹${wallet.toStringAsFixed(0)}',
                       valueColor: AppColors.success),
-                  const Divider(height: 1),
-                  _buildDetailRow(Icons.shield_outlined, 'Security Deposit',
+                  const Divider(height: 1, color: AppColors.iconBackground),
+                  _buildDetailRow(Icons.shield_rounded, 'Security Deposit',
                       '₹${deposit.toStringAsFixed(0)}'),
-                  const Divider(height: 1),
-                  _buildDetailRow(Icons.local_fire_department, 'Payment Streak',
+                  const Divider(height: 1, color: AppColors.iconBackground),
+                  _buildDetailRow(Icons.local_fire_department_rounded, 'Payment Streak',
                       '$streak Days',
                       valueColor: AppColors.primary),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             // Action buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: OutlinedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -214,21 +235,29 @@ class RentalDetailsScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.swap_horiz, size: 18),
-                    label: const Text('Change Plan'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      foregroundColor: const Color(0xFF1E293B),
+                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.swap_horiz_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text('Change Plan',
+                            style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -237,22 +266,30 @@ class RentalDetailsScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    icon:
-                        const Icon(Icons.assignment_return_outlined, size: 18),
-                    label: const Text('End Rental'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
+                      backgroundColor: AppColors.error,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 0,
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.assignment_return_rounded, size: 20),
+                        const SizedBox(width: 8),
+                        Text('End Rental',
+                            style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20), // Bottom padding
           ],
         ),
       ),
@@ -262,25 +299,33 @@ class RentalDetailsScreen extends ConsumerWidget {
   Widget _buildDetailRow(IconData icon, String label, String value,
       {Color? valueColor}) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.slate400, size: 20),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.iconBackground,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.slate500, size: 20),
+          ),
+          const SizedBox(width: 16),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: AppColors.slate500,
               fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
           ),
           const Spacer(),
           Text(
             value,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: valueColor ?? const Color(0xFF1E293B),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
