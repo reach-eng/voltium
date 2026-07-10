@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
@@ -45,28 +48,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     try {
-      final source = await showDialog<ImageSource>(
-        context: context,
-        builder: (ctx) => SimpleDialog(
-          title: const Text('Select Profile Photo'),
-          children: [
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, ImageSource.camera),
-              child: const ListTile(
-                leading: Icon(Icons.camera_alt),
-                title: Text('Camera'),
-              ),
-            ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
-              child: const ListTile(
-                leading: Icon(Icons.photo_library),
-                title: Text('Gallery'),
-              ),
-            ),
-          ],
-        ),
-      );
+      final source = await ImageSourceBottomSheet.show(context: context);
       if (source == null) return;
       final picker = ImagePicker();
       final image = await picker.pickImage(source: source);
@@ -394,7 +376,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 padding: EdgeInsets.only(left: 4, top: 4),
                                 child: Text(
                                   'Changes to emergency contact require admin approval.',
-                                  style: TextStyle(
+                                  style: GoogleFonts.inter(
                                     fontSize: 12,
                                     color: AppColors.slate500,
                                     fontStyle: FontStyle.italic,
@@ -464,7 +446,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                   )
                                 : const Text(
                                     'SUBMIT FOR APPROVAL',
-                                    style: TextStyle(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontWeight: FontWeight.w900,
                                       letterSpacing: 1.2,
                                     ),
@@ -527,10 +509,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           const SizedBox(width: 16),
           const Text(
             'Edit Profile',
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: const Color(0xFF1E293B),
             ),
           ),
         ],
@@ -544,8 +526,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
         return null;
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
-      const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://127.0.0.1:8081');
+      final baseUrl = ApiClient().baseUrl;
       return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
     }
 
@@ -634,7 +615,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: EdgeInsets.only(left: 4),
           child: Text(
             'Guarantor Phone',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: AppColors.slate500,
@@ -670,10 +651,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       _gOtpController.clear();
                     });
                   },
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                   ),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
@@ -722,7 +703,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         )
                       : Text(
                           _isGOtpSent ? 'Resend' : 'Send OTP',
-                          style: const TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -755,10 +736,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     controller: _gOtpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
+                      color: const Color(0xFF1E293B),
                       letterSpacing: 8,
                     ),
                     decoration: const InputDecoration(
@@ -800,7 +781,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         )
                       : const Text(
                           'Verify',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -827,7 +808,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 SizedBox(width: 6),
                 Text(
                   'Phone verified',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.successText,

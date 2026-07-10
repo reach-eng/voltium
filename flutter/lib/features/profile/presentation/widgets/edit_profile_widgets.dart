@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 
 class EditProfileTextField extends StatelessWidget {
@@ -24,7 +25,7 @@ class EditProfileTextField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               color: AppColors.slate500,
@@ -32,33 +33,33 @@ class EditProfileTextField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1E293B),
           ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
+            filled: true,
+            fillColor: const Color(0xFFF1F5F9), // AppColors.slate100 equivalent
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
             ),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
             ),
           ),
         ),
@@ -88,7 +89,7 @@ class EditProfileDateField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               color: AppColors.slate500,
@@ -96,46 +97,46 @@ class EditProfileDateField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+        TextFormField(
+          controller: controller,
+          readOnly: true,
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1E293B),
           ),
-          child: TextFormField(
-            controller: controller,
-            readOnly: true,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E293B),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.calendar_today_outlined,
+              color: AppColors.slate400,
+              size: 18,
             ),
-            decoration: const InputDecoration(
-              prefixIcon: Icon(
-                Icons.calendar_today_outlined,
-                color: AppColors.slate400,
-                size: 18,
-              ),
-              suffixIcon: Icon(
-                Icons.edit_calendar_outlined,
-                color: AppColors.primary,
-                size: 18,
-              ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-              hintText: 'YYYY-MM-DD',
+            suffixIcon: const Icon(
+              Icons.edit_calendar_outlined,
+              color: AppColors.primary,
+              size: 18,
             ),
-            onTap: onTap,
+            filled: true,
+            fillColor: const Color(0xFFF1F5F9), // AppColors.slate100 equivalent
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            hintText: 'YYYY-MM-DD',
           ),
+          onTap: onTap,
         ),
       ],
     );
@@ -153,7 +154,7 @@ class EditProfileSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 12,
           fontWeight: FontWeight.w900,
           color: AppColors.slate500,
@@ -183,8 +184,8 @@ class EditProfileAdminNote extends StatelessWidget {
           Expanded(
             child: Text(
               'Profile changes require admin approval before becoming active.',
-              style: TextStyle(
-                color: Color(0xFF9A3412),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9A3412),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 height: 1.4,
