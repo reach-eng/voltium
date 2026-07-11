@@ -69,7 +69,12 @@ class MainActivity: FlutterActivity() {
                     }
                 }
                 "factoryReset" -> {
-                    result.error("DISABLED", "Factory reset is disabled for public beta", null)
+                    if (dpm.isAdminActive(adminComponent)) {
+                        dpm.wipeData(0)
+                        result.success(true)
+                    } else {
+                        result.error("UNAUTHORIZED", "Device Admin not active", null)
+                    }
                 }
                 "setCameraDisabled" -> {
                     val disabled = call.argument<Boolean>("disabled") ?: false

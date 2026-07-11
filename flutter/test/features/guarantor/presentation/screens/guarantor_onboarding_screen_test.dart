@@ -26,9 +26,11 @@ void main() {
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return ProviderScope(overrides: [
+      return ProviderScope(
+        overrides: [
           appProvider.overrideWith((ref) => testAppProvider),
-        ], child: MaterialApp(
+        ],
+        child: MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),
@@ -104,9 +106,11 @@ void main() {
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return ProviderScope(overrides: [
+      return ProviderScope(
+        overrides: [
           appProvider.overrideWith((ref) => testAppProvider),
-        ], child: const MaterialApp(
+        ],
+        child: const MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(),
           ),
@@ -148,9 +152,11 @@ void main() {
         phone: '9999999999',
         lifecycleStatus: 'NEW',
       ));
-      return ProviderScope(overrides: [
+      return ProviderScope(
+        overrides: [
           appProvider.overrideWith((ref) => testAppProvider),
-        ], child: MaterialApp(
+        ],
+        child: MaterialApp(
           home: Scaffold(
             body: GuarantorOnboardingScreen(onNext: onNext),
           ),

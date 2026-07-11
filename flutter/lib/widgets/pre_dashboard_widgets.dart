@@ -213,124 +213,126 @@ class PreDashboardProfileCard extends StatelessWidget {
 
   Widget _buildRejectedProfile() {
     return PremiumDoubleBezelCard(
-      padding: EdgeInsets.zero,
-      child: Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFFFE4E6), width: 3),
-                ),
-                padding: const EdgeInsets.all(2),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.error, width: 2),
-                  ),
-                  child: ClipOval(
-                    child: rider.profilePhoto != null &&
-                            rider.profilePhoto!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: rider.profilePhoto!,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) =>
-                                _buildPlaceholder(rider),
-                            placeholder: (_, __) => _buildPlaceholder(rider),
-                          )
-                        : _buildPlaceholder(rider),
-                  ),
-                ),
+        padding: EdgeInsets.zero,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
-              Positioned(
-                bottom: -4,
-                right: -4,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+            ],
+          ),
+          child: Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border:
+                          Border.all(color: const Color(0xFFFFE4E6), width: 3),
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.error, width: 2),
+                      ),
+                      child: ClipOval(
+                        child: rider.profilePhoto != null &&
+                                rider.profilePhoto!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: rider.profilePhoto!,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    _buildPlaceholder(rider),
+                                placeholder: (_, __) =>
+                                    _buildPlaceholder(rider),
+                              )
+                            : _buildPlaceholder(rider),
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.white,
-                    size: 16,
+                  Positioned(
+                    bottom: -4,
+                    right: -4,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rider.name.isNotEmpty ? rider.name : 'Rider',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Text(
+                          'RIDER ID',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.slate400,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.iconBackground,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            rider.riderId.isEmpty ? 'VF-RD-000' : rider.riderId,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  rider.name.isNotEmpty ? rider.name : 'Rider',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Text(
-                      'RIDER ID',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.slate400,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.iconBackground,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        rider.riderId.isEmpty ? 'VF-RD-000' : rider.riderId,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget _buildNormalProfile() {
@@ -343,32 +345,32 @@ class PreDashboardProfileCard extends StatelessWidget {
         kycVerified ? const Color(0xFFBBF7D0) : const Color(0xFFFED7AA);
 
     return PremiumDoubleBezelCard(
-      padding: EdgeInsets.zero,
-      child: Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+        padding: EdgeInsets.zero,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 96,
-            height: 96,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.iconBackground, width: 4),
-            ),
-            child: ClipOval(
-              child:
-                  rider.profilePhoto != null && rider.profilePhoto!.isNotEmpty
+          child: Column(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.iconBackground, width: 4),
+                ),
+                child: ClipOval(
+                  child: rider.profilePhoto != null &&
+                          rider.profilePhoto!.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: rider.profilePhoto!,
                           fit: BoxFit.cover,
@@ -376,48 +378,49 @@ class PreDashboardProfileCard extends StatelessWidget {
                           placeholder: (_, __) => _buildPlaceholder(rider),
                         )
                       : _buildPlaceholder(rider),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            rider.name.isNotEmpty ? rider.name : 'Rider',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'ID: ${rider.riderId}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.slate400,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: badgeBg,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: badgeBorder),
-            ),
-            child: Text(
-              badgeText,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                color: badgeTextColor,
-                letterSpacing: 1.2,
+                ),
               ),
-            ),
+              const SizedBox(height: 14),
+              Text(
+                rider.name.isNotEmpty ? rider.name : 'Rider',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'ID: ${rider.riderId}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.slate400,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: badgeBorder),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: badgeTextColor,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ));
+        ));
   }
 
   Widget _buildPlaceholder(RiderModel rider) {

@@ -129,7 +129,7 @@ export const createTicketSchema = z.object({
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
   subject: z.string().min(5, 'Subject must be at least 5 characters').max(200),
   message: z.string().min(10, 'Message must be at least 10 characters').max(5000),
-  attachments: z.string().optional().or(z.literal('')),
+  attachments: z.union([z.string(), z.null(), z.undefined()]).optional(),
 });
 
 // ==================== ADMIN - RIDERS ====================
@@ -303,7 +303,7 @@ export const updateTicketSchema = z.object({
 
 export const ticketReplySchema = z.object({
   message: z.string().min(1, 'Message is required').max(5000),
-  attachments: z.string().optional().or(z.literal('')),
+  attachments: z.union([z.string(), z.null(), z.undefined()]).optional(),
 });
 
 // ==================== ADMIN - LEGAL (UPSERT) ====================

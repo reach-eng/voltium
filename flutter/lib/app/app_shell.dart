@@ -13,6 +13,7 @@ import 'package:voltium_rider/widgets/shell_banners.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 class LazyScreenWrapper extends ConsumerStatefulWidget {
   final Widget child;
   final bool isVisible;

@@ -76,6 +76,9 @@ class StatusTile extends StatelessWidget {
 
 class QuickLinkItem extends StatelessWidget {
   final IconData icon;
+  // activeIcon is accepted for API compatibility but not currently rendered differently.
+  // ignore: unused_field
+  final IconData? activeIcon;
   final Color iconColor;
   final Color iconBgColor;
   final String title;
@@ -84,6 +87,7 @@ class QuickLinkItem extends StatelessWidget {
   const QuickLinkItem({
     super.key,
     required this.icon,
+    this.activeIcon,
     required this.iconColor,
     required this.iconBgColor,
     required this.title,

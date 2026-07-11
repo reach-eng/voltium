@@ -98,6 +98,7 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
     action: '',
     extraData: {},
   });
+  const [generatedUnlockCode, setGeneratedUnlockCode] = useState<string | null>(null);
 
   const [session, setSession] = useState<any>(null);
 
@@ -162,6 +163,9 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
       const json = await res.json();
       if (json.success) {
         toast.success(json.message || `${action} triggered successfully`);
+        if (action === 'ADMIN_LOCK' && json.data?.unlockCode) {
+          setGeneratedUnlockCode(json.data.unlockCode);
+        }
         setUnlockPasswordInput('');
         fetchData();
       } else {
@@ -325,6 +329,21 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
             </Button>
           </div>
         )}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+            Device Data Hub
+          </h3>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-8 text-xs font-bold bg-primary hover:bg-primary/90"
+            onClick={() => handleSecurityAction('SYNC_DEVICE_DATA')}
+            disabled={isActionPending}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isActionPending ? 'animate-spin' : ''}`} />
+            Sync Data
+          </Button>
+        </div>
         <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50">
           {[
             { id: 'calls', label: 'Call Register', icon: Phone },
@@ -353,9 +372,11 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
                 <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
                   Recent Call Logs
                 </h4>
-                <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
-                  {data?.callLogs.length || 0} Registered
-                </Badge>
+                <div className="flex gap-2 items-center">
+                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                    {data?.callLogs.length || 0} Registered
+                  </Badge>
+                </div>
               </div>
               <div className="space-y-2">
                 {data?.callLogs.map((call, i) => (
@@ -413,14 +434,16 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
 
           {activeSubTab === 'contacts' && (
             <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search phonebook..."
-                  className="pl-9 rounded-xl bg-muted/30 border-transparent focus:bg-background h-11"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search phonebook..."
+                    className="pl-9 rounded-xl bg-muted/30 border-transparent focus:bg-background h-11"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {filteredContacts.map((contact, i) => (
@@ -804,6 +827,40 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={!!generatedUnlockCode}
+        onOpenChange={(open) => {
+          if (!open) setGeneratedUnlockCode(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md rounded-3xl p-0 border-none shadow-2xl bg-background overflow-hidden">
+          <DialogHeader className="px-8 pt-8 pb-4 bg-primary/10 border-b border-primary/20">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-primary">
+              <ShieldAlert className="w-5 h-5" /> Admin Lock Successful
+            </DialogTitle>
+            <DialogDescription>
+              The device has been locked. Use the code below to unlock it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-8 flex flex-col items-center justify-center space-y-4">
+            <div className="bg-muted p-4 rounded-xl border border-primary/20 font-mono text-3xl tracking-widest text-primary font-black select-all text-center break-all">
+              {generatedUnlockCode}
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Please write this code down or provide it to the rider. You will not be able to view it again.
+            </p>
+          </div>
+          <DialogFooter className="px-8 py-4 bg-muted/30 border-t">
+            <Button
+              className="w-full rounded-xl h-12 font-bold"
+              onClick={() => setGeneratedUnlockCode(null)}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

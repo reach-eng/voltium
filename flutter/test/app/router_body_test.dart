@@ -15,10 +15,12 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final appProvider = AppProvider();
-      return ProviderScope(overrides: [
-          appProvider.overrideWith((ref) => appProvider),
-        ], child: const MaterialApp(
+      final mockAppProvider = AppProvider();
+      return ProviderScope(
+        overrides: [
+          appProvider.overrideWith((ref) => mockAppProvider),
+        ],
+        child: const MaterialApp(
           home: AppRouter(),
         ),
       );

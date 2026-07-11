@@ -636,7 +636,7 @@ function KycManagementTab() {
                     <TableHead>PAN</TableHead>
                     <TableHead>Bank</TableHead>
                     <TableHead>Signature</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Date & Time</TableHead>
                     <TableHead>Completion</TableHead>
                     <TableHead
                       className="text-right whitespace-nowrap"
@@ -731,8 +731,8 @@ function KycManagementTab() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {rider.submissionDate
-                            ? formatDateTimeDDMMYYYY(rider.submissionDate)
+                          {rider.createdAt
+                            ? formatDateTimeDDMMYYYY(rider.createdAt)
                             : '-'}
                         </TableCell>
                         <TableCell>

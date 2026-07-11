@@ -804,7 +804,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: AppColors.success, size: 14),
+                const Icon(Icons.check_circle,
+                    color: AppColors.success, size: 14),
                 const SizedBox(width: 6),
                 Text(
                   'Phone verified',

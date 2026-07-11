@@ -855,14 +855,15 @@ class CreateTicketRequest {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'riderId': riderId,
       'category': category,
       'priority': priority,
       'subject': subject,
       'message': message,
-      'attachments': attachments,
     };
+    if (attachments != null) map['attachments'] = attachments;
+    return map;
   }
 }
 

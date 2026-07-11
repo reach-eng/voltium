@@ -55,7 +55,7 @@ export const supportUseCases = {
       senderId,
       senderType,
       sanitizeHtml(input.message),
-      input.attachments
+      input.attachments ?? undefined
     );
 
     await supportRepository.update(ticketId, { updatedAt: new Date() });

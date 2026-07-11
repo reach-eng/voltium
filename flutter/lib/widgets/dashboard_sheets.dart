@@ -596,7 +596,9 @@ Future<void> startVehicleReturnWorkflow(
       ),
     );
 
-    final success = await ProviderScope.containerOf(context, listen: false).read(appProvider).submitVehicleReturn(
+    final success = await ProviderScope.containerOf(context, listen: false)
+        .read(appProvider)
+        .submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
         );
@@ -678,7 +680,9 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
 
 void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
   final updated = rider.copyWith(intent: newIntent);
-  ProviderScope.containerOf(context, listen: false).read(appProvider).updateRider(updated);
+  ProviderScope.containerOf(context, listen: false)
+      .read(appProvider)
+      .updateRider(updated);
   Navigator.pop(context);
   Toast.success(context, 'Intent updated successfully');
 }

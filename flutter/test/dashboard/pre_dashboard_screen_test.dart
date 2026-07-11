@@ -30,10 +30,16 @@ void main() {
   });
 
   Widget createScreenWithRider(RiderModel rider, Function(AuthState) onNav) {
-    return ProviderScope(overrides: [
+    return ProviderScope(
+      overrides: [
         appProvider.overrideWith((ref) => AppProvider()),
-        riderProvider.overrideWith((ref) => RiderProvider(riderRepository: mockRiderRepo, rentalRepository: mockRentalRepo, filesRepository: mockFilesRepo)..setRider(rider)),
-      ], child: MaterialApp(
+        riderProvider.overrideWith((ref) => RiderProvider(
+            riderRepository: mockRiderRepo,
+            rentalRepository: mockRentalRepo,
+            filesRepository: mockFilesRepo)
+          ..setRider(rider)),
+      ],
+      child: MaterialApp(
         home: PreDashboardScreen(onStepNavigation: onNav),
       ),
     );

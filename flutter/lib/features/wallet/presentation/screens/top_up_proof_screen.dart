@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
 
 class TopUpProofScreen extends StatefulWidget {
@@ -51,38 +52,10 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
   }
 
   Future<void> _showImageSourceSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_camera_outlined),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImage(ImageSource.gallery);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source != null) {
+      _pickImage(source);
+    }
   }
 
   Future<void> _submit() async {
@@ -166,12 +139,19 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          Text(
-            'Step 3 of 3',
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              ' Step 2 of 2 ',
+              style: GoogleFonts.inter(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(height: 4),
@@ -438,6 +418,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
 
     return GestureDetector(
       onTap: canSubmit ? _submit : null,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 56,

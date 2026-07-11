@@ -105,19 +105,27 @@ void main() {
     });
 
     test(
-        'returns dashboard if rank >= 10 (except SUSPENDED which is caught earlier)',
+        'returns dashboard if rank >= 10 (except SUSPENDED which is caught earlier and rank >= 13 which is terminated)',
         () {
       final rider = createRider('ACTIVE'); // rank 10
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.dashboard);
+    });
 
-      final rider2 = createRider('CLOSED'); // rank 13
-      expect(RiderLifecycleGate.redirect(rider2), LifecycleTarget.dashboard);
+    test('returns intent for rank < 2', () {
+      final intentStatuses = [
+        'NEW', // 0
+        'PHONE_VERIFIED', // 1
+      ];
+
+      for (final status in intentStatuses) {
+        final rider = createRider(status);
+        expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent,
+            reason: 'Status $status should redirect to intent');
+      }
     });
 
     test('returns preDashboard for all other ranks', () {
       final preDashboardStatuses = [
-        'NEW', // 0
-        'PHONE_VERIFIED', // 1
         'GUARANTOR_SUBMITTED', // 3
         'GUARANTOR_APPROVED', // 3
         'PLAN_SELECTED', // 4

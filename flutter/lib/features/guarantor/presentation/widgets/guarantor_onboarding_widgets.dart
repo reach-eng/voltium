@@ -420,8 +420,7 @@ class GuarantorDetailsCard extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: kPrimaryColor, width: 1.5),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
             ),
           ),
         ),
@@ -604,9 +603,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
                     : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: videoUploaded
-                      ? kSuccessColor
-                      : kOutlineVariantColor,
+                  color: videoUploaded ? kSuccessColor : kOutlineVariantColor,
                   width: videoUploaded ? 1 : 2,
                 ),
               ),
@@ -616,9 +613,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
                   children: [
                     Icon(
                       videoUploaded ? Icons.check_circle : Icons.videocam,
-                      color: videoUploaded
-                          ? kSuccessColor
-                          : kOutlineColor,
+                      color: videoUploaded ? kSuccessColor : kOutlineColor,
                       size: 36,
                     ),
                     const SizedBox(height: 8),
@@ -627,9 +622,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: videoUploaded
-                            ? kSuccessColor
-                            : kOnSurfaceColor,
+                        color: videoUploaded ? kSuccessColor : kOnSurfaceColor,
                       ),
                     ),
                   ],
@@ -702,9 +695,8 @@ class GuarantorSignatureCard extends StatelessWidget {
                     : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: signatureUploaded
-                      ? kSuccessColor
-                      : kOutlineVariantColor,
+                  color:
+                      signatureUploaded ? kSuccessColor : kOutlineVariantColor,
                   width: signatureUploaded ? 1 : 2,
                 ),
               ),
@@ -714,9 +706,7 @@ class GuarantorSignatureCard extends StatelessWidget {
                   children: [
                     Icon(
                       signatureUploaded ? Icons.check_circle : Icons.draw,
-                      color: signatureUploaded
-                          ? kSuccessColor
-                          : kOutlineColor,
+                      color: signatureUploaded ? kSuccessColor : kOutlineColor,
                       size: 36,
                     ),
                     const SizedBox(height: 8),
@@ -725,9 +715,8 @@ class GuarantorSignatureCard extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: signatureUploaded
-                            ? kSuccessColor
-                            : kOnSurfaceColor,
+                        color:
+                            signatureUploaded ? kSuccessColor : kOnSurfaceColor,
                       ),
                     ),
                   ],
@@ -938,7 +927,8 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text('Skip', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    child: Text('Skip',
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 8),

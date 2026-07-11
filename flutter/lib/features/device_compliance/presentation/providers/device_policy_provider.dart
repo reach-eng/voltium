@@ -9,6 +9,7 @@ import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 class DevicePolicyProvider extends ChangeNotifier {
   static const _platform =
       MethodChannel('com.voltiumelectric.voltium/device_policy');

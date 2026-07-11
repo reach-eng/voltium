@@ -28,11 +28,13 @@ class _TestAppProvider extends AppProvider {
 }
 
 Widget buildTestApp({AppProvider? provider}) {
-  return ProviderScope(overrides: [
+  return ProviderScope(
+    overrides: [
       localeProviderRef.overrideWith((ref) => LocaleProvider()),
       themeProviderRef.overrideWith((ref) => ThemeProvider()),
       appProvider.overrideWith((ref) => provider ?? _TestAppProvider()),
-    ], child: const MaterialApp(home: WalletScreen()),
+    ],
+    child: const MaterialApp(home: WalletScreen()),
   );
 }
 

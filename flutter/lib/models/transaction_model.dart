@@ -2,7 +2,13 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'transaction_model.g.dart';
 
-enum TransactionType { credit, debit }
+enum TransactionType {
+  credit('credit'),
+  debit('debit');
+
+  final String value;
+  const TransactionType(this.value);
+}
 
 /// Mirrors the server-side enum in `web/prisma/schema.prisma`
 /// (`TransactionStatus`): PENDING / APPROVED / REJECTED / FAILED /
@@ -11,14 +17,17 @@ enum TransactionType { credit, debit }
 /// compatibility with serialized JSON; the parser below
 /// normalises legacy values into the new canonical set.
 enum TransactionStatus {
-  pending,
-  approved,
-  rejected,
-  failed,
-  reversed,
-  refunded,
+  pending('pending'),
+  approved('approved'),
+  rejected('rejected'),
+  failed('failed'),
+  reversed('reversed'),
+  refunded('refunded'),
   // Legacy alias for older client writes / cached records.
-  success,
+  success('success');
+
+  final String value;
+  const TransactionStatus(this.value);
 }
 
 enum BreakdownType { charge, tax, discount, penalty, adjustment }
@@ -231,7 +240,7 @@ class TransactionModel {
     if (value is TransactionType) return value;
     final str = value.toString().toLowerCase();
     return TransactionType.values.firstWhere(
-      (e) => e.name.toLowerCase() == str,
+      (e) => e.value.toLowerCase() == str,
       orElse: () => TransactionType.debit,
     );
   }
@@ -245,7 +254,7 @@ class TransactionModel {
     // transaction".
     final canonical = raw == 'success' ? 'approved' : raw;
     return TransactionStatus.values.firstWhere(
-      (e) => e.name.toLowerCase() == canonical,
+      (e) => e.value.toLowerCase() == canonical,
       orElse: () => TransactionStatus.pending,
     );
   }

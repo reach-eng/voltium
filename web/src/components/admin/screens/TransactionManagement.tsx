@@ -966,68 +966,72 @@ export default function TransactionManagement() {
                       ? 'Approve Transaction'
                       : 'Reject Transaction'}
                   </AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {confirmAction?.action === 'approve' ? (
-                      <div className="space-y-4">
-                        <p>
-                          Are you sure you want to approve this transaction for{' '}
-                          <strong>{formatINR(confirmAction?.tx.amount || 0)}</strong>?
-                        </p>
-                        {confirmAction?.tx.purpose === 'SECURITY_DEPOSIT' && (
-                          <div className="p-4 border rounded-xl bg-muted/10 space-y-3">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={creditWallet}
-                                onChange={(e) => {
-                                  setCreditWallet(e.target.checked);
-                                  if (e.target.checked)
-                                    setWalletCreditAmount(
-                                      confirmAction?.tx.amount
-                                        ? Math.round(confirmAction.tx.amount / 100)
-                                        : 0
-                                    );
-                                }}
-                                className="w-4 h-4 rounded border-gray-300"
-                              />
-                              <span className="text-sm font-medium">
-                                Also add amount to wallet balance?
-                              </span>
-                            </label>
-                            {creditWallet && (
-                              <div className="flex items-center gap-2 pl-7">
-                                <span className="text-sm font-semibold text-muted-foreground">
-                                  ₹
-                                </span>
+                  <AlertDialogDescription asChild>
+                    <div className="text-muted-foreground text-sm">
+                      {confirmAction?.action === 'approve' ? (
+                        <div className="space-y-4">
+                          <p>
+                            Are you sure you want to approve this transaction for{' '}
+                            <strong>{formatINR(confirmAction?.tx.amount || 0)}</strong>?
+                          </p>
+                          {confirmAction?.tx.purpose === 'SECURITY_DEPOSIT' && (
+                            <div className="p-4 border rounded-xl bg-muted/10 space-y-3">
+                              <label className="flex items-center gap-3 cursor-pointer">
                                 <input
-                                  type="number"
-                                  min={1}
-                                  value={walletCreditAmount}
-                                  onChange={(e) =>
-                                    setWalletCreditAmount(Math.max(1, Number(e.target.value)))
-                                  }
-                                  className="flex-1 px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                  type="checkbox"
+                                  checked={creditWallet}
+                                  onChange={(e) => {
+                                    setCreditWallet(e.target.checked);
+                                    if (e.target.checked)
+                                      setWalletCreditAmount(
+                                        confirmAction?.tx.amount
+                                          ? Math.round(confirmAction.tx.amount / 100)
+                                          : 0
+                                      );
+                                  }}
+                                  className="w-4 h-4 rounded border-gray-300"
                                 />
-                                <span className="text-xs text-muted-foreground">
-                                  will be credited
+                                <span className="text-sm font-medium">
+                                  Also add amount to wallet balance?
                                 </span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <>
-                        Are you sure you want to reject this transaction for{' '}
-                        <strong>{formatINR(confirmAction?.tx.amount || 0)}</strong>?
-                        <textarea
-                          className="w-full mt-3 p-2 border rounded-md text-sm"
-                          placeholder="Rejection reason..."
-                          value={rejectionReason}
-                          onChange={(e) => setRejectionReason(e.target.value)}
-                        />
-                      </>
-                    )}
+                              </label>
+                              {creditWallet && (
+                                <div className="flex items-center gap-2 pl-7">
+                                  <span className="text-sm font-semibold text-muted-foreground">
+                                    ₹
+                                  </span>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={walletCreditAmount}
+                                    onChange={(e) =>
+                                      setWalletCreditAmount(Math.max(1, Number(e.target.value)))
+                                    }
+                                    className="flex-1 px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                  />
+                                  <span className="text-xs text-muted-foreground">
+                                    will be credited
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <p>
+                            Are you sure you want to reject this transaction for{' '}
+                            <strong>{formatINR(confirmAction?.tx.amount || 0)}</strong>?
+                          </p>
+                          <textarea
+                            className="w-full p-2 border rounded-md text-sm text-foreground"
+                            placeholder="Rejection reason..."
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

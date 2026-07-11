@@ -458,7 +458,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                           key: const Key('resendCodeButton'),
                           onTap: _resendCountdown <= 0 ? _handleResend : null,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
                             child: Text(
                               _resendCountdown > 0
                                   ? 'Resend in ${_resendCountdown}s'

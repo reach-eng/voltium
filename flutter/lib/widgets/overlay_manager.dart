@@ -16,25 +16,23 @@ class OverlayManager extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = ref.watch(appProvider);
 
-        return Stack(
-          children: [
-            child,
-            if (provider.lockedByAdmin)
-              _buildAdminLockOverlay(context, provider),
-            if (provider.forceUpdate && !provider.lockedByAdmin)
-              _buildForceUpdateOverlay(context, provider),
-            if (provider.hasPermissionViolation &&
-                !provider.lockedByAdmin &&
-                !provider.forceUpdate)
-              const PermissionGuard(),
-            if (provider.walletBalanceLow &&
-                !provider.lockedByAdmin &&
-                !provider.forceUpdate &&
-                !provider.hasPermissionViolation)
-              _buildBalanceBanner(context, provider),
-          ],
-        );
-      
+    return Stack(
+      children: [
+        child,
+        if (provider.lockedByAdmin) _buildAdminLockOverlay(context, provider),
+        if (provider.forceUpdate && !provider.lockedByAdmin)
+          _buildForceUpdateOverlay(context, provider),
+        if (provider.hasPermissionViolation &&
+            !provider.lockedByAdmin &&
+            !provider.forceUpdate)
+          const PermissionGuard(),
+        if (provider.walletBalanceLow &&
+            !provider.lockedByAdmin &&
+            !provider.forceUpdate &&
+            !provider.hasPermissionViolation)
+          _buildBalanceBanner(context, provider),
+      ],
+    );
   }
 
   Widget _buildAdminLockOverlay(BuildContext context, AppProvider provider) {

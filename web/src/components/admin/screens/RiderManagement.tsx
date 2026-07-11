@@ -1019,6 +1019,7 @@ export default function RiderManagement() {
                     >
                       Phone {sortKey === 'phone' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
                     </TableHead>
+                    <TableHead>Date & Time</TableHead>
                     <TableHead>Vehicle</TableHead>
                     <TableHead>Pickup Date</TableHead>
                     <TableHead>ID Check</TableHead>
@@ -1080,6 +1081,9 @@ export default function RiderManagement() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">{rider.phone}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {rider.createdAt ? formatDateTimeDDMMYYYY(rider.createdAt) : '—'}
+                          </TableCell>
                           <TableCell className="text-xs font-medium">
                             {rider.activeVehicle ? (
                               <span className="text-blue-600 flex items-center gap-1">
@@ -1181,7 +1185,7 @@ export default function RiderManagement() {
             }
           }}
         >
-          <DialogContent className="!max-w-[90vw] !w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl rounded-3xl bg-background/95 backdrop-blur-xl">
+          <DialogContent className="!max-w-[90vw] !w-[90vw] h-[95vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl rounded-3xl bg-background/95 backdrop-blur-xl">
             <DialogHeader className="px-8 pt-8 pb-4 bg-muted/20 border-b">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

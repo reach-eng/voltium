@@ -437,7 +437,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             )
           : Text(
               'SUBMIT FEEDBACK',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, letterSpacing: 1.2),
+              style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w900, letterSpacing: 1.2),
             ),
     );
   }

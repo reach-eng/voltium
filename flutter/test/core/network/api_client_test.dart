@@ -6,6 +6,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 
 class MockHttpClient extends Mock implements http.Client {}
+
 class MockSecureStorageService extends Mock implements SecureStorageService {}
 
 void main() {
@@ -49,7 +50,7 @@ void main() {
       verify(() => mockStorage.getSessionToken()).called(1);
       verify(() => mockClient.get(
             any(that: predicate<Uri>((uri) => uri.path == '/test-endpoint')),
-            headers: any(named: 'headers'), 
+            headers: any(named: 'headers'),
           )).called(1);
     });
 

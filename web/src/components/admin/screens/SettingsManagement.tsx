@@ -235,6 +235,20 @@ function BusinessSettingsTab() {
                 className="w-32 h-11 text-base rounded-xl"
               />
             </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="gpsFetchIntervalMins">Background GPS Sync Interval (Mins)</Label>
+              <p className="text-xs text-muted-foreground">
+                How often rider devices push location updates in the background
+              </p>
+              <Input
+                id="gpsFetchIntervalMins"
+                type="number"
+                value={settings.gpsFetchIntervalMins ?? '10'}
+                onChange={(e) => updateSetting('gpsFetchIntervalMins', e.target.value)}
+                className="w-32 h-11 text-base rounded-xl"
+              />
+            </div>
           </CardContent>
         </Card>
 

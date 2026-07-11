@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_theme.dart';
 
@@ -99,10 +100,10 @@ class PermissionGuard extends ConsumerWidget {
                       child: Icon(icon, color: Colors.redAccent, size: 48),
                     ),
                     const SizedBox(height: 32),
-                    const Text(
+                    Text(
                       'REQUIRED PERMISSION\nREVOKED',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -114,7 +115,7 @@ class PermissionGuard extends ConsumerWidget {
                     Text(
                       'The "$permName" permission has been revoked. This permission is mandatory for the app to function.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 15,
                         height: 1.5,
@@ -134,7 +135,7 @@ class PermissionGuard extends ConsumerWidget {
                       ),
                       child: Text(
                         permName.toUpperCase(),
-                        style: const TextStyle(
+                        style: GoogleFonts.inter(
                           color: Colors.redAccent,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -149,9 +150,9 @@ class PermissionGuard extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed: _openSettings,
                         icon: const Icon(Icons.settings),
-                        label: const Text(
+                        label: Text(
                           'OPEN SETTINGS',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             letterSpacing: 0.5,
@@ -169,11 +170,10 @@ class PermissionGuard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () =>
-                          ref.read(appProvider).clearViolation(),
+                      onPressed: () => ref.read(appProvider).clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 13,
                         ),
@@ -182,7 +182,7 @@ class PermissionGuard extends ConsumerWidget {
                     const SizedBox(height: 32),
                     Text(
                       'Voltium Security System v3.0',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white.withValues(alpha: 0.2),
                         fontSize: 12,
                         fontStyle: FontStyle.italic,

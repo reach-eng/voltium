@@ -7,6 +7,7 @@ import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 class ConnectivityProvider extends ChangeNotifier {
   StreamSubscription<bool>? _connectivitySubscription;
 

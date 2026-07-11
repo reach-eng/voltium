@@ -526,7 +526,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
                 children: [
                   buildCurtainHeader(
                     title: 'Pickup Verification',
-                    subtitle: 'Complete the verification steps to assign and pick up your vehicle',
+                    subtitle:
+                        'Complete the verification steps to assign and pick up your vehicle',
                     onBack: () {
                       if (_currentStep > 1) {
                         setState(() {

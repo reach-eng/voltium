@@ -3,6 +3,8 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 
 import '../models/hub_model.dart';
 import '../widgets/dashed_border_painter.dart';
@@ -53,18 +55,18 @@ Widget buildHubDropdown(
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF1F5F9),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kPrimaryColor, width: 2),
       ),
       hintText: 'Select Hub',
       hintStyle: GoogleFonts.inter(
@@ -107,18 +109,18 @@ Widget buildTeamLeaderDropdown(
           const Icon(Icons.person_outline, color: kPrimaryColor, size: 20),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFF1F5F9),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kPrimaryColor, width: 2),
       ),
       hintText: 'Select Team Leader',
       hintStyle: GoogleFonts.inter(
@@ -305,18 +307,18 @@ class EmergencyContactField extends StatelessWidget {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: const Color(0xFFF1F5F9),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kOutlineVariantColor, width: 1),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kPrimaryColor, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: kPrimaryColor, width: 2),
         ),
         hintText: '10-digit number',
         hintStyle: GoogleFonts.inter(
@@ -632,9 +634,9 @@ Widget buildCurtainHeader({
         const SizedBox(height: 24),
         Text(
           title,
-          style: GoogleFonts.inter(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
             color: Colors.white,
             letterSpacing: -0.5,
           ),
@@ -724,39 +726,13 @@ Widget buildStickyBottomBar({
 }
 
 /// Photo source dialog
-void showImageSourceDialog(
+Future<void> showImageSourceDialog(
   BuildContext context,
   String type,
   Function(String, bool) onUpload,
-) {
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: kPrimaryColor),
-              title: const Text('Take a Photo'),
-              onTap: () {
-                Navigator.pop(context);
-                onUpload(type, true);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: kPrimaryColor),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                onUpload(type, false);
-              },
-            ),
-          ],
-        ),
-      );
-    },
-  );
+) async {
+  final source = await ImageSourceBottomSheet.show(context: context);
+  if (source != null) {
+    onUpload(type, source == ImageSource.camera);
+  }
 }

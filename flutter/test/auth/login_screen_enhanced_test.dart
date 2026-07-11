@@ -16,10 +16,12 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 /// - Accessibility semantics
 
 Widget buildTestApp({Function(String)? onNext, bool isSignUp = false}) {
-  return ProviderScope(overrides: [
+  return ProviderScope(
+    overrides: [
       localeProviderRef.overrideWith((ref) => LocaleProvider()),
       themeProviderRef.overrideWith((ref) => ThemeProvider()),
-    ], child: MaterialApp(
+    ],
+    child: MaterialApp(
       home: LoginScreen(onNext: onNext, isSignUp: isSignUp),
     ),
   );

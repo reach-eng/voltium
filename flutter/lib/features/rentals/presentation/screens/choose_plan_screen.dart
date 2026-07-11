@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/plan_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -48,8 +49,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
           _isLoading = false;
 
           // Pre-select the plan matching current plan if any, otherwise default to first plan
-          final currentPlanName =
-              ref.read(appProvider).rider?.currentPlan;
+          final currentPlanName = ref.read(appProvider).rider?.currentPlan;
           if (currentPlanName != null && currentPlanName.isNotEmpty) {
             final matchingIndex = _plans.indexWhere(
               (p) => p.name.toLowerCase() == currentPlanName.toLowerCase(),
@@ -173,7 +173,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       ),
       child: Text(
         'BEST VALUE',
-        style: TextStyle(
+        style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w800,
           color: isSelected ? Colors.white : const Color(0xFF7E22CE),
@@ -264,13 +264,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                               ),
                               const SizedBox(width: 16),
                             ],
-                            const Expanded(
+                            Expanded(
                               child: Text(
                                 'Select a new plan',
-                                style: TextStyle(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF1E293B),
+                                  color: const Color(0xFF1E293B),
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -278,11 +278,11 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                           ],
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           'Choose the rental duration that best fits your needs. You can change this at any time.',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             fontSize: 14,
                             color: AppColors.slate500,
                             height: 1.5,
@@ -365,7 +365,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         isCurrentPlan
                                                             ? 'CURRENT PLAN'
                                                             : 'SELECTED PLAN',
-                                                        style: TextStyle(
+                                                        style:
+                                                            GoogleFonts.inter(
                                                           fontSize: 12,
                                                           fontWeight:
                                                               FontWeight.w800,
@@ -389,8 +390,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                           Expanded(
                                                             child: Text(
                                                               plan.name,
-                                                              style:
-                                                                  const TextStyle(
+                                                              style: GoogleFonts
+                                                                  .plusJakartaSans(
                                                                 fontSize: 18,
                                                                 fontWeight:
                                                                     FontWeight
@@ -417,12 +418,12 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                       Expanded(
                                                         child: Text(
                                                           plan.name,
-                                                          style:
-                                                              const TextStyle(
+                                                          style: GoogleFonts
+                                                              .plusJakartaSans(
                                                             fontSize: 16,
                                                             fontWeight:
                                                                 FontWeight.bold,
-                                                            color: Color(
+                                                            color: const Color(
                                                               0xFF0F172A,
                                                             ),
                                                           ),
@@ -475,7 +476,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         const SizedBox(height: 6),
                                         Text(
                                           plan.description ?? '',
-                                          style: TextStyle(
+                                          style: GoogleFonts.inter(
                                             fontSize: 13,
                                             color: isSelected
                                                 ? Colors.white
@@ -507,7 +508,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                               Expanded(
                                                 child: Text(
                                                   feature,
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.inter(
                                                     fontSize: 14,
                                                     color: isSelected
                                                         ? Colors.white
@@ -540,7 +541,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                           children: [
                                             TextSpan(
                                               text: _formatPrice(plan.price),
-                                              style: TextStyle(
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w900,
                                                 color: isSelected
@@ -551,7 +553,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             TextSpan(
                                               text:
                                                   ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
-                                              style: TextStyle(
+                                              style: GoogleFonts.inter(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color: isSelected
@@ -609,9 +611,9 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Confirm Plan',
-                                      style: TextStyle(
+                                      style: GoogleFonts.inter(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white,

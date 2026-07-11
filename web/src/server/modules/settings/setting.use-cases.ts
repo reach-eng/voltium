@@ -8,7 +8,7 @@ const MONETARY_KEYS = new Set([
   'lateFee',
   'referralBonus',
 ]);
-const PUBLIC_SETTINGS = ['walletMinTopup', 'lateFee', 'referralBonus'];
+const PUBLIC_SETTINGS = ['walletMinTopup', 'lateFee', 'referralBonus', 'gpsFetchIntervalMins'];
 
 export const settingUseCases = {
   async getAll() {
@@ -22,6 +22,7 @@ export const settingUseCases = {
       gracePeriodHours: '24',
       emailNotifications: 'true',
       smsNotifications: 'true',
+      gpsFetchIntervalMins: '10',
     };
 
     const settingsMap: Record<string, string> = { ...DEFAULT_SETTINGS };

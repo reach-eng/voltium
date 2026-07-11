@@ -7,10 +7,12 @@ import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 
 Widget buildTestApp() {
-  return ProviderScope(overrides: [
+  return ProviderScope(
+    overrides: [
       localeProviderRef.overrideWith((ref) => LocaleProvider()),
       themeProviderRef.overrideWith((ref) => ThemeProvider()),
-    ], child: const MaterialApp(home: AppSettingsScreen()),
+    ],
+    child: const MaterialApp(home: AppSettingsScreen()),
   );
 }
 

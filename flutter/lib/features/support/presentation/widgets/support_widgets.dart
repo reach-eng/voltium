@@ -2,6 +2,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/models/support_model.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
 
 String _getMonth(int month) {
@@ -30,28 +31,7 @@ Future<void> pickSupportPhoto(
 ) async {
   if (currentCount >= 5) return;
   try {
-    final source = await showDialog<ImageSource>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Select Photo Source'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, ImageSource.camera),
-            child: const ListTile(
-              leading: Icon(Icons.camera_alt),
-              title: Text('Camera'),
-            ),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, ImageSource.gallery),
-            child: const ListTile(
-              leading: Icon(Icons.photo_library),
-              title: Text('Gallery'),
-            ),
-          ),
-        ],
-      ),
-    );
+    final source = await ImageSourceBottomSheet.show(context: context);
     if (source == null) return;
     final XFile? photo = await picker.pickImage(
       source: source,

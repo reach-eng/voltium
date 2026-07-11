@@ -12,17 +12,20 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 /// Onboarding Flow Widget Tests
 void main() {
   Widget buildTestApp({required Widget child}) {
-    return ProviderScope(overrides: [
+    return ProviderScope(
+      overrides: [
         localeProviderRef.overrideWith((ref) => LocaleProvider()),
         themeProviderRef.overrideWith((ref) => ThemeProvider()),
-      ], child: MaterialApp(
+      ],
+      child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: child,),
+        home: child,
+      ),
     );
   }
 

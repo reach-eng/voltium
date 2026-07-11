@@ -17,7 +17,8 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
@@ -144,7 +145,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                           ? _buildEmptyState()
                           : RefreshIndicator(
                               color: AppColors.primary,
-                              onRefresh: () => ref.read(appProvider).refreshEngagementData(),
+                              onRefresh: () =>
+                                  ref.read(appProvider).refreshEngagementData(),
                               child: ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -204,9 +206,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                         },
                                         onDismissed: (direction) {
                                           setState(() {
-                                            ref.read(appProvider).notifications.removeWhere(
-                                              (n) => n.id == filtered[index].id,
-                                            );
+                                            ref
+                                                .read(appProvider)
+                                                .notifications
+                                                .removeWhere(
+                                                  (n) =>
+                                                      n.id ==
+                                                      filtered[index].id,
+                                                );
                                           });
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -364,8 +371,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     ),
                   ),
                 ),
-              if (unreadCount > 0)
-                const SizedBox(width: 8),
+              if (unreadCount > 0) const SizedBox(width: 8),
               InkWell(
                 onTap: () => AppNavigator.push(
                   context,

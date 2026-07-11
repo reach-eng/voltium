@@ -20,7 +20,8 @@ class TopUpRequestSentCard extends StatelessWidget {
     final isRejected = record?.status == DepositStatus.rejected;
     final statusText = isRejected ? 'Rejected' : 'Awaiting Admin Approval';
     final statusColor = isRejected ? AppColors.error : AppColors.warning;
-    final statusBg = isRejected ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB);
+    final statusBg =
+        isRejected ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB);
     final iconColor = isRejected ? AppColors.error : AppColors.warning;
 
     return Container(
@@ -53,7 +54,8 @@ class TopUpRequestSentCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(12),
@@ -76,11 +78,13 @@ class TopUpRequestSentCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                border:
+                    Border.all(color: AppColors.error.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                  const Icon(Icons.error_outline,
+                      color: AppColors.error, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -99,7 +103,8 @@ class TopUpRequestSentCard extends StatelessWidget {
           const SizedBox(height: 16),
           _buildRow('Security Deposit', '₹${rider.securityDeposit}'),
           const SizedBox(height: 8),
-          _buildRow('Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
+          _buildRow(
+              'Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppColors.outlineVariant),

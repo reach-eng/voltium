@@ -95,7 +95,29 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                   const Spacer(),
                   IconButton(
                     key: const Key('callTeamLeaderButton'),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final phone = (rider.emergencyContact == null ||
+                              rider.emergencyContact!.isEmpty)
+                          ? '+91 98765 12345'
+                          : rider.emergencyContact!;
+                      final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+                      final uri = Uri.parse('tel:$sanitized');
+                      
+                      try {
+                        if (!await launchUrl(uri)) {
+                          throw Exception('Could not launch dialer');
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not open the phone dialer. Please try again.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
                     icon: const Icon(Icons.call, color: Color(0xFF16A34A)),
                   ),
                 ],

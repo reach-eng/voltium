@@ -25,33 +25,7 @@ class EngagementProvider extends ChangeNotifier {
     if (kDebugMode) {
       _rewardPoints = 1250;
       _paymentStreak = 3;
-      _notifications = [
-        AppNotification(
-          id: '1',
-          title: 'Payment Successful',
-          message: 'Your wallet top-up of ₹500 was successful.',
-          type: AppNotificationType.paymentReceived,
-          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-          isRead: false,
-        ),
-        AppNotification(
-          id: '2',
-          title: 'Daily Reward Earned!',
-          message: 'You earned 50 points for your 3-day payment streak.',
-          type: AppNotificationType.promo,
-          createdAt: DateTime.now().subtract(const Duration(days: 1)),
-          isRead: true,
-        ),
-        AppNotification(
-          id: '3',
-          title: 'Vehicle Service Due',
-          message:
-              'Your vehicle is due for a routine check-up. Please visit the hub.',
-          type: AppNotificationType.system,
-          createdAt: DateTime.now().subtract(const Duration(days: 3)),
-          isRead: true,
-        ),
-      ];
+
     }
     _fetchAll();
   }

@@ -102,7 +102,9 @@ class _PremiumDoubleBezelCardState extends State<PremiumDoubleBezelCard>
       padding: EdgeInsets.all(widget.bezelWidth),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(widget.outerRadius),
-        color: isDark ? AppColors.surfaceAlt.withValues(alpha: 0.5) : AppColors.surfaceAlt,
+        color: isDark
+            ? AppColors.surfaceAlt.withValues(alpha: 0.5)
+            : AppColors.surfaceAlt,
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.05)

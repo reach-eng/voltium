@@ -87,7 +87,7 @@ void main() {
       test('fromJson parses correctly', () {
         final json = {
           'id': 'tx_123',
-          'amount': 50000,
+          'amount': 500,
           'type': 'DEBIT',
           'purpose': 'RENTAL',
           'status': 'SUCCESS',

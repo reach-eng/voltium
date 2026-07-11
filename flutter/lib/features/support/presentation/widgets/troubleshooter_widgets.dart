@@ -186,7 +186,8 @@ class ActionButtons extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline, size: 20),
               label: Text(
                 'Yes',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
           ),
@@ -207,7 +208,8 @@ class ActionButtons extends StatelessWidget {
               icon: const Icon(Icons.cancel_outlined, size: 20),
               label: Text(
                 'No',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
+                style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700, fontSize: 16),
               ),
             ),
           ),

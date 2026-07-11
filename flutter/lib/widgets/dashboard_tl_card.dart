@@ -18,109 +18,109 @@ class TeamLeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PremiumDoubleBezelCard(
-      padding: EdgeInsets.zero,
-      child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Team Leader',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.slate400,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              InkWell(
-                onTap: onViewDetails,
-                child: const Text(
-                  'View Details',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+        padding: EdgeInsets.zero,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.warningLight),
-                ),
-                child:
-                    const Icon(Icons.stars, color: AppColors.warning, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (teamLeaderName == null ||
-                              teamLeaderName!.isEmpty ||
-                              teamLeaderName == 'Not Assigned')
-                          ? 'Amit Sharma'
-                          : teamLeaderName!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Team Leader',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.slate400,
+                      letterSpacing: 1.0,
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Assigned TL',
+                  ),
+                  InkWell(
+                    onTap: onViewDetails,
+                    child: const Text(
+                      'View Details',
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.slate500,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.iconBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.phone,
-                    color: Color(0xFF475569),
-                    size: 20,
                   ),
-                  onPressed: onCall,
-                ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.warningLight),
+                    ),
+                    child: const Icon(Icons.stars,
+                        color: AppColors.warning, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          (teamLeaderName == null ||
+                                  teamLeaderName!.isEmpty ||
+                                  teamLeaderName == 'Not Assigned')
+                              ? 'Amit Sharma'
+                              : teamLeaderName!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Assigned TL',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.slate500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.iconBackground,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.phone,
+                        color: Color(0xFF475569),
+                        size: 20,
+                      ),
+                      onPressed: onCall,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    ));
+        ));
   }
 }

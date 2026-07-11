@@ -13,7 +13,7 @@ class TransactionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Support both TransactionModel objects and raw maps.
     final String type = tx is TransactionModel
-        ? tx.type.name.toUpperCase()
+        ? tx.type.value.toUpperCase()
         : (tx['type'] ?? 'OTHER').toString();
     final String purpose = tx is TransactionModel
         ? (tx.purpose ?? '')
@@ -333,138 +333,159 @@ class WalletBalanceCard extends StatelessWidget {
     final balance = rider?.walletBalance ?? 0.0;
     final int streak = rider?.paymentStreak ?? 0;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryGradientEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Material(
+      elevation: 4,
+      borderRadius: BorderRadius.circular(20),
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primary, AppColors.primaryGradientEnd],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Decorative circles
-          Positioned(
-            right: -40,
-            top: -40,
-            child: Container(
-              height: 160,
-              width: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 0,
-            bottom: -20,
-            child: Container(
-              height: 96,
-              width: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          // Content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    color: Colors.white.withValues(alpha: 0.7),
-                    size: 16,
+              // Decorative circles
+              Positioned(
+                right: -40,
+                top: -40,
+                child: Container(
+                  height: 160,
+                  width: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Available Balance',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    '\u20B9',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w300,
-                    ),
+              Positioned(
+                right: 0,
+                bottom: -20,
+                child: Container(
+                  height: 96,
+                  width: 96,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatCurrency(balance),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 24),
-              // Streak section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Content
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Payment Streak',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '$streak / 5 Days',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: List.generate(5, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 10,
-                      margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
-                      decoration: BoxDecoration(
-                        color: index < streak
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Available Balance',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  );
-                }),
-              ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const TopUpFlow(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.add,
+                              color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        '\u20B9',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w300,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatCurrency(balance),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Streak section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Payment Streak',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '$streak / 5 Days',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Expanded(
+                        child: Container(
+                          height: 10,
+                          margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
+                          decoration: BoxDecoration(
+                            color: index < streak
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.25),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
                   if (streak > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -476,38 +497,11 @@ class WalletBalanceCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const TopUpFlow(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      icon: const Icon(Icons.add_card, size: 18),
-                      label: const Text(
-                        'Top Up Wallet',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -651,28 +645,34 @@ class TransactionHistorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final filtered = transactions.where((tx) {
       if (selectedFilter == 'All') return true;
+
+      final String status = tx.status.value;
+      final String type = tx.type.value;
+      final String purpose = tx.purpose ?? '';
+      final String remark = tx.remark ?? '';
+
       if (selectedFilter == 'Approved') {
-        return tx.status == TransactionStatus.approved ||
-            tx.status == TransactionStatus.success;
+        return status.toLowerCase() == 'approved' ||
+            status.toLowerCase() == 'success';
       }
       if (selectedFilter == 'Pending') {
-        return tx.status == TransactionStatus.pending;
+        return status.toLowerCase() == 'pending';
       }
       if (selectedFilter == 'Rejected') {
-        return tx.status == TransactionStatus.rejected ||
-            tx.status == TransactionStatus.failed;
+        return status.toLowerCase() == 'rejected' ||
+            status.toLowerCase() == 'failed';
       }
       if (selectedFilter == 'Rent') {
-        return (tx.purpose ?? '').toUpperCase() == 'RENTAL' &&
-            tx.type == TransactionType.debit;
+        return purpose.toUpperCase() == 'RENTAL' &&
+            type.toLowerCase() == 'debit';
       }
       if (selectedFilter == 'Security') {
-        return (tx.purpose ?? '').toUpperCase() == 'SECURITY_DEPOSIT';
+        return purpose.toUpperCase() == 'SECURITY_DEPOSIT';
       }
       if (selectedFilter == 'Deduction') {
-        return tx.type == TransactionType.debit &&
-            (tx.purpose ?? '').toUpperCase() != 'RENTAL' &&
-            (tx.remark != null && tx.remark!.isNotEmpty);
+        return type.toLowerCase() == 'debit' &&
+            purpose.toUpperCase() != 'RENTAL' &&
+            remark.isNotEmpty;
       }
       return true;
     }).toList();

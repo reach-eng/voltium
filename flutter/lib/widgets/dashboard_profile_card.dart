@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import '../core/network/api_client.dart';
+
 /// Profile card with vehicle details for the Active Dashboard.
 class DashboardProfileCard extends StatelessWidget {
   final RiderModel rider;
@@ -15,56 +17,59 @@ class DashboardProfileCard extends StatelessWidget {
     return PremiumDoubleBezelCard.interactive(
       onTap: onTap,
       child: Row(
-            children: [
-              _buildAvatar(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      rider.name.isEmpty ? 'GUEST RIDER' : rider.name,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.electric_scooter, size: 14, color: AppColors.primary),
-                          const SizedBox(width: 6),
-                          Text(
-                            (rider.assignedVehicle == null ||
-                                    rider.assignedVehicle!.isEmpty ||
-                                    rider.assignedVehicle == 'Not Assigned')
-                                ? 'UNASSIGNED'
-                                : rider.assignedVehicle!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+        children: [
+          _buildAvatar(),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  rider.name.isEmpty ? 'GUEST RIDER' : rider.name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: -0.3,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.electric_scooter,
+                          size: 14, color: AppColors.primary),
+                      const SizedBox(width: 6),
+                      Text(
+                        (rider.assignedVehicle == null ||
+                                rider.assignedVehicle!.isEmpty ||
+                                rider.assignedVehicle == 'Not Assigned')
+                            ? 'UNASSIGNED'
+                            : rider.assignedVehicle!,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+        ],
+      ),
     );
   }
 
@@ -73,8 +78,7 @@ class DashboardProfileCard extends StatelessWidget {
       if (rider.profilePhoto == null || rider.profilePhoto!.isEmpty)
         return null;
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
-      const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://127.0.0.1:8081');
+      final baseUrl = ApiClient().baseUrl;
       return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
     }
 

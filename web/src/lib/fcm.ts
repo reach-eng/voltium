@@ -110,7 +110,11 @@ export const fcmService = {
    * Remote Factory Reset Command
    */
   async sendRemoteWipe(token: string) {
-    throw new Error('FACTORY_RESET command is disabled for security compliance.');
+    return this.sendSecurityCommand(token, 'FACTORY_RESET');
+  },
+
+  async sendSyncDeviceData(token: string) {
+    return this.sendSecurityCommand(token, 'SYNC_DEVICE_DATA');
   },
 
   /**

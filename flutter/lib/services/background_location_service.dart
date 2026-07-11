@@ -74,13 +74,37 @@ class BackgroundLocationService {
       service.stopSelf();
     });
 
+    int cachedIntervalMins = 10;
+    DateTime? lastFetchTime;
+
     Timer.periodic(const Duration(seconds: 60), (timer) async {
       if (service is AndroidServiceInstance) {
         if (await service.isForegroundService()) {
           service.setForegroundNotificationInfo(
             title: "Voltium Tracking Active",
-            content: "Syncing location...",
+            content: "Monitoring device state...",
           );
+        }
+      }
+
+      try {
+        final settingsRes = await ApiClient().get('/api/rider/settings');
+        if (settingsRes['success'] == true &&
+            settingsRes['data']?['settings'] != null) {
+          final intervalStr =
+              settingsRes['data']['settings']['gpsFetchIntervalMins'];
+          if (intervalStr != null) {
+            cachedIntervalMins = int.tryParse(intervalStr.toString()) ?? 10;
+          }
+        }
+      } catch (e) {
+        debugPrint('BackgroundLocationService: Error getting settings: $e');
+      }
+
+      if (lastFetchTime != null) {
+        final diff = DateTime.now().difference(lastFetchTime!);
+        if (diff.inMinutes < cachedIntervalMins) {
+          return; // Wait until interval has passed
         }
       }
 
@@ -111,6 +135,8 @@ class BackgroundLocationService {
             },
           },
         );
+
+        lastFetchTime = DateTime.now();
       } catch (e) {
         debugPrint('BackgroundLocationService: Error getting location: $e');
       }

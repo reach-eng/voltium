@@ -5,6 +5,7 @@ import 'package:voltium_rider/models/support_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 class SupportProvider extends ChangeNotifier {
   final SupportRepository _repository;
 

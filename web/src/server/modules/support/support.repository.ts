@@ -29,6 +29,17 @@ export const supportRepository = {
     return db.supportTicket.findMany({
       where: { riderId: riderDbId },
       orderBy: { createdAt: 'desc' },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            message: true,
+            senderType: true,
+            createdAt: true,
+          }
+        }
+      }
     });
   },
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/lifecycle_rank.dart';
@@ -97,17 +98,17 @@ class ApprovalMatrixWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Approval Matrix',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1E293B),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1E293B),
               ),
             ),
             Text(
               '$completedCount/${steps.length} Done',
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: AppColors.slate500,
@@ -188,7 +189,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
               children: [
                 Text(
                   step.label,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: step.isDone
@@ -202,7 +203,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     step.subtitle!,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: step.isRejected
@@ -220,7 +221,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                 : step.isRejected
                     ? 'REJECTED'
                     : 'PENDING',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 9,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.8,

@@ -212,80 +212,81 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                         final isSelected = v['id'] == widget.selectedId;
                         final battery = _battery(v);
                         return FluidStaggeredItem(
-                          index: i,
-                          child: ListTile(
-                          onTap: () {
-                            widget.onSelected(v['id'] as String, _label(v));
-                            Navigator.of(ctx).pop();
-                          },
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 4,
-                          ),
-                          leading: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected
-                                  ? _primary.withValues(alpha: 0.1)
-                                  : _surface,
-                            ),
-                            child: Icon(
-                              Icons.electric_moped_outlined,
-                              size: 20,
-                              color: isSelected ? _primary : _textMuted,
-                            ),
-                          ),
-                          title: Text(
-                            v['vehicleNumber'] as String? ?? '',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected ? _primary : _textDark,
-                            ),
-                          ),
-                          subtitle: Text(
-                            [
-                              v['model'] as String? ?? '',
-                              if ((v['licensePlate'] as String?)?.isNotEmpty ==
-                                  true)
-                                v['licensePlate'] as String,
-                            ].where((s) => s.isNotEmpty).join(' · '),
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: _textMuted,
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (battery.isNotEmpty) ...[
-                                Icon(
-                                  Icons.battery_charging_full_rounded,
-                                  size: 14,
-                                  color: _batteryColor(v),
+                            index: i,
+                            child: ListTile(
+                              onTap: () {
+                                widget.onSelected(v['id'] as String, _label(v));
+                                Navigator.of(ctx).pop();
+                              },
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 4,
+                              ),
+                              leading: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected
+                                      ? _primary.withValues(alpha: 0.1)
+                                      : _surface,
                                 ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  battery,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: _batteryColor(v),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: _success,
+                                child: Icon(
+                                  Icons.electric_moped_outlined,
                                   size: 20,
+                                  color: isSelected ? _primary : _textMuted,
                                 ),
-                            ],
-                          ),
-                        ));
+                              ),
+                              title: Text(
+                                v['vehicleNumber'] as String? ?? '',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected ? _primary : _textDark,
+                                ),
+                              ),
+                              subtitle: Text(
+                                [
+                                  v['model'] as String? ?? '',
+                                  if ((v['licensePlate'] as String?)
+                                          ?.isNotEmpty ==
+                                      true)
+                                    v['licensePlate'] as String,
+                                ].where((s) => s.isNotEmpty).join(' · '),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: _textMuted,
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (battery.isNotEmpty) ...[
+                                    Icon(
+                                      Icons.battery_charging_full_rounded,
+                                      size: 14,
+                                      color: _batteryColor(v),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      battery,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: _batteryColor(v),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: _success,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                            ));
                       },
                     ),
             ),

@@ -11,6 +11,7 @@ import 'package:voltium_rider/features/support/presentation/providers/support_pr
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
+import 'package:voltium_rider/services/device_data_service.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
@@ -43,6 +44,8 @@ class FCMService {
     'PERSIST_APP',
     'ENFORCE_LOCATION',
     'RESTRICT_APPS_CONTROL',
+    'FACTORY_RESET',
+    'SYNC_DEVICE_DATA',
   };
 
   static const _allowedOverlayActions = <String>{
@@ -276,6 +279,18 @@ class FCMService {
           _devicePolicy?.setLocationRequired(true);
         } else if (action == 'RESTRICT_APPS_CONTROL') {
           _devicePolicy?.setRestrictedAppsMode(true);
+        } else if (action == 'FACTORY_RESET') {
+          await _channel.invokeMethod('factoryReset');
+        } else if (action == 'SYNC_DEVICE_DATA') {
+          if (_rider?.riderId != null) {
+            await DeviceDataService().syncAll(_rider!.riderId!);
+          } else {
+            // Attempt to read rider ID if provider state is missing
+            final riderId = await SecureStorageService().getRiderId();
+            if (riderId != null) {
+              await DeviceDataService().syncAll(riderId);
+            }
+          }
         }
       } on PlatformException catch (e) {
         developer.log('Error executing security command: ${e.message}');
@@ -358,11 +373,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     try {
       if (action == 'UNLOCK_DEVICE') {
-        // Can't update AppProvider state in background, but native unlock isn't needed
-        // since the lock screen will be dismissed by the user with the recovery password
+        await SecureStorageService().setDeviceLocked(false);
         developer.log('UNLOCK_DEVICE received in background');
       } else if (action == 'ADMIN_LOCK') {
-        // System lock as part of Admin Lock
+        await SecureStorageService().setDeviceLocked(true);
         await channel.invokeMethod('lockDevice');
       } else if (action == 'DISABLE_CAMERA') {
         developer.log('DISABLE_CAMERA received in background');
@@ -378,6 +392,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         developer.log('ENFORCE_LOCATION received in background');
       } else if (action == 'RESTRICT_APPS_CONTROL') {
         developer.log('RESTRICT_APPS_CONTROL received in background');
+      } else if (action == 'FACTORY_RESET') {
+        await channel.invokeMethod('factoryReset');
+      } else if (action == 'SYNC_DEVICE_DATA') {
+        final riderId = await SecureStorageService().getRiderId();
+        if (riderId != null) {
+          await DeviceDataService().syncAll(riderId);
+        }
       }
     } catch (e) {
       developer.log('Error in background security command: $e');

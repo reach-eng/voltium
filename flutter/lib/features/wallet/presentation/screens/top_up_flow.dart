@@ -22,7 +22,6 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
   int _amount = 2000;
   File? _proofImage;
 
-
   void _nextPage() {
     _pageController.nextPage(
       duration: const Duration(milliseconds: 300),
@@ -52,8 +51,13 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           TopUpAmountScreen(
-            securityDeposit: ref.watch(appProvider).rider?.activeRentalPlanSecurityDeposit.toInt(),
-            rentalPrice: ref.watch(appProvider).rider?.activeRentalPlanPrice.toInt(),
+            securityDeposit: ref
+                .watch(appProvider)
+                .rider
+                ?.activeRentalPlanSecurityDeposit
+                .toInt(),
+            rentalPrice:
+                ref.watch(appProvider).rider?.activeRentalPlanPrice.toInt(),
             onBack: () => Navigator.pop(context),
             onAmountChanged: (amount) => setState(() => _amount = amount),
             onProceed: (amount) {

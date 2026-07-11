@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
 import 'app_settings_screen.dart';
-import 'edit_profile_screen.dart';
+import 'profile_detail_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
@@ -19,16 +18,21 @@ import 'package:voltium_rider/features/support/presentation/screens/feedback_scr
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+/// Menu screen (formerly "Profile" tab).
+/// Shows a compact rider header and a list of navigation links.
+/// Detailed profile information lives in [ProfileDetailScreen].
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor:
-          AppColors.iconBackground, // Very light gray-blue background
-      appBar: _buildAppBar(context),
+      backgroundColor: AppColors.iconBackground,
+      appBar: _buildAppBar(),
       body: Consumer(
         builder: (context, innerRef, _) {
           final rider = innerRef.watch(appProvider).rider;
@@ -37,104 +41,161 @@ class ProfileScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // ── Compact rider header ──────────────────────────────────
                 FadeUpWidget(
                   delay: 0,
-                  child: _buildProfileCard(context, rider),
+                  child: _CompactRiderHeader(rider: rider),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Personal Details',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF475569), // slate-600
-                    letterSpacing: 1.2,
-                  ),
-                ),
+
+                // ── Menu sections ─────────────────────────────────────────
+                const _SectionLabel('ACCOUNT'),
                 const SizedBox(height: 12),
+
+                // Profile (opens full detail screen)
                 FadeUpWidget(
                   delay: 100,
-                  child: _buildPersonalDetailsCard(rider),
+                  child: QuickLinkItem(
+                    key: const Key('profileMenuLink'),
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person,
+                    iconColor: AppColors.primary,
+                    iconBgColor: const Color(0xFFEFF6FF),
+                    title: 'Profile',
+                    onTap: () =>
+                        AppNavigator.push(context, const ProfileDetailScreen()),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 150,
+                  child: QuickLinkItem(
+                    key: const Key('myDocumentsLink'),
+                    icon: Icons.contact_page_outlined,
+                    activeIcon: Icons.contact_page,
+                    iconColor: AppColors.success,
+                    iconBgColor: const Color(0xFFECFDF5),
+                    title: 'My Documents',
+                    onTap: () =>
+                        AppNavigator.push(context, const MyDocumentsScreen()),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                const _SectionLabel('REWARDS & MORE'),
+                const SizedBox(height: 12),
+
                 FadeUpWidget(
                   delay: 200,
-                  child: _buildStatusBentos(rider),
+                  child: QuickLinkItem(
+                    key: const Key('rewardsLink'),
+                    icon: Icons.card_giftcard_outlined,
+                    activeIcon: Icons.card_giftcard,
+                    iconColor: AppColors.evPurple,
+                    iconBgColor: const Color(0xFFF5F3FF),
+                    title: 'Rewards',
+                    onTap: () =>
+                        AppNavigator.push(context, const RewardsScreen()),
+                  ),
                 ),
-                if (rider?.guarantorName != null) ...[
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Guarantor Details',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF475569),
-                      letterSpacing: 1.2,
-                    ),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 250,
+                  child: QuickLinkItem(
+                    key: const Key('referralLink'),
+                    icon: Icons.people_outline,
+                    activeIcon: Icons.people,
+                    iconColor: AppColors.warning,
+                    iconBgColor: const Color(0xFFFFFBEB),
+                    title: 'Referral Program',
+                    onTap: () =>
+                        AppNavigator.push(context, const ReferralScreen()),
                   ),
-                  const SizedBox(height: 12),
-                  FadeUpWidget(
-                    delay: 250,
-                    child: ProfileGuarantorCard(rider: rider!),
-                  ),
-                ],
+                ),
                 const SizedBox(height: 24),
-                const Text(
-                  'QUICK LINKS',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF475569), // slate-600
-                    letterSpacing: 1.2,
-                  ),
-                ),
+
+                const _SectionLabel('GENERAL'),
                 const SizedBox(height: 12),
-                ProfileQuickLinks(
-                  onEditProfileTap: () {
-                    AppNavigator.push(context, const EditProfileScreen());
-                  },
-                  onMyDocumentsTap: () {
-                    AppNavigator.push(context, const MyDocumentsScreen());
-                  },
-                  onRewardsTap: () {
-                    AppNavigator.push(context, const RewardsScreen());
-                  },
-                  onReferralTap: () {
-                    AppNavigator.push(context, const ReferralScreen());
-                  },
-                  onAppSettingsTap: () {
-                    AppNavigator.push(context, const AppSettingsScreen());
-                  },
-                  onLegalTap: () {
-                    AppNavigator.push(context, const LegalPageScreen());
-                  },
-                  onWorkflowHubTap: () {
-                    AppNavigator.push(context, const RiderWorkflowHubScreen());
-                  },
-                  onFeedbackTap: () {
-                    AppNavigator.push(context,
-                        FeedbackScreen(onSubmit: () => Navigator.pop(context)));
-                  },
-                ),
-                const SizedBox(height: 24),
+
                 FadeUpWidget(
-                  delay: 700,
+                  delay: 300,
+                  child: QuickLinkItem(
+                    key: const Key('workflowHubLink'),
+                    icon: Icons.route_outlined,
+                    activeIcon: Icons.route,
+                    iconColor: AppColors.primary,
+                    iconBgColor: const Color(0xFFEFF6FF),
+                    title: 'Workflow & Services',
+                    onTap: () => AppNavigator.push(
+                        context, const RiderWorkflowHubScreen()),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 340,
+                  child: QuickLinkItem(
+                    key: const Key('feedbackLink'),
+                    icon: Icons.rate_review_outlined,
+                    activeIcon: Icons.rate_review,
+                    iconColor: const Color(0xFF7E22CE),
+                    iconBgColor: const Color(0xFFF3E8FF),
+                    title: 'Feedback',
+                    onTap: () => AppNavigator.push(context,
+                        FeedbackScreen(onSubmit: () => Navigator.pop(context))),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 380,
+                  child: QuickLinkItem(
+                    key: const Key('appSettingsLink'),
+                    icon: Icons.settings_outlined,
+                    activeIcon: Icons.settings,
+                    iconColor: AppColors.slate500,
+                    iconBgColor: AppColors.iconBackground,
+                    title: 'App Settings',
+                    onTap: () =>
+                        AppNavigator.push(context, const AppSettingsScreen()),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 420,
+                  child: QuickLinkItem(
+                    key: const Key('legalLink'),
+                    icon: Icons.gavel_outlined,
+                    activeIcon: Icons.gavel,
+                    iconColor: const Color(0xFF0F766E),
+                    iconBgColor: const Color(0xFFCCFBF1),
+                    title: 'Legal',
+                    onTap: () =>
+                        AppNavigator.push(context, const LegalPageScreen()),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                FadeUpWidget(
+                  delay: 460,
                   child: ProfileEmergencySosTile(
-                    onTap: () {
-                      AppNavigator.push(context, const EmergencySOSScreen());
-                    },
+                    onTap: () =>
+                        AppNavigator.push(context, const EmergencySOSScreen()),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
                 FadeUpWidget(
-                  delay: 800,
+                  delay: 500,
                   child: ProfileLogoutButton(
-                    onTap: () {
-                      innerRef.read(appProvider).logout();
-                    },
+                    onTap: () => innerRef.read(appProvider).logout(),
                   ),
                 ),
-                const SizedBox(height: 48), // Bottom padding
+                const SizedBox(height: 48),
               ],
             ),
           );
@@ -143,74 +204,70 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.iconBackground,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      leadingWidth: 68,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 20.0),
-        child: UnconstrainedBox(
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(9999),
-                onTap: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Color(0xFF1E293B),
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      title: const Text(
-        'Profile',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
+      automaticallyImplyLeading: false,
+      centerTitle: false,
+      titleSpacing: 20,
+      title: Text(
+        'Menu',
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          color: const Color(0xFF1E293B),
+          letterSpacing: -0.5,
         ),
       ),
     );
   }
+}
 
-  Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
-    String? getAvatarUrl() {
-      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
-        return null;
-      if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
-      const baseUrl = String.fromEnvironment('API_URL',
-          defaultValue: 'http://127.0.0.1:8081');
-      return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
-    }
+// ─────────────────────────────────────────────────────────────────────────────
+// Internal widgets
+// ─────────────────────────────────────────────────────────────────────────────
 
-    final avatarUrl = getAvatarUrl();
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF475569),
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+}
+
+/// Compact header showing avatar, name and KYC badge — no redundant detail.
+class _CompactRiderHeader extends StatelessWidget {
+  final RiderModel? rider;
+  const _CompactRiderHeader({this.rider});
+
+  String? _getAvatarUrl() {
+    if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+      return null;
+    if (rider!.profilePhoto!.startsWith('http')) return rider!.profilePhoto;
+    final baseUrl = ApiClient().baseUrl;
+    return '$baseUrl/api/files/${rider!.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarUrl = _getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
         : '?';
-    final String kycStatusName = rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
+    final String kycStatusName =
+        rider?.kycStatus.name.toUpperCase() ?? 'PENDING';
     final bool isVerified =
         kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
@@ -226,257 +283,116 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Row(
         children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color:
-                      isVerified ? AppColors.success : const Color(0xFF2563EB),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+          // Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: isVerified ? AppColors.success : const Color(0xFF2563EB),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: avatarUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      memCacheWidth: 112,
+                      memCacheHeight: 112,
+                      placeholder: (_, __) => const SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2)),
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(Icons.person,
+                          size: 28, color: Colors.white),
+                    ),
+                  )
+                : Text(
+                    initial,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 16),
+          // Name + KYC pill
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  rider?.name ?? 'Rider',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 12,
+                      color: isVerified
+                          ? AppColors.success
+                          : AppColors.warningDark,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isVerified
+                            ? AppColors.success
+                            : AppColors.warningDark,
+                      ),
                     ),
                   ],
-                ),
-                alignment: Alignment.center,
-                child: avatarUrl != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(48),
-                        child: CachedNetworkImage(
-                          imageUrl: avatarUrl,
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
-                          memCacheWidth: 192,
-                          memCacheHeight: 192,
-                          placeholder: (_, __) => const SizedBox(
-                            width: 96,
-                            height: 96,
-                            child: Center(
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2)),
-                          ),
-                          errorWidget: (_, __, ___) =>
-                              const Icon(Icons.person, size: 48),
-                        ),
-                      )
-                    : Text(
-                        initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
-              Positioned(
-                bottom: 2,
-                right: 4,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isVerified ? AppColors.success : AppColors.warning,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 3),
-                  ),
-                  child: Icon(
-                    isVerified ? Icons.check : Icons.access_time_filled,
-                    color: Colors.white,
-                    size: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            rider?.name ?? 'Test Rider',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isVerified
-                  ? const Color(0xFFECFDF5)
-                  : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: isVerified
-                    ? AppColors.success.withValues(alpha: 0.2)
-                    : const Color(0xFFFDE68A),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.shield_outlined,
-                  color: isVerified ? AppColors.success : AppColors.warningDark,
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        isVerified ? AppColors.success : AppColors.warningDark,
-                  ),
                 ),
               ],
             ),
           ),
+          // Phone chip
+          if (rider?.phone != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.iconBackground,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                rider?.phone ?? '',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slate500,
+                ),
+              ),
+            ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPersonalDetailsCard(RiderModel? rider) {
-    String dobFormatted = 'Not provided';
-    if (rider?.dob != null) {
-      dobFormatted = DateFormat('dd MMM yyyy').format(rider!.dob!);
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: 'Name',
-            value: rider?.name ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.email_outlined,
-            title: 'Email',
-            value: rider?.email ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.phone_outlined,
-            title: 'Phone',
-            value: rider?.phone ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.calendar_today_outlined,
-            title: 'Date of Birth',
-            value: dobFormatted,
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: "Father's Name",
-            value: rider?.fatherName ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.person_outline,
-            title: "Mother's Name",
-            value: rider?.motherName ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          ProfileDetailRow(
-            icon: Icons.home_outlined,
-            title: 'Address',
-            value: rider?.currentAddress ?? 'Not provided',
-          ),
-          const CustomDivider(),
-          GestureDetector(
-            onTap: () {
-              final phone = rider?.emergencyContact;
-              if (phone != null && phone.isNotEmpty) {
-                launchUrl(Uri.parse('tel:$phone'));
-              }
-            },
-            child: ProfileDetailRow(
-              icon: Icons.phone_android_outlined,
-              title: 'Emergency Contact',
-              value: rider?.emergencyContact ?? 'Not provided',
-            ),
-          ),
-          if (rider?.assignedVehicle != null &&
-              rider!.assignedVehicle!.isNotEmpty &&
-              rider.assignedVehicle != 'Not Assigned') ...[
-            const CustomDivider(),
-            ProfileDetailRow(
-              icon: Icons.directions_car_outlined,
-              title: 'Vehicle',
-              value: [
-                rider.assignedVehicle,
-                if (rider.vehicleModel != null &&
-                    rider.vehicleModel!.isNotEmpty)
-                  rider.vehicleModel,
-              ].where((e) => e != null && e.isNotEmpty).join(' · '),
-            ),
-          ],
-          if (rider?.teamLeader != null &&
-              rider!.teamLeader!.isNotEmpty &&
-              rider.teamLeader != 'Not Assigned') ...[
-            const CustomDivider(),
-            ProfileDetailRow(
-              icon: Icons.supervisor_account_outlined,
-              title: 'Team Leader',
-              value: rider.teamLeader!,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBentos(RiderModel? rider) {
-    final rawStatus = rider?.kycStatus.name ?? 'Pending';
-    final String kycStatus =
-        rawStatus == 'submitted' ? 'Under Review' : _capitalize(rawStatus);
-    final String guarantorStatus =
-        _capitalize(rider?.guarantorStatus.name ?? 'Pending');
-
-    return Row(
-      children: [
-        Expanded(
-          child: StatusTile(
-            title: 'KYC STATUS',
-            status: kycStatus,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: StatusTile(
-            title: 'GUARANTOR',
-            status: guarantorStatus,
-          ),
-        ),
-      ],
     );
   }
 

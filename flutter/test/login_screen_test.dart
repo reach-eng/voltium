@@ -12,10 +12,12 @@ void main() {
   testWidgets('LoginScreen displays phone input and button',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      ProviderScope(overrides: [
+      ProviderScope(
+        overrides: [
           localeProviderRef.overrideWith((ref) => LocaleProvider()),
           themeProviderRef.overrideWith((ref) => ThemeProvider()),
-        ], child: const MaterialApp(
+        ],
+        child: const MaterialApp(
           localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,

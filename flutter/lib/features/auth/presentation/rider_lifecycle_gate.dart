@@ -11,6 +11,7 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 /// The target route for the rider based on their lifecycle state.
 enum LifecycleTarget {
   /// Rider needs to complete registration / intent of use.

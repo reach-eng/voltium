@@ -14,21 +14,23 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 /// Top-up Flow Widget Tests
 void main() {
   Widget buildTestApp({required Widget child}) {
-    return ProviderScope(overrides: [
+    return ProviderScope(
+      overrides: [
         localeProviderRef.overrideWith((ref) => LocaleProvider()),
         themeProviderRef.overrideWith((ref) => ThemeProvider()),
         appProvider.overrideWith((ref) => AppProvider()),
-      ], child: MaterialApp(
+      ],
+      child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: child,),
+        home: child,
+      ),
     );
   }
-
 
   group('Top-up Amount Screen', () {
     testWidgets('amount screen renders without error', (tester) async {

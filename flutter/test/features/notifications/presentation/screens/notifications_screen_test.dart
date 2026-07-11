@@ -13,7 +13,9 @@ void main() {
 
     // ignore: prefer_const_constructors
     await tester.pumpWidget(
-      ProviderScope(overrides: [appProvider.overrideWith((ref) => AppProvider()) ], child: wrapForGolden(NotificationsScreen()),
+      ProviderScope(
+        overrides: [appProvider.overrideWith((ref) => AppProvider())],
+        child: wrapForGolden(NotificationsScreen()),
       ),
     );
     await tester.pumpAndSettle();

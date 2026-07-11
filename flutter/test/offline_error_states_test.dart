@@ -70,18 +70,21 @@ Widget wrapInApp({
   required Widget child,
   AppProvider? provider,
 }) {
-  return ProviderScope(overrides: [
+  return ProviderScope(
+    overrides: [
       localeProviderRef.overrideWith((ref) => LocaleProvider()),
       themeProviderRef.overrideWith((ref) => ThemeProvider()),
       appProvider.overrideWith((ref) => provider ?? _MockAppProvider()),
-    ], child: MaterialApp(
+    ],
+    child: MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: child,),
+      home: child,
+    ),
   );
 }
 

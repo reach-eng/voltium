@@ -428,6 +428,11 @@ export const riderUseCases = {
 
     // Update core rider fields
     if (Object.keys(riderData).length > 0) {
+      if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
+        const name = riderData.fullName as string;
+        const prefix = name.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
+        riderData.riderId = `VEM${prefix}${String(existing.serialNumber).padStart(3, '0')}`;
+      }
       await db.rider.update({ where: { id: riderDbId }, data: riderData });
     }
 

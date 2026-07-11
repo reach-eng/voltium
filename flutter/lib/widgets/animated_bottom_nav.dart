@@ -52,9 +52,9 @@ class _AppBottomNavState extends State<AppBottomNav>
       label: 'Support',
     ),
     _TabInfo(
-      icon: Icons.person_outline,
-      activeIcon: Icons.person,
-      label: 'Profile',
+      icon: Icons.menu_outlined,
+      activeIcon: Icons.menu,
+      label: 'Menu',
     ),
   ];
 

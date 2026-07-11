@@ -321,7 +321,7 @@ export const adminRiderUseCases = {
     const riderId = `VF-RD-${randomUUID().slice(0, 8).toUpperCase()}`;
 
     const rider = await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const created = await tx.rider.create({
+      let created = await tx.rider.create({
         data: {
           phone,
           fullName: fullName ? sanitizeText(fullName) : null,
@@ -329,6 +329,15 @@ export const adminRiderUseCases = {
           referralCode: `VFR-${randomUUID().slice(0, 6).toUpperCase()}`,
         },
       });
+
+      if (fullName) {
+        const prefix = fullName.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
+        const newRiderId = `VEM${prefix}${String(created.serialNumber).padStart(3, '0')}`;
+        created = await tx.rider.update({
+          where: { id: created.id },
+          data: { riderId: newRiderId },
+        });
+      }
 
       await tx.wallet.create({ data: { riderId: created.id } });
       await tx.kycProfile.create({ data: { riderId: created.id } });
@@ -354,6 +363,9 @@ export const adminRiderUseCases = {
     context: { actorId: string; actorRole: string }
   ) {
     const { actorId, actorRole } = context;
+
+    const existing = await db.rider.findUnique({ where: { id } });
+    if (!existing) throw new Error('Rider not found');
 
     const riderData: any = {};
     const kycData: any = {};
@@ -408,6 +420,11 @@ export const adminRiderUseCases = {
 
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       if (Object.keys(riderData).length > 0) {
+        if (riderData.fullName && existing.riderId.startsWith('VF-RD-')) {
+          const name = riderData.fullName as string;
+          const prefix = name.replace(/[^a-zA-Z]/g, '').padEnd(2, 'X').substring(0, 2).toUpperCase();
+          riderData.riderId = `VEM${prefix}${String(existing.serialNumber).padStart(3, '0')}`;
+        }
         await tx.rider.update({ where: { id }, data: riderData });
       }
       if (Object.keys(kycData).length > 0) {
@@ -738,6 +755,7 @@ export const adminRiderUseCases = {
         fullName: true,
         phone: true,
         lifecycleStatus: true,
+        createdAt: true,
         pickupHub: true,
         teamLeader: true,
         currentPlan: true,
@@ -774,6 +792,7 @@ export const adminRiderUseCases = {
         riderId: r.riderId,
         fullName: r.fullName,
         phone: r.phone,
+        createdAt: r.createdAt,
         lifecycleStatus: r.lifecycleStatus,
         pickupHub: r.pickupHub,
         teamLeader: r.teamLeader,

@@ -38,7 +38,8 @@ class PickupVerificationScreen extends ConsumerStatefulWidget {
       _PickupVerificationScreenState();
 }
 
-class _PickupVerificationScreenState extends ConsumerState<PickupVerificationScreen> {
+class _PickupVerificationScreenState
+    extends ConsumerState<PickupVerificationScreen> {
   bool _isLoading = false;
   bool _agreedToTerms = false;
 

@@ -199,8 +199,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                                 : AppColors.primary),
                     const Divider(height: 1, color: AppColors.iconBackground),
                   ],
-                  _buildDetailRow(
-                      Icons.electric_moped_rounded, 'Assigned Vehicle', vehicle),
+                  _buildDetailRow(Icons.electric_moped_rounded,
+                      'Assigned Vehicle', vehicle),
                   const Divider(height: 1, color: AppColors.iconBackground),
                   _buildDetailRow(
                       Icons.store_mall_directory_rounded, 'Pickup Hub', hub),
@@ -214,8 +214,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                   _buildDetailRow(Icons.shield_rounded, 'Security Deposit',
                       '₹${deposit.toStringAsFixed(0)}'),
                   const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.local_fire_department_rounded, 'Payment Streak',
-                      '$streak Days',
+                  _buildDetailRow(Icons.local_fire_department_rounded,
+                      'Payment Streak', '$streak Days',
                       valueColor: AppColors.primary),
                 ],
               ),
@@ -237,7 +237,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                      side: const BorderSide(
+                          color: Color(0xFFE2E8F0), width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

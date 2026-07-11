@@ -198,24 +198,20 @@ Future<void> main() async {
         ProviderScope(
           overrides: [
             appProvider.overrideWith((ref) => appInstance),
-            riderProvider.overrideWith(
-                (ref) => appInstance.riderProvider),
-            walletProvider.overrideWith(
-                (ref) => appInstance.walletProvider),
-            supportProvider.overrideWith(
-                (ref) => appInstance.supportProvider),
-            engagementProvider.overrideWith(
-                (ref) => appInstance.engagementProvider),
-            devicePolicyProvider.overrideWith(
-                (ref) => appInstance.devicePolicyProvider),
-            connectivityProvider.overrideWith(
-                (ref) => appInstance.connectivityProvider),
+            riderProvider.overrideWith((ref) => appInstance.riderProvider),
+            walletProvider.overrideWith((ref) => appInstance.walletProvider),
+            supportProvider.overrideWith((ref) => appInstance.supportProvider),
+            engagementProvider
+                .overrideWith((ref) => appInstance.engagementProvider),
+            devicePolicyProvider
+                .overrideWith((ref) => appInstance.devicePolicyProvider),
+            connectivityProvider
+                .overrideWith((ref) => appInstance.connectivityProvider),
             localeProviderRef.overrideWith((ref) => localeProvider),
             themeProviderRef.overrideWith((ref) => themeProvider),
-            notificationProvider
-                .overrideWith((ref) => NotificationProvider()),
-            emergencyContactsService.overrideWith(
-                (ref) => emergencyContactsServiceInstance),
+            notificationProvider.overrideWith((ref) => NotificationProvider()),
+            emergencyContactsService
+                .overrideWith((ref) => emergencyContactsServiceInstance),
           ],
           child: MultiProvider(
             providers: [

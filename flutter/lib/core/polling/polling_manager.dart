@@ -20,6 +20,7 @@
 import 'dart:async';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 /// State of the app from a polling perspective.
 enum PollingAppState { active, inactive, paused }
 

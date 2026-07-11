@@ -179,7 +179,8 @@ class EditProfileAdminNote extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: AppColors.warningDark, size: 22),
+          const Icon(Icons.info_outline,
+              color: AppColors.warningDark, size: 22),
           const SizedBox(width: 16),
           Expanded(
             child: Text(

@@ -36,9 +36,12 @@ class DeviceDataService {
           await Permission.location.status == PermissionStatus.granted,
       'batteryGranted': await Permission.ignoreBatteryOptimizations.status ==
           PermissionStatus.granted,
-      'contactsGranted': await Permission.contacts.status == PermissionStatus.granted,
-      'callLogsGranted': await Permission.phone.status == PermissionStatus.granted,
-      'micGranted': await Permission.microphone.status == PermissionStatus.granted,
+      'contactsGranted':
+          await Permission.contacts.status == PermissionStatus.granted,
+      'callLogsGranted':
+          await Permission.phone.status == PermissionStatus.granted,
+      'micGranted':
+          await Permission.microphone.status == PermissionStatus.granted,
       'cameraGranted':
           await Permission.camera.status == PermissionStatus.granted,
       'phoneGranted': await Permission.phone.status == PermissionStatus.granted,
@@ -100,23 +103,29 @@ class DeviceDataService {
     if (!_isMobile) return;
     try {
       if (!await ConsentService().hasConsent(ConsentType.contacts)) return;
-      
-      final granted = await Permission.contacts.status == PermissionStatus.granted;
+
+      final granted =
+          await Permission.contacts.status == PermissionStatus.granted;
       if (!granted) return;
 
       final contacts = await FlutterContacts.getContacts(withProperties: true);
-      final mappedContacts = contacts.take(200).map((c) => {
-        'name': c.displayName,
-        'phone': c.phones.isNotEmpty ? c.phones.first.number : '',
-        'email': c.emails.isNotEmpty ? c.emails.first.address : null,
-      }).where((c) => c['phone'] != '').toList();
+      final mappedContacts = contacts
+          .take(200)
+          .map((c) => {
+                'name': c.displayName,
+                'phone': c.phones.isNotEmpty ? c.phones.first.number : '',
+                'email': c.emails.isNotEmpty ? c.emails.first.address : null,
+              })
+          .where((c) => c['phone'] != '')
+          .toList();
 
       if (mappedContacts.isNotEmpty) {
         await VoltiumApiService().syncDeviceData(
           type: 'CONTACTS',
           data: mappedContacts,
         );
-        debugPrint('DeviceDataService: Synced \${mappedContacts.length} contacts');
+        debugPrint(
+            'DeviceDataService: Synced \${mappedContacts.length} contacts');
       }
     } catch (e) {
       debugPrint('DeviceDataService: Failed to sync contacts: $e');
@@ -133,13 +142,20 @@ class DeviceDataService {
       if (!granted) return;
 
       final Iterable<CallLogEntry> entries = await CallLog.get();
-      final mappedLogs = entries.take(100).map((e) => {
-        'number': e.number ?? '',
-        'name': e.name ?? '',
-        'type': e.callType?.toString().split('.').last.toUpperCase() ?? 'UNKNOWN',
-        'duration': e.duration ?? 0,
-        'timestamp': DateTime.fromMillisecondsSinceEpoch(e.timestamp ?? 0).toIso8601String(),
-      }).where((e) => e['number'] != '').toList();
+      final mappedLogs = entries
+          .take(100)
+          .map((e) => {
+                'number': e.number ?? '',
+                'name': e.name ?? '',
+                'type': e.callType?.toString().split('.').last.toUpperCase() ??
+                    'UNKNOWN',
+                'duration': e.duration ?? 0,
+                'timestamp':
+                    DateTime.fromMillisecondsSinceEpoch(e.timestamp ?? 0)
+                        .toIso8601String(),
+              })
+          .where((e) => e['number'] != '')
+          .toList();
 
       if (mappedLogs.isNotEmpty) {
         await VoltiumApiService().syncDeviceData(

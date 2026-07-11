@@ -297,7 +297,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   bool get _canPop {
     switch (_currentState) {
       case AuthState.otp:
-      case AuthState.intent:
       case AuthState.userForm:
       case AuthState.guarantorForm:
       case AuthState.choosePlan:
@@ -320,7 +319,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
         _navigateToLocal(AuthState.login);
         break;
       case AuthState.intent:
-        _navigateToLocal(AuthState.preDashboard);
+        // Do nothing, let PopScope handle it or just break
         break;
       case AuthState.userForm:
         _navigateToLocal(AuthState.intent);

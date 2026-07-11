@@ -10,10 +10,12 @@ class SupportChecklistScreen extends ConsumerStatefulWidget {
   const SupportChecklistScreen({super.key});
 
   @override
-  ConsumerState<SupportChecklistScreen> createState() => _SupportChecklistScreenState();
+  ConsumerState<SupportChecklistScreen> createState() =>
+      _SupportChecklistScreenState();
 }
 
-class _SupportChecklistScreenState extends ConsumerState<SupportChecklistScreen> {
+class _SupportChecklistScreenState
+    extends ConsumerState<SupportChecklistScreen> {
   late List<bool> _checkedItems;
 
   @override

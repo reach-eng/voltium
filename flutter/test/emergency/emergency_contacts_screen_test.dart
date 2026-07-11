@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 Widget buildTestApp() {
-  return ProviderScope(overrides: [ emergencyContactsService.overrideWith((ref) => EmergencyContactsService()) ], child: const MaterialApp(home: EmergencyContactsScreen()),
+  return ProviderScope(
+    overrides: [
+      emergencyContactsService.overrideWith((ref) => EmergencyContactsService())
+    ],
+    child: const MaterialApp(home: EmergencyContactsScreen()),
   );
 }
 

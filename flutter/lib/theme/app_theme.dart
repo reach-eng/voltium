@@ -99,9 +99,9 @@ class AppShadows {
   /// Card shadow: shadow-[0px_24px_48px_rgba(15,23,42,0.04)]
   static const List<BoxShadow> card = [
     BoxShadow(
-      color: Color(0x0A0F172A),
-      blurRadius: 48,
-      offset: Offset(0, 24),
+      color: Color(0x140F172A), // 8% opacity
+      blurRadius: 12,
+      offset: Offset(0, 4),
     ),
   ];
 
@@ -238,11 +238,12 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: 2,
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          minimumSize: const Size(double.infinity, 60),
+          minimumSize: const Size(double.infinity, 56),
           textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -270,26 +271,35 @@ class AppTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        fillColor: Colors.transparent,
+        filled: true,
+        fillColor: const Color(0xFFF1F5F9), // slate-100
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
           vertical: Spacing.md,
         ),
         labelStyle: GoogleFonts.plusJakartaSans(),
-        hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceDisabled),
+        hintStyle:
+            GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceDisabled),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
@@ -311,7 +321,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
+      textTheme:
+          GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,
@@ -343,8 +354,8 @@ class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           minimumSize: const Size(double.infinity, 60),
-          textStyle:
-              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.plusJakartaSans(
+              fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -355,8 +366,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
-          textStyle:
-              GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: GoogleFonts.plusJakartaSans(
+              fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -385,7 +396,8 @@ class AppTheme {
           vertical: Spacing.md,
         ),
         labelStyle: GoogleFonts.plusJakartaSans(),
-        hintStyle: GoogleFonts.plusJakartaSans(color: darkColors.onSurfaceMuted),
+        hintStyle:
+            GoogleFonts.plusJakartaSans(color: darkColors.onSurfaceMuted),
       ),
       cardTheme: CardThemeData(
         color: darkColors.card,

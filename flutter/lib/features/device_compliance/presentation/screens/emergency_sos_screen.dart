@@ -196,7 +196,8 @@ class EmergencySOSScreen extends ConsumerWidget {
                             style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
                         Text(number,
-                            style: GoogleFonts.inter(color: AppColors.slate500)),
+                            style:
+                                GoogleFonts.inter(color: AppColors.slate500)),
                       ],
                     ),
                   ),
@@ -208,7 +209,8 @@ class EmergencySOSScreen extends ConsumerWidget {
                   Icon(icon, color: color, size: 32),
                   const SizedBox(height: 12),
                   Text(title,
-                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.bold)),
                   Text(number,
                       style: GoogleFonts.inter(color: AppColors.slate500)),
                   const SizedBox(height: 8),

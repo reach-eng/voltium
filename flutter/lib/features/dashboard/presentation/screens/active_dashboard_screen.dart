@@ -17,7 +17,7 @@ import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
 import 'package:voltium_rider/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
-
+import 'package:voltium_rider/widgets/ui_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -44,19 +44,21 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
           _DashboardStateWidget(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Implement scan/find vehicle action
-        },
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-        label: const Text(
-          'Scan to Ride',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
+      floatingActionButton: PulsingFab(
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            // TODO: Implement scan/find vehicle action
+          },
+          backgroundColor: AppColors.primary,
+          elevation: 4,
+          icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+          label: const Text(
+            'Scan to Ride',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
       ),
@@ -252,21 +254,58 @@ class _DashboardContentWidget extends ConsumerWidget {
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            backgroundColor: AppColors.iconBackground,
+            backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
             pinned: false,
             elevation: 0,
             automaticallyImplyLeading: false,
             centerTitle: false,
             titleSpacing: 20,
-            title: Text(
-              'Dashboard',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF1E293B),
-                letterSpacing: -0.5,
+            flexibleSpace: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.iconBackground,
+                    AppColors.primary.withValues(alpha: 0.08),
+                  ],
+                ),
               ),
+            ),
+            title: Builder(
+              builder: (context) {
+                final hour = DateTime.now().hour;
+                final firstName = rider.name.split(' ').first;
+                final displayName = firstName.isEmpty ? 'Rider' : firstName;
+                String greeting = 'Good Evening';
+                if (hour < 12) greeting = 'Good Morning';
+                else if (hour < 17) greeting = 'Good Afternoon';
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$greeting,',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      displayName,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF1E293B),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                );
+              }
             ),
             actions: [
               Padding(
@@ -286,53 +325,84 @@ class _DashboardContentWidget extends ConsumerWidget {
                 children: [
                   if (isCache) _buildCacheIndicator(),
                   if (rider.returnPending || rider.intent == 'RETURN')
-                    ScooterSubmissionBanner(
-                      submissionDate: rider.submissionDate?.toIso8601String(),
-                      pickupHub: rider.pickupHub,
+                    FadeSlideEntrance(
+                      index: 0,
+                      child: ScooterSubmissionBanner(
+                        submissionDate: rider.submissionDate?.toIso8601String(),
+                        pickupHub: rider.pickupHub,
+                      ),
                     ),
-                  DashboardProfileCard(
-                    rider: rider,
-                    onTap: () => AppNavigator.push(
-                      context,
-                      const RentalDetailsScreen(),
+                  FadeSlideEntrance(
+                    index: 1,
+                    child: DashboardProfileCard(
+                      rider: rider,
+                      onTap: () => AppNavigator.push(
+                        context,
+                        const RentalDetailsScreen(),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  PlanCard(
-                    currentPlan: rider.currentPlan,
-                    planEndDate: rider.planEndDate,
+                  FadeSlideEntrance(
+                    index: 2,
+                    child: PlanCard(
+                      currentPlan: rider.currentPlan,
+                      planEndDate: rider.planEndDate,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  WalletCard(
-                    walletBalance: rider.walletBalance,
-                    requiredPayment: rider.activeRentalPlanPrice > 0
-                        ? rider.activeRentalPlanPrice
-                        : walletMinTopup,
-                    paymentStreak: rider.paymentStreak,
-                    currentPlan: rider.currentPlan,
-                    planEndDate: rider.planEndDate,
-                    onTopUp: () {
-                      AppNavigator.push(context, const TopUpFlow());
-                    },
+                  FadeSlideEntrance(
+                    index: 3,
+                    child: WalletCard(
+                      walletBalance: rider.walletBalance,
+                      requiredPayment: rider.activeRentalPlanPrice > 0
+                          ? rider.activeRentalPlanPrice
+                          : walletMinTopup,
+                      paymentStreak: rider.paymentStreak,
+                      currentPlan: rider.currentPlan,
+                      planEndDate: rider.planEndDate,
+                      onTopUp: () {
+                        AppNavigator.push(context, const TopUpFlow());
+                      },
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  ReferralCard(
-                    referralCode: rider.referralCode ?? 'VOLT123',
+                  FadeSlideEntrance(
+                    index: 4,
+                    child: ReferralCard(
+                      referralCode: rider.referralCode ?? 'VOLT123',
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  TeamLeaderCard(
-                    teamLeaderName: rider.teamLeader,
-                    onViewDetails: () => showTLDetailsSheet(context, rider),
-                    onCall: () async {
-                      final phone = (rider.emergencyContact == null ||
-                              rider.emergencyContact!.isEmpty)
-                          ? '+91 98765 12345'
-                          : rider.emergencyContact!;
-                      final uri = Uri.parse('tel:$phone');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    },
+                  FadeSlideEntrance(
+                    index: 5,
+                    child: TeamLeaderCard(
+                      teamLeaderName: rider.teamLeader,
+                      onViewDetails: () => showTLDetailsSheet(context, rider),
+                      onCall: () async {
+                        final phone = (rider.emergencyContact == null ||
+                                rider.emergencyContact!.isEmpty)
+                            ? '+91 98765 12345'
+                            : rider.emergencyContact!;
+                        final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+                        final uri = Uri.parse('tel:$sanitized');
+                        
+                        try {
+                          if (!await launchUrl(uri)) {
+                            throw Exception('Could not launch dialer');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open the phone dialer. Please try again.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 80),
                 ],

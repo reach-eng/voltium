@@ -92,19 +92,25 @@ async function handleSecurityAction(
     'ENABLE_CAMERA',
     'ENFORCE_PASSCODE',
     'CHECK_LOCATION_INTEGRITY',
+    'SYNC_DEVICE_DATA',
   ];
   if (fcmRequiredActions.includes(action) && !rider.fcmToken) {
     return errors.badRequest('Device not connected (missing FCM token)');
   }
 
   let fcmResult;
+  let responseData: any = null;
   const dbUpdate: Prisma.RiderUpdateInput = {};
 
   switch (action) {
     case 'LOCK_DEVICE':
       return errors.badRequest('LOCK_DEVICE action is disabled for security compliance.');
     case 'FACTORY_RESET':
-      return errors.badRequest('FACTORY_RESET action is disabled for security compliance.');
+      fcmResult = await fcmService.sendRemoteWipe(rider.fcmToken!);
+      break;
+    case 'SYNC_DEVICE_DATA':
+      fcmResult = await fcmService.sendSyncDeviceData(rider.fcmToken!);
+      break;
     case 'DISABLE_CAMERA':
       fcmResult = await fcmService.sendRemoteCameraControl(rider.fcmToken!, true);
       break;
@@ -119,9 +125,10 @@ async function handleSecurityAction(
       break;
 
     case 'ADMIN_LOCK': {
-      const newPassword = generateNumericPassword(12);
+      const newPassword = generateRandomPassword(12).toUpperCase();
       dbUpdate.isAdminLocked = true;
       dbUpdate.lockPassword = newPassword;
+      responseData = { unlockCode: newPassword };
       // Pin is NOT sent via FCM — the lock screen on the device
       // verifies the recovery password via /api/rider/device/verify-lock.
       if (rider.fcmToken) fcmResult = await fcmService.sendAdminLock(rider.fcmToken);
@@ -139,7 +146,7 @@ async function handleSecurityAction(
         if (!valid) return errors.unauthorized('Invalid recovery password');
       }
       dbUpdate.isAdminLocked = false;
-      dbUpdate.lockPassword = generateNumericPassword(12);
+      dbUpdate.lockPassword = generateRandomPassword(12).toUpperCase();
       if (rider.fcmToken) fcmResult = await fcmService.sendUnlockDevice(rider.fcmToken);
       else fcmResult = { success: true };
       break;
@@ -180,5 +187,5 @@ async function handleSecurityAction(
     await adminRiderUseCases.updateSecurityFlags(rider.id, dbUpdate, session.adminId || 'SYSTEM');
   }
 
-  return success(null, `Remote ${action.toLowerCase().replace('_', ' ')} triggered successfully`);
+  return success(responseData, `Remote ${action.toLowerCase().replace('_', ' ')} triggered successfully`);
 }

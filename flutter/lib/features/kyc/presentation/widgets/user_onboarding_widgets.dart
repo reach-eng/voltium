@@ -212,7 +212,8 @@ class PersonalDetailsCard extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
-                fillColor: enabled ? const Color(0xFFF1F5F9) : const Color(0xFFE2E8F0),
+                fillColor:
+                    enabled ? const Color(0xFFF1F5F9) : const Color(0xFFE2E8F0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -294,19 +295,19 @@ class PersonalDetailsCard extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: kPrimaryColor, width: 2),
-                    ),
+            fillColor: const Color(0xFFF1F5F9),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+            ),
           ),
         ),
       ],
@@ -459,9 +460,7 @@ class DocTile extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: isUploaded
-            ? kSuccessColor.withValues(alpha: 0.1)
-            : Colors.white,
+        color: isUploaded ? kSuccessColor.withValues(alpha: 0.1) : Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -900,7 +899,10 @@ class UserOnboardingDialogField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500, color: kOnSurfaceColor),
+          style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: kOnSurfaceColor),
         ),
         const SizedBox(height: 4),
         TextFormField(
@@ -912,7 +914,8 @@ class UserOnboardingDialogField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(color: kOutlineColor.withValues(alpha: 0.7), fontSize: 14),
+            hintStyle: GoogleFonts.inter(
+                color: kOutlineColor.withValues(alpha: 0.7), fontSize: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: kOutlineVariantColor),
