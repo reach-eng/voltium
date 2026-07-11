@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui' as ui;
 import '../../../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -91,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFFFFFFF),
       body: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -116,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primaryGradientEnd
-                                    .withValues(alpha: 0.2),
+                                    .withValues(alpha: 0.15),
                                 blurRadius: 40,
                                 offset: const Offset(0, 15),
                               ),
@@ -144,33 +146,32 @@ class _SplashScreenState extends State<SplashScreen>
                       opacity: _textOpacity.value,
                       child: Transform.translate(
                         offset: Offset(0, _textSlide.value),
-                        child: const Column(
+                        child: Column(
                           children: [
                             Text(
                               'Voltium',
-                              style: TextStyle(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 40,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF0F172A),
                                 letterSpacing: -1,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   'Ride the Future',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w300,
-                                    fontStyle: FontStyle.italic,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
                                     color: AppColors.slate500,
-                                    letterSpacing: 0.5,
+                                    letterSpacing: 1.5,
                                   ),
                                 ),
-                                SizedBox(width: 6),
-                                Text('⚡', style: TextStyle(fontSize: 18)),
+                                const SizedBox(width: 8),
+                                const Text('⚡', style: TextStyle(fontSize: 16)),
                               ],
                             ),
                           ],
@@ -190,44 +191,58 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                        width: 140,
-                        height: 2,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: Stack(
-                            children: [
-                              Container(
-                                color: const Color(0xFF0F172A)
-                                    .withValues(alpha: 0.1),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Container(
+                            width: 160,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A).withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFF0F172A).withValues(alpha: 0.1),
+                                width: 0.5,
                               ),
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: _barWidth.value,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.primaryGradientEnd,
-                                        Color(0xFF4A2A85),
+                            ),
+                            child: Stack(
+                              children: [
+                                FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: _barWidth.value,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.primaryGradientEnd,
+                                          Color(0xFF4A2A85),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(999),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primaryGradientEnd.withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 0),
+                                        ),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(999),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      const Text(
+                      const SizedBox(height: 16),
+                      Text(
                         'CONNECTING TO GRID',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
                           color: AppColors.slate400,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 2.0,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2.5,
                         ),
                       ),
                     ],

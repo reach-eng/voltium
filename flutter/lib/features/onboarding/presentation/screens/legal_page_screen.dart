@@ -316,7 +316,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
     final rider = context.watch<AppProvider>().rider;
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.surface,
       appBar: _buildAppBar(context),
       body: FadeTransition(
         opacity: CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut),
@@ -328,13 +328,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+                boxShadow: AppShadows.card,
               ),
               clipBehavior: Clip.antiAlias,
               child: ListView.builder(
@@ -584,13 +578,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                           border: Border.all(
                                             color: AppColors.iconBackground,
                                           ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.05),
-                                              blurRadius: 4,
-                                            ),
-                                          ],
+                                          boxShadow: AppShadows.glass,
                                         ),
                                         clipBehavior: Clip.antiAlias,
                                         child: CachedNetworkImage(
@@ -768,7 +756,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
       }
     }
     return AppBar(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leadingWidth: 68,
@@ -781,13 +769,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              boxShadow: AppShadows.card,
             ),
             child: Material(
               color: Colors.transparent,

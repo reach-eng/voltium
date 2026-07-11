@@ -177,15 +177,18 @@ class _DashboardContentWidget extends ConsumerWidget {
   Widget _buildNotificationBell(BuildContext context) {
     return InkWell(
       key: const Key('notificationBell'),
+      borderRadius: BorderRadius.circular(22),
       onTap: () {
         AppNavigator.push(context, const NotificationsScreen());
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.black.withValues(alpha: 0.05),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
         ),
         child: Stack(
           clipBehavior: Clip.none,
@@ -193,7 +196,7 @@ class _DashboardContentWidget extends ConsumerWidget {
             const Icon(
               Icons.notifications_none_rounded,
               size: 20,
-              color: Color(0xFF1E293B),
+              color: AppColors.onSurface,
             ),
             Positioned(
               right: -2,
@@ -202,7 +205,7 @@ class _DashboardContentWidget extends ConsumerWidget {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.error,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -261,18 +264,6 @@ class _DashboardContentWidget extends ConsumerWidget {
             automaticallyImplyLeading: false,
             centerTitle: false,
             titleSpacing: 20,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.iconBackground,
-                    AppColors.primary.withValues(alpha: 0.08),
-                  ],
-                ),
-              ),
-            ),
             title: Builder(
               builder: (context) {
                 final hour = DateTime.now().hour;
@@ -290,7 +281,7 @@ class _DashboardContentWidget extends ConsumerWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.onSurfaceVariant,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -299,7 +290,7 @@ class _DashboardContentWidget extends ConsumerWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.onSurface,
                         letterSpacing: -0.5,
                       ),
                     ),

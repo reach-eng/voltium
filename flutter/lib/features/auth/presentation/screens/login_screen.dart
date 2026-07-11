@@ -6,6 +6,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/main.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'dart:ui' as ui;
 import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
 
@@ -38,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen>
   final FocusNode _phoneFocusNode = FocusNode();
   final FocusNode _referralFocusNode = FocusNode();
   bool _isLoading = false;
+  bool _isEnterPressed = false;
   String? _phoneError;
 
   late final AnimationController _entryCtrl;
@@ -133,52 +135,78 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt, // #F5F7FA
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 48),
-
-              // Logo + App Name + Subtitle
-              _buildLogoSection(),
-
-              const SizedBox(height: 64),
-
-              // Welcome text
-              _buildWelcomeSection(),
-
-              const SizedBox(height: 32),
-
-              // Phone input
-              _buildPhoneInput(),
-
-              const SizedBox(height: 16),
-
-              // Referral code input
-              _buildReferralInput(),
-
-              const SizedBox(height: 16),
-
-              // OTP secure note
-              _buildOtpNote(),
-
-              const SizedBox(height: 32),
-
-              // Enter button
-              _buildEnterButton(),
-
-              const SizedBox(height: 32),
-
-              // Footer terms
-              _buildFooterTerms(),
-
-              const SizedBox(height: 24),
-            ],
+      backgroundColor: AppColors.surface, // Upgraded from surfaceAlt
+      body: Stack(
+        children: [
+          // Ambient background glow
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.05),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    blurRadius: 100,
+                    spreadRadius: 50,
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+          Positioned.fill(
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(32, 24, 32, MediaQuery.of(context).padding.bottom + 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 48),
+
+                    // Logo + App Name + Subtitle
+                    _buildLogoSection(),
+
+                    const SizedBox(height: 64),
+
+                    // Welcome text
+                    _buildWelcomeSection(),
+
+                    const SizedBox(height: 32),
+
+                    // Phone input
+                    _buildPhoneInput(),
+
+                    const SizedBox(height: 16),
+
+                    // Referral code input
+                    _buildReferralInput(),
+
+                    const SizedBox(height: 16),
+
+                    // OTP secure note
+                    _buildOtpNote(),
+
+                    const SizedBox(height: 32),
+
+                    // Enter button
+                    _buildEnterButton(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Floating footer
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildFloatingFooter(),
+          ),
+        ],
       ),
     );
   }
@@ -320,17 +348,25 @@ class _LoginScreenState extends State<LoginScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: _phoneError != null
-                    ? const Color(0xFFFFF1F1)
-                    : AppColors.inputBackground,
-                borderRadius: BorderRadius.circular(999),
-                border: _phoneError != null
-                    ? Border.all(color: AppColors.error, width: 1.5)
-                    : null,
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: _phoneError != null
+                        ? const Color(0xFFFFF1F1)
+                        : Colors.white.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: _phoneError != null
+                          ? AppColors.error
+                          : Colors.white.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                    boxShadow: AppShadows.glass,
+                  ),
               child: Row(
                 children: [
                   GestureDetector(
@@ -401,6 +437,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
               ),
             ),
+          ),
+          ),
             if (_phoneError != null)
               Padding(
                 padding: const EdgeInsets.only(left: 20, top: 8),
@@ -436,12 +474,21 @@ class _LoginScreenState extends State<LoginScreen>
           parent: _entryCtrl,
           curve: const Interval(0.25, 0.85),
         ),
-        child: Container(
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.inputBackground,
-            borderRadius: BorderRadius.circular(999),
-          ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+                boxShadow: AppShadows.glass,
+              ),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => _referralFocusNode.requestFocus(),
@@ -487,6 +534,8 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
       ),
+      ),
+      ),
     );
   }
 
@@ -523,20 +572,27 @@ class _LoginScreenState extends State<LoginScreen>
         child: GestureDetector(
           key: const Key('sendOtpButton'),
           behavior: HitTestBehavior.opaque,
+          onTapDown: _canSubmit || VoltiumApp.isTestMode ? (_) => setState(() => _isEnterPressed = true) : null,
+          onTapUp: _canSubmit || VoltiumApp.isTestMode ? (_) => setState(() => _isEnterPressed = false) : null,
+          onTapCancel: () => setState(() => _isEnterPressed = false),
           onTap: VoltiumApp.isTestMode
               ? _handleLogin
               : (_canSubmit ? _handleLogin : null),
-          child: AnimatedOpacity(
-            opacity: _canSubmit ? 1.0 : 0.4,
-            duration: const Duration(milliseconds: 200),
-            child: Container(
-              width: double.infinity,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: AppGradients.primary,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: _canSubmit ? AppShadows.primaryButton : null,
-              ),
+          child: AnimatedScale(
+            scale: _isEnterPressed ? 0.96 : 1.0,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            child: AnimatedOpacity(
+              opacity: _canSubmit ? 1.0 : 0.4,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: AppGradients.primary,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: _canSubmit ? AppShadows.primaryButton : null,
+                ),
               child: Center(
                 child: _isLoading
                     ? const SizedBox(
@@ -558,70 +614,88 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
           ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildFooterTerms() {
-    return Center(
-      child: FadeTransition(
-        opacity: CurvedAnimation(
-          parent: _entryCtrl,
-          curve: const Interval(0.5, 1.0),
-        ),
-        child: RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.onSurfaceVariant,
-              height: 1.6,
+  Widget _buildFloatingFooter() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.7),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
-            children: [
-              TextSpan(text: a11yLabel('By signing in, you agree to our\n')),
-              WidgetSpan(
-                child: Semantics(
-                  button: true,
-                  label: a11yButton('Terms of Service'),
-                  child: GestureDetector(
-                    onTap: () => _launchUrl('https://voltium.app/terms'),
-                    child: Text(
-                      'Terms of Service',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
+          ),
+          child: Center(
+            child: FadeTransition(
+              opacity: CurvedAnimation(
+                parent: _entryCtrl,
+                curve: const Interval(0.5, 1.0),
+              ),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                    height: 1.6,
+                  ),
+                  children: [
+                    TextSpan(text: a11yLabel('By signing in, you agree to our\n')),
+                    WidgetSpan(
+                      child: Semantics(
+                        button: true,
+                        label: a11yButton('Terms of Service'),
+                        child: GestureDetector(
+                          onTap: () => _launchUrl('https://voltium.app/terms'),
+                          child: Text(
+                            'Terms of Service',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              TextSpan(
-                text: ' and ',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-              WidgetSpan(
-                child: Semantics(
-                  button: true,
-                  label: a11yButton('Privacy Policy'),
-                  child: GestureDetector(
-                    onTap: () => _launchUrl('https://voltium.app/privacy'),
-                    child: Text(
-                      'Privacy Policy',
+                    TextSpan(
+                      text: ' and ',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
-                  ),
+                    WidgetSpan(
+                      child: Semantics(
+                        button: true,
+                        label: a11yButton('Privacy Policy'),
+                        child: GestureDetector(
+                          onTap: () => _launchUrl('https://voltium.app/privacy'),
+                          child: Text(
+                            'Privacy Policy',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

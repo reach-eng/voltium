@@ -402,6 +402,7 @@ class _LegalScreenState extends State<LegalScreen>
               // Custom checkbox row
               GestureDetector(
                 key: const Key('acceptCheckbox'),
+                behavior: HitTestBehavior.opaque,
                 onTap: _toggleAccepted,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

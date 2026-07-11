@@ -20,7 +20,7 @@ import 'package:voltium_rider/features/support/presentation/screens/troubleshoot
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
-import 'package:voltium_rider/features/profile/presentation/screens/app_settings_screen.dart';
+
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
@@ -207,11 +207,6 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
                 'Edit profile',
                 Icons.edit_outlined,
                 () => AppNavigator.push(context, const EditProfileScreen()),
-              ),
-              _Tile(
-                'App settings',
-                Icons.settings_outlined,
-                () => AppNavigator.push(context, const AppSettingsScreen()),
               ),
               _Tile(
                 'Legal documents',

@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
           tokenVersion: rider.tokenVersion,
         });
         const resp = success(
-          { ...flatRider, token: sessionToken },
+          { ...flatRider, token: sessionToken, refreshToken: result.refreshToken },
           'OTP verified successfully',
           200,
           undefined,
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response = success(
-      { ...result.riderData, token: result.token, isNewRider: result.isNewRider },
+      { ...result.riderData, token: result.token, refreshToken: result.refreshToken, isNewRider: result.isNewRider },
       'OTP verified successfully',
       200,
       undefined,

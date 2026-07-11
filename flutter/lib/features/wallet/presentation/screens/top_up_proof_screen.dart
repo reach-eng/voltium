@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -68,13 +69,14 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surface,
+      extendBody: true, // For glass bottom nav
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 140), // extra bottom padding for floating footer
               child: Column(
                 children: [
                   _buildAmountCard(),
@@ -88,11 +90,25 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
+        ],
+      ),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+            ),
             child: _buildSubmitButton(),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -106,9 +122,16 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
         20,
         48,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,27 +163,29 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
           ),
           const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              ' Step 2 of 2 ',
+              'Step 2 of 2',
               style: GoogleFonts.inter(
-                color: AppColors.primary,
+                color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Text(
             'Upload Proof',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
           ),
         ],
@@ -173,8 +198,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.iconBackground),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.glass,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -225,8 +250,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.iconBackground),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppShadows.glass,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,14 +301,14 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
   Widget _buildUploadCard() {
     return InkWell(
       key: const Key('uploadProofCard'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       onTap: _showImageSourceSheet,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.iconBackground),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppShadows.glass,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,8 +345,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 36),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(14),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.outlineVariant),
                 ),
                 child: Column(
@@ -354,22 +379,34 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             else
               Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.file(
-                      _imageFile!,
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(
+                        _imageFile!,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   Positioned(
-                    top: 8,
-                    right: 8,
+                    top: 12,
+                    right: 12,
                     child: IconButton.filled(
                       key: const Key('removeProofButton'),
                       onPressed: () => setState(() => _imageFile = null),
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(Icons.close, size: 20),
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFFDC2626),
                         foregroundColor: Colors.white,
@@ -389,7 +426,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB), // Pale yellow
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: RichText(
         text: TextSpan(
@@ -421,12 +458,20 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 56,
+        height: 60,
         decoration: BoxDecoration(
-          color: canSubmit
-              ? AppColors.primaryGradientEnd
-              : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(16),
+          gradient: canSubmit ? AppGradients.primary : null,
+          color: canSubmit ? null : AppColors.outlineVariant,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: canSubmit
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: _isUploading
@@ -442,8 +487,9 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                   'Submit Proof',
                   style: GoogleFonts.inter(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: canSubmit ? Colors.white : AppColors.slate500,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: canSubmit ? Colors.white : AppColors.slate400,
                   ),
                 ),
         ),

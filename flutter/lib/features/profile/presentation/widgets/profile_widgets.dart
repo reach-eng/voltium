@@ -76,13 +76,12 @@ class StatusTile extends StatelessWidget {
 
 class QuickLinkItem extends StatelessWidget {
   final IconData icon;
-  // activeIcon is accepted for API compatibility but not currently rendered differently.
-  // ignore: unused_field
   final IconData? activeIcon;
   final Color iconColor;
   final Color iconBgColor;
   final String title;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final Widget? trailing;
 
   const QuickLinkItem({
     super.key,
@@ -91,7 +90,8 @@ class QuickLinkItem extends StatelessWidget {
     required this.iconColor,
     required this.iconBgColor,
     required this.title,
-    required this.onTap,
+    this.onTap,
+    this.trailing,
   });
 
   @override
@@ -137,7 +137,7 @@ class QuickLinkItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(
+                trailing ?? const Icon(
                   Icons.chevron_right,
                   color: Color(0xFFCBD5E1),
                   size: 20,

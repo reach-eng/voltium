@@ -57,13 +57,7 @@ class WalletCard extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: borderColor, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: themeColor.withValues(alpha: 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.glass,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,10 +71,10 @@ class WalletCard extends StatelessWidget {
                       Text(
                         compact ? 'TOTAL BALANCE' : 'AVAILABLE BALANCE',
                         style: TextStyle(
-                          fontSize: compact ? 9 : 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w800,
                           color: AppColors.slate500,
-                          letterSpacing: 1.0,
+                          letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -232,13 +226,7 @@ class WalletCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.glass,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,12 +238,12 @@ class WalletCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        compact ? 'TOTAL BALANCE' : 'TOTAL BALANCE',
+                        'TOTAL BALANCE',
                         style: TextStyle(
-                          fontSize: compact ? 9 : 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w800,
                           color: AppColors.slate500,
-                          letterSpacing: 1.0,
+                          letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),

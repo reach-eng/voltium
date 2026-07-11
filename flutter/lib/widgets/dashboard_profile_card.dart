@@ -16,6 +16,7 @@ class DashboardProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return PremiumDoubleBezelCard.interactive(
       onTap: onTap,
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           _buildAvatar(),

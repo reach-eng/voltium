@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,6 +49,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   bool _isLoading = false;
+  bool _isVerifyPressed = false;
   int _resendCountdown = 30;
   Timer? _countdownTimer;
 
@@ -139,6 +141,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         final isNewRider = response['isNewRider'] as bool? ?? true;
         if (token != null && !PlatformInfo.isWeb) {
           await SecureStorageService().setToken(token);
+          
+          final refreshToken = response['refreshToken'] as String?;
+          if (refreshToken != null && refreshToken.isNotEmpty) {
+            await SecureStorageService().setRefreshToken(refreshToken);
+          }
+          
           // Persist the FCM command secret (BLOCKER 1.1).
           final fcmSecret = response['fcmCommandSecret'] as String?;
           if (fcmSecret != null && fcmSecret.isNotEmpty) {
@@ -209,9 +217,31 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt, // #F5F7FA
-      body: SafeArea(
-        child: Column(
+      backgroundColor: AppColors.surface, // #F5F7FA
+      extendBody: true,
+      bottomNavigationBar: _buildFloatingFooter(),
+      body: Stack(
+        children: [
+          // Ambient Gradient Background
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.05),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
           children: [
             // Custom AppBar — white circle back btn + "VOLTIUM" centered
             Padding(
@@ -224,18 +254,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(
                       onTap: widget.onBack ?? () => Navigator.maybePop(context),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: AppShadows.glass,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back,
-                          size: 20,
-                          color: AppColors.onSurface,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                width: 1.5,
+                              ),
+                              boxShadow: AppShadows.glass,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              size: 20,
+                              color: AppColors.onSurface,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -289,24 +329,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                             offset: Offset(0, _bounceAnim.value),
                             child: child,
                           ),
-                          child: Container(
-                            width: 96,
-                            height: 96,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x0A000000),
-                                  blurRadius: 20,
-                                  offset: Offset(0, 10),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: BackdropFilter(
+                              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Container(
+                                width: 96,
+                                height: 96,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.4),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: AppShadows.glass,
                                 ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.smartphone,
-                              size: 40,
-                              color: AppColors.primary,
+                                child: const Icon(
+                                  Icons.smartphone,
+                                  size: 40,
+                                  color: AppColors.primary,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -385,50 +429,49 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                           key: const Key('otpInputRow'),
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: List.generate(6, (index) {
-                            return SizedBox(
-                              width: 48,
-                              height: 56,
-                              child: TextFormField(
-                                key: ValueKey('otp_box_$index'),
-                                controller: _controllers[index],
-                                focusNode: _focusNodes[index],
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                maxLength: 1,
-                                obscureText: false,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                ],
-                                onChanged: (v) => _onChanged(v, index),
-                                style: GoogleFonts.inter(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.onSurface,
-                                ),
-                                decoration: InputDecoration(
-                                  counterText: '',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: EdgeInsets.zero,
-                                  border: OutlineInputBorder(
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                child: Container(
+                                  width: 48,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.7),
                                     borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.outlineVariant,
-                                      width: 1.5,
+                                    border: Border.all(
+                                      color: _focusNodes[index].hasFocus
+                                          ? AppColors.primary
+                                          : Colors.white.withValues(alpha: 0.4),
+                                      width: _focusNodes[index].hasFocus ? 2.0 : 1.5,
                                     ),
+                                    boxShadow: AppShadows.glass,
                                   ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.outlineVariant,
-                                      width: 1.5,
+                                  child: TextFormField(
+                                    key: ValueKey('otp_box_$index'),
+                                    controller: _controllers[index],
+                                    focusNode: _focusNodes[index],
+                                    keyboardType: TextInputType.number,
+                                    textAlign: TextAlign.center,
+                                    maxLength: 1,
+                                    obscureText: false,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (v) => _onChanged(v, index),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.onSurface,
                                     ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
+                                    decoration: const InputDecoration(
+                                      counterText: '',
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      filled: true,
+                                      fillColor: Colors.transparent,
+                                      contentPadding: EdgeInsets.zero,
                                     ),
                                   ),
                                 ),
@@ -477,73 +520,97 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                       ],
                     ),
 
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 120), // Padding for floating footer
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+        ],
+      ),
+    );
+  }
 
-            // Gradient "Verify & Proceed" CTA
-            Padding(
-              padding: const EdgeInsets.only(
-                left: 24,
-                right: 24,
-                bottom: 32,
-                top: 16,
+  Widget _buildFloatingFooter() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.7),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
               ),
-              child: GestureDetector(
-                key: const Key('verifyOtpButton'),
-                behavior: HitTestBehavior.opaque,
-                onTap: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
-                    ? _handleVerify
-                    : null,
-                child: AnimatedOpacity(
-                  opacity: (_isComplete && !_isLoading) ? 1.0 : 0.4,
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: AppGradients.primary,
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: (_isComplete && !_isLoading)
-                          ? AppShadows.primaryButton
-                          : null,
-                    ),
-                    child: Center(
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Verify & Proceed',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.arrow_forward,
-                                  size: 20,
+            ),
+          ),
+          child: GestureDetector(
+            key: const Key('verifyOtpButton'),
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+                ? (_) => setState(() => _isVerifyPressed = true)
+                : null,
+            onTapUp: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+                ? (_) => setState(() => _isVerifyPressed = false)
+                : null,
+            onTapCancel: () => setState(() => _isVerifyPressed = false),
+            onTap: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+                ? _handleVerify
+                : null,
+            child: AnimatedScale(
+              scale: _isVerifyPressed ? 0.96 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              child: AnimatedOpacity(
+                opacity: (_isComplete && !_isLoading) ? 1.0 : 0.4,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.primary,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: (_isComplete && !_isLoading)
+                        ? AppShadows.primaryButton
+                        : null,
+                  ),
+                  child: Center(
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Verify & Proceed',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
-                              ],
-                            ),
-                    ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.arrow_forward,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

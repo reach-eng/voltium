@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -90,80 +91,82 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
+      extendBody: true, // For glass bottom nav
       body: Column(
         children: [
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 140), // extra bottom padding for floating footer
               child: FadeTransition(
                 opacity: _entryCtrl,
                 child: Column(
                   children: [
-                    Text(
-                      'Enter Amount',
-                      style: GoogleFonts.inter(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'How much would you like to add?',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: AppColors.slate500,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
                     // Large Amount Input Display
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: Text(
-                            '₹',
-                            style: GoogleFonts.inter(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.slate500,
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: AppShadows.glass,
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              '₹',
+                              style: GoogleFonts.inter(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.slate500,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        IntrinsicWidth(
-                          child: TextFormField(
-                            key: const Key('customAmountField'),
-                            controller: _customAmountCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF1E293B),
-                              letterSpacing: -1,
+                          const SizedBox(width: 8),
+                          IntrinsicWidth(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(minWidth: 50),
+                              child: TextFormField(
+                                key: const Key('customAmountField'),
+                                autofocus: true,
+                                controller: _customAmountCtrl,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                fontSize: 56,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF1E293B),
+                                letterSpacing: -2,
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                filled: false, // Override theme
+                              ),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedAmount = int.tryParse(val) ?? 0;
+                                });
+                                },
+                              ),
                             ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onChanged: (val) {
-                              setState(() {
-                                _selectedAmount = int.tryParse(val) ?? 0;
-                              });
-                            },
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 40),
@@ -171,8 +174,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                     // Grid of 4 chips
                     GridView.count(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
                       shrinkWrap: true,
                       childAspectRatio: 2.2,
                       physics: const NeverScrollableScrollPhysics(),
@@ -183,14 +186,14 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primaryGradientEnd
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              gradient: isSelected ? AppGradients.primary : null,
+                              color: isSelected ? null : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isSelected ? AppShadows.primaryButton : AppShadows.glass,
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.primaryGradientEnd
-                                    : AppColors.outlineVariant,
+                                    ? Colors.transparent
+                                    : AppColors.outlineVariant.withValues(alpha: 0.5),
                                 width: 1,
                               ),
                             ),
@@ -198,7 +201,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               child: Text(
                                 '₹$amt',
                                 style: GoogleFonts.inter(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? Colors.white
@@ -211,7 +214,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                       }).toList(),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Balance info row
                     Consumer(
@@ -228,6 +231,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 color: const Color(0xFF475569),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             Text(
@@ -235,6 +239,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 color: AppColors.slate500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -246,13 +251,25 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               ),
             ),
           ),
-
-          // Bottom button
-          Padding(
-            padding: const EdgeInsets.all(20),
+        ],
+      ),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+            ),
             child: _buildProceedButton(),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -266,9 +283,16 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         20,
         48,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+      decoration: BoxDecoration(
+        gradient: AppGradients.primary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(40)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,27 +324,29 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
           ),
           const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              ' Step 1 of 2 ',
+              'Step 1 of 2',
               style: GoogleFonts.inter(
-                color: AppColors.primary,
+                color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           Text(
             'Enter Amount',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
             ),
           ),
         ],
@@ -335,18 +361,17 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 56,
+        height: 60,
         decoration: BoxDecoration(
-          color: _canProceed
-              ? AppColors.primaryGradientEnd
-              : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(16),
+          gradient: _canProceed ? AppGradients.primary : null,
+          color: _canProceed ? null : AppColors.outlineVariant,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: _canProceed
               ? [
                   BoxShadow(
-                    color: AppColors.primaryGradientEnd.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ]
               : null,
@@ -363,14 +388,15 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
                     color: _canProceed ? Colors.white : AppColors.slate400,
                   ),
                 ),
               ),
               if (_canProceed)
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
@@ -378,7 +404,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                   child: const Icon(
                     Icons.arrow_forward,
                     color: Colors.white,
-                    size: 16,
+                    size: 18,
                   ),
                 ),
             ],

@@ -30,13 +30,7 @@ class ReferralCard extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.success.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.glass,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

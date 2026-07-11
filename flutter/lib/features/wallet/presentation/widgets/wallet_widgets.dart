@@ -722,30 +722,19 @@ class TransactionHistorySection extends StatelessWidget {
                 final isSelected = selectedFilter == f;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
+                  child: ChoiceChip(
                     key: Key('filter${f}Chip'),
-                    onTap: () => onFilterChanged(f),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF1B60DA)
-                            : AppColors.iconBackground,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        f,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isSelected ? Colors.white : AppColors.slate500,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    label: Text(
+                      f.toUpperCase(),
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.slate500,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
                     ),
+                    selected: isSelected,
+                    selectedColor: AppColors.primary,
+                    onSelected: (_) => onFilterChanged(f),
                   ),
                 );
               }).toList(),

@@ -92,6 +92,7 @@ class VerifyOtpResponse {
   final String? accountStatus;
   final bool? isNewRider;
   final String? fcmCommandSecret;
+  final String? refreshToken;
 
   VerifyOtpResponse({
     this.riderId,
@@ -108,6 +109,7 @@ class VerifyOtpResponse {
     this.accountStatus,
     this.isNewRider,
     this.fcmCommandSecret,
+    this.refreshToken,
   });
 
   factory VerifyOtpResponse.fromJson(Map<String, dynamic> json) {
@@ -126,6 +128,7 @@ class VerifyOtpResponse {
       accountStatus: json['accountStatus'] as String?,
       isNewRider: json['isNewRider'] as bool?,
       fcmCommandSecret: json['fcmCommandSecret'] as String?,
+      refreshToken: json['refreshToken'] as String?,
     );
   }
 
@@ -145,6 +148,7 @@ class VerifyOtpResponse {
       'accountStatus': accountStatus,
       'isNewRider': isNewRider,
       'fcmCommandSecret': fcmCommandSecret,
+      'refreshToken': refreshToken,
     };
   }
 }

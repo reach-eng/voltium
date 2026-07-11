@@ -305,7 +305,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.surface,
       appBar: _buildAppBar(),
       body: SafeArea(
         child: AnimatedSwitcher(
@@ -338,9 +338,15 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           color: Colors.white,
         ),
       ),
-      backgroundColor: vfBlue,
+      backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
       elevation: 0,
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: AppGradients.primary,
+        ),
+      ),
       leading: _mode == _Mode.categorySelect
           ? null
           : IconButton(
@@ -351,10 +357,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
       actions: [
         if (_mode != _Mode.categorySelect)
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _resetToCategories,
-            tooltip: 'Start Over',
-          ),
+              icon: const Icon(Icons.refresh),
+              onPressed: _resetToCategories,
+              tooltip: 'Start Over',
+            ),
       ],
     );
   }

@@ -7,20 +7,19 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
-import 'app_settings_screen.dart';
 import 'profile_detail_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 import 'package:voltium_rider/features/workflows/presentation/screens/rider_workflow_hub_screen.dart';
-import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
+import 'package:voltium_rider/features/profile/presentation/screens/controls_screen.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
-
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 
 /// Menu screen (formerly "Profile" tab).
 /// Shows a compact rider header and a list of navigation links.
@@ -36,6 +35,11 @@ class ProfileScreen extends ConsumerWidget {
       body: Consumer(
         builder: (context, innerRef, _) {
           final rider = innerRef.watch(appProvider).rider;
+          final themeProv = innerRef.watch(themeProviderRef);
+          final localeProv = innerRef.watch(localeProviderRef);
+          final isDark = themeProv.isDarkMode;
+          final currentLocale = localeProv.locale.languageCode;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Column(
@@ -137,62 +141,49 @@ class ProfileScreen extends ConsumerWidget {
                 FadeUpWidget(
                   delay: 340,
                   child: QuickLinkItem(
-                    key: const Key('feedbackLink'),
-                    icon: Icons.rate_review_outlined,
-                    activeIcon: Icons.rate_review,
-                    iconColor: const Color(0xFF7E22CE),
-                    iconBgColor: const Color(0xFFF3E8FF),
-                    title: 'Feedback',
-                    onTap: () => AppNavigator.push(context,
-                        FeedbackScreen(onSubmit: () => Navigator.pop(context))),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                FadeUpWidget(
-                  delay: 380,
-                  child: QuickLinkItem(
-                    key: const Key('appSettingsLink'),
-                    icon: Icons.settings_outlined,
-                    activeIcon: Icons.settings,
-                    iconColor: AppColors.slate500,
-                    iconBgColor: AppColors.iconBackground,
-                    title: 'App Settings',
-                    onTap: () =>
-                        AppNavigator.push(context, const AppSettingsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                FadeUpWidget(
-                  delay: 420,
-                  child: QuickLinkItem(
-                    key: const Key('legalLink'),
-                    icon: Icons.gavel_outlined,
-                    activeIcon: Icons.gavel,
+                    key: const Key('controlsLink'),
+                    icon: Icons.tune_outlined,
+                    activeIcon: Icons.tune,
                     iconColor: const Color(0xFF0F766E),
                     iconBgColor: const Color(0xFFCCFBF1),
-                    title: 'Legal',
-                    onTap: () =>
-                        AppNavigator.push(context, const LegalPageScreen()),
+                    title: 'Controls',
+                    onTap: () => AppNavigator.push(context, const ControlsScreen()),
                   ),
                 ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
 
                 FadeUpWidget(
-                  delay: 460,
+                  delay: 350,
+                  child: QuickLinkItem(
+                    key: const Key('languageLink'),
+                    icon: Icons.language,
+                    iconColor: AppColors.success,
+                    iconBgColor: const Color(0xFFECFDF5),
+                    title: 'Language',
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          currentLocale == 'hi' ? 'Hindi' : 'English',
+                          style: const TextStyle(
+                            color: AppColors.slate500,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1), size: 20),
+                      ],
+                    ),
+                    onTap: () => _showLanguageDialog(context, localeProv),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                FadeUpWidget(
+                  delay: 360,
                   child: ProfileEmergencySosTile(
                     onTap: () =>
                         AppNavigator.push(context, const EmergencySOSScreen()),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                FadeUpWidget(
-                  delay: 500,
-                  child: ProfileLogoutButton(
-                    onTap: () => innerRef.read(appProvider).logout(),
                   ),
                 ),
                 const SizedBox(height: 48),
@@ -223,6 +214,55 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _showLanguageDialog(BuildContext context, LocaleProvider localeProvider) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Select Language'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English'),
+              leading: Radio<String>(
+                key: const Key('englishRadio'),
+                value: 'en',
+                groupValue: localeProvider.locale.languageCode,
+                onChanged: (v) {
+                  localeProvider.setEnglish();
+                  Navigator.pop(ctx);
+                },
+                toggleable: true,
+              ),
+              onTap: () {
+                localeProvider.setEnglish();
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('हिंदी (Hindi)'),
+              leading: Radio<String>(
+                key: const Key('hindiRadio'),
+                value: 'hi',
+                groupValue: localeProvider.locale.languageCode,
+                onChanged: (v) {
+                  localeProvider.setHindi();
+                  Navigator.pop(ctx);
+                },
+              ),
+              onTap: () {
+                localeProvider.setHindi();
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/date_helpers.dart';
+import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+
 
 /// Reusable active plan card with blue gradient.
 /// Displays subscription name, time remaining, and next recharge date.
@@ -29,13 +31,7 @@ class PlanCard extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: AppShadows.glass,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,7 +44,7 @@ class PlanCard extends StatelessWidget {
                     Text(
                       'CURRENT SUBSCRIPTION',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Colors.white70,
                         letterSpacing: 1.0,
@@ -72,7 +68,7 @@ class PlanCard extends StatelessWidget {
                         ? currentPlan!.toUpperCase()
                         : 'NO PLAN',
                     style: const TextStyle(
-                      fontSize: 9,
+                      fontSize: 12,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       letterSpacing: 1.2,
@@ -113,7 +109,7 @@ class PlanCard extends StatelessWidget {
                           const Text(
                             'TIME REMAINING',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF93C5FD),
                               letterSpacing: 1,
@@ -146,7 +142,7 @@ class PlanCard extends StatelessWidget {
                           const Text(
                             'NEXT RECHARGE',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF93C5FD),
                               letterSpacing: 1,

@@ -24,13 +24,7 @@ class TeamLeaderCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppShadows.glass,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,7 +35,7 @@ class TeamLeaderCard extends StatelessWidget {
                   const Text(
                     'Team Leader',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
                       color: AppColors.slate400,
                       letterSpacing: 1.0,
