@@ -141,12 +141,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         final isNewRider = response['isNewRider'] as bool? ?? true;
         if (token != null && !PlatformInfo.isWeb) {
           await SecureStorageService().setToken(token);
-          
+
           final refreshToken = response['refreshToken'] as String?;
           if (refreshToken != null && refreshToken.isNotEmpty) {
             await SecureStorageService().setRefreshToken(refreshToken);
           }
-          
+
           // Persist the FCM command secret (BLOCKER 1.1).
           final fcmSecret = response['fcmCommandSecret'] as String?;
           if (fcmSecret != null && fcmSecret.isNotEmpty) {
@@ -242,100 +242,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           ),
           SafeArea(
             child: Column(
-          children: [
-            // Custom AppBar — white circle back btn + "VOLTIUM" centered
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Back button (left)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: widget.onBack ?? () => Navigator.maybePop(context),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: BackdropFilter(
-                          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                width: 1.5,
-                              ),
-                              boxShadow: AppShadows.glass,
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back,
-                              size: 20,
-                              color: AppColors.onSurface,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Centered brand name
-                  Text(
-                    'Voltium',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.onSurface,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-
-                  // Spacer (right side)
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: SizedBox(width: 40, height: 40),
-                  ),
-                ],
-              ),
-            ),
-
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 48),
-
-                    // Bouncing smartphone icon in white circle
-                    FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: _entryCtrl,
-                        curve: const Interval(0, 0.7),
-                      ),
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-                          CurvedAnimation(
-                            parent: _entryCtrl,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        ),
-                        child: AnimatedBuilder(
-                          animation: _bounceAnim,
-                          builder: (context, child) => Transform.translate(
-                            offset: Offset(0, _bounceAnim.value),
-                            child: child,
-                          ),
+              children: [
+                // Custom AppBar — white circle back btn + "VOLTIUM" centered
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Back button (left)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
+                          onTap: widget.onBack ??
+                              () => Navigator.maybePop(context),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(999),
                             child: BackdropFilter(
-                              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              filter:
+                                  ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                               child: Container(
-                                width: 96,
-                                height: 96,
+                                width: 44,
+                                height: 44,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withValues(alpha: 0.7),
                                   shape: BoxShape.circle,
@@ -346,188 +274,274 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                   boxShadow: AppShadows.glass,
                                 ),
                                 child: const Icon(
-                                  Icons.smartphone,
-                                  size: 40,
-                                  color: AppColors.primary,
+                                  Icons.arrow_back,
+                                  size: 20,
+                                  color: AppColors.onSurface,
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 48),
-
-                    // Title
-                    FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: _entryCtrl,
-                        curve: const Interval(0.1, 0.8),
+                      // Centered brand name
+                      Text(
+                        'Voltium',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.onSurface,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            widget.isLogin ? 'Welcome Back!' : 'Verify OTP',
-                            style: GoogleFonts.inter(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.onSurface,
-                              letterSpacing: -0.5,
+
+                      // Spacer (right side)
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: SizedBox(width: 40, height: 40),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 48),
+
+                        // Bouncing smartphone icon in white circle
+                        FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: _entryCtrl,
+                            curve: const Interval(0, 0.7),
+                          ),
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                              CurvedAnimation(
+                                parent: _entryCtrl,
+                                curve: Curves.easeOutCubic,
+                              ),
+                            ),
+                            child: AnimatedBuilder(
+                              animation: _bounceAnim,
+                              builder: (context, child) => Transform.translate(
+                                offset: Offset(0, _bounceAnim.value),
+                                child: child,
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: BackdropFilter(
+                                  filter: ui.ImageFilter.blur(
+                                      sigmaX: 16, sigmaY: 16),
+                                  child: Container(
+                                    width: 96,
+                                    height: 96,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.4),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: AppShadows.glass,
+                                    ),
+                                    child: const Icon(
+                                      Icons.smartphone,
+                                      size: 40,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: GoogleFonts.inter(
-                                fontSize: 15,
-                                color: AppColors.onSurfaceVariant,
-                                height: 1.6,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: widget.isLogin
-                                      ? 'Enter the code to login to your account '
-                                      : 'Enter the 6-digit code sent to ',
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Title
+                        FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: _entryCtrl,
+                            curve: const Interval(0.1, 0.8),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                widget.isLogin ? 'Welcome Back!' : 'Verify OTP',
+                                style: GoogleFonts.inter(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.onSurface,
+                                  letterSpacing: -0.5,
                                 ),
-                                TextSpan(
-                                  text: widget.phoneNumber,
+                              ),
+                              const SizedBox(height: 12),
+                              RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
                                   style: GoogleFonts.inter(
                                     fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
+                                    color: AppColors.onSurfaceVariant,
+                                    height: 1.6,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 48),
-
-                    // OTP Input boxes
-                    FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: _entryCtrl,
-                        curve: const Interval(0.2, 0.9),
-                      ),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          for (int i = 0; i < 6; i++) {
-                            if (_controllers[i].text.isEmpty) {
-                              _focusNodes[i].requestFocus();
-                              break;
-                            }
-                            if (i == 5) _focusNodes[5].requestFocus();
-                          }
-                        },
-                        child: Row(
-                          key: const Key('otpInputRow'),
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: List.generate(6, (index) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: BackdropFilter(
-                                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                                child: Container(
-                                  width: 48,
-                                  height: 56,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: _focusNodes[index].hasFocus
-                                          ? AppColors.primary
-                                          : Colors.white.withValues(alpha: 0.4),
-                                      width: _focusNodes[index].hasFocus ? 2.0 : 1.5,
+                                  children: [
+                                    TextSpan(
+                                      text: widget.isLogin
+                                          ? 'Enter the code to login to your account '
+                                          : 'Enter the 6-digit code sent to ',
                                     ),
-                                    boxShadow: AppShadows.glass,
-                                  ),
-                                  child: TextFormField(
-                                    key: ValueKey('otp_box_$index'),
-                                    controller: _controllers[index],
-                                    focusNode: _focusNodes[index],
-                                    keyboardType: TextInputType.number,
-                                    textAlign: TextAlign.center,
-                                    maxLength: 1,
-                                    obscureText: false,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    onChanged: (v) => _onChanged(v, index),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.onSurface,
+                                    TextSpan(
+                                      text: widget.phoneNumber,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
-                                    decoration: const InputDecoration(
-                                      counterText: '',
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      filled: true,
-                                      fillColor: Colors.transparent,
-                                      contentPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                            );
-                          }),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 64),
-
-                    // Resend section
-                    Column(
-                      children: [
-                        Text(
-                          "DIDN'T RECEIVE THE CODE?",
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                            color: AppColors.onSurfaceVariant,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          key: const Key('resendCodeButton'),
-                          onTap: _resendCountdown <= 0 ? _handleResend : null,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                            child: Text(
-                              _resendCountdown > 0
-                                  ? 'Resend in ${_resendCountdown}s'
-                                  : 'Resend Code',
+
+                        const SizedBox(height: 48),
+
+                        // OTP Input boxes
+                        FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: _entryCtrl,
+                            curve: const Interval(0.2, 0.9),
+                          ),
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              for (int i = 0; i < 6; i++) {
+                                if (_controllers[i].text.isEmpty) {
+                                  _focusNodes[i].requestFocus();
+                                  break;
+                                }
+                                if (i == 5) _focusNodes[5].requestFocus();
+                              }
+                            },
+                            child: Row(
+                              key: const Key('otpInputRow'),
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: List.generate(6, (index) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: BackdropFilter(
+                                    filter: ui.ImageFilter.blur(
+                                        sigmaX: 16, sigmaY: 16),
+                                    child: Container(
+                                      width: 48,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.7),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: _focusNodes[index].hasFocus
+                                              ? AppColors.primary
+                                              : Colors.white
+                                                  .withValues(alpha: 0.4),
+                                          width: _focusNodes[index].hasFocus
+                                              ? 2.0
+                                              : 1.5,
+                                        ),
+                                        boxShadow: AppShadows.glass,
+                                      ),
+                                      child: TextFormField(
+                                        key: ValueKey('otp_box_$index'),
+                                        controller: _controllers[index],
+                                        focusNode: _focusNodes[index],
+                                        keyboardType: TextInputType.number,
+                                        textAlign: TextAlign.center,
+                                        maxLength: 1,
+                                        obscureText: false,
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter
+                                              .digitsOnly,
+                                        ],
+                                        onChanged: (v) => _onChanged(v, index),
+                                        style: GoogleFonts.inter(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.onSurface,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          counterText: '',
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          filled: true,
+                                          fillColor: Colors.transparent,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 64),
+
+                        // Resend section
+                        Column(
+                          children: [
+                            Text(
+                              "DIDN'T RECEIVE THE CODE?",
                               style: GoogleFonts.inter(
-                                fontSize: 15,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w800,
-                                color: _resendCountdown > 0
-                                    ? AppColors.onSurfaceDisabled
-                                    : AppColors.primary,
+                                letterSpacing: 1.2,
+                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              key: const Key('resendCodeButton'),
+                              onTap:
+                                  _resendCountdown <= 0 ? _handleResend : null,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                child: Text(
+                                  _resendCountdown > 0
+                                      ? 'Resend in ${_resendCountdown}s'
+                                      : 'Resend Code',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: _resendCountdown > 0
+                                        ? AppColors.onSurfaceDisabled
+                                        : AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+
+                        const SizedBox(
+                            height: 120), // Padding for floating footer
                       ],
                     ),
-
-                    const SizedBox(height: 120), // Padding for floating footer
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
         ],
       ),
     );
@@ -538,7 +552,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.7),
             border: Border(

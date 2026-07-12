@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
-import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_checklist_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';

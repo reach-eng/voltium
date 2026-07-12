@@ -3,6 +3,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -102,7 +103,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                           : rider.emergencyContact!;
                       final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
                       final uri = Uri.parse('tel:$sanitized');
-                      
+
                       try {
                         if (!await launchUrl(uri)) {
                           throw Exception('Could not launch dialer');
@@ -111,7 +112,8 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Could not open the phone dialer. Please try again.'),
+                              content: Text(
+                                  'Could not open the phone dialer. Please try again.'),
                               backgroundColor: Colors.red,
                             ),
                           );

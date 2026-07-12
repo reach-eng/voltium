@@ -4,9 +4,7 @@ import 'package:voltium_rider/features/dashboard/presentation/screens/active_das
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/profile_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
-import 'package:voltium_rider/core/network/connectivity_provider.dart';
-import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
-import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
+
 import 'package:voltium_rider/services/monitoring_service.dart';
 import 'package:voltium_rider/widgets/animated_bottom_nav.dart';
 import 'package:voltium_rider/widgets/shell_banners.dart';

@@ -185,9 +185,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
       _selectedVehicleLabel = null;
     });
     try {
-      print('Fetching vehicles for hub: $hubId');
+      debugPrint('Fetching vehicles for hub: $hubId');
       final response = await VoltiumApiService().fetchVehicles(hubId);
-      print('Fetch response: $response');
+      debugPrint('Fetch response: $response');
       if (!mounted) return;
       // The API wraps the response in { success, data }. The data may
       // be a list directly (GET /api/vehicles) or nested under a key.
@@ -196,16 +196,16 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
           ? data
           : (data is Map ? data['vehicles'] : response['vehicles']);
       final list = (rawList as List<dynamic>?) ?? [];
-      print('Vehicle list length: ${list.length}');
+      debugPrint('Vehicle list length: ${list.length}');
       setState(() {
         _vehicles = list
             .map((v) => v as Map<String, dynamic>)
             .where((v) => v['status'] == 'AVAILABLE')
             .toList();
       });
-      print('Available vehicles: ${_vehicles.length}');
+      debugPrint('Available vehicles: ${_vehicles.length}');
     } catch (e) {
-      print('Fetch error: $e');
+      debugPrint('Fetch error: $e');
       _showError('Failed to fetch vehicles: $e');
     } finally {
       if (mounted) setState(() => _isLoadingVehicles = false);
@@ -309,7 +309,6 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
       return;
     }
 
-    final provider = ref.read(appProvider);
     final riderPhone = ref.watch(appProvider).rider?.phone ?? '';
     final guarantorPhone = ref.watch(appProvider).rider?.guarantorPhone ?? '';
 
@@ -329,9 +328,9 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     });
 
     try {
-      print('Sending OTP to $digits');
+      debugPrint('Sending OTP to $digits');
       final response = await VoltiumApiService().sendOtp(phone: digits);
-      print('OTP send response: $response');
+      debugPrint('OTP send response: $response');
       if (!mounted) return;
       setState(() {
         _isOtpSent = true;
@@ -345,7 +344,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
         _otpController.text = testOtp.toString();
       }
     } catch (e) {
-      print('OTP send error: $e');
+      debugPrint('OTP send error: $e');
       if (!mounted) return;
       _showError('Failed to send OTP. Please try again. $e');
     } finally {

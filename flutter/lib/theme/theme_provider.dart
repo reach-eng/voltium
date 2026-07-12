@@ -22,8 +22,8 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> setDarkMode(bool value) async {
     if (_isDarkMode == value) return;
     _isDarkMode = value;
-    await CacheService().setDarkMode(value);
     notifyListeners();
+    await CacheService().setDarkMode(value);
   }
 
   Future<void> toggleTheme() => setDarkMode(!_isDarkMode);

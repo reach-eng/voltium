@@ -137,11 +137,12 @@ class QuickLinkItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                trailing ?? const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFFCBD5E1),
-                  size: 20,
-                ),
+                trailing ??
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Color(0xFFCBD5E1),
+                      size: 20,
+                    ),
               ],
             ),
           ),

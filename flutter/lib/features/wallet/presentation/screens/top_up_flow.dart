@@ -44,7 +44,6 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(appProvider);
     return Scaffold(
       body: PageView(
         controller: _pageController,

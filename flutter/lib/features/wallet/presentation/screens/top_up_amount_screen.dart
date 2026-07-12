@@ -98,19 +98,22 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 32, 20, 140), // extra bottom padding for floating footer
+              padding: const EdgeInsets.fromLTRB(
+                  20, 32, 20, 140), // extra bottom padding for floating footer
               child: FadeTransition(
                 opacity: _entryCtrl,
                 child: Column(
                   children: [
                     // Large Amount Input Display
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 32, horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: AppShadows.glass,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.5)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -140,27 +143,27 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                   FilteringTextInputFormatter.digitsOnly,
                                 ],
                                 textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 56,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF1E293B),
-                                letterSpacing: -2,
-                              ),
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                focusedErrorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                                filled: false, // Override theme
-                              ),
-                              onChanged: (val) {
-                                setState(() {
-                                  _selectedAmount = int.tryParse(val) ?? 0;
-                                });
+                                style: GoogleFonts.inter(
+                                  fontSize: 56,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF1E293B),
+                                  letterSpacing: -2,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  filled: false, // Override theme
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedAmount = int.tryParse(val) ?? 0;
+                                  });
                                 },
                               ),
                             ),
@@ -186,14 +189,18 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
-                              gradient: isSelected ? AppGradients.primary : null,
+                              gradient:
+                                  isSelected ? AppGradients.primary : null,
                               color: isSelected ? null : Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: isSelected ? AppShadows.primaryButton : AppShadows.glass,
+                              boxShadow: isSelected
+                                  ? AppShadows.primaryButton
+                                  : AppShadows.glass,
                               border: Border.all(
                                 color: isSelected
                                     ? Colors.transparent
-                                    : AppColors.outlineVariant.withValues(alpha: 0.5),
+                                    : AppColors.outlineVariant
+                                        .withValues(alpha: 0.5),
                                 width: 1,
                               ),
                             ),
@@ -257,7 +264,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            padding: EdgeInsets.fromLTRB(
+                20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.7),
               border: Border(

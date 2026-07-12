@@ -1,9 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
-import 'package:voltium_rider/features/support/domain/repository.dart';
 import 'package:voltium_rider/features/support/data/repository_impl.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
 
 enum TicketFilter { all, open, assigned, inProgress, closed }
 
@@ -17,7 +15,7 @@ class TicketState {
     this.tickets = const [],
     this.filter = TicketFilter.all,
   });
-  
+
   List<TicketEntity> get filteredTickets {
     if (filter == TicketFilter.all) return tickets;
     return tickets.where((t) {
@@ -25,7 +23,7 @@ class TicketState {
       return normalizedStatus == filter.name.toLowerCase();
     }).toList();
   }
-  
+
   TicketState copyWith({
     bool? isLoading,
     List<TicketEntity>? tickets,
@@ -49,7 +47,8 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   Future<void> fetchTickets() async {
     state = state.copyWith(isLoading: true);
     try {
-      final repository = SupportRepositoryImpl(ref.read(appProvider).voltiumApiClient);
+      final repository =
+          SupportRepositoryImpl(ref.read(appProvider).voltiumApiClient);
       final response = await repository.fetchTickets();
       final data = response['tickets'] as List<dynamic>?;
       if (data != null) {

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/main.dart';
+import 'package:voltium_rider/widgets/dialogs.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
 import 'package:voltium_rider/widgets/approval_matrix_widget.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
@@ -38,7 +39,6 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     final walletMinTopup =
         ref.watch(appProvider.select((p) => p.walletMinTopup));
     final rider = ref.watch(riderProvider.select((p) => p.rider));
-    final appProv = ref.read(appProvider);
     debugPrint('PreDashboardScreen: currentPlan = ${rider?.currentPlan}');
 
     if (rider == null) {
@@ -336,10 +336,19 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                       Icons.logout,
                       color: AppColors.error,
                       size: 22,
-                    ),
-                    onPressed: () async {
-                      await ref.read(appProvider).logout();
-                      widget.onStepNavigation(AuthState.permissions);
+                    ),                      onPressed: () async {
+                      if (!mounted) return;
+                      final confirmed = await showLogoutConfirmation(context);
+                      if (confirmed == true) {
+                        await ref.read(appProvider).logout();
+                        if (mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AppShell()),
+                            (route) => false,
+                          );
+                        }
+                      }
                     },
                   ),
                   IconButton(

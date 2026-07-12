@@ -48,7 +48,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
           final rider = ref.watch(appProvider.select((p) => p.rider));
           final tlName = rider?.teamLeader;
           final tlPhone = rider?.emergencyContact;
-          
+
           return CustomScrollView(
             slivers: [
               SliverPadding(
@@ -57,7 +57,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                   delegate: SliverChildListDelegate([
                     // Search
                     SearchAnchor(
-                      builder: (BuildContext context, SearchController controller) {
+                      builder:
+                          (BuildContext context, SearchController controller) {
                         return SearchBar(
                           controller: controller,
                           padding: const WidgetStatePropertyAll<EdgeInsets>(
@@ -68,8 +69,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                           onChanged: (_) {
                             controller.openView();
                           },
-                          leading:
-                              const Icon(Icons.search, color: AppColors.slate500),
+                          leading: const Icon(Icons.search,
+                              color: AppColors.slate500),
                           hintText: 'Search FAQs, topics...',
                           elevation: const WidgetStatePropertyAll(0),
                           backgroundColor:
@@ -114,8 +115,11 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        _buildQuickChip(Icons.help_outline, 'FAQ',
-                            () => AppNavigator.push(context, const FaqScreen())),
+                        _buildQuickChip(
+                            Icons.help_outline,
+                            'FAQ',
+                            () =>
+                                AppNavigator.push(context, const FaqScreen())),
                         _buildQuickChip(
                             Icons.build_circle_outlined,
                             'Troubleshoot',
@@ -207,20 +211,22 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                               },
                               style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
                               child: const Text('Create Ticket',
-                                  style: TextStyle(fontWeight: FontWeight.bold)),
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Recent Tickets Section
                     const RecentTicketsContainer(),
                     const SizedBox(height: 24),

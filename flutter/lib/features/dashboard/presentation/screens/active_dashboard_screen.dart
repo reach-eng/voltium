@@ -44,24 +44,7 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
           _DashboardStateWidget(),
         ],
       ),
-      floatingActionButton: PulsingFab(
-        child: FloatingActionButton.extended(
-          onPressed: () {
-            // TODO: Implement scan/find vehicle action
-          },
-          backgroundColor: AppColors.primary,
-          elevation: 4,
-          icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-          label: const Text(
-            'Scan to Ride',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ),
+
     );
   }
 }
@@ -264,40 +247,39 @@ class _DashboardContentWidget extends ConsumerWidget {
             automaticallyImplyLeading: false,
             centerTitle: false,
             titleSpacing: 20,
-            title: Builder(
-              builder: (context) {
-                final hour = DateTime.now().hour;
-                final firstName = rider.name.split(' ').first;
-                final displayName = firstName.isEmpty ? 'Rider' : firstName;
-                String greeting = 'Good Evening';
-                if (hour < 12) greeting = 'Good Morning';
-                else if (hour < 17) greeting = 'Good Afternoon';
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$greeting,',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 0.5,
-                      ),
+            title: Builder(builder: (context) {
+              final hour = DateTime.now().hour;
+              final firstName = rider.name.split(' ').first;
+              final displayName = firstName.isEmpty ? 'Rider' : firstName;
+              String greeting = 'Good Evening';
+              if (hour < 12)
+                greeting = 'Good Morning';
+              else if (hour < 17) greeting = 'Good Afternoon';
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$greeting,',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.onSurfaceVariant,
+                      letterSpacing: 0.5,
                     ),
-                    Text(
-                      displayName,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.onSurface,
-                        letterSpacing: -0.5,
-                      ),
+                  ),
+                  Text(
+                    displayName,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.onSurface,
+                      letterSpacing: -0.5,
                     ),
-                  ],
-                );
-              }
-            ),
+                  ),
+                ],
+              );
+            }),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 20),
@@ -375,9 +357,10 @@ class _DashboardContentWidget extends ConsumerWidget {
                                 rider.emergencyContact!.isEmpty)
                             ? '+91 98765 12345'
                             : rider.emergencyContact!;
-                        final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
+                        final sanitized =
+                            phone.replaceAll(RegExp(r'[^\d+]'), '');
                         final uri = Uri.parse('tel:$sanitized');
-                        
+
                         try {
                           if (!await launchUrl(uri)) {
                             throw Exception('Could not launch dialer');
@@ -386,7 +369,8 @@ class _DashboardContentWidget extends ConsumerWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Could not open the phone dialer. Please try again.'),
+                                content: Text(
+                                    'Could not open the phone dialer. Please try again.'),
                                 backgroundColor: Colors.red,
                               ),
                             );

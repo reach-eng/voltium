@@ -1,7 +1,6 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:dotted_border/dotted_border.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
 

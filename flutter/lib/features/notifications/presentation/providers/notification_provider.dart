@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class NotificationProvider extends ChangeNotifier {
   static const String _key = 'volt_notifications';

@@ -73,8 +73,6 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   // Top-up flow state
   int _topUpAmount = 2000;
-  int? _topUpSecurityDeposit;
-  int? _topUpRentalPrice;
 
   // Pickup flow state
   String? _pickupHubId;

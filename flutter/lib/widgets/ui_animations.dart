@@ -43,7 +43,8 @@ class _FadeSlideEntranceState extends State<FadeSlideEntrance>
       ),
     );
 
-    _slideAnimation = Tween<Offset>(begin: widget.startOffset, end: Offset.zero).animate(
+    _slideAnimation =
+        Tween<Offset>(begin: widget.startOffset, end: Offset.zero).animate(
       CurvedAnimation(
         parent: _controller,
         curve: Curves.easeOutCubic,
@@ -113,8 +114,9 @@ class _PulsingFabState extends State<PulsingFab>
       animation: _controller,
       builder: (context, child) {
         final scale = 1.0 + (_controller.value * 0.03); // Subtle scale
-        final glowOpacity = 0.2 + (_controller.value * 0.3); // Subtle glow pulse
-        
+        final glowOpacity =
+            0.2 + (_controller.value * 0.3); // Subtle glow pulse
+
         return Transform.scale(
           scale: scale,
           child: Container(

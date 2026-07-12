@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'top_up_flow.dart';
 import 'package:voltium_rider/features/wallet/presentation/widgets/wallet_widgets.dart';

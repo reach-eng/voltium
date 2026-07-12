@@ -76,7 +76,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 140), // extra bottom padding for floating footer
+              padding: const EdgeInsets.fromLTRB(
+                  20, 24, 20, 140), // extra bottom padding for floating footer
               child: Column(
                 children: [
                   _buildAmountCard(),
@@ -96,7 +97,8 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+            padding: EdgeInsets.fromLTRB(
+                20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.7),
               border: Border(

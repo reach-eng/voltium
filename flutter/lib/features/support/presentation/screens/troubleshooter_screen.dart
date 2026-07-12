@@ -357,10 +357,10 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
       actions: [
         if (_mode != _Mode.categorySelect)
           IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _resetToCategories,
-              tooltip: 'Start Over',
-            ),
+            icon: const Icon(Icons.refresh),
+            onPressed: _resetToCategories,
+            tooltip: 'Start Over',
+          ),
       ],
     );
   }

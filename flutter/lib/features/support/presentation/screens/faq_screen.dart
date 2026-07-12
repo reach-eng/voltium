@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:voltium_rider/models/support_model.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
 

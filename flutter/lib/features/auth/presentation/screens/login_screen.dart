@@ -161,7 +161,8 @@ class _LoginScreenState extends State<LoginScreen>
           Positioned.fill(
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(32, 24, 32, MediaQuery.of(context).padding.bottom + 120),
+                padding: EdgeInsets.fromLTRB(
+                    32, 24, 32, MediaQuery.of(context).padding.bottom + 120),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -367,78 +368,79 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     boxShadow: AppShadows.glass,
                   ),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () => _phoneFocusNode.requestFocus(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ExcludeSemantics(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 24, right: 12),
-                            child: Text(
-                              '+91',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.onSurface,
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => _phoneFocusNode.requestFocus(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ExcludeSemantics(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 24, right: 12),
+                                child: Text(
+                                  '+91',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.onSurface,
+                                  ),
+                                ),
                               ),
                             ),
+                            Container(
+                              width: 1,
+                              height: 20,
+                              color: AppColors.divider,
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          key: const Key('phoneInput'),
+                          controller: _phoneController,
+                          focusNode: _phoneFocusNode,
+                          keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.done,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(10),
+                          ],
+                          onChanged: _onPhoneChanged,
+                          onFieldSubmitted: (_) => _handleLogin(),
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.onSurface,
+                            letterSpacing: 1.5,
+                          ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: true,
+                            fillColor: Colors.transparent,
+                            hintText: '00000 00000',
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 16,
+                              color: AppColors.onSurfaceDisabled,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            errorText: null,
                           ),
                         ),
-                        Container(
-                          width: 1,
-                          height: 20,
-                          color: AppColors.divider,
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      key: const Key('phoneInput'),
-                      controller: _phoneController,
-                      focusNode: _phoneFocusNode,
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      onChanged: _onPhoneChanged,
-                      onFieldSubmitted: (_) => _handleLogin(),
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
-                        letterSpacing: 1.5,
                       ),
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: true,
-                        fillColor: Colors.transparent,
-                        hintText: '00000 00000',
-                        hintStyle: GoogleFonts.inter(
-                          fontSize: 16,
-                          color: AppColors.onSurfaceDisabled,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w400,
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                        errorText: null,
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-          ),
             if (_phoneError != null)
               Padding(
                 padding: const EdgeInsets.only(left: 20, top: 8),
@@ -489,52 +491,52 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 boxShadow: AppShadows.glass,
               ),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _referralFocusNode.requestFocus(),
-            child: Row(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 20, right: 8),
-                  child: Icon(
-                    Icons.person_add_outlined,
-                    size: 20,
-                    color: AppColors.primary,
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    key: const Key('referralInput'),
-                    controller: _referralController,
-                    focusNode: _referralFocusNode,
-                    textCapitalization: TextCapitalization.characters,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurface,
-                    ),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: true,
-                      fillColor: Colors.transparent,
-                      hintText: 'Referral Code (Optional)',
-                      hintStyle: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: AppColors.onSurfaceDisabled,
-                        fontWeight: FontWeight.w400,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _referralFocusNode.requestFocus(),
+                child: Row(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 20, right: 8),
+                      child: Icon(
+                        Icons.person_add_outlined,
+                        size: 20,
+                        color: AppColors.primary,
                       ),
-                      contentPadding: EdgeInsets.zero,
                     ),
-                  ),
+                    Expanded(
+                      child: TextFormField(
+                        key: const Key('referralInput'),
+                        controller: _referralController,
+                        focusNode: _referralFocusNode,
+                        textCapitalization: TextCapitalization.characters,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.onSurface,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          hintText: 'Referral Code (Optional)',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: AppColors.onSurfaceDisabled,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }
@@ -572,8 +574,12 @@ class _LoginScreenState extends State<LoginScreen>
         child: GestureDetector(
           key: const Key('sendOtpButton'),
           behavior: HitTestBehavior.opaque,
-          onTapDown: _canSubmit || VoltiumApp.isTestMode ? (_) => setState(() => _isEnterPressed = true) : null,
-          onTapUp: _canSubmit || VoltiumApp.isTestMode ? (_) => setState(() => _isEnterPressed = false) : null,
+          onTapDown: _canSubmit || VoltiumApp.isTestMode
+              ? (_) => setState(() => _isEnterPressed = true)
+              : null,
+          onTapUp: _canSubmit || VoltiumApp.isTestMode
+              ? (_) => setState(() => _isEnterPressed = false)
+              : null,
           onTapCancel: () => setState(() => _isEnterPressed = false),
           onTap: VoltiumApp.isTestMode
               ? _handleLogin
@@ -593,27 +599,27 @@ class _LoginScreenState extends State<LoginScreen>
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: _canSubmit ? AppShadows.primaryButton : null,
                 ),
-              child: Center(
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+                child: Center(
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Enter',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : Text(
-                        'Enter',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
+                ),
               ),
             ),
-          ),
           ),
         ),
       ),
@@ -625,7 +631,8 @@ class _LoginScreenState extends State<LoginScreen>
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, MediaQuery.of(context).padding.bottom + 20),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.7),
             border: Border(
@@ -650,7 +657,8 @@ class _LoginScreenState extends State<LoginScreen>
                     height: 1.6,
                   ),
                   children: [
-                    TextSpan(text: a11yLabel('By signing in, you agree to our\n')),
+                    TextSpan(
+                        text: a11yLabel('By signing in, you agree to our\n')),
                     WidgetSpan(
                       child: Semantics(
                         button: true,
@@ -680,7 +688,8 @@ class _LoginScreenState extends State<LoginScreen>
                         button: true,
                         label: a11yButton('Privacy Policy'),
                         child: GestureDetector(
-                          onTap: () => _launchUrl('https://voltium.app/privacy'),
+                          onTap: () =>
+                              _launchUrl('https://voltium.app/privacy'),
                           child: Text(
                             'Privacy Policy',
                             style: GoogleFonts.inter(

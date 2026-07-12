@@ -244,7 +244,6 @@ class PathSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -256,7 +255,7 @@ class PathSummary extends StatelessWidget {
         ),
       ),
       child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -325,7 +324,6 @@ class ResolutionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final (title, titleColor) = switch (resolutionType) {
       'SUCCESS' => ('Issue Resolved', Colors.green),
       'FAILED' => ('Troubleshooting Tip', Colors.orange),
@@ -385,8 +383,6 @@ class PathStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(

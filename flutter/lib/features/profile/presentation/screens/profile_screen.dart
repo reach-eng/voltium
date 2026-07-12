@@ -10,7 +10,7 @@ import 'package:voltium_rider/features/rewards/presentation/screens/rewards_scre
 import 'profile_detail_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
 import 'package:voltium_rider/features/referrals/presentation/screens/referral_screen.dart';
-import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
+
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 import 'package:voltium_rider/features/workflows/presentation/screens/rider_workflow_hub_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/controls_screen.dart';
@@ -19,7 +19,7 @@ import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
-import 'package:voltium_rider/theme/theme_provider.dart';
+
 
 /// Menu screen (formerly "Profile" tab).
 /// Shows a compact rider header and a list of navigation links.
@@ -35,9 +35,7 @@ class ProfileScreen extends ConsumerWidget {
       body: Consumer(
         builder: (context, innerRef, _) {
           final rider = innerRef.watch(appProvider).rider;
-          final themeProv = innerRef.watch(themeProviderRef);
           final localeProv = innerRef.watch(localeProviderRef);
-          final isDark = themeProv.isDarkMode;
           final currentLocale = localeProv.locale.languageCode;
 
           return SingleChildScrollView(
@@ -147,7 +145,8 @@ class ProfileScreen extends ConsumerWidget {
                     iconColor: const Color(0xFF0F766E),
                     iconBgColor: const Color(0xFFCCFBF1),
                     title: 'Controls',
-                    onTap: () => AppNavigator.push(context, const ControlsScreen()),
+                    onTap: () =>
+                        AppNavigator.push(context, const ControlsScreen()),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -171,7 +170,8 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right, color: Color(0xFFCBD5E1), size: 20),
+                        const Icon(Icons.chevron_right,
+                            color: Color(0xFFCBD5E1), size: 20),
                       ],
                     ),
                     onTap: () => _showLanguageDialog(context, localeProv),
@@ -215,7 +215,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguageDialog(BuildContext context, LocaleProvider localeProvider) {
+  void _showLanguageDialog(
+      BuildContext context, LocaleProvider localeProvider) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -261,8 +262,6 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
-
-
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

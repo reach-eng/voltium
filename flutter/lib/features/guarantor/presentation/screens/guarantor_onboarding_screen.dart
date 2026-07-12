@@ -281,7 +281,6 @@ class _GuarantorOnboardingScreenState
     }
 
     // Prevent guarantor phone from being the same as rider phone
-    final provider = ref.read(appProvider);
     if (phone == ref.watch(appProvider).rider?.phone) {
       _showError('Guarantor phone cannot be the same as your phone');
       return;
@@ -353,26 +352,6 @@ class _GuarantorOnboardingScreenState
         _showError('Invalid OTP. Please try again.');
       }
     }
-  }
-
-  bool get _isFormComplete {
-    final missing = GuarantorFormValidator.validate(
-      name: _nameController.text,
-      dob: _dobController.text,
-      phone: _phoneController.text,
-      isPhoneVerified: _isPhoneVerified,
-      fatherName: _fatherNameController.text,
-      motherName: _motherNameController.text,
-      address: _addressController.text,
-      aadhaarFrontUploaded: _aadhaarFrontUploaded,
-      aadhaarBackUploaded: _aadhaarBackUploaded,
-      panUploaded: _panUploaded,
-      photoUploaded: _photoUploaded,
-      videoUploaded: _videoUploaded,
-      signatureUploaded: _signatureUploaded,
-      riderPhone: ref.read(appProvider).rider?.phone,
-    );
-    return missing.isEmpty;
   }
 
   void _showError(String msg) {

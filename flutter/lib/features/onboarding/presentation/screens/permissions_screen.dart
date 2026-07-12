@@ -316,7 +316,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                           child: _buildPermissionCard(entry.value),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

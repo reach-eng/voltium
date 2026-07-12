@@ -1,18 +1,4 @@
-/// Riverpod provider definitions for Voltium's domain providers.
-///
-/// These wrap the existing [ChangeNotifier]-based domain providers so screens
-/// can gradually migrate from `context.read<AppProvider>()` to `ref.watch(appProvider)`.
-///
-/// Migration pattern:
-///   1. Import this file + `package:flutter_riverpod/flutter_riverpod.dart`
-///   2. Change `extends StatelessWidget` → `extends ConsumerWidget`
-///   3. Replace `context.read<ProviderClass>()` with `ref.read(providerRef)`
-///   4. Replace `context.watch<ProviderClass>()` with `ref.watch(providerRef)`
-///
-/// When all screens are migrated, delete:
-///   - providers/app_provider.dart (the god composite)
-///   - The MultiProvider wrapper in main.dart
-///   - The `provider` dependency from pubspec.yaml
+library;
 
 import 'package:flutter_riverpod/legacy.dart';
 

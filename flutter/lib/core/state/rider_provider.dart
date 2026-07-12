@@ -17,7 +17,6 @@ import 'package:voltium_rider/utils/lifecycle_rank.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 export 'rider_provider.dart' show DataState;
 
 enum DataState {

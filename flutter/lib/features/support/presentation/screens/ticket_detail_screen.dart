@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
-import 'package:voltium_rider/theme/app_colors.dart';
+
 
 class TicketDetailScreen extends StatelessWidget {
   final TicketEntity ticket;
@@ -53,7 +53,8 @@ class TicketDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isAdmin ? Colors.blue.shade50 : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
-                border: isAdmin ? Border.all(color: Colors.blue.shade200) : null,
+                border:
+                    isAdmin ? Border.all(color: Colors.blue.shade200) : null,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

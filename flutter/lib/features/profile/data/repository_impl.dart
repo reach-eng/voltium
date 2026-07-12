@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
@@ -13,7 +14,7 @@ class RiderRepositoryImpl implements RiderRepository {
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
     final response = await _client.get('/api/rider/profile');
-    print('GET_RIDER_PROFILE_RESPONSE: $response');
+    debugPrint('GET_RIDER_PROFILE_RESPONSE: $response');
     return response;
   }
 

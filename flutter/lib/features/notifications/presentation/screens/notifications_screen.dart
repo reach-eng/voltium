@@ -5,7 +5,7 @@ import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
-import 'package:voltium_rider/widgets/fade_up_widget.dart';
+
 import 'notification_preferences_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';

@@ -13,7 +13,6 @@ import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class FCMService {
   static const _channel =

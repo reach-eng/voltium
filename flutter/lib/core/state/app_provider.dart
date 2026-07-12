@@ -186,6 +186,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await apiClient.storage.clearSession();
     riderProvider.logout();
     walletProvider.logout();
     supportProvider.logout();

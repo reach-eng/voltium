@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
@@ -11,6 +10,8 @@ import 'package:voltium_rider/features/profile/presentation/widgets/profile_widg
 
 import 'package:voltium_rider/features/support/presentation/screens/feedback_screen.dart';
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
+import 'package:voltium_rider/main.dart';
+import 'package:voltium_rider/widgets/dialogs.dart';
 
 class ControlsScreen extends ConsumerWidget {
   const ControlsScreen({super.key});
@@ -44,7 +45,6 @@ class ControlsScreen extends ConsumerWidget {
           children: [
             const _SectionLabel('PREFERENCES'),
             const SizedBox(height: 12),
-            
             FadeUpWidget(
               delay: 0,
               child: QuickLinkItem(
@@ -61,10 +61,8 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             const _SectionLabel('SUPPORT & LEGAL'),
             const SizedBox(height: 12),
-
             FadeUpWidget(
               delay: 50,
               child: QuickLinkItem(
@@ -79,7 +77,6 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-
             FadeUpWidget(
               delay: 100,
               child: QuickLinkItem(
@@ -94,10 +91,8 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             const _SectionLabel('ABOUT'),
             const SizedBox(height: 12),
-
             FadeUpWidget(
               delay: 150,
               child: QuickLinkItem(
@@ -117,7 +112,6 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-
             FadeUpWidget(
               delay: 200,
               child: QuickLinkItem(
@@ -132,10 +126,8 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             const _SectionLabel('ACCOUNT'),
             const SizedBox(height: 12),
-
             FadeUpWidget(
               delay: 250,
               child: QuickLinkItem(
@@ -148,11 +140,22 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-
             FadeUpWidget(
               delay: 300,
               child: ProfileLogoutButton(
-                onTap: () => ref.read(appProvider).logout(),
+                onTap: () async {
+                  final confirmed = await showLogoutConfirmation(context);
+                  if (confirmed == true && context.mounted) {
+                    await ref.read(appProvider).logout();
+                    if (context.mounted) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AppShell()),
+                        (route) => false,
+                      );
+                    }
+                  }
+                },
               ),
             ),
             const SizedBox(height: 48),

@@ -22,7 +22,6 @@ class TopUpRequestSentCard extends StatelessWidget {
     final statusColor = isRejected ? AppColors.error : AppColors.warning;
     final statusBg =
         isRejected ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB);
-    final iconColor = isRejected ? AppColors.error : AppColors.warning;
 
     return Container(
       width: double.infinity,

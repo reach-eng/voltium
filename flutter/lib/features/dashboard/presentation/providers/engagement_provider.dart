@@ -3,7 +3,6 @@ import 'package:voltium_rider/models/reward_model.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class EngagementProvider extends ChangeNotifier {
   int _rewardPoints = 0;
@@ -25,7 +24,6 @@ class EngagementProvider extends ChangeNotifier {
     if (kDebugMode) {
       _rewardPoints = 1250;
       _paymentStreak = 3;
-
     }
     _fetchAll();
   }

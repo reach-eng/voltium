@@ -41,7 +41,6 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Start in the correct position based on current locale.
-    final localeProv = ref.read(localeProviderRef);
     if (ref.watch(localeProviderRef).isHindi) {
       _controller.value = 1.0;
     }
@@ -59,8 +58,6 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
   }
 
   Future<void> _onTap(int index) async {
-    final localeProv = ref.read(localeProviderRef);
-
     if (index == 0 && !ref.read(localeProviderRef).isEnglish) {
       await ref.read(localeProviderRef).setEnglish();
       _controller.reverse();
