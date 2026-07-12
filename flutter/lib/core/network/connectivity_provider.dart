@@ -6,7 +6,6 @@ import 'package:voltium_rider/services/connectivity_service.dart';
 import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 
-
 class ConnectivityProvider extends ChangeNotifier {
   StreamSubscription<bool>? _connectivitySubscription;
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
 
-
 class TicketDetailScreen extends StatelessWidget {
   final TicketEntity ticket;
 

@@ -20,7 +20,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 
-
 /// Menu screen (formerly "Profile" tab).
 /// Shows a compact rider header and a list of navigation links.
 /// Detailed profile information lives in [ProfileDetailScreen].

@@ -8,7 +8,6 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 
-
 class DevicePolicyProvider extends ChangeNotifier {
   static const _platform =
       MethodChannel('com.voltiumelectric.voltium/device_policy');

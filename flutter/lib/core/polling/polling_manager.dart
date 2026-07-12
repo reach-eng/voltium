@@ -19,7 +19,6 @@
 
 import 'dart:async';
 
-
 /// State of the app from a polling perspective.
 enum PollingAppState { active, inactive, paused }
 

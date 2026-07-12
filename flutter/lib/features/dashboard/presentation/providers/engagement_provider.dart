@@ -3,7 +3,6 @@ import 'package:voltium_rider/models/reward_model.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 
-
 class EngagementProvider extends ChangeNotifier {
   int _rewardPoints = 0;
   int get rewardPoints => _rewardPoints;

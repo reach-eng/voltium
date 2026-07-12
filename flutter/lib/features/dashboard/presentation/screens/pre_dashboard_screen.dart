@@ -336,7 +336,8 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                       Icons.logout,
                       color: AppColors.error,
                       size: 22,
-                    ),                      onPressed: () async {
+                    ),
+                    onPressed: () async {
                       if (!mounted) return;
                       final confirmed = await showLogoutConfirmation(context);
                       if (confirmed == true) {

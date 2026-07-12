@@ -44,7 +44,6 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
           _DashboardStateWidget(),
         ],
       ),
-
     );
   }
 }
