@@ -15,6 +15,8 @@ import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_sc
 import 'package:voltium_rider/models/rider_model.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class UserOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
@@ -485,6 +487,13 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       );
       await KycRepository.clearFormCache(riderId: riderId);
       await provider.refresh();
+      PostHogService.capture('kyc_submitted', properties: {
+        'has_aadhaar':
+            (_aadhaarFrontUploaded && _aadhaarBackUploaded).toString(),
+        'has_pan': _panUploaded.toString(),
+        'has_selfie': _selfieUploaded.toString(),
+        'has_signature': _signatureUploaded.toString(),
+      });
 
       if (mounted) {
         widget.onNext?.call();
@@ -545,17 +554,14 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? AppColors.primary : const Color(0xFFF3F4F6),
-        border: isActive ? null : Border.all(color: const Color(0xFFE5E7EB)),
+        color: isActive ? AppColors.primary : AppColors.surfaceSubtle,
+        border: isActive ? null : Border.all(color: AppColors.borderSubtle),
       ),
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: TextStyle(
-          color: isActive ? Colors.white : const Color(0xFF4B5563),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.bodySmallEmphasis
+            .copyWith(color: isActive ? Colors.white : AppColors.textSecondary),
       ),
     );
   }
@@ -564,7 +570,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     return Container(
       width: 40,
       height: 2,
-      color: const Color(0xFFE5E7EB),
+      color: AppColors.borderSubtle,
     );
   }
 
@@ -609,8 +615,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: kSurfaceColor,
+      backgroundColor: colors.surfaceSubtle,
       body: Column(
         children: [
           Expanded(

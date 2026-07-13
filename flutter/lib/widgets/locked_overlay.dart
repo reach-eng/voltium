@@ -4,6 +4,8 @@ import '../services/voltium_api_service.dart';
 import '../core/platform/platform_info.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class LockedOverlay extends ConsumerStatefulWidget {
   const LockedOverlay({super.key});
@@ -128,16 +130,16 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
               children: [
                 const Icon(Icons.lock_person_rounded,
                     size: 64, color: Colors.amber),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'Your account has been locked by Voltium.',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTypography.titleMedium,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Please contact support to unlock.',
-                  style: TextStyle(color: Colors.grey),
+                  style: GoogleFonts.plusJakartaSans(color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -174,35 +176,28 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                     color: Colors.white,
                     size: 80,
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
+                  SizedBox(height: 24),
+                  Text(
                     'VOLTIUM SOFT LOCK',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                    ),
+                    style: AppTypography.headingLarge
+                        .copyWith(color: Colors.white, letterSpacing: 2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'This device is locked for rider deterrence. Force-quitting the app will keep it locked on next launch.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Contact Voltium support to unlock',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.titleSmall
+                        .copyWith(color: Colors.redAccent),
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   Container(
                     constraints: const BoxConstraints(maxWidth: 300),
                     child: Column(
@@ -213,7 +208,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                           keyboardType: TextInputType.number,
                           maxLength: 12,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontSize: 24,
                             letterSpacing: 4,
@@ -221,7 +216,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                           decoration: InputDecoration(
                             counterText: '',
                             hintText: 'PASSWORD',
-                            hintStyle: TextStyle(
+                            hintStyle: GoogleFonts.plusJakartaSans(
                               color: Colors.white.withValues(alpha: 0.3),
                               letterSpacing: 0,
                             ),
@@ -235,17 +230,17 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                           onFieldSubmitted: (_) => _verifyPassword(),
                         ),
                         if (_error.isNotEmpty) ...[
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           Text(
                             _error,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: GoogleFonts.plusJakartaSans(
                               color: Colors.redAccent,
                               fontSize: 13,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -267,22 +262,19 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text(
+                                : Text(
                                     'UNLOCK',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
+                                    style: AppTypography.titleSmall,
                                   ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 64),
+                  SizedBox(height: 64),
                   Text(
                     'Voltium Security System v3.0',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white.withValues(alpha: 0.3),
                       fontSize: 12,
                       fontStyle: FontStyle.italic,

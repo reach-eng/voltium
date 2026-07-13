@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ImageSourceBottomSheet {
   /// Shows a modal bottom sheet to select between Camera and Gallery.
@@ -10,11 +10,11 @@ class ImageSourceBottomSheet {
     return showModalBottomSheet<ImageSource>(
       context: context,
       showDragHandle: true,
-      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) {
+        final colors = AppColors.of(context);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -26,11 +26,8 @@ class ImageSourceBottomSheet {
                       color: AppColors.primary),
                   title: Text(
                     'Take Photo',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyLarge
+                        .copyWith(color: colors.onSurface),
                   ),
                   onTap: () {
                     Navigator.pop(context, ImageSource.camera);
@@ -41,11 +38,8 @@ class ImageSourceBottomSheet {
                       color: AppColors.primary),
                   title: Text(
                     'Choose from Gallery',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyLarge
+                        .copyWith(color: colors.onSurface),
                   ),
                   onTap: () {
                     Navigator.pop(context, ImageSource.gallery);

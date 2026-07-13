@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 const vfBlue = AppColors.primary;
 const vfBlueLight = Color(0xFFE8F0FE);
@@ -67,7 +68,7 @@ class CategoryCard extends StatelessWidget {
                     ),
                     child: Icon(icon, color: color, size: 22),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,17 +76,14 @@ class CategoryCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
-                          ),
+                          style: AppTypography.titleSmall
+                              .copyWith(color: AppColors.slate800),
                         ),
                         if (description != null) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             description!,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppColors.slate500,
                             ),
@@ -96,7 +94,7 @@ class CategoryCard extends StatelessWidget {
                   ),
                   const Icon(
                     Icons.chevron_right,
-                    color: Color(0xFF9CA3AF),
+                    color: AppColors.onSurfaceDisabled,
                   ),
                 ],
               ),
@@ -145,22 +143,18 @@ class QuestionCard extends StatelessWidget {
               ),
               child: Icon(icon, color: categoryColor, size: 32),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             Text(
               question,
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                color: const Color(0xFF1E293B),
-                height: 1.4,
-              ),
+              style: AppTypography.titleMedium
+                  .copyWith(color: AppColors.slate800, height: 1.4),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               'Answer honestly for the most accurate diagnosis.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: AppColors.slate500,
               ),
@@ -201,13 +195,12 @@ class ActionButtons extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline, size: 20),
               label: Text(
                 'Yes',
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700, fontSize: 16),
+                style: AppTypography.titleSmall,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: SizedBox(
             height: 52,
@@ -223,8 +216,7 @@ class ActionButtons extends StatelessWidget {
               icon: const Icon(Icons.cancel_outlined, size: 20),
               label: Text(
                 'No',
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700, fontSize: 16),
+                style: AppTypography.titleSmall,
               ),
             ),
           ),
@@ -259,15 +251,12 @@ class PathSummary extends StatelessWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading:
-              const Icon(Icons.history, size: 18, color: Color(0xFF9CA3AF)),
+          leading: const Icon(Icons.history,
+              size: 18, color: AppColors.onSurfaceDisabled),
           title: Text(
             'Your answers (${path.length})',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodyMediumEmphasis
+                .copyWith(color: AppColors.slate500),
           ),
           children: [
             for (final answer in path)
@@ -290,13 +279,13 @@ class PathSummary extends StatelessWidget {
                         color: answer.answer ? Colors.green : Colors.red,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         answer.question,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: const Color(0xFF1E293B),
+                          color: AppColors.slate800,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -348,19 +337,15 @@ class ResolutionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: titleColor,
-              ),
+              style: AppTypography.titleMedium.copyWith(color: titleColor),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               resolution,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
-                color: const Color(0xFF1E293B),
+                color: AppColors.slate800,
                 height: 1.5,
               ),
             ),
@@ -400,26 +385,23 @@ class PathStep extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               '$stepNumber',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: answer.answer ? Colors.green : Colors.red,
-              ),
+              style: AppTypography.labelMedium
+                  .copyWith(color: answer.answer ? Colors.green : Colors.red),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   answer.question,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Row(
                   children: [
                     Icon(
@@ -429,16 +411,13 @@ class PathStep extends StatelessWidget {
                           ? Colors.green.shade700
                           : Colors.red.shade700,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       answer.answer ? 'Yes' : 'No',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: answer.answer
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                      ),
+                      style: AppTypography.labelMedium.copyWith(
+                          color: answer.answer
+                              ? Colors.green.shade700
+                              : Colors.red.shade700),
                     ),
                   ],
                 ),
@@ -496,14 +475,10 @@ class TroubleshooterStepCounter extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.timeline, size: 16, color: vfBlue),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             'Step $currentStep of $totalSteps',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: vfBlue,
-            ),
+            style: AppTypography.bodyCompactStrong.copyWith(color: vfBlue),
           ),
         ],
       ),
@@ -588,15 +563,13 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.route, size: 18, color: Color(0xFF6B7280)),
-                const SizedBox(width: 8),
+                const Icon(Icons.route,
+                    size: 18, color: AppColors.textTertiary),
+                SizedBox(width: 8),
                 Text(
                   'Diagnostic path taken',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.labelLarge
+                      .copyWith(color: AppColors.slate800),
                 ),
               ],
             ),
@@ -613,7 +586,7 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
                     child: VerticalDivider(
                       width: 2,
                       thickness: 1.5,
-                      color: Color(0xFFE5E7EB),
+                      color: AppColors.borderSubtle,
                     ),
                   ),
                 ),
@@ -663,7 +636,7 @@ class TroubleshooterSupportTicketButton extends StatelessWidget {
             : const Icon(Icons.send_rounded, size: 18),
         label: Text(
           isSubmitting ? 'Submitting...' : 'Create Support Ticket',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15),
+          style: AppTypography.buttonMedium,
         ),
       ),
     );
@@ -695,7 +668,7 @@ class TroubleshooterSosButton extends StatelessWidget {
         icon: const Icon(Icons.warning_amber_rounded, size: 22),
         label: Text(
           'Emergency SOS',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 16),
+          style: AppTypography.titleSmall,
         ),
       ),
     );

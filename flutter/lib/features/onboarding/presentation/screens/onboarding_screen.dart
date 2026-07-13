@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class OnboardingService {
   static const String _keyOnboardingComplete = 'onboarding_complete';
@@ -129,6 +132,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         );
                       } else {
                         OnboardingService().setOnboardingComplete();
+                        PostHogService.capture('onboarding_completed');
                         widget.onComplete();
                       }
                     },
@@ -174,22 +178,19 @@ class OnboardingPage extends StatelessWidget {
             size: 120,
             color: iconColor ?? AppColors.primary,
           ),
-          const SizedBox(height: 48),
+          SizedBox(height: 48),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppColors.onSurface,
-            ),
+            style: AppTypography.headingMedium
+                .copyWith(color: AppColors.onSurface),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             description,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
-              color: Color(0xFF667085),
+              color: AppColors.textMuted,
             ),
             textAlign: TextAlign.center,
           ),

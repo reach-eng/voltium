@@ -13,6 +13,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 enum ToastStyle { success, error, info, warning }
 
@@ -54,10 +56,10 @@ class Toast {
     messenger.hideCurrentSnackBar();
 
     final (Color bg, IconData icon) = switch (style) {
-      ToastStyle.success => (const Color(0xFF16A34A), Icons.check_circle),
-      ToastStyle.error => (const Color(0xFFD92D20), Icons.error_outline),
-      ToastStyle.info => (const Color(0xFF2563EB), Icons.info_outline),
-      ToastStyle.warning => (const Color(0xFFD97706), Icons.warning_amber),
+      ToastStyle.success => (AppColors.successGreen, Icons.check_circle),
+      ToastStyle.error => (AppColors.errorRedAlt, Icons.error_outline),
+      ToastStyle.info => (AppColors.primary, Icons.info_outline),
+      ToastStyle.warning => (AppColors.warningDark, Icons.warning_amber),
     };
 
     messenger.showSnackBar(SnackBar(
@@ -67,11 +69,12 @@ class Toast {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Flexible(
               child: Text(
                 message,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white, fontSize: 14),
               ),
             ),
           ],

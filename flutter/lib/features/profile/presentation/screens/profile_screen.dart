@@ -19,6 +19,10 @@ import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Menu screen (formerly "Profile" tab).
 /// Shows a compact rider header and a list of navigation links.
@@ -28,14 +32,24 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
-      appBar: _buildAppBar(),
+      backgroundColor: colors.iconBackground,
+      appBar: _buildAppBar(context),
       body: Consumer(
         builder: (context, innerRef, _) {
           final rider = innerRef.watch(appProvider).rider;
+          final dataState = innerRef.watch(appProvider).dataState;
           final localeProv = innerRef.watch(localeProviderRef);
           final currentLocale = localeProv.locale.languageCode;
+          final isLoading = rider == null &&
+              (dataState == DataState.initial ||
+                  dataState == DataState.loading);
+
+          if (isLoading) {
+            return const ProfileSkeleton();
+          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -50,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // ── Menu sections ─────────────────────────────────────────
-                const _SectionLabel('ACCOUNT'),
+                _SectionLabel(l10n.menu_account),
                 const SizedBox(height: 12),
 
                 // Profile (opens full detail screen)
@@ -61,8 +75,8 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     iconColor: AppColors.primary,
-                    iconBgColor: const Color(0xFFEFF6FF),
-                    title: 'Profile',
+                    iconBgColor: AppColors.primarySurface,
+                    title: l10n.menu_profile,
                     onTap: () =>
                         AppNavigator.push(context, const ProfileDetailScreen()),
                   ),
@@ -76,15 +90,15 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.contact_page_outlined,
                     activeIcon: Icons.contact_page,
                     iconColor: AppColors.success,
-                    iconBgColor: const Color(0xFFECFDF5),
-                    title: 'My Documents',
+                    iconBgColor: AppColors.successSurfaceAlt,
+                    title: l10n.menu_myDocuments,
                     onTap: () =>
                         AppNavigator.push(context, const MyDocumentsScreen()),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                const _SectionLabel('REWARDS & MORE'),
+                _SectionLabel(l10n.menu_rewardsMore),
                 const SizedBox(height: 12),
 
                 FadeUpWidget(
@@ -94,8 +108,8 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.card_giftcard_outlined,
                     activeIcon: Icons.card_giftcard,
                     iconColor: AppColors.evPurple,
-                    iconBgColor: const Color(0xFFF5F3FF),
-                    title: 'Rewards',
+                    iconBgColor: AppColors.purpleSurface,
+                    title: l10n.menu_rewards,
                     onTap: () =>
                         AppNavigator.push(context, const RewardsScreen()),
                   ),
@@ -109,15 +123,15 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.people_outline,
                     activeIcon: Icons.people,
                     iconColor: AppColors.warning,
-                    iconBgColor: const Color(0xFFFFFBEB),
-                    title: 'Referral Program',
+                    iconBgColor: AppColors.warningSurface,
+                    title: l10n.menu_referralProgram,
                     onTap: () =>
                         AppNavigator.push(context, const ReferralScreen()),
                   ),
                 ),
                 const SizedBox(height: 24),
 
-                const _SectionLabel('GENERAL'),
+                _SectionLabel(l10n.menu_general),
                 const SizedBox(height: 12),
 
                 FadeUpWidget(
@@ -127,8 +141,8 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.route_outlined,
                     activeIcon: Icons.route,
                     iconColor: AppColors.primary,
-                    iconBgColor: const Color(0xFFEFF6FF),
-                    title: 'Workflow & Services',
+                    iconBgColor: AppColors.primarySurface,
+                    title: l10n.menu_workflowServices,
                     onTap: () => AppNavigator.push(
                         context, const RiderWorkflowHubScreen()),
                   ),
@@ -143,7 +157,7 @@ class ProfileScreen extends ConsumerWidget {
                     activeIcon: Icons.tune,
                     iconColor: const Color(0xFF0F766E),
                     iconBgColor: const Color(0xFFCCFBF1),
-                    title: 'Controls',
+                    title: l10n.menu_controls,
                     onTap: () =>
                         AppNavigator.push(context, const ControlsScreen()),
                   ),
@@ -156,21 +170,23 @@ class ProfileScreen extends ConsumerWidget {
                     key: const Key('languageLink'),
                     icon: Icons.language,
                     iconColor: AppColors.success,
-                    iconBgColor: const Color(0xFFECFDF5),
-                    title: 'Language',
+                    iconBgColor: AppColors.successSurfaceAlt,
+                    title: l10n.menu_language,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          currentLocale == 'hi' ? 'Hindi' : 'English',
-                          style: const TextStyle(
-                            color: AppColors.slate500,
+                          currentLocale == 'hi'
+                              ? l10n.settings_hindi
+                              : l10n.settings_english,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: colors.onSurfaceMuted,
                             fontSize: 14,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right,
-                            color: Color(0xFFCBD5E1), size: 20),
+                        Icon(Icons.chevron_right,
+                            color: colors.outline, size: 20),
                       ],
                     ),
                     onTap: () => _showLanguageDialog(context, localeProv),
@@ -194,37 +210,36 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.iconBackground,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
       centerTitle: false,
       titleSpacing: 20,
       title: Text(
-        'Menu',
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 24,
-          fontWeight: FontWeight.w900,
-          color: const Color(0xFF1E293B),
-          letterSpacing: -0.5,
-        ),
+        l10n.menu_title,
+        style: AppTypography.headingMedium
+            .copyWith(color: colors.onSurface, letterSpacing: -0.5),
       ),
     );
   }
 
   void _showLanguageDialog(
       BuildContext context, LocaleProvider localeProvider) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Select Language'),
+        title: Text(l10n.menu_selectLanguage),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('English'),
+              title: Text(l10n.settings_english),
               leading: Radio<String>(
                 key: const Key('englishRadio'),
                 value: 'en',
@@ -241,7 +256,7 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
             ListTile(
-              title: const Text('हिंदी (Hindi)'),
+              title: Text('${l10n.settings_hindi} (Hindi)'),
               leading: Radio<String>(
                 key: const Key('hindiRadio'),
                 value: 'hi',
@@ -273,14 +288,11 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Text(
       label,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF475569),
-        letterSpacing: 1.2,
-      ),
+      style: AppTypography.bodySmallTracked
+          .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.2),
     );
   }
 }
@@ -300,6 +312,7 @@ class _CompactRiderHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final avatarUrl = _getAvatarUrl();
     final String initial = (rider?.name.isNotEmpty ?? false)
         ? rider!.name.substring(0, 1).toUpperCase()
@@ -311,7 +324,7 @@ class _CompactRiderHeader extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -329,7 +342,7 @@ class _CompactRiderHeader extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: isVerified ? AppColors.success : const Color(0xFF2563EB),
+              color: isVerified ? AppColors.success : AppColors.primary,
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 3),
               boxShadow: [
@@ -363,11 +376,8 @@ class _CompactRiderHeader extends StatelessWidget {
                   )
                 : Text(
                     initial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.headingMedium
+                        .copyWith(color: Colors.white),
                   ),
           ),
           const SizedBox(width: 16),
@@ -378,15 +388,15 @@ class _CompactRiderHeader extends StatelessWidget {
               children: [
                 Text(
                   rider?.name ?? 'Rider',
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: colors.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(
@@ -396,16 +406,13 @@ class _CompactRiderHeader extends StatelessWidget {
                           ? AppColors.success
                           : AppColors.warningDark,
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isVerified
-                            ? AppColors.success
-                            : AppColors.warningDark,
-                      ),
+                      style: AppTypography.bodySmallEmphasis.copyWith(
+                          color: isVerified
+                              ? AppColors.success
+                              : AppColors.warningDark),
                     ),
                   ],
                 ),
@@ -417,15 +424,15 @@ class _CompactRiderHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.iconBackground,
+                color: colors.iconBackground,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 rider?.phone ?? '',
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate500,
+                  color: colors.onSurfaceMuted,
                 ),
               ),
             ),

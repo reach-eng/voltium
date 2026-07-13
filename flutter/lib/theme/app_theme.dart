@@ -33,7 +33,8 @@ class AppColors {
   static const Color onSurfaceVariant =
       Color(0xFF475467); // web #475467 / #424653
   static const Color onSurfaceMuted = Color(0xFF737785); // web #737785
-  static const Color onSurfaceDisabled = Color(0xFF98A2B3);
+  static const Color onSurfaceDisabled =
+      Color(0xFF6B7280); // WCAG AA: 5.3:1 on surface
 
   // Surface / Background Colors
   static const Color surface = Color(0xFFF7F9FB); // web #f7f9fb (main bg)
@@ -58,10 +59,72 @@ class AppColors {
   // Slate palette
   static const Color slate400 = Color(0xFF94A3B8);
   static const Color slate500 = Color(0xFF64748B);
+  static const Color slate600 = Color(0xFF475569);
+  static const Color slate700 = Color(0xFF334155);
+  static const Color slate800 = Color(0xFF1E293B);
+  static const Color slate900 = Color(0xFF0F172A);
+
+  // Extended text colors
+  static const Color textPrimary = Color(0xFF111827); // gray-900
+  static const Color textSecondary = Color(0xFF4B5563); // gray-600
+  static const Color textMuted = Color(0xFF667085); // gray-500
+  static const Color textTertiary = Color(0xFF6B7280); // gray-500 alt
+
+  // Extended surface colors
+  static const Color surfaceBright = Color(0xFFF8FAFC); // slate-50
+  static const Color surfaceSubtle = Color(0xFFF3F4F6); // gray-100
+  static const Color surfaceHover = Color(0xFFF9F9FF); // custom light
+
+  // Extended border colors
+  static const Color borderSubtle = Color(0xFFE5E7EB); // gray-200
+  static const Color borderDefault = Color(0xFFD1D5DB); // gray-300
+  static const Color borderMedium = Color(0xFFCBD5E1); // slate-300
+
+  // Success extended
+  static const Color successGreen = Color(0xFF16A34A); // green-600
+  static const Color successBright = Color(0xFF4ADE80); // green-400
+  static const Color successSurface = Color(0xFFDCFCE7); // green-100
+  static const Color successSurfaceLight = Color(0xFFF0FDF4); // green-50
+  static const Color successSurfaceAlt = Color(0xFFECFDF5); // green-50 alt
+
+  // Error extended
+  static const Color errorRed = Color(0xFFDC2626); // red-600
+  static const Color errorRedAlt = Color(0xFFD92D20); // red-600 alt
+  static const Color errorSurface = Color(0xFFFEF2F2); // red-50
+  static const Color errorBorder = Color(0xFFFECACA); // red-200
+  static const Color errorRose = Color(0xFFFFE4E6); // rose-100
+
+  // Warning extended
+  static const Color warningSurface = Color(0xFFFFFBEB); // amber-50
+  static const Color warningBorder = Color(0xFFFDE68A); // amber-200
+
+  // Primary extended
+  static const Color primarySurface = Color(0xFFEFF6FF); // blue-50
+  static const Color primaryLightBlue = Color(0xFF93C5FD); // blue-300
+  static const Color primaryDeep = Color(0xFF142B5B); // dark blue
+  static const Color primaryCyan = Color(0xFF0053C1); // brand cyan-blue
+
+  // Purple extended
+  static const Color purpleDark = Color(0xFF7C3AED); // violet-600
+  static const Color purpleSurface = Color(0xFFF5F3FF); // violet-50
+  static const Color purpleDeep = Color(0xFF9333EA); // purple-600
 
   // Feature Colors
   static const Color evPurple = Color(0xFF8B5CF6);
   static const Color evPurpleLight = Color(0xFFEDE9FE);
+  static const Color whatsappGreen = Color(0xFF25D366);
+
+  /// Get theme-aware colors for the current brightness.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final colors = AppColors.of(context);
+  /// Container(color: colors.surface)
+  /// ```
+  static ThemeColors of(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return brightness == Brightness.dark ? ThemeColors.dark : ThemeColors.light;
+  }
 
   AppColors._();
 }
@@ -317,7 +380,7 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    const darkColors = _DarkColors();
+    const darkColors = ThemeColors.dark;
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -377,19 +440,29 @@ class AppTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
-        fillColor: Colors.transparent,
+        filled: true,
+        fillColor: darkColors.inputFill,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: darkColors.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide:
+              BorderSide(color: darkColors.outline.withValues(alpha: 0.3)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: darkColors.outline),
+          borderRadius: BorderRadius.circular(16),
+          borderSide:
+              BorderSide(color: darkColors.outline.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Spacing.lg,
@@ -417,36 +490,113 @@ class AppTheme {
   AppTheme._();
 }
 
-class _DarkColors {
-  const _DarkColors();
+/// Theme-aware color tokens.
+///
+/// Access via `AppColors.of(context)` to get the correct color for the
+/// current brightness (light/dark). This replaces manual
+/// `Theme.of(context).brightness == Brightness.dark` checks.
+///
+/// Usage:
+/// ```dart
+/// final colors = AppColors.of(context);
+/// Container(color: colors.surface, child: Text('Hello', style: TextStyle(color: colors.onSurface)))
+/// ```
+class ThemeColors {
+  static const ThemeColors light = ThemeColors._(
+    surface: Color(0xFFF7F9FB),
+    surfaceAlt: Color(0xFFF5F7FA),
+    surfaceBright: Color(0xFFF8FAFC),
+    surfaceSubtle: Color(0xFFF3F4F6),
+    card: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF101828),
+    onSurfaceVariant: Color(0xFF475467),
+    onSurfaceMuted: Color(0xFF667085),
+    divider: Color(0xFFE0E3E5),
+    outline: Color(0xFFD0D5DD),
+    outlineVariant: Color(0xFFE2E8F0),
+    inputFill: Color(0xFFF1F5F9),
+    iconBackground: Color(0xFFF1F5F9),
+    success: Color(0xFF16A34A),
+    successSurface: Color(0xFFDCFCE7),
+    error: Color(0xFFEF4444),
+    errorRed: Color(0xFFDC2626),
+    errorSurface: Color(0xFFFEF2F2),
+    warning: Color(0xFFF59E0B),
+    warningSurface: Color(0xFFFFFBEB),
+    primarySurface: Color(0xFFEFF6FF),
+    successGreen: Color(0xFF16A34A),
+  );
 
-  // Surfaces
-  final Color surface = const Color(0xFF0F172A);
-  final Color surfaceAlt = const Color(0xFF1E293B);
-  final Color card = const Color(0xFF1E293B);
-  final Color inputFill = const Color(0xFF1E293B);
-  final Color iconBackground = const Color(0xFF1E293B);
+  static const ThemeColors dark = ThemeColors._(
+    surface: Color(0xFF0F172A),
+    surfaceAlt: Color(0xFF1E293B),
+    surfaceBright: Color(0xFF1E293B),
+    surfaceSubtle: Color(0xFF1E293B),
+    card: Color(0xFF1E293B),
+    onSurface: Color(0xFFF1F5F9),
+    onSurfaceVariant: Color(0xFF94A3B8),
+    onSurfaceMuted: Color(0xFF64748B),
+    divider: Color(0xFF334155),
+    outline: Color(0xFF475569),
+    outlineVariant: Color(0xFF334155),
+    inputFill: Color(0xFF1E293B),
+    iconBackground: Color(0xFF1E293B),
+    success: Color(0xFF34D399),
+    successSurface: Color(0xFF064E3B),
+    error: Color(0xFFFCA5A5),
+    errorRed: Color(0xFFFCA5A5),
+    errorSurface: Color(0xFF7F1D1D),
+    warning: Color(0xFFFBBF24),
+    warningSurface: Color(0xFF78350F),
+    primarySurface: Color(0xFF1E293B),
+    successGreen: Color(0xFF34D399),
+  );
 
-  // Text
-  final Color onSurface = const Color(0xFFF1F5F9);
-  final Color onSurfaceVariant = const Color(0xFF94A3B8);
-  final Color onSurfaceMuted = const Color(0xFF64748B);
+  final Color surface;
+  final Color surfaceAlt;
+  final Color surfaceBright;
+  final Color surfaceSubtle;
+  final Color card;
+  final Color onSurface;
+  final Color onSurfaceVariant;
+  final Color onSurfaceMuted;
+  final Color divider;
+  final Color outline;
+  final Color outlineVariant;
+  final Color inputFill;
+  final Color iconBackground;
+  final Color success;
+  final Color successSurface;
+  final Color error;
+  final Color errorRed;
+  final Color errorSurface;
+  final Color warning;
+  final Color warningSurface;
+  final Color primarySurface;
+  final Color successGreen;
 
-  // Borders & Dividers
-  final Color divider = const Color(0xFF334155);
-  final Color outline = const Color(0xFF475569);
-  final Color outlineVariant = const Color(0xFF334155);
-  final Color inputBorder = const Color(0xFF475569);
-
-  // Status colors (slightly adjusted for dark bg contrast)
-  final Color success = const Color(0xFF34D399);
-  final Color successLight = const Color(0xFF064E3B);
-  final Color error = const Color(0xFFFCA5A5);
-  final Color errorLight = const Color(0xFF7F1D1D);
-  final Color warning = const Color(0xFFFBBF24);
-  final Color warningLight = const Color(0xFF78350F);
-
-  // Slate
-  final Color slate400 = const Color(0xFF94A3B8);
-  final Color slate500 = const Color(0xFF64748B);
+  const ThemeColors._({
+    required this.surface,
+    required this.surfaceAlt,
+    required this.surfaceBright,
+    required this.surfaceSubtle,
+    required this.card,
+    required this.onSurface,
+    required this.onSurfaceVariant,
+    required this.onSurfaceMuted,
+    required this.divider,
+    required this.outline,
+    required this.outlineVariant,
+    required this.inputFill,
+    required this.iconBackground,
+    required this.success,
+    required this.successSurface,
+    required this.error,
+    required this.errorRed,
+    required this.errorSurface,
+    required this.warning,
+    required this.warningSurface,
+    required this.primarySurface,
+    required this.successGreen,
+  });
 }

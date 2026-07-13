@@ -1,23 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 enum AnalyticsEvent {
   appOpened,
-  appBackgrounded,
   screenViewed,
   buttonTapped,
-  formSubmitted,
-  apiCallStarted,
   apiCallCompleted,
   apiCallFailed,
-  loginStarted,
   loginSuccess,
   loginFailed,
-  otpSent,
-  otpVerified,
-  kycSubmitted,
-  planSubscribed,
-  topUpInitiated,
-  topUpCompleted,
   errorOccurred,
 }
 
@@ -37,12 +28,12 @@ class AnalyticsService {
     if (!_isEnabled) return;
 
     final eventName = event.name;
-    final properties = {
-      ...?params,
-      'timestamp': DateTime.now().toIso8601String(),
+    final properties = <String, Object>{
+      if (params != null) ...params.map((k, v) => MapEntry(k, v as Object)),
     };
 
     debugPrint('[Analytics] $eventName: $properties');
+    PostHogService.capture(eventName, properties: properties);
   }
 
   void trackScreen(String screenName, [Map<String, dynamic>? params]) {
@@ -50,6 +41,7 @@ class AnalyticsService {
       'screen_name': screenName,
       ...?params,
     });
+    PostHogService.screen(screenName);
   }
 
   void trackButtonTap(String buttonName, String screenName) {
@@ -81,15 +73,23 @@ class AnalyticsService {
     track(success ? AnalyticsEvent.loginSuccess : AnalyticsEvent.loginFailed, {
       'rider_hash': riderId.hashCode.toString(),
     });
+    if (success) {
+      PostHogService.identify(riderId.hashCode.toString());
+    }
   }
 
   void setUserProperties(String riderId, Map<String, dynamic> properties) {
     if (!_isEnabled) return;
     debugPrint('[Analytics] User properties set for $riderId: $properties');
+    PostHogService.identify(
+      riderId.hashCode.toString(),
+      properties: properties.map((k, v) => MapEntry(k, v as Object)),
+    );
   }
 
   void clearUser() {
     if (!_isEnabled) return;
     debugPrint('[Analytics] User cleared');
+    PostHogService.reset();
   }
 }

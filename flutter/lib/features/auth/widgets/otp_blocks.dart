@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class OtpBlocks extends StatefulWidget {
   final int length;
@@ -87,26 +89,28 @@ class _OtpBlocksState extends State<OtpBlocks> {
                 textAlign: TextAlign.center,
                 keyboardType: TextInputType.number,
                 maxLength: 1,
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF111827),
+                  color: AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   counterText: '',
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    borderSide:
+                        const BorderSide(color: AppColors.borderDefault),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    borderSide:
+                        const BorderSide(color: AppColors.borderDefault),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide:
-                        const BorderSide(color: Color(0xFF2563EB), width: 2),
+                        const BorderSide(color: AppColors.primary, width: 2),
                   ),
                   fillColor: Colors.white,
                   filled: true,

@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class CircularProgressIndicator2 extends StatelessWidget {
   final double progress;
@@ -24,7 +26,7 @@ class CircularProgressIndicator2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     return SizedBox(
       width: size,
       height: size,
@@ -36,8 +38,7 @@ class CircularProgressIndicator2 extends StatelessWidget {
             painter: _CircularProgressPainter(
               progress: progress.clamp(0.0, 1.0),
               strokeWidth: strokeWidth,
-              backgroundColor: backgroundColor ??
-                  (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+              backgroundColor: backgroundColor ?? colors.outlineVariant,
               progressColor: progressColor ?? AppColors.primary,
             ),
           ),
@@ -46,7 +47,7 @@ class CircularProgressIndicator2 extends StatelessWidget {
           else if (showPercentage)
             Text(
               '${(progress * 100).toInt()}%',
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: size * 0.2,
                 fontWeight: FontWeight.bold,
                 color: progressColor ?? AppColors.primary,
@@ -123,6 +124,7 @@ class KYCProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final progress = totalSteps > 0 ? completedSteps / totalSteps : 0.0;
     final isComplete = completedSteps >= totalSteps;
 
@@ -136,12 +138,12 @@ class KYCProgressIndicator extends StatelessWidget {
               size: size,
               strokeWidth: 10,
               progressColor:
-                  isComplete ? const Color(0xFF16A34A) : AppColors.primary,
+                  isComplete ? AppColors.successGreen : AppColors.primary,
             ),
             if (isComplete)
               const Icon(
                 Icons.check,
-                color: Color(0xFF16A34A),
+                color: AppColors.successGreen,
                 size: 40,
               )
             else
@@ -150,23 +152,20 @@ class KYCProgressIndicator extends StatelessWidget {
                 children: [
                   Text(
                     '${(progress * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.headingMedium,
                   ),
                   Text(
                     '$completedSteps/$totalSteps',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
           ],
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         ...List.generate(totalSteps, (index) {
           final isCompleted = index < completedSteps;
           return Padding(
@@ -177,25 +176,26 @@ class KYCProgressIndicator extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: isCompleted
-                        ? const Color(0xFF16A34A)
-                        : Colors.grey[300],
+                    color:
+                        isCompleted ? AppColors.successGreen : colors.divider,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     isCompleted ? Icons.check : Icons.circle_outlined,
-                    color: isCompleted ? Colors.white : Colors.grey[500],
+                    color: isCompleted ? Colors.white : colors.onSurfaceVariant,
                     size: 14,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Text(
                   stepLabels[index],
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight:
                         isCompleted ? FontWeight.w600 : FontWeight.normal,
-                    color: isCompleted ? Colors.grey[800] : Colors.grey[500],
+                    color: isCompleted
+                        ? colors.onSurface
+                        : colors.onSurfaceVariant,
                     decoration:
                         isCompleted ? TextDecoration.none : TextDecoration.none,
                   ),
@@ -225,6 +225,7 @@ class StepProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,11 +234,8 @@ class StepProgressIndicator extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'Step ${currentStep + 1} of $totalSteps',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
+              style: AppTypography.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
             ),
           ),
         Row(
@@ -251,10 +249,8 @@ class StepProgressIndicator extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: isCompleted || isCurrent
-                      ? (isCurrent
-                          ? AppColors.primary
-                          : const Color(0xFF16A34A))
-                      : Colors.grey[300],
+                      ? (isCurrent ? AppColors.primary : AppColors.successGreen)
+                      : colors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -262,13 +258,10 @@ class StepProgressIndicator extends StatelessWidget {
           }),
         ),
         if (showLabels && labels.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             labels[currentStep.clamp(0, labels.length - 1)],
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.bodyMediumEmphasis,
           ),
         ],
       ],
@@ -335,6 +328,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final radius =
         widget.borderRadius ?? BorderRadius.circular(widget.height / 2);
 
@@ -344,7 +338,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
         return Container(
           height: widget.height,
           decoration: BoxDecoration(
-            color: widget.backgroundColor ?? Colors.grey[200],
+            color: widget.backgroundColor ?? colors.outlineVariant,
             borderRadius: radius,
           ),
           child: FractionallySizedBox(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TopUpAmountScreen extends ConsumerStatefulWidget {
   final Function(int)? onProceed;
@@ -123,14 +124,14 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Text(
                               '₹',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.slate500,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           IntrinsicWidth(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(minWidth: 50),
@@ -143,10 +144,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                   FilteringTextInputFormatter.digitsOnly,
                                 ],
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 56,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF1E293B),
+                                  color: AppColors.slate800,
                                   letterSpacing: -2,
                                 ),
                                 decoration: const InputDecoration(
@@ -207,13 +208,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                             child: Center(
                               child: Text(
                                 '₹$amt',
-                                style: GoogleFonts.inter(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : const Color(0xFF475569),
-                                ),
+                                style: AppTypography.titleMedium.copyWith(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.slate600),
                               ),
                             ),
                           ),
@@ -235,19 +233,13 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           children: [
                             Text(
                               'Current Balance: ₹${currentBalance.toInt()}',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: const Color(0xFF475569),
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: AppTypography.bodyMedium
+                                  .copyWith(color: AppColors.slate600),
                             ),
                             Text(
                               'Min: ₹100',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                color: AppColors.slate500,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: AppTypography.bodyMediumEmphasis
+                                  .copyWith(color: AppColors.slate500),
                             ),
                           ],
                         );
@@ -330,7 +322,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
               const SizedBox(width: 32),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -339,23 +331,15 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             ),
             child: Text(
               'Step 1 of 2',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
+              style: AppTypography.labelMedium
+                  .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Enter Amount',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+            style: AppTypography.displayMedium
+                .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
         ],
       ),
@@ -393,12 +377,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                 child: Text(
                   'PROCEED TO PAYMENT',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: _canProceed ? Colors.white : AppColors.slate400,
-                  ),
+                  style: AppTypography.buttonMedium.copyWith(
+                      letterSpacing: 0.5,
+                      color: _canProceed ? Colors.white : AppColors.slate400),
                 ),
               ),
               if (_canProceed)

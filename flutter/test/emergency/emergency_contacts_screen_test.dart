@@ -18,25 +18,25 @@ void main() {
   group('Emergency Contacts Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(EmergencyContactsScreen), findsOneWidget);
     });
 
     testWidgets('shows empty state initially', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('No emergency contacts'), findsOneWidget);
     });
 
     testWidgets('shows add contact button', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Add Contact'), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TicketDetailScreen extends StatelessWidget {
   final TicketEntity ticket;
@@ -21,25 +23,27 @@ class TicketDetailScreen extends StatelessWidget {
           // Original Complaint
           Text(
             'Issue: ${ticket.subject}',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: AppTypography.titleSmall,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             ticket.message,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, color: Colors.black87),
           ),
           const Divider(height: 32),
 
-          const Text(
+          Text(
             'Resolution History:',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: AppTypography.titleSmall,
           ),
           const SizedBox(height: 12),
 
           if (ticket.messages.isEmpty)
-            const Text(
+            Text(
               'No remarks yet.',
-              style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+              style: GoogleFonts.plusJakartaSans(
+                  color: Colors.grey, fontStyle: FontStyle.italic),
             ),
 
           // Timeline of Admin Remarks vs Rider Messages
@@ -60,17 +64,18 @@ class TicketDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     isAdmin ? 'Support Team' : 'You',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       color: isAdmin ? Colors.blue.shade800 : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(msg.message),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     _formatDate(msg.createdAt),
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10, color: Colors.grey.shade600),
                   )
                 ],
               ),

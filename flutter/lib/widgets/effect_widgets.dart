@@ -102,15 +102,17 @@ class _ParticleEffectState extends State<ParticleEffect>
         if (_particles.isEmpty && widget.enabled) {
           _initParticles(_size);
         }
-        return Stack(
-          children: [
-            widget.child,
-            if (widget.enabled)
-              CustomPaint(
-                size: _size,
-                painter: _ParticlePainter(_particles),
-              ),
-          ],
+        return RepaintBoundary(
+          child: Stack(
+            children: [
+              widget.child,
+              if (widget.enabled)
+                CustomPaint(
+                  size: _size,
+                  painter: _ParticlePainter(_particles),
+                ),
+            ],
+          ),
         );
       },
     );
@@ -210,22 +212,24 @@ class _AnimatedGlowState extends State<AnimatedGlow>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: _animation.value * 0.6),
-                blurRadius: 20 * _animation.value,
-                spreadRadius: 5 * _animation.value,
-              ),
-            ],
-          ),
-          child: widget.child,
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withValues(alpha: _animation.value * 0.6),
+                  blurRadius: 20 * _animation.value,
+                  spreadRadius: 5 * _animation.value,
+                ),
+              ],
+            ),
+            child: widget.child,
+          );
+        },
+      ),
     );
   }
 }
@@ -311,7 +315,7 @@ class VoltMeshGradient extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Container(color: const Color(0xFF0F172A)), // Base color
+        Container(color: AppColors.slate900), // Base color
         Positioned(
           top: -100,
           right: -100,
@@ -332,7 +336,7 @@ class VoltMeshGradient extends StatelessWidget {
             height: 250,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF142B5B).withValues(alpha: 0.4),
+              color: AppColors.primaryDeep.withValues(alpha: 0.4),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/platform/platform_info.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WebPlatformBanner extends StatelessWidget {
   const WebPlatformBanner({super.key});
@@ -15,11 +16,12 @@ class WebPlatformBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               'Web mode — device admin, background location, and push notifications are not available.',
-              style: TextStyle(fontSize: 11, color: Colors.amber.shade900),
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11, color: Colors.amber.shade900),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
 import '../core/network/api_client.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Profile card with vehicle details for the Active Dashboard.
 class DashboardProfileCard extends StatelessWidget {
@@ -14,27 +15,24 @@ class DashboardProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return PremiumDoubleBezelCard.interactive(
       onTap: onTap,
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          _buildAvatar(),
-          const SizedBox(width: 16),
+          _buildAvatar(colors),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   rider.name.isEmpty ? 'GUEST RIDER' : rider.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                    letterSpacing: -0.3,
-                  ),
+                  style: AppTypography.titleLarge
+                      .copyWith(color: colors.onSurface, letterSpacing: -0.3),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -49,19 +47,15 @@ class DashboardProfileCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.electric_scooter,
                           size: 14, color: AppColors.primary),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         (rider.assignedVehicle == null ||
                                 rider.assignedVehicle!.isEmpty ||
                                 rider.assignedVehicle == 'Not Assigned')
                             ? 'UNASSIGNED'
                             : rider.assignedVehicle!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          letterSpacing: 0.5,
-                        ),
+                        style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.primary, letterSpacing: 0.5),
                       ),
                     ],
                   ),
@@ -74,7 +68,7 @@ class DashboardProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar() {
+  Widget _buildAvatar(ThemeColors colors) {
     String? getAvatarUrl() {
       if (rider.profilePhoto == null || rider.profilePhoto!.isEmpty)
         return null;
@@ -93,8 +87,8 @@ class DashboardProfileCard extends StatelessWidget {
           height: 72,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.iconBackground,
-            border: Border.all(color: AppColors.outlineVariant),
+            color: colors.iconBackground,
+            border: Border.all(color: colors.outlineVariant),
           ),
           child: ClipOval(
             child: avatarUrl != null
@@ -117,22 +111,16 @@ class DashboardProfileCard extends StatelessWidget {
                         rider.name.isNotEmpty
                             ? rider.name[0].toUpperCase()
                             : 'A',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF1E293B),
-                        ),
+                        style: AppTypography.headingMedium
+                            .copyWith(color: colors.onSurface),
                       ),
                     ),
                   )
                 : Center(
                     child: Text(
                       rider.name.isNotEmpty ? rider.name[0].toUpperCase() : 'A',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF1E293B),
-                      ),
+                      style: AppTypography.headingMedium
+                          .copyWith(color: colors.onSurface),
                     ),
                   ),
           ),

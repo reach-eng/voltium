@@ -33,18 +33,19 @@ RiderModel makeRider({
 
 void main() {
   group('RiderLifecycleGate.redirect', () {
-    test('new rider with no intent → preDashboard', () {
+    test('new rider with no intent -> intent', () {
       final rider = makeRider(registrationDone: false, intent: null);
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
     });
 
-    test('rider with empty intent → preDashboard', () {
+    test('rider with empty intent -> intent', () {
       final rider = makeRider(intent: '');
-      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
+      expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.intent);
     });
 
-    test('rider with intent but KYC not done → preDashboard', () {
-      final rider = makeRider(kycDone: false);
+    test('rider with intent but KYC not done -> preDashboard', () {
+      final rider =
+          makeRider(kycDone: false, lifecycleStatus: 'GUARANTOR_APPROVED');
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });
 
@@ -57,10 +58,11 @@ void main() {
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.guarantorForm);
     });
 
-    test('rider with all done but no pickup → preDashboard', () {
+    test('rider with all done but no pickup -> preDashboard', () {
       final rider = makeRider(
         kycDone: true,
         guarantorStatus: GuarantorStatus.approved,
+        lifecycleStatus: 'KYC_APPROVED',
       );
       expect(RiderLifecycleGate.redirect(rider), LifecycleTarget.preDashboard);
     });

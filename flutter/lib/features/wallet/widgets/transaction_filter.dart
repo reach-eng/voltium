@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum TransactionFilter {
   all('All'),
@@ -58,16 +59,16 @@ class TransactionFilterSort extends StatelessWidget {
                     selected: selectedFilter == TransactionFilter.credit,
                     onSelected: (_) =>
                         onFilterChanged(TransactionFilter.credit),
-                    selectedColor: const Color(0xFFDCFCE7),
-                    checkmarkColor: const Color(0xFF16A34A),
+                    selectedColor: AppColors.successSurface,
+                    checkmarkColor: AppColors.successGreen,
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
                     label: const Text('Debit'),
                     selected: selectedFilter == TransactionFilter.debit,
                     onSelected: (_) => onFilterChanged(TransactionFilter.debit),
-                    selectedColor: const Color(0xFFFEF3F2),
-                    checkmarkColor: const Color(0xFFD92D20),
+                    selectedColor: AppColors.errorSurface,
+                    checkmarkColor: AppColors.errorRedAlt,
                   ),
                 ],
               ),
@@ -75,7 +76,7 @@ class TransactionFilterSort extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           PopupMenuButton<TransactionSort>(
-            icon: const Icon(Icons.sort, color: Color(0xFF667085)),
+            icon: const Icon(Icons.sort, color: AppColors.textMuted),
             onSelected: onSortChanged,
             itemBuilder: (context) => TransactionSort.values.map((sort) {
               return PopupMenuItem(
@@ -143,14 +144,14 @@ class DateRangePicker extends StatelessWidget {
                   const Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: Color(0xFF667085),
+                    color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     startDate != null
                         ? '${startDate!.day}/${startDate!.month}/${startDate!.year}'
                         : 'Start Date',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: startDate != null
                           ? AppColors.onSurface
                           : AppColors.onSurfaceDisabled,
@@ -161,9 +162,10 @@ class DateRangePicker extends StatelessWidget {
             ),
           ),
         ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text('to', style: TextStyle(color: Color(0xFF667085))),
+          child: Text('to',
+              style: GoogleFonts.plusJakartaSans(color: AppColors.textMuted)),
         ),
         Expanded(
           child: InkWell(
@@ -189,14 +191,14 @@ class DateRangePicker extends StatelessWidget {
                   const Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: Color(0xFF667085),
+                    color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     endDate != null
                         ? '${endDate!.day}/${endDate!.month}/${endDate!.year}'
                         : 'End Date',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: endDate != null
                           ? AppColors.onSurface
                           : AppColors.onSurfaceDisabled,

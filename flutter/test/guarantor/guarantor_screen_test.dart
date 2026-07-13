@@ -34,7 +34,7 @@ void main() {
     testWidgets('guarantor screen renders without error', (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(GuarantorOnboardingScreen), findsOneWidget);
     });
 
@@ -42,7 +42,7 @@ void main() {
         (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should have text fields for guarantor info
       final textFields = find.byType(TextField).evaluate();
@@ -52,7 +52,7 @@ void main() {
     testWidgets('guarantor screen does not overflow', (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const GuarantorOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

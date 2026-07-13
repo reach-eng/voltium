@@ -31,14 +31,14 @@ void main() {
   group('Referral Screen', () {
     testWidgets('referral screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const ReferralScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(ReferralScreen), findsOneWidget);
     });
 
     testWidgets('referral screen shows referral code or invite section',
         (tester) async {
       await tester.pumpWidget(buildTestApp(child: const ReferralScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should show referral code or invite friends button
       final hasReferralCode = find
@@ -60,7 +60,7 @@ void main() {
 
     testWidgets('referral screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const ReferralScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class StatusTile extends StatelessWidget {
   final String title;
@@ -18,8 +20,7 @@ class StatusTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
-    final Color dotColor =
-        isApproved ? AppColors.success : const Color(0xFFDC2626);
+    final Color dotColor = isApproved ? AppColors.success : AppColors.errorRed;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -47,26 +48,18 @@ class StatusTile extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.slate500,
-                  letterSpacing: 0.8,
-                ),
+                style: AppTypography.bodySmallStrong
+                    .copyWith(color: AppColors.slate500, letterSpacing: 0.8),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             status,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: dotColor,
-            ),
+            style: AppTypography.buttonMedium.copyWith(color: dotColor),
           ),
         ],
       ),
@@ -126,21 +119,18 @@ class QuickLinkItem extends StatelessWidget {
                   ),
                   child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.buttonMedium
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ),
                 trailing ??
                     const Icon(
                       Icons.chevron_right,
-                      color: Color(0xFFCBD5E1),
+                      color: AppColors.borderMedium,
                       size: 20,
                     ),
               ],
@@ -190,26 +180,23 @@ class ProfileDetailRow extends StatelessWidget {
           ),
           child: Icon(icon, color: AppColors.slate500, size: 20),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: AppColors.slate500,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.bodyMediumEmphasis
+                    .copyWith(color: AppColors.slate800),
               ),
             ],
           ),
@@ -297,22 +284,19 @@ class ProfileGuarantorCard extends StatelessWidget {
                         size: 24,
                       ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       rider.guarantorName ?? 'No Name Provided',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
+                      style: AppTypography.bodyMediumEmphasis
+                          .copyWith(color: AppColors.slate800),
                     ),
                     Text(
                       rider.guarantorPhone ?? 'No Phone Provided',
-                      style: const TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: AppColors.slate500,
                       ),
@@ -324,23 +308,21 @@ class ProfileGuarantorCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isApproved
-                      ? const Color(0xFFECFDF5)
-                      : const Color(0xFFFFFBEB),
+                      ? AppColors.successSurfaceAlt
+                      : AppColors.warningSurface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isApproved
                         ? AppColors.success.withValues(alpha: 0.2)
-                        : const Color(0xFFFDE68A),
+                        : AppColors.warningBorder,
                   ),
                 ),
                 child: Text(
                   _capitalize(rider.guarantorStatus.name),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        isApproved ? AppColors.success : AppColors.warningDark,
-                  ),
+                  style: AppTypography.labelMedium.copyWith(
+                      color: isApproved
+                          ? AppColors.success
+                          : AppColors.warningDark),
                 ),
               ),
             ],
@@ -349,7 +331,7 @@ class ProfileGuarantorCard extends StatelessWidget {
               rider.guarantorAddress!.isNotEmpty) ...[
             const SizedBox(height: 12),
             const CustomDivider(),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Row(
               children: [
                 const Icon(
@@ -357,12 +339,12 @@ class ProfileGuarantorCard extends StatelessWidget {
                   color: AppColors.slate500,
                   size: 16,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     rider.guarantorAddress!,
-                    style:
-                        const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12, color: AppColors.slate600),
                   ),
                 ),
               ],
@@ -383,9 +365,9 @@ class ProfileEmergencySosTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: AppColors.errorSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        border: Border.all(color: AppColors.errorBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -405,19 +387,16 @@ class ProfileEmergencySosTile extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.emergency_outlined,
-                    color: Color(0xFFDC2626),
+                    color: AppColors.errorRed,
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 16),
-                const Expanded(
+                SizedBox(width: 16),
+                Expanded(
                   child: Text(
                     'Emergency SOS',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFDC2626),
-                    ),
+                    style: AppTypography.titleSmall
+                        .copyWith(color: AppColors.errorRed),
                   ),
                 ),
                 const Icon(Icons.chevron_right, color: AppColors.error),
@@ -442,25 +421,22 @@ class ProfileLogoutButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFFDC2626),
+        foregroundColor: AppColors.errorRed,
         elevation: 0,
-        side: const BorderSide(color: Color(0xFFFECACA), width: 1.5),
+        side: const BorderSide(color: AppColors.errorBorder, width: 1.5),
         minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(9999),
         ),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.logout, size: 20),
           SizedBox(width: 8),
           Text(
             'Logout',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTypography.titleSmall,
           ),
         ],
       ),
@@ -500,7 +476,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('editProfileLink'),
             icon: Icons.edit_outlined,
             iconColor: AppColors.info, // blue-500
-            iconBgColor: const Color(0xFFEFF6FF), // blue-50
+            iconBgColor: AppColors.primarySurface, // blue-50
             title: 'Edit Profile',
             onTap: onEditProfileTap,
           ),
@@ -512,7 +488,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('myDocumentsLink'),
             icon: Icons.contact_page_outlined,
             iconColor: AppColors.success, // emerald-500
-            iconBgColor: const Color(0xFFECFDF5), // emerald-50
+            iconBgColor: AppColors.successSurfaceAlt, // emerald-50
             title: 'My Documents',
             onTap: onMyDocumentsTap,
           ),
@@ -524,7 +500,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('rewardsLink'),
             icon: Icons.card_giftcard_outlined,
             iconColor: AppColors.evPurple, // violet-500
-            iconBgColor: const Color(0xFFF5F3FF), // violet-50
+            iconBgColor: AppColors.purpleSurface, // violet-50
             title: 'Rewards',
             onTap: onRewardsTap,
           ),
@@ -536,7 +512,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('referralLink'),
             icon: Icons.people_outline,
             iconColor: AppColors.warning, // amber-500
-            iconBgColor: const Color(0xFFFFFBEB), // amber-50
+            iconBgColor: AppColors.warningSurface, // amber-50
             title: 'Referral Program',
             onTap: onReferralTap,
           ),
@@ -560,7 +536,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('workflowHubLink'),
             icon: Icons.route_outlined,
             iconColor: AppColors.primary,
-            iconBgColor: const Color(0xFFEFF6FF),
+            iconBgColor: AppColors.primarySurface,
             title: 'Workflow & Services',
             onTap: onWorkflowHubTap,
           ),

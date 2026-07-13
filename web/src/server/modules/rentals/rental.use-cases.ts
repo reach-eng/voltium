@@ -60,7 +60,7 @@ export const rentalUseCases = {
     });
     const availabilityRatio = totalVehicles > 0 ? availableVehicles / totalVehicles : 0;
 
-    const dailyRentSetting = await db.setting.findUnique({ where: { key: 'dailyRent' } });
+    const dailyRentSetting = await db.systemSetting.findUnique({ where: { key: 'dailyRent' } });
     const basePricePaise = dailyRentSetting ? parseInt(dailyRentSetting.value) || 18000 : 18000;
 
     const dynamicPrice = calculateDynamicPrice(basePricePaise, {

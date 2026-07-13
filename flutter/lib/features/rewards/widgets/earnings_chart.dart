@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EarningsChart extends StatelessWidget {
   final List<Map<String, dynamic>> dailyEarnings;
@@ -34,14 +35,10 @@ class EarningsChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'DAILY BREAKDOWN',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: AppColors.slate500,
-              letterSpacing: 1.5,
-            ),
+            style: AppTypography.microOverline
+                .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -124,11 +121,7 @@ class _BarChartPainter extends CustomPainter {
       if (amounts[i] > 0) {
         valuePaint.text = TextSpan(
           text: '\u20B9${amounts[i].toStringAsFixed(0)}',
-          style: const TextStyle(
-            fontSize: 8,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.microBadge.copyWith(color: AppColors.slate800),
         );
         valuePaint.layout();
         valuePaint.paint(
@@ -139,11 +132,7 @@ class _BarChartPainter extends CustomPainter {
 
       labelPaint.text = TextSpan(
         text: dayLabels.length > i ? dayLabels[i] : '',
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: AppColors.slate500,
-        ),
+        style: AppTypography.smallBadge.copyWith(color: AppColors.slate500),
       );
       labelPaint.layout();
       labelPaint.paint(

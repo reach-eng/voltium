@@ -548,7 +548,7 @@ export const backupService = {
   async acquireLock(status: 'BACKUP_RUNNING' | 'RESTORE_RUNNING', owner: string): Promise<boolean> {
     try {
       return await db.$transaction(async (tx: Prisma.TransactionClient) => {
-        const lockStatus = await tx.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
+        const lockStatus = await tx.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
         const currentStatus = lockStatus?.value || 'NONE';
 
         if (currentStatus !== 'NONE') {
@@ -560,20 +560,20 @@ export const backupService = {
         }
 
         await Promise.all([
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_STATUS' },
             update: { value: status },
-            create: { key: 'BACKUP_LOCK_STATUS', value: status },
+            create: { key: 'BACKUP_LOCK_STATUS', value: status, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_STARTED_AT' },
             update: { value: new Date().toISOString() },
-            create: { key: 'BACKUP_LOCK_STARTED_AT', value: new Date().toISOString() },
+            create: { key: 'BACKUP_LOCK_STARTED_AT', value: new Date().toISOString(), valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
-          tx.setting.upsert({
+          tx.systemSetting.upsert({
             where: { key: 'BACKUP_LOCK_OWNER' },
             update: { value: owner },
-            create: { key: 'BACKUP_LOCK_OWNER', value: owner },
+            create: { key: 'BACKUP_LOCK_OWNER', value: owner, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           }),
         ]);
 
@@ -589,20 +589,20 @@ export const backupService = {
   async releaseLock(): Promise<void> {
     try {
       await Promise.all([
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_STATUS' },
           update: { value: 'NONE' },
-          create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
+          create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_STARTED_AT' },
           update: { value: '' },
-          create: { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
+          create: { key: 'BACKUP_LOCK_STARTED_AT', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
-        db.setting.upsert({
+        db.systemSetting.upsert({
           where: { key: 'BACKUP_LOCK_OWNER' },
           update: { value: '' },
-          create: { key: 'BACKUP_LOCK_OWNER', value: '' },
+          create: { key: 'BACKUP_LOCK_OWNER', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
         }),
       ]);
       logger.info('[BackupService] Lock released successfully');
@@ -614,9 +614,9 @@ export const backupService = {
   async getLockStatus(): Promise<{ status: string; startedAt: string; owner: string }> {
     try {
       const [statusSetting, startedSetting, ownerSetting] = await Promise.all([
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } }),
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_STARTED_AT' } }),
-        db.setting.findUnique({ where: { key: 'BACKUP_LOCK_OWNER' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STARTED_AT' } }),
+        db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_OWNER' } }),
       ]);
 
       return {

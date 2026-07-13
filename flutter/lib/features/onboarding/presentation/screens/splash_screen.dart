@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui' as ui;
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -66,6 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _startSequence() async {
+    PostHogService.capture('splash_viewed');
     await Future.delayed(const Duration(milliseconds: 200));
     if (!mounted) return;
     _logoCtrl.forward();
@@ -93,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: AppColors.surfaceWhite,
       body: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -138,7 +141,7 @@ class _SplashScreenState extends State<SplashScreen>
                     );
                   },
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 AnimatedBuilder(
                   animation: _textCtrl,
                   builder: (context, _) {
@@ -150,28 +153,23 @@ class _SplashScreenState extends State<SplashScreen>
                           children: [
                             Text(
                               'Voltium',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF0F172A),
-                                letterSpacing: -1,
-                              ),
+                              style: AppTypography.displayLarge.copyWith(
+                                  color: AppColors.slate900, letterSpacing: -1),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Ride the Future',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.slate500,
-                                    letterSpacing: 1.5,
-                                  ),
+                                  'Electric scooter rentals',
+                                  style: AppTypography.bodyLarge.copyWith(
+                                      color: AppColors.slate500,
+                                      letterSpacing: 1.5),
                                 ),
-                                const SizedBox(width: 8),
-                                const Text('⚡', style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 8),
+                                Text('⚡',
+                                    style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 16)),
                               ],
                             ),
                           ],
@@ -199,12 +197,11 @@ class _SplashScreenState extends State<SplashScreen>
                             width: 160,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A)
-                                  .withValues(alpha: 0.05),
+                              color: AppColors.slate900.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: const Color(0xFF0F172A)
-                                    .withValues(alpha: 0.1),
+                                color:
+                                    AppColors.slate900.withValues(alpha: 0.1),
                                 width: 0.5,
                               ),
                             ),
@@ -218,7 +215,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       gradient: const LinearGradient(
                                         colors: [
                                           AppColors.primaryGradientEnd,
-                                          Color(0xFF4A2A85),
+                                          AppColors.purpleDark,
                                         ],
                                       ),
                                       borderRadius: BorderRadius.circular(999),
@@ -238,15 +235,11 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         'CONNECTING TO GRID',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: AppColors.slate400,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 2.5,
-                        ),
+                        style: AppTypography.microLabel.copyWith(
+                            color: AppColors.slate400, letterSpacing: 2.5),
                       ),
                     ],
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SortableColumn {
   final String label;
@@ -123,7 +124,7 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     return Column(
       children: [
         if (widget.showSearch)
@@ -156,11 +157,10 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
           ),
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: colors.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:
-                  isDark ? const Color(0xFF334155) : AppColors.outlineVariant,
+              color: colors.outlineVariant,
             ),
           ),
           child: ClipRRect(
@@ -169,16 +169,14 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 headingRowColor: WidgetStateProperty.all(
-                  isDark ? const Color(0xFF1E293B) : AppColors.surfaceAlt,
+                  colors.surfaceAlt,
                 ),
-                headingTextStyle: TextStyle(
+                headingTextStyle: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.bold,
-                  color:
-                      isDark ? AppColors.iconBackground : AppColors.onSurface,
+                  color: colors.onSurface,
                 ),
-                dataTextStyle: TextStyle(
-                  color:
-                      isDark ? AppColors.iconBackground : AppColors.onSurface,
+                dataTextStyle: GoogleFonts.plusJakartaSans(
+                  color: colors.onSurface,
                 ),
                 columnSpacing: 24,
                 horizontalMargin: 16,
@@ -262,10 +260,10 @@ class _PaginatedDataTableWidgetState<T>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(12),
       ),
       child: PaginatedDataTable(

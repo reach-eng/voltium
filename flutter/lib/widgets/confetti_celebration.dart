@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ConfettiCelebration extends StatefulWidget {
   final bool isPlaying;
@@ -56,18 +57,20 @@ class _ConfettiCelebrationState extends State<ConfettiCelebration> {
     return Stack(
       children: [
         widget.child ?? const SizedBox.shrink(),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            particleDrag: 0.05,
-            emissionFrequency: 0.05,
-            numberOfParticles: widget.particleCount,
-            gravity: 0.2,
-            shouldLoop: false,
-            colors: widget.colors,
-            strokeWidth: 2,
-            strokeColor: Colors.white,
+        RepaintBoundary(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              particleDrag: 0.05,
+              emissionFrequency: 0.05,
+              numberOfParticles: widget.particleCount,
+              gravity: 0.2,
+              shouldLoop: false,
+              colors: widget.colors,
+              strokeWidth: 2,
+              strokeColor: Colors.white,
+            ),
           ),
         ),
       ],
@@ -173,43 +176,44 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
       return const SizedBox.shrink();
     }
 
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _opacity.value,
-          child: Transform.scale(
-            scale: _scale.value,
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 20,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Opacity(
+            opacity: _opacity.value,
+            child: Transform.scale(
+              scale: _scale.value,
+              child: child,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.celebration, size: 64, color: AppColors.primary),
-            if (widget.message != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                widget.message!,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
               ),
             ],
-          ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.celebration, size: 64, color: AppColors.primary),
+              if (widget.message != null) ...[
+                SizedBox(height: 16),
+                Text(
+                  widget.message!,
+                  style: AppTypography.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

@@ -1,12 +1,30 @@
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:flutter/foundation.dart';
 
+// Token and host are injected at build time via --dart-define or
+// --dart-define-from-file referencing the project .env file.
+const _token = String.fromEnvironment('POSTHOG_API_KEY');
+const _host = String.fromEnvironment(
+  'POSTHOG_HOST',
+  defaultValue: 'https://us.i.posthog.com',
+);
+
 class PostHogService {
   static Future<void> initialize() async {
-    if (kIsWeb) return; // For now focus on mobile app
-    // PostHog SDK init is deferred until a real API key is provided via
-    // environment configuration. The capture/screen/identify helpers below
-    // are no-ops until then.
+    if (_token.isEmpty) {
+      if (kDebugMode) {
+        debugPrint(
+            '[PostHog] No API key — pass via --dart-define=POSTHOG_API_KEY=phc_xxx or --dart-define-from-file=.env');
+      }
+      return;
+    }
+    final config = PostHogConfig(_token);
+    config.host = _host;
+    config.debug = kDebugMode;
+    await Posthog().setup(config);
+    if (kDebugMode) {
+      debugPrint('[PostHog] Initialized with host: $_host');
+    }
   }
 
   static Future<void> capture(String eventName,
@@ -31,6 +49,10 @@ class PostHogService {
       userId: userId,
       userProperties: _scrubProperties(properties),
     );
+  }
+
+  static Future<void> reset() async {
+    await Posthog().reset();
   }
 
   static Future<void> captureError(dynamic error, StackTrace? stack,

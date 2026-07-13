@@ -84,7 +84,7 @@ class FocusDecorations {
   static InputDecoration withFocus(
     InputDecoration decoration, {
     Color focusColor = AppColors.primary,
-    Color errorColor = const Color(0xFFD92D20),
+    Color errorColor = AppColors.errorRedAlt,
     bool hasError = false,
   }) {
     return decoration.copyWith(

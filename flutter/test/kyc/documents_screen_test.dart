@@ -31,19 +31,19 @@ void main() {
   group('My Documents Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(MyDocumentsScreen), findsOneWidget);
     });
 
     testWidgets('displays documents title', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('My Documents'), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

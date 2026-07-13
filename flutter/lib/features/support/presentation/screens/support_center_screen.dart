@@ -12,6 +12,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/support/presentation/providers/ticket_provider.dart';
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/skeleton_loader.dart';
+import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 
 class SupportCenterScreen extends ConsumerStatefulWidget {
   const SupportCenterScreen({super.key});
@@ -35,19 +38,23 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
         titleSpacing: 20,
         title: Text(
           'Support Center',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: const Color(0xFF1E293B),
-            letterSpacing: -0.5,
-          ),
+          style: AppTypography.headingMedium
+              .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
         ),
       ),
       body: Consumer(
         builder: (context, ref, child) {
           final rider = ref.watch(appProvider.select((p) => p.rider));
+          final dataState = ref.watch(appProvider.select((p) => p.dataState));
           final tlName = rider?.teamLeader;
           final tlPhone = rider?.emergencyContact;
+          final isLoading = rider == null &&
+              (dataState == DataState.initial ||
+                  dataState == DataState.loading);
+
+          if (isLoading) {
+            return const SupportSkeleton();
+          }
 
           return CustomScrollView(
             slivers: [
@@ -102,13 +109,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                     const SizedBox(height: 24),
 
                     // Quick Help section (Moved to top)
-                    const Text(
+                    Text(
                       'Quick Help',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
+                      style: AppTypography.titleMedium
+                          .copyWith(color: AppColors.slate800),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -129,41 +133,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Low Battery Warning
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFFDE68A)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.battery_alert, color: Color(0xFFD97706)),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Active Ride: Low Battery',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF92400E)),
-                                ),
-                                Text(
-                                  'Your scooter is below 15%. Tap here for nearby hubs.',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Color(0xFF92400E)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(Icons.chevron_right, color: Color(0xFF92400E)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    // Low battery warning removed — not data-driven.
+                    // Re-add when vehicle battery level is available in RiderModel.
 
                     // Create Ticket Container
                     Container(
@@ -183,21 +154,19 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         children: [
                           const Icon(Icons.headset_mic,
                               size: 48, color: AppColors.primary),
-                          const SizedBox(height: 16),
-                          const Text(
+                          SizedBox(height: 16),
+                          Text(
                             'Contact Support',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTypography.titleMedium,
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: 8),
+                          Text(
                             'Our team is here to help you with any issues.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppColors.slate500),
+                            style: GoogleFonts.plusJakartaSans(
+                                color: AppColors.slate500),
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton(
@@ -217,9 +186,9 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text('Create Ticket',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                              child: Text('Create Ticket',
+                                  style: GoogleFonts.plusJakartaSans(
+                                      fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
@@ -296,7 +265,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
 
   Widget _buildQuickChip(IconData icon, String label, VoidCallback onTap) {
     return Material(
-      color: const Color(0xFFF8FAFC),
+      color: AppColors.surfaceBright,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -307,12 +276,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: Color(0xFF1E293B))),
+                  style: AppTypography.bodyCompactStrong
+                      .copyWith(color: AppColors.slate800)),
             ],
           ),
         ),
@@ -353,16 +320,14 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             ),
             child: Icon(icon, color: color, size: 22),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(title, style: AppTypography.bodyMediumEmphasis),
                 Text(subtitle,
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                         color: AppColors.slate500, fontSize: 12)),
               ],
             ),
@@ -382,12 +347,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(actionIcon, color: color, size: 16),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(actionLabel,
-                        style: TextStyle(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12)),
+                        style:
+                            AppTypography.labelMedium.copyWith(color: color)),
                   ],
                 ),
               ),
@@ -421,11 +384,11 @@ class RecentTicketsContainer extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recent Tickets',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: AppTypography.titleMedium,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -435,13 +398,10 @@ class RecentTicketsContainer extends ConsumerWidget {
                   child: ChoiceChip(
                     label: Text(
                       filter.name.toUpperCase(),
-                      style: TextStyle(
-                        color: ticketState.filter == filter
-                            ? Colors.white
-                            : AppColors.slate500,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                      style: AppTypography.labelMedium.copyWith(
+                          color: ticketState.filter == filter
+                              ? Colors.white
+                              : AppColors.slate500),
                     ),
                     selected: ticketState.filter == filter,
                     selectedColor: AppColors.primary,
@@ -457,11 +417,11 @@ class RecentTicketsContainer extends ConsumerWidget {
           if (ticketState.isLoading)
             const Center(child: CircularProgressIndicator())
           else if (ticketState.filteredTickets.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'No tickets found in this category.',
-                style: TextStyle(color: Colors.grey),
+                style: GoogleFonts.plusJakartaSans(color: Colors.grey),
               ),
             )
           else
@@ -471,11 +431,12 @@ class RecentTicketsContainer extends ConsumerWidget {
                     ticket.subject,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     'Status: ${ticket.status.name.toUpperCase()}',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: ticket.status.name.toLowerCase() == 'closed'
                           ? Colors.grey
                           : AppColors.primary,

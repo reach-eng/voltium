@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'legal_page_screen.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web LegalConsentScreen.tsx exactly:
 /// - bg #f7f9fb
@@ -81,6 +83,7 @@ class _LegalScreenState extends State<LegalScreen>
 
   void _handleContinue() {
     if (!_accepted) return;
+    PostHogService.capture('legal_accepted');
     widget.onNext?.call();
   }
 
@@ -122,7 +125,7 @@ class _LegalScreenState extends State<LegalScreen>
                       ),
                       child: Text(
                         'Please review and accept our legal documents to continue.',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           color: AppColors.onSurfaceVariant,
                           height: 1.6,
@@ -258,10 +261,10 @@ class _LegalScreenState extends State<LegalScreen>
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Text(
               'Agree to Terms',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurfaceAlt,
@@ -308,11 +311,8 @@ class _LegalScreenState extends State<LegalScreen>
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.onSurfaceAlt,
-                      ),
+                      style: AppTypography.bodyLargeEmphasis
+                          .copyWith(color: AppColors.onSurfaceAlt),
                     ),
                     AnimatedRotation(
                       turns: isExpanded ? 0.5 : 0.0,
@@ -357,7 +357,7 @@ class _LegalScreenState extends State<LegalScreen>
                                             const EdgeInsets.only(bottom: 12),
                                         child: Text(
                                           para,
-                                          style: GoogleFonts.inter(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             color: AppColors.onSurfaceVariant,
                                             height: 1.7,
@@ -436,11 +436,11 @@ class _LegalScreenState extends State<LegalScreen>
                               )
                             : null,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppColors.onSurfaceVariant,
                               height: 1.6,
@@ -451,12 +451,10 @@ class _LegalScreenState extends State<LegalScreen>
                               ),
                               TextSpan(
                                 text: 'Terms of Service',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                  decoration: TextDecoration.underline,
-                                ),
+                                style: AppTypography.bodyCompactEmphasis
+                                    .copyWith(
+                                        color: AppColors.primary,
+                                        decoration: TextDecoration.underline),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     AppNavigator.push(
@@ -470,12 +468,10 @@ class _LegalScreenState extends State<LegalScreen>
                               const TextSpan(text: ' and '),
                               TextSpan(
                                 text: 'Privacy Policy',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
-                                  decoration: TextDecoration.underline,
-                                ),
+                                style: AppTypography.bodyCompactEmphasis
+                                    .copyWith(
+                                        color: AppColors.primary,
+                                        decoration: TextDecoration.underline),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     AppNavigator.push(
@@ -514,11 +510,8 @@ class _LegalScreenState extends State<LegalScreen>
                     child: Center(
                       child: Text(
                         'Continue',
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: AppTypography.bodyLargeEmphasis
+                            .copyWith(color: Colors.white),
                       ),
                     ),
                   ),

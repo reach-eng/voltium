@@ -63,13 +63,13 @@ class EarningEntry {
   static Color platformColor(GigPlatform p) {
     switch (p) {
       case GigPlatform.zomato:
-        return const Color(0xFFE23744);
+        return AppColors.errorRed;
       case GigPlatform.swiggy:
-        return const Color(0xFFFF9933);
+        return AppColors.warning;
       case GigPlatform.zepto:
-        return const Color(0xFF3D8B37);
+        return AppColors.successDark;
       case GigPlatform.blinkit:
-        return const Color(0xFFFFD700);
+        return AppColors.warning;
       case GigPlatform.other:
         return AppColors.slate500;
     }

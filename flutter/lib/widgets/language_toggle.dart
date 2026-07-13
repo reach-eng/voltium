@@ -75,7 +75,7 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
     final l10n = AppLocalizations.of(context)!;
 
     const vfBlue = AppColors.primary;
-    const vfBlueLight = Color(0xFFD6E4FF);
+    const vfBlueLight = AppColors.primaryLighter;
 
     return LayoutBuilder(
       builder: (context, constraints) {

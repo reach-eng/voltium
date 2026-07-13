@@ -5,6 +5,8 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 enum IntentType { delivery, personal }
 
@@ -35,11 +37,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
         ),
         title: Text(
           'Intent of Use',
-          style: GoogleFonts.plusJakartaSans(
-            color: AppColors.onSurface,
-            fontSize: 18,
-            fontWeight: FontWeight.w800, // Bold as in image
-          ),
+          style: AppTypography.titleMedium.copyWith(color: AppColors.onSurface),
         ),
         centerTitle: false,
         titleSpacing: 0,
@@ -58,28 +56,26 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.onSurface,
-                          height: 1.1,
-                          letterSpacing: -0.5,
-                        ),
-                        children: const [
-                          TextSpan(text: 'How will you use\n'),
+                        style: AppTypography.headingMedium.copyWith(
+                            color: AppColors.onSurface,
+                            height: 1.1,
+                            letterSpacing: -0.5),
+                        children: [
+                          const TextSpan(text: 'How will you use\n'),
                           TextSpan(
                             text: 'Voltium',
-                            style: TextStyle(color: AppColors.primary),
+                            style: GoogleFonts.plusJakartaSans(
+                                color: AppColors.primary),
                           ),
-                          TextSpan(text: '?'),
+                          const TextSpan(text: '?'),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'Select your primary usage to help us customize your experience and support.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppColors.onSurfaceVariant,
                         fontSize: 15,
                         height: 1.4,
@@ -122,7 +118,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                             .primaryLighter, // Soft blue tint container
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFD0E0F5),
+                          color: AppColors.primaryLighter,
                           width: 1,
                         ),
                       ),
@@ -138,7 +134,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                           Expanded(
                             child: Text(
                               'Switching between types is possible later through account settings, though commercial access may require additional verification.',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.plusJakartaSans(
                                 color: AppColors.onSurfaceVariant,
                                 fontSize: 13,
                                 height: 1.4,
@@ -194,6 +190,10 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                                 data: {'intent': intentStr},
                               );
                               await provider.refresh();
+                              PostHogService.capture(
+                                'intent_of_use_submitted',
+                                properties: {'intent': intentStr},
+                              );
                             } catch (_) {
                               if (!mounted) return;
                               messenger.showSnackBar(
@@ -210,7 +210,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: const Color(0xFF94B5E9),
+                    disabledBackgroundColor: AppColors.primaryLight,
                     foregroundColor: Colors.white,
                     disabledForegroundColor: Colors.white70,
                     elevation: 0,
@@ -220,10 +220,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                   ),
                   child: Text(
                     'Confirm Selection',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: AppTypography.titleSmall,
                   ),
                 ),
               ),
@@ -296,16 +293,13 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.inter(
-                      color: isSelected ? Colors.white : AppColors.onSurface,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: AppTypography.titleMedium.copyWith(
+                        color: isSelected ? Colors.white : AppColors.onSurface),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     description,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: isSelected
                           ? Colors.white.withValues(alpha: 0.85)
                           : AppColors.onSurfaceVariant,

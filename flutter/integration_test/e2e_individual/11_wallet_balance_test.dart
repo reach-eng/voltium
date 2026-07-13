@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
+import '../pages/wallet_page.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +16,10 @@ void main() {
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'walletTab');
 
-    // Verify wallet elements
-    expect(find.byKey(const Key('topUpButton')), findsOneWidget);
-    expect(find.byKey(const Key('historyButton')), findsOneWidget);
+    final walletPage = WalletPageObject(tester);
+    walletPage.expectLoaded();
+
+    await walletPage.scrollToHistory();
+    expect(walletPage.historySection, findsOneWidget);
   });
 }

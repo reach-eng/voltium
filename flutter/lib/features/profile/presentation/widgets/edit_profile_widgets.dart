@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EditProfileTextField extends StatelessWidget {
   final String label;
@@ -25,26 +26,21 @@ class EditProfileTextField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodySmallStrong
+                .copyWith(color: AppColors.slate500),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E293B),
-          ),
+          style: AppTypography.bodyLargeEmphasis
+              .copyWith(color: AppColors.slate800),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
             filled: true,
-            fillColor: const Color(0xFFF1F5F9), // AppColors.slate100 equivalent
+            fillColor:
+                AppColors.iconBackground, // AppColors.slate100 equivalent
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -89,22 +85,16 @@ class EditProfileDateField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodySmallStrong
+                .copyWith(color: AppColors.slate500),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller,
           readOnly: true,
-          style: GoogleFonts.inter(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E293B),
-          ),
+          style: AppTypography.bodyLargeEmphasis
+              .copyWith(color: AppColors.slate800),
           decoration: InputDecoration(
             prefixIcon: const Icon(
               Icons.calendar_today_outlined,
@@ -117,7 +107,8 @@ class EditProfileDateField extends StatelessWidget {
               size: 18,
             ),
             filled: true,
-            fillColor: const Color(0xFFF1F5F9), // AppColors.slate100 equivalent
+            fillColor:
+                AppColors.iconBackground, // AppColors.slate100 equivalent
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -154,12 +145,8 @@ class EditProfileSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          color: AppColors.slate500,
-          letterSpacing: 1.2,
-        ),
+        style: AppTypography.bodySmallTracked
+            .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
       ),
     );
   }
@@ -181,11 +168,11 @@ class EditProfileAdminNote extends StatelessWidget {
         children: [
           const Icon(Icons.info_outline,
               color: AppColors.warningDark, size: 22),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               'Profile changes require admin approval before becoming active.',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 color: const Color(0xFF9A3412),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

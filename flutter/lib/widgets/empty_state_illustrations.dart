@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EmptyStateIllustration extends StatelessWidget {
   final EmptyStateType type;
@@ -19,6 +21,7 @@ class EmptyStateIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -26,22 +29,19 @@ class EmptyStateIllustration extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildIllustration(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               title ?? _defaultTitle,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.titleMedium,
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 message!,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: Colors.grey.shade600,
+                  color: colors.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PersonalDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
@@ -40,6 +41,7 @@ class PersonalDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final formattedPhone = phone.length >= 10
         ? '+91 ${phone.substring(0, 5)} ${phone.substring(5)}'
         : phone;
@@ -47,16 +49,16 @@ class PersonalDetailsCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kSurfaceContainer,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: colors.onSurface.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+        border: Border.all(color: colors.surfaceSubtle, width: 1),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -64,15 +66,12 @@ class PersonalDetailsCard extends StatelessWidget {
         children: [
           Text(
             'Personal Details',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: kOnSurfaceColor,
-              letterSpacing: -0.2,
-            ),
+            style: AppTypography.titleSmall
+                .copyWith(color: colors.onSurface, letterSpacing: -0.2),
           ),
           const SizedBox(height: 24),
           _buildTextField(
+            context,
             'Full Name',
             'Enter full name',
             nameController,
@@ -81,6 +80,7 @@ class PersonalDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildDateField(
+            context,
             'Date of Birth',
             'DD-MM-YYYY',
             dobController,
@@ -89,6 +89,7 @@ class PersonalDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildTextField(
+            context,
             'Email Address',
             'Enter email address',
             emailController,
@@ -96,9 +97,10 @@ class PersonalDetailsCard extends StatelessWidget {
             enabled: emailEnabled,
           ),
           const SizedBox(height: 12),
-          _buildPhoneField(formattedPhone),
+          _buildPhoneField(context, formattedPhone),
           const SizedBox(height: 12),
           _buildTextField(
+            context,
             "Father's Name",
             "Enter father's name",
             fatherNameController,
@@ -107,6 +109,7 @@ class PersonalDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildTextField(
+            context,
             "Mother's Name",
             "Enter mother's name",
             motherNameController,
@@ -115,6 +118,7 @@ class PersonalDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildTextArea(
+            context,
             'Current Address',
             'Enter your full address',
             addressController,
@@ -126,36 +130,34 @@ class PersonalDetailsCard extends StatelessWidget {
   }
 
   Widget _buildTextField(
+    BuildContext context,
     String label,
     String hint,
     TextEditingController controller, {
     Key? key,
     bool enabled = true,
   }) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(label.toUpperCase()),
-        const SizedBox(height: 8),
+        buildInputLabel(context, label.toUpperCase()),
+        SizedBox(height: 8),
         TextFormField(
           key: key,
           controller: controller,
           readOnly: !enabled,
-          style: GoogleFonts.inter(
-            color: kOnSurfaceColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(
-              color: kOutlineColor.withValues(alpha: 0.7),
+            hintStyle: GoogleFonts.plusJakartaSans(
+              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
               fontSize: 14,
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: const Color(0xFFF1F5F9),
+            fillColor: colors.iconBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -166,7 +168,7 @@ class PersonalDetailsCard extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
@@ -175,44 +177,42 @@ class PersonalDetailsCard extends StatelessWidget {
   }
 
   Widget _buildDateField(
+    BuildContext context,
     String label,
     String hint,
     TextEditingController controller,
     VoidCallback onTap, {
     bool enabled = true,
   }) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(label.toUpperCase()),
-        const SizedBox(height: 8),
+        buildInputLabel(context, label.toUpperCase()),
+        SizedBox(height: 8),
         GestureDetector(
           onTap: enabled ? onTap : null,
           child: AbsorbPointer(
             child: TextFormField(
               key: const Key('dobField'),
               controller: controller,
-              style: GoogleFonts.inter(
-                color: kOnSurfaceColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: GoogleFonts.inter(
-                  color: kOutlineColor.withValues(alpha: 0.7),
+                hintStyle: GoogleFonts.plusJakartaSans(
+                  color: colors.onSurfaceMuted.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.calendar_today,
                   size: 18,
-                  color: kOutlineColor,
+                  color: colors.onSurfaceMuted,
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 filled: true,
                 fillColor:
-                    enabled ? const Color(0xFFF1F5F9) : const Color(0xFFE2E8F0),
+                    enabled ? colors.iconBackground : colors.outlineVariant,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -223,7 +223,8 @@ class PersonalDetailsCard extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+                  borderSide:
+                      const BorderSide(color: AppColors.primary, width: 2),
                 ),
               ),
             ),
@@ -233,30 +234,28 @@ class PersonalDetailsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPhoneField(String phone) {
+  Widget _buildPhoneField(BuildContext context, String phone) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel('PHONE NUMBER'),
-        const SizedBox(height: 8),
+        buildInputLabel(context, 'PHONE NUMBER'),
+        SizedBox(height: 8),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFE2E8F0), // Disabled slate look
+            color: colors.outlineVariant, // Disabled slate look
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             children: [
-              const Icon(Icons.phone, size: 18, color: kOutlineColor),
-              const SizedBox(width: 12),
+              Icon(Icons.phone, size: 18, color: colors.onSurfaceMuted),
+              SizedBox(width: 12),
               Text(
                 phone,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: kOutlineColor,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTypography.bodyMedium
+                    .copyWith(color: colors.onSurfaceMuted),
               ),
             ],
           ),
@@ -266,35 +265,33 @@ class PersonalDetailsCard extends StatelessWidget {
   }
 
   Widget _buildTextArea(
+    BuildContext context,
     String label,
     String hint,
     TextEditingController controller, {
     bool enabled = true,
   }) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildInputLabel(label.toUpperCase()),
-        const SizedBox(height: 8),
+        buildInputLabel(context, label.toUpperCase()),
+        SizedBox(height: 8),
         TextFormField(
           controller: controller,
           maxLines: 3,
           readOnly: !enabled,
-          style: GoogleFonts.inter(
-            color: kOnSurfaceColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(
-              color: kOutlineColor.withValues(alpha: 0.7),
+            hintStyle: GoogleFonts.plusJakartaSans(
+              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
               fontSize: 14,
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             filled: true,
-            fillColor: const Color(0xFFF1F5F9),
+            fillColor: colors.iconBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -305,7 +302,7 @@ class PersonalDetailsCard extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
         ),
@@ -346,19 +343,20 @@ class IdentityVerificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kSurfaceContainer,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: colors.onSurface.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+        border: Border.all(color: colors.surfaceSubtle, width: 1),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -366,18 +364,14 @@ class IdentityVerificationCard extends StatelessWidget {
         children: [
           Text(
             'Identity Verification',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: kOnSurfaceColor,
-              letterSpacing: -0.2,
-            ),
+            style: AppTypography.titleSmall
+                .copyWith(color: colors.onSurface, letterSpacing: -0.2),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Clear photos only. Max 5MB each.',
-            style:
-                GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 12, color: colors.onSurfaceMuted),
           ),
           const SizedBox(height: 24),
           Row(
@@ -455,11 +449,13 @@ class DocTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     Widget content = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: isUploaded ? kSuccessColor.withValues(alpha: 0.1) : Colors.white,
+        color:
+            isUploaded ? AppColors.success.withValues(alpha: 0.1) : colors.card,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -469,25 +465,23 @@ class DocTile extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isUploaded
-                  ? kSuccessColor.withValues(alpha: 0.2)
-                  : const Color(0xFFF1F5F9),
+                  ? AppColors.success.withValues(alpha: 0.2)
+                  : colors.iconBackground,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               isUploaded ? Icons.check_circle : icon,
-              color: isUploaded ? kSuccessColor : const Color(0xFF94A3B8),
+              color: isUploaded ? AppColors.success : colors.onSurfaceMuted,
               size: 20,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             isUploaded ? 'Uploaded' : label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isUploaded ? kSuccessColor : const Color(0xFF64748B),
-            ),
+            style: AppTypography.bodySmallEmphasis.copyWith(
+                color:
+                    isUploaded ? AppColors.success : colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -497,7 +491,7 @@ class DocTile extends StatelessWidget {
       content = Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          border: Border.all(color: colors.outlineVariant, width: 1.5),
         ),
         child: content,
       );
@@ -505,7 +499,7 @@ class DocTile extends StatelessWidget {
       content = Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kSuccessColor, width: 1.5),
+          border: Border.all(color: AppColors.success, width: 1.5),
         ),
         child: content,
       );
@@ -537,19 +531,20 @@ class SelfieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kSurfaceContainer,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: colors.onSurface.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+        border: Border.all(color: colors.surfaceSubtle, width: 1),
       ),
       padding: const EdgeInsets.all(24),
       child: GestureDetector(
@@ -562,12 +557,8 @@ class SelfieCard extends StatelessWidget {
             children: [
               Text(
                 'Rider Photo',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: kOnSurfaceColor,
-                  letterSpacing: -0.2,
-                ),
+                style: AppTypography.titleSmall
+                    .copyWith(color: colors.onSurface, letterSpacing: -0.2),
               ),
               const SizedBox(height: 24),
               if (selfieUploaded && selfiePath != null)
@@ -583,9 +574,9 @@ class SelfieCard extends StatelessWidget {
                 Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
+                    color: colors.surfaceSubtle,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: kOutlineVariantColor, width: 1),
+                    border: Border.all(color: colors.outlineVariant, width: 1),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -593,36 +584,34 @@ class SelfieCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.card,
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.photo_camera,
-                          color: kOutlineColor,
+                          color: colors.onSurfaceMuted,
                           size: 28,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         'Take Rider Photo',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: kOutlineColor,
-                        ),
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: colors.onSurfaceMuted),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Tap to capture your photo',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: kOutlineColor.withValues(alpha: 0.7)),
+                            color:
+                                colors.onSurfaceMuted.withValues(alpha: 0.7)),
                       ),
                     ],
                   ),
                 ),
               if (selfieUploaded) ...[
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -630,21 +619,18 @@ class SelfieCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: AppColors.successSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.check, color: AppColors.success, size: 14),
                           SizedBox(width: 4),
                           Text(
                             'Photo Captured',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.successText,
-                            ),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: AppColors.successText),
                           ),
                         ],
                       ),
@@ -674,6 +660,7 @@ class SignatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Opacity(
@@ -681,16 +668,16 @@ class SignatureCard extends StatelessWidget {
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: kSurfaceContainer,
+            color: colors.card,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                color: colors.onSurface.withValues(alpha: 0.04),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
             ],
-            border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+            border: Border.all(color: colors.surfaceSubtle, width: 1),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -698,20 +685,16 @@ class SignatureCard extends StatelessWidget {
             children: [
               Text(
                 'Digital Signature',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: kOnSurfaceColor,
-                  letterSpacing: -0.2,
-                ),
+                style: AppTypography.titleSmall
+                    .copyWith(color: colors.onSurface, letterSpacing: -0.2),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 'Sign below to authorize documentation.',
-                style: GoogleFonts.inter(
-                    fontSize: 12, color: const Color(0xFF6B7280)),
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12, color: colors.onSurfaceMuted),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               GestureDetector(
                 key: const Key('signatureTile'),
                 onTap: enabled ? onTap : null,
@@ -719,13 +702,13 @@ class SignatureCard extends StatelessWidget {
                   height: 120,
                   decoration: BoxDecoration(
                     color: signatureUploaded
-                        ? kSuccessColor.withValues(alpha: 0.1)
-                        : const Color(0xFFF3F4F6),
+                        ? AppColors.success.withValues(alpha: 0.1)
+                        : colors.surfaceSubtle,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: signatureUploaded
-                          ? kSuccessColor
-                          : kOutlineVariantColor,
+                          ? AppColors.success
+                          : colors.outlineVariant,
                       width: 1,
                     ),
                   ),
@@ -736,13 +719,10 @@ class SignatureCard extends StatelessWidget {
                           signatureUploaded
                               ? 'Signature Captured'
                               : 'Tap to draw signature',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: signatureUploaded
-                                ? kSuccessColor
-                                : kOutlineColor,
-                          ),
+                          style: AppTypography.bodyMediumEmphasis.copyWith(
+                              color: signatureUploaded
+                                  ? AppColors.success
+                                  : colors.onSurfaceMuted),
                         ),
                       ),
                       if (signatureUploaded)
@@ -790,11 +770,12 @@ class UserOnboardingBottomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+        color: colors.card,
+        border: Border(
+          top: BorderSide(color: colors.surfaceSubtle, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -820,10 +801,10 @@ class UserOnboardingBottomButton extends StatelessWidget {
               key: const Key('nextOnboardingButton'),
               onPressed: !isUploading && canProceed ? onNext : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.outlineVariant,
-                disabledForegroundColor: AppColors.slate400,
+                disabledBackgroundColor: colors.outlineVariant,
+                disabledForegroundColor: colors.onSurfaceMuted,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -842,34 +823,26 @@ class UserOnboardingBottomButton extends StatelessWidget {
                           ),
                         ),
                         if (uploadProgressText.isNotEmpty) ...[
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Text(
                             uploadProgressText,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTypography.bodyMediumEmphasis,
                           ),
                         ],
                       ],
                     )
                   : Text(
                       'Confirm & Proceed',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTypography.buttonMedium,
                     ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: kOutlineColor.withValues(alpha: 0.7),
+            style: AppTypography.microBadge.copyWith(
+              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
               letterSpacing: 1.0,
             ),
           ),
@@ -893,39 +866,34 @@ class UserOnboardingDialogField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: kOnSurfaceColor),
+          style: AppTypography.bodyCompact.copyWith(color: colors.onSurface),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         TextFormField(
           controller: controller,
-          style: GoogleFonts.inter(
-            color: kOnSurfaceColor,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(
-                color: kOutlineColor.withValues(alpha: 0.7), fontSize: 14),
+            hintStyle: GoogleFonts.plusJakartaSans(
+                color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                fontSize: 14),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: kOutlineVariantColor),
+              borderSide: BorderSide(color: colors.outlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: kOutlineVariantColor),
+              borderSide: BorderSide(color: colors.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

@@ -123,8 +123,9 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = LoginScreen(
         key: const ValueKey('login'),
         isSignUp: state._isSignUpFlow,
-        onNext: (phone) {
+        onNext: (phone, referralCode) {
           state._phone = phone;
+          state._referralCode = referralCode;
           state._navigateToLocal(AuthState.otp);
         },
       );
@@ -134,6 +135,7 @@ Widget _buildRouterBody(BuildContext context, _AppRouterState state) {
       currentScreen = OtpVerificationScreen(
         key: const ValueKey('otp'),
         phoneNumber: state._phone,
+        referralCode: state._referralCode,
         onBack: () => state._navigateToLocal(AuthState.login),
         onNext: (bool isNewRider) {
           final provider = ProviderScope.containerOf(context).read(appProvider);

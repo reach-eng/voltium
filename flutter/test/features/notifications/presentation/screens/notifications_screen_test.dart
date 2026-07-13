@@ -18,7 +18,7 @@ void main() {
         child: wrapForGolden(NotificationsScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     await expectLater(
       find.byType(NotificationsScreen),

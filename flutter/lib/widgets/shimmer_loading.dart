@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class ShimmerLoading extends StatelessWidget {
   final double width;
@@ -18,14 +19,18 @@ class ShimmerLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Blue-tinted shimmer for brand identity in light mode
+    final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLighter;
+    final highlightColor =
+        isDark ? AppColors.slate700 : AppColors.primarySurface;
     return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-      highlightColor: isDark ? Colors.grey[700]! : Colors.grey[100]!,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.of(context).card,
           borderRadius: shape == ShimmerShape.circle
               ? BorderRadius.circular(height / 2)
               : BorderRadius.circular(borderRadius),

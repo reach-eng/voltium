@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class AnimatedCounter extends StatefulWidget {
   final int endValue;
@@ -57,14 +59,16 @@ class _AnimatedCounterState extends State<AnimatedCounter>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Text(
-          '${widget.prefix ?? ''}${_animation.value.toString()}${widget.suffix ?? ''}',
-          style: widget.style,
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _animation,
+        builder: (context, child) {
+          return Text(
+            '${widget.prefix ?? ''}${_animation.value.toString()}${widget.suffix ?? ''}',
+            style: widget.style,
+          );
+        },
+      ),
     );
   }
 }
@@ -83,13 +87,9 @@ class AnimatedCurrency extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final defaultStyle = style ??
-        TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: isDark ? Colors.white : Colors.black,
-        );
+    final colors = AppColors.of(context);
+    final defaultStyle =
+        style ?? AppTypography.headingMedium.copyWith(color: colors.onSurface);
 
     return AnimatedCounter(
       endValue: amountInPaise ~/ 100,

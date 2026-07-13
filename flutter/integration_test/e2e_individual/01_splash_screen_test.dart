@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -13,6 +14,7 @@ void main() {
 
   testWidgets('Splash screen displays Voltium branding and auto-navigates',
       (tester) async {
+    final app = AppRobots(tester);
     await resetAppState();
     await safeAppMain();
     // Don't use pumpAndSettle - it waits for splash animations to complete
@@ -29,8 +31,8 @@ void main() {
 
     // Should reach permissions or login screen
     final possibleScreens = [
-      find.byKey(const Key('continuePermissionsButton')),
-      find.byKey(const Key('phoneInput')),
+      app.onboarding.continuePermissionsButton,
+      app.login.phoneField,
     ];
 
     bool foundScreen = false;
@@ -40,7 +42,10 @@ void main() {
         break;
       }
     }
-    expect(foundScreen, isTrue,
-        reason: 'Splash should auto-navigate to next screen',);
+    expect(
+      foundScreen,
+      isTrue,
+      reason: 'Splash should auto-navigate to next screen',
+    );
   });
 }

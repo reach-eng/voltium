@@ -18,6 +18,8 @@ import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
@@ -493,6 +495,7 @@ class _GuarantorOnboardingScreenState
       );
       await GuarantorCache.clearFormCache(riderId);
       await provider.refresh();
+      PostHogService.capture('guarantor_form_submitted');
       if (mounted) {
         widget.onNext?.call();
       }
@@ -551,26 +554,22 @@ class _GuarantorOnboardingScreenState
             children: [
               Text(
                 'Skip Guarantor?',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF141B2B),
-                  letterSpacing: -0.5,
-                ),
+                style: AppTypography.titleLarge
+                    .copyWith(color: AppColors.slate900, letterSpacing: -0.5),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Text(
                 'Without a guarantor, you will be required to pay a higher '
                 'security deposit (₹5,000 instead of ₹2,000) when you select '
                 'a plan.\n\n'
                 'You can add a guarantor later from Profile → Settings.',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   height: 1.5,
-                  color: const Color(0xFF4B5563),
+                  color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -578,12 +577,13 @@ class _GuarantorOnboardingScreenState
                     key: const Key('skipGuarantorCancelButton'),
                     onPressed: () => Navigator.of(ctx).pop(false),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF6B7280),
-                      textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      foregroundColor: AppColors.textTertiary,
+                      textStyle: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600),
                     ),
                     child: const Text('Cancel'),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   ElevatedButton(
                     key: const Key('skipGuarantorConfirmButton'),
                     onPressed: () => Navigator.of(ctx).pop(true),
@@ -597,7 +597,8 @@ class _GuarantorOnboardingScreenState
                     ),
                     child: Text(
                       'Skip',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -649,17 +650,14 @@ class _GuarantorOnboardingScreenState
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? AppColors.primary : const Color(0xFFF3F4F6),
-        border: isActive ? null : Border.all(color: const Color(0xFFE5E7EB)),
+        color: isActive ? AppColors.primary : AppColors.surfaceSubtle,
+        border: isActive ? null : Border.all(color: AppColors.borderSubtle),
       ),
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: TextStyle(
-          color: isActive ? Colors.white : const Color(0xFF4B5563),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.bodySmallEmphasis
+            .copyWith(color: isActive ? Colors.white : AppColors.textSecondary),
       ),
     );
   }
@@ -668,7 +666,7 @@ class _GuarantorOnboardingScreenState
     return Container(
       width: 40,
       height: 2,
-      color: const Color(0xFFE5E7EB),
+      color: AppColors.borderSubtle,
     );
   }
 
@@ -722,9 +720,10 @@ class _GuarantorOnboardingScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     debugPrint('GuarantorOnboardingScreen: build called');
     return Scaffold(
-      backgroundColor: kSurfaceColor,
+      backgroundColor: colors.surfaceSubtle,
       body: Column(
         children: [
           Expanded(
@@ -851,40 +850,37 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: AppColors.warningLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF59E0B), width: 1),
+        border: Border.all(color: AppColors.warning, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
             Icons.warning_amber_rounded,
-            color: Color(0xFFB45309),
+            color: AppColors.warningDark,
             size: 24,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Your guarantor takes on real financial liability',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF92400E),
-                  ),
+                  style: AppTypography.bodyCompactStrong
+                      .copyWith(color: AppColors.warningText),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'By submitting this form, your guarantor becomes jointly '
                   'responsible for all rental charges, damages, and penalties '
                   'for the duration of your subscription. Read the Guarantor '
                   'Agreement in the expandable card below for the full terms.',
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: Color(0xFF78350F),
+                    color: AppColors.warningText,
                     height: 1.4,
                   ),
                 ),

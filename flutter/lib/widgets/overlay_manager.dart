@@ -6,6 +6,9 @@ import 'permission_guard.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class OverlayManager extends ConsumerWidget {
   final Widget child;
@@ -40,6 +43,7 @@ class OverlayManager extends ConsumerWidget {
   }
 
   Widget _buildForceUpdateOverlay(BuildContext context, AppProvider provider) {
+    final colors = AppColors.of(context);
     return Container(
       color: Colors.black87,
       width: double.infinity,
@@ -49,7 +53,7 @@ class OverlayManager extends ConsumerWidget {
           margin: const EdgeInsets.symmetric(horizontal: 32),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.card,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -60,16 +64,17 @@ class OverlayManager extends ConsumerWidget {
                 color: Colors.blue,
                 size: 64,
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 'Update Required',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: AppTypography.titleLarge,
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'A critical update is required to continue using the app. This version is no longer supported.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style:
+                    GoogleFonts.plusJakartaSans(color: colors.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -120,21 +125,21 @@ class OverlayManager extends ConsumerWidget {
             child: Row(
               children: [
                 const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Low Wallet Balance',
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         'Current balance: ₹${provider.currentBalance.toStringAsFixed(2)}. Please top up to avoid interruptions.',
-                        style: const TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
@@ -144,9 +149,9 @@ class OverlayManager extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => provider.setWalletBalanceWarning(false),
-                  child: const Text(
+                  child: Text(
                     'DISMISS',
-                    style: TextStyle(color: Colors.white),
+                    style: GoogleFonts.plusJakartaSans(color: Colors.white),
                   ),
                 ),
               ],

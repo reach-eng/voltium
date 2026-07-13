@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TimelineItem {
   final String title;
@@ -93,7 +95,7 @@ class TimelineWidget extends StatelessWidget {
                     children: [
                       Text(
                         item.title,
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           color: item.isCompleted || item.isActive
                               ? Colors.black
@@ -103,7 +105,7 @@ class TimelineWidget extends StatelessWidget {
                       if (item.subtitle != null)
                         Text(
                           item.subtitle!,
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.grey.shade600,
                             fontSize: 12,
                           ),
@@ -111,7 +113,7 @@ class TimelineWidget extends StatelessWidget {
                       if (item.timestamp != null)
                         Text(
                           _formatTimestamp(item.timestamp!),
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.grey.shade500,
                             fontSize: 10,
                           ),
@@ -169,11 +171,7 @@ class BadgeCounter extends StatelessWidget {
               child: Center(
                 child: Text(
                   count > 99 ? '99+' : count.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -342,7 +340,7 @@ class StepIndicator extends StatelessWidget {
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : Text(
                           '${index + 1}',
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: isActive ? activeColor : inactiveColor,
                             fontWeight: FontWeight.bold,
                           ),

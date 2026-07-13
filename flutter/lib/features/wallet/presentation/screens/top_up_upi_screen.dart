@@ -9,6 +9,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web TopUpUpiScreen.tsx:
 /// - Gradient header with back btn + "Step 3 of 3" + "Top Up"
@@ -211,21 +212,15 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                   ),
                   child: Text(
                     ' Step 2 of 2 ',
-                    style: GoogleFonts.inter(
-                      color: AppColors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTypography.labelMedium
+                        .copyWith(color: AppColors.primary),
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'Top Up',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTypography.titleMediumLarge
+                      .copyWith(color: Colors.white),
                 ),
               ],
             ),
@@ -256,21 +251,16 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
               children: [
                 Text(
                   'TOP-UP AMOUNT',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                  style: AppTypography.bodySmallStrong.copyWith(
                     color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
                     letterSpacing: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                  style: GoogleFonts.inter(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTypography.headingLarge
+                      .copyWith(color: AppColors.primary),
                 ),
               ],
             ),
@@ -282,9 +272,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                     vertical: 16.0, horizontal: 12.0),
                 child: Text(
                   'Edit',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                  style: AppTypography.bodySmallStrong.copyWith(
                     color: AppColors.primary,
                     decoration: TextDecoration.underline,
                     decorationColor: AppColors.primary.withValues(alpha: 0.3),
@@ -327,23 +315,20 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Proof of Top Up',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceAlt,
-                    ),
+                    style: AppTypography.labelLarge
+                        .copyWith(color: AppColors.onSurfaceAlt),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       color: AppColors.onSurfaceVariant,
                       height: 1.5,
@@ -380,14 +365,11 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                   size: 16,
                   color: AppColors.onSurfaceVariant,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   'Upload Photo Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceAlt,
-                  ),
+                  style: AppTypography.bodyMediumEmphasis
+                      .copyWith(color: AppColors.onSurfaceAlt),
                 ),
               ],
             ),
@@ -424,22 +406,19 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                           size: 24,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         'Tap to upload photo',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onSurfaceAlt,
-                        ),
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: AppColors.onSurfaceAlt),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 40),
                         child: Text(
                           'Ensure the photo shows both the rider and team member or the payment receipt',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             color: AppColors.onSurfaceVariant,
                             height: 1.4,
@@ -472,7 +451,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                         width: 44,
                         height: 44,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFBA1A1A),
+                          color: AppColors.errorDark,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -493,22 +472,19 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 ],
               ),
             if (_imageFile != null) ...[
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   const Icon(
                     Icons.check_circle,
-                    color: Color(0xFF16A34A),
+                    color: AppColors.successGreen,
                     size: 14,
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'Photo uploaded successfully',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: const Color(0xFF16A34A),
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.successGreen),
                   ),
                 ],
               ),
@@ -527,20 +503,20 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEB),
+          color: AppColors.warningSurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: RichText(
           text: TextSpan(
-            style: GoogleFonts.inter(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: AppColors.warningText,
               height: 1.5,
             ),
             children: [
-              const TextSpan(
+              TextSpan(
                 text: 'Note: ',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
               ),
               const TextSpan(
                 text:
@@ -579,12 +555,10 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 )
               : Text(
                   'Submit Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        canSubmit ? Colors.white : AppColors.onSurfaceVariant,
-                  ),
+                  style: AppTypography.buttonMedium.copyWith(
+                      color: canSubmit
+                          ? Colors.white
+                          : AppColors.onSurfaceVariant),
                 ),
         ),
       ),

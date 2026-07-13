@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final VoidCallback onContinue;
@@ -41,18 +43,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'Before we start',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onSurface,
-                  ),
+                  style: AppTypography.headingMedium
+                      .copyWith(color: AppColors.onSurface),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'To provide you with the best experience, Voltium needs access to your Location (to find nearby hubs) and Camera (for document uploads).',
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 16,
                     color: AppColors.onSurfaceVariant,
                     height: 1.5,
@@ -79,7 +78,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -87,17 +86,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               _agreedToTerms = !_agreedToTerms;
                             });
                           },
-                          child: const ExcludeSemantics(
+                          child: ExcludeSemantics(
                             child: Text.rich(
                               TextSpan(
                                 text: 'I agree to the ',
-                                style: TextStyle(
+                                style: GoogleFonts.plusJakartaSans(
                                     color: AppColors.onSurfaceVariant,
                                     fontSize: 14),
                                 children: [
                                   TextSpan(
                                     text: 'Terms of Service',
-                                    style: TextStyle(
+                                    style: GoogleFonts.plusJakartaSans(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -105,7 +104,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   TextSpan(text: ' and '),
                                   TextSpan(
                                     text: 'Privacy Policy',
-                                    style: TextStyle(
+                                    style: GoogleFonts.plusJakartaSans(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -119,7 +118,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 ElevatedButton(
                   key: const Key('continuePermissionsButton'),
                   onPressed: _agreedToTerms
@@ -134,13 +133,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     disabledBackgroundColor:
                         AppColors.onSurface.withValues(alpha: 0.12),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Continue',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style:
+                        AppTypography.titleSmall.copyWith(color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -162,7 +158,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
+                colors: [AppColors.primaryCyan, AppColors.primaryGradientEnd],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -180,27 +176,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     color: Colors.white,
                     size: 64,
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
+                  SizedBox(height: 24),
+                  Text(
                     'Welcome to Voltium',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      height: 1.1,
-                      letterSpacing: -1,
-                    ),
+                    style: AppTypography.displayLarge.copyWith(
+                        color: Colors.white, height: 1.1, letterSpacing: -1),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Your smart electric mobility companion. Ride greener, ride smarter.',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 18,
                       color: Colors.white70,
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   ElevatedButton(
                     key: const Key('getStartedButton'),
                     onPressed: () => _showConsentBottomSheet(context),
@@ -214,12 +205,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       elevation: 8,
                       shadowColor: Colors.black.withValues(alpha: 0.3),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Get Started',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTypography.titleMedium,
                     ),
                   ),
                   const SizedBox(height: 24),

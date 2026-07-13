@@ -31,25 +31,25 @@ void main() {
   group('Rider Workflow Hub Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(RiderWorkflowHubScreen), findsOneWidget);
     });
 
     testWidgets('displays workflow title', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Workflow & Services'), findsOneWidget);
     });
 
     testWidgets('shows section headings', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.textContaining('verification'), findsWidgets);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

@@ -29,7 +29,7 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     // Verify phone input field exists
     expect(find.byKey(const Key('phoneInput')), findsOneWidget);

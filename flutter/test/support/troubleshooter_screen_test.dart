@@ -20,26 +20,26 @@ void main() {
   group('Troubleshooter Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(TroubleshooterScreen), findsOneWidget);
     });
 
     testWidgets('shows troubleshoot title', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Smart Troubleshooter'), findsOneWidget);
     });
 
     testWidgets('shows category selection prompt', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.textContaining('What issue are you experiencing?'),
           findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

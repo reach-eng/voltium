@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class OTPTimer extends StatefulWidget {
   final int seconds;
@@ -69,13 +71,9 @@ class _OTPTimerState extends State<OTPTimer> {
           Text(
             '$_remainingSeconds',
             style: widget.textStyle ??
-                TextStyle(
-                  color: widget.activeColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                AppTypography.titleSmall.copyWith(color: widget.activeColor),
           ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         GestureDetector(
           onTap: isActive ? _resend : null,
           child: Text(
@@ -83,7 +81,7 @@ class _OTPTimerState extends State<OTPTimer> {
             style: widget.textStyle?.copyWith(
                   color: isActive ? widget.activeColor : Colors.grey,
                 ) ??
-                TextStyle(
+                GoogleFonts.plusJakartaSans(
                   color: isActive ? widget.activeColor : Colors.grey,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -171,13 +169,13 @@ class _AnimatedOTPTimerState extends State<AnimatedOTPTimer>
                 backgroundColor: Colors.grey.shade300,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               _remainingSeconds > 0
                   ? '${(_remainingSeconds * (1 - _controller.value)).ceil()}s'
                   : widget.resendText,
               style: widget.textStyle ??
-                  TextStyle(
+                  GoogleFonts.plusJakartaSans(
                     color: _remainingSeconds > 0
                         ? Colors.grey
                         : widget.activeColor,

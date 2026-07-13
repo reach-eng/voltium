@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class EmergencySOSScreen extends ConsumerWidget {
   const EmergencySOSScreen({super.key});
@@ -30,7 +32,7 @@ class EmergencySOSScreen extends ConsumerWidget {
         elevation: 0,
         title: Text('Emergency SOS',
             style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                fontWeight: FontWeight.bold, color: AppColors.slate800)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -55,7 +57,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                   ],
                 ),
                 child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20),
+                    color: AppColors.slate800, size: 20),
               ),
             ),
           ),
@@ -66,9 +68,10 @@ class EmergencySOSScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
             GestureDetector(
               onLongPress: () {
+                PostHogService.capture('emergency_sos_triggered');
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('SOS Alert Triggered! Help is on the way.'),
@@ -103,10 +106,11 @@ class EmergencySOSScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'Press and hold to trigger an emergency alert',
-              style: GoogleFonts.inter(color: AppColors.slate500, fontSize: 16),
+              style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.slate500, fontSize: 16),
             ),
             const SizedBox(height: 64),
             // Personal emergency contact (from profile).
@@ -116,7 +120,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                 icon: Icons.person,
                 title: 'My Emergency Contact',
                 number: emergencyContact.toString(),
-                color: const Color(0xFFDC2626),
+                color: AppColors.errorRed,
                 isFullWidth: true,
                 onTap: () => _callNumber(emergencyContact.toString()),
               ),
@@ -187,17 +191,15 @@ class EmergencySOSScreen extends ConsumerWidget {
             ? Row(
                 children: [
                   Icon(icon, color: color, size: 32),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title,
-                            style: GoogleFonts.plusJakartaSans(
-                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(title, style: AppTypography.titleSmall),
                         Text(number,
-                            style:
-                                GoogleFonts.inter(color: AppColors.slate500)),
+                            style: GoogleFonts.plusJakartaSans(
+                                color: AppColors.slate500)),
                       ],
                     ),
                   ),
@@ -207,12 +209,13 @@ class EmergencySOSScreen extends ConsumerWidget {
             : Column(
                 children: [
                   Icon(icon, color: color, size: 32),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(title,
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold)),
                   Text(number,
-                      style: GoogleFonts.inter(color: AppColors.slate500)),
+                      style: GoogleFonts.plusJakartaSans(
+                          color: AppColors.slate500)),
                   const SizedBox(height: 8),
                   Icon(Icons.call, color: color, size: 18),
                 ],

@@ -12,7 +12,7 @@ void main() {
             width: 100, height: 100, child: Placeholder()), // Mocked fallback
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
     await expectLater(
       find.byType(SizedBox),
       matchesGoldenFile('goldens/otp_blocks_golden_test_default.png'),

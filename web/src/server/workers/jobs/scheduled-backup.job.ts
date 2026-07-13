@@ -39,13 +39,13 @@ export const scheduledBackupJob = {
       }
 
       // Check maintenance mode
-      const maintenanceSetting = await db.setting.findUnique({ where: { key: 'maintenanceMode' } });
+      const maintenanceSetting = await db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } });
       if (maintenanceSetting?.value === 'true') {
         return { ran: false, reason: 'Maintenance mode is active' };
       }
 
       // Check backup lock — a restore operation may be in progress
-      const backupLock = await db.setting.findUnique({ where: { key: 'backupLock' } });
+      const backupLock = await db.systemSetting.findUnique({ where: { key: 'BACKUP_LOCK_STATUS' } });
       if (backupLock?.value === 'RESTORE_RUNNING') {
         return { ran: false, reason: 'Restore operation is in progress — backup skipped' };
       }
@@ -114,11 +114,11 @@ export const scheduledBackupJob = {
         );
 
         // Clear any previous failure alert
-        await db.setting
+        await db.systemSetting
           .upsert({
             where: { key: 'LAST_BACKUP_FAILURE' },
             update: { value: '' },
-            create: { key: 'LAST_BACKUP_FAILURE', value: '' },
+            create: { key: 'LAST_BACKUP_FAILURE', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           })
           .catch(() => {});
 
@@ -142,11 +142,11 @@ export const scheduledBackupJob = {
           at: clock.now().toISOString(),
           scheduleId: schedule.id,
         });
-        await db.setting
+        await db.systemSetting
           .upsert({
             where: { key: 'LAST_BACKUP_FAILURE' },
             update: { value: failurePayload },
-            create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload },
+            create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
           })
           .catch(() => {});
 

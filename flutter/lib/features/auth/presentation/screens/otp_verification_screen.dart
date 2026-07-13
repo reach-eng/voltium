@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:voltium_rider/main.dart';
@@ -11,8 +10,11 @@ import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/widgets/spark_otp_input.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 /// Matches web OtpScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -30,12 +32,15 @@ class OtpVerificationScreen extends StatefulWidget {
   final bool isLogin;
   final VoidCallback? onBack;
 
+  final String? referralCode;
+
   const OtpVerificationScreen({
     super.key,
     this.onNext,
     this.phoneNumber = '+91 98765 43210',
     this.isLogin = false,
     this.onBack,
+    this.referralCode,
   });
 
   @override
@@ -44,12 +49,11 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     with TickerProviderStateMixin {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final GlobalKey<SparkOtpInputState> _otpKey = GlobalKey<SparkOtpInputState>();
 
   bool _isLoading = false;
   bool _isVerifyPressed = false;
+  bool _isOtpComplete = false;
   int _resendCountdown = 30;
   Timer? _countdownTimer;
 
@@ -89,12 +93,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   @override
   void dispose() {
     _countdownTimer?.cancel();
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var n in _focusNodes) {
-      n.dispose();
-    }
     _bounceCtrl.dispose();
     _entryCtrl.dispose();
     super.dispose();
@@ -115,20 +113,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     });
   }
 
-  void _onChanged(String value, int index) {
-    if (value.length == 1 && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    }
-    if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-    setState(() {});
+  void _onOtpChanged(String value) {
+    setState(() {
+      _isOtpComplete = value.length == 6;
+    });
   }
 
-  bool get _isComplete => _controllers.every((c) => c.text.isNotEmpty);
-
   Future<void> _handleVerify() async {
-    final code = _controllers.map((c) => c.text).join();
+    final code = _otpKey.currentState?.value ?? '';
     if (code.length != 6) return;
 
     setState(() => _isLoading = true);
@@ -159,9 +151,25 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         await CacheService().cacheRider(rider.toCacheMap());
         if (!mounted) return;
         context.read<AppProvider>().setRider(rider);
+        if (rider.riderId.isNotEmpty) {
+          await PostHogService.identify(rider.riderId, properties: {
+            'lifecycle_status': rider.lifecycleStatus,
+            'account_status': rider.accountStatus.name,
+          });
+        }
+        await PostHogService.capture('otp_verified', properties: {
+          'is_new_rider': isNewRider.toString(),
+        });
+        if (isNewRider) {
+          await PostHogService.capture('signup_completed', properties: {
+            if (widget.referralCode != null)
+              'referral_code': widget.referralCode!,
+          });
+        }
         widget.onNext?.call(isNewRider);
       }
     } catch (e) {
+      PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
         String errorMsg = 'Failed to verify OTP. Please try again.';
         if (e is ApiException) {
@@ -184,13 +192,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
       await VoltiumApiService().sendOtp(phone: phone);
+      PostHogService.capture('otp_resent');
       if (mounted) {
-        for (var c in _controllers) {
-          c.clear();
-        }
-        setState(() => _resendCountdown = 30);
+        _otpKey.currentState?.clear();
+        setState(() {
+          _resendCountdown = 30;
+          _isOtpComplete = false;
+        });
         _startCountdown();
-        _focusNodes[0].requestFocus();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('OTP code resent successfully!'),
@@ -287,7 +296,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                       // Centered brand name
                       Text(
                         'Voltium',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           color: AppColors.onSurface,
@@ -375,18 +384,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                             children: [
                               Text(
                                 widget.isLogin ? 'Welcome Back!' : 'Verify OTP',
-                                style: GoogleFonts.inter(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.onSurface,
-                                  letterSpacing: -0.5,
-                                ),
+                                style: AppTypography.headingMedium.copyWith(
+                                    color: AppColors.onSurface,
+                                    letterSpacing: -0.5),
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12),
                               RichText(
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15,
                                     color: AppColors.onSurfaceVariant,
                                     height: 1.6,
@@ -399,11 +405,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                     ),
                                     TextSpan(
                                       text: widget.phoneNumber,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.primary,
-                                      ),
+                                      style: AppTypography.buttonMedium
+                                          .copyWith(color: AppColors.primary),
                                     ),
                                   ],
                                 ),
@@ -414,83 +417,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
 
                         const SizedBox(height: 48),
 
-                        // OTP Input boxes
+                        // Spark OTP Input — electric glow per digit, chain-lightning on complete
                         FadeTransition(
                           opacity: CurvedAnimation(
                             parent: _entryCtrl,
                             curve: const Interval(0.2, 0.9),
                           ),
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
-                              for (int i = 0; i < 6; i++) {
-                                if (_controllers[i].text.isEmpty) {
-                                  _focusNodes[i].requestFocus();
-                                  break;
-                                }
-                                if (i == 5) _focusNodes[5].requestFocus();
-                              }
-                            },
-                            child: Row(
-                              key: const Key('otpInputRow'),
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(6, (index) {
-                                return ClipRRect(
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: BackdropFilter(
-                                    filter: ui.ImageFilter.blur(
-                                        sigmaX: 16, sigmaY: 16),
-                                    child: Container(
-                                      width: 48,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.7),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: _focusNodes[index].hasFocus
-                                              ? AppColors.primary
-                                              : Colors.white
-                                                  .withValues(alpha: 0.4),
-                                          width: _focusNodes[index].hasFocus
-                                              ? 2.0
-                                              : 1.5,
-                                        ),
-                                        boxShadow: AppShadows.glass,
-                                      ),
-                                      child: TextFormField(
-                                        key: ValueKey('otp_box_$index'),
-                                        controller: _controllers[index],
-                                        focusNode: _focusNodes[index],
-                                        keyboardType: TextInputType.number,
-                                        textAlign: TextAlign.center,
-                                        maxLength: 1,
-                                        obscureText: false,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter
-                                              .digitsOnly,
-                                        ],
-                                        onChanged: (v) => _onChanged(v, index),
-                                        style: GoogleFonts.inter(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.onSurface,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          counterText: '',
-                                          border: InputBorder.none,
-                                          enabledBorder: InputBorder.none,
-                                          focusedBorder: InputBorder.none,
-                                          filled: true,
-                                          fillColor: Colors.transparent,
-                                          contentPadding: EdgeInsets.zero,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
+                          child: SparkOtpInput(
+                            key: _otpKey,
+                            onCompleted: (_) => _handleVerify(),
+                            onChanged: _onOtpChanged,
+                            autoFocus: true,
                           ),
                         ),
 
@@ -501,14 +438,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                           children: [
                             Text(
                               "DIDN'T RECEIVE THE CODE?",
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.2,
-                                color: AppColors.onSurfaceVariant,
-                              ),
+                              style: AppTypography.bodySmallStrong.copyWith(
+                                  letterSpacing: 1.2,
+                                  color: AppColors.onSurfaceVariant),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             GestureDetector(
                               key: const Key('resendCodeButton'),
                               onTap:
@@ -520,13 +454,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                   _resendCountdown > 0
                                       ? 'Resend in ${_resendCountdown}s'
                                       : 'Resend Code',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w800,
-                                    color: _resendCountdown > 0
-                                        ? AppColors.onSurfaceDisabled
-                                        : AppColors.primary,
-                                  ),
+                                  style: AppTypography.buttonMedium.copyWith(
+                                      color: _resendCountdown > 0
+                                          ? AppColors.onSurfaceDisabled
+                                          : AppColors.primary),
                                 ),
                               ),
                             ),
@@ -566,14 +497,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           child: GestureDetector(
             key: const Key('verifyOtpButton'),
             behavior: HitTestBehavior.opaque,
-            onTapDown: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
-                ? (_) => setState(() => _isVerifyPressed = true)
-                : null,
-            onTapUp: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+            onTapDown:
+                (VoltiumApp.isTestMode || (_isOtpComplete && !_isLoading))
+                    ? (_) => setState(() => _isVerifyPressed = true)
+                    : null,
+            onTapUp: (VoltiumApp.isTestMode || (_isOtpComplete && !_isLoading))
                 ? (_) => setState(() => _isVerifyPressed = false)
                 : null,
             onTapCancel: () => setState(() => _isVerifyPressed = false),
-            onTap: (VoltiumApp.isTestMode || (_isComplete && !_isLoading))
+            onTap: (VoltiumApp.isTestMode || (_isOtpComplete && !_isLoading))
                 ? _handleVerify
                 : null,
             child: AnimatedScale(
@@ -581,14 +513,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeOutCubic,
               child: AnimatedOpacity(
-                opacity: (_isComplete && !_isLoading) ? 1.0 : 0.4,
+                opacity: (_isOtpComplete && !_isLoading) ? 1.0 : 0.4,
                 duration: const Duration(milliseconds: 200),
                 child: Container(
                   height: 56,
                   decoration: BoxDecoration(
                     gradient: AppGradients.primary,
                     borderRadius: BorderRadius.circular(999),
-                    boxShadow: (_isComplete && !_isLoading)
+                    boxShadow: (_isOtpComplete && !_isLoading)
                         ? AppShadows.primaryButton
                         : null,
                   ),
@@ -607,11 +539,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                             children: [
                               Text(
                                 'Verify & Proceed',
-                                style: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
+                                style: AppTypography.buttonMedium
+                                    .copyWith(color: Colors.white),
                               ),
                               const SizedBox(width: 8),
                               const Icon(

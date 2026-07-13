@@ -18,6 +18,7 @@ import 'package:voltium_rider/features/dashboard/presentation/providers/engageme
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
@@ -37,8 +38,8 @@ class AppProvider extends ChangeNotifier {
   late final VoltiumApiClient voltiumApiClient;
   late final FilesRepository filesRepository;
 
-  AppProvider({String? riderId, String? phone}) {
-    apiClient = ApiClient();
+  AppProvider({String? riderId, String? phone, ApiClient? injectedApiClient}) {
+    apiClient = injectedApiClient ?? ApiClient();
     voltiumApiClient = VoltiumApiClient(apiClient);
     filesRepository = FilesRepository(apiClient, voltiumApiClient);
     final walletRepository = WalletRepositoryImpl(apiClient, voltiumApiClient);
@@ -128,8 +129,17 @@ class AppProvider extends ChangeNotifier {
     engagementProvider.initEngagementData();
     await devicePolicyProvider.checkSystemPermissions();
 
-    if (rider != null && !rider!.pickupDone) {
-      riderProvider.startOnboardingPoll();
+    if (rider != null) {
+      // Re-identify the returning user for PostHog analytics
+      if (rider!.id != null) {
+        await PostHogService.identify(rider!.id!, properties: {
+          'phone': rider!.phone,
+        });
+      }
+
+      if (!rider!.pickupDone) {
+        riderProvider.startOnboardingPoll();
+      }
     }
     if (rider != null && Platform.isAndroid) {
       devicePolicyProvider.startSecurityFlagsPoll(
@@ -186,6 +196,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    await PostHogService.reset();
     await apiClient.storage.clearSession();
     riderProvider.logout();
     walletProvider.logout();

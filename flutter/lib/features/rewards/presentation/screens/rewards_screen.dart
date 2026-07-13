@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class RewardsScreen extends ConsumerStatefulWidget {
   const RewardsScreen({super.key});
@@ -52,7 +53,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
         elevation: 0,
         title: Text('Rewards',
             style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                fontWeight: FontWeight.bold, color: AppColors.slate800)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -77,7 +78,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                   ],
                 ),
                 child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20),
+                    color: AppColors.slate800, size: 20),
               ),
             ),
           ),
@@ -164,17 +165,14 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                   );
                                 },
                               ),
-                              const SizedBox(width: 20),
+                              SizedBox(width: 20),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Total Points',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white70,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: AppTypography.bodyLarge
+                                        .copyWith(color: Colors.white70),
                                   ),
                                   Text(
                                     '$points',
@@ -200,19 +198,13 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                 children: [
                                   Text(
                                     '$currentTier Tier',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: AppTypography.bodyMediumEmphasis
+                                        .copyWith(color: Colors.white),
                                   ),
                                   Text(
                                     '$pointsToNext pts to next',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: AppTypography.bodySmall
+                                        .copyWith(color: Colors.white70),
                                   ),
                                 ],
                               ),
@@ -255,14 +247,11 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
             Text(
               'Available Rewards',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
-              ),
+              style:
+                  AppTypography.titleLarge.copyWith(color: AppColors.slate800),
             ),
             const SizedBox(height: 24),
             // Custom Empty State
@@ -279,8 +268,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                const Color(0xFF94A3B8).withValues(alpha: 0.1),
+                            color: AppColors.slate400.withValues(alpha: 0.1),
                             blurRadius: 24,
                             spreadRadius: 8,
                           )
@@ -308,20 +296,17 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
                       'No rewards unlocked yet',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF1E293B),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTypography.titleMedium
+                          .copyWith(color: AppColors.slate800),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       'Keep riding and completing milestones\nto unlock exclusive rewards.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppColors.slate500,
                         fontSize: 14,
                         height: 1.5,

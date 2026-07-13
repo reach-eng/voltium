@@ -24,10 +24,6 @@ vi.mock('@/server/modules/data-management/backup.service', () => ({
 
 vi.mock('@/lib/db', () => ({
   db: {
-    setting: {
-      upsert: vi.fn(),
-      update: vi.fn(),
-    },
     systemSetting: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
@@ -143,8 +139,8 @@ describe('Restore Safety Tests', () => {
         expect.objectContaining({ type: 'PRE_RESTORE' })
       );
       expect(backupService.setBackupLock).toHaveBeenCalledWith(true);
-      expect(db.setting.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({ create: { key: 'maintenanceMode', value: 'true' } })
+      expect(db.systemSetting.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ create: expect.objectContaining({ key: 'MAINTENANCE_MODE', value: 'true' }) })
       );
       expect(shell.restoreDatabase).toHaveBeenCalled();
       expect(result.status).toBe('COMPLETED');

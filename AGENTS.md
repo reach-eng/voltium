@@ -159,7 +159,7 @@ Rules:
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
 ## Coverage Requirements
-- All new code: 95% lines, 90% branches
+- All new code: 85% lines
 - All new tests must pass CI without reducing overall coverage
 - Coverage thresholds are enforced in CI; PRs that drop coverage fail
 

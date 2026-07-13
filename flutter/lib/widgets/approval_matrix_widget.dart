@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/lifecycle_rank.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 enum StepStatus { completed, pending, rejected, active }
 
@@ -31,6 +32,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final rank = lifecycleRank(rider);
     final isKycRejected = rider.kycStatus == KycStatus.rejected;
     final isPlanRejected = rider.planStatus == 'REJECTED';
@@ -100,20 +102,12 @@ class ApprovalMatrixWidget extends StatelessWidget {
           children: [
             Text(
               'Approval Matrix',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF1E293B),
-              ),
+              style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
             ),
             Text(
               '$completedCount/${steps.length} Done',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: AppColors.slate500,
-                letterSpacing: 0.5,
-              ),
+              style: AppTypography.overline
+                  .copyWith(color: colors.onSurfaceVariant, letterSpacing: 0.5),
             ),
           ],
         ),
@@ -125,7 +119,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final step = steps[index];
-            return _buildStepItem(step);
+            return _buildStepItem(context, colors, step);
           },
         ),
       ],
@@ -139,21 +133,22 @@ class ApprovalMatrixWidget extends StatelessWidget {
     return StepStatus.pending;
   }
 
-  Widget _buildStepItem(_StepData step) {
+  Widget _buildStepItem(
+      BuildContext context, ThemeColors colors, _StepData step) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: step.isDone
-            ? const Color(0xFFF0FDF4)
+            ? AppColors.successSurfaceLight
             : step.isRejected
-                ? const Color(0xFFFEF2F2)
-                : const Color(0xFFF8FAFC),
+                ? AppColors.errorSurface
+                : AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: step.isDone
-              ? const Color(0xFFDCFCE7)
+              ? AppColors.successSurface
               : step.isRejected
-                  ? const Color(0xFFFECACA)
+                  ? AppColors.errorBorder
                   : Colors.transparent,
         ),
       ),
@@ -168,7 +163,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                   ? AppColors.success
                   : step.isRejected
                       ? AppColors.error
-                      : AppColors.outlineVariant,
+                      : colors.outlineVariant,
             ),
             child: Center(
               child: step.isDone
@@ -178,37 +173,35 @@ class ApprovalMatrixWidget extends StatelessWidget {
                       : Icon(
                           step.icon,
                           size: 16,
-                          color: AppColors.slate400,
+                          color: colors.onSurfaceMuted,
                         ),
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   step.label,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.bodyCompactStrong.copyWith(
                     color: step.isDone
                         ? AppColors.successText
                         : step.isRejected
                             ? const Color(0xFF991B1B)
-                            : const Color(0xFF1E293B),
+                            : colors.onSurface,
                   ),
                 ),
                 if (step.subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     step.subtitle!,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: step.isRejected
                           ? AppColors.error
-                          : AppColors.slate500,
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -221,16 +214,13 @@ class ApprovalMatrixWidget extends StatelessWidget {
                 : step.isRejected
                     ? 'REJECTED'
                     : 'PENDING',
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.8,
-              color: step.isDone
-                  ? AppColors.success
-                  : step.isRejected
-                      ? AppColors.error
-                      : AppColors.slate400,
-            ),
+            style: AppTypography.microBadge.copyWith(
+                letterSpacing: 0.8,
+                color: step.isDone
+                    ? AppColors.success
+                    : step.isRejected
+                        ? AppColors.error
+                        : colors.onSurfaceMuted),
           ),
         ],
       ),

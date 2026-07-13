@@ -104,13 +104,13 @@ void main() {
   group('Active Rental Details Screen', () {
     testWidgets('rental details screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const RentalDetailsScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(RentalDetailsScreen), findsOneWidget);
     });
 
     testWidgets('rental details screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const RentalDetailsScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

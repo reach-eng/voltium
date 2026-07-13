@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/date_helpers.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Reusable active plan card with blue gradient.
 /// Displays subscription name, time remaining, and next recharge date.
@@ -25,7 +26,7 @@ class PlanCard extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+              colors: [AppColors.primary, AppColors.primaryDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -36,18 +37,14 @@ class PlanCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (!compact) ...[
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'CURRENT SUBSCRIPTION',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white70,
-                        letterSpacing: 1.0,
-                      ),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: Colors.white70, letterSpacing: 1.0),
                     ),
                     Icon(Icons.auto_graph, color: Colors.white, size: 24),
                   ],
@@ -66,12 +63,8 @@ class PlanCard extends StatelessWidget {
                     (currentPlan?.isNotEmpty ?? false)
                         ? currentPlan!.toUpperCase()
                         : 'NO PLAN',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                    ),
+                    style: AppTypography.bodySmallTracked
+                        .copyWith(color: Colors.white, letterSpacing: 1.2),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -85,14 +78,10 @@ class PlanCard extends StatelessWidget {
                         .join(' ')
                     : (currentPlan?.replaceAll('_', ' ').toUpperCase() ??
                         'WEEKLY PAYMENT'),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                ),
+                style: AppTypography.headingSmall
+                    .copyWith(color: Colors.white, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Row(
                 children: [
                   Expanded(
@@ -105,29 +94,23 @@ class PlanCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'TIME REMAINING',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF93C5FD),
-                              letterSpacing: 1,
-                            ),
+                            style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.primaryLightBlue,
+                                letterSpacing: 1),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             DateHelpers.computeTimeRemaining(planEndDate),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
+                            style: AppTypography.headingSmall
+                                .copyWith(color: Colors.white),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(16),
@@ -138,23 +121,17 @@ class PlanCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'NEXT RECHARGE',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF93C5FD),
-                              letterSpacing: 1,
-                            ),
+                            style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.primaryLightBlue,
+                                letterSpacing: 1),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             DateHelpers.computeNextRecharge(planEndDate),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
+                            style: AppTypography.headingSmall
+                                .copyWith(color: Colors.white),
                           ),
                         ],
                       ),

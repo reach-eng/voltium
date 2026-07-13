@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SearchBar extends StatefulWidget {
   final String hintText;
@@ -62,14 +63,15 @@ class _SearchBarState extends State<SearchBar> {
         children: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Icon(Icons.search, color: Color(0xFF667085), size: 20),
+            child: Icon(Icons.search, color: AppColors.textMuted, size: 20),
           ),
           Expanded(
             child: TextFormField(
               controller: _controller,
               decoration: InputDecoration(
                 hintText: widget.hintText,
-                hintStyle: const TextStyle(color: AppColors.onSurfaceDisabled),
+                hintStyle: GoogleFonts.plusJakartaSans(
+                    color: AppColors.onSurfaceDisabled),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -77,7 +79,8 @@ class _SearchBarState extends State<SearchBar> {
           ),
           if (_hasText)
             IconButton(
-              icon: const Icon(Icons.clear, size: 20, color: Color(0xFF667085)),
+              icon:
+                  const Icon(Icons.clear, size: 20, color: AppColors.textMuted),
               onPressed: () {
                 _controller.clear();
                 widget.onClear?.call();
@@ -116,7 +119,7 @@ class FilterChipList extends StatelessWidget {
               onSelected: (_) => onSelected(item),
               selectedColor: AppColors.primaryLighter,
               checkmarkColor: AppColors.primary,
-              labelStyle: TextStyle(
+              labelStyle: GoogleFonts.plusJakartaSans(
                 color:
                     isSelected ? AppColors.primary : AppColors.onSurfaceVariant,
               ),
@@ -152,11 +155,12 @@ class SortDropdown extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          icon: const Icon(Icons.sort, size: 20, color: Color(0xFF667085)),
+          icon: const Icon(Icons.sort, size: 20, color: AppColors.textMuted),
           items: options.map((option) {
             return DropdownMenuItem(
               value: option,
-              child: Text(option, style: const TextStyle(fontSize: 14)),
+              child: Text(option,
+                  style: GoogleFonts.plusJakartaSans(fontSize: 14)),
             );
           }).toList(),
           onChanged: onChanged,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Mutable entry for a single photo upload slot.
 class PhotoUploadEntry {
@@ -67,19 +67,20 @@ class AssignmentDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kSurfaceContainer,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: colors.onSurface.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+        border: Border.all(color: colors.surfaceSubtle, width: 1),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -87,25 +88,23 @@ class AssignmentDetailsCard extends StatelessWidget {
         children: [
           Text(
             'ASSIGNMENT DETAILS',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: kOutlineColor,
-              letterSpacing: 1.5,
-            ),
+            style: AppTypography.bodySmallStrong
+                .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           const SizedBox(height: 24),
-          buildInputLabel('SELECT HUB'),
+          buildInputLabel(context, 'SELECT HUB'),
           const SizedBox(height: 8),
-          buildHubDropdown(selectedHubId, hubs, onHubChanged),
+          buildHubDropdown(context, selectedHubId, hubs, onHubChanged),
           const SizedBox(height: 20),
-          buildInputLabel('TEAM LEADER'),
+          buildInputLabel(context, 'TEAM LEADER'),
           const SizedBox(height: 8),
-          buildTeamLeaderDropdown(selectedTeamLeader, onTeamLeaderChanged),
+          buildTeamLeaderDropdown(
+              context, selectedTeamLeader, onTeamLeaderChanged),
           const SizedBox(height: 20),
-          buildInputLabel('VEHICLE NUMBER'),
+          buildInputLabel(context, 'VEHICLE NUMBER'),
           const SizedBox(height: 8),
           buildVehicleDropdown(
+            context: context,
             hubSelected: isHubSelected,
             isLoadingVehicles: isLoadingVehicles,
             vehicleSelected: selectedVehicleId != null,
@@ -114,7 +113,7 @@ class AssignmentDetailsCard extends StatelessWidget {
             onTap: onVehicleTap,
           ),
           const SizedBox(height: 20),
-          buildInputLabel('EMERGENCY CONTACT'),
+          buildInputLabel(context, 'EMERGENCY CONTACT'),
           const SizedBox(height: 8),
           EmergencyContactField(
             controller: emergencyContactController,
@@ -126,7 +125,7 @@ class AssignmentDetailsCard extends StatelessWidget {
           ),
           if (isOtpSent && !isOtpVerified) ...[
             const SizedBox(height: 20),
-            buildInputLabel('ENTER 6-DIGIT OTP'),
+            buildInputLabel(context, 'ENTER 6-DIGIT OTP'),
             const SizedBox(height: 8),
             OtpGrid(controller: otpController),
             const SizedBox(height: 16),
@@ -136,11 +135,11 @@ class AssignmentDetailsCard extends StatelessWidget {
             ),
           ],
           if (isOtpVerified) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: kSuccessColor.withValues(alpha: 0.08),
+                color: AppColors.success.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -148,17 +147,14 @@ class AssignmentDetailsCard extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.check_circle,
-                    color: kSuccessColor,
+                    color: AppColors.success,
                     size: 16,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Emergency contact verified successfully',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: kSuccessColor,
-                    ),
+                    style: AppTypography.bodySmallEmphasis
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
@@ -211,19 +207,20 @@ class VehicleConditionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: kSurfaceContainer,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: colors.onSurface.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: const Color(0xFFF3F4F6), width: 1),
+        border: Border.all(color: colors.surfaceSubtle, width: 1),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -236,17 +233,14 @@ class VehicleConditionCard extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.camera_alt_outlined,
-                    color: kPrimaryColor,
+                    color: AppColors.primary,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Vehicle Condition',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: kOnSurfaceColor,
-                    ),
+                    style: AppTypography.titleSmall
+                        .copyWith(color: colors.onSurface),
                   ),
                 ],
               ),
@@ -258,24 +252,17 @@ class VehicleConditionCard extends StatelessWidget {
                 ),
                 child: Text(
                   'MANDATORY',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.error,
-                    letterSpacing: 0.5,
-                  ),
+                  style: AppTypography.bodySmallStrong
+                      .copyWith(color: AppColors.error, letterSpacing: 0.5),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             'Upload high-quality pictures from the requested angles',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: kOutlineColor,
-            ),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.onSurfaceMuted),
           ),
           const SizedBox(height: 24),
           Column(
@@ -343,23 +330,17 @@ class VehicleConditionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Text(
             'Photo with Vehicle',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: kOnSurfaceColor,
-            ),
+            style: AppTypography.bodyCompactEmphasis
+                .copyWith(color: colors.onSurface),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Take a selfie next to the vehicle before riding',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: kOutlineColor,
-            ),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.onSurfaceMuted),
           ),
           const SizedBox(height: 8),
           PhotoUploadCard(

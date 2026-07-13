@@ -23,6 +23,32 @@ class EngagementProvider extends ChangeNotifier {
     if (kDebugMode) {
       _rewardPoints = 1250;
       _paymentStreak = 3;
+      _notifications = [
+        AppNotification(
+          id: '1',
+          title: 'Welcome to Voltium',
+          message: 'Enjoy your first ride with us!',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+          isRead: false,
+        ),
+        AppNotification(
+          id: '2',
+          title: 'Ride completed',
+          message: 'Your ride has been successfully completed.',
+          type: AppNotificationType.info,
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          isRead: true,
+        ),
+        AppNotification(
+          id: '3',
+          title: 'Special offer',
+          message: 'Get 20% off on your next ride!',
+          type: AppNotificationType.promotion,
+          createdAt: DateTime.now().subtract(const Duration(days: 1)),
+          isRead: true,
+        ),
+      ];
     }
     _fetchAll();
   }

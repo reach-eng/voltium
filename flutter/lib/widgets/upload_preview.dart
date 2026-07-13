@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:universal_io/io.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class UploadPreview extends StatelessWidget {
   final String? filePath;
@@ -32,7 +33,7 @@ class UploadPreview extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasFile ? const Color(0xFF16A34A) : AppColors.outlineVariant,
+            color: hasFile ? AppColors.successGreen : AppColors.outlineVariant,
           ),
         ),
         child: Stack(
@@ -72,14 +73,11 @@ class UploadPreview extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF16A34A),
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.smallBadge
+                              .copyWith(color: AppColors.successGreen),
                         ),
                       ],
                     )
@@ -88,17 +86,14 @@ class UploadPreview extends StatelessWidget {
                       children: [
                         Icon(
                           isLoading ? Icons.upload : Icons.add_photo_alternate,
-                          color: const Color(0xFF667085),
+                          color: AppColors.textMuted,
                           size: 28,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.smallBadge
+                              .copyWith(color: AppColors.onSurfaceVariant),
                         ),
                       ],
                     ),

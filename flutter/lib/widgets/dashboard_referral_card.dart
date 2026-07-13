@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Reusable referral card with green gradient, code display, and copy/share actions.
 class ReferralCard extends StatelessWidget {
@@ -50,24 +51,19 @@ class ReferralCard extends StatelessWidget {
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 14),
-                  const Expanded(
+                  SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Refer & Earn',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          style: AppTypography.titleSmall
+                              .copyWith(color: Colors.white),
                         ),
                         Text(
                           'Share your code with friends',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                          style: AppTypography.bodySmall.copyWith(
                             color: Color(0xFFA7F3D0),
                           ),
                         ),
@@ -76,7 +72,7 @@ class ReferralCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -94,22 +90,16 @@ class ReferralCard extends StatelessWidget {
                       children: [
                         Text(
                           'YOUR CODE',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                          style: AppTypography.bodySmallStrong.copyWith(
                             color: Colors.white.withValues(alpha: 0.8),
                             letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           referralCode,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 1.0,
-                          ),
+                          style: AppTypography.titleSmall.copyWith(
+                              color: Colors.white, letterSpacing: 1.0),
                         ),
                       ],
                     ),

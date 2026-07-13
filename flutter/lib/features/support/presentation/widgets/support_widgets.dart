@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/models/support_model.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 String _getMonth(int month) {
   const months = [
@@ -110,28 +112,20 @@ class RaiseTicketCard extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
+              SizedBox(width: 12),
+              Text(
                 'Raise a Ticket',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: AppTypography.titleMedium.copyWith(color: Colors.white),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Text(
+          SizedBox(height: 20),
+          Text(
             'ISSUE TYPE',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+            style: AppTypography.bodySmallTracked
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
@@ -144,16 +138,13 @@ class RaiseTicketCard extends StatelessWidget {
                 key: const Key('issueTypeDropdown'),
                 isExpanded: true,
                 value: selectedCategory,
-                dropdownColor: const Color(0xFF1E293B),
+                dropdownColor: AppColors.slate800,
                 icon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white70,
                 ),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+                style: AppTypography.bodyMediumEmphasis
+                    .copyWith(color: Colors.white),
                 onChanged: (value) {
                   if (value != null) onCategoryChanged(value);
                 },
@@ -163,17 +154,13 @@ class RaiseTicketCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'DESCRIPTION',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+            style: AppTypography.bodySmallTracked
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
@@ -190,12 +177,13 @@ class RaiseTicketCard extends StatelessWidget {
                 focusNode: descriptionFocusNode,
                 controller: messageController,
                 maxLines: 3,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   hintText: 'Describe the issue...',
-                  hintStyle: const TextStyle(color: Colors.white38),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white38),
                   border: InputBorder.none,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.mic_none, color: Colors.white70),
@@ -214,15 +202,11 @@ class RaiseTicketCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'ATTACH PHOTOS (MAX 5)',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Colors.white60,
-              letterSpacing: 1.2,
-            ),
+            style: AppTypography.bodySmallTracked
+                .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -289,7 +273,7 @@ class RaiseTicketCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           ElevatedButton(
             key: const Key('raiseTicketButton'),
             onPressed: isSubmitting ? null : onSubmit,
@@ -311,9 +295,9 @@ class RaiseTicketCard extends StatelessWidget {
                       color: AppColors.primary,
                     ),
                   )
-                : const Text(
+                : Text(
                     'RAISE TICKET',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1,
                     ),
@@ -383,7 +367,7 @@ class TicketListItem extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,15 +378,12 @@ class TicketListItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             ticket.subject,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1E293B),
-                            ),
+                            style: AppTypography.bodyMediumEmphasis
+                                .copyWith(color: AppColors.slate800),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -414,16 +395,13 @@ class TicketListItem extends StatelessWidget {
                           ),
                           child: Text(
                             ticket.status.replaceAll('_', ' '),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: statusColor,
-                            ),
+                            style: AppTypography.bodySmallTracked
+                                .copyWith(color: statusColor),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(
@@ -431,21 +409,20 @@ class TicketListItem extends StatelessWidget {
                           size: 10,
                           color: AppColors.slate400,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           '${ticket.createdAt.day} ${_getMonth(ticket.createdAt.month)}',
-                          style: const TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             color: AppColors.slate500,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '• ${ticket.ticketId}',
-                          style: const TextStyle(
+                          style: GoogleFonts.ibmPlexMono(
                             fontSize: 12,
                             color: AppColors.slate400,
-                            fontFamily: 'monospace',
                           ),
                         ),
                       ],
@@ -456,10 +433,10 @@ class TicketListItem extends StatelessWidget {
             ],
           ),
           ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               ticket.message,
-              style: const TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 color: AppColors.slate500,
                 height: 1.5,
@@ -522,14 +499,11 @@ class TopActionCard extends StatelessWidget {
                   ),
                   child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyCompactStrong
+                      .copyWith(color: AppColors.slate800),
                 ),
               ],
             ),

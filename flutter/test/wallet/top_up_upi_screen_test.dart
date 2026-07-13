@@ -36,31 +36,31 @@ void main() {
   group('Top Up UPI Screen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(TopUpUpiScreen), findsOneWidget);
     });
 
     testWidgets('displays step info', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
-      expect(find.text('Step 3 of 3'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.textContaining('Step 2 of 2'), findsOneWidget);
     });
 
     testWidgets('shows top up amount', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.textContaining('500'), findsWidgets);
     });
 
     testWidgets('shows submit proof button', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Submit Proof'), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

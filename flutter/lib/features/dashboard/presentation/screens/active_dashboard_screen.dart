@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:voltium_rider/widgets/notification_bell.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/widgets/cards.dart';
@@ -12,16 +13,17 @@ import 'package:voltium_rider/widgets/dashboard_profile_card.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
+import 'package:voltium_rider/widgets/error_state_widget.dart';
 import 'package:voltium_rider/widgets/dashboard_tl_card.dart';
 import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
-import 'package:voltium_rider/widgets/dashboard_sheets.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
 import 'package:voltium_rider/widgets/ui_animations.dart';
-import 'package:google_fonts/google_fonts.dart';
-
+import 'package:voltium_rider/widgets/card_parallax_tilt.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Active Dashboard screen for the Voltium Rider App.
 ///
@@ -37,8 +39,9 @@ class ActiveDashboardScreen extends ConsumerStatefulWidget {
 class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.surfaceBright,
       body: const Stack(
         children: [
           _DashboardStateWidget(),
@@ -84,39 +87,11 @@ class _DashboardErrorWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: GlassCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Unable to connect to command center: $errorMessage',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => ref.read(appProvider).refresh(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ErrorStateWidget.network(
+      message: errorMessage != null
+          ? 'Unable to connect: $errorMessage'
+          : 'Unable to connect to command center.',
+      onRetry: () => ref.read(appProvider).refresh(),
     );
   }
 }
@@ -131,13 +106,9 @@ class _DashboardEmptyWidget extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'No data available',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTypography.titleMedium.copyWith(color: Colors.white),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -157,44 +128,11 @@ class _DashboardContentWidget extends ConsumerWidget {
   const _DashboardContentWidget({required this.rider});
 
   Widget _buildNotificationBell(BuildContext context) {
-    return InkWell(
-      key: const Key('notificationBell'),
-      borderRadius: BorderRadius.circular(22),
+    return NotificationBell(
+      hasUnread: true,
       onTap: () {
         AppNavigator.push(context, const NotificationsScreen());
       },
-      child: Container(
-        width: 44,
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.05),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            const Icon(
-              Icons.notifications_none_rounded,
-              size: 20,
-              color: AppColors.onSurface,
-            ),
-            Positioned(
-              right: -2,
-              top: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -210,14 +148,11 @@ class _DashboardContentWidget extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.cloud_off, size: 14, color: Colors.amber.shade700),
-          const SizedBox(width: 6),
+          SizedBox(width: 6),
           Text(
             'Showing cached data',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.amber.shade700,
-              fontWeight: FontWeight.w500,
-            ),
+            style:
+                AppTypography.bodySmall.copyWith(color: Colors.amber.shade700),
           ),
         ],
       ),
@@ -226,6 +161,7 @@ class _DashboardContentWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final walletMinTopup =
         ref.watch(appProvider.select((p) => p.walletMinTopup));
     final dataState = ref.watch(appProvider.select((p) => p.dataState));
@@ -233,7 +169,7 @@ class _DashboardContentWidget extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.primary,
-      backgroundColor: Colors.white,
+      backgroundColor: colors.card,
       onRefresh: () => ref.read(appProvider).refresh(),
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -260,21 +196,13 @@ class _DashboardContentWidget extends ConsumerWidget {
                 children: [
                   Text(
                     '$greeting,',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 0.5,
-                    ),
+                    style: AppTypography.bodyMediumEmphasis.copyWith(
+                        color: AppColors.onSurfaceVariant, letterSpacing: 0.5),
                   ),
                   Text(
                     displayName,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.onSurface,
-                      letterSpacing: -0.5,
-                    ),
+                    style: AppTypography.headingMedium.copyWith(
+                        color: AppColors.onSurface, letterSpacing: -0.5),
                   ),
                 ],
               );
@@ -325,24 +253,26 @@ class _DashboardContentWidget extends ConsumerWidget {
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 3,
-                    child: WalletCard(
-                      walletBalance: rider.walletBalance,
-                      requiredPayment: rider.activeRentalPlanPrice > 0
-                          ? rider.activeRentalPlanPrice
-                          : walletMinTopup,
-                      paymentStreak: rider.paymentStreak,
-                      currentPlan: rider.currentPlan,
-                      planEndDate: rider.planEndDate,
-                      onTopUp: () {
-                        AppNavigator.push(context, const TopUpFlow());
-                      },
+                    child: CardParallaxTilt(
+                      child: WalletCard(
+                        walletBalance: rider.walletBalance,
+                        requiredPayment: rider.activeRentalPlanPrice > 0
+                            ? rider.activeRentalPlanPrice
+                            : walletMinTopup,
+                        paymentStreak: rider.paymentStreak,
+                        currentPlan: rider.currentPlan,
+                        planEndDate: rider.planEndDate,
+                        onTopUp: () {
+                          AppNavigator.push(context, const TopUpFlow());
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 4,
                     child: ReferralCard(
-                      referralCode: rider.referralCode ?? 'VOLT123',
+                      referralCode: rider.referralCode ?? '',
                     ),
                   ),
                   const SizedBox(height: 12),

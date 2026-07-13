@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/rider_model.dart';
@@ -14,6 +15,7 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import '../helpers/test_helpers.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -24,6 +26,7 @@ void main() {
   }
 
   testWidgets('Admin approval wait after security deposit', (tester) async {
+    final app = AppRobots(tester);
     // =============================
     // PHASE 1: Auth & Onboarding
     // =============================
@@ -32,10 +35,16 @@ void main() {
     await settle(tester);
 
     // Verify we landed on preDashboard after onboarding.
-    await waitFor(tester, find.byKey(const ValueKey('preDashboard')),
-        timeout: const Duration(seconds: 30),);
-    expect(find.byKey(const ValueKey('preDashboard')), findsOneWidget,
-        reason: 'Should be on preDashboard after onboarding',);
+    await waitFor(
+      tester,
+      app.dashboard.preDashboardScreen,
+      timeout: const Duration(seconds: 30),
+    );
+    expect(
+      app.dashboard.preDashboardScreen,
+      findsOneWidget,
+      reason: 'Should be on preDashboard after onboarding',
+    );
 
     // =============================
     // PHASE 2: Security Deposit
@@ -47,27 +56,29 @@ void main() {
     await settle(tester);
 
     // Choose Security Deposit.
-    await waitFor(tester, find.byKey(const Key('securityDepositPurposeCard')));
-    await smartTap(tester, find.byKey(const Key('securityDepositPurposeCard')));
+    await waitFor(tester, app.wallet.securityDepositPurposeCard);
+    await smartTap(tester, app.wallet.securityDepositPurposeCard);
     await settle(tester);
 
     // Proceed to amount selection.
     await scrollAndTap(
-        tester, find.byKey(const Key('continueToPaymentButton')),);
+      tester,
+      app.onboarding.continueToPaymentButton,
+    );
     await settle(tester);
-    await waitFor(tester, find.byKey(const Key('amount2000')));
-    await smartTap(tester, find.byKey(const Key('amount2000')));
+    await waitFor(tester, app.wallet.amount2000);
+    await smartTap(tester, app.wallet.amount2000);
     await settle(tester);
 
     // Proceed to UPI payment.
-    await scrollAndTap(tester, find.byKey(const Key('proceedToUpiButton')));
+    await scrollAndTap(tester, app.wallet.proceedToUpiButton);
     await settle(tester);
 
     // Upload proof and submit.
-    await waitFor(tester, find.byKey(const Key('uploadProofArea')));
-    await smartTap(tester, find.byKey(const Key('uploadProofArea')));
+    await waitFor(tester, app.onboarding.uploadProofArea);
+    await smartTap(tester, app.onboarding.uploadProofArea);
     await settle(tester);
-    await scrollAndTap(tester, find.byKey(const Key('submitProofButton')));
+    await scrollAndTap(tester, app.onboarding.submitProofButton);
     await settle(tester);
 
     // Return to preDashboard (receipt may or may not appear).
@@ -87,11 +98,13 @@ void main() {
     final riderProvider = getRiderProvider(tester);
     final currentRider = riderProvider.rider;
     if (currentRider != null) {
-      riderProvider.updateRider(currentRider.copyWith(
-        depositDone: true,
-        kycDone: true,
-        kycStatus: KycStatus.verified,
-      ),);
+      riderProvider.updateRider(
+        currentRider.copyWith(
+          depositDone: true,
+          kycDone: true,
+          kycStatus: KycStatus.verified,
+        ),
+      );
       await settle(tester);
       await tester.pump(const Duration(seconds: 1));
     }
@@ -127,18 +140,27 @@ void main() {
       if (depositApproved && kycApproved) break;
     }
 
-    expect(depositApproved, isTrue,
-        reason: 'Admin should approve the Security Deposit within timeout',);
-    expect(kycApproved, isTrue,
-        reason: 'Admin should approve KYC within timeout',);
+    expect(
+      depositApproved,
+      isTrue,
+      reason: 'Admin should approve the Security Deposit within timeout',
+    );
+    expect(
+      kycApproved,
+      isTrue,
+      reason: 'Admin should approve KYC within timeout',
+    );
 
     // =============================
     // PHASE 3: Continue to Plan Selection
     // =============================
     await waitFor(tester, find.text('BOOK VEHICLE'));
     await smartTap(tester, find.text('BOOK VEHICLE'));
-    expect(find.text('BOOK VEHICLE'), findsAtLeastNWidgets(1),
-        reason: 'BOOK VEHICLE should appear after admin approvals',);
+    expect(
+      find.text('BOOK VEHICLE'),
+      findsAtLeastNWidgets(1),
+      reason: 'BOOK VEHICLE should appear after admin approvals',
+    );
 
     // Simulate pickup completion
     final riderProvider2 = getRiderProvider(tester);
@@ -153,7 +175,10 @@ void main() {
     final pickupLabel = find.text('Pickup');
     final pickupStatus =
         find.descendant(of: pickupLabel, matching: find.text('COMPLETED'));
-    expect(pickupStatus, findsOneWidget,
-        reason: 'Pickup should be completed after admin approvals',);
+    expect(
+      pickupStatus,
+      findsOneWidget,
+      reason: 'Pickup should be completed after admin approvals',
+    );
   });
 }

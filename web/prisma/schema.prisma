@@ -24,6 +24,7 @@ model Admin {
 
   @@index([role])
   @@index([email])
+  @@map("admins")
 }
 
 model AdminSession {
@@ -37,6 +38,7 @@ model AdminSession {
   @@index([adminId])
   @@index([token])
   @@index([expiresAt])
+  @@map("admin_sessions")
 }
 
 model RolePermission {
@@ -48,6 +50,7 @@ model RolePermission {
   @@unique([role, permission])
   @@index([role])
   @@index([permission])
+  @@map("role_permissions")
 }
 
 model Hub {
@@ -61,6 +64,7 @@ model Hub {
   vehicles  Vehicle[]
 
   @@index([isActive])
+  @@map("hubs")
 }
 
 model Vehicle {
@@ -88,6 +92,7 @@ model Vehicle {
   @@index([hubId])
   @@index([vehicleId])
   @@index([hubId, status])
+  @@map("vehicles")
 }
 
 model Shift {
@@ -102,6 +107,8 @@ model Shift {
   updatedAt   DateTime      @updatedAt
   deletedAt   DateTime?
   leases      RentalLease[]
+
+  @@map("shifts")
 }
 
 /// RentalPlan represents a recurring subscription. 
@@ -217,6 +224,7 @@ model Rider {
   @@index([referredBy])
   @@index([teamLeader])
   @@index([phone, lifecycleStatus])
+  @@map("riders")
 }
 
 model VehicleReturn {
@@ -242,6 +250,7 @@ model VehicleReturn {
   @@index([vehicleId])
   @@index([status])
   @@index([riderId, status])
+  @@map("vehicle_returns")
 }
 
 model KycProfile {
@@ -268,6 +277,7 @@ model KycProfile {
   @@index([status])
   @@index([riderId])
   @@index([status, riderId])
+  @@map("kyc_profiles")
 }
 
 model Guarantor {
@@ -294,6 +304,7 @@ model Guarantor {
 
   @@index([riderId])
   @@index([status])
+  @@map("guarantors")
 }
 
 model Wallet {
@@ -311,6 +322,7 @@ model Wallet {
 
   @@index([riderId])
   @@index([depositStatus])
+  @@map("wallets")
 }
 
 model WalletLedger {
@@ -336,6 +348,7 @@ model WalletLedger {
   @@index([category])
   @@index([createdAt])
   @@index([riderId, createdAt])
+  @@map("wallet_ledgers")
 }
 
 model DepositRecord {
@@ -363,6 +376,7 @@ model DepositRecord {
 
   @@index([status])
   @@index([riderId])
+  @@map("deposit_records")
 }
 
 model RentalLease {
@@ -389,6 +403,7 @@ model RentalLease {
   @@index([riderId, status])
   @@index([createdAt])
   @@index([status, createdAt])
+  @@map("rental_leases")
 }
 
 model Transaction {
@@ -423,6 +438,7 @@ model Transaction {
   @@index([idempotencyKey])
   @@index([riderId, status])
   @@index([riderId, createdAt])
+  @@map("transactions")
 }
 
 model TransactionBreakdown {
@@ -434,6 +450,8 @@ model TransactionBreakdown {
   sortOrder     Int           @default(0)
   createdAt     DateTime      @default(now())
   transaction   Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("transaction_breakdowns")
 }
 
 model SupportTicket {
@@ -462,6 +480,7 @@ model SupportTicket {
   @@index([priority])
   @@index([assignedTo])
   @@index([riderId, status])
+  @@map("support_tickets")
 }
 
 model TicketMessage {
@@ -476,6 +495,7 @@ model TicketMessage {
 
   @@index([ticketId])
   @@index([senderId])
+  @@map("ticket_messages")
 }
 
 model Notification {
@@ -495,6 +515,7 @@ model Notification {
   @@index([type])
   @@index([priority])
   @@index([riderId, isRead])
+  @@map("notifications")
 }
 
 model NotificationDelivery {
@@ -511,6 +532,7 @@ model NotificationDelivery {
   @@index([riderId])
   @@index([status])
   @@index([notificationId])
+  @@map("notification_deliveries")
 }
 
 model AuditLog {
@@ -533,6 +555,7 @@ model AuditLog {
   @@index([expiresAt])
   @@index([actorId, createdAt])
   @@index([entity, entityId, action])
+  @@map("audit_logs")
 }
 
 model SyncQueue {
@@ -549,6 +572,7 @@ model SyncQueue {
 
   @@index([riderId])
   @@index([status])
+  @@map("sync_queues")
 }
 
 model FileRecord {
@@ -575,6 +599,7 @@ model FileRecord {
   @@index([status])
   @@index([ownerId, status])
   @@index([ownerId, purpose])
+  @@map("file_records")
 }
 
 model Offer {
@@ -621,18 +646,10 @@ model Reward {
   @@map("rewards")
 }
 
-model Setting {
-  id        String   @id @default(cuid())
-  key       String   @unique
-  value     String
-  updatedAt DateTime @updatedAt
-
-  @@map("settings")
-}
-
-/// Admin-editable system settings with metadata.
-/// Use this for app configuration that should not require file edits (APP_PUBLIC_URL, etc.).
-/// The older Setting model is kept for internal KV pairs (maintenance mode, backup locks).
+/// Consolidated settings store.
+/// All key-value configuration — business settings, system config, feature flags,
+/// backup locks, job tracking — is stored here. The older Setting model (table "settings")
+/// has been merged into this model via migration.
 model SystemSetting {
   id               String   @id @default(cuid())
   key              String   @unique
@@ -703,6 +720,8 @@ model Announcement {
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
   deliveries      AnnouncementDelivery[]
+
+  @@map("announcements")
 }
 
 model AnnouncementDelivery {
@@ -719,6 +738,7 @@ model AnnouncementDelivery {
   @@index([announcementId])
   @@index([riderId])
   @@index([status])
+  @@map("announcement_deliveries")
 }
 
 model Incident {
@@ -752,6 +772,7 @@ model Incident {
   @@index([type])
   @@index([severity])
   @@index([createdAt])
+  @@map("incidents")
 }
 
 model RiderEarning {
@@ -772,6 +793,7 @@ model RiderEarning {
   @@index([date])
   @@index([platform])
   @@index([riderId, date])
+  @@map("rider_earnings")
 }
 
 model RiderScore {
@@ -790,6 +812,7 @@ model RiderScore {
 
   @@index([compositeScore])
   @@index([riskLevel])
+  @@map("rider_scores")
 }
 
 model TrafficFine {
@@ -811,6 +834,7 @@ model TrafficFine {
   @@index([riderId])
   @@index([fineId])
   @@index([status])
+  @@map("traffic_fines")
 }
 
 model DeviceViolation {
@@ -825,6 +849,7 @@ model DeviceViolation {
   @@index([riderId])
   @@index([status])
   @@index([riderId, status])
+  @@map("device_violations")
 }
 
 model UserContact {
@@ -837,6 +862,7 @@ model UserContact {
   rider     Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
+  @@map("user_contacts")
 }
 
 model UserCallLog {
@@ -852,6 +878,7 @@ model UserCallLog {
 
   @@index([riderId])
   @@index([riderId, timestamp])
+  @@map("user_call_logs")
 }
 
 model UserLocation {
@@ -867,6 +894,7 @@ model UserLocation {
 
   @@index([riderId])
   @@index([riderId, timestamp])
+  @@map("user_locations")
 }
 
 model OtpCode {
@@ -884,6 +912,7 @@ model OtpCode {
 
   @@index([expiresAt])
   @@index([phone])
+  @@map("otp_codes")
 }
 
 model RateLimitBucket {
@@ -896,6 +925,7 @@ model RateLimitBucket {
 
   @@index([resetAt])
   @@index([key])
+  @@map("rate_limit_buckets")
 }
 
 model OutboxEvent {
@@ -924,6 +954,7 @@ model OutboxEvent {
   @@index([status, eventType])
   @@index([status, eventType, readyAt])
   @@index([status, updatedAt])
+  @@map("outbox_events")
 }
 
 model ReconciliationReport {
@@ -940,6 +971,7 @@ model ReconciliationReport {
 
   @@index([reportDate])
   @@index([createdAt])
+  @@map("reconciliation_reports")
 }
 
 model BackupSchedule {
@@ -970,6 +1002,7 @@ model BackupSchedule {
 
   @@index([enabled])
   @@index([nextRunAt])
+  @@map("backup_schedules")
 }
 
 model BackupJob {
@@ -997,6 +1030,7 @@ model BackupJob {
   @@index([scheduleType])
   @@index([createdAt])
   @@index([createdByAdminId])
+  @@map("backup_jobs")
 }
 
 model RestoreJob {
@@ -1014,6 +1048,7 @@ model RestoreJob {
   @@index([backupJobId])
   @@index([status])
   @@index([createdAt])
+  @@map("restore_jobs")
 }
 
 model IdempotencyKey {
@@ -1026,6 +1061,7 @@ model IdempotencyKey {
 
   @@index([expiresAt])
   @@index([status])
+  @@map("idempotency_keys")
 }
 
 enum RiderLifecycleStatus {

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // Run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_individual/12_wallet_topup_test.dart -d emulator-5554
 
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/wallet_screen.dart';
 import 'package:voltium_rider/screens/top_up_purpose_screen.dart';
@@ -14,6 +15,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Wallet – open top-up dialog and cancel', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'walletTab');
 
@@ -21,7 +23,7 @@ void main() {
     final topUpBtn = find
         .descendant(
           of: find.byType(WalletScreen),
-          matching: find.byKey(const Key('topUpButton')),
+          matching: app.wallet.topUpButton,
         )
         .first;
     await tester.ensureVisible(topUpBtn);
@@ -35,12 +37,12 @@ void main() {
 
     // Step 2: Enter Amount
     expect(find.text('Enter Amount'), findsOneWidget);
-    expect(find.byKey(const Key('customAmountField')), findsOneWidget);
+    expect(app.wallet.customAmountField, findsOneWidget);
 
     // Back to wallet
-    await tester.tap(find.byKey(const Key('backButton')));
+    await tester.tap(app.settings.backButton);
     await settle(tester);
-    await tester.tap(find.byKey(const Key('backButton')));
+    await tester.tap(app.settings.backButton);
     await settle(tester);
 
     // Should be back on wallet

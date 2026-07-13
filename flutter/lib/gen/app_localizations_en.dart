@@ -1547,4 +1547,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get txtevPlus => 'EV Plus';
+
+  @override
+  String get menu_title => 'Menu';
+
+  @override
+  String get menu_account => 'ACCOUNT';
+
+  @override
+  String get menu_profile => 'Profile';
+
+  @override
+  String get menu_myDocuments => 'My Documents';
+
+  @override
+  String get menu_rewardsMore => 'REWARDS & MORE';
+
+  @override
+  String get menu_rewards => 'Rewards';
+
+  @override
+  String get menu_referralProgram => 'Referral Program';
+
+  @override
+  String get menu_general => 'GENERAL';
+
+  @override
+  String get menu_workflowServices => 'Workflow & Services';
+
+  @override
+  String get menu_controls => 'Controls';
+
+  @override
+  String get menu_language => 'Language';
+
+  @override
+  String get menu_selectLanguage => 'Select Language';
+
+  @override
+  String get menu_emergencySos => 'Emergency SOS';
+
+  @override
+  String get controls_title => 'Controls';
+
+  @override
+  String get controls_preferences => 'PREFERENCES';
+
+  @override
+  String get controls_darkMode => 'Dark Mode';
+
+  @override
+  String get controls_supportLegal => 'SUPPORT & LEGAL';
+
+  @override
+  String get controls_feedback => 'Feedback';
+
+  @override
+  String get controls_legal => 'Legal';
+
+  @override
+  String get controls_about => 'ABOUT';
+
+  @override
+  String get controls_appVersion => 'App Version';
+
+  @override
+  String get controls_rateUs => 'Rate Us';
+
+  @override
+  String get controls_accountSection => 'ACCOUNT';
+
+  @override
+  String get controls_deleteConfirmTitle => 'Delete Account';
+
+  @override
+  String get controls_deleteConfirmBody =>
+      'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?';
+
+  @override
+  String get controls_delete => 'Delete';
+
+  @override
+  String get controls_deleteNotAvailable =>
+      'Account deletion is not yet available. Please contact support.';
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class BreadcrumbItem {
   final String label;
@@ -44,7 +46,7 @@ class Breadcrumbs extends StatelessWidget {
                   item.icon != null
                       ? '${item.icon != null ? '${item.icon!.codePoint} ' : ''}${item.label}'
                       : item.label,
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     color: isLast ? activeColor : inactiveColor,
                     fontSize: fontSize,
                     fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
@@ -56,7 +58,7 @@ class Breadcrumbs extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     separator,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: inactiveColor,
                       fontSize: fontSize,
                     ),
@@ -124,9 +126,10 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: colors.outlineVariant,
         borderRadius: BorderRadius.circular(8),
       ),
       child: TabBar(
@@ -139,7 +142,7 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
                 borderRadius: BorderRadius.circular(8),
               )
             : null,
-        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+        labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         tabs: widget.tabs.map((tab) => Tab(text: tab)).toList(),
       ),
     );
@@ -171,6 +174,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Drawer(
       width: widget.width,
       backgroundColor: widget.backgroundColor,
@@ -181,7 +185,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             padding: const EdgeInsets.only(top: 40),
             child: widget.header,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Expanded(
             child: ListView.builder(
               itemCount: widget.items.length,
@@ -191,12 +195,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                 return ListTile(
                   leading: Icon(
                     item.icon,
-                    color: isSelected ? widget.activeColor : Colors.grey,
+                    color:
+                        isSelected ? widget.activeColor : colors.onSurfaceMuted,
                   ),
                   title: Text(
                     item.label,
-                    style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.grey.shade700,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: isSelected ? colors.onSurface : colors.onSurface,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -257,10 +262,11 @@ class SegmentedControl<T> extends StatefulWidget {
 class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: colors.outlineVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -287,8 +293,10 @@ class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
                     : Center(
                         child: Text(
                           segment.toString(),
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : Colors.grey,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: isSelected
+                                ? Colors.white
+                                : colors.onSurfaceVariant,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,

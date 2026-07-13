@@ -9,24 +9,19 @@ import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../models/hub_model.dart';
 import '../widgets/dashed_border_painter.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
-/// Pickup Hub styling constants
-const Color kPrimaryColor = AppColors.primary;
-const Color kSurfaceColor = Color(0xFFF9F9FF);
-const Color kSurfaceContainer = AppColors.surfaceWhite;
-const Color kOnSurfaceColor = Color(0xFF141B2B);
-const Color kOutlineColor = AppColors.onSurfaceMuted;
-const Color kOutlineVariantColor = Color(0xFFC2C6D6);
-const Color kSuccessColor = AppColors.success;
+// Pickup Hub styling constants have been moved to dynamic AppColors.of(context)
+// Note: AppColors.primary and AppColors.success are brand colors and remain static.
 
-/// Input label helper
-Widget buildInputLabel(String text) {
+/// Input label helper — callers in this file always pass BuildContext via
+/// a local `colors` variable captured in the build scope.
+Widget buildInputLabel(BuildContext context, String text, {Color? color}) {
+  final colors = AppColors.of(context);
   return Text(
     text,
-    style: GoogleFonts.inter(
-      fontSize: 10,
-      fontWeight: FontWeight.w800,
-      color: kOutlineColor,
+    style: AppTypography.overline.copyWith(
+      color: color ?? colors.onSurfaceMuted,
       letterSpacing: 1.0,
     ),
   );
@@ -34,28 +29,26 @@ Widget buildInputLabel(String text) {
 
 /// Hub dropdown
 Widget buildHubDropdown(
+  BuildContext context,
   String? selectedHubId,
   List<HubModel> hubs,
   ValueChanged<String?> onChanged,
 ) {
+  final colors = AppColors.of(context);
   return DropdownButtonFormField<String>(
     key: const Key('hubDropdown'),
     initialValue: selectedHubId,
-    style: GoogleFonts.inter(
-      color: kOnSurfaceColor,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-    ),
-    icon: const Icon(Icons.keyboard_arrow_down, color: kOutlineColor),
+    style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
+    icon: Icon(Icons.keyboard_arrow_down, color: colors.onSurfaceMuted),
     decoration: InputDecoration(
       prefixIcon: const Icon(
         Icons.location_on_outlined,
-        color: kPrimaryColor,
+        color: AppColors.primary,
         size: 20,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: const Color(0xFFF1F5F9),
+      fillColor: colors.iconBackground,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
@@ -66,11 +59,11 @@ Widget buildHubDropdown(
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       hintText: 'Select Hub',
-      hintStyle: GoogleFonts.inter(
-        color: kOutlineColor.withValues(alpha: 0.7),
+      hintStyle: GoogleFonts.plusJakartaSans(
+        color: colors.onSurfaceMuted.withValues(alpha: 0.7),
         fontSize: 14,
       ),
     ),
@@ -86,30 +79,28 @@ Widget buildHubDropdown(
 
 /// Team Leader dropdown
 Widget buildTeamLeaderDropdown(
+  BuildContext context,
   String? selectedTeamLeader,
   ValueChanged<String?> onChanged,
 ) {
+  final colors = AppColors.of(context);
   const teamLeaders = [
     'Rajesh Kumar (TL-01)',
-    'Amit Sharma (TL-02)',
+    'Not assigned',
     'Sanjay Singh (TL-03)',
   ];
 
   return DropdownButtonFormField<String>(
     key: const Key('teamLeaderDropdown'),
     initialValue: selectedTeamLeader,
-    style: GoogleFonts.inter(
-      color: kOnSurfaceColor,
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-    ),
-    icon: const Icon(Icons.keyboard_arrow_down, color: kOutlineColor),
+    style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
+    icon: Icon(Icons.keyboard_arrow_down, color: colors.onSurfaceMuted),
     decoration: InputDecoration(
       prefixIcon:
-          const Icon(Icons.person_outline, color: kPrimaryColor, size: 20),
+          const Icon(Icons.person_outline, color: AppColors.primary, size: 20),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
-      fillColor: const Color(0xFFF1F5F9),
+      fillColor: colors.iconBackground,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: BorderSide.none,
@@ -120,11 +111,11 @@ Widget buildTeamLeaderDropdown(
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       hintText: 'Select Team Leader',
-      hintStyle: GoogleFonts.inter(
-        color: kOutlineColor.withValues(alpha: 0.7),
+      hintStyle: GoogleFonts.plusJakartaSans(
+        color: colors.onSurfaceMuted.withValues(alpha: 0.7),
         fontSize: 14,
       ),
     ),
@@ -140,6 +131,7 @@ Widget buildTeamLeaderDropdown(
 
 /// Vehicle dropdown (tap to open search sheet)
 Widget buildVehicleDropdown({
+  required BuildContext context,
   required bool hubSelected,
   required bool isLoadingVehicles,
   required bool vehicleSelected,
@@ -147,16 +139,17 @@ Widget buildVehicleDropdown({
   required int vehicleCount,
   required VoidCallback? onTap,
 }) {
+  final colors = AppColors.of(context);
   return GestureDetector(
     onTap: hubSelected && !isLoadingVehicles ? onTap : null,
     child: Container(
       key: const Key('vehicleDropdown'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: hubSelected ? Colors.white : AppColors.iconBackground,
+        color: hubSelected ? colors.card : colors.iconBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: vehicleSelected ? kPrimaryColor : kOutlineVariantColor,
+          color: vehicleSelected ? AppColors.primary : colors.outlineVariant,
           width: vehicleSelected ? 1.5 : 1,
         ),
       ),
@@ -164,10 +157,10 @@ Widget buildVehicleDropdown({
         children: [
           Icon(
             Icons.electric_moped_outlined,
-            color: hubSelected ? kPrimaryColor : kOutlineColor,
+            color: hubSelected ? AppColors.primary : colors.onSurfaceMuted,
             size: 20,
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: isLoadingVehicles
                 ? Row(
@@ -177,15 +170,15 @@ Widget buildVehicleDropdown({
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: kPrimaryColor,
+                          color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         'Loading vehicles…',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: kOutlineColor,
+                          color: colors.onSurfaceMuted,
                         ),
                       ),
                     ],
@@ -197,22 +190,22 @@ Widget buildVehicleDropdown({
                             : vehicleCount == 0
                                 ? 'No vehicles available'
                                 : 'Select Vehicle'),
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight:
                           vehicleSelected ? FontWeight.w600 : FontWeight.w400,
                       color: vehicleSelected
-                          ? kOnSurfaceColor
-                          : kOutlineColor.withValues(alpha: 0.7),
+                          ? colors.onSurface
+                          : colors.onSurfaceMuted.withValues(alpha: 0.7),
                     ),
                   ),
           ),
           if (vehicleSelected)
-            const Icon(Icons.check_circle, color: kSuccessColor, size: 18)
+            const Icon(Icons.check_circle, color: AppColors.success, size: 18)
           else
-            const Icon(
+            Icon(
               Icons.keyboard_arrow_down,
-              color: kOutlineColor,
+              color: colors.onSurfaceMuted,
               size: 20,
             ),
         ],
@@ -242,6 +235,7 @@ class EmergencyContactField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return TextFormField(
       key: const Key('emergencyContactField'),
       controller: controller,
@@ -251,14 +245,10 @@ class EmergencyContactField extends StatelessWidget {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(10),
       ],
-      style: GoogleFonts.inter(
-        color: kOnSurfaceColor,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
+      style: AppTypography.bodyMedium.copyWith(color: colors.onSurface),
       decoration: InputDecoration(
-        prefixIcon:
-            const Icon(Icons.phone_outlined, color: kPrimaryColor, size: 20),
+        prefixIcon: const Icon(Icons.phone_outlined,
+            color: AppColors.primary, size: 20),
         suffixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -269,7 +259,7 @@ class EmergencyContactField extends StatelessWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                        color: kPrimaryColor,
+                        color: AppColors.primary,
                         strokeWidth: 2,
                       ),
                     )
@@ -278,7 +268,7 @@ class EmergencyContactField extends StatelessWidget {
                       style: TextButton.styleFrom(
                         backgroundColor: isOtpVerified
                             ? Colors.transparent
-                            : kPrimaryColor.withValues(alpha: 0.1),
+                            : AppColors.primary.withValues(alpha: 0.1),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
@@ -293,12 +283,11 @@ class EmergencyContactField extends StatelessWidget {
                             : isOtpSent
                                 ? 'RESEND'
                                 : 'SEND OTP',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: isOtpVerified ? kSuccessColor : kPrimaryColor,
-                          letterSpacing: 0.5,
-                        ),
+                        style: AppTypography.overline.copyWith(
+                            color: isOtpVerified
+                                ? AppColors.success
+                                : AppColors.primary,
+                            letterSpacing: 0.5),
                       ),
                     ),
             ),
@@ -307,7 +296,7 @@ class EmergencyContactField extends StatelessWidget {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         filled: true,
-        fillColor: const Color(0xFFF1F5F9),
+        fillColor: colors.iconBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -318,11 +307,11 @@ class EmergencyContactField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         hintText: '10-digit number',
-        hintStyle: GoogleFonts.inter(
-          color: kOutlineColor.withValues(alpha: 0.5),
+        hintStyle: GoogleFonts.plusJakartaSans(
+          color: colors.onSurfaceMuted.withValues(alpha: 0.5),
           fontSize: 14,
         ),
       ),
@@ -362,6 +351,7 @@ class OtpGrid extends StatelessWidget {
           child: AnimatedBuilder(
             animation: controller,
             builder: (context, child) {
+              final innerColors = AppColors.of(context);
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) {
@@ -373,21 +363,20 @@ class OtpGrid extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: innerColors.card,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isFocused ? kPrimaryColor : kOutlineVariantColor,
+                        color: isFocused
+                            ? AppColors.primary
+                            : innerColors.outlineVariant,
                         width: isFocused ? 2.0 : 1.0,
                       ),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       char,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: kOnSurfaceColor,
-                      ),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: innerColors.onSurface),
                     ),
                   );
                 }),
@@ -405,6 +394,7 @@ Widget buildVerifyOtpButton({
   required bool isVerifying,
   required VoidCallback? onPressed,
 }) {
+  // Use constant colors for this primary action button.
   return SizedBox(
     width: double.infinity,
     height: 48,
@@ -412,7 +402,7 @@ Widget buildVerifyOtpButton({
       key: const Key('verifyOtpButton'),
       onPressed: isVerifying ? null : onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: kPrimaryColor,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -430,11 +420,8 @@ Widget buildVerifyOtpButton({
             )
           : Text(
               'Verify',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.5,
-              ),
+              style:
+                  AppTypography.bodyMediumStrong.copyWith(letterSpacing: 0.5),
             ),
     ),
   );
@@ -461,6 +448,7 @@ class PhotoUploadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final hasImage = imagePath != null;
     final isDone = photoUrl != null;
 
@@ -470,7 +458,7 @@ class PhotoUploadCard extends StatelessWidget {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9FF),
+          color: colors.surfaceSubtle,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Stack(
@@ -478,7 +466,7 @@ class PhotoUploadCard extends StatelessWidget {
             if (!hasImage)
               CustomPaint(
                 painter: DashedBorderPainter(
-                  color: kOutlineVariantColor,
+                  color: colors.outlineVariant,
                   borderRadius: 16,
                 ),
                 child: Container(),
@@ -501,24 +489,21 @@ class PhotoUploadCard extends StatelessWidget {
                     Container(
                       width: 36,
                       height: 36,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
+                        color: colors.card,
                       ),
                       child: const Icon(
                         Icons.camera_alt_outlined,
                         size: 18,
-                        color: kPrimaryColor,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       label,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: kOnSurfaceColor,
-                      ),
+                      style: AppTypography.bodySmallEmphasis
+                          .copyWith(color: colors.onSurface),
                     ),
                   ],
                 ),
@@ -527,15 +512,15 @@ class PhotoUploadCard extends StatelessWidget {
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: colors.card,
                   ),
                   child: const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                      color: kPrimaryColor,
+                      color: AppColors.primary,
                       strokeWidth: 2,
                     ),
                   ),
@@ -548,7 +533,7 @@ class PhotoUploadCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: kSuccessColor,
+                    color: AppColors.success,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -581,11 +566,8 @@ class PhotoUploadCard extends StatelessWidget {
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style:
+                        AppTypography.smallBadge.copyWith(color: Colors.white),
                   ),
                 ),
               ),
@@ -605,7 +587,7 @@ Widget buildCurtainHeader({
   return Container(
     width: double.infinity,
     decoration: const BoxDecoration(
-      color: kPrimaryColor,
+      color: AppColors.primary,
     ),
     padding: const EdgeInsets.only(top: 60, bottom: 80, left: 24, right: 24),
     child: Column(
@@ -631,22 +613,16 @@ Widget buildCurtainHeader({
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: 24),
         Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
+          style: AppTypography.headingMedium
+              .copyWith(color: Colors.white, letterSpacing: -0.5),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           subtitle,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
+          style: AppTypography.inputHint.copyWith(
             color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
@@ -660,12 +636,14 @@ Widget buildStickyBottomBar({
   required bool isFormValid,
   required VoidCallback? onSubmit,
   String buttonText = 'Confirm & Proceed',
+  required BuildContext context,
 }) {
+  final colors = AppColors.of(context);
   return Container(
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: const Border(
-        top: BorderSide(color: Color(0xFFF3F4F6), width: 1),
+      color: colors.card,
+      border: Border(
+        top: BorderSide(color: colors.surfaceSubtle, width: 1),
       ),
       boxShadow: [
         BoxShadow(
@@ -691,10 +669,10 @@ Widget buildStickyBottomBar({
             key: const Key('confirmHubButton'),
             onPressed: isFormValid ? onSubmit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.outlineVariant,
-              disabledForegroundColor: AppColors.slate400,
+              disabledBackgroundColor: colors.outlineVariant,
+              disabledForegroundColor: colors.onSurfaceMuted,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -702,21 +680,16 @@ Widget buildStickyBottomBar({
             ),
             child: Text(
               buttonText,
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTypography.buttonMedium,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(
           'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            color: kOutlineColor.withValues(alpha: 0.7),
+          style: AppTypography.microBadge.copyWith(
+            color: colors.onSurfaceMuted.withValues(alpha: 0.7),
             letterSpacing: 1.0,
           ),
         ),

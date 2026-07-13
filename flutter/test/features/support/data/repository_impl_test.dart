@@ -120,7 +120,7 @@ void main() {
               .captured;
       final request = captured.first as CreateTicketRequest;
       expect(request.riderId, '');
-      expect(request.priority, 'NORMAL');
+      expect(request.priority, 'MEDIUM');
     });
 
     test('createTicket propagates exception when API fails', () async {

@@ -15,6 +15,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 part 'legal_page_content.dart';
 
@@ -300,7 +301,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not generate PDF: $e'),
-            backgroundColor: const Color(0xFFDC2626),
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -372,11 +373,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 Expanded(
                                   child: Text(
                                     section.title,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF1E293B),
-                                    ),
+                                    style: AppTypography.bodyMediumStrong
+                                        .copyWith(color: AppColors.slate800),
                                   ),
                                 ),
                                 AnimatedRotation(
@@ -409,7 +407,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 child: SingleChildScrollView(
                                   child: Text(
                                     section.content,
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: AppColors.slate500,
                                       height: 1.7,
@@ -432,7 +430,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
+                                  color: AppColors.surfaceBright,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
@@ -450,11 +448,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         signerName.isNotEmpty
                                             ? signerName[0].toUpperCase()
                                             : '?',
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                        style: AppTypography.titleSmall
+                                            .copyWith(color: Colors.white),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -466,20 +461,19 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         children: [
                                           Text(
                                             'SIGNED BY',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w900,
-                                              color: AppColors.slate400,
-                                              letterSpacing: 1.2,
-                                            ),
+                                            style: AppTypography
+                                                .bodySmallTracked
+                                                .copyWith(
+                                                    color: AppColors.slate400,
+                                                    letterSpacing: 1.2),
                                           ),
-                                          const SizedBox(height: 2),
+                                          SizedBox(height: 2),
                                           Text(
                                             signerName,
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w800,
-                                              color: const Color(0xFF1E293B),
+                                              color: AppColors.slate800,
                                             ),
                                           ),
                                         ],
@@ -492,20 +486,18 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                       children: [
                                         Text(
                                           'DATE',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w900,
-                                            color: AppColors.slate400,
-                                            letterSpacing: 1.2,
-                                          ),
+                                          style: AppTypography.bodySmallTracked
+                                              .copyWith(
+                                                  color: AppColors.slate400,
+                                                  letterSpacing: 1.2),
                                         ),
-                                        const SizedBox(height: 2),
+                                        SizedBox(height: 2),
                                         Text(
                                           _currentDate,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF1E293B),
+                                            color: AppColors.slate800,
                                           ),
                                         ),
                                       ],
@@ -526,7 +518,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFCBD5E1),
+                                    color: AppColors.borderMedium,
                                     style: BorderStyle.solid,
                                     width: 1,
                                   ),
@@ -638,7 +630,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                     _isGeneratingPdf
                                         ? 'Generating…'
                                         : 'Download Signed PDF',
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -681,17 +673,13 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                 children: [
                   Text(
                     'NEED HELP?',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.slate500,
-                      letterSpacing: 1.2,
-                    ),
+                    style: AppTypography.bodySmallTracked.copyWith(
+                        color: AppColors.slate500, letterSpacing: 1.2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: AppColors.slate500,
                         height: 1.5,
@@ -703,7 +691,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         ),
                         TextSpan(
                           text: _kSupportEmail,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -711,7 +699,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                         const TextSpan(text: ' or call '),
                         TextSpan(
                           text: _kSupportPhone,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
                           ),
@@ -782,7 +770,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                 },
                 child: const Icon(
                   Icons.arrow_back,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   size: 20,
                 ),
               ),
@@ -792,11 +780,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
       ),
       title: Text(
         title,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF1E293B),
-        ),
+        style: AppTypography.headingSmall.copyWith(color: AppColors.slate800),
       ),
     );
   }
@@ -805,16 +789,12 @@ class _LegalPageScreenState extends State<LegalPageScreen>
     return Row(
       children: [
         const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Flexible(
           child: Text(
             '$name (Electronic Signature)',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              fontStyle: FontStyle.italic,
-              color: AppColors.slate400,
-            ),
+            style: AppTypography.bodySmall.copyWith(
+                fontStyle: FontStyle.italic, color: AppColors.slate400),
             overflow: TextOverflow.ellipsis,
           ),
         ),

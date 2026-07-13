@@ -1012,22 +1012,26 @@ async function main() {
 
   // ==================== SETTINGS ====================
   const settings = [
-    { key: 'dailyRent', value: String(paise(399)) },
-    { key: 'weeklyRent', value: String(paise(2199)) },
-    { key: 'monthlyRent', value: String(paise(7499)) },
-    { key: 'securityDeposit', value: String(paise(5000)) },
-    { key: 'lateFee', value: String(paise(50)) },
-    { key: 'referralBonus', value: String(paise(500)) },
-    { key: 'autoApproveKYC', value: 'false' },
-    { key: 'emailNotifications', value: 'true' },
-    { key: 'smsNotifications', value: 'true' },
-    { key: 'gracePeriodHours', value: '24' },
-    { key: 'BACKUP_LOCK_STATUS', value: 'NONE' },
-    { key: 'BACKUP_LOCK_STARTED_AT', value: '' },
-    { key: 'BACKUP_LOCK_OWNER', value: '' },
+    { key: 'dailyRent', value: String(paise(399)), category: 'BUSINESS', isEditable: true },
+    { key: 'weeklyRent', value: String(paise(2199)), category: 'BUSINESS', isEditable: true },
+    { key: 'monthlyRent', value: String(paise(7499)), category: 'BUSINESS', isEditable: true },
+    { key: 'securityDeposit', value: String(paise(5000)), category: 'BUSINESS', isEditable: true },
+    { key: 'lateFee', value: String(paise(50)), category: 'BUSINESS', isEditable: true },
+    { key: 'referralBonus', value: String(paise(500)), category: 'BUSINESS', isEditable: true },
+    { key: 'autoApproveKYC', value: 'false', category: 'BUSINESS', isEditable: true },
+    { key: 'emailNotifications', value: 'true', category: 'BUSINESS', isEditable: true },
+    { key: 'smsNotifications', value: 'true', category: 'BUSINESS', isEditable: true },
+    { key: 'gracePeriodHours', value: '24', category: 'BUSINESS', isEditable: true },
+    { key: 'BACKUP_LOCK_STATUS', value: 'NONE', category: 'INTERNAL', isEditable: false },
+    { key: 'BACKUP_LOCK_STARTED_AT', value: '', category: 'INTERNAL', isEditable: false },
+    { key: 'BACKUP_LOCK_OWNER', value: '', category: 'INTERNAL', isEditable: false },
   ];
   for (const s of settings) {
-    await db.setting.upsert({ where: { key: s.key }, update: {}, create: s });
+    await db.systemSetting.upsert({
+      where: { key: s.key },
+      update: { valueType: 'STRING', category: s.category, isEditable: s.isEditable },
+      create: { key: s.key, value: s.value, valueType: 'STRING', category: s.category, isSecret: false, isEditable: s.isEditable },
+    });
   }
   console.log('Created settings');
 

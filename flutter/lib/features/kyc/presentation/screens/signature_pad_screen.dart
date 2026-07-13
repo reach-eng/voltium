@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class SignaturePadScreen extends StatefulWidget {
   const SignaturePadScreen({super.key});
@@ -73,7 +74,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         title: Text(
           'Draw Signature',
           style: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF111827),
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -82,15 +83,15 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
             onPressed: _clear,
             child: Text(
               'Clear',
-              style: GoogleFonts.inter(color: const Color(0xFF2563EB)),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.primary),
             ),
           ),
           TextButton(
             onPressed: _save,
             child: Text(
               'Save',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF2563EB),
+              style: GoogleFonts.plusJakartaSans(
+                color: AppColors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -107,7 +108,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    border: Border.all(color: AppColors.borderSubtle),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Stack(
@@ -144,7 +145,7 @@ class _SignaturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF111827)
+      ..color = AppColors.textPrimary
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
     for (int i = 0; i < points.length - 1; i++) {

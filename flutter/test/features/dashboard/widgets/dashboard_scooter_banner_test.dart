@@ -11,7 +11,7 @@ void main() {
     // Ignore const warning temporarily if constructor is not const
     // ignore: prefer_const_constructors
     await tester.pumpWidget(wrapForGolden(ScooterSubmissionBanner()));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     await expectLater(
       find.byType(ScooterSubmissionBanner),

@@ -117,10 +117,10 @@ class _ShimmerTableState extends State<ShimmerTable>
             gradient: LinearGradient(
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value + 1, 0),
-              colors: [
-                Colors.grey.shade300,
-                Colors.grey.shade100,
-                Colors.grey.shade300,
+              colors: const [
+                Color(0xFFE8EDF5),
+                Color(0xFFF5F8FF),
+                Color(0xFFE8EDF5),
               ],
             ),
           ),
@@ -331,9 +331,9 @@ class _ShimmerGridState extends State<ShimmerGrid>
                   begin: Alignment(_animation.value - 1, 0),
                   end: Alignment(_animation.value + 1, 0),
                   colors: [
-                    Colors.grey.shade300,
-                    Colors.grey.shade100,
-                    Colors.grey.shade300,
+                    const Color(0xFFE8EDF5),
+                    const Color(0xFFF5F8FF),
+                    const Color(0xFFE8EDF5),
                   ],
                 ),
               ),

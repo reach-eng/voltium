@@ -37,7 +37,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(OnboardingScreen), findsOneWidget);
     });
 
@@ -48,7 +48,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final hasSteps = find.byType(ListTile).evaluate().isNotEmpty ||
           find.byType(Card).evaluate().isNotEmpty ||
@@ -64,7 +64,7 @@ void main() {
           pages: const [],
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });
@@ -81,7 +81,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(seconds: 3));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

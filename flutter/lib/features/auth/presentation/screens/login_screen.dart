@@ -9,6 +9,8 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'dart:ui' as ui;
 import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -23,7 +25,8 @@ import 'package:voltium_rider/utils/accessibility.dart';
 /// - Footer terms links (12px, #475467)
 
 class LoginScreen extends StatefulWidget {
-  final Function(String)? onNext;
+  /// Called when OTP is sent successfully. Passes (phoneNumber, referralCode).
+  final Function(String phone, String? referralCode)? onNext;
   final bool isSignUp;
 
   const LoginScreen({super.key, this.onNext, this.isSignUp = false});
@@ -105,16 +108,25 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _isLoading = true);
+    PostHogService.capture('phone_entered', properties: {
+      'is_sign_up': widget.isSignUp.toString(),
+    });
     try {
       final referralCode = _referralController.text.trim();
       await VoltiumApiService().sendOtp(
         phone: digits,
         referralCode: referralCode.isNotEmpty ? referralCode : null,
       );
+      PostHogService.capture('otp_requested', properties: {
+        'has_referral': (referralCode.isNotEmpty).toString(),
+        'is_sign_up': widget.isSignUp.toString(),
+      });
       if (mounted) {
-        widget.onNext?.call(digits);
+        widget.onNext
+            ?.call(digits, referralCode.isNotEmpty ? referralCode : null);
       }
     } catch (e) {
+      PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
         String errorMsg = 'Network error. Please try again.';
         if (e is ApiException) {
@@ -257,27 +269,20 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   'Voltium',
-                  style: GoogleFonts.inter(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.onSurface,
-                    letterSpacing: -0.5,
-                    height: 1.2,
-                  ),
+                  style: AppTypography.headingLarge.copyWith(
+                      color: AppColors.onSurface,
+                      letterSpacing: -0.5,
+                      height: 1.2),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 ExcludeSemantics(
                   child: Text(
-                    'Manage your journey with precision.',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.onSurfaceVariant,
-                      height: 1.4,
-                    ),
+                    'Electric scooter rentals made simple.',
+                    style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant, height: 1.4),
                   ),
                 ),
               ],
@@ -309,17 +314,13 @@ class _LoginScreenState extends State<LoginScreen>
             children: [
               Text(
                 'Welcome',
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurface,
-                  letterSpacing: -0.5,
-                ),
+                style: AppTypography.headingSmall
+                    .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Enter the registered phone number to login or enter a new number to create another account.',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: AppColors.onSurfaceVariant,
                   height: 1.6,
@@ -349,96 +350,83 @@ class _LoginScreenState extends State<LoginScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: _phoneError != null
-                        ? const Color(0xFFFFF1F1)
-                        : Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: _phoneError != null
-                          ? AppColors.error
-                          : Colors.white.withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                    boxShadow: AppShadows.glass,
-                  ),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () => _phoneFocusNode.requestFocus(),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ExcludeSemantics(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 24, right: 12),
-                                child: Text(
-                                  '+91',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurface,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 20,
-                              color: AppColors.divider,
-                            ),
-                            const SizedBox(width: 12),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          key: const Key('phoneInput'),
-                          controller: _phoneController,
-                          focusNode: _phoneFocusNode,
-                          keyboardType: TextInputType.phone,
-                          textInputAction: TextInputAction.done,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(10),
-                          ],
-                          onChanged: _onPhoneChanged,
-                          onFieldSubmitted: (_) => _handleLogin(),
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onSurface,
-                            letterSpacing: 1.5,
-                          ),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: true,
-                            fillColor: Colors.transparent,
-                            hintText: '00000 00000',
-                            hintStyle: GoogleFonts.inter(
-                              fontSize: 16,
-                              color: AppColors.onSurfaceDisabled,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                            errorText: null,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            Container(
+              height: 56,
+              decoration: BoxDecoration(
+                color: _phoneError != null
+                    ? AppColors.errorSurface
+                    : AppColors.of(context).card,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: _phoneError != null
+                      ? AppColors.error
+                      : AppColors.of(context).outline.withValues(alpha: 0.4),
+                  width: 1.5,
                 ),
+                boxShadow: AppShadows.glass,
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => _phoneFocusNode.requestFocus(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ExcludeSemantics(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 24, right: 12),
+                            child: Text(
+                              '+91',
+                              style: AppTypography.titleSmall
+                                  .copyWith(color: AppColors.onSurface),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 20,
+                          color: AppColors.divider,
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: TextFormField(
+                      key: const Key('phoneInput'),
+                      controller: _phoneController,
+                      focusNode: _phoneFocusNode,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.telephoneNumber],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      onChanged: _onPhoneChanged,
+                      onFieldSubmitted: (_) => _handleLogin(),
+                      style: AppTypography.bodyLarge.copyWith(
+                          color: AppColors.onSurface, letterSpacing: 1.5),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: true,
+                        fillColor: Colors.transparent,
+                        hintText: '00000 00000',
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          color: AppColors.onSurfaceDisabled,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        contentPadding: EdgeInsets.zero,
+                        errorText: null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (_phoneError != null)
@@ -448,11 +436,8 @@ class _LoginScreenState extends State<LoginScreen>
                   liveRegion: true,
                   child: Text(
                     _phoneError!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFFDC2626),
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: AppColors.errorRed),
                   ),
                 ),
               ),
@@ -476,64 +461,52 @@ class _LoginScreenState extends State<LoginScreen>
           parent: _entryCtrl,
           curve: const Interval(0.25, 0.85),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: Container(
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  width: 1.5,
+        child: Container(
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.of(context).card,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.of(context).outline.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: AppShadows.glass,
+          ),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _referralFocusNode.requestFocus(),
+            child: Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 20, right: 8),
+                  child: Icon(
+                    Icons.person_add_outlined,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
                 ),
-                boxShadow: AppShadows.glass,
-              ),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _referralFocusNode.requestFocus(),
-                child: Row(
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 20, right: 8),
-                      child: Icon(
-                        Icons.person_add_outlined,
-                        size: 20,
-                        color: AppColors.primary,
-                      ),
+                Expanded(
+                  child: TextFormField(
+                    key: const Key('referralInput'),
+                    controller: _referralController,
+                    focusNode: _referralFocusNode,
+                    textCapitalization: TextCapitalization.characters,
+                    style: AppTypography.bodyMediumEmphasis
+                        .copyWith(color: AppColors.onSurface),
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      hintText: 'Referral Code (Optional)',
+                      hintStyle: AppTypography.inputHint
+                          .copyWith(color: AppColors.onSurfaceDisabled),
+                      contentPadding: EdgeInsets.zero,
                     ),
-                    Expanded(
-                      child: TextFormField(
-                        key: const Key('referralInput'),
-                        controller: _referralController,
-                        focusNode: _referralFocusNode,
-                        textCapitalization: TextCapitalization.characters,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onSurface,
-                        ),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: true,
-                          fillColor: Colors.transparent,
-                          hintText: 'Referral Code (Optional)',
-                          hintStyle: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: AppColors.onSurfaceDisabled,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -552,15 +525,11 @@ class _LoginScreenState extends State<LoginScreen>
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
-          'A SECURE OTP WILL BE SENT',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
-            color: AppColors.onSurfaceVariant,
-          ),
+          'A secure OTP will be sent',
+          style: AppTypography.bodySmallStrong
+              .copyWith(letterSpacing: 1.2, color: AppColors.onSurfaceVariant),
         ),
       ],
     );
@@ -611,11 +580,8 @@ class _LoginScreenState extends State<LoginScreen>
                         )
                       : Text(
                           'Enter',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          style: AppTypography.buttonMedium
+                              .copyWith(color: Colors.white),
                         ),
                 ),
               ),
@@ -651,7 +617,7 @@ class _LoginScreenState extends State<LoginScreen>
               child: RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: AppColors.onSurfaceVariant,
                     height: 1.6,
@@ -667,18 +633,15 @@ class _LoginScreenState extends State<LoginScreen>
                           onTap: () => _launchUrl('https://voltium.app/terms'),
                           child: Text(
                             'Terms of Service',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.labelMedium
+                                .copyWith(color: AppColors.primary),
                           ),
                         ),
                       ),
                     ),
                     TextSpan(
                       text: ' and ',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: AppColors.onSurfaceVariant,
                       ),
@@ -692,11 +655,8 @@ class _LoginScreenState extends State<LoginScreen>
                               _launchUrl('https://voltium.app/privacy'),
                           child: Text(
                             'Privacy Policy',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.labelMedium
+                                .copyWith(color: AppColors.primary),
                           ),
                         ),
                       ),

@@ -8,6 +8,8 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class ChoosePlanScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
@@ -112,6 +114,11 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       // If no exception was thrown, the API call succeeded.
       // Refresh profile to update planDone flag
       await provider.refreshFromApi();
+      PostHogService.capture('plan_selected', properties: {
+        'plan_id': selectedPlan.id,
+        'plan_name': selectedPlan.name,
+        'security_deposit': securityDeposit.toString(),
+      });
       widget.onNext();
     } catch (e) {
       if (mounted) {
@@ -173,9 +180,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       ),
       child: Text(
         'BEST VALUE',
-        style: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+        style: AppTypography.bodySmallStrong.copyWith(
           color: isSelected ? Colors.white : const Color(0xFF7E22CE),
           letterSpacing: 0.5,
         ),
@@ -213,7 +218,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC), // Light Slate 50
+      backgroundColor: AppColors.surfaceBright, // Light Slate 50
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -223,7 +228,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                     children: [
                       Text(
                         _error!,
-                        style: const TextStyle(color: AppColors.error),
+                        style:
+                            GoogleFonts.plusJakartaSans(color: AppColors.error),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -258,7 +264,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   child: const Icon(
                                     Icons.arrow_back_ios_new,
                                     size: 18,
-                                    color: Color(0xFF1E293B),
+                                    color: AppColors.slate800,
                                   ),
                                 ),
                               ),
@@ -267,12 +273,9 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             Expanded(
                               child: Text(
                                 'Select a new plan',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  color: const Color(0xFF1E293B),
-                                  letterSpacing: -0.5,
-                                ),
+                                style: AppTypography.headingMedium.copyWith(
+                                    color: AppColors.slate800,
+                                    letterSpacing: -0.5),
                               ),
                             ),
                           ],
@@ -282,7 +285,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Text(
                           'Choose the rental duration that best fits your needs. You can change this at any time.',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             color: AppColors.slate500,
                             height: 1.5,
@@ -365,11 +368,9 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         isCurrentPlan
                                                             ? 'CURRENT PLAN'
                                                             : 'SELECTED PLAN',
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w800,
+                                                        style: AppTypography
+                                                            .bodySmallStrong
+                                                            .copyWith(
                                                           color: Colors.white
                                                               .withValues(
                                                                   alpha: 0.8),
@@ -473,10 +474,10 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                       ),
                                       if (plan.description?.isNotEmpty ==
                                           true) ...[
-                                        const SizedBox(height: 6),
+                                        SizedBox(height: 6),
                                         Text(
                                           plan.description ?? '',
-                                          style: GoogleFonts.inter(
+                                          style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             color: isSelected
                                                 ? Colors.white
@@ -504,11 +505,12 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         .withValues(alpha: 0.9)
                                                     : AppColors.slate400,
                                               ),
-                                              const SizedBox(width: 12),
+                                              SizedBox(width: 12),
                                               Expanded(
                                                 child: Text(
                                                   feature,
-                                                  style: GoogleFonts.inter(
+                                                  style: GoogleFonts
+                                                      .plusJakartaSans(
                                                     fontSize: 14,
                                                     color: isSelected
                                                         ? Colors.white
@@ -547,15 +549,15 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                 fontWeight: FontWeight.w900,
                                                 color: isSelected
                                                     ? Colors.white
-                                                    : const Color(0xFF0F172A),
+                                                    : AppColors.slate900,
                                               ),
                                             ),
                                             TextSpan(
                                               text:
                                                   ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
+                                              style: AppTypography
+                                                  .bodyMediumEmphasis
+                                                  .copyWith(
                                                 color: isSelected
                                                     ? Colors.white
                                                         .withValues(alpha: 0.7)
@@ -592,7 +594,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                               : _subscribe,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            disabledBackgroundColor: const Color(0xFFCBD5E1),
+                            disabledBackgroundColor: AppColors.borderMedium,
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
@@ -613,11 +615,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                     )
                                   : Text(
                                       'Confirm Plan',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
+                                      style: AppTypography.titleSmall
+                                          .copyWith(color: Colors.white),
                                     ),
                             ),
                           ),

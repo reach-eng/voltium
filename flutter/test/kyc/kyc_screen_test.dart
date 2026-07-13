@@ -34,7 +34,7 @@ void main() {
     testWidgets('onboarding screen renders without error', (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(UserOnboardingScreen), findsOneWidget);
     });
@@ -43,7 +43,7 @@ void main() {
         (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // At least a text input or button should be visible
       final hasTextField = find.byType(TextField).evaluate().isNotEmpty;
@@ -56,7 +56,7 @@ void main() {
     testWidgets('onboarding screen does not overflow', (tester) async {
       await tester
           .pumpWidget(buildTestApp(child: const UserOnboardingScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should render without RenderFlex overflow errors
       expect(tester.takeException(), isNull);

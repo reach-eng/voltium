@@ -80,14 +80,7 @@ export async function PUT(request: NextRequest) {
       }),
     ]);
 
-    // Also update the legacy Setting table for backwards compatibility/triggers if needed
-    try {
-      await db.setting.upsert({
-        where: { key: 'maintenanceMode' },
-        update: { value: String(enabled) },
-        create: { key: 'maintenanceMode', value: String(enabled) },
-      });
-    } catch {}
+    // Legacy Setting consolidated — maintenanceMode now lives in SystemSetting as MAINTENANCE_MODE
 
     // Audit logging
     await createAuditLog({

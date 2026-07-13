@@ -9,7 +9,7 @@ import 'consent_service.dart';
 import 'monitoring_service.dart';
 import '../core/platform/platform_info.dart';
 
-import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_contacts/flutter_contacts.dart' hide PermissionStatus;
 import 'package:call_log/call_log.dart';
 
 class DeviceDataService {
@@ -108,7 +108,8 @@ class DeviceDataService {
           await Permission.contacts.status == PermissionStatus.granted;
       if (!granted) return;
 
-      final contacts = await FlutterContacts.getContacts(withProperties: true);
+      final contacts = await FlutterContacts.getAll(
+          properties: {ContactProperty.phone, ContactProperty.email});
       final mappedContacts = contacts
           .take(200)
           .map((c) => {

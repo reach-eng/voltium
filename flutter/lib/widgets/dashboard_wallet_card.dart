@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import 'animated_balance_counter.dart';
+import 'streak_celebration_bar.dart';
+import 'effect_widgets.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Reusable wallet card used across dashboard screens.
 /// Supports a low-balance warning variant and a normal variant.
@@ -26,308 +32,285 @@ class WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final now = DateTime.now();
     final daysUntilDue = planEndDate?.difference(now).inDays;
-    // Only show insufficient balance if balance < plan cost AND rent is due
-    // within the next 3 days (or is already overdue).
-    final bool dueIn3Days = daysUntilDue != null && daysUntilDue <= 3;
+    // Show insufficient balance if rent is due within 3 days, overdue, or plan hasn't started (null end date)
+    final bool dueIn3Days =
+        planEndDate == null || (daysUntilDue != null && daysUntilDue <= 3);
     final bool isLowBalance =
         requiredPayment > 0 && (walletBalance < requiredPayment) && dueIn3Days;
     final bool isDailyPlan =
         currentPlan?.toLowerCase().contains('daily') ?? false;
 
     if (isLowBalance) {
-      return _buildLowBalanceCard(isDailyPlan);
+      return _buildLowBalanceCard(isDailyPlan, colors);
     }
-    return _buildNormalCard();
+    return _buildNormalCard(colors);
   }
 
-  Widget _buildLowBalanceCard(bool isDailyPlan) {
+  Widget _buildLowBalanceCard(bool isDailyPlan, ThemeColors colors) {
     final Color themeColor = isDailyPlan ? AppColors.warning : AppColors.error;
     final Color lightBgColor =
-        isDailyPlan ? const Color(0xFFFFFBEB) : const Color(0xFFFEF2F2);
+        isDailyPlan ? AppColors.warningSurface : AppColors.errorSurface;
     final Color borderColor =
-        isDailyPlan ? const Color(0xFFFDE68A) : const Color(0xFFFECACA);
+        isDailyPlan ? AppColors.warningBorder : AppColors.errorBorder;
 
-    return PremiumDoubleBezelCard(
+    return AnimatedGlow(
+      color: themeColor,
+      duration: const Duration(milliseconds: 2000),
+      child: PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: borderColor, width: 2),
-            boxShadow: AppShadows.glass,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.surfaceSubtle.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                    color: borderColor.withValues(alpha: 0.5), width: 2),
+                boxShadow: AppShadows.glass,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        compact ? 'TOTAL BALANCE' : 'AVAILABLE BALANCE',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.slate500,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '₹${walletBalance.floor()}',
-                            style: TextStyle(
+                            compact ? 'TOTAL BALANCE' : 'AVAILABLE BALANCE',
+                            style: AppTypography.bodySmallStrong.copyWith(
+                                color: colors.onSurfaceMuted,
+                                letterSpacing: 1.2),
+                          ),
+                          const SizedBox(height: 8),
+                          AnimatedBalanceCounter(
+                            value: walletBalance,
+                            showRupeeSymbol: true,
+                            compact: true,
+                            decimalPlaces: 2,
+                            duration: const Duration(milliseconds: 700),
+                            textStyle: GoogleFonts.plusJakartaSans(
                               fontSize: compact ? 28 : 32,
                               fontWeight: FontWeight.w800,
                               color: themeColor,
                             ),
                           ),
-                          Text(
-                            '.${((walletBalance % 1) * 100).toInt().toString().padLeft(2, '0')}',
-                            style: const TextStyle(
-                              fontSize: 18,
+                        ],
+                      ),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: lightBgColor.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: borderColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Icon(Icons.account_balance_wallet,
+                            color: themeColor),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: lightBgColor.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border:
+                          Border.all(color: borderColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: themeColor),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Top Up Now to Ride. Your\nbalance is insufficient.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: compact ? 13 : 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.slate400,
+                              color: themeColor,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onTopUp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: themeColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Top Up Wallet',
+                            style: AppTypography.titleSmall,
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.add_circle_outline, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Rental Recovery Streak',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: compact ? 12 : 14,
+                          fontWeight: FontWeight.w600,
+                          color: compact
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
+                        ),
+                      ),
+                      Text(
+                        '$paymentStreak/5 Days',
+                        style: AppTypography.bodyCompactStrong
+                            .copyWith(color: themeColor),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  StreakCelebrationBar(
+                    streak: paymentStreak,
+                    height: compact ? 8 : 10,
+                    borderRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNormalCard(ThemeColors colors) {
+    return PremiumDoubleBezelCard(
+        padding: EdgeInsets.zero,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: AppShadows.glass,
+                border: Border.all(
+                    color: colors.outlineVariant.withValues(alpha: 0.4),
+                    width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TOTAL BALANCE',
+                            style: AppTypography.bodySmallStrong.copyWith(
+                                color: colors.onSurfaceMuted,
+                                letterSpacing: 1.2),
+                          ),
+                          const SizedBox(height: 8),
+                          AnimatedBalanceCounter(
+                            value: walletBalance,
+                            showRupeeSymbol: true,
+                            compact: true,
+                            duration: const Duration(milliseconds: 700),
+                            textStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: compact ? 28 : 32,
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: lightBgColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child:
-                        Icon(Icons.account_balance_wallet, color: themeColor),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: lightBgColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded, color: themeColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Top Up Now to Ride. Your\nbalance is insufficient.',
-                        style: TextStyle(
-                          fontSize: compact ? 13 : 14,
-                          fontWeight: FontWeight.w700,
-                          color: themeColor,
-                          height: 1.4,
+                      Material(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: onTopUp,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.add,
+                                color: Colors.white, size: 24),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onTopUp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
+                    ],
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Top Up Wallet',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        'Rental Recovery Streak',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: compact ? 12 : 14,
+                          fontWeight: FontWeight.w600,
+                          color: compact
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.add_circle_outline, size: 20),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Rental Recovery Streak',
-                    style: TextStyle(
-                      fontSize: compact ? 12 : 14,
-                      fontWeight: FontWeight.w600,
-                      color: compact
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF1E293B),
-                    ),
-                  ),
-                  Text(
-                    '$paymentStreak/5 Days',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Expanded(
-                    child: Container(
-                      height: 8,
-                      margin:
-                          EdgeInsets.only(right: i < 4 ? (compact ? 4 : 6) : 0),
-                      decoration: BoxDecoration(
-                        color: i < paymentStreak
-                            ? AppColors.success
-                            : AppColors.iconBackground,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ));
-  }
-
-  Widget _buildNormalCard() {
-    return PremiumDoubleBezelCard(
-        padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: AppShadows.glass,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
                       Text(
-                        'TOTAL BALANCE',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.slate500,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₹${walletBalance.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          fontSize: compact ? 28 : 32,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1E293B),
-                        ),
+                        '$paymentStreak/5 Days',
+                        style: AppTypography.bodyCompactStrong
+                            .copyWith(color: AppColors.primary),
                       ),
                     ],
                   ),
-                  Material(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: onTopUp,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.add,
-                            color: Colors.white, size: 24),
-                      ),
+                  const SizedBox(height: 10),
+                  StreakCelebrationBar(
+                    streak: paymentStreak,
+                    height: compact ? 8 : 10,
+                    borderRadius: 4,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'A minimum recharge of ₹${requiredPayment > 0 ? requiredPayment.toStringAsFixed(0) : '2000'} is required to proceed further.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: compact ? 10 : 12,
+                      fontWeight: FontWeight.w500,
+                      color: colors.onSurfaceMuted,
+                      height: 1.4,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Rental Recovery Streak',
-                    style: TextStyle(
-                      fontSize: compact ? 12 : 14,
-                      fontWeight: FontWeight.w600,
-                      color: compact
-                          ? const Color(0xFF475569)
-                          : const Color(0xFF1E293B),
-                    ),
-                  ),
-                  Text(
-                    '$paymentStreak/5 Days',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Expanded(
-                    child: Container(
-                      height: 8,
-                      margin:
-                          EdgeInsets.only(right: i < 4 ? (compact ? 4 : 6) : 0),
-                      decoration: BoxDecoration(
-                        color: i < paymentStreak
-                            ? AppColors.success
-                            : AppColors.iconBackground,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'A minimum recharge of ₹${requiredPayment > 0 ? requiredPayment.toStringAsFixed(0) : '2000'} is required to proceed further.',
-                style: TextStyle(
-                  fontSize: compact ? 10 : 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.slate500,
-                  height: 1.4,
-                ),
-              ),
-            ],
+            ),
           ),
         ));
   }

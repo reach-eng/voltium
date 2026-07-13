@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'micro_animations.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ThemeIcon extends StatelessWidget {
   final IconData lightIcon;
@@ -146,7 +147,7 @@ class StatusBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: GoogleFonts.plusJakartaSans(
           color: color,
           fontSize: fontSize,
           fontWeight: FontWeight.w600,
@@ -164,10 +165,10 @@ class StatusBadge extends StatelessWidget {
 }
 
 class StatusBadgeColors {
-  static const Color active = Color(0xFF16A34A);
+  static const Color active = AppColors.successGreen;
   static const Color pending = AppColors.warning;
   static const Color inactive = AppColors.slate500;
-  static const Color error = Color(0xFFDC2626);
+  static const Color error = AppColors.errorRed;
   static const Color info = AppColors.info;
   static const Color warning = AppColors.warning;
 }

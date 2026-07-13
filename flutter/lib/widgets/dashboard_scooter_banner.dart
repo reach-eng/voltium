@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Scooter submission required banner widget.
 class ScooterSubmissionBanner extends StatelessWidget {
@@ -43,6 +44,7 @@ class ScooterSubmissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final String formattedDate = submissionDate != null
         ? _formatDate(DateTime.parse(submissionDate!))
         : 'Friday, Oct 27, 2023';
@@ -50,7 +52,7 @@ class ScooterSubmissionBanner extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.error, width: 1.5),
         boxShadow: [
@@ -71,7 +73,7 @@ class ScooterSubmissionBanner extends StatelessWidget {
               child: Icon(
                 Icons.insights,
                 size: 120,
-                color: Color(0xFFFEF2F2),
+                color: AppColors.errorSurface,
               ),
             ),
             Padding(
@@ -82,7 +84,7 @@ class ScooterSubmissionBanner extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
+                      color: AppColors.errorSurface,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Container(
@@ -98,37 +100,27 @@ class ScooterSubmissionBanner extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Scooter Submission\nRequired',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            height: 1.3,
-                          ),
+                          style: AppTypography.titleMedium
+                              .copyWith(color: colors.onSurface, height: 1.3),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(
                           'Submission Date: $formattedDate',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF1E293B),
-                          ),
+                          style: AppTypography.bodyCompact
+                              .copyWith(color: colors.onSurface),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'Hub Name: ${(pickupHub == null || pickupHub!.isEmpty || pickupHub == 'Not Assigned') ? 'New Delhi Central' : pickupHub!}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF1E293B),
-                          ),
+                          style: AppTypography.bodyCompact
+                              .copyWith(color: colors.onSurface),
                         ),
                       ],
                     ),

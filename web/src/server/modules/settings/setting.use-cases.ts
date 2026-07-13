@@ -12,7 +12,7 @@ const PUBLIC_SETTINGS = ['walletMinTopup', 'lateFee', 'referralBonus', 'gpsFetch
 
 export const settingUseCases = {
   async getAll() {
-    const [flags, settings] = await Promise.all([getFeatureFlags(), db.setting.findMany()]);
+    const [flags, settings] = await Promise.all([getFeatureFlags(), db.systemSetting.findMany()]);
 
     const DEFAULT_SETTINGS: Record<string, string> = {
       walletMinTopup: '150000',
@@ -41,10 +41,18 @@ export const settingUseCases = {
     for (const [key, value] of Object.entries(data)) {
       let storedValue = String(value);
       if (MONETARY_KEYS.has(key)) storedValue = String(rupeesToPaise(Number(value)));
-      const result = await db.setting.upsert({
+      const result = await db.systemSetting.upsert({
         where: { key },
-        update: { value: storedValue },
-        create: { key, value: storedValue },
+        update: { value: storedValue,
+          valueType: MONETARY_KEYS.has(key) ? 'NUMBER' : 'STRING',
+          category: 'BUSINESS',
+          isSecret: false,
+          isEditable: true },
+        create: { key, value: storedValue,
+          valueType: MONETARY_KEYS.has(key) ? 'NUMBER' : 'STRING',
+          category: 'BUSINESS',
+          isSecret: false,
+          isEditable: true },
       });
       results.push(result);
     }
@@ -59,7 +67,7 @@ export const settingUseCases = {
   },
 
   async getPublic() {
-    const settings = await db.setting.findMany({ where: { key: { in: PUBLIC_SETTINGS } } });
+    const settings = await db.systemSetting.findMany({ where: { key: { in: PUBLIC_SETTINGS } } });
     const settingsMap: Record<string, number> = {};
     for (const s of settings) settingsMap[s.key] = paiseToRupees(Number(s.value));
     const flags = await getFeatureFlags();

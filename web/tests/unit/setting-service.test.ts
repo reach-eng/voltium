@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 
 vi.mock('@/lib/db', () => ({
   db: {
-    setting: { findMany: vi.fn(), upsert: vi.fn() }
+    systemSetting: { findMany: vi.fn(), upsert: vi.fn() }
   }
 }));
 
@@ -18,7 +18,7 @@ describe('Setting Use Cases - Edge Cases', () => {
   });
 
   it('getAll returns default settings blended with db settings and feature flags', async () => {
-    (db.setting.findMany as any).mockResolvedValue([
+    (db.systemSetting.findMany as any).mockResolvedValue([
       { key: 'walletMinTopup', value: '200000' }
     ]);
     
@@ -30,12 +30,12 @@ describe('Setting Use Cases - Edge Cases', () => {
   });
 
   it('update upserts correctly', async () => {
-    (db.setting.upsert as any).mockResolvedValue({});
+    (db.systemSetting.upsert as any).mockResolvedValue({});
     const result = await settingUseCases.update({ lateFee: '500' }, 'actor-1');
-    expect(db.setting.upsert).toHaveBeenCalledWith({
+    expect(db.systemSetting.upsert).toHaveBeenCalledWith({
       where: { key: 'lateFee' },
-      create: { key: 'lateFee', value: '50000' },
-      update: { value: '50000' }
+      create: { key: 'lateFee', value: '50000', valueType: 'NUMBER', category: 'BUSINESS', isSecret: false, isEditable: true },
+      update: { value: '50000', valueType: 'NUMBER', category: 'BUSINESS', isSecret: false, isEditable: true }
     });
     expect(result).toEqual([{}]);
   });

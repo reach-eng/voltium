@@ -1,7 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import 'electric_arc.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web BottomNav.tsx exactly:
 /// - Glass effect: white/95 + backdrop blur
@@ -37,6 +38,9 @@ class _AppBottomNavState extends State<AppBottomNav>
   late AnimationController _entryCtrl;
   late Animation<Offset> _slideAnim;
   late Animation<double> _fadeAnim;
+
+  final GlobalKey<_ElectricArcNavState> _arcKey = GlobalKey();
+  int _previousIndex = 0;
 
   static const _tabs = [
     _TabInfo(
@@ -95,39 +99,50 @@ class _AppBottomNavState extends State<AppBottomNav>
 
   @override
   Widget build(BuildContext context) {
-    return SlideTransition(
-      position: _slideAnim,
-      child: FadeTransition(
-        opacity: _fadeAnim,
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              height: 80 + MediaQuery.of(context).padding.bottom,
-              decoration: BoxDecoration(
-                // glass: white 95% opacity
-                color: Colors.white.withValues(alpha: 0.95),
-                border: const Border(
-                  top: BorderSide(color: AppColors.outlineVariant, width: 1),
+    final colors = AppColors.of(context);
+    return _ElectricArcNav(
+      key: _arcKey,
+      child: SlideTransition(
+        position: _slideAnim,
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                height: 80 + MediaQuery.of(context).padding.bottom,
+                decoration: BoxDecoration(
+                  // glass: card 95% opacity
+                  color: colors.card.withValues(alpha: 0.95),
+                  border: const Border(
+                    top: BorderSide(color: AppColors.outlineVariant, width: 1),
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 80,
-                  child: Row(
-                    children: List.generate(_tabs.length, (index) {
-                      return _NavButton(
-                        key: widget.tabKeys != null &&
-                                index < widget.tabKeys!.length
-                            ? widget.tabKeys![index]
-                            : null,
-                        tab: _tabs[index],
-                        isActive: index == widget.currentIndex,
-                        hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
-                        onTap: () => widget.onTap(index),
-                      );
-                    }),
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    height: 80,
+                    child: Row(
+                      children: List.generate(_tabs.length, (index) {
+                        return _NavButton(
+                          key: widget.tabKeys != null &&
+                                  index < widget.tabKeys!.length
+                              ? widget.tabKeys![index]
+                              : null,
+                          tab: _tabs[index],
+                          isActive: index == widget.currentIndex,
+                          hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
+                          onTap: () {
+                            _arcKey.currentState?.animateTo(
+                              _previousIndex,
+                              index,
+                            );
+                            _previousIndex = index;
+                            widget.onTap(index);
+                          },
+                        );
+                      }),
+                    ),
                   ),
                 ),
               ),
@@ -174,11 +189,8 @@ class _NavButtonState extends State<_NavButton>
   late AnimationController _pillCtrl;
   late Animation<double> _pillFade;
 
-  static final TextStyle _navLabelStyle = GoogleFonts.inter(
-    fontSize: 12,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.2,
-  );
+  static final TextStyle _navLabelStyle =
+      AppTypography.labelMedium.copyWith(letterSpacing: -0.2);
 
   @override
   void initState() {
@@ -211,106 +223,138 @@ class _NavButtonState extends State<_NavButton>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     const activeColor = AppColors.primary;
-    const inactiveColor = AppColors.onSurfaceVariant;
+    final inactiveColor = colors.onSurfaceVariant;
     final iconColor = widget.isActive ? activeColor : inactiveColor;
-    final labelColor = widget.isActive ? AppColors.onSurface : inactiveColor;
+    final labelColor = widget.isActive ? colors.onSurface : inactiveColor;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Stack(
-          alignment: Alignment.bottomCenter,
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon container with animated pill background
-                SizedBox(
-                  width: 64,
-                  height: 32,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Active pill: bg-primary/10 rounded-full
-                      FadeTransition(
-                        opacity: _pillFade,
-                        child: Container(
-                          width: 64,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: activeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(999),
+      child: Semantics(
+        button: true,
+        label: widget.tab.label,
+        selected: widget.isActive,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon container with animated pill background
+                  SizedBox(
+                    width: 64,
+                    height: 32,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Active pill: bg-primary/10 rounded-full
+                        FadeTransition(
+                          opacity: _pillFade,
+                          child: Container(
+                            width: 64,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: activeColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                           ),
                         ),
-                      ),
-                      // Icon
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(
-                            widget.isActive
-                                ? widget.tab.activeIcon
-                                : widget.tab.icon,
-                            color: iconColor,
-                            size: 20,
-                          ),
-                          // Notification badge
-                          if (widget.hasNotification)
-                            Positioned(
-                              top: -4,
-                              right: -6,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 1.5,
+                        // Icon
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              widget.isActive
+                                  ? widget.tab.activeIcon
+                                  : widget.tab.icon,
+                              color: iconColor,
+                              size: 20,
+                            ),
+                            // Notification badge
+                            if (widget.hasNotification)
+                              Positioned(
+                                top: -4,
+                                right: -6,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: colors.card,
+                                      width: 1.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
 
-                // Label
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: _navLabelStyle.copyWith(color: labelColor),
-                  child: Text(widget.tab.label),
-                ),
-              ],
-            ),
+                  // Label
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: _navLabelStyle.copyWith(color: labelColor),
+                    child: Text(widget.tab.label),
+                  ),
+                ],
+              ),
 
-            // Active dot at bottom (nav-dot)
-            if (widget.isActive)
-              Positioned(
-                bottom: 4,
-                child: AnimatedOpacity(
-                  opacity: widget.isActive ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
+              // Active dot at bottom (nav-dot)
+              if (widget.isActive)
+                Positioned(
+                  bottom: 4,
+                  child: AnimatedOpacity(
+                    opacity: widget.isActive ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Thin wrapper that exposes a GlobalKey-based [animateTo] for the parent
+/// state to trigger the electric arc between tabs.
+class _ElectricArcNav extends StatefulWidget {
+  final Widget child;
+  const _ElectricArcNav({super.key, required this.child});
+
+  @override
+  State<_ElectricArcNav> createState() => _ElectricArcNavState();
+}
+
+class _ElectricArcNavState extends State<_ElectricArcNav> {
+  final GlobalKey<ElectricArcState> _arcStateKey = GlobalKey();
+
+  void animateTo(int from, int to) {
+    _arcStateKey.currentState?.animateTo(from, to);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElectricArc(
+      key: _arcStateKey,
+      child: widget.child,
     );
   }
 }

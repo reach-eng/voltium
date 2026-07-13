@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // Run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_individual/28_offline_indicator_test.dart -d emulator-5554
 
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -12,10 +13,11 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Offline indicator – shows when network is down', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
 
     // The app may show an offline banner on startup if no network
-    final offlineBanner = find.byKey(const Key('offlineBanner'));
+    final offlineBanner = app.shared.offlineBanner;
     final offlineIcon = find.byIcon(Icons.wifi_off);
 
     // We can't easily disconnect network in integration tests,

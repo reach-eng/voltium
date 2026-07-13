@@ -54,8 +54,8 @@ class SupportProvider extends ChangeNotifier {
           subtitle: 'Billing & Top-ups',
           articleCount: 8,
           icon: Icons.credit_card_outlined,
-          iconColor: Color(0xFF16A34A),
-          iconBgColor: Color(0xFFDCFCE7),
+          iconColor: AppColors.successGreen,
+          iconBgColor: AppColors.successSurface,
         ),
         const FaqCategory(
           id: 'vehicle',
@@ -63,7 +63,7 @@ class SupportProvider extends ChangeNotifier {
           subtitle: 'Moped & Battery',
           articleCount: 15,
           icon: Icons.electric_moped_outlined,
-          iconColor: Color(0xFF2563EB),
+          iconColor: AppColors.primary,
           iconBgColor: AppColors.infoLight,
         ),
       ];

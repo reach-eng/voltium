@@ -57,7 +57,8 @@ void main() {
       );
 
       await tester.pumpWidget(createScreenWithRider(rider, (state) {}));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       expect(find.text('START REGISTRATION'), findsOneWidget);
     });
@@ -73,7 +74,8 @@ void main() {
       );
 
       await tester.pumpWidget(createScreenWithRider(rider, (state) {}));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       expect(find.text('BOOK VEHICLE'), findsOneWidget);
     });
@@ -91,7 +93,8 @@ void main() {
       );
 
       await tester.pumpWidget(createScreenWithRider(rider, (state) {}));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       expect(find.text('Top Up Wallet'), findsOneWidget);
     });

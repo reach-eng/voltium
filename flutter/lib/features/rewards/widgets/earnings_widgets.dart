@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/models/earnings_entry_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/date_helpers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Week selector with prev/next navigation
 class WeekSelector extends StatelessWidget {
@@ -50,29 +52,22 @@ class WeekSelector extends StatelessWidget {
               child: const Icon(
                 Icons.chevron_left,
                 size: 20,
-                color: Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
             ),
           ),
           Column(
             children: [
-              const Text(
+              Text(
                 'WEEKLY EARNINGS',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.slate500,
-                  letterSpacing: 1.5,
-                ),
+                style: AppTypography.microBadge
+                    .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 _getWeekRange(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.bodyMediumEmphasis
+                    .copyWith(color: AppColors.slate800),
               ),
             ],
           ),
@@ -87,7 +82,7 @@ class WeekSelector extends StatelessWidget {
               child: const Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
             ),
           ),
@@ -135,11 +130,9 @@ class TotalCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'THIS WEEK',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
+                style: AppTypography.microOverline.copyWith(
                   color: Color(0xB3FFFFFF),
                   letterSpacing: 1.5,
                 ),
@@ -150,52 +143,45 @@ class TotalCard extends StatelessWidget {
                   color: Colors.white.withAlpha(51),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(
                       Icons.trending_up,
-                      color: Color(0xFF4ADE80),
+                      color: AppColors.successBright,
                       size: 14,
                     ),
                     SizedBox(width: 4),
                     Text(
                       '+12%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4ADE80),
-                      ),
+                      style: AppTypography.microLabel
+                          .copyWith(color: AppColors.successBright),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 '\u20B9',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w300,
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 total.toStringAsFixed(0),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -1,
-                ),
+                style: AppTypography.displayLarge
+                    .copyWith(color: Colors.white, letterSpacing: -1),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -208,29 +194,24 @@ class TotalCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TRIPS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                        style: AppTypography.microBadge.copyWith(
                           color: Color(0xB3FFFFFF),
                           letterSpacing: 0.8,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '$trips',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: Colors.white),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(12),
@@ -241,23 +222,18 @@ class TotalCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'HOURS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                        style: AppTypography.microBadge.copyWith(
                           color: Color(0xB3FFFFFF),
                           letterSpacing: 0.8,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '${hours.toStringAsFixed(1)}h',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -328,21 +304,14 @@ class DayCard extends StatelessWidget {
                 children: [
                   Text(
                     DateHelpers.dayName(date),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.slate500,
-                      letterSpacing: 1.5,
-                    ),
+                    style: AppTypography.microOverline.copyWith(
+                        color: AppColors.slate500, letterSpacing: 1.5),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     DateHelpers.formatFullDate(date),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyMediumEmphasis
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ],
               ),
@@ -362,29 +331,24 @@ class DayCard extends StatelessWidget {
                         ),
                         child: Text(
                           EarningEntry.platformLabel(p),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                          style: AppTypography.microBadge.copyWith(
                             color: EarningEntry.platformColor(p),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     '\u20B9${amount.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF16A34A),
-                    ),
+                    style: AppTypography.titleMedium
+                        .copyWith(color: AppColors.successGreen),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               _buildStat(Icons.directions_bike, '$trips trips'),
@@ -397,21 +361,18 @@ class DayCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: AppColors.primarySurface,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.add, size: 14, color: AppColors.primary),
                       SizedBox(width: 4),
                       Text(
                         'Add',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
+                        style: AppTypography.microLabel
+                            .copyWith(color: AppColors.primary),
                       ),
                     ],
                   ),
@@ -435,21 +396,14 @@ class DayCard extends StatelessWidget {
             children: [
               Text(
                 DateHelpers.dayName(date),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.slate400,
-                  letterSpacing: 1.5,
-                ),
+                style: AppTypography.microOverline
+                    .copyWith(color: AppColors.slate400, letterSpacing: 1.5),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 DateHelpers.formatFullDate(date),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate400,
-                ),
+                style: AppTypography.bodyMediumEmphasis
+                    .copyWith(color: AppColors.slate400),
               ),
             ],
           ),
@@ -461,18 +415,15 @@ class DayCard extends StatelessWidget {
                 color: AppColors.iconBackground,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.add, size: 14, color: AppColors.slate500),
                   SizedBox(width: 4),
                   Text(
                     'Add Entry',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate500,
-                    ),
+                    style: AppTypography.microLabel
+                        .copyWith(color: AppColors.slate500),
                   ),
                 ],
               ),
@@ -487,10 +438,10 @@ class DayCard extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 14, color: AppColors.slate500),
-        const SizedBox(width: 4),
+        SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             color: AppColors.slate500,
           ),
@@ -535,14 +486,10 @@ class SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'WEEKLY SUMMARY',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1.5,
-            ),
+            style: AppTypography.microOverline
+                .copyWith(color: Colors.white, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           Row(
@@ -575,7 +522,7 @@ class SummaryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -585,15 +532,12 @@ class SummaryCard extends StatelessWidget {
             child: Row(
               children: [
                 const Icon(Icons.lightbulb, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'You earned \u20B9${total.toStringAsFixed(0)} this week. ${bestAmount > 0 ? 'Your best day was ${DateHelpers.dayName(bestDate)} with \u20B9${bestAmount.toStringAsFixed(0)}!' : 'Start logging to see insights!'}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style:
+                        AppTypography.bodySmall.copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -610,21 +554,15 @@ class SummaryCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
+          style: AppTypography.microBadge.copyWith(
             color: Colors.white.withAlpha(179),
             letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: AppTypography.bodyMediumEmphasis.copyWith(color: Colors.white),
           overflow: TextOverflow.ellipsis,
         ),
       ],
@@ -658,19 +596,17 @@ class EarningsEmptyState extends StatelessWidget {
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'No earnings logged yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+            style:
+                AppTypography.titleMedium.copyWith(color: AppColors.slate800),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             'Tap "Add Entry" to start tracking your gig earnings',
-            style: TextStyle(fontSize: 14, color: AppColors.slate500),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, color: AppColors.slate500),
             textAlign: TextAlign.center,
           ),
         ],

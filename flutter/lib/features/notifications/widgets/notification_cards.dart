@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 enum NotificationType { ride, payment, promo, alert, system }
 
@@ -23,16 +25,11 @@ class NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
-        color: isRead
-            ? (Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E293B)
-                : AppColors.surfaceAlt)
-            : (Theme.of(context).brightness == Brightness.dark
-                ? const Color(0xFF1E293B)
-                : Colors.white),
+        color: isRead ? colors.surfaceAlt : colors.card,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -62,7 +59,7 @@ class NotificationCard extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +70,7 @@ class NotificationCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               title,
-                              style: TextStyle(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontWeight: isRead
                                     ? FontWeight.normal
                                     : FontWeight.bold,
@@ -84,18 +81,18 @@ class NotificationCard extends StatelessWidget {
                           if (timestamp != null)
                             Text(
                               _formatTime(timestamp!),
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: colors.onSurfaceVariant,
                                 fontSize: 11,
                               ),
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         message,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: colors.onSurfaceVariant,
                           fontSize: 13,
                         ),
                         maxLines: 2,
@@ -142,13 +139,13 @@ class NotificationCard extends StatelessWidget {
       case NotificationType.ride:
         return AppColors.primary;
       case NotificationType.payment:
-        return const Color(0xFF16A34A);
+        return AppColors.successGreen;
       case NotificationType.promo:
         return AppColors.warningDark;
       case NotificationType.alert:
-        return const Color(0xFFD92D20);
+        return AppColors.errorRedAlt;
       case NotificationType.system:
-        return const Color(0xFF667085);
+        return AppColors.onSurfaceMuted;
     }
   }
 
@@ -221,13 +218,13 @@ class NotificationListTile extends StatelessWidget {
       case NotificationType.ride:
         return AppColors.primary;
       case NotificationType.payment:
-        return const Color(0xFF16A34A);
+        return AppColors.successGreen;
       case NotificationType.promo:
         return AppColors.warningDark;
       case NotificationType.alert:
-        return const Color(0xFFD92D20);
+        return AppColors.errorRedAlt;
       case NotificationType.system:
-        return const Color(0xFF667085);
+        return AppColors.onSurfaceMuted;
     }
   }
 }
@@ -253,11 +250,8 @@ class NotificationGroup extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: Color(0xFF667085),
-            ),
+            style: AppTypography.bodyMediumEmphasis
+                .copyWith(color: AppColors.of(context).onSurfaceMuted),
           ),
         ),
         ...children,
@@ -290,17 +284,13 @@ class NotificationBadge extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               decoration: BoxDecoration(
-                color: const Color(0xFFD92D20),
+                color: AppColors.errorRedAlt,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
                 child: Text(
                   count > 99 ? '99+' : count.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
                 ),
               ),
             ),

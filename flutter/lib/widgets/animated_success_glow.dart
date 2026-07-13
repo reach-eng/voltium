@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class AnimatedSuccessGlow extends StatefulWidget {
   final double size;
@@ -10,8 +11,8 @@ class AnimatedSuccessGlow extends StatefulWidget {
   const AnimatedSuccessGlow({
     super.key,
     this.size = 96,
-    this.primaryColor = const Color(0xFF16A34A),
-    this.secondaryColor = const Color(0xFF22C55E),
+    this.primaryColor = AppColors.successGreen,
+    this.secondaryColor = AppColors.successGreen,
     this.icon = Icons.check_circle_outline,
   });
 
@@ -61,72 +62,74 @@ class _AnimatedSuccessGlowState extends State<AnimatedSuccessGlow>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Outer glow rings
-          AnimatedBuilder(
-            animation: _glowCtrl,
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: (widget.size * 1.35) + (10 * _glowCtrl.value),
-                    height: (widget.size * 1.35) + (10 * _glowCtrl.value),
-                    decoration: BoxDecoration(
-                      color: widget.primaryColor.withValues(alpha: 0.05),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: (widget.size * 1.15) + (15 * _glowCtrl.value),
-                    height: (widget.size * 1.15) + (15 * _glowCtrl.value),
-                    decoration: BoxDecoration(
-                      color: widget.primaryColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          // Main circle
-          Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [widget.primaryColor, widget.secondaryColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: widget.primaryColor.withValues(alpha: 0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: AnimatedBuilder(
-              animation: _rotateAnim,
+    return RepaintBoundary(
+      child: ScaleTransition(
+        scale: _scaleAnim,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Outer glow rings
+            AnimatedBuilder(
+              animation: _glowCtrl,
               builder: (context, child) {
-                return Transform.rotate(
-                  angle: _rotateAnim.value,
-                  child: Icon(
-                    widget.icon,
-                    color: Colors.white,
-                    size: widget.size * 0.583, // ~56 out of 96
-                  ),
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: (widget.size * 1.35) + (10 * _glowCtrl.value),
+                      height: (widget.size * 1.35) + (10 * _glowCtrl.value),
+                      decoration: BoxDecoration(
+                        color: widget.primaryColor.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Container(
+                      width: (widget.size * 1.15) + (15 * _glowCtrl.value),
+                      height: (widget.size * 1.15) + (15 * _glowCtrl.value),
+                      decoration: BoxDecoration(
+                        color: widget.primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
-          ),
-        ],
+            // Main circle
+            Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [widget.primaryColor, widget.secondaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: AnimatedBuilder(
+                animation: _rotateAnim,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: _rotateAnim.value,
+                    child: Icon(
+                      widget.icon,
+                      color: Colors.white,
+                      size: widget.size * 0.583, // ~56 out of 96
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

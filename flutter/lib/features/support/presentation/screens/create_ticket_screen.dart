@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_checklist_screen.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class CreateTicketScreen extends ConsumerStatefulWidget {
   const CreateTicketScreen({super.key});
@@ -46,6 +48,9 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             message: _messageController.text.trim(),
             riderId: ref.read(appProvider).riderId,
           );
+      PostHogService.capture('ticket_created', properties: {
+        'category': _selectedCategory,
+      });
 
       if (mounted) {
         // Capture navigator before pop so we can push after
@@ -93,7 +98,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         ),
         title: Text(
           'Create Ticket',
-          style: GoogleFonts.inter(
+          style: GoogleFonts.plusJakartaSans(
             color: AppColors.onSurface,
             fontWeight: FontWeight.bold,
           ),
@@ -109,16 +114,13 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
               children: [
                 Text(
                   'How can we help you?',
-                  style: GoogleFonts.inter(
-                    color: AppColors.onSurface,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.headingMedium
+                      .copyWith(color: AppColors.onSurface),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Please fill out the form below to create a support ticket.',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: AppColors.onSurfaceVariant,
                     fontSize: 14,
                   ),
@@ -128,12 +130,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 // Category Dropdown
                 Text(
                   'Category',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
@@ -148,7 +150,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                       dropdownColor: Colors.white,
                       icon: const Icon(Icons.keyboard_arrow_down,
                           color: AppColors.onSurfaceVariant),
-                      style: GoogleFonts.inter(color: AppColors.onSurface),
+                      style: GoogleFonts.plusJakartaSans(
+                          color: AppColors.onSurface),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() => _selectedCategory = newValue);
@@ -172,21 +175,22 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 // Subject TextField
                 Text(
                   'Subject',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _subjectController,
-                  style: GoogleFonts.inter(color: AppColors.onSurface),
+                  style:
+                      GoogleFonts.plusJakartaSans(color: AppColors.onSurface),
                   decoration: InputDecoration(
                     hintText: 'Brief summary of the issue',
-                    hintStyle:
-                        GoogleFonts.inter(color: AppColors.onSurfaceDisabled),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
+                    fillColor: AppColors.iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -197,8 +201,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF0053C1), width: 2),
+                      borderSide: const BorderSide(
+                          color: AppColors.primaryCyan, width: 2),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
@@ -217,22 +221,23 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 // Message TextField
                 Text(
                   'Message',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _messageController,
-                  style: GoogleFonts.inter(color: AppColors.onSurface),
+                  style:
+                      GoogleFonts.plusJakartaSans(color: AppColors.onSurface),
                   maxLines: 6,
                   decoration: InputDecoration(
                     hintText: 'Describe your issue in detail...',
-                    hintStyle:
-                        GoogleFonts.inter(color: AppColors.onSurfaceDisabled),
+                    hintStyle: GoogleFonts.plusJakartaSans(
+                        color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
+                    fillColor: AppColors.iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -243,8 +248,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide:
-                          const BorderSide(color: Color(0xFF0053C1), width: 2),
+                      borderSide: const BorderSide(
+                          color: AppColors.primaryCyan, width: 2),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
@@ -285,10 +290,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                           )
                         : Text(
                             'Submit Ticket',
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: AppTypography.titleSmall,
                           ),
                   ),
                 ),

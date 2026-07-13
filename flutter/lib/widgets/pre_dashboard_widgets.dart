@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Pre-Dashboard state banner showing current onboarding status.
 class PreDashboardBanner extends StatelessWidget {
@@ -33,22 +35,18 @@ class PreDashboardBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE4E6),
+        color: AppColors.errorRose,
         borderRadius: BorderRadius.circular(9999),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.circle, color: AppColors.error, size: 10),
           SizedBox(width: 8),
           Text(
             'KYC REJECTED',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: AppColors.error,
-              letterSpacing: 1.2,
-            ),
+            style: AppTypography.bodyMediumStrong
+                .copyWith(color: AppColors.error, letterSpacing: 1.2),
           ),
         ],
       ),
@@ -59,7 +57,7 @@ class PreDashboardBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
+        color: AppColors.warningSurface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFFFE082)),
       ),
@@ -69,31 +67,25 @@ class PreDashboardBanner extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: const BoxDecoration(
-              color: Color(0xFFFFA000),
+              color: AppColors.warningDark,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.schedule, color: Colors.white, size: 18),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'KYC Approved',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFE65100),
-                  ),
+                  style: AppTypography.labelLarge
+                      .copyWith(color: AppColors.warningDark),
                 ),
                 Text(
                   planDone ? 'Pickup your vehicle' : 'Choose a Plan',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFF57C00),
-                  ),
+                  style: AppTypography.bodySmallEmphasis
+                      .copyWith(color: AppColors.warningDark),
                 ),
               ],
             ),
@@ -103,16 +95,12 @@ class PreDashboardBanner extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFFFA000)),
+              border: Border.all(color: AppColors.warningDark),
             ),
-            child: const Text(
+            child: Text(
               'PENDING',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFFFA000),
-                letterSpacing: 0.8,
-              ),
+              style: AppTypography.microOverline
+                  .copyWith(color: AppColors.warningDark, letterSpacing: 0.8),
             ),
           ),
         ],
@@ -124,9 +112,9 @@ class PreDashboardBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
+        color: AppColors.errorSurface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFECACA)),
+        border: Border.all(color: AppColors.errorBorder),
       ),
       child: Row(
         children: [
@@ -143,26 +131,21 @@ class PreDashboardBanner extends StatelessWidget {
               size: 18,
             ),
           ),
-          const SizedBox(width: 14),
-          const Expanded(
+          SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Account Action',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                  style: AppTypography.labelLarge.copyWith(
                     color: Color(0xFF991B1B),
                   ),
                 ),
                 Text(
                   'Required',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.errorDark,
-                  ),
+                  style: AppTypography.bodySmallEmphasis
+                      .copyWith(color: AppColors.errorDark),
                 ),
               ],
             ),
@@ -174,14 +157,10 @@ class PreDashboardBanner extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.error),
             ),
-            child: const Text(
+            child: Text(
               'INACTIVE',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w900,
-                color: AppColors.error,
-                letterSpacing: 0.8,
-              ),
+              style: AppTypography.microOverline
+                  .copyWith(color: AppColors.error, letterSpacing: 0.8),
             ),
           ),
         ],
@@ -213,229 +192,227 @@ class PreDashboardProfileCard extends StatelessWidget {
 
   Widget _buildRejectedProfile() {
     return PremiumDoubleBezelCard(
-        padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: const Color(0xFFFFE4E6), width: 3),
-                    ),
-                    padding: const EdgeInsets.all(2),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.error, width: 2),
-                      ),
-                      child: ClipOval(
-                        child: rider.profilePhoto != null &&
-                                rider.profilePhoto!.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: rider.profilePhoto!,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) =>
-                                    _buildPlaceholder(rider),
-                                placeholder: (_, __) =>
-                                    _buildPlaceholder(rider),
-                              )
-                            : _buildPlaceholder(rider),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -4,
-                    right: -4,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.zero,
+      child: Builder(
+        builder: (context) {
+          final colors = AppColors.of(context);
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Text(
-                      rider.name.isNotEmpty ? rider.name : 'Rider',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1E293B),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: AppColors.errorRose, width: 3),
+                      ),
+                      padding: const EdgeInsets.all(2),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.error, width: 2),
+                        ),
+                        child: ClipOval(
+                          child: rider.profilePhoto != null &&
+                                  rider.profilePhoto!.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: rider.profilePhoto!,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) =>
+                                      _buildPlaceholder(rider),
+                                  placeholder: (_, __) =>
+                                      _buildPlaceholder(rider),
+                                )
+                              : _buildPlaceholder(rider),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Text(
-                          'RIDER ID',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.slate400,
-                            letterSpacing: 1.0,
-                          ),
+                    Positioned(
+                      bottom: -4,
+                      right: -4,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.iconBackground,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            rider.riderId.isEmpty ? 'VF-RD-000' : rider.riderId,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.white,
+                          size: 16,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ));
+                SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        rider.name.isNotEmpty ? rider.name : 'Rider',
+                        style: AppTypography.headingSmall
+                            .copyWith(color: colors.onSurface),
+                      ),
+                      SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(
+                            'RIDER ID',
+                            style: AppTypography.microLabel.copyWith(
+                                color: colors.onSurfaceMuted,
+                                letterSpacing: 1.0),
+                          ),
+                          SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.iconBackground,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              rider.riderId.isEmpty ? '—' : rider.riderId,
+                              style: AppTypography.bodySmallStrong
+                                  .copyWith(color: colors.onSurface),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildNormalProfile() {
     final String badgeText = kycVerified ? 'KYC VERIFIED' : 'PENDING KYC';
     final Color badgeBg =
-        kycVerified ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED);
+        kycVerified ? AppColors.successSurfaceLight : const Color(0xFFFFF7ED);
     final Color badgeTextColor =
-        kycVerified ? const Color(0xFF16A34A) : const Color(0xFFEA580C);
+        kycVerified ? AppColors.successGreen : const Color(0xFFEA580C);
     final Color badgeBorder =
         kycVerified ? const Color(0xFFBBF7D0) : const Color(0xFFFED7AA);
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.iconBackground, width: 4),
-                ),
-                child: ClipOval(
-                  child: rider.profilePhoto != null &&
-                          rider.profilePhoto!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: rider.profilePhoto!,
-                          fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => _buildPlaceholder(rider),
-                          placeholder: (_, __) => _buildPlaceholder(rider),
-                        )
-                      : _buildPlaceholder(rider),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                rider.name.isNotEmpty ? rider.name : 'Rider',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'ID: ${rider.riderId}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.slate400,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: badgeBorder),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: badgeTextColor,
-                    letterSpacing: 1.2,
+        child: Builder(
+          builder: (context) {
+            final colors = AppColors.of(context);
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colors.card,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border:
+                          Border.all(color: colors.iconBackground, width: 4),
+                    ),
+                    child: ClipOval(
+                      child: rider.profilePhoto != null &&
+                              rider.profilePhoto!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: rider.profilePhoto!,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) =>
+                                  _buildPlaceholder(rider),
+                              placeholder: (_, __) => _buildPlaceholder(rider),
+                            )
+                          : _buildPlaceholder(rider),
+                    ),
+                  ),
+                  SizedBox(height: 14),
+                  Text(
+                    rider.name.isNotEmpty ? rider.name : 'Rider',
+                    style: AppTypography.titleMedium
+                        .copyWith(color: colors.onSurface),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'ID: ${rider.riderId}',
+                    style: AppTypography.bodyCompact.copyWith(
+                        color: colors.onSurfaceMuted, letterSpacing: 0.3),
+                  ),
+                  SizedBox(height: 12),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: badgeBorder),
+                    ),
+                    child: Text(
+                      badgeText,
+                      style: AppTypography.microOverline
+                          .copyWith(color: badgeTextColor, letterSpacing: 1.2),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ));
   }
 
   Widget _buildPlaceholder(RiderModel rider) {
-    return Container(
-      color: AppColors.outlineVariant,
-      child: Center(
-        child: Text(
-          rider.name.isEmpty ? '?' : rider.name[0].toUpperCase(),
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            color: AppColors.slate500,
+    return Builder(
+      builder: (context) {
+        final colors = AppColors.of(context);
+        return Container(
+          color: colors.outlineVariant,
+          child: Center(
+            child: Text(
+              rider.name.isEmpty ? '?' : rider.name[0].toUpperCase(),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 36,
+                fontWeight: FontWeight.w700,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -460,9 +437,9 @@ class RejectionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2),
+        color: AppColors.errorRose,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: const Color(0xFFFDA4AF), width: 1.5),
+        border: Border.all(color: AppColors.errorBorder, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -475,7 +452,7 @@ class RejectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFE4E6),
+                    color: AppColors.errorRose,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -484,35 +461,34 @@ class RejectionCard extends StatelessWidget {
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        reason,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF334155),
-                          height: 1.4,
-                        ),
-                      ),
+                      Builder(builder: (context) {
+                        final colors = AppColors.of(context);
+                        return Text(
+                          title,
+                          style: AppTypography.titleLarge
+                              .copyWith(color: colors.onSurface),
+                        );
+                      }),
+                      SizedBox(height: 8),
+                      Builder(builder: (context) {
+                        final colors = AppColors.of(context);
+                        return Text(
+                          reason,
+                          style: AppTypography.bodyLarge
+                              .copyWith(color: colors.onSurface, height: 1.4),
+                        );
+                      }),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -533,10 +509,7 @@ class RejectionCard extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       buttonText,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: AppTypography.titleSmall,
                     ),
                   ],
                 ),
@@ -581,8 +554,8 @@ class PreDashboardCtaCard extends StatelessWidget {
           'Available plans are fetched from admin panel. Complete your profile to start your first journey.',
       buttonLabel: 'BOOK VEHICLE',
       buttonIcon: Icons.arrow_forward,
-      gradientColors: [const Color(0xFF2563EB), const Color(0xFF1D4ED8)],
-      buttonColor: const Color(0xFF2563EB),
+      gradientColors: [AppColors.primary, AppColors.primaryDark],
+      buttonColor: AppColors.primary,
       onPressed: onPressed,
     );
   }
@@ -627,23 +600,19 @@ class PreDashboardCtaCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
+            style: AppTypography.titleLarge.copyWith(color: Colors.white),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: Color(0xFFBFDBFE),
+              color: AppColors.primaryLightBlue,
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -662,7 +631,7 @@ class PreDashboardCtaCard extends StatelessWidget {
                 children: [
                   Text(
                     buttonLabel,
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.2,
@@ -702,18 +671,14 @@ class PickupButton extends StatelessWidget {
           elevation: 8,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.local_shipping, size: 22),
             SizedBox(width: 12),
             Text(
               'PICKUP YOUR VEHICLE',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
+              style: AppTypography.buttonMedium.copyWith(letterSpacing: 1.2),
             ),
           ],
         ),
@@ -737,14 +702,14 @@ class NeedHelpCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+            colors: [AppColors.primary, AppColors.primaryDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -762,27 +727,21 @@ class NeedHelpCard extends StatelessWidget {
               child:
                   const Icon(Icons.help_outline, color: Colors.white, size: 24),
             ),
-            const SizedBox(width: 14),
-            const Expanded(
+            SizedBox(width: 14),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'NEED HELP?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                    style:
+                        AppTypography.titleSmall.copyWith(color: Colors.white),
                   ),
                   SizedBox(height: 4),
                   Text(
                     'Contact support for onboarding assistance',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFBFDBFE),
-                    ),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: AppColors.primaryLightBlue),
                   ),
                 ],
               ),

@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -14,6 +15,7 @@ void main() {
 
   testWidgets('Exhaustive UI traversal and data entry simulation',
       (tester) async {
+    final app = AppRobots(tester);
     // 1. Enter the app using the returning user cache to bypass auth for speed
     await setupReturningUser();
     await safeAppMain();
@@ -25,7 +27,7 @@ void main() {
     await expectOnDashboard(tester);
 
     // 2. Traversal: Dashboard interactions
-    final vehicleCard = find.byKey(const Key('assignedVehicleCard'));
+    final vehicleCard = app.dashboard.assignedVehicleCard;
     if (vehicleCard.evaluate().isNotEmpty) {
       await scrollAndTap(tester, vehicleCard);
       await settle(tester);
@@ -47,33 +49,33 @@ void main() {
     }
 
     // Tap Top Up and enter data
-    final topUpBtn = find.byKey(const Key('topUpButton'));
+    final topUpBtn = app.wallet.topUpButton;
     if (topUpBtn.evaluate().isNotEmpty) {
       await smartTap(tester, topUpBtn);
       await settle(tester);
 
       // Step 1: Purpose
-      final continueBtn = find.byKey(const Key('continueToPaymentButton'));
+      final continueBtn = app.onboarding.continueToPaymentButton;
       if (continueBtn.evaluate().isNotEmpty) {
         await smartTap(tester, continueBtn);
         await settle(tester);
       }
 
       // Step 2: Amount
-      final amountField = find.byKey(const Key('customAmountField'));
+      final amountField = app.wallet.customAmountField;
       if (amountField.evaluate().isNotEmpty) {
         await smartEnterText(tester, amountField, '100');
         await settle(tester);
       }
 
-      final proceedBtn = find.byKey(const Key('proceedToUpiButton'));
+      final proceedBtn = app.wallet.proceedToUpiButton;
       if (proceedBtn.evaluate().isNotEmpty) {
         await smartTap(tester, proceedBtn);
         await settle(tester);
       }
 
       // Step 3: Proof
-      final uploadArea = find.byKey(const Key('uploadProofArea'));
+      final uploadArea = app.onboarding.uploadProofArea;
       if (uploadArea.evaluate().isNotEmpty) {
         // Go back multiple times to return to wallet
         await goBack(tester); // To Amount
@@ -89,7 +91,7 @@ void main() {
     await navigateToTab(tester, 'supportTab');
 
     // Expand FAQ
-    final faqTile = find.byKey(const Key('faqTile'));
+    final faqTile = app.support.faqTile;
     if (faqTile.evaluate().isNotEmpty) {
       await tester.tap(faqTile);
       await settle(tester);
@@ -102,19 +104,22 @@ void main() {
     }
 
     // Open Ticket and enter data
-    final ticketTile = find.byKey(const Key('raiseTicketTile'));
+    final ticketTile = app.support.raiseTicketTile;
     if (ticketTile.evaluate().isNotEmpty) {
       await tester.tap(ticketTile);
       await settle(tester);
 
-      final descField = find.byKey(const Key('ticketDescriptionField'));
+      final descField = app.support.ticketDescriptionField;
       if (descField.evaluate().isNotEmpty) {
         await smartEnterText(
-            tester, descField, 'Test description for exhaustive traversal',);
+          tester,
+          descField,
+          'Test description for exhaustive traversal',
+        );
         await settle(tester);
       }
 
-      final submitBtn = find.byKey(const Key('submitTicketButton'));
+      final submitBtn = app.support.submitTicketButton;
       if (submitBtn.evaluate().isNotEmpty) {
         await tester.tap(submitBtn);
         await settle(tester);
@@ -126,13 +131,13 @@ void main() {
     await navigateToTab(tester, 'profileTab');
 
     // Open App Settings
-    final settingsLink = find.byKey(const Key('appSettingsLink'));
+    final settingsLink = app.settings.appSettingsLink;
     if (settingsLink.evaluate().isNotEmpty) {
       await tester.tap(settingsLink);
       await settle(tester);
 
       // Toggle Theme
-      final themeToggle = find.byKey(const Key('darkModeSwitch'));
+      final themeToggle = app.settings.darkModeSwitch;
       if (themeToggle.evaluate().isNotEmpty) {
         await tester.tap(themeToggle);
         await settle(tester);

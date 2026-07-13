@@ -9,6 +9,8 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// TL Details bottom sheet
 void showTLDetailsSheet(BuildContext context, RiderModel rider) {
@@ -45,53 +47,44 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
               backgroundColor: AppColors.iconBackground,
               child: Icon(Icons.person, size: 48, color: AppColors.slate400),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text(
               (rider.teamLeader == null ||
                       rider.teamLeader!.isEmpty ||
                       rider.teamLeader == 'Not Assigned')
-                  ? 'Amit Sharma'
+                  ? 'Not assigned'
                   : rider.teamLeader!,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
-              ),
+              style: AppTypography.headingSmall
+                  .copyWith(color: AppColors.slate800),
             ),
-            const SizedBox(height: 4),
-            const Text(
+            SizedBox(height: 4),
+            Text(
               'Assigned Team Leader',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.slate500,
-                fontWeight: FontWeight.w500,
-              ),
+              style:
+                  AppTypography.bodyCompact.copyWith(color: AppColors.slate500),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.surfaceBright,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const Icon(
                     Icons.phone_outlined,
-                    color: Color(0xFF2563EB),
+                    color: AppColors.primary,
                     size: 20,
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Text(
                     (rider.emergencyContact == null ||
                             rider.emergencyContact!.isEmpty)
-                        ? '+91 98765 12345'
+                        ? ''
                         : rider.emergencyContact!,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyLarge
+                        .copyWith(color: AppColors.slate800),
                   ),
                   const Spacer(),
                   IconButton(
@@ -99,7 +92,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                     onPressed: () async {
                       final phone = (rider.emergencyContact == null ||
                               rider.emergencyContact!.isEmpty)
-                          ? '+91 98765 12345'
+                          ? ''
                           : rider.emergencyContact!;
                       final sanitized = phone.replaceAll(RegExp(r'[^\d+]'), '');
                       final uri = Uri.parse('tel:$sanitized');
@@ -120,12 +113,12 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                         }
                       }
                     },
-                    icon: const Icon(Icons.call, color: Color(0xFF16A34A)),
+                    icon: const Icon(Icons.call, color: AppColors.successGreen),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Row(
               children: [
                 Expanded(
@@ -142,16 +135,16 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Change TL',
-                      style: TextStyle(
-                        color: Color(0xFFDC2626),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.errorRed,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
@@ -163,9 +156,10 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Close',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -212,19 +206,17 @@ void showChangeTLReasonSheet(BuildContext context) {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'Change Team Leader',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.titleLarge
+                    .copyWith(color: AppColors.slate800),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.',
-                style: TextStyle(fontSize: 14, color: AppColors.slate500),
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14, color: AppColors.slate500),
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -233,14 +225,14 @@ void showChangeTLReasonSheet(BuildContext context) {
                 decoration: InputDecoration(
                   hintText: 'Enter your reason here...',
                   filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
+                  fillColor: AppColors.surfaceBright,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
@@ -253,16 +245,17 @@ void showChangeTLReasonSheet(BuildContext context) {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
+                  backgroundColor: AppColors.errorRed,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Submit Request',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style:
+                      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -308,28 +301,25 @@ void showSubscriptionSheet(
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            SizedBox(height: 24),
+            Text(
               'Manage Subscription',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
-              ),
+              style:
+                  AppTypography.titleLarge.copyWith(color: AppColors.slate800),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.',
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: AppColors.slate500,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: AppColors.surfaceBright,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.outlineVariant),
               ),
@@ -342,11 +332,8 @@ void showSubscriptionSheet(
                       Text(
                         rider.currentPlan?.replaceAll('_', ' ').toUpperCase() ??
                             'NO PLAN',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: AppColors.slate900),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -354,21 +341,18 @@ void showSubscriptionSheet(
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFDCFCE7),
+                          color: AppColors.successSurface,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Active',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF16A34A),
-                          ),
+                          style: AppTypography.labelMedium
+                              .copyWith(color: AppColors.successGreen),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Row(
                     children: [
                       const Icon(
@@ -378,18 +362,15 @@ void showSubscriptionSheet(
                       ),
                       Text(
                         '${rider.activeRentalPlanPrice.toInt()} / week',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.slate500,
-                        ),
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: AppColors.slate500),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             FilledButton(
               key: const Key('requestPlanChangeButton'),
               onPressed: () {
@@ -404,38 +385,38 @@ void showSubscriptionSheet(
                   borderRadius: BorderRadius.circular(27),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Request Plan Change',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTypography.titleSmall,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             OutlinedButton(
               key: const Key('endRentalButton'),
               onPressed: () {
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFDC2626),
-                side: const BorderSide(color: Color(0xFFFECACA)),
+                foregroundColor: AppColors.errorRed,
+                side: const BorderSide(color: AppColors.errorBorder),
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(27),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.assignment_return_outlined, size: 20),
                   SizedBox(width: 8),
                   Text(
                     'End Rental',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: AppTypography.titleSmall,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             OutlinedButton(
               key: const Key('changeIntentButton'),
               onPressed: () {
@@ -443,7 +424,7 @@ void showSubscriptionSheet(
                 showIntentDialog(context, rider);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF475569),
+                foregroundColor: AppColors.slate600,
                 side: const BorderSide(color: AppColors.outlineVariant),
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
@@ -454,33 +435,30 @@ void showSubscriptionSheet(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.work_outline, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     rider.intent != null
                         ? 'Change Intent: ${rider.intent}'
                         : 'Change Intent of Use',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTypography.titleSmall,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.slate500,
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                side: const BorderSide(color: AppColors.borderMedium),
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(27),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Close',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: AppTypography.titleSmall,
               ),
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
@@ -524,29 +502,24 @@ Future<void> startVehicleReturnWorkflow(
                   size: 48,
                   color: AppColors.primary,
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text(
                   'Step ${i + 1} of 4',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.primary),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Capture ${labels[i]} of Vehicle',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.titleMedium
+                      .copyWith(color: AppColors.slate800),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   'Ensure the photo is clear and well-lit for faster approval.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.slate500),
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14, color: AppColors.slate500),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
@@ -570,13 +543,14 @@ Future<void> startVehicleReturnWorkflow(
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextButton(
                   key: const Key('cancelReturnProcessButton'),
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'Cancel Return Process',
-                    style: TextStyle(color: AppColors.slate500),
+                    style:
+                        GoogleFonts.plusJakartaSans(color: AppColors.slate500),
                   ),
                 ),
               ],
@@ -594,20 +568,21 @@ Future<void> startVehicleReturnWorkflow(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const AlertDialog(
+      builder: (context) => AlertDialog(
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
+            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 16),
             Text(
               'Uploading photos & submitting request...',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Please do not close the app.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style:
+                  GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
@@ -631,7 +606,7 @@ Future<void> startVehicleReturnWorkflow(
             icon: const Icon(
               Icons.check_circle,
               size: 48,
-              color: Color(0xFF16A34A),
+              color: AppColors.successGreen,
             ),
             title: const Text('Return Request Submitted'),
             content: const Text(
@@ -649,7 +624,7 @@ Future<void> startVehicleReturnWorkflow(
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to submit return request. Please try again.'),
-            backgroundColor: Color(0xFFDC2626),
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }

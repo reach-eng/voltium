@@ -2984,6 +2984,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'EV Plus'**
   String get txtevPlus;
+
+  /// Profile menu AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get menu_title;
+
+  /// Account section header
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT'**
+  String get menu_account;
+
+  /// Profile menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get menu_profile;
+
+  /// Documents menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'My Documents'**
+  String get menu_myDocuments;
+
+  /// Rewards section header
+  ///
+  /// In en, this message translates to:
+  /// **'REWARDS & MORE'**
+  String get menu_rewardsMore;
+
+  /// Rewards menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards'**
+  String get menu_rewards;
+
+  /// Referral menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Referral Program'**
+  String get menu_referralProgram;
+
+  /// General section header
+  ///
+  /// In en, this message translates to:
+  /// **'GENERAL'**
+  String get menu_general;
+
+  /// Workflow hub link label
+  ///
+  /// In en, this message translates to:
+  /// **'Workflow & Services'**
+  String get menu_workflowServices;
+
+  /// Controls menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Controls'**
+  String get menu_controls;
+
+  /// Language menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get menu_language;
+
+  /// Language picker dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get menu_selectLanguage;
+
+  /// Emergency SOS menu link label
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency SOS'**
+  String get menu_emergencySos;
+
+  /// Controls screen AppBar title
+  ///
+  /// In en, this message translates to:
+  /// **'Controls'**
+  String get controls_title;
+
+  /// Preferences section header
+  ///
+  /// In en, this message translates to:
+  /// **'PREFERENCES'**
+  String get controls_preferences;
+
+  /// Dark mode toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get controls_darkMode;
+
+  /// Support section header
+  ///
+  /// In en, this message translates to:
+  /// **'SUPPORT & LEGAL'**
+  String get controls_supportLegal;
+
+  /// Feedback link label
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get controls_feedback;
+
+  /// Legal link label
+  ///
+  /// In en, this message translates to:
+  /// **'Legal'**
+  String get controls_legal;
+
+  /// About section header
+  ///
+  /// In en, this message translates to:
+  /// **'ABOUT'**
+  String get controls_about;
+
+  /// App version label
+  ///
+  /// In en, this message translates to:
+  /// **'App Version'**
+  String get controls_appVersion;
+
+  /// Rate us link label
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Us'**
+  String get controls_rateUs;
+
+  /// Account section header in controls
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT'**
+  String get controls_accountSection;
+
+  /// Delete account confirmation dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get controls_deleteConfirmTitle;
+
+  /// Delete account confirmation dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?'**
+  String get controls_deleteConfirmBody;
+
+  /// Delete button label in confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get controls_delete;
+
+  /// Snackbar message when delete is not available
+  ///
+  /// In en, this message translates to:
+  /// **'Account deletion is not yet available. Please contact support.'**
+  String get controls_deleteNotAvailable;
 }
 
 class _AppLocalizationsDelegate

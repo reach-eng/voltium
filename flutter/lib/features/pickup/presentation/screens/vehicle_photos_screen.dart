@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class VehiclePhotosScreen extends ConsumerWidget {
   const VehiclePhotosScreen({super.key});
@@ -69,14 +69,11 @@ class VehiclePhotosScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             'Vehicle Photos',
-            style: GoogleFonts.inter(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+            style: AppTypography.titleMediumLarge
+                .copyWith(color: AppColors.onSurface),
           ),
         ],
       ),
@@ -97,7 +94,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.primarySurface,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -106,28 +103,21 @@ class VehiclePhotosScreen extends ConsumerWidget {
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'ASSIGNED VEHICLE',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 1.0,
-                  ),
+                  style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.onSurfaceVariant, letterSpacing: 1.0),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   vehicle,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onSurface,
-                  ),
+                  style: AppTypography.titleSmall
+                      .copyWith(color: AppColors.onSurface),
                 ),
               ],
             ),
@@ -143,12 +133,8 @@ class VehiclePhotosScreen extends ConsumerWidget {
       children: [
         Text(
           'PICKUP PHOTOS',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: AppColors.onSurface,
-            letterSpacing: 1.2,
-          ),
+          style: AppTypography.bodySmallStrong
+              .copyWith(color: AppColors.onSurface, letterSpacing: 1.2),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -188,14 +174,11 @@ class VehiclePhotosScreen extends ConsumerWidget {
                           color: AppColors.onSurfaceVariant,
                           size: 32,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Text(
                           photo['label'],
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            color: AppColors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.bodySmallEmphasis
+                              .copyWith(color: AppColors.onSurfaceVariant),
                         ),
                       ],
                     )
@@ -234,14 +217,10 @@ class VehiclePhotosScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(999),
           boxShadow: AppShadows.primaryButton,
         ),
-        child: const Center(
+        child: Center(
           child: Text(
             'Back to Dashboard',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            style: AppTypography.buttonMedium.copyWith(color: Colors.white),
           ),
         ),
       ),

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../theme/app_theme.dart';
+import '../../../../widgets/animated_balance_counter.dart';
+import '../../../../widgets/streak_celebration_bar.dart';
 import '../screens/top_up_flow.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TransactionListTile extends StatelessWidget {
   const TransactionListTile({super.key, required this.tx});
@@ -45,30 +50,31 @@ class TransactionListTile extends StatelessWidget {
 
     // Status colors.
     Color statusTextColor = AppColors.warningDark;
-    Color statusBgColor = const Color(0xFFFFFBEB);
+    Color statusBgColor = AppColors.warningSurface;
 
     if (status == 'rejected' || status == 'failed') {
-      statusTextColor = const Color(0xFFDC2626);
-      statusBgColor = const Color(0xFFFEF2F2);
+      statusTextColor = AppColors.errorRed;
+      statusBgColor = AppColors.errorSurface;
     } else if (status == 'pending') {
       statusTextColor = AppColors.warningDark;
-      statusBgColor = const Color(0xFFFFFBEB);
+      statusBgColor = AppColors.warningSurface;
     } else if (status == 'approved' || status == 'success') {
       if (purpose.contains('REWARD')) {
         statusTextColor = AppColors.warning;
-        statusBgColor = const Color(0xFFFFFBEB);
+        statusBgColor = AppColors.warningSurface;
       } else if (purpose.contains('REFUND')) {
         statusTextColor = const Color(0xFF1B60DA);
-        statusBgColor = const Color(0xFFEFF6FF);
+        statusBgColor = AppColors.primarySurface;
       } else if (isCredit) {
-        statusTextColor = const Color(0xFF16A34A);
-        statusBgColor = const Color(0xFFDCFCE7);
+        statusTextColor = AppColors.successGreen;
+        statusBgColor = AppColors.successSurface;
       } else {
         statusTextColor = const Color(0xFF1B60DA);
-        statusBgColor = const Color(0xFFEFF6FF);
+        statusBgColor = AppColors.primarySurface;
       }
     }
 
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -77,16 +83,16 @@ class TransactionListTile extends StatelessWidget {
             height: 40,
             width: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: colors.surfaceAlt,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.account_balance_wallet,
-              color: AppColors.slate500,
+              color: colors.onSurfaceMuted,
               size: 18,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,18 +101,15 @@ class TransactionListTile extends StatelessWidget {
                   children: [
                     Text(
                       displayLabel,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
-                      ),
+                      style: AppTypography.bodyMediumEmphasis
+                          .copyWith(color: colors.onSurface),
                     ),
                     if (!isCredit)
                       const Padding(
                         padding: EdgeInsets.only(left: 4),
                         child: Icon(
                           Icons.arrow_outward,
-                          color: Color(0xFFDC2626),
+                          color: AppColors.errorRed,
                           size: 12,
                         ),
                       ),
@@ -116,9 +119,9 @@ class TransactionListTile extends StatelessWidget {
                         padding: const EdgeInsets.only(left: 4),
                         child: Text(
                           '($remark)',
-                          style: const TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: AppColors.slate500,
+                            color: colors.onSurfaceMuted,
                           ),
                         ),
                       ),
@@ -126,9 +129,9 @@ class TransactionListTile extends StatelessWidget {
                 ),
                 Text(
                   dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.slate500,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -139,15 +142,11 @@ class TransactionListTile extends StatelessWidget {
             children: [
               Text(
                 '${isCredit ? '+' : '-'}\u20B9${amount.abs().toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isCredit
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFF1E293B),
-                ),
+                style: AppTypography.bodyMediumEmphasis.copyWith(
+                    color:
+                        isCredit ? AppColors.successGreen : colors.onSurface),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -156,11 +155,8 @@ class TransactionListTile extends StatelessWidget {
                 ),
                 child: Text(
                   status.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: statusTextColor,
-                  ),
+                  style: AppTypography.bodySmallTracked
+                      .copyWith(color: statusTextColor),
                 ),
               ),
             ],
@@ -196,11 +192,8 @@ class MethodChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey.shade700,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
+          style: AppTypography.bodySmallEmphasis.copyWith(
+              color: isSelected ? Colors.white : Colors.grey.shade700),
         ),
       ),
     );
@@ -218,111 +211,109 @@ class SecurityDepositCard extends StatelessWidget {
 
     final double deposit = (rider.securityDeposit ?? 0).toDouble();
     final bool isRefundable = deposit >= AppConstants.depositRefundThreshold;
+    final colors = AppColors.of(context);
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x050F172A),
-            blurRadius: 24,
-            offset: Offset(0, 8),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: colors.surfaceSubtle.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.5), width: 1),
+            boxShadow: AppShadows.glass,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'SECURITY DEPOSIT',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.slate500,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isRefundable
-                      ? const Color(0xFFDCFCE7)
-                      : const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isRefundable ? 'Refundable' : 'Non-Refundable',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isRefundable
-                        ? const Color(0xFF16A34A)
-                        : const Color(0xFFDC2626),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'SECURITY DEPOSIT',
+                    style: AppTypography.bodySmallStrong.copyWith(
+                        color: colors.onSurfaceMuted, letterSpacing: 1.0),
                   ),
-                ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (isRefundable
+                              ? AppColors.successGreen
+                              : AppColors.errorRed)
+                          .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (isRefundable
+                                  ? AppColors.successGreen
+                                  : AppColors.errorRed)
+                              .withValues(alpha: 0.3),
+                          blurRadius: 12,
+                        ),
+                      ],
+                      border: Border.all(
+                        color: (isRefundable
+                                ? AppColors.successGreen
+                                : AppColors.errorRed)
+                            .withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      isRefundable ? 'Refundable' : 'Non-Refundable',
+                      style: AppTypography.labelMedium.copyWith(
+                          color: isRefundable
+                              ? AppColors.successGreen
+                              : AppColors.errorRed),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              const Text(
-                '\u20B9',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF1E293B),
-                ),
+              SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '\u20B9',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text(
+                    deposit.toInt().toString(),
+                    style: AppTypography.headingMedium
+                        .copyWith(color: colors.onSurface),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
+              SizedBox(height: 12),
               Text(
-                deposit.toInt().toString(),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
+                isRefundable
+                    ? 'Your first top-up of ₹\u2060${deposit.toInt()} is refundable after 180 days of active service.'
+                    : 'Amounts less than ₹\u2060${AppConstants.depositRefundThreshold.toInt()} are treated as account activation fees and are non-refundable.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: colors.onSurfaceVariant,
+                  height: 1.4,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            isRefundable
-                ? 'Your first top-up of ₹${deposit.toInt()} is refundable after 180 days of active service.'
-                : 'Amounts less than ₹${AppConstants.depositRefundThreshold.toInt()} are treated as account activation fees and are non-refundable.',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.slate500,
-              height: 1.4,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
-String _formatCurrency(double amount) {
-  return amount
-      .abs()
-      .toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 2);
-}
-
-// ── WalletBalanceCard ───────────────────────────────────────────────────────
-
-/// Displays the rider's wallet balance with a payment-streak indicator.
 class WalletBalanceCard extends StatelessWidget {
   final dynamic rider;
 
@@ -332,184 +323,174 @@ class WalletBalanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final balance = rider?.walletBalance ?? 0.0;
     final int streak = rider?.paymentStreak ?? 0;
+    final colors = AppColors.of(context);
 
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(20),
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryGradientEnd],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppShadows.glass,
+        border: Border.all(color: colors.outlineVariant, width: 1),
+      ),
+      child: Stack(
+        children: [
+          // Dynamic Mesh Gradient Background
+          Positioned(
+            top: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
+            ),
           ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Decorative circles
-              Positioned(
-                right: -40,
-                top: -40,
-                child: Container(
-                  height: 160,
-                  width: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryDeep.withValues(alpha: 0.2),
               ),
-              Positioned(
-                right: 0,
-                bottom: -20,
-                child: Container(
-                  height: 96,
-                  width: 96,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet,
+                          color: colors.onSurfaceMuted,
+                          size: 16,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Available Balance',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: colors.onSurfaceMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    InkWell(
+                      key: const Key('topUpButton'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const TopUpFlow(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.2)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.add,
+                            color: AppColors.primary, size: 20),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              // Content
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const SizedBox(height: 12),
+                AnimatedBalanceCounter(
+                  value: balance,
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    color: colors.onSurface,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                  duration: const Duration(milliseconds: 700),
+                ),
+                const SizedBox(height: 24),
+                // Streak section
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceSubtle.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: colors.outlineVariant.withValues(alpha: 0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(
-                            Icons.account_balance_wallet,
-                            color: Colors.white.withValues(alpha: 0.7),
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
                           Text(
-                            'Available Balance',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
+                            'Payment Streak',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: colors.onSurfaceVariant,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          Text(
+                            '$streak / 5 Days',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const TopUpFlow(),
+                      const SizedBox(height: 8),
+                      StreakCelebrationBar(
+                        streak: streak,
+                        earnedColor: AppColors.primary,
+                        unearnedColor: colors.outlineVariant,
+                      ),
+                      if (streak > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            '$streak day streak! Keep going to unlock premium tiers.',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: colors.onSurfaceMuted,
+                              fontSize: 10,
                             ),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.add,
-                              color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        '\u20B9',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatCurrency(balance),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Streak section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Payment Streak',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        '$streak / 5 Days',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: List.generate(5, (index) {
-                      return Expanded(
-                        child: Container(
-                          height: 10,
-                          margin: EdgeInsets.only(right: index < 4 ? 6 : 0),
-                          decoration: BoxDecoration(
-                            color: index < streak
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(5),
                           ),
                         ),
-                      );
-                    }),
+                    ],
                   ),
-                  if (streak > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        '$streak day streak! Keep going to unlock premium tiers.',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-// ── WalletActionButtons ─────────────────────────────────────────────────────
-
-/// Top-up and History action buttons.
 class WalletActionButtons extends StatelessWidget {
   final VoidCallback onTopUp;
   final VoidCallback onHistory;
@@ -522,6 +503,8 @@ class WalletActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Row(
       children: [
         Expanded(
@@ -529,45 +512,43 @@ class WalletActionButtons extends StatelessWidget {
             key: const Key('topUpButton'),
             onTap: onTopUp,
             borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: colors.card.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.outlineVariant, width: 1),
+                    boxShadow: AppShadows.glass,
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFDCFCE7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Color(0xFF16A34A),
-                      size: 18,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          color: AppColors.successSurface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: AppColors.successGreen,
+                          size: 18,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Top Up',
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: colors.onSurface),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Top Up',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurfaceAlt,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -578,45 +559,43 @@ class WalletActionButtons extends StatelessWidget {
             key: const Key('historyButton'),
             onTap: onHistory,
             borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x0A0F172A),
-                    blurRadius: 48,
-                    offset: Offset(0, 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  decoration: BoxDecoration(
+                    color: colors.card.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.outlineVariant, width: 1),
+                    boxShadow: AppShadows.glass,
                   ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.download,
-                      color: AppColors.primary,
-                      size: 18,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primarySurface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.download,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'History',
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: colors.onSurface),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'History',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.onSurfaceAlt,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -643,6 +622,8 @@ class TransactionHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     final filtered = transactions.where((tx) {
       if (selectedFilter == 'All') return true;
 
@@ -679,15 +660,10 @@ class TransactionHistorySection extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 48,
-            offset: Offset(0, 24),
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colors.outlineVariant, width: 1),
+        boxShadow: AppShadows.glass,
       ),
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -698,15 +674,12 @@ class TransactionHistorySection extends StatelessWidget {
             children: [
               Text(
                 'Recent Transactions',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurfaceAlt,
-                ),
+                style: AppTypography.labelLarge
+                    .copyWith(color: AppColors.onSurfaceAlt),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -726,14 +699,20 @@ class TransactionHistorySection extends StatelessWidget {
                     key: Key('filter${f}Chip'),
                     label: Text(
                       f.toUpperCase(),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.slate500,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                      style: AppTypography.labelMedium.copyWith(
+                          color: isSelected
+                              ? Colors.white
+                              : colors.onSurfaceMuted),
                     ),
                     selected: isSelected,
                     selectedColor: AppColors.primary,
+                    backgroundColor: colors.surfaceSubtle,
+                    side: BorderSide(
+                        color: isSelected
+                            ? AppColors.primary
+                            : colors.outlineVariant),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
                     onSelected: (_) => onFilterChanged(f),
                   ),
                 );
@@ -749,9 +728,9 @@ class TransactionHistorySection extends StatelessWidget {
                   selectedFilter == 'All'
                       ? 'No transactions yet'
                       : 'No transactions matching filter',
-                  style: TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: Colors.grey.shade400,
+                    color: colors.onSurfaceMuted,
                     fontStyle: FontStyle.italic,
                   ),
                 ),

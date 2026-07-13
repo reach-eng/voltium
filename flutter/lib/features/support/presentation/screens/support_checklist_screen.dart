@@ -5,6 +5,8 @@ import 'troubleshooter_screen.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class SupportChecklistScreen extends ConsumerStatefulWidget {
   const SupportChecklistScreen({super.key});
@@ -36,9 +38,9 @@ class _SupportChecklistScreenState
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Support Checklist',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -53,21 +55,17 @@ class _SupportChecklistScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'PLEASE VERIFY',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.slate500,
-                        letterSpacing: 1.0,
-                      ),
+                      style: AppTypography.bodySmallStrong.copyWith(
+                          color: AppColors.slate500, letterSpacing: 1.0),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
+                    SizedBox(height: 16),
+                    Text(
                       'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.',
-                      style: TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: Color(0xFF1E293B),
+                        color: AppColors.slate800,
                         height: 1.5,
                       ),
                     ),
@@ -111,13 +109,9 @@ class _SupportChecklistScreenState
         },
         title: Text(
           text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF1E293B),
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.slate800),
         ),
-        activeColor: const Color(0xFF2563EB),
+        activeColor: AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -141,29 +135,26 @@ class _SupportChecklistScreenState
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2563EB),
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(9999),
               ),
               elevation: _allChecked ? 4 : 0,
-              disabledBackgroundColor: const Color(0xFFCBD5E1),
+              disabledBackgroundColor: AppColors.borderMedium,
               disabledForegroundColor: Colors.white70,
             ),
-            child: const Text(
+            child: Text(
               'Proceed to Support',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: AppTypography.titleSmall,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Keep checking all items to proceed',
-            style: TextStyle(
-              fontSize: 12,
-              color: _allChecked ? Colors.transparent : Colors.redAccent,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.bodySmallEmphasis.copyWith(
+                color: _allChecked ? Colors.transparent : Colors.redAccent),
           ),
         ],
       ),

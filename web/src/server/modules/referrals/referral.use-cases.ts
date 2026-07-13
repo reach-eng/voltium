@@ -52,7 +52,7 @@ export const referralUseCases = {
     }
 
     // Read referral bonus from settings
-    const setting = await db.setting.findFirst({ where: { key: 'referralBonus' } });
+    const setting = await db.systemSetting.findFirst({ where: { key: 'referralBonus' } });
     const bonus = parseInt(setting?.value || '200');
 
     const bonusPaise = bonus * 100;

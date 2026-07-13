@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// A bento-styled tile for the Active Dashboard grid.
 class BentoGrid extends StatelessWidget {
@@ -22,7 +23,7 @@ class BentoGrid extends StatelessWidget {
           child: _BentoTile(
             icon: Icons.location_on,
             iconColor: AppColors.primary,
-            iconBgColor: const Color(0xFFEFF6FF),
+            iconBgColor: AppColors.primarySurface,
             title: 'ACTIVE HUB',
             value: (pickupHub == null ||
                     pickupHub!.isEmpty ||
@@ -38,12 +39,12 @@ class BentoGrid extends StatelessWidget {
             child: _BentoTile(
               icon: Icons.stars,
               iconColor: AppColors.warningDark,
-              iconBgColor: const Color(0xFFFFFBEB),
+              iconBgColor: AppColors.warningSurface,
               title: 'TEAM LEADER',
               value: (teamLeader == null ||
                       teamLeader!.isEmpty ||
                       teamLeader == 'Not Assigned')
-                  ? 'Amit Sharma'
+                  ? 'Not assigned'
                   : teamLeader!,
             ),
           ),
@@ -70,10 +71,11 @@ class _BentoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -95,24 +97,16 @@ class _BentoTile extends StatelessWidget {
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate400,
-              letterSpacing: 1.0,
-            ),
+            style: AppTypography.overline
+                .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.0),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.labelLarge.copyWith(color: colors.onSurface),
             overflow: TextOverflow.ellipsis,
           ),
         ],

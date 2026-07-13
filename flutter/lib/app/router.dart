@@ -67,6 +67,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   bool _isSignUpFlow = true;
   String _phone = '';
+  String? _referralCode;
   AuthState _startupState = AuthState.splash;
   bool _isOnboarding = false;
   AuthState? _postOtpTargetState;

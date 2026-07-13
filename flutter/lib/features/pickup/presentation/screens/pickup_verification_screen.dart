@@ -4,6 +4,8 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PickupVerificationScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
@@ -107,18 +109,16 @@ class _PickupVerificationScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Ready to Roll?',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.onSurface,
-                ),
+                style: AppTypography.headingLarge
+                    .copyWith(color: AppColors.onSurface),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Please review the digital rental agreement before collecting your vehicle.',
-                style: TextStyle(color: AppColors.onSurfaceVariant),
+                style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.onSurfaceVariant),
               ),
               const SizedBox(height: 32),
 
@@ -133,10 +133,11 @@ class _PickupVerificationScreenState
                     children: [
                       const Icon(Icons.check_circle,
                           color: AppColors.success, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'Vehicle photos captured',
-                        style: TextStyle(fontWeight: FontWeight.w500),
+                        style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -153,10 +154,11 @@ class _PickupVerificationScreenState
                         setState(() => _agreedToTerms = val ?? false),
                     activeColor: AppColors.primary,
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.',
-                      style: TextStyle(fontSize: 13, height: 1.4),
+                      style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13, height: 1.4),
                     ),
                   ),
                 ],

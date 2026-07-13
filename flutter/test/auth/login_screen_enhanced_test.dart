@@ -15,7 +15,8 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 /// - Error message display
 /// - Accessibility semantics
 
-Widget buildTestApp({Function(String)? onNext, bool isSignUp = false}) {
+Widget buildTestApp(
+    {Function(String, String?)? onNext, bool isSignUp = false}) {
   return ProviderScope(
     overrides: [
       localeProviderRef.overrideWith((ref) => LocaleProvider()),
@@ -31,77 +32,77 @@ void main() {
   group('LoginScreen — Rendering', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(LoginScreen), findsOneWidget);
     });
 
     testWidgets('displays Voltium branding', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Voltium'), findsOneWidget);
       expect(
-        find.text('Manage your journey with precision.'),
+        find.text('Electric scooter rentals made simple.'),
         findsOneWidget,
       );
     });
 
     testWidgets('displays Welcome section', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Welcome'), findsOneWidget);
     });
 
     testWidgets('displays phone input with +91 prefix', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byKey(const Key('phoneInput')), findsOneWidget);
       expect(find.text('+91'), findsOneWidget);
     });
 
     testWidgets('displays referral code input', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byKey(const Key('referralInput')), findsOneWidget);
     });
 
     testWidgets('displays OTP secure note', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(
-        find.text('A SECURE OTP WILL BE SENT'),
+        find.text('A secure OTP will be sent'),
         findsOneWidget,
       );
     });
 
     testWidgets('displays Enter button', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Enter'), findsOneWidget);
     });
 
     testWidgets('displays Terms of Service and Privacy Policy links',
         (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Terms of Service'), findsOneWidget);
       expect(find.text('Privacy Policy'), findsOneWidget);
     });
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('renders in a Scaffold', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(Scaffold), findsOneWidget);
     });
 
     testWidgets('phone input only accepts numeric input', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Try to enter non-numeric text — digitsOnly formatter should reject it
       await tester.enterText(
@@ -124,7 +125,7 @@ void main() {
   group('LoginScreen — Phone Input Validation', () {
     testWidgets('accepts valid 10-digit phone number', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.enterText(
         find.byKey(const Key('phoneInput')),
@@ -139,7 +140,7 @@ void main() {
 
     testWidgets('shows error for phone starting with 5', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.enterText(
         find.byKey(const Key('phoneInput')),
@@ -155,7 +156,7 @@ void main() {
 
     testWidgets('shows error for phone starting with 0', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.enterText(
         find.byKey(const Key('phoneInput')),
@@ -171,7 +172,7 @@ void main() {
 
     testWidgets('clears error when valid phone is entered', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // First enter invalid
       await tester.enterText(
@@ -192,7 +193,7 @@ void main() {
 
     testWidgets('shows no error for empty input', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Don't enter anything, just pump
       await tester.pump();
@@ -202,7 +203,7 @@ void main() {
 
     testWidgets('phone input rejects more than 10 digits', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Enter 10 valid digits
       await tester.enterText(
@@ -230,7 +231,7 @@ void main() {
 
     testWidgets('phone input rejects non-numeric characters', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Type a mix of letters and digits
       await tester.enterText(
@@ -252,7 +253,7 @@ void main() {
     testWidgets('button has reduced opacity when phone is empty',
         (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final animatedOpacity = tester.widget<AnimatedOpacity>(
         find.descendant(
@@ -266,7 +267,7 @@ void main() {
     testWidgets('button has full opacity when valid phone entered',
         (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.enterText(
         find.byKey(const Key('phoneInput')),
@@ -287,7 +288,7 @@ void main() {
   group('LoginScreen — Referral Code Input', () {
     testWidgets('referral input has person add icon', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(
         find.byIcon(Icons.person_add_outlined),
@@ -297,7 +298,7 @@ void main() {
 
     testWidgets('referral input has correct hint text', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(
         find.text('Referral Code (Optional)'),
@@ -307,7 +308,7 @@ void main() {
 
     testWidgets('can type in referral code', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.enterText(
         find.byKey(const Key('referralInput')),
@@ -322,7 +323,7 @@ void main() {
   group('LoginScreen — isSignUp mode', () {
     testWidgets('renders correctly in sign-up mode', (tester) async {
       await tester.pumpWidget(buildTestApp(isSignUp: true));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(LoginScreen), findsOneWidget);
       expect(find.text('Enter'), findsOneWidget);
     });
@@ -331,7 +332,7 @@ void main() {
   group('LoginScreen — Accessibility', () {
     testWidgets('phone input has proper semantics', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final phoneInput = find.byKey(const Key('phoneInput'));
       expect(phoneInput, findsOneWidget);
@@ -343,7 +344,7 @@ void main() {
 
     testWidgets('logo section has header semantics', (tester) async {
       await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // The Semantics widget wraps the logo with a header label
       // Use find.bySemanticsLabel or just verify the Voltium text exists with header semantics

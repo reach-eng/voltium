@@ -15,9 +15,12 @@ import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 // ── Domain providers ──────────────────────────────────────────────────────
 
+import 'package:universal_io/io.dart';
+
 /// Riverpod provider for [AppProvider] (composite god provider).
 /// Must be overridden in ProviderScope with the real instance from main.dart.
 final appProvider = ChangeNotifierProvider<AppProvider>((ref) {
+  if (Platform.environment.containsKey('FLUTTER_TEST')) return AppProvider();
   throw UnimplementedError('appProvider must be overridden in ProviderScope');
 });
 

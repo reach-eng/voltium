@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Searchable vehicle picker modal bottom sheet.
 class VehicleSearchSheet extends StatefulWidget {
@@ -22,10 +23,10 @@ class VehicleSearchSheet extends StatefulWidget {
 
 class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
   static const Color _primary = AppColors.primary;
-  static const Color _surface = Color(0xFFF8FAFC);
-  static const Color _outline = Color(0xFFC2C6D6);
+  static const Color _surface = AppColors.surfaceBright;
+  static const Color _outline = AppColors.borderMedium;
   static const Color _success = AppColors.success;
-  static const Color _textDark = Color(0xFF141B2B);
+  static const Color _textDark = AppColors.slate900;
   static const Color _textMuted = AppColors.onSurfaceMuted;
 
   final TextEditingController _searchCtrl = TextEditingController();
@@ -105,7 +106,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -113,7 +114,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                   Expanded(
                     child: Text(
                       'Select Vehicle',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: _textDark,
@@ -122,25 +123,23 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                   ),
                   Text(
                     '${widget.vehicles.length} available',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: _success,
-                    ),
+                    style: AppTypography.bodySmallEmphasis
+                        .copyWith(color: _success),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextFormField(
                 controller: _searchCtrl,
                 autofocus: true,
-                style: GoogleFonts.inter(fontSize: 14, color: _textDark),
+                style:
+                    GoogleFonts.plusJakartaSans(fontSize: 14, color: _textDark),
                 decoration: InputDecoration(
                   hintText: 'Search by ID, model or plate…',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: _textMuted.withValues(alpha: 0.7),
                   ),
@@ -191,10 +190,10 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                             size: 40,
                             color: _outline,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(
                             'No vehicles match your search',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: _textMuted,
                             ),
@@ -239,11 +238,8 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                               ),
                               title: Text(
                                 v['vehicleNumber'] as String? ?? '',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected ? _primary : _textDark,
-                                ),
+                                style: AppTypography.labelLarge.copyWith(
+                                    color: isSelected ? _primary : _textDark),
                               ),
                               subtitle: Text(
                                 [
@@ -253,7 +249,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                       true)
                                     v['licensePlate'] as String,
                                 ].where((s) => s.isNotEmpty).join(' · '),
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   color: _textMuted,
                                 ),
@@ -267,12 +263,10 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                       size: 14,
                                       color: _batteryColor(v),
                                     ),
-                                    const SizedBox(width: 2),
+                                    SizedBox(width: 2),
                                     Text(
                                       battery,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
+                                      style: AppTypography.microLabel.copyWith(
                                         color: _batteryColor(v),
                                       ),
                                     ),

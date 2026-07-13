@@ -14,8 +14,11 @@ void main() {
   testWidgets('Full journey – splash → auth → onboarding → dashboard',
       (tester) async {
     final reachedDashboard = await fullLoginFlow(tester);
-    expect(reachedDashboard, isTrue,
-        reason: 'Should reach dashboard after full auth',);
+    expect(
+      reachedDashboard,
+      isTrue,
+      reason: 'Should reach dashboard after full auth',
+    );
 
     // Verify dashboard elements
     expect(find.byKey(const Key('dashboardTab')), findsOneWidget);

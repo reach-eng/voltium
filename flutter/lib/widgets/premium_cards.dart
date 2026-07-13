@@ -94,7 +94,7 @@ class _PremiumDoubleBezelCardState extends State<PremiumDoubleBezelCard>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
     final innerRadius = widget.outerRadius - widget.bezelWidth;
 
     Widget content = Container(
@@ -102,13 +102,9 @@ class _PremiumDoubleBezelCardState extends State<PremiumDoubleBezelCard>
       padding: EdgeInsets.all(widget.bezelWidth),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(widget.outerRadius),
-        color: isDark
-            ? AppColors.surfaceAlt.withValues(alpha: 0.5)
-            : AppColors.surfaceAlt,
+        color: colors.surfaceAlt,
         border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.03),
+          color: Colors.black.withValues(alpha: 0.03),
           width: 1,
         ),
       ),
@@ -116,7 +112,7 @@ class _PremiumDoubleBezelCardState extends State<PremiumDoubleBezelCard>
         padding: widget.padding ?? const EdgeInsets.all(Spacing.lg),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(innerRadius),
-          color: isDark ? const Color(0xFF191C1E) : Colors.white,
+          color: colors.card,
           boxShadow: AppShadows.card,
         ),
         child: widget.child,

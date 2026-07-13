@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 enum AnimationType {
   scale,
@@ -273,11 +274,11 @@ class _SuccessAnimationState extends State<SuccessAnimation>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: const Color(0xFF16A34A),
+              color: AppColors.successGreen,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                  color: AppColors.successGreen.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 5,
                 ),

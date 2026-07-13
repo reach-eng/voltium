@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../models/support_model.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TicketStatusScreen extends StatelessWidget {
   final IssueModel ticket;
@@ -86,14 +87,11 @@ class TicketStatusScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Text(
                     'Ticket Status',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurface,
-                    ),
+                    style: AppTypography.titleSmall
+                        .copyWith(color: AppColors.onSurface),
                   ),
                 ],
               ),
@@ -128,12 +126,9 @@ class TicketStatusScreen extends StatelessWidget {
                             children: [
                               Text(
                                 'TICKET ID',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
-                                  letterSpacing: 1.2,
-                                ),
+                                style: AppTypography.microOverline.copyWith(
+                                    color: AppColors.primary,
+                                    letterSpacing: 1.2),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -147,59 +142,44 @@ class TicketStatusScreen extends StatelessWidget {
                                 ),
                                 child: Text(
                                   ticket.status.replaceAll('_', ' '),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    color: isResolved
-                                        ? AppColors.success
-                                        : AppColors.primary,
-                                  ),
+                                  style: AppTypography.microOverline.copyWith(
+                                      color: isResolved
+                                          ? AppColors.success
+                                          : AppColors.primary),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Text(
                             ticket.ticketId,
-                            style: GoogleFonts.inter(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.onSurface,
-                            ),
+                            style: AppTypography.titleSmall
+                                .copyWith(color: AppColors.onSurface),
                           ),
                           const Divider(height: 24),
                           Text(
                             'SUBJECT',
-                            style: GoogleFonts.inter(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.onSurfaceVariant,
-                              letterSpacing: 1,
-                            ),
+                            style: AppTypography.microBadge.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                letterSpacing: 1),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             ticket.subject,
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.onSurface,
-                            ),
+                            style: AppTypography.labelLarge
+                                .copyWith(color: AppColors.onSurface),
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(
                             'MESSAGE',
-                            style: GoogleFonts.inter(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.onSurfaceVariant,
-                              letterSpacing: 1,
-                            ),
+                            style: AppTypography.microBadge.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                letterSpacing: 1),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Text(
                             ticket.message,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: AppColors.onSurface,
                               height: 1.4,
@@ -212,7 +192,7 @@ class TicketStatusScreen extends StatelessWidget {
 
                     Text(
                       'PROGRESS TIMELINE',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
                         color: AppColors.onSurfaceVariant,
@@ -294,31 +274,30 @@ class TicketStatusScreen extends StatelessWidget {
                                         children: [
                                           Text(
                                             step.title,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w800,
-                                              color: step.isCompleted ||
-                                                      step.isActive
-                                                  ? AppColors.onSurface
-                                                  : AppColors.onSurfaceVariant,
-                                            ),
+                                            style: AppTypography
+                                                .bodyMediumStrong
+                                                .copyWith(
+                                                    color: step.isCompleted ||
+                                                            step.isActive
+                                                        ? AppColors.onSurface
+                                                        : AppColors
+                                                            .onSurfaceVariant),
                                           ),
                                           Text(
                                             step.time,
-                                            style: GoogleFonts.inter(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: step.isCompleted
-                                                  ? AppColors.primary
-                                                  : AppColors.onSurfaceVariant,
-                                            ),
+                                            style: AppTypography.microLabel
+                                                .copyWith(
+                                                    color: step.isCompleted
+                                                        ? AppColors.primary
+                                                        : AppColors
+                                                            .onSurfaceVariant),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4),
                                       Text(
                                         step.description,
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
                                           color: AppColors.onSurfaceVariant,
                                           height: 1.4,

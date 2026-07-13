@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ReceiptPreview extends StatelessWidget {
   final String transactionId;
@@ -28,7 +30,7 @@ class ReceiptPreview extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: isDark ? AppColors.slate800 : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -49,21 +51,14 @@ class ReceiptPreview extends StatelessWidget {
                 children: [
                   Text(
                     'Transaction Receipt',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.grey[500],
-                      letterSpacing: 1.5,
-                    ),
+                    style: AppTypography.overline
+                        .copyWith(color: Colors.grey[500], letterSpacing: 1.5),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '#${transactionId.substring(0, 8).toUpperCase()}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.grey[800],
-                    ),
+                    style: AppTypography.bodyMediumEmphasis.copyWith(
+                        color: isDark ? Colors.white : Colors.grey[800]),
                   ),
                 ],
               ),
@@ -78,11 +73,8 @@ class ReceiptPreview extends StatelessWidget {
                 ),
                 child: Text(
                   type.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isCredit ? AppColors.success : AppColors.error,
-                  ),
+                  style: AppTypography.microLabel.copyWith(
+                      color: isCredit ? AppColors.success : AppColors.error),
                 ),
               ),
             ],
@@ -95,7 +87,7 @@ class ReceiptPreview extends StatelessWidget {
           if (riderName != null) _buildRow('Rider', riderName!, isDark),
           if (vehicleNumber != null)
             _buildRow('Vehicle', vehicleNumber!, isDark),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -109,25 +101,19 @@ class ReceiptPreview extends StatelessWidget {
               children: [
                 Text(
                   isCredit ? 'Amount Credited' : 'Amount Debited',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.grey[800],
-                  ),
+                  style: AppTypography.bodyMediumEmphasis.copyWith(
+                      color: isDark ? Colors.white : Colors.grey[800]),
                 ),
                 Text(
                   '₹${(amount / 100).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: isCredit ? AppColors.success : AppColors.error,
-                  ),
+                  style: AppTypography.headingMedium.copyWith(
+                      color: isCredit ? AppColors.success : AppColors.error),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Row(
+          SizedBox(height: 16),
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
@@ -138,11 +124,8 @@ class ReceiptPreview extends StatelessWidget {
               SizedBox(width: 4),
               Text(
                 'Voltium',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
+                style: AppTypography.bodySmallEmphasis
+                    .copyWith(color: AppColors.primary),
               ),
             ],
           ),
@@ -159,18 +142,15 @@ class ReceiptPreview extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: Colors.grey[500],
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white : Colors.grey[800],
-            ),
+            style: AppTypography.bodyMedium
+                .copyWith(color: isDark ? Colors.white : Colors.grey[800]),
           ),
         ],
       ),

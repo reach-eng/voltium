@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class FormScrollHelper {
   static void scrollToFirstError(
@@ -47,7 +48,7 @@ class FormScrollHelper {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Please fix $fieldName'),
-        backgroundColor: const Color(0xFFD92D20),
+        backgroundColor: AppColors.errorRedAlt,
         duration: const Duration(seconds: 2),
       ),
     );

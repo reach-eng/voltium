@@ -13,9 +13,17 @@ class RiderRepositoryImpl implements RiderRepository {
 
   @override
   Future<Map<String, dynamic>> getRiderProfile() async {
-    final response = await _client.get('/api/rider/profile');
-    debugPrint('GET_RIDER_PROFILE_RESPONSE: $response');
-    return response;
+    try {
+      final response = await _apiClient.getRiderProfile();
+      return {
+        'success': true,
+        'data': response.toJson(),
+        'rider': response.toJson(),
+      };
+    } catch (e) {
+      debugPrint('GET_RIDER_PROFILE_ERROR: $e');
+      rethrow;
+    }
   }
 
   @override

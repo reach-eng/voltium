@@ -10,6 +10,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../core/platform/platform_info.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class _PermissionItem {
   final String id;
@@ -266,7 +267,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9FF),
+      backgroundColor: AppColors.surfaceHover,
       body: SafeArea(
         child: Column(
           children: [
@@ -276,22 +277,18 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                     Text(
                       'Permissions',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF1E293B),
-                        letterSpacing: -0.5,
-                      ),
+                      style: AppTypography.headingLarge.copyWith(
+                          color: AppColors.slate800, letterSpacing: -0.5),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       'Please allow the following permissions to ensure safety and functionality.',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: const Color(0xFF475569),
+                        color: AppColors.slate600,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -335,7 +332,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+        border: Border.all(color: AppColors.surfaceSubtle),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -359,7 +356,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,21 +366,18 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                     Flexible(
                       child: Text(
                         perm.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF141B2B),
-                        ),
+                        style: AppTypography.labelLarge
+                            .copyWith(color: AppColors.slate900),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   perm.description,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: const Color(0xFF4B5563),
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -409,7 +403,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             height: 24,
             decoration: BoxDecoration(
               color:
-                  perm.isEnabled ? AppColors.primary : const Color(0xFFD1D5DB),
+                  perm.isEnabled ? AppColors.primary : AppColors.borderDefault,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Stack(
@@ -474,7 +468,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           duration: const Duration(milliseconds: 200),
           height: 56,
           decoration: BoxDecoration(
-            color: canProceed ? AppColors.primary : const Color(0xFFE5E7EB),
+            color: canProceed ? AppColors.primary : AppColors.borderSubtle,
             borderRadius: BorderRadius.circular(12),
             boxShadow: canProceed
                 ? [
@@ -491,16 +485,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             children: [
               Text(
                 'Continue',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: canProceed ? Colors.white : const Color(0xFF9CA3AF),
-                ),
+                style: AppTypography.titleSmall.copyWith(
+                    color: canProceed
+                        ? Colors.white
+                        : AppColors.onSurfaceDisabled),
               ),
               const SizedBox(width: 8),
               Icon(
                 Icons.arrow_forward,
-                color: canProceed ? Colors.white : const Color(0xFF9CA3AF),
+                color: canProceed ? Colors.white : AppColors.onSurfaceDisabled,
                 size: 20,
               ),
             ],

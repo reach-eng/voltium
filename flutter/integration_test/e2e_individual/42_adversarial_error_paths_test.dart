@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import 'test_helpers.dart';
 
@@ -20,11 +21,12 @@ void main() {
 
   // ── Test 1: Login with empty phone shows validation error ─────────────
   testWidgets('Login – empty phone field shows validation', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
 
     // Try to submit with empty phone — should stay on login screen
-    final loginButton = find.byKey(const Key('sendOtpButton'));
+    final loginButton = app.login.getOtpButton;
     if (loginButton.evaluate().isNotEmpty) {
       await settle(tester);
       await tester.tap(loginButton.first);
@@ -38,16 +40,17 @@ void main() {
 
   // ── Test 2: Invalid OTP handling ──────────────────────────────────────
   testWidgets('Login – invalid OTP shows error message', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
 
     // Enter valid phone
-    final phoneField = find.byKey(const Key('phoneNumberField'));
+    final phoneField = app.shared.phoneNumberField;
     if (phoneField.evaluate().isNotEmpty) {
       await tester.enterText(phoneField.first, TestCredentials.phone);
 
       // Tap Send OTP
-      final sendOtpButton = find.byKey(const Key('sendOtpButton'));
+      final sendOtpButton = app.login.getOtpButton;
       if (sendOtpButton.evaluate().isNotEmpty) {
         await settle(tester);
         await tester.tap(sendOtpButton.first);
@@ -56,13 +59,13 @@ void main() {
     }
 
     // Enter wrong OTP (not 111111)
-    final otpField = find.byKey(const Key('otpField'));
+    final otpField = app.shared.otpField;
     if (otpField.evaluate().isNotEmpty) {
       await tester.enterText(otpField.first, '000000');
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
       // Tap Verify
-      final verifyButton = find.byKey(const Key('verifyOtpButton'));
+      final verifyButton = app.login.verifyOtpButton;
       if (verifyButton.evaluate().isNotEmpty) {
         await settle(tester);
         await tester.tap(verifyButton.first);
@@ -77,16 +80,17 @@ void main() {
 
   // ── Test 3: Rapid OTP resend attempts ──────────────────────────────────
   testWidgets('OTP – rapid resend shows rate limit feedback', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
 
     // Enter valid phone
-    final phoneField = find.byKey(const Key('phoneNumberField'));
+    final phoneField = app.shared.phoneNumberField;
     if (phoneField.evaluate().isNotEmpty) {
       await tester.enterText(phoneField.first, TestCredentials.phone);
 
       // Tap Send OTP
-      final sendOtpButton = find.byKey(const Key('sendOtpButton'));
+      final sendOtpButton = app.login.getOtpButton;
       if (sendOtpButton.evaluate().isNotEmpty) {
         await settle(tester);
         await tester.tap(sendOtpButton.first);
@@ -95,7 +99,7 @@ void main() {
     }
 
     // Try resend multiple times rapidly
-    final resendButton = find.byKey(const Key('resendOtpButton'));
+    final resendButton = app.shared.resendOtpButton;
     if (resendButton.evaluate().isNotEmpty) {
       for (int i = 0; i < 5 && resendButton.evaluate().isNotEmpty; i++) {
         await settle(tester);
@@ -105,14 +109,17 @@ void main() {
 
       // After rapid resends, app should still be on OTP screen (not crash)
       await tester.pumpAndSettle(const Duration(seconds: 2));
-      expect(find.byKey(const Key('otpField')).evaluate().isNotEmpty ||
-          find.byKey(const Key('verifyOtpButton')).evaluate().isNotEmpty, isTrue,
+      expect(
+          app.shared.otpField.evaluate().isNotEmpty ||
+              app.login.verifyOtpButton.evaluate().isNotEmpty,
+          isTrue,
           reason: 'App should not crash after rapid OTP resend');
     }
   });
 
   // ── Test 4: Wallet top-up with invalid amount ──────────────────────────
   testWidgets('Wallet top-up – invalid amount shows error', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await expectOnDashboard(tester);
 
@@ -121,20 +128,20 @@ void main() {
     await settle(tester);
 
     // Find and tap top-up button
-    final topupButton = find.byKey(const Key('topupButton'));
+    final topupButton = app.shared.topupButton;
     if (topupButton.evaluate().isNotEmpty) {
       await scrollAndTap(tester, topupButton.first);
       await settle(tester);
 
       // Enter invalid amount (zero)
-      final amountField = find.byKey(const Key('topupAmountField'));
+      final amountField = app.shared.topupAmountField;
       if (amountField.evaluate().isNotEmpty) {
         await smartEnterText(tester, amountField.first, '0');
         await settle(tester);
 
         // Should see validation error or the submit button should be disabled
         // final errorText = find.textContaining('minimum');
-        final submitButton = find.byKey(const Key('submitTopupButton'));
+        final submitButton = app.shared.submitTopupButton;
         if (submitButton.evaluate().isNotEmpty) {
           await scrollAndTap(tester, submitButton.first);
           await settle(tester);
@@ -149,6 +156,7 @@ void main() {
 
   // ── Test 5: Profile edit with empty required fields ────────────────────
   testWidgets('Profile – empty required fields blocked', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await expectOnDashboard(tester);
 
@@ -157,19 +165,19 @@ void main() {
     await settle(tester);
 
     // Tap edit profile
-    final editButton = find.byKey(const Key('editProfileButton'));
+    final editButton = app.profile.editProfileButton;
     if (editButton.evaluate().isNotEmpty) {
       await scrollAndTap(tester, editButton.first);
       await settle(tester);
 
       // Clear name field
-      final nameField = find.byKey(const Key('profileNameField'));
+      final nameField = app.profile.profileNameField;
       if (nameField.evaluate().isNotEmpty) {
         await smartEnterText(tester, nameField.first, '');
         await settle(tester);
 
         // Try to save
-        final saveButton = find.byKey(const Key('saveProfileButton'));
+        final saveButton = app.profile.saveProfileButton;
         if (saveButton.evaluate().isNotEmpty) {
           await scrollAndTap(tester, saveButton.first);
           await settle(tester);
@@ -184,27 +192,28 @@ void main() {
 
   // ── Test 6: Support ticket with empty description ──────────────────────
   testWidgets('Support – empty ticket shows error', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await expectOnDashboard(tester);
 
     await navigateToTab(tester, 'profileTab');
     await settle(tester);
 
-    final supportButton = find.byKey(const Key('supportButton'));
+    final supportButton = app.shared.supportButton;
     if (supportButton.evaluate().isNotEmpty) {
       await scrollAndTap(tester, supportButton.first);
       await settle(tester);
-      await scrollAndTap(tester, find.byKey(const Key('createTicketButton')));
+      await scrollAndTap(tester, app.shared.createTicketButton);
       await settle(tester);
 
       // Try to submit empty ticket
-      final submitButton = find.byKey(const Key('submitTicketButton'));
+      final submitButton = app.support.submitTicketButton;
       if (submitButton.evaluate().isNotEmpty) {
         await scrollAndTap(tester, submitButton.first);
         await settle(tester);
 
         // Should see validation error
-        final ticketForm = find.byKey(const Key('ticketDescriptionField'));
+        final ticketForm = app.support.ticketDescriptionField;
         expect(ticketForm.evaluate().isNotEmpty, isTrue,
             reason: 'Should stay on ticket screen with empty description');
       }

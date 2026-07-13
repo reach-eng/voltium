@@ -12,6 +12,7 @@ import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -376,7 +377,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 padding: const EdgeInsets.only(left: 4, top: 4),
                                 child: Text(
                                   'Changes to emergency contact require admin approval.',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     color: AppColors.slate500,
                                     fontStyle: FontStyle.italic,
@@ -418,7 +419,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           delay: 500,
                           child: EditProfileAdminNote(),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: 32),
                         FadeUpWidget(
                           delay: 600,
                           child: ElevatedButton(
@@ -473,7 +474,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -502,18 +503,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: const Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: Color(0xFF1E293B),
+                color: AppColors.slate800,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             'Edit Profile',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1E293B),
-            ),
+            style:
+                AppTypography.headingSmall.copyWith(color: AppColors.slate800),
           ),
         ],
       ),
@@ -615,14 +613,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             'Guarantor Phone',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: AppColors.slate500,
-            ),
+            style: AppTypography.bodyMediumStrong
+                .copyWith(color: AppColors.slate500),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Row(
           children: [
             Expanded(
@@ -651,11 +646,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       _gOtpController.clear();
                     });
                   },
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyLargeEmphasis
+                      .copyWith(color: AppColors.slate800),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
                       Icons.phone_android_outlined,
@@ -679,14 +671,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             if (needsVerification) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isSendingGOtp ? null : _sendGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    disabledBackgroundColor: const Color(0xFF93C5FD),
+                    disabledBackgroundColor: AppColors.primaryLightBlue,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -703,7 +695,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         )
                       : Text(
                           _isGOtpSent ? 'Resend' : 'Send OTP',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -716,7 +708,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         // OTP input section
         if (_isGOtpSent && !_isGPhoneVerified) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -736,12 +728,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     controller: _gOtpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E293B),
-                      letterSpacing: 8,
-                    ),
+                    style: AppTypography.bodyLargeEmphasis
+                        .copyWith(color: AppColors.slate800, letterSpacing: 8),
                     decoration: const InputDecoration(
                       prefixIcon: Icon(
                         Icons.lock_outline,
@@ -757,7 +745,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
@@ -781,7 +769,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         )
                       : Text(
                           'Verify',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -794,11 +782,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ],
         // Verified badge
         if (_isGPhoneVerified && phoneChanged) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: AppColors.successSurface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -806,14 +794,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 const Icon(Icons.check_circle,
                     color: AppColors.success, size: 14),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   'Phone verified',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.successText,
-                  ),
+                  style: AppTypography.microLabel
+                      .copyWith(color: AppColors.successText),
                 ),
               ],
             ),

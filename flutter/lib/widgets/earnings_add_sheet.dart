@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/earnings_entry_model.dart';
 import '../theme/app_theme.dart';
 import '../utils/toast.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Bottom sheet for adding a new earnings entry.
 class AddEarningSheet extends StatefulWidget {
@@ -97,13 +99,10 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Add Earning',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.titleLarge
+                      .copyWith(color: AppColors.slate800),
                 ),
                 InkWell(
                   onTap: () => Navigator.of(context).pop(),
@@ -217,7 +216,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildInputField(
               label: 'DATE',
               child: InkWell(
@@ -234,9 +233,9 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                     children: [
                       Text(
                         '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: const TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: Color(0xFF1E293B),
+                          color: AppColors.slate800,
                         ),
                       ),
                       const Icon(
@@ -268,7 +267,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             FilledButton(
               onPressed: _submit,
               style: FilledButton.styleFrom(
@@ -278,13 +277,9 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Submit',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                style: AppTypography.buttonMedium.copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -299,12 +294,8 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            color: AppColors.slate500,
-            letterSpacing: 1.5,
-          ),
+          style: AppTypography.microBadge
+              .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
         ),
         const SizedBox(height: 6),
         child,

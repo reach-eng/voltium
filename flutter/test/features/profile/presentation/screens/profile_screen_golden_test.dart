@@ -19,7 +19,7 @@ void main() {
         child: ProfileScreen(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     await expectLater(
       find.byType(GoldenTestHarness),

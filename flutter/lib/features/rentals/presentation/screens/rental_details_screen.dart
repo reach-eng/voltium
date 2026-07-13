@@ -8,6 +8,7 @@ import 'end_rental_screen.dart';
 import 'choose_plan_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class RentalDetailsScreen extends ConsumerWidget {
   const RentalDetailsScreen({super.key});
@@ -38,10 +39,8 @@ class RentalDetailsScreen extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         title: Text('Rental Details',
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B))),
+            style:
+                AppTypography.titleMedium.copyWith(color: AppColors.slate800)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -66,7 +65,7 @@ class RentalDetailsScreen extends ConsumerWidget {
                   ],
                 ),
                 child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20),
+                    color: AppColors.slate800, size: 20),
               ),
             ),
           ),
@@ -98,12 +97,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'CURRENT PLAN',
-                        style: GoogleFonts.inter(
-                          color: Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                        ),
+                        style: AppTypography.labelMedium.copyWith(
+                            color: Colors.white70, letterSpacing: 1.2),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -114,34 +109,26 @@ class RentalDetailsScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           status.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
+                          style: AppTypography.labelMedium.copyWith(
+                              color: Colors.white, letterSpacing: 1.0),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     plan,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
+                    style: AppTypography.headingLarge
+                        .copyWith(color: Colors.white, letterSpacing: -0.5),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
                         '₹${price.toStringAsFixed(0)}',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -149,25 +136,19 @@ class RentalDetailsScreen extends ConsumerWidget {
                       ),
                       Text(
                         ' / cycle',
-                        style: GoogleFonts.inter(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.bodyMedium
+                            .copyWith(color: Colors.white70),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             Text(
               'Rental Information',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
-              ),
+              style:
+                  AppTypography.titleMedium.copyWith(color: AppColors.slate800),
             ),
             const SizedBox(height: 16),
             Container(
@@ -236,9 +217,9 @@ class RentalDetailsScreen extends ConsumerWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1E293B),
+                      foregroundColor: AppColors.slate800,
                       side: const BorderSide(
-                          color: Color(0xFFE2E8F0), width: 1.5),
+                          color: AppColors.outlineVariant, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -248,15 +229,14 @@ class RentalDetailsScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.swap_horiz_rounded, size: 20),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text('Change Plan',
-                            style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
+                            style: AppTypography.bodyMediumEmphasis),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -280,10 +260,9 @@ class RentalDetailsScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.assignment_return_rounded, size: 20),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text('End Rental',
-                            style: GoogleFonts.inter(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
+                            style: AppTypography.bodyMediumEmphasis),
                       ],
                     ),
                   ),
@@ -311,23 +290,16 @@ class RentalDetailsScreen extends ConsumerWidget {
             ),
             child: Icon(icon, color: AppColors.slate500, size: 20),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             label,
-            style: GoogleFonts.inter(
-              color: AppColors.slate500,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.slate500),
           ),
           const Spacer(),
           Text(
             value,
-            style: GoogleFonts.inter(
-              color: valueColor ?? const Color(0xFF1E293B),
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTypography.buttonMedium
+                .copyWith(color: valueColor ?? AppColors.slate800),
           ),
         ],
       ),

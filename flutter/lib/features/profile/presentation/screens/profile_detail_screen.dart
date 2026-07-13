@@ -12,6 +12,7 @@ import '../../../../theme/app_theme.dart';
 import 'edit_profile_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Shows the rider's full profile details:
 /// avatar card, personal details, KYC/Guarantor status, guarantor card,
@@ -104,7 +105,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                 },
                 child: const Icon(
                   Icons.arrow_back,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   size: 20,
                 ),
               ),
@@ -112,13 +113,9 @@ class ProfileDetailScreen extends ConsumerWidget {
           ),
         ),
       ),
-      title: const Text(
+      title: Text(
         'Profile',
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
-        ),
+        style: AppTypography.headingSmall.copyWith(color: AppColors.slate800),
       ),
     );
   }
@@ -163,8 +160,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color:
-                      isVerified ? AppColors.success : const Color(0xFF2563EB),
+                  color: isVerified ? AppColors.success : AppColors.primary,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 4),
                   boxShadow: [
@@ -199,11 +195,8 @@ class ProfileDetailScreen extends ConsumerWidget {
                       )
                     : Text(
                         initial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTypography.displayLarge
+                            .copyWith(color: Colors.white),
                       ),
               ),
               Positioned(
@@ -226,27 +219,23 @@ class ProfileDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             rider?.name ?? 'Test Rider',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isVerified
-                  ? const Color(0xFFECFDF5)
-                  : const Color(0xFFFFFBEB),
+                  ? AppColors.successSurfaceAlt
+                  : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: isVerified
                     ? AppColors.success.withValues(alpha: 0.2)
-                    : const Color(0xFFFDE68A),
+                    : AppColors.warningBorder,
               ),
             ),
             child: Row(
@@ -257,15 +246,13 @@ class ProfileDetailScreen extends ConsumerWidget {
                   color: isVerified ? AppColors.success : AppColors.warningDark,
                   size: 14,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        isVerified ? AppColors.success : AppColors.warningDark,
-                  ),
+                  style: AppTypography.bodyCompactStrong.copyWith(
+                      color: isVerified
+                          ? AppColors.success
+                          : AppColors.warningDark),
                 ),
               ],
             ),
@@ -415,12 +402,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF475569),
-        letterSpacing: 1.2,
-      ),
+      style: AppTypography.bodySmallTracked
+          .copyWith(color: AppColors.slate600, letterSpacing: 1.2),
     );
   }
 }
@@ -457,25 +440,22 @@ class _EditProfileTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEFF6FF),
+                    color: AppColors.primarySurface,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.edit_outlined,
                       color: AppColors.info, size: 22),
                 ),
-                const SizedBox(width: 16),
-                const Expanded(
+                SizedBox(width: 16),
+                Expanded(
                   child: Text(
                     'Edit Profile',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.buttonMedium
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ),
                 const Icon(Icons.chevron_right,
-                    color: Color(0xFFCBD5E1), size: 20),
+                    color: AppColors.borderMedium, size: 20),
               ],
             ),
           ),

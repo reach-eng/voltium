@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -12,6 +11,8 @@ import 'package:voltium_rider/features/support/presentation/screens/feedback_scr
 import 'package:voltium_rider/features/onboarding/presentation/screens/legal_page_screen.dart';
 import 'package:voltium_rider/main.dart';
 import 'package:voltium_rider/widgets/dialogs.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 class ControlsScreen extends ConsumerWidget {
   const ControlsScreen({super.key});
@@ -20,22 +21,20 @@ class ControlsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeProv = ref.watch(themeProviderRef);
     final isDark = themeProv.isDarkMode;
+    final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.iconBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: colors.iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         title: Text(
-          'Controls',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF1E293B),
-            letterSpacing: -0.5,
-          ),
+          l10n.controls_title,
+          style: AppTypography.titleLarge
+              .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),
       ),
       body: SingleChildScrollView(
@@ -43,16 +42,16 @@ class ControlsScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionLabel('PREFERENCES'),
+            _SectionLabel(l10n.controls_preferences),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 0,
               child: QuickLinkItem(
                 key: const Key('darkModeLink'),
                 icon: Icons.dark_mode_outlined,
-                iconColor: AppColors.slate500,
-                iconBgColor: AppColors.iconBackground,
-                title: 'Dark Mode',
+                iconColor: colors.onSurfaceVariant,
+                iconBgColor: colors.iconBackground,
+                title: l10n.controls_darkMode,
                 trailing: Switch.adaptive(
                   value: isDark,
                   onChanged: (v) => themeProv.setDarkMode(v),
@@ -61,7 +60,7 @@ class ControlsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const _SectionLabel('SUPPORT & LEGAL'),
+            _SectionLabel(l10n.controls_supportLegal),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 50,
@@ -71,7 +70,7 @@ class ControlsScreen extends ConsumerWidget {
                 activeIcon: Icons.rate_review,
                 iconColor: const Color(0xFF7E22CE),
                 iconBgColor: const Color(0xFFF3E8FF),
-                title: 'Feedback',
+                title: l10n.controls_feedback,
                 onTap: () => AppNavigator.push(context,
                     FeedbackScreen(onSubmit: () => Navigator.pop(context))),
               ),
@@ -85,29 +84,26 @@ class ControlsScreen extends ConsumerWidget {
                 activeIcon: Icons.gavel,
                 iconColor: const Color(0xFF0F766E),
                 iconBgColor: const Color(0xFFCCFBF1),
-                title: 'Legal',
+                title: l10n.controls_legal,
                 onTap: () =>
                     AppNavigator.push(context, const LegalPageScreen()),
               ),
             ),
             const SizedBox(height: 24),
-            const _SectionLabel('ABOUT'),
-            const SizedBox(height: 12),
+            _SectionLabel(l10n.controls_about),
+            SizedBox(height: 12),
             FadeUpWidget(
               delay: 150,
               child: QuickLinkItem(
                 key: const Key('appVersionLink'),
                 icon: Icons.info_outline,
-                iconColor: AppColors.slate500,
-                iconBgColor: AppColors.iconBackground,
-                title: 'App Version',
-                trailing: const Text(
+                iconColor: colors.onSurfaceVariant,
+                iconBgColor: colors.iconBackground,
+                title: l10n.controls_appVersion,
+                trailing: Text(
                   'v2.1.0',
-                  style: TextStyle(
-                    color: AppColors.slate500,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.bodyMediumEmphasis
+                      .copyWith(color: colors.onSurfaceMuted),
                 ),
               ),
             ),
@@ -119,23 +115,23 @@ class ControlsScreen extends ConsumerWidget {
                 icon: Icons.star_outline,
                 iconColor: const Color(0xFFEAB308),
                 iconBgColor: const Color(0xFFFEF9C3),
-                title: 'Rate Us',
+                title: l10n.controls_rateUs,
                 onTap: () async {
                   // Implementation for Rate Us using url_launcher
                 },
               ),
             ),
             const SizedBox(height: 24),
-            const _SectionLabel('ACCOUNT'),
+            _SectionLabel(l10n.controls_accountSection),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 250,
               child: QuickLinkItem(
                 key: const Key('deleteAccountLink'),
                 icon: Icons.delete_outline,
-                iconColor: const Color(0xFFDC2626),
-                iconBgColor: const Color(0xFFFFE4E6),
-                title: 'Delete Account',
+                iconColor: AppColors.errorRed,
+                iconBgColor: AppColors.errorRose,
+                title: l10n.settings_deleteAccount,
                 onTap: () => _showDeleteAccountDialog(context),
               ),
             ),
@@ -166,36 +162,37 @@ class ControlsScreen extends ConsumerWidget {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-          'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?',
+        title: Text(l10n.controls_deleteConfirmTitle),
+        content: Text(
+          l10n.controls_deleteConfirmBody,
         ),
         actions: [
           TextButton(
             key: const Key('cancelDeleteButton'),
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(MaterialLocalizations.of(ctx).cancelButtonLabel),
           ),
           FilledButton(
             key: const Key('confirmDeleteButton'),
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text(
-                    'Account deletion is not yet available. Please contact support.',
+                    l10n.controls_deleteNotAvailable,
                   ),
                   backgroundColor: AppColors.warning,
                 ),
               );
             },
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
+              backgroundColor: AppColors.errorRed,
             ),
-            child: const Text('Delete'),
+            child: Text(l10n.controls_delete),
           ),
         ],
       ),
@@ -209,14 +206,11 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Text(
       label,
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF475569),
-        letterSpacing: 1.2,
-      ),
+      style: AppTypography.bodySmallTracked
+          .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
     );
   }
 }

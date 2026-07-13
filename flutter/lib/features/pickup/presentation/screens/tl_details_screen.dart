@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TlDetailsScreen extends ConsumerWidget {
   const TlDetailsScreen({super.key});
@@ -15,11 +16,11 @@ class TlDetailsScreen extends ConsumerWidget {
     final tlName = (rider?.teamLeader == null ||
             rider!.teamLeader!.isEmpty ||
             rider.teamLeader == 'Not Assigned')
-        ? 'Amit Sharma'
+        ? 'Not assigned'
         : rider.teamLeader!;
     final tlPhone =
         (rider?.emergencyContact == null || rider!.emergencyContact!.isEmpty)
-            ? '+91 98765 12345'
+            ? ''
             : rider.emergencyContact!;
 
     return Scaffold(
@@ -73,14 +74,11 @@ class TlDetailsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             'Team Leader',
-            style: GoogleFonts.inter(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+            style: AppTypography.titleMediumLarge
+                .copyWith(color: AppColors.onSurface),
           ),
         ],
       ),
@@ -103,23 +101,17 @@ class TlDetailsScreen extends ConsumerWidget {
             child:
                 Icon(Icons.person, size: 48, color: AppColors.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             name,
-            style: GoogleFonts.inter(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppColors.onSurface,
-            ),
+            style:
+                AppTypography.headingSmall.copyWith(color: AppColors.onSurface),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             'Assigned Team Leader',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodyCompact
+                .copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
       ),
@@ -130,21 +122,18 @@ class TlDetailsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
-          const Icon(Icons.phone_outlined, color: Color(0xFF2563EB), size: 20),
-          const SizedBox(width: 16),
+          const Icon(Icons.phone_outlined, color: AppColors.primary, size: 20),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               phone,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
-              ),
+              style:
+                  AppTypography.bodyLarge.copyWith(color: AppColors.onSurface),
             ),
           ),
           GestureDetector(
@@ -158,10 +147,11 @@ class TlDetailsScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
+                color: AppColors.successSurface,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.call, color: Color(0xFF16A34A), size: 18),
+              child: const Icon(Icons.call,
+                  color: AppColors.successGreen, size: 18),
             ),
           ),
         ],
@@ -173,20 +163,20 @@ class TlDetailsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.infoLight),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 18, color: Color(0xFF2563EB)),
-          const SizedBox(width: 12),
+          const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+          SizedBox(width: 12),
           Expanded(
             child: Text(
               'Your team leader is your primary point of contact for daily operations, route guidance, and on-ground support.',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: const Color(0xFF1D4ED8),
+                color: AppColors.primaryDark,
                 height: 1.5,
               ),
             ),
@@ -202,7 +192,7 @@ class TlDetailsScreen extends ConsumerWidget {
         _buildActionBtn(
           label: 'Change Team Leader',
           icon: Icons.swap_horiz,
-          color: const Color(0xFFDC2626),
+          color: AppColors.errorRed,
           onTap: () {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -250,14 +240,10 @@ class TlDetailsScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              style: AppTypography.labelLarge.copyWith(color: Colors.white),
             ),
           ],
         ),

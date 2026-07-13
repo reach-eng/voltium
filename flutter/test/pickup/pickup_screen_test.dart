@@ -112,7 +112,7 @@ void main() {
           emergencyContact: '+919999999999',
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(PickupVerificationScreen), findsOneWidget);
     });
 
@@ -125,7 +125,7 @@ void main() {
           emergencyContact: '+919999999999',
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

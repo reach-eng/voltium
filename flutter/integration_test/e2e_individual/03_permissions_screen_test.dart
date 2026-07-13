@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -12,12 +13,12 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Permissions screen – continue to login', (tester) async {
+    final app = AppRobots(tester);
     await launchApp(tester);
     await handlePreamble(tester);
 
-    final hasLogin = find.byKey(const Key('phoneInput')).evaluate().isNotEmpty;
-    final hasDashboard =
-        find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty;
+    final hasLogin = app.login.phoneField.evaluate().isNotEmpty;
+    final hasDashboard = app.dashboard.dashboardTab.evaluate().isNotEmpty;
 
     expect(
       hasLogin || hasDashboard,

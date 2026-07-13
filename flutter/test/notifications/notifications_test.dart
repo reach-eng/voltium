@@ -33,14 +33,14 @@ void main() {
   group('Notification Screen', () {
     testWidgets('notification screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(NotificationsScreen), findsOneWidget);
     });
 
     testWidgets('notification screen shows empty state or list',
         (tester) async {
       await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Either shows notifications or an empty state
       final hasListView = find.byType(ListView).evaluate().isNotEmpty;
@@ -59,7 +59,7 @@ void main() {
 
     testWidgets('notification screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const NotificationsScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

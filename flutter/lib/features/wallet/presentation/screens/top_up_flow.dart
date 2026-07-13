@@ -8,6 +8,7 @@ import 'top_up_amount_screen.dart';
 import 'top_up_proof_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class TopUpFlow extends ConsumerStatefulWidget {
   const TopUpFlow({super.key});
@@ -61,6 +62,9 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
             onAmountChanged: (amount) => setState(() => _amount = amount),
             onProceed: (amount) {
               setState(() => _amount = amount);
+              PostHogService.capture('wallet_top_up_initiated', properties: {
+                'amount': amount.toString(),
+              });
               _nextPage();
             },
           ),
@@ -80,6 +84,23 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   upiRef: 'OFFLINE_PAYMENT',
                   image: _proofImage,
                 );
+                final securityDeposit = ref
+                    .read(appProvider)
+                    .rider
+                    ?.activeRentalPlanSecurityDeposit
+                    .toInt();
+                final isDeposit =
+                    securityDeposit != null && _amount == securityDeposit;
+                PostHogService.capture('wallet_top_up_submitted', properties: {
+                  'amount': _amount.toString(),
+                  'has_proof_image': (_proofImage != null).toString(),
+                  'is_deposit': isDeposit.toString(),
+                });
+                if (isDeposit) {
+                  PostHogService.capture('deposit_submitted', properties: {
+                    'amount': _amount.toString(),
+                  });
+                }
                 if (context.mounted) {
                   final nav = Navigator.of(context);
                   nav.pop();

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class EmergencyContactsScreen extends ConsumerWidget {
   const EmergencyContactsScreen({super.key});
@@ -11,31 +13,30 @@ class EmergencyContactsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final service = ref.watch(emergencyContactsService);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F172A) : AppColors.iconBackground,
+      backgroundColor: colors.surfaceAlt,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black,
+            color: colors.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Emergency Contacts',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
+          style: GoogleFonts.plusJakartaSans(
+            color: colors.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
       body: service.contacts.isEmpty
-          ? _buildEmptyState(context, isDark)
+          ? _buildEmptyState(context)
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: service.contacts.length,
@@ -43,7 +44,6 @@ class EmergencyContactsScreen extends ConsumerWidget {
                 final contact = service.contacts[index];
                 return _ContactCard(
                   contact: contact,
-                  isDark: isDark,
                   onCall: () => _callContact(contact.phone),
                   onSetPrimary: () => service.setPrimaryContact(contact.id),
                   onDelete: () => service.removeContact(contact.id),
@@ -61,7 +61,8 @@ class EmergencyContactsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, bool isDark) {
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -69,22 +70,19 @@ class EmergencyContactsScreen extends ConsumerWidget {
           Icon(
             Icons.contact_emergency,
             size: 64,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+            color: colors.onSurfaceMuted,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'No emergency contacts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
+            style: AppTypography.titleMedium
+                .copyWith(color: colors.onSurfaceVariant),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Add contacts to alert in case of emergency',
-            style: TextStyle(
-              color: isDark ? Colors.grey[600] : Colors.grey[500],
+            style: GoogleFonts.plusJakartaSans(
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -167,14 +165,12 @@ class EmergencyContactsScreen extends ConsumerWidget {
 
 class _ContactCard extends ConsumerWidget {
   final EmergencyContact contact;
-  final bool isDark;
   final VoidCallback onCall;
   final VoidCallback onSetPrimary;
   final VoidCallback onDelete;
 
   const _ContactCard({
     required this.contact,
-    required this.isDark,
     required this.onCall,
     required this.onSetPrimary,
     required this.onDelete,
@@ -182,10 +178,11 @@ class _ContactCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(12),
         border: contact.isPrimary
             ? Border.all(color: AppColors.primary, width: 2)
@@ -196,7 +193,7 @@ class _ContactCard extends ConsumerWidget {
           backgroundColor: contact.isPrimary ? AppColors.primary : Colors.grey,
           child: Text(
             contact.name[0].toUpperCase(),
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
@@ -206,26 +203,22 @@ class _ContactCard extends ConsumerWidget {
           children: [
             Text(
               contact.name,
-              style: TextStyle(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
+                color: colors.onSurface,
               ),
             ),
             if (contact.isPrimary) ...[
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   'PRIMARY',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
                 ),
               ),
             ],
@@ -233,7 +226,7 @@ class _ContactCard extends ConsumerWidget {
         ),
         subtitle: Text(
           '${contact.relationship} • ${contact.phone}',
-          style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+          style: GoogleFonts.plusJakartaSans(color: colors.onSurfaceVariant),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -255,13 +248,15 @@ class _ContactCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red, size: 20),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
+                      const Icon(Icons.delete, color: Colors.red, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Delete',
+                          style:
+                              GoogleFonts.plusJakartaSans(color: Colors.red)),
                     ],
                   ),
                 ),

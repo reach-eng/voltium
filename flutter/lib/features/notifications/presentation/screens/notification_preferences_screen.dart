@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -95,8 +97,9 @@ class _NotificationPreferencesScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surfaceSubtle,
       body: Stack(
         children: [
           _buildBackground(),
@@ -114,7 +117,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.notifications_active,
                             iconColor: AppColors.primary,
-                            iconBg: const Color(0xFFEFF6FF),
+                            iconBg: AppColors.primarySurface,
                             title: 'Push Notifications',
                             subtitle: 'Receive push notifications from Voltium',
                             value: _pushEnabled,
@@ -122,8 +125,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.volume_up,
-                            iconColor: const Color(0xFF7C3AED),
-                            iconBg: const Color(0xFFF5F3FF),
+                            iconColor: AppColors.purpleDark,
+                            iconBg: AppColors.purpleSurface,
                             title: 'Sound',
                             subtitle: 'Play sound for notifications',
                             value: _soundEnabled,
@@ -132,7 +135,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.vibration,
                             iconColor: AppColors.warning,
-                            iconBg: const Color(0xFFFFFBEB),
+                            iconBg: AppColors.warningSurface,
                             title: 'Vibration',
                             subtitle: 'Vibrate for notifications',
                             value: _vibrationEnabled,
@@ -147,8 +150,8 @@ class _NotificationPreferencesScreenState
                         children: [
                           _buildToggleTile(
                             icon: Icons.currency_rupee,
-                            iconColor: const Color(0xFF16A34A),
-                            iconBg: const Color(0xFFF0FDF4),
+                            iconColor: AppColors.successGreen,
+                            iconBg: AppColors.successSurfaceLight,
                             title: 'Payments',
                             subtitle: 'Top-ups, rent deductions, refunds',
                             value: _paymentsEnabled,
@@ -157,8 +160,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.shield_outlined,
-                            iconColor: const Color(0xFF7C3AED),
-                            iconBg: const Color(0xFFF5F3FF),
+                            iconColor: AppColors.purpleDark,
+                            iconBg: AppColors.purpleSurface,
                             title: 'KYC',
                             subtitle: 'Document verification updates',
                             value: _kycEnabled,
@@ -166,8 +169,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.build_outlined,
-                            iconColor: const Color(0xFF2563EB),
-                            iconBg: const Color(0xFFEFF6FF),
+                            iconColor: AppColors.primary,
+                            iconBg: AppColors.primarySurface,
                             title: 'Maintenance',
                             subtitle: 'Service reminders, battery swaps',
                             value: _maintenanceEnabled,
@@ -176,7 +179,7 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.campaign_outlined,
-                            iconColor: const Color(0xFF9333EA),
+                            iconColor: AppColors.purpleDeep,
                             iconBg: const Color(0xFFFAF5FF),
                             title: 'Announcements',
                             subtitle: 'Promotions, offers, platform updates',
@@ -186,7 +189,7 @@ class _NotificationPreferencesScreenState
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32),
                       FilledButton(
                         onPressed: _isLoading ? null : _savePreferences,
                         style: FilledButton.styleFrom(
@@ -205,13 +208,10 @@ class _NotificationPreferencesScreenState
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 'Save Preferences',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
+                                style: AppTypography.buttonMedium
+                                    .copyWith(color: Colors.white),
                               ),
                       ),
                     ],
@@ -232,7 +232,7 @@ class _NotificationPreferencesScreenState
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -240,6 +240,7 @@ class _NotificationPreferencesScreenState
   }
 
   Widget _buildHeader() {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -249,7 +250,7 @@ class _NotificationPreferencesScreenState
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -258,21 +259,17 @@ class _NotificationPreferencesScreenState
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: Color(0xFF1E293B),
+                color: colors.onSurface,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Text(
+          SizedBox(width: 16),
+          Text(
             'Notification Preferences',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
         ],
       ),
@@ -283,9 +280,10 @@ class _NotificationPreferencesScreenState
     required String title,
     required List<Widget> children,
   }) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
@@ -301,12 +299,8 @@ class _NotificationPreferencesScreenState
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: AppColors.slate500,
-              letterSpacing: 1.5,
-            ),
+            style: AppTypography.microOverline
+                .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.5),
           ),
           const SizedBox(height: 12),
           ...children,
@@ -324,6 +318,7 @@ class _NotificationPreferencesScreenState
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -337,25 +332,22 @@ class _NotificationPreferencesScreenState
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.bodyMediumEmphasis
+                      .copyWith(color: colors.onSurface),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.slate500,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ],

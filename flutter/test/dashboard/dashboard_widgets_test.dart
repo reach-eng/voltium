@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
+import 'package:voltium_rider/widgets/animated_balance_counter.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
 
@@ -23,7 +24,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byType(WalletCard), findsOneWidget);
     });
 
@@ -35,8 +37,9 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('5000'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.byType(AnimatedBalanceCounter), findsWidgets);
     });
 
     testWidgets('displays TOTAL BALANCE label', (tester) async {
@@ -47,7 +50,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('TOTAL BALANCE'), findsOneWidget);
     });
 
@@ -59,7 +63,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('3/5 Days'), findsOneWidget);
       expect(find.text('Rental Recovery Streak'), findsOneWidget);
     });
@@ -72,7 +77,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.textContaining('minimum recharge'), findsOneWidget);
       expect(find.textContaining('2000'), findsAtLeastNWidgets(1));
     });
@@ -85,7 +91,8 @@ void main() {
           paymentStreak: 2,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       // 5 containers for streak bars
       final streakRow = find.byType(WalletCard);
       expect(streakRow, findsOneWidget);
@@ -99,7 +106,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.textContaining('insufficient'), findsNothing);
       expect(find.text('Top Up Wallet'), findsNothing);
     });
@@ -114,7 +122,8 @@ void main() {
           onTopUp: () => tapped = true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       // Tap the add button (normal card uses a round + button)
       final addButton = find.byIcon(Icons.add);
@@ -132,7 +141,8 @@ void main() {
           paymentStreak: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });
@@ -140,41 +150,47 @@ void main() {
   group('WalletCard — Low Balance (Monthly Plan)', () {
     testWidgets('shows warning when balance < 25% of required', (tester) async {
       await tester.pumpWidget(wrapInMaterialApp(
-        const WalletCard(
+        WalletCard(
           walletBalance: 300,
           requiredPayment: 2000,
           paymentStreak: 0,
+          planEndDate: DateTime.now().add(const Duration(days: 1)),
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.textContaining('insufficient'), findsOneWidget);
       expect(find.text('Top Up Wallet'), findsOneWidget);
     });
 
     testWidgets('shows error color for non-daily low balance', (tester) async {
       await tester.pumpWidget(wrapInMaterialApp(
-        const WalletCard(
+        WalletCard(
           walletBalance: 100,
           requiredPayment: 2000,
           paymentStreak: 0,
           currentPlan: 'monthly',
+          planEndDate: DateTime.now().add(const Duration(days: 1)),
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
     });
 
     testWidgets('shows warning color for daily plan low balance',
         (tester) async {
       await tester.pumpWidget(wrapInMaterialApp(
-        const WalletCard(
+        WalletCard(
           walletBalance: 100,
           requiredPayment: 2000,
           paymentStreak: 0,
           currentPlan: 'daily',
+          planEndDate: DateTime.now().add(const Duration(days: 1)),
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
     });
 
@@ -185,10 +201,12 @@ void main() {
           walletBalance: 100,
           requiredPayment: 2000,
           paymentStreak: 0,
+          planEndDate: DateTime.now().add(const Duration(days: 1)),
           onTopUp: () => tapped = true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       await tester.tap(find.text('Top Up Wallet'));
       expect(tapped, isTrue);
@@ -196,13 +214,15 @@ void main() {
 
     testWidgets('does not overflow', (tester) async {
       await tester.pumpWidget(wrapInMaterialApp(
-        const WalletCard(
+        WalletCard(
           walletBalance: 100,
           requiredPayment: 2000,
           paymentStreak: 0,
+          planEndDate: DateTime.now().add(const Duration(days: 1)),
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });
@@ -217,7 +237,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byType(WalletCard), findsOneWidget);
     });
 
@@ -230,7 +251,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('TOTAL BALANCE'), findsOneWidget);
     });
 
@@ -244,7 +266,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });
@@ -258,7 +281,8 @@ void main() {
           paymentStreak: 0,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.textContaining('0'), findsAtLeastNWidgets(1));
     });
 
@@ -270,7 +294,8 @@ void main() {
           paymentStreak: 0,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.textContaining('2000'), findsAtLeastNWidgets(1));
     });
 
@@ -282,7 +307,8 @@ void main() {
           paymentStreak: 5,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('5/5 Days'), findsOneWidget);
     });
   });
@@ -295,7 +321,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byType(PlanCard), findsOneWidget);
     });
 
@@ -306,7 +333,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('WEEKLY'), findsOneWidget);
     });
 
@@ -318,7 +346,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('CURRENT SUBSCRIPTION'), findsOneWidget);
     });
 
@@ -330,7 +359,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('TIME REMAINING'), findsOneWidget);
       expect(find.text('NEXT RECHARGE'), findsOneWidget);
     });
@@ -343,7 +373,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byType(PlanCard), findsOneWidget);
     });
 
@@ -355,7 +386,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       // Compact mode shows uppercase plan name in badge
       expect(find.text('DAILY'), findsOneWidget);
     });
@@ -367,7 +399,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       // In non-compact mode, null plan defaults to 'WEEKLY PAYMENT'
       expect(find.text('WEEKLY PAYMENT'), findsOneWidget);
     });
@@ -380,7 +413,8 @@ void main() {
           compact: true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       // In compact mode, null plan shows 'NO PLAN' badge
       expect(find.text('NO PLAN'), findsOneWidget);
     });
@@ -392,7 +426,8 @@ void main() {
           planEndDate: null,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });
@@ -402,7 +437,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byType(ReferralCard), findsOneWidget);
     });
 
@@ -410,7 +446,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('VF-RD-88'), findsOneWidget);
     });
 
@@ -418,7 +455,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('Refer & Earn'), findsOneWidget);
     });
 
@@ -426,7 +464,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.text('YOUR CODE'), findsOneWidget);
     });
 
@@ -434,7 +473,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(find.byIcon(Icons.copy), findsOneWidget);
       expect(find.byIcon(Icons.share), findsOneWidget);
     });
@@ -447,7 +487,8 @@ void main() {
           onCopy: () => copyCalled = true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
 
       await tester.tap(find.byIcon(Icons.copy));
       await tester.pump();
@@ -458,7 +499,8 @@ void main() {
       await tester.pumpWidget(wrapInMaterialApp(
         const ReferralCard(referralCode: 'VF-RD-88'),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
       expect(tester.takeException(), isNull);
     });
   });

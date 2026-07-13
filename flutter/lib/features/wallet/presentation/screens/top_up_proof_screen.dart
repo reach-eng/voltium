@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TopUpProofScreen extends StatefulWidget {
   final int amount;
@@ -163,7 +164,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               const SizedBox(width: 32),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -172,23 +173,15 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             ),
             child: Text(
               'Step 2 of 2',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
+              style: AppTypography.labelMedium
+                  .copyWith(color: Colors.white, letterSpacing: 0.5),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Upload Proof',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+            style: AppTypography.displayMedium
+                .copyWith(color: Colors.white, letterSpacing: -0.5),
           ),
         ],
       ),
@@ -211,17 +204,13 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             children: [
               Text(
                 'TOP-UP AMOUNT',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate500,
-                  letterSpacing: 0.5,
-                ),
+                style: AppTypography.bodySmallEmphasis
+                    .copyWith(color: AppColors.slate500, letterSpacing: 0.5),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primaryGradientEnd,
@@ -236,10 +225,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
             ),
             child: Text(
               'Edit',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTypography.bodyMediumEmphasis,
             ),
           ),
         ],
@@ -261,7 +247,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFFEFF6FF),
+              color: AppColors.primarySurface,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -270,23 +256,20 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Proof of Top Up',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
-                  ),
+                  style: AppTypography.titleSmall
+                      .copyWith(color: AppColors.slate800),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     height: 1.4,
                     color: AppColors.slate500,
@@ -319,18 +302,15 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
               children: [
                 const Icon(
                   Icons.image_outlined,
-                  color: Color(0xFF1E293B),
+                  color: AppColors.slate800,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Upload Photo Proof',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.titleSmall
+                        .copyWith(color: AppColors.slate800),
                   ),
                 ),
                 if (_imageFile != null)
@@ -358,19 +338,16 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                       color: AppColors.primaryGradientEnd,
                       size: 34,
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Text(
                       'Tap to upload photo',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF1E293B),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTypography.labelLarge
+                          .copyWith(color: AppColors.slate800),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       'Camera or gallery',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppColors.slate500,
                         fontSize: 14,
                       ),
@@ -410,7 +387,7 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                       onPressed: () => setState(() => _imageFile = null),
                       icon: const Icon(Icons.close, size: 20),
                       style: IconButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC2626),
+                        backgroundColor: AppColors.errorRed,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -427,22 +404,22 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB), // Pale yellow
+        color: AppColors.warningSurface, // Pale yellow
         borderRadius: BorderRadius.circular(16),
       ),
       child: RichText(
         text: TextSpan(
-          style: GoogleFonts.inter(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             height: 1.5,
             color: AppColors.warningText, // Amber text color
           ),
-          children: const [
+          children: [
             TextSpan(
               text: 'Note: ',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
-            TextSpan(
+            const TextSpan(
               text:
                   'Payments are verified manually by our team. Balance will be updated within 24 hours of verification.',
             ),
@@ -487,12 +464,9 @@ class _TopUpProofScreenState extends State<TopUpProofScreen> {
                 )
               : Text(
                   'Submit Proof',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: canSubmit ? Colors.white : AppColors.slate400,
-                  ),
+                  style: AppTypography.titleSmall.copyWith(
+                      letterSpacing: 0.5,
+                      color: canSubmit ? Colors.white : AppColors.slate400),
                 ),
         ),
       ),

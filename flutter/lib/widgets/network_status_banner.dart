@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class NetworkStatusBanner extends StatefulWidget {
   final Widget child;
@@ -10,8 +13,8 @@ class NetworkStatusBanner extends StatefulWidget {
   const NetworkStatusBanner({
     super.key,
     required this.child,
-    this.onlineColor = const Color(0xFF16A34A),
-    this.offlineColor = const Color(0xFFD92D20),
+    this.onlineColor = AppColors.successGreen,
+    this.offlineColor = AppColors.errorRedAlt,
   });
 
   @override
@@ -60,14 +63,15 @@ class _NetworkStatusBannerState extends State<NetworkStatusBanner> {
             color: widget.offlineColor,
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.wifi_off, color: Colors.white, size: 14),
                 SizedBox(width: 8),
                 Text(
                   'No internet connection',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                  style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white, fontSize: 12),
                 ),
               ],
             ),
@@ -85,21 +89,17 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFD92D20),
+      color: AppColors.errorRedAlt,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.wifi_off, color: Colors.white, size: 14),
           SizedBox(width: 8),
           Text(
             'You are offline',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: Colors.white),
           ),
         ],
       ),
@@ -113,21 +113,17 @@ class OnlineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF16A34A),
+      color: AppColors.successGreen,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.cloud_done, color: Colors.white, size: 14),
           SizedBox(width: 8),
           Text(
             'Back online',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: Colors.white),
           ),
         ],
       ),

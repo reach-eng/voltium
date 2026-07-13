@@ -29,6 +29,8 @@ import 'package:voltium_rider/features/device_compliance/presentation/screens/em
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class RiderWorkflowHubScreen extends ConsumerWidget {
   const RiderWorkflowHubScreen({super.key});
@@ -261,12 +263,8 @@ class _Section extends ConsumerWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF475569),
-              letterSpacing: 0.8,
-            ),
+            style: AppTypography.bodySmallTracked
+                .copyWith(color: AppColors.slate600, letterSpacing: 0.8),
           ),
           const SizedBox(height: 12),
           ...children
@@ -289,7 +287,7 @@ class _Tile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Material(
-      color: const Color(0xFFF8FAFC),
+      color: AppColors.surfaceBright,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -299,13 +297,13 @@ class _Tile extends ConsumerWidget {
           child: Row(
             children: [
               Icon(icon, color: AppColors.primary, size: 22),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.slate800,
                   ),
                 ),
               ),

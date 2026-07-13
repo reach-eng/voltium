@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class OtpInput extends StatefulWidget {
   final int length;
@@ -98,13 +99,13 @@ class _OtpInputState extends State<OtpInput> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultDecoration = BoxDecoration(
-      color: isDark ? const Color(0xFF1E293B) : Colors.grey[100],
+      color: isDark ? AppColors.slate800 : Colors.grey[100],
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.transparent),
     );
     final focused = widget.focusedDecoration ??
         BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isDark ? AppColors.slate800 : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: [
@@ -117,7 +118,7 @@ class _OtpInputState extends State<OtpInput> {
         );
     final errorDecoration = widget.errorDecoration ??
         BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.red[50],
+          color: isDark ? AppColors.slate800 : Colors.red[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.red, width: 2),
         );
@@ -153,7 +154,7 @@ class _OtpInputState extends State<OtpInput> {
                   maxLength: 1,
                   keyboardType: TextInputType.number,
                   style: widget.textStyle ??
-                      TextStyle(
+                      GoogleFonts.plusJakartaSans(
                         fontSize: widget.size * 0.5,
                         fontWeight: FontWeight.bold,
                         color: isDark ? Colors.white : Colors.black,
@@ -172,10 +173,10 @@ class _OtpInputState extends State<OtpInput> {
           }),
         ),
         if (_error != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             _error!,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               color: Colors.red,
               fontSize: 12,
             ),

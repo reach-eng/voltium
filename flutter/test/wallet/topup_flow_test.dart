@@ -35,13 +35,13 @@ void main() {
   group('Top-up Amount Screen', () {
     testWidgets('amount screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const TopUpAmountScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(TopUpAmountScreen), findsOneWidget);
     });
 
     testWidgets('amount screen has an amount input field', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const TopUpAmountScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should have a numeric input for amount
       final hasTextField = find.byType(TextField).evaluate().isNotEmpty;

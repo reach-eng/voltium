@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
@@ -21,6 +20,7 @@ import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PreDashboardScreen extends ConsumerStatefulWidget {
   final Function(AuthState) onStepNavigation;
@@ -36,6 +36,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final walletMinTopup =
         ref.watch(appProvider.select((p) => p.walletMinTopup));
     final rider = ref.watch(riderProvider.select((p) => p.rider));
@@ -72,7 +73,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colors.surfaceBright,
       body: Column(
         children: [
           // Header
@@ -114,7 +115,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colors.card,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
                             BoxShadow(
@@ -295,12 +296,13 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   }
 
   Widget _buildHeader(RiderModel rider) {
+    final colors = AppColors.of(context);
     return SafeArea(
         bottom: false,
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: colors.card,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -317,14 +319,11 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                     child:
                         const Icon(Icons.bolt, color: Colors.white, size: 18),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Text(
                     'Dashboard',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.titleLarge
+                        .copyWith(color: colors.onSurface),
                   ),
                 ],
               ),
@@ -353,9 +352,9 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.notifications_outlined,
-                      color: Color(0xFF475569),
+                      color: colors.onSurfaceVariant,
                       size: 22,
                     ),
                     onPressed: () => AppNavigator.push(
@@ -371,6 +370,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   }
 
   Widget _buildRejectionCard(BuildContext context, RiderModel rider) {
+    final colors = AppColors.of(context);
     // Custom dashed border painter could be used, but for simplicity we'll use a container
     // wrapped in a CustomPaint or just standard border. To match dashed border exactly,
     // we would need a package like dotted_border. Since we don't have it, we'll use a solid
@@ -378,10 +378,10 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F2), // Light pink background
+        color: AppColors.errorRose, // Light pink background
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: const Color(0xFFFDA4AF),
+          color: AppColors.errorBorder,
           width: 1.5,
         ), // Pink/Red border
       ),
@@ -396,7 +396,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFE4E6),
+                    color: AppColors.errorRose,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -405,38 +405,31 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Rejection Remarks',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                        ),
+                        style: AppTypography.titleLarge
+                            .copyWith(color: colors.onSurface),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         rider.kycRejectionReason != null &&
                                 rider.kycRejectionReason!.isNotEmpty
                             ? rider.kycRejectionReason!
                             : 'The uploaded PAN card document was blurry and unreadable. Please ensure all details are clearly visible in the new upload.',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF334155),
-                          height: 1.4,
-                        ),
+                        style: AppTypography.bodyLarge.copyWith(
+                            color: colors.onSurfaceVariant, height: 1.4),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -457,10 +450,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
                     SizedBox(width: 8),
                     Text(
                       'Re-upload Documents',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: AppTypography.titleSmall,
                     ),
                   ],
                 ),
@@ -494,11 +484,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
             SizedBox(width: 12),
             Text(
               'PICKUP YOUR VEHICLE',
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-              ),
+              style: AppTypography.buttonMedium.copyWith(letterSpacing: 1.2),
             ),
           ],
         ),

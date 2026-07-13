@@ -5,20 +5,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Guarantor Form E2E: Direct routing and submission', (tester) async {
+  testWidgets('Guarantor Form E2E: Direct routing and submission',
+      (tester) async {
+    final app = AppRobots(tester);
     await resetAppState();
     await launchApp(tester);
 
     // 1. Auth Flow
     await handlePreamble(tester);
     await completeAuthFlow(tester, phone: TestCredentials.phone);
-    
+
     // 2. Wait for Intent Screen
     await waitFor(tester, find.text('Deliver with Us'));
     await tester.tap(find.text('Deliver with Us'));
@@ -27,13 +30,16 @@ void main() {
     await settle(tester);
 
     // 3. User Form
-    await waitFor(tester, find.byKey(const Key('fullNameField')));
-    await tester.enterText(find.byKey(const Key('fullNameField')), TestCredentials.fullName);
-    await tester.enterText(find.byKey(const Key('emailField')), TestCredentials.email);
-    await tester.enterText(find.byKey(const Key('fatherNameField')), TestCredentials.fatherName);
-    await tester.enterText(find.byKey(const Key('motherNameField')), TestCredentials.motherName);
+    await waitFor(tester, app.onboarding.fullNameField);
+    await tester.enterText(
+        app.onboarding.fullNameField, TestCredentials.fullName);
+    await tester.enterText(app.onboarding.emailField, TestCredentials.email);
+    await tester.enterText(
+        app.onboarding.fatherNameField, TestCredentials.fatherName);
+    await tester.enterText(
+        app.onboarding.motherNameField, TestCredentials.motherName);
     await settle(tester);
-    
+
     // Pick DOB
     await tester.tap(find.text('DD-MM-YYYY'));
     await settle(tester);
@@ -42,27 +48,32 @@ void main() {
     await settle(tester);
 
     // Submit User Form
-    await tester.tap(find.byKey(const Key('nextOnboardingButton')));
+    await tester.tap(app.onboarding.nextOnboardingButton);
     await settle(tester);
 
     // 4. Verify direct routing to Guarantor Form
     await waitFor(tester, find.text('Guarantor Details'));
-    expect(find.byKey(const Key('guarantorNameField')), findsOneWidget);
+    expect(app.onboarding.guarantorNameField, findsOneWidget);
 
     // 5. Fill Guarantor Form
-    await tester.enterText(find.byKey(const Key('guarantorNameField')), TestCredentials.guarantorName);
-    await tester.enterText(find.byKey(const Key('guarantorPhoneField')), TestCredentials.guarantorPhone);
-    await tester.enterText(find.byKey(const Key('guarantorFatherNameField')), TestCredentials.fatherName);
-    await tester.enterText(find.byKey(const Key('guarantorMotherNameField')), TestCredentials.motherName);
-    await tester.enterText(find.byKey(const Key('guarantorAddressField')), '123 Test Ave');
+    await tester.enterText(
+        app.onboarding.guarantorNameField, TestCredentials.guarantorName);
+    await tester.enterText(
+        app.onboarding.guarantorPhoneField, TestCredentials.guarantorPhone);
+    await tester.enterText(
+        app.onboarding.guarantorFatherNameField, TestCredentials.fatherName);
+    await tester.enterText(
+        app.onboarding.guarantorMotherNameField, TestCredentials.motherName);
+    await tester.enterText(app.shared.guarantorAddressField, '123 Test Ave');
     await settle(tester);
-    
+
     // Test Mode bypasses document uploads automatically, so we just tap Finish
-    await tester.tap(find.byKey(const Key('completeOnboardingButton')));
+    await tester.tap(app.onboarding.completeOnboardingButton);
     await settle(tester);
 
     // 6. Verify routing to PreDashboard
-    await waitFor(tester, find.text('Start Registration').or(find.text('Book Vehicle')));
-    expect(find.byKey(const Key('preDashboardScreen')), findsWidgets);
+    await waitFor(
+        tester, find.text('Start Registration').or(find.text('Book Vehicle')));
+    expect(app.shared.preDashboardScreen, findsWidgets);
   });
 }

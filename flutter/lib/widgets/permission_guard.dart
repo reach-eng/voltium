@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PermissionGuard extends ConsumerWidget {
   const PermissionGuard({super.key});
@@ -70,16 +71,16 @@ class PermissionGuard extends ConsumerWidget {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: AppColors.slate900,
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                const Color(0xFF1A1A2E),
-                const Color(0xFF16213E).withValues(alpha: 0.9),
-                const Color(0xFF0F3460).withValues(alpha: 0.8),
+                AppColors.slate900,
+                AppColors.slate900.withValues(alpha: 0.9),
+                AppColors.primaryDeep.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -99,29 +100,24 @@ class PermissionGuard extends ConsumerWidget {
                       ),
                       child: Icon(icon, color: Colors.redAccent, size: 48),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     Text(
                       'REQUIRED PERMISSION\nREVOKED',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        height: 1.3,
-                      ),
+                      style: AppTypography.headingMedium.copyWith(
+                          color: Colors.white, letterSpacing: 1.5, height: 1.3),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       'The "$permName" permission has been revoked. This permission is mandatory for the app to function.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 15,
                         height: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -135,15 +131,11 @@ class PermissionGuard extends ConsumerWidget {
                       ),
                       child: Text(
                         permName.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          color: Colors.redAccent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
+                        style: AppTypography.bodyMediumEmphasis.copyWith(
+                            color: Colors.redAccent, letterSpacing: 1),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -152,11 +144,8 @@ class PermissionGuard extends ConsumerWidget {
                         icon: const Icon(Icons.settings),
                         label: Text(
                           'OPEN SETTINGS',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                          ),
+                          style: AppTypography.titleSmall
+                              .copyWith(letterSpacing: 0.5),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -168,21 +157,21 @@ class PermissionGuard extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextButton(
                       onPressed: () => ref.read(appProvider).clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 13,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    SizedBox(height: 32),
                     Text(
                       'Voltium Security System v3.0',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withValues(alpha: 0.2),
                         fontSize: 12,
                         fontStyle: FontStyle.italic,

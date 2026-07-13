@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class TopUpRequestSentCard extends StatelessWidget {
   final RiderModel rider;
@@ -21,7 +23,7 @@ class TopUpRequestSentCard extends StatelessWidget {
     final statusText = isRejected ? 'Rejected' : 'Awaiting Admin Approval';
     final statusColor = isRejected ? AppColors.error : AppColors.warning;
     final statusBg =
-        isRejected ? const Color(0xFFFEF2F2) : const Color(0xFFFFFBEB);
+        isRejected ? AppColors.errorSurface : AppColors.warningSurface;
 
     return Container(
       width: double.infinity,
@@ -44,13 +46,10 @@ class TopUpRequestSentCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Top-up Request',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.titleSmall
+                    .copyWith(color: AppColors.slate800),
               ),
               Container(
                 padding:
@@ -61,21 +60,18 @@ class TopUpRequestSentCard extends StatelessWidget {
                 ),
                 child: Text(
                   statusText.toUpperCase(),
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style:
+                      AppTypography.microOverline.copyWith(color: statusColor),
                 ),
               ),
             ],
           ),
           if (isRejected && record?.rejectionReason != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: AppColors.errorSurface,
                 borderRadius: BorderRadius.circular(12),
                 border:
                     Border.all(color: AppColors.error.withValues(alpha: 0.2)),
@@ -84,15 +80,12 @@ class TopUpRequestSentCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.error_outline,
                       color: AppColors.error, size: 16),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Reason: ${record!.rejectionReason}',
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: AppColors.error),
                     ),
                   ),
                 ],
@@ -110,7 +103,7 @@ class TopUpRequestSentCard extends StatelessWidget {
           ),
           _buildRow('Total Pending', '₹$topUpAmount', isBold: true),
           if (isRejected) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -125,9 +118,9 @@ class TopUpRequestSentCard extends StatelessWidget {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text(
+                label: Text(
                   'Resubmit Request',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: AppTypography.labelLarge,
                 ),
               ),
             ),
@@ -143,16 +136,16 @@ class TopUpRequestSentCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            color: isBold ? const Color(0xFF1E293B) : AppColors.slate500,
+          style: GoogleFonts.plusJakartaSans(
+            color: isBold ? AppColors.slate800 : AppColors.slate500,
             fontSize: isBold ? 14 : 13,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            color: const Color(0xFF1E293B),
+          style: GoogleFonts.plusJakartaSans(
+            color: AppColors.slate800,
             fontSize: isBold ? 16 : 14,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
           ),

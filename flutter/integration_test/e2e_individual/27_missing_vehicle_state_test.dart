@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 // Run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_individual/27_missing_vehicle_state_test.dart -d emulator-5554
 
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -12,6 +13,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Dashboard – handles missing vehicle state', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
 
     // Dashboard should be visible
@@ -19,7 +21,7 @@ void main() {
 
     // If no vehicle assigned, should show appropriate messaging
     final noVehicleMessage = find.textContaining('No vehicle');
-    final vehicleCard = find.byKey(const Key('assignedVehicleCard'));
+    final vehicleCard = app.dashboard.assignedVehicleCard;
 
     expect(
       noVehicleMessage.evaluate().isNotEmpty ||

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ReferralCard extends StatelessWidget {
   final String referralCode;
@@ -48,18 +50,15 @@ class ReferralCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Refer Friends',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTypography.titleLarge
+                          .copyWith(color: Colors.white),
                     ),
                     if (userName != null)
                       Text(
                         'Hey $userName!',
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 14,
                         ),
@@ -80,7 +79,7 @@ class ReferralCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -93,22 +92,18 @@ class ReferralCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Your Referral Code',
-                          style: TextStyle(
-                            color: Color(0xFF667085),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppColors.textMuted,
                             fontSize: 12,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           referralCode,
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
+                          style: AppTypography.headingMedium.copyWith(
+                              color: AppColors.primary, letterSpacing: 2),
                         ),
                       ],
                     ),
@@ -127,7 +122,7 @@ class ReferralCard extends StatelessWidget {
               ),
             ),
             if (rewardAmount != null) ...[
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -143,14 +138,11 @@ class ReferralCard extends StatelessWidget {
                       color: Colors.white,
                       size: 18,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'Get \$${rewardAmount!.toStringAsFixed(2)} for each referral',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: Colors.white),
                     ),
                   ],
                 ),
@@ -211,7 +203,7 @@ class ReferralStatsCard extends StatelessWidget {
               icon: Icons.attach_money,
               value: '\$${totalEarnings.toStringAsFixed(0)}',
               label: 'Earned',
-              color: const Color(0xFF16A34A),
+              color: AppColors.successGreen,
             ),
           ),
           Expanded(
@@ -253,20 +245,16 @@ class _StatItem extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: AppTypography.titleLarge.copyWith(color: color),
           ),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: Color(0xFF667085),
+              color: AppColors.textMuted,
             ),
           ),
         ],
@@ -292,12 +280,9 @@ class ReferralShareOptions extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Share via',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTypography.bodyLarge,
           ),
           const SizedBox(height: 16),
           Row(
@@ -312,7 +297,7 @@ class ReferralShareOptions extends StatelessWidget {
               _ShareOption(
                 icon: Icons.chat,
                 label: 'WhatsApp',
-                color: const Color(0xFF25D366),
+                color: AppColors.whatsappGreen,
                 onTap: () {},
               ),
               _ShareOption(
@@ -370,10 +355,10 @@ class _ShareOption extends StatelessWidget {
               ),
               child: Icon(icon, color: color),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 12),
+              style: GoogleFonts.plusJakartaSans(fontSize: 12),
             ),
           ],
         ),

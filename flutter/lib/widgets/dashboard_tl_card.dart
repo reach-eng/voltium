@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'premium_cards.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Team Leader card widget for the Active Dashboard.
 class TeamLeaderCard extends StatelessWidget {
@@ -32,43 +33,36 @@ class TeamLeaderCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Team Leader',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.slate400,
-                      letterSpacing: 1.0,
-                    ),
+                    style: AppTypography.bodySmallStrong.copyWith(
+                        color: AppColors.slate400, letterSpacing: 1.0),
                   ),
                   InkWell(
                     onTap: onViewDetails,
-                    child: const Text(
+                    child: Text(
                       'View Details',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: AppColors.primary),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBEB),
+                      color: AppColors.warningSurface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppColors.warningLight),
                     ),
                     child: const Icon(Icons.stars,
                         color: AppColors.warning, size: 24),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,22 +71,16 @@ class TeamLeaderCard extends StatelessWidget {
                           (teamLeaderName == null ||
                                   teamLeaderName!.isEmpty ||
                                   teamLeaderName == 'Not Assigned')
-                              ? 'Amit Sharma'
+                              ? 'Not assigned'
                               : teamLeaderName!,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1E293B),
-                          ),
+                          style: AppTypography.titleSmall
+                              .copyWith(color: AppColors.slate800),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
+                        SizedBox(height: 4),
+                        Text(
                           'Assigned TL',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.slate500,
-                          ),
+                          style: AppTypography.bodySmallEmphasis
+                              .copyWith(color: AppColors.slate500),
                         ),
                       ],
                     ),
@@ -105,7 +93,7 @@ class TeamLeaderCard extends StatelessWidget {
                     child: IconButton(
                       icon: const Icon(
                         Icons.phone,
-                        color: Color(0xFF475569),
+                        color: AppColors.slate600,
                         size: 20,
                       ),
                       onPressed: onCall,

@@ -533,1018 +533,1101 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dashboard_riderLabel => 'राइडर';
 
   @override
-  String get txtsomethingWentWrong => 'Something went wrong';
+  String get txtsomethingWentWrong => 'कुछ गलत हो गया';
 
   @override
-  String get txtreload => 'Reload';
+  String get txtreload => 'रीलोड करें';
 
   @override
   String get txtriderNotFoundPleaseContactSupport =>
-      'Rider not found. Please contact support.';
+      'राइडर नहीं मिला। कृपया सपोर्ट से संपर्क करें।';
 
   @override
-  String get txtvoltium => 'Voltium';
+  String get txtvoltium => 'वोल्टियम';
 
   @override
-  String get txtcreateAccount => 'Create Account';
+  String get txtcreateAccount => 'अकाउंट बनाएं';
 
   @override
-  String get txtloginWithPhone => 'Login with Phone';
+  String get txtloginWithPhone => 'फ़ोन से लॉगिन करें';
 
   @override
   String get txtmanageYourJourneyWithPrecision =>
-      'Manage your journey with precision.';
+      'अपनी यात्रा को सटीकता से प्रबंधित करें।';
 
   @override
-  String get txtwelcome => 'Welcome';
+  String get txtwelcome => 'स्वागत है';
 
   @override
   String get txtenterTheRegisteredPhoneNumberToLoginOrEnterANewNumberToCreateAnotherAccount =>
-      'Enter the registered phone number to login or enter a new number to create another account.';
+      'लॉगिन के लिए रजिस्टर्ड फ़ोन नंबर डालें या नया अकाउंट बनाने के लिए नया नंबर डालें।';
 
   @override
-  String get txtaSecureOtpWillBeSent => 'A SECURE OTP WILL BE SENT';
+  String get txtaSecureOtpWillBeSent => 'एक सुरक्षित OTP भेजा जाएगा';
 
   @override
-  String get txtenter => 'Enter';
+  String get txtenter => 'डालें';
 
   @override
-  String get txttermsOfService => 'Terms of Service';
+  String get txttermsOfService => 'सेवा की शर्तें';
 
   @override
-  String get txtprivacyPolicy => 'Privacy Policy';
+  String get txtprivacyPolicy => 'गोपनीयता नीति';
 
   @override
-  String get txtotpCodeResentSuccessfully => 'OTP code resent successfully!';
+  String get txtotpCodeResentSuccessfully =>
+      'OTP कोड सफलतापूर्वक दोबारा भेजा गया!';
 
   @override
-  String get txtinitializeSystem => 'Initialize System';
+  String get txtinitializeSystem => 'सिस्टम शुरू करें';
 
   @override
-  String get txtdashboard => 'Dashboard';
+  String get txtdashboard => 'डैशबोर्ड';
 
   @override
-  String get txtrejectionRemarks => 'Rejection Remarks';
+  String get txtrejectionRemarks => 'अस्वीकृति टिप्पणियां';
 
   @override
-  String get txtpickupYourVehicle => 'PICKUP YOUR VEHICLE';
+  String get txtpickupYourVehicle => 'अपना वाहन उठाएं';
 
   @override
-  String get txtemergencyContacts => 'Emergency Contacts';
+  String get txtemergencyContacts => 'आपातकालीन संपर्क';
 
   @override
-  String get txtaddContact => 'Add Contact';
+  String get txtaddContact => 'संपर्क जोड़ें';
 
   @override
-  String get txtnoEmergencyContacts => 'No emergency contacts';
+  String get txtnoEmergencyContacts => 'कोई आपातकालीन संपर्क नहीं';
 
   @override
   String get txtaddContactsToAlertInCaseOfEmergency =>
-      'Add contacts to alert in case of emergency';
+      'आपातकाल की स्थिति में अलर्ट के लिए संपर्क जोड़ें';
 
   @override
-  String get txtaddEmergencyContact => 'Add Emergency Contact';
+  String get txtaddEmergencyContact => 'आपातकालीन संपर्क जोड़ें';
 
   @override
-  String get txtcancel => 'Cancel';
+  String get txtcancel => 'रद्द करें';
 
   @override
-  String get txtadd => 'Add';
+  String get txtadd => 'जोड़ें';
 
   @override
-  String get txtprimary => 'PRIMARY';
+  String get txtprimary => 'प्राथमिक';
 
   @override
-  String get txtsetAsPrimary => 'Set as Primary';
+  String get txtsetAsPrimary => 'प्राथमिक बनाएं';
 
   @override
-  String get txtdelete => 'Delete';
+  String get txtdelete => 'हटाएं';
 
   @override
-  String get txtemergencySos => 'Emergency SOS';
+  String get txtemergencySos => 'आपातकालीन SOS';
 
   @override
-  String get txttakeAPhoto => 'Take a Photo';
+  String get txttakeAPhoto => 'फ़ोटो लें';
 
   @override
-  String get txtchooseFromGallery => 'Choose from Gallery';
+  String get txtchooseFromGallery => 'गैलरी से चुनें';
 
   @override
-  String get txtotpSentToGuarantorPhone => 'OTP sent to guarantor phone';
+  String get txtotpSentToGuarantorPhone => 'गारंटर के फ़ोन पर OTP भेजा गया';
 
   @override
-  String get txtphoneVerifiedSuccessfully => 'Phone verified successfully';
+  String get txtphoneVerifiedSuccessfully => 'फ़ोन सफलतापूर्वक सत्यापित';
 
   @override
-  String get txtguarantorDetails => 'Guarantor Details';
+  String get txtguarantorDetails => 'गारंटर विवरण';
 
   @override
-  String get txtguarantorPhoneNumber => 'Guarantor Phone Number';
+  String get txtguarantorPhoneNumber => 'गारंटर फ़ोन नंबर';
 
   @override
-  String get txtphoneNumberVerified => 'Phone Number Verified';
+  String get txtphoneNumberVerified => 'फ़ोन नंबर सत्यापित';
 
   @override
-  String get txtenterOtp => 'Enter OTP';
+  String get txtenterOtp => 'OTP डालें';
 
   @override
-  String get txtverifyOtp => 'VERIFY OTP';
+  String get txtverifyOtp => 'OTP सत्यापित करें';
 
   @override
-  String get txtdocumentsUpload => 'Documents Upload';
+  String get txtdocumentsUpload => 'दस्तावेज़ अपलोड';
 
   @override
-  String get txtclearPhotosOnlyMax5mbEach => 'Clear photos only. Max 5MB each.';
+  String get txtclearPhotosOnlyMax5mbEach => 'साफ़ फ़ोटो। प्रत्येक अधिकतम 5MB।';
 
   @override
-  String get txtguarantorSignature => 'Guarantor Signature';
+  String get txtguarantorSignature => 'गारंटर हस्ताक्षर';
 
   @override
   String get txtsignOnScreenToAuthorizeDetails =>
-      'Sign on screen to authorize details.';
+      'विवरण प्रमाणित करने के लिए स्क्रीन पर हस्ताक्षर करें।';
 
   @override
-  String get txtonboarding => 'Onboarding';
+  String get txtonboarding => 'ऑनबोर्डिंग';
 
   @override
-  String get txtstep => 'Step';
+  String get txtstep => 'कदम';
 
   @override
-  String get txtoneMoreStep => 'One more step';
+  String get txtoneMoreStep => 'एक और कदम';
 
   @override
   String get txtweNeedAFewMoreDetailsToSetUpYourFleetProfileSecurely =>
-      'We need a few more details to set up your fleet profile securely.';
+      'आपकी फ़्लीट प्रोफ़ाइल को सुरक्षित रूप से सेट करने के लिए हमें कुछ और जानकारी चाहिए।';
 
   @override
-  String get txtfinishSetup => 'FINISH SETUP';
+  String get txtfinishSetup => 'सेटअप पूरा करें';
 
   @override
-  String get txtunableToOpenDocument => 'Unable to open document';
+  String get txtunableToOpenDocument => 'दस्तावेज़ खोल नहीं पा रहे';
 
   @override
-  String get txtmyDocuments => 'My Documents';
+  String get txtmyDocuments => 'मेरे दस्तावेज़';
 
   @override
-  String get txtsecurityProfile => 'SECURITY PROFILE';
+  String get txtsecurityProfile => 'सुरक्षा प्रोफ़ाइल';
 
   @override
-  String get txtnoDocumentsSubmittedYet => 'No documents submitted yet';
+  String get txtnoDocumentsSubmittedYet => 'अभी तक कोई दस्तावेज़ जमा नहीं हुआ';
 
   @override
-  String get txtverified => 'VERIFIED';
+  String get txtverified => 'सत्यापित';
 
   @override
-  String get txthavingTroubleWithDocuments => 'Having trouble with documents?';
+  String get txthavingTroubleWithDocuments => 'दस्तावेज़ों में परेशानी?';
 
   @override
   String get txtifYouSeeAnyIssuesWithYourVerifiedDocumentsOrNeedToUpdateThemPleaseRaiseASupportTicket =>
-      'If you see any issues with your verified documents or need to update them, please raise a support ticket.';
+      'अगर आपके सत्यापित दस्तावेज़ों में कोई समस्या है या उन्हें अपडेट करना है, तो कृपया सपोर्ट टिकट उठाएं।';
 
   @override
-  String get txtcontactSupport => 'CONTACT SUPPORT';
+  String get txtcontactSupport => 'सपोर्ट से संपर्क करें';
 
   @override
-  String get txtintentOfUse => 'Intent of Use';
+  String get txtintentOfUse => 'उपयोग का उद्देश्य';
 
   @override
   String get txtselectYourPrimaryUsageToHelpUsCustomizeYourExperienceAndSupport =>
-      'Select your primary usage to help us customize your experience and support.';
+      'अपना मुख्य उपयोग चुनें ताकि हम आपके अनुभव और सहायता को कस्टमाइज़ कर सकें।';
 
   @override
   String get txtswitchingBetweenTypesIsPossibleLaterThroughAccountSettingsThoughCommercialAccessMayRequireAdditionalVerification =>
-      'Switching between types is possible later through account settings, though commercial access may require additional verification.';
+      'टाइप बाद में अकाउंट सेटिंग्स से बदले जा सकते हैं, लेकिन कमर्शियल एक्सेस के लिए अतिरिक्त सत्यापन की ज़रूरत पड़ सकती है।';
 
   @override
-  String get txtconfirmSelection => 'Confirm Selection';
+  String get txtconfirmSelection => 'चयन की पुष्टि करें';
 
   @override
-  String get txtdrawSignature => 'Draw Signature';
+  String get txtdrawSignature => 'हस्ताक्षर बनाएं';
 
   @override
-  String get txtclear => 'Clear';
+  String get txtclear => 'साफ़ करें';
 
   @override
-  String get txtsave => 'Save';
+  String get txtsave => 'सहेजें';
 
   @override
-  String get txtbankDetails => 'Bank Details';
+  String get txtbankDetails => 'बैंक विवरण';
 
   @override
-  String get txtclose => 'Close';
+  String get txtclose => 'बंद करें';
 
   @override
-  String get txttakeSelfie => 'Take Selfie';
+  String get txttakeSelfie => 'सेल्फी लें';
 
   @override
-  String get txtcamera => 'Camera';
+  String get txtcamera => 'कैमरा';
 
   @override
-  String get txtgallery => 'Gallery';
+  String get txtgallery => 'गैलरी';
 
   @override
-  String get txtpersonalDetails => 'Personal Details';
+  String get txtpersonalDetails => 'व्यक्तिगत विवरण';
 
   @override
-  String get txtphoneNumber => 'Phone Number';
+  String get txtphoneNumber => 'फ़ोन नंबर';
 
   @override
-  String get txtidentityVerification => 'Identity Verification';
+  String get txtidentityVerification => 'पहचान सत्यापन';
 
   @override
-  String get txttakeRiderPhoto => 'Take Rider Photo';
+  String get txttakeRiderPhoto => 'राइडर की फ़ोटो लें';
 
   @override
-  String get txttapToCaptureYourPhoto => 'Tap to capture your photo';
+  String get txttapToCaptureYourPhoto => 'अपनी फ़ोटो के लिए टैप करें';
 
   @override
-  String get txtphotoCaptured => 'Photo Captured';
+  String get txtphotoCaptured => 'फ़ोटो कैप्चर हो गई';
 
   @override
-  String get txtdigitalSignature => 'Digital Signature';
+  String get txtdigitalSignature => 'डिजिटल हस्ताक्षर';
 
   @override
   String get txtsignBelowToAuthorizeDocumentation =>
-      'Sign below to authorize documentation.';
+      'दस्तावेज़ प्रमाणित करने के लिए नीचे हस्ताक्षर करें।';
 
   @override
-  String get txtalmostThere => 'Almost there!';
+  String get txtalmostThere => 'लगभग हो गया!';
 
   @override
-  String get txtnotifications => 'Notifications';
+  String get txtnotifications => 'सूचनाएं';
 
   @override
-  String get txtnoNotificationsYet => 'No notifications yet';
+  String get txtnoNotificationsYet => 'अभी तक कोई सूचना नहीं';
 
   @override
-  String get txtpreferencesSaved => 'Preferences saved';
+  String get txtpreferencesSaved => 'प्राथमिकताएं सहेजी गईं';
 
   @override
-  String get txtfailedToSavePreferences => 'Failed to save preferences';
+  String get txtfailedToSavePreferences => 'प्राथमिकताएं सहेज नहीं पाए';
 
   @override
-  String get txtsavePreferences => 'Save Preferences';
+  String get txtsavePreferences => 'प्राथमिकताएं सहेजें';
 
   @override
-  String get txtnotificationPreferences => 'Notification Preferences';
+  String get txtnotificationPreferences => 'सूचना प्राथमिकताएं';
 
   @override
-  String get txtdeleteNotification => 'Delete Notification';
+  String get txtdeleteNotification => 'सूचना हटाएं';
 
   @override
   String get txtareYouSureYouWantToDeleteThisNotification =>
-      'Are you sure you want to delete this notification?';
+      'क्या आप इस सूचना को हटाना चाहते हैं?';
 
   @override
-  String get txtnotificationDeleted => 'Notification deleted';
+  String get txtnotificationDeleted => 'सूचना हटा दी गई';
 
   @override
-  String get txtmarkAllRead => 'MARK ALL READ';
+  String get txtmarkAllRead => 'सभी पढ़ा हुआ चिन्हित करें';
 
   @override
-  String get txtauthorizedSignatory => 'Authorized Signatory';
+  String get txtauthorizedSignatory => 'अधिकृत हस्ताक्षरकर्ता';
 
   @override
-  String get txtsignedBy => 'SIGNED BY';
+  String get txtsignedBy => 'द्वारा हस्ताक्षरित';
 
   @override
-  String get txtdate => 'DATE';
+  String get txtdate => 'तारीख';
 
   @override
-  String get txtneedHelp => 'NEED HELP?';
+  String get txtneedHelp => 'मदद चाहिए?';
 
   @override
-  String get txtlegal => 'Legal';
+  String get txtlegal => 'कानूनी';
 
   @override
   String get txtpleaseReviewAndAcceptOurLegalDocumentsToContinue =>
-      'Please review and accept our legal documents to continue.';
+      'आगे बढ़ने के लिए कृपया हमारे कानूनी दस्तावेज़ों की समीक्षा करें और स्वीकार करें।';
 
   @override
-  String get txtagreeToTerms => 'Agree to Terms';
+  String get txtagreeToTerms => 'शर्तें स्वीकार करें';
 
   @override
-  String get txtcontinue => 'Continue';
+  String get txtcontinue => 'जारी रखें';
 
   @override
-  String get txtskip => 'Skip';
+  String get txtskip => 'छोड़ें';
 
   @override
-  String get txtprivacyChoices => 'Privacy choices';
+  String get txtprivacyChoices => 'गोपनीयता विकल्प';
 
   @override
   String get txtchooseWhatVoltiumMayCollectForRiderSafetySupportAndComplianceYouCanRevokeOptionalConsentHereBeforeContinuing =>
-      'Choose what Voltium may collect for rider safety, support, and compliance. You can revoke optional consent here before continuing.';
+      'चुनें कि राइडर की सुरक्षा, सहायता और अनुपालन के लिए वोल्टियम क्या एकत्र कर सकता है। आगे बढ़ने से पहले आप यहां वैकल्पिक सहमति वापस ले सकते हैं।';
 
   @override
-  String get txtrideTheFuture => 'Ride the Future';
+  String get txtrideTheFuture => 'भविष्य की सवारी करें';
 
   @override
-  String get txtconnectingToGrid => 'CONNECTING TO GRID';
+  String get txtconnectingToGrid => 'ग्रिड से जुड़ रहे हैं';
 
   @override
-  String get txtretry => 'Retry';
+  String get txtretry => 'फिर से कोशिश करें';
 
   @override
   String get txteverythingIsSyncedYourVehicleIsReadyAndYourDashboardIsNowLiveEnjoyYourRide =>
-      'Everything is synced. Your vehicle is ready and your dashboard is now live. Enjoy your ride!';
+      'सब कुछ सिंक हो गया है। आपका वाहन तैयार है और आपका डैशबोर्ड अब लाइव है। अपनी सवारी का आनंद लें!';
 
   @override
-  String get txtgoToDashboard => 'Go to Dashboard';
+  String get txtgoToDashboard => 'डैशबोर्ड पर जाएं';
 
   @override
-  String get txtpleaseLogInAgain => 'Please log in again.';
+  String get txtpleaseLogInAgain => 'कृपया दोबारा लॉगिन करें।';
 
   @override
   String get txtfailedToCompletePickupPleaseTryAgain =>
-      'Failed to complete pickup. Please try again.';
+      'पिकअप पूरा नहीं हो पाया। कृपया फिर से कोशिश करें।';
 
   @override
-  String get txtfinalVerification => 'Final Verification';
+  String get txtfinalVerification => 'अंतिम सत्यापन';
 
   @override
-  String get txtreadyToRoll => 'Ready to Roll?';
+  String get txtreadyToRoll => 'तैयार हैं?';
 
   @override
   String get txtpleaseReviewAndSignTheDigitalRentalAgreementBeforeCollectingYourVehicle =>
-      'Please review and sign the digital rental agreement before collecting your vehicle.';
+      'अपना वाहन लेने से पहले कृपया डिजिटल किराया समझौते की समीक्षा करें और हस्ताक्षर करें।';
 
   @override
-  String get txtdrawYourSignatureHere => 'Draw your signature here';
+  String get txtdrawYourSignatureHere => 'यहां अपना हस्ताक्षर बनाएं';
 
   @override
   String get txtiConfirmThatIHaveInspectedTheVehicleAndAcceptResponsibilityForItsCareAndTrafficCompliance =>
-      'I confirm that I have inspected the vehicle and accept responsibility for its care and traffic compliance.';
+      'मैं पुष्टि करता/करती हूं कि मैंने वाहन की जांच कर ली है और उसकी देखभाल और ट्रैफिक अनुपालन की ज़िम्मेदारी स्वीकार करता/करती हूं।';
 
   @override
-  String get txtteamLeader => 'Team Leader';
+  String get txtteamLeader => 'टीम लीडर';
 
   @override
-  String get txtassignedTeamLeader => 'Assigned Team Leader';
+  String get txtassignedTeamLeader => 'असाइन टीम लीडर';
 
   @override
   String get txtrequestSubmittedToSupportTeam =>
-      'Request submitted to support team';
+      'सपोर्ट टीम को अनुरोध भेजा गया';
 
   @override
-  String get txtvehiclePhotos => 'Vehicle Photos';
+  String get txtvehiclePhotos => 'वाहन फ़ोटो';
 
   @override
-  String get txtassignedVehicle => 'ASSIGNED VEHICLE';
+  String get txtassignedVehicle => 'असाइन वाहन';
 
   @override
-  String get txtpickupPhotos => 'PICKUP PHOTOS';
+  String get txtpickupPhotos => 'पिकअप फ़ोटो';
 
   @override
-  String get txtbackToDashboard => 'Back to Dashboard';
+  String get txtbackToDashboard => 'डैशबोर्ड पर वापस';
 
   @override
-  String get txtassignmentDetails => 'ASSIGNMENT DETAILS';
+  String get txtassignmentDetails => 'असाइनमेंट विवरण';
 
   @override
   String get txtemergencyContactVerifiedSuccessfully =>
-      'Emergency contact verified successfully';
+      'आपातकालीन संपर्क सफलतापूर्वक सत्यापित';
 
   @override
-  String get txtvehicleCondition => 'Vehicle Condition';
+  String get txtvehicleCondition => 'वाहन की स्थिति';
 
   @override
-  String get txtmandatory => 'MANDATORY';
+  String get txtmandatory => 'अनिवार्य';
 
   @override
-  String get txtphotoWithVehicle => 'Photo with Vehicle';
+  String get txtphotoWithVehicle => 'वाहन के साथ फ़ोटो';
 
   @override
   String get txttakeASelfieNextToTheVehicleBeforeRiding =>
-      'Take a selfie next to the vehicle before riding';
+      'सवारी शुरू करने से पहले वाहन के बगल में सेल्फी लें';
 
   @override
-  String get txtdeleteAccount => 'Delete Account';
+  String get txtdeleteAccount => 'अकाउंट हटाएं';
 
   @override
   String get txtthisActionIsIrreversibleAllYourDataIncludingKycDocumentsWalletBalanceAndRentalHistoryWillBePermanentlyDeletedAreYouSure =>
-      'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?';
+      'यह क्रिया अपरिवर्तनीय है। KYC दस्तावेज़, वॉलेट बैलेंस और किराया इतिहास सहित आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा। क्या आप निश्चित हैं?';
 
   @override
   String get txtaccountDeletionIsNotYetAvailablePleaseContactSupport =>
-      'Account deletion is not yet available. Please contact support.';
+      'अकाउंट हटाना अभी उपलब्ध नहीं है। कृपया सपोर्ट से संपर्क करें।';
 
   @override
-  String get txtsettings => 'Settings';
+  String get txtsettings => 'सेटिंग्स';
 
   @override
-  String get txtphoneNumberChangeComingSoon =>
-      'Phone number change coming soon';
+  String get txtphoneNumberChangeComingSoon => 'फ़ोन नंबर बदलना जल्द आ रहा है';
 
   @override
-  String get txtpasswordChangeComingSoon => 'Password change coming soon';
+  String get txtpasswordChangeComingSoon => 'पासवर्ड बदलना जल्द आ रहा है';
 
   @override
-  String get txtselectLanguage => 'Select Language';
+  String get txtselectLanguage => 'भाषा चुनें';
 
   @override
   String get txtenglish => 'English';
 
   @override
-  String get txtthisActionIsIrreversible => 'This action is irreversible';
+  String get txtthisActionIsIrreversible => 'यह क्रिया अपरिवर्तनीय है';
 
   @override
-  String get txtaddEntry => 'Add Entry';
+  String get txtaddEntry => 'एंट्री जोड़ें';
 
   @override
-  String get txtearningsLog => 'Earnings Log';
+  String get txtearningsLog => 'कमाई का लॉग';
 
   @override
-  String get txtnoEarningsLoggedYet => 'No earnings logged yet';
+  String get txtnoEarningsLoggedYet => 'अभी तक कोई कमाई लॉग नहीं';
 
   @override
-  String get txtselectProfilePhoto => 'Select Profile Photo';
+  String get txtselectProfilePhoto => 'प्रोफ़ाइल फ़ोटो चुनें';
 
   @override
-  String get txtfailedToCapturePhoto => 'Failed to capture photo';
+  String get txtfailedToCapturePhoto => 'फ़ोटो कैप्चर नहीं हो पाई';
 
   @override
   String get txtguarantorPhoneCannotBeTheSameAsYourPhone =>
-      'Guarantor phone cannot be the same as your phone';
+      'गारंटर का फ़ोन आपके फ़ोन जैसा नहीं हो सकता';
 
   @override
-  String get txtfailedToSendOtp => 'Failed to send OTP';
+  String get txtfailedToSendOtp => 'OTP भेज नहीं पाए';
 
   @override
-  String get txtguarantorPhoneVerified => 'Guarantor phone verified';
+  String get txtguarantorPhoneVerified => 'गारंटर का फ़ोन सत्यापित';
 
   @override
-  String get txtinvalidOtp => 'Invalid OTP';
+  String get txtinvalidOtp => 'गलत OTP';
 
   @override
-  String get txtprofileUpdatedSuccessfully => 'Profile updated successfully';
+  String get txtprofileUpdatedSuccessfully => 'प्रोफ़ाइल सफलतापूर्वक अपडेट';
 
   @override
   String get txtfailedToUpdateProfilePleaseTryAgain =>
-      'Failed to update profile. Please try again.';
+      'प्रोफ़ाइल अपडेट नहीं हो पाई। कृपया फिर से कोशिश करें।';
 
   @override
-  String get txtsubmitForApproval => 'SUBMIT FOR APPROVAL';
+  String get txtsubmitForApproval => 'अनुमोदन के लिए जमा करें';
 
   @override
-  String get txteditProfile => 'Edit Profile';
+  String get txteditProfile => 'प्रोफ़ाइल संपादित करें';
 
   @override
-  String get txtguarantorPhone => 'Guarantor Phone';
+  String get txtguarantorPhone => 'गारंटर फ़ोन';
 
   @override
-  String get txtverify => 'Verify';
+  String get txtverify => 'सत्यापित करें';
 
   @override
-  String get txtphoneVerified => 'Phone verified';
+  String get txtphoneVerified => 'फ़ोन सत्यापित';
 
   @override
-  String get txtquickLinks => 'QUICK LINKS';
+  String get txtquickLinks => 'त्वरित लिंक';
 
   @override
-  String get txtprofile => 'Profile';
+  String get txtprofile => 'प्रोफ़ाइल';
 
   @override
-  String get txtweeklyEarnings => 'WEEKLY EARNINGS';
+  String get txtweeklyEarnings => 'साप्ताहिक कमाई';
 
   @override
-  String get txtthisWeek => 'THIS WEEK';
+  String get txtthisWeek => 'इस हफ्ते';
 
   @override
-  String get txttrips => 'TRIPS';
+  String get txttrips => 'ट्रिप';
 
   @override
-  String get txthours => 'HOURS';
+  String get txthours => 'घंटे';
 
   @override
-  String get txtweeklySummary => 'WEEKLY SUMMARY';
+  String get txtweeklySummary => 'साप्ताहिक सारांश';
 
   @override
   String get txtprofileChangesRequireAdminApprovalBeforeBecomingActive =>
-      'Profile changes require admin approval before becoming active.';
+      'प्रोफ़ाइल में बदलाव सक्रिय होने से पहले एडमिन अनुमोदन की ज़रूरत होती है।';
 
   @override
-  String get txtlogout => 'Logout';
+  String get txtlogout => 'लॉग आउट';
 
   @override
-  String get txtreferrals => 'Referrals';
+  String get txtreferrals => 'रेफ़रल';
 
   @override
   String get txtfailedToSubscribeCheckYourBalance =>
-      'Failed to subscribe. Check your balance.';
+      'सदस्यता नहीं ले पाए। अपना बैलेंस चेक करें।';
 
   @override
-  String get txtbestValue => 'BEST VALUE';
+  String get txtbestValue => 'बेस्ट वैल्यू';
 
   @override
-  String get txtselectANewPlan => 'Select a new plan';
+  String get txtselectANewPlan => 'नया प्लान चुनें';
 
   @override
   String get txtchooseTheRentalDurationThatBestFitsYourNeedsYouCanChangeThisAtAnyTime =>
-      'Choose the rental duration that best fits your needs. You can change this at any time.';
+      'अपनी ज़रूरत के हिसाब से किराया अवधि चुनें। इसे कभी भी बदला जा सकता है।';
 
   @override
-  String get txtconfirmNewPlan => 'Confirm New Plan';
+  String get txtconfirmNewPlan => 'नए प्लान की पुष्टि करें';
 
   @override
   String get txterrorSubmittingReturnPleaseTryAgain =>
-      'Error submitting return. Please try again.';
+      'वापसी जमा करने में गड़बड़ी। कृपया फिर से कोशिश करें।';
 
   @override
-  String get txtrequestSubmitted => 'Request Submitted!';
+  String get txtrequestSubmitted => 'अनुरोध भेजा गया!';
 
   @override
   String get txtyourVehicleReturnRequestHasBeenSentForApproval =>
-      'Your vehicle return request has been sent for approval.';
+      'आपका वाहन वापसी अनुरोध अनुमोदन के लिए भेज दिया गया है।';
 
   @override
-  String get txtendRental => 'End Rental';
+  String get txtendRental => 'किराया समाप्त करें';
 
   @override
-  String get txtareYouSure => 'Are you sure?';
+  String get txtareYouSure => 'क्या आप निश्चित हैं?';
 
   @override
   String get txtreturningYourVehicleWillEndYourCurrentRentalPeriodMakeSureToCompleteAllInspectionSteps =>
-      'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.';
+      'वाहन वापस करने से आपकी वर्तमान किराया अवधि समाप्त हो जाएगी। सभी जांच चरण पूरे कर लें।';
 
   @override
-  String get txtreturnInspection => 'RETURN INSPECTION';
+  String get txtreturnInspection => 'वापसी जांच';
 
   @override
-  String get txttakeReturnPhotosOfYourVehicle =>
-      'Take return photos of your vehicle';
+  String get txttakeReturnPhotosOfYourVehicle => 'अपने वाहन की वापसी फ़ोटो लें';
 
   @override
-  String get txtodometerReading => 'ODOMETER READING';
+  String get txtodometerReading => 'ओडोमीटर रीडिंग';
 
   @override
-  String get txtbatteryLevel => 'Battery Level';
+  String get txtbatteryLevel => 'बैटरी लेवल';
 
   @override
   String get txtiConfirmTheVehicleIsReturnedInGoodConditionWithAllAccessoriesIntact =>
-      'I confirm the vehicle is returned in good condition with all accessories intact.';
+      'मैं पुष्टि करता/करती हूं कि वाहन सभी एक्सेसरीज़ के साथ अच्छी स्थिति में वापस किया गया है।';
 
   @override
-  String get txtconfirmReturn => 'Confirm Return';
+  String get txtconfirmReturn => 'वापसी की पुष्टि करें';
 
   @override
   String get txtpleaseTakeAllInspectionPhotosToContinue =>
-      'Please take all inspection photos to continue';
+      'आगे बढ़ने के लिए कृपया सभी जांच फ़ोटो लें';
 
   @override
-  String get txtsubscriptionConfirmed => 'Subscription Confirmed!';
+  String get txtsubscriptionConfirmed => 'सदस्यता की पुष्टि हो गई!';
 
   @override
   String get txtyourPlanIsNowActiveYouCanNowProceedToTheNearestHubToPickUpYourVehicle =>
-      'Your plan is now active. You can now proceed to the nearest hub to pick up your vehicle.';
+      'आपका प्लान अब सक्रिय है। अब आप अपना वाहन लेने के लिए नजदीकी हब पर जा सकते हैं।';
 
   @override
-  String get txtproceedToPickup => 'Proceed to Pickup';
+  String get txtproceedToPickup => 'पिकअप के लिए आगे बढ़ें';
 
   @override
-  String get txtrentalDetails => 'Rental Details';
+  String get txtrentalDetails => 'किराया विवरण';
 
   @override
-  String get txtrewards => 'Rewards';
+  String get txtrewards => 'इनाम';
 
   @override
-  String get txtnoResultsFound => 'No results found';
+  String get txtnoResultsFound => 'कोई परिणाम नहीं मिला';
 
   @override
-  String get txtstillNeedHelp => 'Still need help?';
+  String get txtstillNeedHelp => 'अभी भी मदद चाहिए?';
 
   @override
-  String get txtquickTip => 'Quick Tip';
+  String get txtquickTip => 'त्वरित टिप';
 
   @override
-  String get txtprevious => 'PREVIOUS';
+  String get txtprevious => 'पिछला';
 
   @override
-  String get txtshareYourThoughts => 'Share Your Thoughts';
+  String get txtshareYourThoughts => 'अपनी राय साझा करें';
 
   @override
   String get txtyourFeedbackHelpsUsImproveTheExperienceForEveryone =>
-      'Your feedback helps us improve the experience for everyone.';
+      'आपकी प्रतिक्रिया हमें सबके अनुभव को बेहतर बनाने में मदद करती है।';
 
   @override
-  String get txtfeedback => 'Feedback';
+  String get txtfeedback => 'प्रतिक्रिया';
 
   @override
-  String get txtsubmitFeedback => 'SUBMIT FEEDBACK';
+  String get txtsubmitFeedback => 'प्रतिक्रिया जमा करें';
 
   @override
-  String get txtenjoyingVoltium => 'Enjoying Voltium?';
+  String get txtenjoyingVoltium => 'वोल्टियम पसंद आ रहा है?';
 
   @override
   String get txttakeAMomentToRateYourExperienceItHelpsUsGrow =>
-      'Take a moment to rate your experience. It helps us grow!';
+      'अपने अनुभव को रेट करने के लिए थोड़ा समय निकालें। यह हमें बढ़ने में मदद करता है!';
 
   @override
-  String get txtrateUs => 'RATE US';
+  String get txtrateUs => 'हमें रेट करें';
 
   @override
-  String get txtnotNow => 'NOT NOW';
+  String get txtnotNow => 'अभी नहीं';
 
   @override
-  String get txtsupportCenter => 'Support Center';
+  String get txtsupportCenter => 'सपोर्ट सेंटर';
 
   @override
-  String get txtsupportChecklist => 'Support Checklist';
+  String get txtsupportChecklist => 'सपोर्ट चेकलिस्ट';
 
   @override
-  String get txtpleaseVerify => 'PLEASE VERIFY';
+  String get txtpleaseVerify => 'कृपया सत्यापित करें';
 
   @override
   String get txtbeforeCreatingATicketPleaseEnsureYouHaveCompletedTheseStepsToHelpUsResolveYourIssueFaster =>
-      'Before creating a ticket, please ensure you have completed these steps to help us resolve your issue faster.';
+      'टिकट बनाने से पहले कृपया सुनिश्चित करें कि आपने ये चरण पूरे कर लिए हैं ताकि हम आपकी समस्या जल्दी हल कर सकें।';
 
   @override
-  String get txtproceedToSupport => 'Proceed to Support';
+  String get txtproceedToSupport => 'सपोर्ट के लिए आगे बढ़ें';
 
   @override
   String get txtkeepCheckingAllItemsToProceed =>
-      'Keep checking all items to proceed';
+      'आगे बढ़ने के लिए सभी आइटम चेक करते रहें';
 
   @override
-  String get txtcallNow => 'Call Now';
+  String get txtcallNow => 'अभी कॉल करें';
 
   @override
-  String get txtwhatIssueAreYouExperiencing =>
-      'What issue are you experiencing?';
+  String get txtwhatIssueAreYouExperiencing => 'आपको क्या समस्या हो रही है?';
 
   @override
-  String get txttroubleshootAnotherIssue => 'Troubleshoot Another Issue';
+  String get txttroubleshootAnotherIssue => 'दूसरी समस्या का समाधान';
 
   @override
-  String get txtselectPhotoSource => 'Select Photo Source';
+  String get txtselectPhotoSource => 'फ़ोटो स्रोत चुनें';
 
   @override
-  String get txtraiseATicket => 'Raise a Ticket';
+  String get txtraiseATicket => 'टिकट उठाएं';
 
   @override
-  String get txtissueType => 'ISSUE TYPE';
+  String get txtissueType => 'समस्या का प्रकार';
 
   @override
-  String get txtdescription => 'DESCRIPTION';
+  String get txtdescription => 'विवरण';
 
   @override
-  String get txtraiseTicket => 'RAISE TICKET';
+  String get txtraiseTicket => 'टिकट उठाएं';
 
   @override
   String get txtanswerHonestlyForTheMostAccurateDiagnosis =>
-      'Answer honestly for the most accurate diagnosis.';
+      'सबसे सटीक निदान के लिए ईमानदारी से जवाब दें।';
 
   @override
-  String get txtyes => 'Yes';
+  String get txtyes => 'हां';
 
   @override
-  String get txtdiagnosticPathTaken => 'Diagnostic path taken';
+  String get txtdiagnosticPathTaken => 'निदान मार्ग लिया';
 
   @override
-  String get txttransactionHistory => 'Transaction History';
+  String get txttransactionHistory => 'लेनदेन इतिहास';
 
   @override
   String get txttapAnyTransactionToSeeTheFullFeeBreakdown =>
-      'Tap any transaction to see the full fee breakdown';
+      'पूर्ण शुल्क विवरण देखने के लिए किसी भी लेनदेन पर टैप करें';
 
   @override
-  String get txtnoTransactionsFound => 'No transactions found';
+  String get txtnoTransactionsFound => 'कोई लेनदेन नहीं मिला';
 
   @override
-  String get txttotalCharged => 'TOTAL CHARGED';
+  String get txttotalCharged => 'कुल शुल्क';
 
   @override
-  String get txtenterAmount => 'Enter Amount';
+  String get txtenterAmount => 'राशि डालें';
 
   @override
-  String get txthowMuchWouldYouLikeToAdd => 'How much would you like to add?';
+  String get txthowMuchWouldYouLikeToAdd => 'आप कितना जोड़ना चाहेंगे?';
 
   @override
-  String get txtstep2Of3 => 'Step 2 of 3';
+  String get txtstep2Of3 => 'कदम 2 का 3';
 
   @override
-  String get txtproceedToPayment => 'PROCEED TO PAYMENT';
+  String get txtproceedToPayment => 'भुगतान के लिए आगे बढ़ें';
 
   @override
-  String get txttakePhoto => 'Take Photo';
+  String get txttakePhoto => 'फ़ोटो लें';
 
   @override
-  String get txtstep3Of3 => 'Step 3 of 3';
+  String get txtstep3Of3 => 'कदम 3 का 3';
 
   @override
-  String get txtuploadProof => 'Upload Proof';
+  String get txtuploadProof => 'प्रूफ़ अपलोड करें';
 
   @override
-  String get txtedit => 'Edit';
+  String get txtedit => 'संपादित करें';
 
   @override
-  String get txtproofOfTopUp => 'Proof of Top Up';
+  String get txtproofOfTopUp => 'टॉप अप का प्रूफ़';
 
   @override
   String get txtpleaseAttachAPhotoOfTheRiderGivingTheCashToAVoltiumTeamMemberOrTheReceiptOfTheOnlinePayment =>
-      'Please attach a photo of the rider giving the cash to a Voltium team member or the receipt of the online payment.';
+      'कृपया राइडर द्वारा वोल्टियम टीम सदस्य को कैश देते हुए या ऑनलाइन भुगतान की रसीद की फ़ोटो संलग्न करें।';
 
   @override
-  String get txtuploadPhotoProof => 'Upload Photo Proof';
+  String get txtuploadPhotoProof => 'फ़ोटो प्रूफ़ अपलोड करें';
 
   @override
-  String get txtchangePhoto => 'Change Photo';
+  String get txtchangePhoto => 'फ़ोटो बदलें';
 
   @override
-  String get txttapToUploadPhoto => 'Tap to upload photo';
+  String get txttapToUploadPhoto => 'फ़ोटो अपलोड करने के लिए टैप करें';
 
   @override
-  String get txtcameraOrGallery => 'Camera or gallery';
+  String get txtcameraOrGallery => 'कैमरा या गैलरी';
 
   @override
-  String get txtsubmitProof => 'Submit Proof';
+  String get txtsubmitProof => 'प्रूफ़ जमा करें';
 
   @override
-  String get txtstep1Of3 => 'Step 1 of 3';
+  String get txtstep1Of3 => 'कदम 1 का 3';
 
   @override
-  String get txtselectPurpose => 'Select Purpose';
+  String get txtselectPurpose => 'उद्देश्य चुनें';
 
   @override
-  String get txtstandardAmount => 'Standard Amount';
+  String get txtstandardAmount => 'मानक राशि';
 
   @override
-  String get txtimportantInformation => 'Important Information';
+  String get txtimportantInformation => 'महत्वपूर्ण जानकारी';
 
   @override
-  String get txtcontinueToPayment => 'Continue to Payment';
+  String get txtcontinueToPayment => 'भुगतान जारी रखें';
 
   @override
-  String get txtpaymentSubmitted => 'Payment Submitted';
+  String get txtpaymentSubmitted => 'भुगतान जमा हो गया';
 
   @override
-  String get txtverificationInProgress => 'Verification in Progress';
+  String get txtverificationInProgress => 'सत्यापन जारी है';
 
   @override
-  String get txttopUp => 'Top Up';
+  String get txttopUp => 'टॉप अप';
 
   @override
   String get txtensureThePhotoShowsBothTheRiderAndTeamMemberOrThePaymentReceipt =>
-      'Ensure the photo shows both the rider and team member or the payment receipt';
+      'सुनिश्चित करें कि फ़ोटो में राइडर और टीम सदस्य दोनों दिख रहे हैं या भुगतान की रसीद है';
 
   @override
-  String get txtphotoUploadedSuccessfully => 'Photo uploaded successfully';
+  String get txtphotoUploadedSuccessfully => 'फ़ोटो सफलतापूर्वक अपलोड';
 
   @override
-  String get txtwallet => 'Wallet';
+  String get txtwallet => 'वॉलेट';
 
   @override
-  String get txtdeleteHistory => 'Delete History?';
+  String get txtdeleteHistory => 'इतिहास हटाएं?';
 
   @override
-  String get txtthisWillClearYourLocalTransactionHistoryThisActionCannotBeUndone =>
-      'This will clear your local transaction history. This action cannot be undone.';
+  String
+      get txtthisWillClearYourLocalTransactionHistoryThisActionCannotBeUndone =>
+          'यह आपका स्थानीय लेनदेन इतिहास मिटा देगा। यह क्रिया वापस नहीं हो सकती।';
 
   @override
-  String get txtsecurityDeposit => 'SECURITY DEPOSIT';
+  String get txtsecurityDeposit => 'सुरक्षा जमा';
 
   @override
-  String get txtelectricVehicleRentalService =>
-      'Electric Vehicle Rental Service';
+  String get txtelectricVehicleRentalService => 'इलेक्ट्रिक वाहन किराया सेवा';
 
   @override
-  String get txttransactionReceipt => 'Transaction Receipt';
+  String get txttransactionReceipt => 'लेनदेन रसीद';
 
   @override
-  String get txtthankYouForUsingVoltium => 'Thank you for using Voltium!';
+  String get txtthankYouForUsingVoltium =>
+      'वोल्टियम का उपयोग करने के लिए धन्यवाद!';
 
   @override
-  String get txtapprovalMatrix => 'Approval Matrix';
+  String get txtapprovalMatrix => 'अनुमोदन मैट्रिक्स';
 
   @override
-  String get txtgoBack => 'Go Back?';
+  String get txtgoBack => 'वापस जाएं?';
 
   @override
-  String get txtcurrentSubscription => 'CURRENT SUBSCRIPTION';
+  String get txtcurrentSubscription => 'वर्तमान सदस्यता';
 
   @override
-  String get txttimeRemaining => 'TIME REMAINING';
+  String get txttimeRemaining => 'शेष समय';
 
   @override
-  String get txtnextRecharge => 'NEXT RECHARGE';
+  String get txtnextRecharge => 'अगला रिचार्ज';
 
   @override
-  String get txtshareYourCodeWithFriends => 'Share your code with friends';
+  String get txtshareYourCodeWithFriends => 'अपना कोड दोस्तों के साथ साझा करें';
 
   @override
-  String get txtyourCode => 'YOUR CODE';
+  String get txtyourCode => 'आपका कोड';
 
   @override
-  String get txtchangeTl => 'Change TL';
+  String get txtchangeTl => 'TL बदलें';
 
   @override
-  String get txtchangeTeamLeader => 'Change Team Leader';
+  String get txtchangeTeamLeader => 'टीम लीडर बदलें';
 
   @override
   String get txtpleaseProvideAReasonForChangingYourAssignedTeamLeaderThisWillBeReviewedByTheSupportTeam =>
-      'Please provide a reason for changing your assigned Team Leader. This will be reviewed by the support team.';
+      'कृपया अपने असाइन टीम लीडर बदलने का कारण बताएं। इसकी समीक्षा सपोर्ट टीम द्वारा की जाएगी।';
 
   @override
   String get txtyourRequestHasBeenSubmittedForApproval =>
-      'Your request has been submitted for approval';
+      'आपका अनुरोध अनुमोदन के लिए भेज दिया गया है';
 
   @override
-  String get txtsubmitRequest => 'Submit Request';
+  String get txtsubmitRequest => 'अनुरोध जमा करें';
 
   @override
-  String get txtmanageSubscription => 'Manage Subscription';
+  String get txtmanageSubscription => 'सदस्यता प्रबंधित करें';
 
   @override
   String get txtviewYourCurrentActivePlanDetailsBelowToChangeOrUpgradeYourPlanPleaseSubmitARequestToYourHubManager =>
-      'View your current active plan details below. To change or upgrade your plan, please submit a request to your hub manager.';
+      'अपने वर्तमान सक्रिय प्लान का विवरण नीचे देखें। प्लान बदलने या अपग्रेड करने के लिए कृपया अपने हब मैनेजर को अनुरोध भेजें।';
 
   @override
-  String get txtactive => 'Active';
+  String get txtactive => 'सक्रिय';
 
   @override
-  String get txtrequestPlanChange => 'Request Plan Change';
+  String get txtrequestPlanChange => 'प्लान बदलने का अनुरोध';
 
   @override
-  String get txtcapturePhoto => 'Capture Photo';
+  String get txtcapturePhoto => 'फ़ोटो कैप्चर करें';
 
   @override
-  String get txtcancelReturnProcess => 'Cancel Return Process';
+  String get txtcancelReturnProcess => 'वापसी प्रक्रिया रद्द करें';
 
   @override
-  String get txtpleaseDoNotCloseTheApp => 'Please do not close the app.';
+  String get txtpleaseDoNotCloseTheApp => 'कृपया ऐप बंद न करें।';
 
   @override
-  String get txtreturnRequestSubmitted => 'Return Request Submitted';
+  String get txtreturnRequestSubmitted => 'वापसी अनुरोध भेजा गया';
 
   @override
   String get txtyourVehicleReturnRequestIsPendingApprovalOurHubManagerWillVerifyYourSubmissionSoon =>
-      'Your vehicle return request is pending approval. Our hub manager will verify your submission soon.';
+      'आपका वाहन वापसी अनुरोध अनुमोदन के लिए लंबित है। हमारा हब मैनेजर जल्द ही आपकी जमा राशि की जांच करेगा।';
 
   @override
-  String get txtgreat => 'Great!';
+  String get txtgreat => 'बढ़िया!';
 
   @override
   String get txtfailedToSubmitReturnRequestPleaseTryAgain =>
-      'Failed to submit return request. Please try again.';
+      'वापसी अनुरोध जमा नहीं हो पाया। कृपया फिर से कोशिश करें।';
 
   @override
-  String get txtintentUpdatedSuccessfully => 'Intent updated successfully';
+  String get txtintentUpdatedSuccessfully => 'उद्देश्य सफलतापूर्वक अपडेट';
 
   @override
-  String get txtviewDetails => 'View Details';
+  String get txtviewDetails => 'विवरण देखें';
 
   @override
-  String get txtassignedTl => 'Assigned TL';
+  String get txtassignedTl => 'असाइन TL';
 
   @override
-  String get txttopUpWallet => 'Top Up Wallet';
+  String get txttopUpWallet => 'वॉलेट टॉप अप';
 
   @override
-  String get txtrentalRecoveryStreak => 'Rental Recovery Streak';
+  String get txtrentalRecoveryStreak => 'किराया रिकवरी स्ट्रीक';
 
   @override
-  String get txtall => 'All';
+  String get txtall => 'सभी';
 
   @override
-  String get txtpleaseEnterAValidAmount => 'Please enter a valid amount';
+  String get txtpleaseEnterAValidAmount => 'कृपया सही राशि डालें';
 
   @override
-  String get txtpleaseEnterValidTripsCount => 'Please enter valid trips count';
+  String get txtpleaseEnterValidTripsCount => 'कृपया सही ट्रिप संख्या डालें';
 
   @override
-  String get txtpleaseEnterValidHours => 'Please enter valid hours';
+  String get txtpleaseEnterValidHours => 'कृपया सही घंटे डालें';
 
   @override
-  String get txtaddEarning => 'Add Earning';
+  String get txtaddEarning => 'कमाई जोड़ें';
 
   @override
-  String get txtsubmit => 'Submit';
+  String get txtsubmit => 'जमा करें';
 
   @override
-  String get txtdailyBreakdown => 'DAILY BREAKDOWN';
+  String get txtdailyBreakdown => 'दैनिक विवरण';
 
   @override
-  String get txttryAgain => 'Try Again';
+  String get txttryAgain => 'फिर से कोशिश करें';
 
   @override
-  String get txtvoltiumSoftLock => 'VOLTIUM SOFT LOCK';
+  String get txtvoltiumSoftLock => 'वोल्टियम सॉफ्ट लॉक';
 
   @override
   String get txtcontactVoltiumSupportToUnlock =>
-      'Contact Voltium support to unlock';
+      'अनलॉक करने के लिए वोल्टियम सपोर्ट से संपर्क करें';
 
   @override
-  String get txtunlock => 'UNLOCK';
+  String get txtunlock => 'अनलॉक';
 
   @override
-  String get txtvoltiumSecuritySystemV30 => 'Voltium Security System v3.0';
+  String get txtvoltiumSecuritySystemV30 => 'वोल्टियम सिक्योरिटी सिस्टम v3.0';
 
   @override
-  String get txtnoInternetConnection => 'No internet connection';
+  String get txtnoInternetConnection => 'इंटरनेट कनेक्शन नहीं';
 
   @override
-  String get txtyouAreOffline => 'You are offline';
+  String get txtyouAreOffline => 'आप ऑफ़लाइन हैं';
 
   @override
-  String get txtbackOnline => 'Back online';
+  String get txtbackOnline => 'वापस ऑनलाइन';
 
   @override
-  String get txtupdateRequired => 'Update Required';
+  String get txtupdateRequired => 'अपडेट ज़रूरी';
 
   @override
   String get txtaCriticalUpdateIsRequiredToContinueUsingTheAppThisVersionIsNoLongerSupported =>
-      'A critical update is required to continue using the app. This version is no longer supported.';
+      'ऐप का उपयोग जारी रखने के लिए एक ज़रूरी अपडेट चाहिए। यह संस्करण अब समर्थित नहीं है।';
 
   @override
-  String get txtupdateNow => 'UPDATE NOW';
+  String get txtupdateNow => 'अभी अपडेट करें';
 
   @override
-  String get txtlowWalletBalance => 'Low Wallet Balance';
+  String get txtlowWalletBalance => 'वॉलेट बैलेंस कम';
 
   @override
-  String get txtdismiss => 'DISMISS';
+  String get txtdismiss => 'खारिज करें';
 
   @override
-  String get txtopenSettings => 'OPEN SETTINGS';
+  String get txtopenSettings => 'सेटिंग्स खोलें';
 
   @override
-  String get txtpickupVerification => 'Pickup Verification';
+  String get txtpickupVerification => 'पिकअप सत्यापन';
 
   @override
   String get txtcompleteTheVerificationStepsToAssignAndPickUpYourVehicle =>
-      'Complete the verification steps to assign and pick up your vehicle';
+      'अपना वाहन असाइन करने और लेने के लिए सत्यापन चरण पूरे करें';
 
   @override
   String get txtensureAllDetailsAreAccurateBeforeProceeding =>
-      'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING';
+      'आगे बढ़ने से पहले सभी विवरण सही हैं यह सुनिश्चित करें';
 
   @override
-  String get txtselectVehicle => 'Select Vehicle';
+  String get txtselectVehicle => 'वाहन चुनें';
 
   @override
-  String get txtnoVehiclesMatchYourSearch => 'No vehicles match your search';
+  String get txtnoVehiclesMatchYourSearch =>
+      'आपकी खोज से मेल खाने वाला कोई वाहन नहीं';
 
   @override
-  String get txtkycRejected => 'KYC REJECTED';
+  String get txtkycRejected => 'KYC अस्वीकृत';
 
   @override
-  String get txtkycApproved => 'KYC Approved';
+  String get txtkycApproved => 'KYC स्वीकृत';
 
   @override
-  String get txtpending => 'PENDING';
+  String get txtpending => 'लंबित';
 
   @override
-  String get txtaccountAction => 'Account Action';
+  String get txtaccountAction => 'खाता कार्रवाई';
 
   @override
-  String get txtrequired => 'Required';
+  String get txtrequired => 'आवश्यक';
 
   @override
-  String get txtinactive => 'INACTIVE';
+  String get txtinactive => 'निष्क्रिय';
 
   @override
-  String get txtriderId => 'RIDER ID';
+  String get txtriderId => 'राइडर ID';
 
   @override
   String get txtcontactSupportForOnboardingAssistance =>
-      'Contact support for onboarding assistance';
+      'ऑनबोर्डिंग सहायता के लिए सपोर्ट से संपर्क करें';
 
   @override
-  String get txtshare => 'Share';
+  String get txtshare => 'साझा करें';
 
   @override
-  String get txtreferFriends => 'Refer Friends';
+  String get txtreferFriends => 'दोस्तों को रेफ़र करें';
 
   @override
-  String get txtyourReferralCode => 'Your Referral Code';
+  String get txtyourReferralCode => 'आपका रेफ़रल कोड';
 
   @override
-  String get txtcodeCopied => 'Code copied!';
+  String get txtcodeCopied => 'कोड कॉपी हो गया!';
 
   @override
-  String get txtshareReferral => 'Share Referral';
+  String get txtshareReferral => 'रेफ़रल साझा करें';
 
   @override
-  String get txtshareVia => 'Share via';
+  String get txtshareVia => 'इसके ज़रिए साझा करें';
 
   @override
-  String get txtlinkCopied => 'Link copied!';
+  String get txtlinkCopied => 'लिंक कॉपी हो गया!';
 
   @override
-  String get txtactionRequired => 'Action Required';
+  String get txtactionRequired => 'कार्रवाई ज़रूरी';
 
   @override
-  String get txtelectricMobility => 'Electric Mobility';
+  String get txtelectricMobility => 'इलेक्ट्रिक मोबिलिटी';
 
   @override
-  String get txtcredit => 'Credit';
+  String get txtcredit => 'क्रेडिट';
 
   @override
-  String get txtdebit => 'Debit';
+  String get txtdebit => 'डेबिट';
 
   @override
-  String get txtwalletBalance => 'Wallet Balance';
+  String get txtwalletBalance => 'वॉलेट बैलेंस';
 
   @override
   String get txtevPlus => 'EV Plus';
+
+  @override
+  String get menu_title => 'मेनू';
+
+  @override
+  String get menu_account => 'खाता';
+
+  @override
+  String get menu_profile => 'प्रोफ़ाइल';
+
+  @override
+  String get menu_myDocuments => 'मेरे दस्तावेज़';
+
+  @override
+  String get menu_rewardsMore => 'इनाम और अधिक';
+
+  @override
+  String get menu_rewards => 'इनाम';
+
+  @override
+  String get menu_referralProgram => 'रेफ़रल प्रोग्राम';
+
+  @override
+  String get menu_general => 'सामान्य';
+
+  @override
+  String get menu_workflowServices => 'वर्कफ़्लो और सेवाएं';
+
+  @override
+  String get menu_controls => 'कंट्रोल्स';
+
+  @override
+  String get menu_language => 'भाषा';
+
+  @override
+  String get menu_selectLanguage => 'भाषा चुनें';
+
+  @override
+  String get menu_emergencySos => 'आपातकालीन SOS';
+
+  @override
+  String get controls_title => 'कंट्रोल्स';
+
+  @override
+  String get controls_preferences => 'प्राथमिकताएं';
+
+  @override
+  String get controls_darkMode => 'डार्क मोड';
+
+  @override
+  String get controls_supportLegal => 'सहायता और कानूनी';
+
+  @override
+  String get controls_feedback => 'प्रतिक्रिया';
+
+  @override
+  String get controls_legal => 'कानूनी';
+
+  @override
+  String get controls_about => 'के बारे में';
+
+  @override
+  String get controls_appVersion => 'ऐप संस्करण';
+
+  @override
+  String get controls_rateUs => 'हमें रेट करें';
+
+  @override
+  String get controls_accountSection => 'खाता';
+
+  @override
+  String get controls_deleteConfirmTitle => 'खाता हटाएं';
+
+  @override
+  String get controls_deleteConfirmBody =>
+      'यह क्रिया अपरिवर्तनीय है। आपका सारा डेटा, जिसमें KYC दस्तावेज़, वॉलेट बैलेंस और किराया इतिहास शामिल है, स्थायी रूप से हटा दिया जाएगा। क्या आप निश्चित हैं?';
+
+  @override
+  String get controls_delete => 'हटाएं';
+
+  @override
+  String get controls_deleteNotAvailable =>
+      'खाता हटाना अभी उपलब्ध नहीं है। कृपया सपोर्ट से संपर्क करें।';
 }

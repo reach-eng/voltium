@@ -132,44 +132,42 @@ class WalletSkeleton extends StatelessWidget {
           child: const ShimmerLoading(width: 112, height: 28, borderRadius: 4),
         ),
 
-        const Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                ShimmerLoading(
-                  width: double.infinity,
-                  height: 192,
-                  borderRadius: 24,
-                ),
-                SizedBox(height: 16),
-                ShimmerLoading(
-                  width: double.infinity,
-                  height: 128,
-                  borderRadius: 24,
-                ),
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ShimmerLoading(
-                        width: double.infinity,
-                        height: 64,
-                        borderRadius: 16,
-                      ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: const [
+              ShimmerLoading(
+                width: double.infinity,
+                height: 192,
+                borderRadius: 24,
+              ),
+              SizedBox(height: 16),
+              ShimmerLoading(
+                width: double.infinity,
+                height: 128,
+                borderRadius: 24,
+              ),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ShimmerLoading(
+                      width: double.infinity,
+                      height: 64,
+                      borderRadius: 16,
                     ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: ShimmerLoading(
-                        width: double.infinity,
-                        height: 64,
-                        borderRadius: 16,
-                      ),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: ShimmerLoading(
+                      width: double.infinity,
+                      height: 64,
+                      borderRadius: 16,
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ],
@@ -249,28 +247,31 @@ class ProfileSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.fromLTRB(20, 48, 20, 20),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              ShimmerLoading(width: 40, height: 40, shape: ShimmerShape.circle),
-              SizedBox(width: 12),
-              ShimmerLoading(width: 80, height: 28, borderRadius: 4),
-            ],
-          ),
-          SizedBox(height: 24),
-          ShimmerLoading(
-            width: double.infinity,
-            height: 192,
-            borderRadius: 16,
-          ),
-          SizedBox(height: 24),
-          ShimmerLoading(
-            width: double.infinity,
-            height: 208,
-            borderRadius: 16,
-          ),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                ShimmerLoading(
+                    width: 40, height: 40, shape: ShimmerShape.circle),
+                SizedBox(width: 12),
+                ShimmerLoading(width: 80, height: 28, borderRadius: 4),
+              ],
+            ),
+            SizedBox(height: 24),
+            ShimmerLoading(
+              width: double.infinity,
+              height: 192,
+              borderRadius: 16,
+            ),
+            SizedBox(height: 24),
+            ShimmerLoading(
+              width: double.infinity,
+              height: 208,
+              borderRadius: 16,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -283,50 +284,53 @@ class SupportSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const Row(
-            children: [
-              ShimmerLoading(width: 40, height: 40, shape: ShimmerShape.circle),
-              SizedBox(width: 12),
-              ShimmerLoading(width: 144, height: 28, borderRadius: 4),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: List.generate(
-              3,
-              (i) => const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
-                  child: ShimmerLoading(
-                    width: double.infinity,
-                    height: 80,
-                    borderRadius: 12,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            const Row(
+              children: [
+                ShimmerLoading(
+                    width: 40, height: 40, shape: ShimmerShape.circle),
+                SizedBox(width: 12),
+                ShimmerLoading(width: 144, height: 28, borderRadius: 4),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: List.generate(
+                3,
+                (i) => const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: ShimmerLoading(
+                      width: double.infinity,
+                      height: 80,
+                      borderRadius: 12,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          const ShimmerLoading(
-            width: double.infinity,
-            height: 48,
-            borderRadius: 12,
-          ),
-          const SizedBox(height: 20),
-          ...List.generate(
-            4,
-            (i) => const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: ShimmerLoading(
-                width: double.infinity,
-                height: 64,
-                borderRadius: 12,
+            const SizedBox(height: 20),
+            const ShimmerLoading(
+              width: double.infinity,
+              height: 48,
+              borderRadius: 12,
+            ),
+            const SizedBox(height: 20),
+            ...List.generate(
+              4,
+              (i) => const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: ShimmerLoading(
+                  width: double.infinity,
+                  height: 64,
+                  borderRadius: 12,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

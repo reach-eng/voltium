@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class GradientWalletCard extends StatelessWidget {
   final double balance;
@@ -20,7 +23,7 @@ class GradientWalletCard extends StatelessWidget {
   static const _defaultGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [AppColors.primary, Color(0xFF142B5B), Color(0xFF0A3D8F)],
+    colors: [AppColors.primary, AppColors.primaryDeep, AppColors.primaryDeep],
   );
 
   @override
@@ -31,6 +34,7 @@ class GradientWalletCard extends StatelessWidget {
         width: double.infinity,
         height: 216,
         margin: const EdgeInsets.symmetric(horizontal: 16),
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           gradient: gradient ?? _defaultGradient,
           borderRadius: BorderRadius.circular(24),
@@ -68,6 +72,12 @@ class GradientWalletCard extends StatelessWidget {
                 ),
               ),
             ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -76,13 +86,10 @@ class GradientWalletCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Wallet Balance',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTypography.bodyMedium
+                            .copyWith(color: Colors.white70),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -93,7 +100,7 @@ class GradientWalletCard extends StatelessWidget {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(
                               Icons.bolt,
@@ -103,21 +110,18 @@ class GradientWalletCard extends StatelessWidget {
                             SizedBox(width: 4),
                             Text(
                               'EV Plus',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: AppTypography.bodySmallEmphasis
+                                  .copyWith(color: Colors.white),
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Text(
                     '₹${(balance / 100).toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 36,
                       fontWeight: FontWeight.bold,
@@ -140,23 +144,20 @@ class GradientWalletCard extends StatelessWidget {
                             size: 20,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Text(
                           vehicleNumber!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTypography.bodyLarge
+                              .copyWith(color: Colors.white),
                         ),
                       ],
                     ),
                   ],
                   if (name != null) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       name!,
-                      style: const TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.white70,
                         fontSize: 14,
                       ),
@@ -188,6 +189,7 @@ class MiniWalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -208,21 +210,18 @@ class MiniWalletCard extends StatelessWidget {
             ),
             child: Icon(icon, color: Colors.white, size: 20),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             '₹${(balance / 100).toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color != null ? Colors.grey[800] : AppColors.primary,
-            ),
+            style: AppTypography.titleLarge.copyWith(
+                color: color != null ? colors.onSurface : AppColors.primary),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: colors.onSurfaceMuted,
             ),
           ),
         ],
@@ -247,6 +246,7 @@ class WalletActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -266,14 +266,11 @@ class WalletActionButton extends StatelessWidget {
                 size: 24,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
-              ),
+              style: AppTypography.bodySmall
+                  .copyWith(color: colors.onSurfaceVariant),
             ),
           ],
         ),

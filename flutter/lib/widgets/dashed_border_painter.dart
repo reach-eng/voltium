@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class DashedBorderPainter extends CustomPainter {
   final Color color;
@@ -10,7 +11,7 @@ class DashedBorderPainter extends CustomPainter {
   final double borderRadius;
 
   DashedBorderPainter({
-    this.color = const Color(0xFFC2C6D6),
+    this.color = AppColors.borderMedium,
     this.strokeWidth = 2.0,
     this.dashPattern = 6.0,
     this.gapPattern = 4.0,

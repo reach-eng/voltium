@@ -35,7 +35,7 @@ void main() {
       // Navigate to a named route.
       final navState = tester.state<NavigatorState>(find.byType(Navigator));
       navState.pushNamed('/a');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // didPush should have fired with the new route.
       expect(

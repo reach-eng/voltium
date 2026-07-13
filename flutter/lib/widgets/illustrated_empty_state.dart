@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Shown when a screen has no data (empty wallet, no tickets, etc).
 class IllustratedEmptyState extends StatelessWidget {
@@ -23,6 +24,7 @@ class IllustratedEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
@@ -39,26 +41,19 @@ class IllustratedEmptyState extends StatelessWidget {
               ),
               child: Icon(icon, size: 40, color: AppColors.primary),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.onSurface,
-              ),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.onSurface),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.onSurfaceMuted,
-                height: 1.4,
-              ),
+              style: AppTypography.inputHint
+                  .copyWith(color: colors.onSurfaceMuted, height: 1.4),
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 24),

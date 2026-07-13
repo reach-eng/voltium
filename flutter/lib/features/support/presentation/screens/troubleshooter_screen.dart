@@ -9,6 +9,7 @@ import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'troubleshooter_result.dart';
 import '../widgets/troubleshooter_widgets.dart';
 import '../../../../theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Smart Troubleshooter screen for the Voltium Rider App.
 ///
@@ -332,11 +333,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
             : _mode == _Mode.question
                 ? _selectedCategory?.label ?? 'Troubleshooter'
                 : 'Result',
-        style: GoogleFonts.plusJakartaSans(
-          fontWeight: FontWeight.w800,
-          fontSize: 18,
-          color: Colors.white,
-        ),
+        style: AppTypography.titleMedium.copyWith(color: Colors.white),
       ),
       backgroundColor: Colors.transparent,
       foregroundColor: Colors.white,
@@ -377,20 +374,16 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
           const SizedBox(height: 8),
           // Header illustration.
           const TroubleshooterHeaderIcon(),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF1E293B),
-              letterSpacing: -0.5,
-            ),
+            style: AppTypography.headingSmall
+                .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Select a category and we will guide you through a step‑by‑step diagnosis.',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: AppColors.slate500,
             ),
@@ -574,7 +567,8 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(
                   'Troubleshoot Another Issue',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                  style:
+                      GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                 ),
               ),
             ),

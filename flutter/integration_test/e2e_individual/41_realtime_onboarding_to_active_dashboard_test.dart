@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -16,6 +17,7 @@ void main() {
   testWidgets(
       'Realtime Full Journey – Splash → Legal/Permissions → Login → Active Dashboard',
       (tester) async {
+    final app = AppRobots(tester);
     print('🚀 [Voltium Realtime Test] Starting fresh run from 0...');
 
     // 1. Start from a completely clean slate
@@ -29,53 +31,56 @@ void main() {
 
     // 2. Handle Preamble Screens with delays so the user can watch the UI step-by-step
     print(
-        '🔄 [Voltium Realtime Test] Processing onboarding preamble screens...',);
+      '🔄 [Voltium Realtime Test] Processing onboarding preamble screens...',
+    );
 
     for (int i = 0; i < 5; i++) {
       await settle(tester);
 
       // Check if we reached Dashboard
-      if (find.byKey(const Key('dashboardTab')).evaluate().isNotEmpty) {
+      if (app.dashboard.dashboardTab.evaluate().isNotEmpty) {
         print('🎉 [Voltium Realtime Test] Dashboard found directly!');
         break;
       }
 
       // Check if we reached Login Screen
-      if (find.byKey(const Key('phoneInput')).evaluate().isNotEmpty) {
+      if (app.login.phoneField.evaluate().isNotEmpty) {
         print('📱 [Voltium Realtime Test] Arrived at Phone Login Screen!');
         break;
       }
 
       // Check if Legal Screen is visible
-      final legalCheckbox = find.byKey(const Key('acceptCheckbox'));
+      final legalCheckbox = app.onboarding.acceptCheckbox;
       if (legalCheckbox.evaluate().isNotEmpty) {
         print(
-            '📜 [Voltium Realtime Test] Arrived at Legal screen. Accepting terms...',);
+          '📜 [Voltium Realtime Test] Arrived at Legal screen. Accepting terms...',
+        );
         await tester.tap(legalCheckbox);
         await settle(tester);
         await tester.pump(const Duration(seconds: 1));
 
-        await tester.tap(find.byKey(const Key('continueLegalButton')));
+        await tester.tap(app.onboarding.continueLegalButton);
         await settle(tester);
         print(
-            '📜 [Voltium Realtime Test] Accepted terms and conditions. Moving to next screen...',);
+          '📜 [Voltium Realtime Test] Accepted terms and conditions. Moving to next screen...',
+        );
         await tester.pump(const Duration(seconds: 2));
         continue;
       }
 
       // Check if Permissions Screen is visible
-      final continuePermissions =
-          find.byKey(const Key('continuePermissionsButton'));
+      final continuePermissions = app.onboarding.continuePermissionsButton;
       if (continuePermissions.evaluate().isNotEmpty) {
         print(
-            '🛡️ [Voltium Realtime Test] Arrived at Permissions screen. Enabling mock permissions...',);
+          '🛡️ [Voltium Realtime Test] Arrived at Permissions screen. Enabling mock permissions...',
+        );
 
         // Opt-in toggles if available
         final allowButtons = [
-          find.byKey(const Key('allowLocationButton')),
-          find.byKey(const Key('allowContactsButton')),
-          find.byKey(const Key('allowCameraButton')),
-          find.byKey(const Key('allowNotificationsButton')),
+          app.onboarding.allowLocationButton,
+          app.onboarding.allowContactsButton,
+          app.onboarding.allowCameraButton,
+          app.onboarding.allowNotificationsButton,
         ];
         for (final btn in allowButtons) {
           if (btn.evaluate().isNotEmpty) {
@@ -86,7 +91,8 @@ void main() {
         }
 
         print(
-            '👉 [Voltium Realtime Test] Tapping Continue on Permissions Screen...',);
+          '👉 [Voltium Realtime Test] Tapping Continue on Permissions Screen...',
+        );
         await tester.tap(continuePermissions);
         await settle(tester);
         await tester.pump(const Duration(seconds: 2));
@@ -94,10 +100,11 @@ void main() {
       }
 
       // Check if Auth Choice Screen is visible
-      final loginWithPhone = find.byKey(const Key('loginWithPhoneButton'));
+      final loginWithPhone = app.onboarding.loginWithPhoneButton;
       if (loginWithPhone.evaluate().isNotEmpty) {
         print(
-            '📱 [Voltium Realtime Test] Arrived at Auth Choice screen. Tapping Login with Phone...',);
+          '📱 [Voltium Realtime Test] Arrived at Auth Choice screen. Tapping Login with Phone...',
+        );
         await tester.tap(loginWithPhone);
         await settle(tester);
         await tester.pump(const Duration(seconds: 2));
@@ -111,18 +118,23 @@ void main() {
 
     // 3. Login Flow
     await settle(tester);
-    if (find.byKey(const Key('phoneInput')).evaluate().isNotEmpty) {
+    if (app.login.phoneField.evaluate().isNotEmpty) {
       print('✍️ [Voltium Realtime Test] Typing phone number...');
       await tester.enterText(
-          find.byKey(const Key('phoneInput')), TestCredentials.phone,);
+        app.login.phoneField,
+        TestCredentials.phone,
+      );
       await settle(tester);
       await tester.pump(const Duration(seconds: 2));
 
       print('👉 [Voltium Realtime Test] Tapping Send OTP...');
-      final sendOtpBtn = find.byKey(const Key('sendOtpButton'));
+      final sendOtpBtn = app.login.getOtpButton;
       final loginScrollable = find.byType(Scrollable).first;
-      await tester.scrollUntilVisible(sendOtpBtn, 200,
-          scrollable: loginScrollable,);
+      await tester.scrollUntilVisible(
+        sendOtpBtn,
+        200,
+        scrollable: loginScrollable,
+      );
       await settle(tester);
       await tester.tap(sendOtpBtn);
       await settle(tester);
@@ -131,10 +143,11 @@ void main() {
 
     // 4. OTP Verification Flow
     await settle(tester);
-    final otpInputRow = find.byKey(const Key('otpInputRow'));
+    final otpInputRow = app.login.otpField;
     if (otpInputRow.evaluate().isNotEmpty) {
       print(
-          '🔐 [Voltium Realtime Test] Arrived at OTP Screen. Entering 6-digit OTP code...',);
+        '🔐 [Voltium Realtime Test] Arrived at OTP Screen. Entering 6-digit OTP code...',
+      );
       final otpFields = find.descendant(
         of: otpInputRow,
         matching: find.byType(TextField),
@@ -148,15 +161,19 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
 
       print('👉 [Voltium Realtime Test] Tapping Verify OTP...');
-      final verifyOtpBtn = find.byKey(const Key('verifyOtpButton'));
+      final verifyOtpBtn = app.login.verifyOtpButton;
       final otpScrollable = find.byType(Scrollable).first;
-      await tester.scrollUntilVisible(verifyOtpBtn, 200,
-          scrollable: otpScrollable,);
+      await tester.scrollUntilVisible(
+        verifyOtpBtn,
+        200,
+        scrollable: otpScrollable,
+      );
       await settle(tester);
       await tester.tap(verifyOtpBtn);
       await settle(tester);
       print(
-          '🔄 [Voltium Realtime Test] Verification submitted. Navigating to Dashboard...',);
+        '🔄 [Voltium Realtime Test] Verification submitted. Navigating to Dashboard...',
+      );
       await tester.pump(const Duration(seconds: 3));
       await settle(tester);
     }
@@ -164,15 +181,17 @@ void main() {
     // 5. Active Dashboard Verification
     await settle(tester);
     print('🎉 [Voltium Realtime Test] Arrived at the Active Dashboard!');
-    expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
-    expect(find.byKey(const Key('notificationBell')), findsOneWidget);
+    expect(app.dashboard.dashboardTab, findsOneWidget);
+    expect(app.dashboard.notificationBell, findsOneWidget);
 
     print(
-        '✨ [Voltium Realtime Test] Holding view on Active Dashboard for 10 seconds to allow live realtime observation! enjoy! ✨',);
+      '✨ [Voltium Realtime Test] Holding view on Active Dashboard for 10 seconds to allow live realtime observation! enjoy! ✨',
+    );
     await tester.pump(const Duration(seconds: 10));
     await settle(tester);
 
     print(
-        '✅ [Voltium Realtime Test] Realtime observation complete. Test successful!',);
+      '✅ [Voltium Realtime Test] Realtime observation complete. Test successful!',
+    );
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// A reusable phone input field aligned with the Voltium design system.
 class PhoneInputField extends StatelessWidget {
@@ -39,7 +41,7 @@ class PhoneInputField extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(left: 20),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -52,11 +54,8 @@ class PhoneInputField extends StatelessWidget {
                     SizedBox(width: 8),
                     Text(
                       '+91',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                      ),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: AppColors.onSurface),
                     ),
                   ],
                 ),
@@ -66,7 +65,7 @@ class PhoneInputField extends StatelessWidget {
                 height: 20,
                 color: AppColors.divider,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: TextFormField(
                   key: textFormFieldKey,
@@ -80,19 +79,15 @@ class PhoneInputField extends StatelessWidget {
                   onChanged: onChanged,
                   onFieldSubmitted:
                       onSubmitted != null ? (_) => onSubmitted!() : null,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
-                    letterSpacing: 1.5,
-                  ),
+                  style: AppTypography.bodyLarge
+                      .copyWith(color: AppColors.onSurface, letterSpacing: 1.5),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     filled: false,
                     hintText: hintText,
-                    hintStyle: const TextStyle(
+                    hintStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       color: AppColors.onSurfaceDisabled,
                       letterSpacing: 1.5,
@@ -112,11 +107,7 @@ class PhoneInputField extends StatelessWidget {
               liveRegion: true,
               child: Text(
                 errorText!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.error,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.error),
               ),
             ),
           ),

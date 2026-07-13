@@ -33,14 +33,14 @@ void main() {
   group('End Rental (Return Request) Screen', () {
     testWidgets('end rental screen renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const EndRentalScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(EndRentalScreen), findsOneWidget);
     });
 
     testWidgets('end rental screen shows return form or instructions',
         (tester) async {
       await tester.pumpWidget(buildTestApp(child: const EndRentalScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should show return-related UI
       final hasText = find.byType(Text).evaluate().isNotEmpty;
@@ -53,7 +53,7 @@ void main() {
 
     testWidgets('end rental screen does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const EndRentalScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

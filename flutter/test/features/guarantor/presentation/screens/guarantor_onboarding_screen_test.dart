@@ -40,10 +40,10 @@ void main() {
 
     testWidgets('Screen renders all 6 sections', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.text('Guarantor Details'), findsWidgets);
-      expect(find.text('FINISH SETUP'), findsOneWidget);
+      expect(find.text('NEXT STEP'), findsOneWidget);
     });
 
     testWidgets('Cache is loaded and populated', (WidgetTester tester) async {
@@ -61,7 +61,7 @@ void main() {
           jsonEncode(cacheData));
 
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Verify fields are populated from cache
       expect(find.text('Cached Name'), findsOneWidget);
@@ -74,11 +74,11 @@ void main() {
 
     testWidgets('Fields save to cache when typed', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       final nameField = find.byType(TextField).first;
       await tester.enterText(nameField, 'New Name');
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Read cache
       final cachedStr = CacheService()
@@ -121,7 +121,7 @@ void main() {
     testWidgets('liability banner is visible at the top of the form',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Banner explains the financial liability
       expect(find.byKey(const Key('guarantorLiabilityBanner')), findsOneWidget);
@@ -167,7 +167,7 @@ void main() {
     testWidgets('Skip button is visible in the bottom bar',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byKey(const Key('skipGuarantorButton')), findsOneWidget);
     });
@@ -176,11 +176,11 @@ void main() {
         'Tapping Skip opens a confirmation dialog explaining higher deposit',
         (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Tap the Skip button
       await tester.tap(find.byKey(const Key('skipGuarantorButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Confirmation dialog appears
       expect(find.text('Skip Guarantor?'), findsOneWidget);
@@ -202,12 +202,12 @@ void main() {
       await tester.pumpWidget(createTestWidget(onNext: () {
         onNextCalled = true;
       }));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.tap(find.byKey(const Key('skipGuarantorButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       await tester.tap(find.byKey(const Key('skipGuarantorCancelButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(onNextCalled, isFalse);
       // Higher-deposit flag must NOT be set when user cancels
@@ -224,12 +224,12 @@ void main() {
       await tester.pumpWidget(createTestWidget(onNext: () {
         onNextCalled = true;
       }));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       await tester.tap(find.byKey(const Key('skipGuarantorButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       await tester.tap(find.byKey(const Key('skipGuarantorConfirmButton')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       expect(onNextCalled, isTrue,
           reason: 'onNext must be called after confirming skip');

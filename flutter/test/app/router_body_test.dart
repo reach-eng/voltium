@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/app/router.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
@@ -20,8 +21,11 @@ void main() {
         overrides: [
           appProvider.overrideWith((ref) => mockAppProvider),
         ],
-        child: const MaterialApp(
-          home: AppRouter(),
+        child: ChangeNotifierProvider<AppProvider>.value(
+          value: mockAppProvider,
+          child: const MaterialApp(
+            home: AppRouter(),
+          ),
         ),
       );
     }

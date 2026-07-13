@@ -1021,5 +1021,115 @@
   "txtcredit": "Credit",
   "txtdebit": "Debit",
   "txtwalletBalance": "Wallet Balance",
-  "txtevPlus": "EV Plus"
+  "txtevPlus": "EV Plus",
+
+  "menu_title": "Menu",
+  "@menu_title": {
+    "description": "Profile menu AppBar title"
+  },
+  "menu_account": "ACCOUNT",
+  "@menu_account": {
+    "description": "Account section header"
+  },
+  "menu_profile": "Profile",
+  "@menu_profile": {
+    "description": "Profile menu link label"
+  },
+  "menu_myDocuments": "My Documents",
+  "@menu_myDocuments": {
+    "description": "Documents menu link label"
+  },
+  "menu_rewardsMore": "REWARDS & MORE",
+  "@menu_rewardsMore": {
+    "description": "Rewards section header"
+  },
+  "menu_rewards": "Rewards",
+  "@menu_rewards": {
+    "description": "Rewards menu link label"
+  },
+  "menu_referralProgram": "Referral Program",
+  "@menu_referralProgram": {
+    "description": "Referral menu link label"
+  },
+  "menu_general": "GENERAL",
+  "@menu_general": {
+    "description": "General section header"
+  },
+  "menu_workflowServices": "Workflow & Services",
+  "@menu_workflowServices": {
+    "description": "Workflow hub link label"
+  },
+  "menu_controls": "Controls",
+  "@menu_controls": {
+    "description": "Controls menu link label"
+  },
+  "menu_language": "Language",
+  "@menu_language": {
+    "description": "Language menu link label"
+  },
+  "menu_selectLanguage": "Select Language",
+  "@menu_selectLanguage": {
+    "description": "Language picker dialog title"
+  },
+  "menu_emergencySos": "Emergency SOS",
+  "@menu_emergencySos": {
+    "description": "Emergency SOS menu link label"
+  },
+
+  "controls_title": "Controls",
+  "@controls_title": {
+    "description": "Controls screen AppBar title"
+  },
+  "controls_preferences": "PREFERENCES",
+  "@controls_preferences": {
+    "description": "Preferences section header"
+  },
+  "controls_darkMode": "Dark Mode",
+  "@controls_darkMode": {
+    "description": "Dark mode toggle label"
+  },
+  "controls_supportLegal": "SUPPORT & LEGAL",
+  "@controls_supportLegal": {
+    "description": "Support section header"
+  },
+  "controls_feedback": "Feedback",
+  "@controls_feedback": {
+    "description": "Feedback link label"
+  },
+  "controls_legal": "Legal",
+  "@controls_legal": {
+    "description": "Legal link label"
+  },
+  "controls_about": "ABOUT",
+  "@controls_about": {
+    "description": "About section header"
+  },
+  "controls_appVersion": "App Version",
+  "@controls_appVersion": {
+    "description": "App version label"
+  },
+  "controls_rateUs": "Rate Us",
+  "@controls_rateUs": {
+    "description": "Rate us link label"
+  },
+  "controls_accountSection": "ACCOUNT",
+  "@controls_accountSection": {
+    "description": "Account section header in controls"
+  },
+  "controls_deleteConfirmTitle": "Delete Account",
+  "@controls_deleteConfirmTitle": {
+    "description": "Delete account confirmation dialog title"
+  },
+  "controls_deleteConfirmBody": "This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?",
+  "@controls_deleteConfirmBody": {
+    "description": "Delete account confirmation dialog body"
+  },
+  "controls_delete": "Delete",
+  "@controls_delete": {
+    "description": "Delete button label in confirmation dialog"
+  },
+  "controls_deleteNotAvailable": "Account deletion is not yet available. Please contact support.",
+  "@controls_deleteNotAvailable": {
+    "description": "Snackbar message when delete is not available"
+  }
 }

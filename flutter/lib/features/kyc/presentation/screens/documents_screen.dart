@@ -11,6 +11,7 @@ import 'package:universal_io/io.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class MyDocumentsScreen extends ConsumerWidget {
   const MyDocumentsScreen({super.key});
@@ -83,7 +84,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
                     Icons.arrow_back,
-                    color: Color(0xFF1E293B),
+                    color: AppColors.slate800,
                     size: 18,
                   ),
                 ),
@@ -93,11 +94,7 @@ class MyDocumentsScreen extends ConsumerWidget {
         ),
         title: Text(
           'My Documents',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1E293B),
-            fontSize: 20,
-          ),
+          style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
         ),
         centerTitle: false,
       ),
@@ -254,7 +251,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                     height: 40,
                     width: 40,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFECFDF5),
+                      color: AppColors.successSurfaceAlt,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -263,27 +260,20 @@ class MyDocumentsScreen extends ConsumerWidget {
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'SECURITY PROFILE',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.successText,
-                          letterSpacing: 1.2,
-                        ),
+                        style: AppTypography.bodySmallTracked.copyWith(
+                            color: AppColors.successText, letterSpacing: 1.2),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Verified & Secure',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1E293B),
-                        ),
+                        style: AppTypography.bodyMediumEmphasis
+                            .copyWith(color: AppColors.slate800),
                       ),
                     ],
                   ),
@@ -293,7 +283,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: AppColors.successSurfaceAlt,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -309,17 +299,13 @@ class MyDocumentsScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             isApproved
                 ? 'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'
                 : 'Your verification is in progress. Some documents may still be under review by our safety team.',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: AppColors.slate500,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(color: AppColors.slate500, height: 1.5),
           ),
         ],
       ),
@@ -331,26 +317,19 @@ class MyDocumentsScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: AppColors.slate500,
-            letterSpacing: 1.2,
-          ),
+          style: AppTypography.bodySmallTracked
+              .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
         ),
         const SizedBox(width: 8),
         Expanded(
           child:
               Container(height: 1, color: Colors.black.withValues(alpha: 0.05)),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text(
           '$count FILES',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: AppColors.primary,
-          ),
+          style:
+              AppTypography.bodySmallTracked.copyWith(color: AppColors.primary),
         ),
       ],
     );
@@ -376,7 +355,7 @@ class MyDocumentsScreen extends ConsumerWidget {
         child: Center(
           child: Text(
             'No documents submitted yet',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontStyle: FontStyle.italic,
               color: AppColors.slate500,
@@ -426,60 +405,49 @@ class MyDocumentsScreen extends ConsumerWidget {
               height: 48,
               width: 48,
               decoration: BoxDecoration(
-                color:
-                    isVideo ? const Color(0xFFFFF7ED) : const Color(0xFFEFF6FF),
+                color: isVideo
+                    ? const Color(0xFFFFF7ED)
+                    : AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 doc.icon,
-                color:
-                    isVideo ? const Color(0xFFF97316) : const Color(0xFF0062FF),
+                color: isVideo ? AppColors.warningDark : AppColors.primary,
                 size: 22,
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     doc.label,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E293B),
-                    ),
+                    style: AppTypography.bodyMediumEmphasis
+                        .copyWith(color: AppColors.slate800),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
                         'VERIFIED',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.success,
-                          letterSpacing: 1,
-                        ),
+                        style: AppTypography.bodySmallTracked.copyWith(
+                            color: AppColors.success, letterSpacing: 1),
                       ),
                       const SizedBox(width: 6),
                       Container(
                         height: 3,
                         width: 3,
                         decoration: const BoxDecoration(
-                          color: Color(0xFFCBD5E1),
+                          color: AppColors.borderMedium,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         isVideo ? 'VIDEO' : 'IMAGE',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.slate500,
-                          letterSpacing: 1,
-                        ),
+                        style: AppTypography.bodySmallTracked.copyWith(
+                            color: AppColors.slate500, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -490,7 +458,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               height: 36,
               width: 36,
               decoration: const BoxDecoration(
-                color: Color(0xFFF8FAFC),
+                color: AppColors.surfaceBright,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -526,30 +494,23 @@ class MyDocumentsScreen extends ConsumerWidget {
             child:
                 const Icon(Icons.info_outline, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Having trouble with documents?',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+                  style: AppTypography.bodyMediumEmphasis
+                      .copyWith(color: AppColors.primary),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'If you see any issues with your verified documents or need to update them, please raise a support ticket.',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.primary,
-                    height: 1.5,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTypography.bodySmall
+                      .copyWith(color: AppColors.primary, height: 1.5),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 InkWell(
                   onTap: () =>
                       AppNavigator.push(context, const SupportCenterScreen()),
@@ -557,12 +518,8 @@ class MyDocumentsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'CONTACT SUPPORT',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.primary,
-                          letterSpacing: 1.2,
-                        ),
+                        style: AppTypography.bodySmallTracked.copyWith(
+                            color: AppColors.primary, letterSpacing: 1.2),
                       ),
                       SizedBox(width: 4),
                       Icon(

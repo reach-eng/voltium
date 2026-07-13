@@ -31,14 +31,14 @@ void main() {
   group('Support Center Screen', () {
     testWidgets('support center renders without error', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(find.byType(SupportCenterScreen), findsOneWidget);
     });
 
     testWidgets('support center shows support categories or options',
         (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
 
       // Should show some support options, FAQs, or contact info
       final hasListTile = find.byType(ListTile).evaluate().isNotEmpty;
@@ -50,7 +50,7 @@ void main() {
 
     testWidgets('support center does not overflow', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const SupportCenterScreen()));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 1));
       expect(tester.takeException(), isNull);
     });
   });

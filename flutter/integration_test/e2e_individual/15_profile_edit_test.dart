@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -12,19 +13,19 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Profile – edit screen navigates and displays', (tester) async {
+    final app = AppRobots(tester);
     await fullLoginFlow(tester);
     await navigateToTab(tester, 'profileTab');
 
     // Tap edit profile
-    await tester.tap(find.byKey(const Key('editProfileLink')));
+    await tester.tap(app.shared.editProfileLink);
     await settle(tester);
     await tester.pump(const Duration(seconds: 1));
 
     // Verify edit screen is shown (check for any edit field)
-    final hasEditScreen =
-        find.byKey(const Key('editFullNameField')).evaluate().isNotEmpty ||
-            find.textContaining('Full Name').evaluate().isNotEmpty ||
-            find.textContaining('Edit Profile').evaluate().isNotEmpty;
+    final hasEditScreen = app.profile.editFullNameField.evaluate().isNotEmpty ||
+        find.textContaining('Full Name').evaluate().isNotEmpty ||
+        find.textContaining('Edit Profile').evaluate().isNotEmpty;
 
     expect(hasEditScreen, isTrue, reason: 'Should reach edit profile screen');
 
@@ -32,6 +33,6 @@ void main() {
     await goBack(tester);
 
     // Should return to profile
-    expect(find.byKey(const Key('logoutButton')), findsOneWidget);
+    expect(app.profile.logoutButton, findsOneWidget);
   });
 }

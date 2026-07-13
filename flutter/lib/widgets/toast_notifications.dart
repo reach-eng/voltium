@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 @Deprecated('Use Toast from utils/toast.dart instead')
 class ToastService {
@@ -160,11 +161,11 @@ class _ToastWidgetState extends State<_ToastWidget>
                 child: Row(
                   children: [
                     Icon(_getIcon(), color: _getIconColor(), size: 24),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.message,
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: widget.isDark ? Colors.white : Colors.black87,
                           fontWeight: FontWeight.w500,
                         ),
@@ -183,7 +184,7 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getBackgroundColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFFDCFCE7);
+        return AppColors.successSurface;
       case ToastType.error:
         return AppColors.errorLight;
       case ToastType.warning:
@@ -196,9 +197,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getBorderColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFF16A34A);
+        return AppColors.successGreen;
       case ToastType.error:
-        return const Color(0xFFDC2626);
+        return AppColors.errorRed;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:
@@ -222,9 +223,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getIconColor() {
     switch (widget.type) {
       case ToastType.success:
-        return const Color(0xFF16A34A);
+        return AppColors.successGreen;
       case ToastType.error:
-        return const Color(0xFFDC2626);
+        return AppColors.errorRed;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class ChipWidget extends StatelessWidget {
   final String label;
@@ -38,11 +40,8 @@ class ChipWidget extends StatelessWidget {
             ],
             Text(
               label,
-              style: TextStyle(
-                color: selected ? Colors.white : color,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTypography.bodySmall
+                  .copyWith(color: selected ? Colors.white : color),
             ),
             if (onDelete != null) ...[
               const SizedBox(width: 4),
@@ -174,10 +173,11 @@ class LinearProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: backgroundColor ?? Colors.grey.shade200,
+        color: backgroundColor ?? colors.outlineVariant,
         borderRadius: borderRadius ?? BorderRadius.circular(4),
       ),
       child: FractionallySizedBox(
@@ -307,6 +307,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -319,9 +320,9 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value + 1, 0),
               colors: [
-                Colors.grey.shade300,
-                Colors.grey.shade100,
-                Colors.grey.shade300,
+                colors.divider,
+                colors.outlineVariant,
+                colors.divider,
               ],
             ),
           ),

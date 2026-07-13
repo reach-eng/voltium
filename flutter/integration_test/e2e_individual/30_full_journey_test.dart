@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../pages/app_robots.dart';
 import 'package:integration_test/integration_test.dart';
 import '../helpers/test_helpers.dart';
 
@@ -13,12 +14,16 @@ void main() {
 
   testWidgets('Full journey – splash → auth → onboarding → dashboard',
       (tester) async {
+    final app = AppRobots(tester);
     final reachedDashboard = await fullLoginFlow(tester);
-    expect(reachedDashboard, isTrue,
-        reason: 'Should reach dashboard after full auth',);
+    expect(
+      reachedDashboard,
+      isTrue,
+      reason: 'Should reach dashboard after full auth',
+    );
 
     // Verify dashboard elements
-    expect(find.byKey(const Key('dashboardTab')), findsOneWidget);
-    expect(find.byKey(const Key('notificationBell')), findsOneWidget);
+    expect(app.dashboard.dashboardTab, findsOneWidget);
+    expect(app.dashboard.notificationBell, findsOneWidget);
   });
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// A glass-styled KPI tile for dashboard grid.
 class GlassKpiTile extends StatelessWidget {
@@ -43,24 +45,20 @@ class GlassKpiTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 8,
               fontWeight: FontWeight.w900,
               color: Colors.white.withValues(alpha: 0.4),
               letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: AppTypography.titleMedium.copyWith(color: Colors.white),
           ),
         ],
       ),

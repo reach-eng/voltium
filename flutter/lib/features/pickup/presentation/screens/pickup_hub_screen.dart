@@ -1,6 +1,5 @@
 import 'package:universal_io/io.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -9,11 +8,12 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
-import 'package:voltium_rider/widgets/pickup_vehicle_search_sheet.dart';
+import 'package:voltium_rider/features/pickup/widgets/pickup_vehicle_search_sheet.dart';
 import 'package:voltium_rider/features/pickup/presentation/widgets/pickup_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 class PickupHubScreen extends ConsumerStatefulWidget {
   final Function(
@@ -89,17 +89,14 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? AppColors.primary : const Color(0xFFF3F4F6),
-        border: isActive ? null : Border.all(color: const Color(0xFFE5E7EB)),
+        color: isActive ? AppColors.primary : AppColors.surfaceSubtle,
+        border: isActive ? null : Border.all(color: AppColors.borderSubtle),
       ),
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: TextStyle(
-          color: isActive ? Colors.white : const Color(0xFF4B5563),
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: AppTypography.bodySmallEmphasis
+            .copyWith(color: isActive ? Colors.white : AppColors.textSecondary),
       ),
     );
   }
@@ -108,7 +105,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     return Container(
       width: 40,
       height: 2,
-      color: const Color(0xFFE5E7EB),
+      color: AppColors.borderSubtle,
     );
   }
 
@@ -244,15 +241,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
               color: Colors.white,
               size: 18,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 msg,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppTypography.bodyCompactEmphasis
+                    .copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -278,15 +272,12 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
               color: Colors.white,
               size: 18,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 msg,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppTypography.bodyCompactEmphasis
+                    .copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -441,20 +432,22 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return const Scaffold(
-      backgroundColor: kSurfaceColor,
+  Widget _buildLoadingState(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Scaffold(
+      backgroundColor: colors.surfaceSubtle,
       body: Center(
         child: CircularProgressIndicator(
-          color: kPrimaryColor,
+          color: AppColors.primary,
         ),
       ),
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: kSurfaceColor,
+      backgroundColor: colors.surfaceSubtle,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -466,24 +459,21 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
                 color: AppColors.error,
                 size: 48,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 _error ?? 'An unexpected error occurred',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: kOnSurfaceColor,
-                ),
+                style:
+                    AppTypography.bodyLarge.copyWith(color: colors.onSurface),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               SizedBox(
                 width: 140,
                 height: 40,
                 child: ElevatedButton(
                   onPressed: _fetchHubs,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrimaryColor,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -492,10 +482,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
                   ),
                   child: Text(
                     'Retry',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: AppTypography.bodyMediumStrong,
                   ),
                 ),
               ),
@@ -508,15 +495,16 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     if (_isLoading) {
-      return _buildLoadingState();
+      return _buildLoadingState(context);
     }
     if (_error != null) {
-      return _buildErrorState();
+      return _buildErrorState(context);
     }
 
     return Scaffold(
-      backgroundColor: kSurfaceColor,
+      backgroundColor: colors.surfaceSubtle,
       body: Column(
         children: [
           Expanded(
@@ -618,6 +606,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
             ),
           ),
           buildStickyBottomBar(
+            context: context,
             isFormValid: _canProceedCurrentStep,
             buttonText: _currentStep < 2 ? 'NEXT STEP' : 'FINISH SETUP',
             onSubmit: _onBottomButtonPressed,

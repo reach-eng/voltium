@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/animated_bottom_nav.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web HistoryScreen.tsx:
 /// - Header with back button and refresh
@@ -150,14 +151,11 @@ class _HistoryScreenState extends State<HistoryScreen>
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Text(
             'Transaction History',
-            style: GoogleFonts.inter(
-              fontSize: 21,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-            ),
+            style: AppTypography.titleMediumLarge
+                .copyWith(color: AppColors.onSurface),
           ),
           const Spacer(),
           GestureDetector(
@@ -213,7 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         _buildSummaryItem(
           'Credits',
           '+₹${_totalCredits.toInt()}',
-          const Color(0xFF16A34A),
+          AppColors.successGreen,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
@@ -226,7 +224,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           'Net',
           '₹${(_totalCredits - _totalDebits).toInt()}',
           (_totalCredits - _totalDebits) >= 0
-              ? const Color(0xFF16A34A)
+              ? AppColors.successGreen
               : AppColors.error,
         ),
       ],
@@ -246,21 +244,17 @@ class _HistoryScreenState extends State<HistoryScreen>
           children: [
             Text(
               label.toUpperCase(),
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurfaceVariant,
                 letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               value,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: color,
-              ),
+              style: AppTypography.bodyMediumStrong.copyWith(color: color),
             ),
           ],
         ),
@@ -277,7 +271,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       ),
       child: TextFormField(
         onChanged: (val) => setState(() => _searchQuery = val),
-        style: GoogleFonts.inter(fontSize: 14),
+        style: GoogleFonts.plusJakartaSans(fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search transactions...',
           prefixIcon:
@@ -316,12 +310,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                 child: Center(
                   child: Text(
                     tab,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color:
-                          isActive ? Colors.white : AppColors.onSurfaceVariant,
-                    ),
+                    style: AppTypography.labelMedium.copyWith(
+                        color: isActive
+                            ? Colors.white
+                            : AppColors.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -336,7 +328,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.infoLight),
       ),
@@ -347,12 +339,12 @@ class _HistoryScreenState extends State<HistoryScreen>
             size: 14,
             color: AppColors.info,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             'Tap any transaction to see the full fee breakdown',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
-              color: const Color(0xFF1D4ED8),
+              color: AppColors.primaryDark,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -372,14 +364,11 @@ class _HistoryScreenState extends State<HistoryScreen>
               size: 48,
               color: AppColors.outline,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               'No transactions found',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceAlt,
-              ),
+              style: AppTypography.labelLarge
+                  .copyWith(color: AppColors.onSurfaceAlt),
             ),
           ],
         ),
@@ -434,61 +423,55 @@ class _HistoryScreenState extends State<HistoryScreen>
                     height: 40,
                     decoration: BoxDecoration(
                       color: isCredit
-                          ? const Color(0xFFF0FDF4)
-                          : const Color(0xFFFEF2F2),
+                          ? AppColors.successSurfaceLight
+                          : AppColors.errorSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
                       color:
-                          isCredit ? const Color(0xFF16A34A) : AppColors.error,
+                          isCredit ? AppColors.successGreen : AppColors.error,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           tx['description'] ?? tx['purpose'] ?? 'Transaction',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.onSurfaceAlt,
-                          ),
+                          style: AppTypography.labelLarge
+                              .copyWith(color: AppColors.onSurfaceAlt),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Row(
                           children: [
                             Text(
                               date,
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 color: AppColors.onSurfaceVariant,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               '|',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 color: AppColors.outline,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               status,
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color:
-                                    status == 'SUCCESS' || status == 'APPROVED'
-                                        ? const Color(0xFF16A34A)
-                                        : AppColors.warningDark,
-                              ),
+                              style: AppTypography.microLabel.copyWith(
+                                  color: status == 'SUCCESS' ||
+                                          status == 'APPROVED'
+                                      ? AppColors.successGreen
+                                      : AppColors.warningDark),
                             ),
                           ],
                         ),
@@ -503,19 +486,16 @@ class _HistoryScreenState extends State<HistoryScreen>
                             : Icons.remove_circle_outline,
                         size: 14,
                         color: isCredit
-                            ? const Color(0xFF16A34A)
-                            : const Color(0xFFBA1A1A),
+                            ? AppColors.successGreen
+                            : AppColors.errorDark,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: 4),
                       Text(
                         '₹${amount.toInt()}',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: isCredit
-                              ? const Color(0xFF16A34A)
-                              : const Color(0xFFBA1A1A),
-                        ),
+                        style: AppTypography.bodyMediumStrong.copyWith(
+                            color: isCredit
+                                ? AppColors.successGreen
+                                : AppColors.errorDark),
                       ),
                     ],
                   ),
@@ -535,7 +515,7 @@ class _HistoryScreenState extends State<HistoryScreen>
       width: double.infinity,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainer,
-        border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+        border: Border(top: BorderSide(color: AppColors.surfaceSubtle)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -546,7 +526,7 @@ class _HistoryScreenState extends State<HistoryScreen>
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 tx['description'],
-                style: GoogleFonts.inter(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: AppColors.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
@@ -560,19 +540,13 @@ class _HistoryScreenState extends State<HistoryScreen>
             children: [
               Text(
                 'TOTAL CHARGED',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurfaceVariant,
-                ),
+                style: AppTypography.overline
+                    .copyWith(color: AppColors.onSurfaceVariant),
               ),
               Text(
                 '₹${(tx['amount'] as num).toInt()}',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurfaceAlt,
-                ),
+                style: AppTypography.bodyMediumStrong
+                    .copyWith(color: AppColors.onSurfaceAlt),
               ),
             ],
           ),
@@ -587,7 +561,7 @@ class _HistoryScreenState extends State<HistoryScreen>
     final amount = (b['amount'] as num).toDouble();
 
     Color color = AppColors.onSurfaceAlt;
-    Color bg = const Color(0xFFF3F4F6);
+    Color bg = AppColors.surfaceSubtle;
     String prefix = '';
 
     if (type == 'TAX') {
@@ -595,17 +569,17 @@ class _HistoryScreenState extends State<HistoryScreen>
       bg = const Color(0xFFFFF7ED);
     }
     if (type == 'DISCOUNT') {
-      color = const Color(0xFF15803D);
-      bg = const Color(0xFFF0FDF4);
+      color = AppColors.successDark;
+      bg = AppColors.successSurfaceLight;
       prefix = '-';
     }
     if (type == 'PENALTY') {
       color = AppColors.errorDark;
-      bg = const Color(0xFFFEF2F2);
+      bg = AppColors.errorSurface;
     }
     if (type == 'ADJUSTMENT') {
-      color = const Color(0xFF1D4ED8);
-      bg = const Color(0xFFEFF6FF);
+      color = AppColors.primaryDark;
+      bg = AppColors.primarySurface;
     }
 
     return Padding(
@@ -623,31 +597,20 @@ class _HistoryScreenState extends State<HistoryScreen>
                 ),
                 child: Text(
                   type,
-                  style: GoogleFonts.inter(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
+                  style: AppTypography.microBadge.copyWith(color: color),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 label,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.onSurfaceAlt,
-                ),
+                style: AppTypography.bodySmall
+                    .copyWith(color: AppColors.onSurfaceAlt),
               ),
             ],
           ),
           Text(
             '$prefix₹${amount.toInt()}',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: AppTypography.labelMedium.copyWith(color: color),
           ),
         ],
       ),

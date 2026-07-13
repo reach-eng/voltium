@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 
 class ReferralScreen extends ConsumerStatefulWidget {
   const ReferralScreen({super.key});
@@ -35,6 +37,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
   void _copyToClipboard(String code) async {
     await HapticFeedback.heavyImpact();
     Clipboard.setData(ClipboardData(text: code));
+    PostHogService.capture('referral_shared', properties: {'method': 'copy'});
     setState(() => _isCopied = true);
 
     if (mounted) {
@@ -43,10 +46,10 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
           content: Row(
             children: [
               const Icon(Icons.check_circle_rounded, color: Colors.white),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 'Referral code copied!',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -76,7 +79,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
         elevation: 0,
         title: Text('Refer & Earn',
             style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                fontWeight: FontWeight.bold, color: AppColors.slate800)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -101,7 +104,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                   ],
                 ),
                 child: const Icon(Icons.arrow_back,
-                    color: Color(0xFF1E293B), size: 20),
+                    color: AppColors.slate800, size: 20),
               ),
             ),
           ),
@@ -169,37 +172,30 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 32),
                   Text(
                     'Invite Friends,\nEarn Rewards!',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E293B),
-                      height: 1.2,
-                      letterSpacing: -0.5,
-                    ),
+                    style: AppTypography.headingLarge.copyWith(
+                        color: AppColors.slate800,
+                        height: 1.2,
+                        letterSpacing: -0.5),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'Share your referral code with friends and you both get 50 bonus points when they take their first ride.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: AppColors.slate500,
                       fontSize: 15,
                       height: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 40),
                   Text(
                     'YOUR REFERRAL CODE',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.slate400,
-                      letterSpacing: 1.5,
-                    ),
+                    style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.slate400, letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 12),
                   // Interactive Code Box with Dashed Border Simulation
@@ -290,14 +286,11 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                             children: [
                               const Icon(Icons.share_rounded,
                                   color: Colors.white, size: 20),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Text(
                                 'Share Code',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                                style: AppTypography.titleSmall
+                                    .copyWith(color: Colors.white),
                               ),
                             ],
                           ),

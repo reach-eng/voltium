@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
       take: 10,
     });
 
-    // 2. Fetch last runs of all jobs from Settings table
-    const jobSettings = await db.setting.findMany({
+    // 2. Fetch last runs of all jobs from SystemSetting table
+    const jobSettings = await db.systemSetting.findMany({
       where: {
         key: { startsWith: 'job:last_run:' },
       },
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
           raw: rentRes,
         };
         // Save status for both as they run together
-        await db.setting.upsert({
+        await db.systemSetting.upsert({
           where: { key: 'job:last_run:rent-due-checker' },
           update: {
             value: JSON.stringify({
@@ -187,9 +187,10 @@ export async function POST(req: NextRequest) {
               status: 'SUCCESS',
               details: `Checked: ${rentRes.checkedRentals}, Overdue detected: ${rentRes.overdueDetected}`,
             }),
+            valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
           },
         });
-        await db.setting.upsert({
+        await db.systemSetting.upsert({
           where: { key: 'job:last_run:auto-debit' },
           update: {
             value: JSON.stringify({
@@ -205,6 +206,7 @@ export async function POST(req: NextRequest) {
               status: 'SUCCESS',
               details: `Checked: ${rentRes.checkedRentals}, Debited: ${rentRes.autoDebited}`,
             }),
+            valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
           },
         });
         break;
@@ -259,9 +261,9 @@ export async function POST(req: NextRequest) {
         return errors.badRequest(`Unknown jobId: ${jobId}`);
     }
 
-    // Save run details in Settings table
+    // Save run details in SystemSetting
     if (jobId !== 'rent-due-checker' && jobId !== 'auto-debit') {
-      await db.setting.upsert({
+      await db.systemSetting.upsert({
         where: { key: `job:last_run:${jobId}` },
         update: {
           value: JSON.stringify({
@@ -277,6 +279,7 @@ export async function POST(req: NextRequest) {
             status: result.success ? 'SUCCESS' : 'FAILED',
             details: result.details,
           }),
+          valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
         },
       });
     }

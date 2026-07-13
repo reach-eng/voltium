@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 
 vi.mock('@/lib/db', () => ({
   db: {
-    setting: {
+    systemSetting: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
       deleteMany: vi.fn(),
@@ -27,16 +27,16 @@ describe('Backup Lock Service Tests', () => {
   });
 
   it('acquires lock when status is NONE', async () => {
-    vi.mocked(db.setting.findUnique).mockResolvedValue(null); // defaults to NONE
-    vi.mocked(db.setting.upsert).mockResolvedValue({} as any);
+    vi.mocked(db.systemSetting.findUnique).mockResolvedValue(null); // defaults to NONE
+    vi.mocked(db.systemSetting.upsert).mockResolvedValue({} as any);
 
     const result = await backupService.acquireLock('BACKUP_RUNNING', 'test-owner');
     expect(result).toBe(true);
-    expect(db.setting.upsert).toHaveBeenCalledTimes(3);
+    expect(db.systemSetting.upsert).toHaveBeenCalledTimes(3);
   });
 
   it('fails to acquire lock when status is not NONE', async () => {
-    vi.mocked(db.setting.findUnique).mockResolvedValue({
+    vi.mocked(db.systemSetting.findUnique).mockResolvedValue({
       id: '1',
       key: 'BACKUP_LOCK_STATUS',
       value: 'RESTORE_RUNNING',
@@ -45,21 +45,21 @@ describe('Backup Lock Service Tests', () => {
 
     const result = await backupService.acquireLock('BACKUP_RUNNING', 'test-owner');
     expect(result).toBe(false);
-    expect(db.setting.upsert).not.toHaveBeenCalled();
+    expect(db.systemSetting.upsert).not.toHaveBeenCalled();
   });
 
   it('releases lock correctly', async () => {
-    vi.mocked(db.setting.upsert).mockResolvedValue({} as any);
+    vi.mocked(db.systemSetting.upsert).mockResolvedValue({} as any);
 
     await backupService.releaseLock();
-    expect(db.setting.upsert).toHaveBeenCalledTimes(3);
-    expect(db.setting.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE' } })
+    expect(db.systemSetting.upsert).toHaveBeenCalledTimes(3);
+    expect(db.systemSetting.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false } })
     );
   });
 
   it('gets lock status correctly', async () => {
-    vi.mocked(db.setting.findUnique)
+    vi.mocked(db.systemSetting.findUnique)
       .mockResolvedValueOnce({ value: 'BACKUP_RUNNING' } as any) // status
       .mockResolvedValueOnce({ value: '2026-06-16T00:00:00.000Z' } as any) // startedAt
       .mockResolvedValueOnce({ value: 'scheduled-worker' } as any); // owner

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/notification_model.dart';
+import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
@@ -10,6 +11,8 @@ import 'notification_preferences_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 enum NotificationTab { all, payments, kyc, maintenance, announcements }
 
@@ -29,6 +32,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   @override
   void initState() {
     super.initState();
+    PostHogService.capture('notification_opened');
     _tabController =
         TabController(length: NotificationTab.values.length, vsync: this);
     _tabController.addListener(() {
@@ -124,8 +128,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surfaceSubtle,
       body: Consumer(
         builder: (context, ref, _) {
           final notifications = ref.read(appProvider).notifications;
@@ -225,6 +230,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                           );
                                         },
                                         child: _buildNotificationCard(
+                                          context,
                                           filtered[index],
                                           ref.read(appProvider),
                                         ),
@@ -252,7 +258,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFF8FAFC)],
+            colors: [AppColors.iconBackground, AppColors.surfaceBright],
           ),
         ),
       ),
@@ -264,6 +270,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     AppProvider provider,
     int unreadCount,
   ) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -276,7 +283,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 child: Container(
                   padding: const EdgeInsets.all(13),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.card,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -285,24 +292,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
                     size: 18,
-                    color: Color(0xFF1E293B),
+                    color: colors.onSurface,
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              const Text(
+              SizedBox(width: 16),
+              Text(
                 'Notifications',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
+                style: AppTypography.headingSmall
+                    .copyWith(color: colors.onSurface),
               ),
               if (unreadCount > 0) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -312,11 +316,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   ),
                   child: Text(
                     '$unreadCount',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style:
+                        AppTypography.labelMedium.copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -330,7 +331,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   child: Container(
                     padding: const EdgeInsets.all(13),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.card,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -339,10 +340,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.delete_sweep,
                       size: 18,
-                      color: AppColors.slate500,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -380,7 +381,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                 child: Container(
                   padding: const EdgeInsets.all(13),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.card,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -389,10 +390,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings_outlined,
                     size: 18,
-                    color: AppColors.slate500,
+                    color: colors.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -404,11 +405,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   Widget _buildTabBar() {
+    final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -443,17 +445,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       Icon(
                         _getTabIcon(tab),
                         size: 16,
-                        color: isSelected ? Colors.white : AppColors.slate500,
+                        color:
+                            isSelected ? Colors.white : colors.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         _getTabLabel(tab),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : AppColors.slate500,
-                          letterSpacing: 0.3,
-                        ),
+                        style: AppTypography.labelMedium.copyWith(
+                            color: isSelected
+                                ? Colors.white
+                                : colors.onSurfaceVariant,
+                            letterSpacing: 0.3),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -468,6 +470,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   Widget _buildEmptyState() {
+    final colors = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -476,7 +479,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             height: 80,
             width: 80,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colors.card,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -490,34 +493,33 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               color: AppColors.primary.withValues(alpha: 0.15),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Text(
             'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-            ),
+            style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: 8),
+          Text(
             "You're all caught up!",
-            style: TextStyle(fontSize: 14, color: AppColors.slate500),
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 14, color: colors.onSurfaceVariant),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNotificationCard(AppNotification notif, AppProvider provider) {
-    final categoryInfo = _getCategoryInfo(notif);
+  Widget _buildNotificationCard(
+      BuildContext context, AppNotification notif, AppProvider provider) {
+    final colors = AppColors.of(context);
+    final categoryInfo = _getCategoryInfo(context, notif);
 
     return InkWell(
       key: const Key('notificationCard'),
       onTap: () => provider.markNotificationAsRead(notif.id),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(20),
           border: !notif.isRead
               ? Border.all(
@@ -568,7 +570,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   ),
               ],
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,7 +580,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     children: [
                       Text(
                         categoryInfo.label.toUpperCase(),
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           color: categoryInfo.color,
@@ -587,29 +589,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       ),
                       Text(
                         _formatTime(notif.createdAt),
-                        style: const TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
-                          color: AppColors.slate400,
+                          color: colors.onSurfaceMuted,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     notif.title,
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight:
                           !notif.isRead ? FontWeight.bold : FontWeight.w600,
-                      color: const Color(0xFF1E293B),
+                      color: colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     notif.message,
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: AppColors.slate500,
+                      color: colors.onSurfaceVariant,
                       height: 1.4,
                     ),
                   ),
@@ -623,8 +625,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   ({IconData icon, Color color, Color bgColor, String label}) _getCategoryInfo(
+    BuildContext context,
     AppNotification notif,
   ) {
+    final colors = AppColors.of(context);
     final title = notif.title.toLowerCase();
     if (notif.type == AppNotificationType.paymentReceived ||
         notif.type == AppNotificationType.paymentSent ||
@@ -634,8 +638,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('rent')) {
       return (
         icon: Icons.currency_rupee,
-        color: const Color(0xFF16A34A),
-        bgColor: const Color(0xFFF0FDF4),
+        color: AppColors.successGreen,
+        bgColor: AppColors.successSurfaceLight,
         label: 'Payment'
       );
     }
@@ -644,8 +648,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('document')) {
       return (
         icon: Icons.shield_outlined,
-        color: const Color(0xFF7C3AED),
-        bgColor: const Color(0xFFF5F3FF),
+        color: AppColors.purpleDark,
+        bgColor: AppColors.purpleSurface,
         label: 'KYC'
       );
     }
@@ -656,8 +660,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('swap')) {
       return (
         icon: Icons.build_outlined,
-        color: const Color(0xFF2563EB),
-        bgColor: const Color(0xFFEFF6FF),
+        color: AppColors.primary,
+        bgColor: AppColors.primarySurface,
         label: 'Maintenance'
       );
     }
@@ -667,7 +671,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('announcement')) {
       return (
         icon: Icons.campaign_outlined,
-        color: const Color(0xFF9333EA),
+        color: AppColors.purpleDeep,
         bgColor: const Color(0xFFFAF5FF),
         label: 'Announcement'
       );
@@ -675,7 +679,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     return (
       icon: Icons.notifications_outlined,
       color: AppColors.slate500,
-      bgColor: AppColors.iconBackground,
+      bgColor: colors.iconBackground,
       label: 'General'
     );
   }

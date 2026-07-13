@@ -40,6 +40,14 @@ for key in "${REQUIRED_KEYS[@]}"; do
   fi
 done
 
+# Optional: pass PostHog analytics keys if present
+for key in POSTHOG_API_KEY POSTHOG_HOST; do
+  value=$(grep -E "^${key}=" .env | cut -d '=' -f 2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" || true)
+  if [ -n "$value" ]; then
+    DEFINE_FLAGS+=("--dart-define=${key}=${value}")
+  fi
+done
+
 if [ ${#MISSING[@]} -gt 0 ]; then
   echo "ERROR: The following Firebase keys are missing or empty in flutter/.env:"
   for key in "${MISSING[@]}"; do

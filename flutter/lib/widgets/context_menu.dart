@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class ContextMenuPreview extends StatefulWidget {
   final Widget child;
@@ -121,7 +123,7 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -137,7 +139,7 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
       child: Material(
         elevation: 8,
         borderRadius: BorderRadius.circular(12),
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        color: colors.card,
         child: Container(
           width: 240,
           decoration: BoxDecoration(
@@ -172,7 +174,7 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
   }
 
   Widget _buildMenuItem(ContextMenuItem item) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = AppColors.of(context);
 
     return InkWell(
       onTap: () {
@@ -189,15 +191,15 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
               Icon(
                 item.icon,
                 size: 20,
-                color: item.color ?? (isDark ? Colors.white : Colors.black87),
+                color: item.color ?? colors.onSurface,
               ),
               const SizedBox(width: 12),
             ],
             Expanded(
               child: Text(
                 item.label,
-                style: TextStyle(
-                  color: item.color ?? (isDark ? Colors.white : Colors.black87),
+                style: GoogleFonts.plusJakartaSans(
+                  color: item.color ?? colors.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -205,9 +207,9 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
             if (item.subtitle != null)
               Text(
                 item.subtitle!,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
-                  color: Colors.grey[500],
+                  color: colors.onSurfaceVariant,
                 ),
               ),
           ],

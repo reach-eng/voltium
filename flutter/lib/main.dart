@@ -45,10 +45,11 @@ import 'widgets/animated_bottom_nav.dart';
 import 'widgets/error_boundary.dart';
 import 'widgets/overlay_manager.dart';
 import 'core/observability/posthog_service.dart';
-import 'core/observability/telemetry_service.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 
 bool get isTestModeOverride => AppConstants.isTestModeOverride;
 set isTestModeOverride(bool val) => AppConstants.isTestModeOverride = val;
@@ -59,7 +60,7 @@ final FocusObserver focusObserver = FocusObserver((route) {
   // Reserved for future modal/push screen scenarios.
 });
 
-Future<void> main() async {
+Future<void> main({AppProvider? injectedAppProvider}) async {
   if (AppConstants.isTestMode) {
     try {
       enableFlutterDriverExtension();
@@ -77,8 +78,6 @@ Future<void> main() async {
   // Initialize Error Monitoring
   await MonitoringService.initialize();
   await PostHogService.initialize();
-  TelemetryService.initialize();
-
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
     debugPrint('[FlutterError] ${details.exception}');
@@ -115,15 +114,16 @@ Future<void> main() async {
                   size: 64,
                   color: Colors.red,
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'Something went wrong',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTypography.titleMedium,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   details.exception.toString(),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -165,7 +165,7 @@ Future<void> main() async {
         localeProvider.setHindi();
       }
 
-      final appInstance = AppProvider();
+      final appInstance = injectedAppProvider ?? AppProvider();
       final themeProvider = ThemeProvider();
 
       if (PlatformInfo.supportsFCM) {
@@ -365,6 +365,10 @@ class _AppShellState extends State<AppShell> {
           setState(() => _currentIndex = index);
           _refreshTabOnFocus(index);
           MonitoringService.logInfo('Navigation: Switched to tab $index');
+          PostHogService.capture('tab_switched', properties: {
+            'tab_index': index.toString(),
+            'tab_name': ['dashboard', 'wallet', 'support', 'profile'][index],
+          });
         },
         tabKeys: [
           const Key('dashboardTab'),
