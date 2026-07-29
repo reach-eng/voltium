@@ -80,7 +80,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
                     Icons.arrow_back,
@@ -100,7 +100,7 @@ class MyDocumentsScreen extends ConsumerWidget {
       ),
       body: Consumer(
         builder: (context, ref, child) {
-          final rider = ref.watch(appProvider).rider;
+          final rider = ref.watch(riderProvider).rider;
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
@@ -227,10 +227,10 @@ class MyDocumentsScreen extends ConsumerWidget {
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -346,7 +346,7 @@ class MyDocumentsScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 32),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: Colors.black.withValues(alpha: 0.05),
             style: BorderStyle.solid,
@@ -365,18 +365,16 @@ class MyDocumentsScreen extends ConsumerWidget {
       );
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: filtered.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final doc = filtered[index];
-        return FadeUpWidget(
-          delay: baseDelay + (index * 50),
-          child: _buildDocItem(context, doc),
-        );
-      },
+    return Column(
+      children: [
+        for (int index = 0; index < filtered.length; index++) ...[
+          if (index > 0) const SizedBox(height: 12),
+          FadeUpWidget(
+            delay: baseDelay + (index * 50),
+            child: _buildDocItem(context, filtered[index]),
+          ),
+        ],
+      ],
     );
   }
 
@@ -384,12 +382,12 @@ class MyDocumentsScreen extends ConsumerWidget {
     final bool isVideo = doc.isVideo;
     return InkWell(
       onTap: () => _viewDocument(context, doc.url, cacheKey: doc.cacheKey),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -406,9 +404,9 @@ class MyDocumentsScreen extends ConsumerWidget {
               width: 48,
               decoration: BoxDecoration(
                 color: isVideo
-                    ? const Color(0xFFFFF7ED)
+                    ? AppColors.orangeAccentSurface
                     : AppColors.primarySurface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Icon(
                 doc.icon,
@@ -475,10 +473,10 @@ class MyDocumentsScreen extends ConsumerWidget {
 
   Widget _buildSupportBanner(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(
@@ -489,7 +487,7 @@ class MyDocumentsScreen extends ConsumerWidget {
             width: 40,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child:
                 const Icon(Icons.info_outline, color: Colors.white, size: 20),

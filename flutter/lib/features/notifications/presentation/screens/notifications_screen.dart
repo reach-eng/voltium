@@ -10,7 +10,7 @@ import 'package:voltium_rider/utils/app_navigator.dart';
 import 'notification_preferences_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -120,9 +120,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
   }
 
-  void _clearReadNotifications(AppProvider provider) {
+  void _clearReadNotifications(EngagementProvider provider) {
     setState(() {
-      ref.read(appProvider).notifications.removeWhere((n) => n.isRead);
+      ref.read(engagementProvider).notifications.removeWhere((n) => n.isRead);
     });
   }
 
@@ -133,7 +133,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       backgroundColor: colors.surfaceSubtle,
       body: Consumer(
         builder: (context, ref, _) {
-          final notifications = ref.read(appProvider).notifications;
+          final notifications = ref.read(engagementProvider).notifications;
           final filtered = _getFilteredNotifications(notifications);
           final unreadCount = notifications.where((n) => !n.isRead).length;
 
@@ -143,15 +143,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               SafeArea(
                 child: Column(
                   children: [
-                    _buildHeader(context, ref.read(appProvider), unreadCount),
+                    _buildHeader(context, ref.read(engagementProvider), unreadCount),
                     _buildTabBar(),
                     Expanded(
                       child: filtered.isEmpty
                           ? _buildEmptyState()
                           : RefreshIndicator(
                               color: AppColors.primary,
-                              onRefresh: () =>
-                                  ref.read(appProvider).refreshEngagementData(),
+                              onRefresh: () async =>
+                                  ref.read(engagementProvider).initEngagementData(),
                               child: ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -174,7 +174,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                           decoration: BoxDecoration(
                                             color: AppColors.error,
                                             borderRadius:
-                                                BorderRadius.circular(20),
+                                                BorderRadius.circular(AppRadius.lg),
                                           ),
                                           child: const Icon(
                                             Icons.delete_outline,
@@ -212,7 +212,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                         onDismissed: (direction) {
                                           setState(() {
                                             ref
-                                                .read(appProvider)
+                                                .read(engagementProvider)
                                                 .notifications
                                                 .removeWhere(
                                                   (n) =>
@@ -232,7 +232,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                         child: _buildNotificationCard(
                                           context,
                                           filtered[index],
-                                          ref.read(appProvider),
+                                          ref.read(engagementProvider),
                                         ),
                                       ),
                                     ),
@@ -267,7 +267,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   Widget _buildHeader(
     BuildContext context,
-    AppProvider provider,
+    EngagementProvider provider,
     int unreadCount,
   ) {
     final colors = AppColors.of(context);
@@ -281,7 +281,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               InkWell(
                 onTap: () => Navigator.maybePop(context),
                 child: Container(
-                  padding: const EdgeInsets.all(13),
+                  padding: const EdgeInsets.all(Spacing.md2),
                   decoration: BoxDecoration(
                     color: colors.card,
                     shape: BoxShape.circle,
@@ -312,7 +312,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Text(
                     '$unreadCount',
@@ -325,11 +325,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ),
           Row(
             children: [
-              if (ref.read(appProvider).notifications.any((n) => n.isRead))
+              if (ref.read(engagementProvider).notifications.any((n) => n.isRead))
                 InkWell(
                   onTap: () => _clearReadNotifications(provider),
                   child: Container(
-                    padding: const EdgeInsets.all(13),
+                    padding: const EdgeInsets.all(Spacing.md2),
                     decoration: BoxDecoration(
                       color: colors.card,
                       shape: BoxShape.circle,
@@ -347,14 +347,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     ),
                   ),
                 ),
-              if (ref.read(appProvider).notifications.any((n) => n.isRead))
+              if (ref.read(engagementProvider).notifications.any((n) => n.isRead))
                 const SizedBox(width: 8),
               if (unreadCount > 0)
                 InkWell(
                   key: const Key('markAllReadButton'),
                   onTap: () => provider.markAllNotificationsRead(),
                   child: Container(
-                    padding: const EdgeInsets.all(13),
+                    padding: const EdgeInsets.all(Spacing.md2),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -379,7 +379,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                   const NotificationPreferencesScreen(),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.all(13),
+                  padding: const EdgeInsets.all(Spacing.md2),
                   decoration: BoxDecoration(
                     color: colors.card,
                     shape: BoxShape.circle,
@@ -408,10 +408,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     final colors = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(4),
+      padding: Spacing.paddingXs,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -431,13 +431,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 2.0),
               child: InkWell(
                 onTap: () => _tabController.animateTo(index),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -480,7 +480,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             width: 80,
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -510,7 +510,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   Widget _buildNotificationCard(
-      BuildContext context, AppNotification notif, AppProvider provider) {
+      BuildContext context, AppNotification notif, EngagementProvider provider) {
     final colors = AppColors.of(context);
     final categoryInfo = _getCategoryInfo(context, notif);
 
@@ -520,7 +520,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: !notif.isRead
               ? Border.all(
                   color: AppColors.primary.withValues(alpha: 0.1),
@@ -535,7 +535,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -582,7 +582,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                         categoryInfo.label.toUpperCase(),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 11,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: categoryInfo.color,
                           letterSpacing: 0.5,
                         ),
@@ -638,7 +638,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('rent')) {
       return (
         icon: Icons.currency_rupee,
-        color: AppColors.successGreen,
+        color: AppColors.success,
         bgColor: AppColors.successSurfaceLight,
         label: 'Payment'
       );
@@ -672,7 +672,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.campaign_outlined,
         color: AppColors.purpleDeep,
-        bgColor: const Color(0xFFFAF5FF),
+        bgColor: AppColors.purpleLightSurface,
         label: 'Announcement'
       );
     }

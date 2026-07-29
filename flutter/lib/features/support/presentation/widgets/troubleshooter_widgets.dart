@@ -5,7 +5,7 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 const vfBlue = AppColors.primary;
-const vfBlueLight = Color(0xFFE8F0FE);
+const vfBlueLight = AppColors.primarySurface;
 
 IconData tsIconData(String name) {
   return switch (name) {
@@ -43,7 +43,7 @@ class CategoryCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.glass,
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.6),
@@ -64,7 +64,7 @@ class CategoryCard extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Icon(icon, color: color, size: 22),
                   ),
@@ -123,7 +123,7 @@ class QuestionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.6),
@@ -131,7 +131,7 @@ class QuestionCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Container(
@@ -186,7 +186,7 @@ class ActionButtons extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onYes,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -207,7 +207,7 @@ class ActionButtons extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onNo,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
+                backgroundColor: AppColors.errorDark,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -239,7 +239,7 @@ class PathSummary extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.6),
@@ -269,14 +269,14 @@ class PathSummary extends StatelessWidget {
                       height: 20,
                       decoration: BoxDecoration(
                         color: answer.answer
-                            ? Colors.green.withValues(alpha: 0.15)
-                            : Colors.red.withValues(alpha: 0.15),
+                            ? AppColors.success.withValues(alpha: 0.15)
+                            : AppColors.error.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         answer.answer ? Icons.check : Icons.close,
                         size: 12,
-                        color: answer.answer ? Colors.green : Colors.red,
+                        color: answer.answer ? AppColors.success : AppColors.error,
                       ),
                     ),
                     SizedBox(width: 10),
@@ -314,17 +314,17 @@ class ResolutionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (title, titleColor) = switch (resolutionType) {
-      'SUCCESS' => ('Issue Resolved', Colors.green),
+      'SUCCESS' => ('Issue Resolved', AppColors.success),
       'FAILED' => ('Troubleshooting Tip', Colors.orange),
       'NEEDS_SUPPORT' => ('Support Required', vfBlue),
-      'DANGER' => ('Safety Warning', Colors.red),
-      _ => ('Result', Colors.grey),
+      'DANGER' => ('Safety Warning', AppColors.error),
+      _ => ('Result', AppColors.onSurfaceVariant),
     };
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
           color: titleColor.withValues(alpha: 0.3),
@@ -332,7 +332,7 @@ class ResolutionCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Text(
@@ -378,15 +378,15 @@ class PathStep extends StatelessWidget {
             height: 28,
             decoration: BoxDecoration(
               color: answer.answer
-                  ? Colors.green.withValues(alpha: 0.15)
-                  : Colors.red.withValues(alpha: 0.15),
+                  ? AppColors.success.withValues(alpha: 0.15)
+                  : AppColors.error.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: Text(
               '$stepNumber',
               style: AppTypography.labelMedium
-                  .copyWith(color: answer.answer ? Colors.green : Colors.red),
+                  .copyWith(color: answer.answer ? AppColors.success : AppColors.error),
             ),
           ),
           SizedBox(width: 10),
@@ -408,16 +408,16 @@ class PathStep extends StatelessWidget {
                       answer.answer ? Icons.check : Icons.close,
                       size: 14,
                       color: answer.answer
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
+                          ? AppColors.successDark
+                          : AppColors.errorDark,
                     ),
                     SizedBox(width: 4),
                     Text(
                       answer.answer ? 'Yes' : 'No',
                       style: AppTypography.labelMedium.copyWith(
                           color: answer.answer
-                              ? Colors.green.shade700
-                              : Colors.red.shade700),
+                              ? AppColors.successDark
+                              : AppColors.errorDark),
                     ),
                   ],
                 ),
@@ -441,7 +441,7 @@ class TroubleshooterHeaderIcon extends StatelessWidget {
         height: 80,
         decoration: BoxDecoration(
           color: vfBlueLight,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: const Icon(
           Icons.build_circle_rounded,
@@ -469,7 +469,7 @@ class TroubleshooterStepCounter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: vfBlueLight,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -499,8 +499,8 @@ class TroubleshooterResultIcon extends StatelessWidget {
     final (icon, color, bgColor) = switch (resolutionType) {
       'SUCCESS' => (
           Icons.check_circle_rounded,
-          Colors.green,
-          Colors.green.withValues(alpha: 0.12),
+          AppColors.success,
+          AppColors.success.withValues(alpha: 0.12),
         ),
       'FAILED' => (
           Icons.error_outline,
@@ -514,13 +514,13 @@ class TroubleshooterResultIcon extends StatelessWidget {
         ),
       'DANGER' => (
           Icons.warning_rounded,
-          Colors.red,
-          Colors.red.withValues(alpha: 0.12),
+          AppColors.error,
+          AppColors.error.withValues(alpha: 0.12),
         ),
       _ => (
           Icons.info_outline,
-          Colors.grey,
-          Colors.grey.withValues(alpha: 0.12),
+          AppColors.onSurfaceVariant,
+          AppColors.onSurfaceVariant.withValues(alpha: 0.12),
         ),
     };
 
@@ -549,7 +549,7 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.6),
@@ -557,14 +557,14 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 const Icon(Icons.route,
-                    size: 18, color: AppColors.textTertiary),
+                    size: 18, color: AppColors.onSurfaceDisabled),
                 SizedBox(width: 8),
                 Text(
                   'Diagnostic path taken',
@@ -658,7 +658,7 @@ class TroubleshooterSosButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.error,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),

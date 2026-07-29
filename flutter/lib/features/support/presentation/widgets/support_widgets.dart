@@ -80,11 +80,11 @@ class RaiseTicketCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF2176FF)],
+          colors: [AppColors.primary, AppColors.royalBlueStrong],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.2),
@@ -93,7 +93,7 @@ class RaiseTicketCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -104,7 +104,7 @@ class RaiseTicketCard extends StatelessWidget {
                 width: 36,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.confirmation_number_outlined,
@@ -130,7 +130,7 @@ class RaiseTicketCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: DropdownButtonHideUnderline(
@@ -169,7 +169,7 @@ class RaiseTicketCard extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
               ),
               child: TextFormField(
@@ -220,7 +220,7 @@ class RaiseTicketCard extends StatelessWidget {
                     child: Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: Image.file(
                             file,
                             width: 80,
@@ -236,7 +236,7 @@ class RaiseTicketCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: const BoxDecoration(
-                                color: Colors.red,
+                                color: AppColors.error,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -259,7 +259,7 @@ class RaiseTicketCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.3)),
                       ),
@@ -282,7 +282,7 @@ class RaiseTicketCard extends StatelessWidget {
               foregroundColor: AppColors.primary,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
               ),
               elevation: 0,
             ),
@@ -298,7 +298,7 @@ class RaiseTicketCard extends StatelessWidget {
                 : Text(
                     'RAISE TICKET',
                     style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 1,
                     ),
                   ),
@@ -339,7 +339,7 @@ class TicketListItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -348,7 +348,7 @@ class TicketListItem extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -359,7 +359,7 @@ class TicketListItem extends StatelessWidget {
                 width: 40,
                 decoration: BoxDecoration(
                   color: AppColors.iconBackground,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.help_center_outlined,
@@ -391,7 +391,7 @@ class TicketListItem extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(99),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                           child: Text(
                             ticket.status.replaceAll('_', ' '),
@@ -472,7 +472,7 @@ class TopActionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -484,7 +484,7 @@ class TopActionCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 20),

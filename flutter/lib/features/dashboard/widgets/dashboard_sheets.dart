@@ -9,6 +9,7 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -65,10 +66,10 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
             ),
             SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               decoration: BoxDecoration(
                 color: AppColors.surfaceBright,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
                 children: [
@@ -107,13 +108,13 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                             const SnackBar(
                               content: Text(
                                   'Could not open the phone dialer. Please try again.'),
-                              backgroundColor: Colors.red,
+                              backgroundColor: AppColors.error,
                             ),
                           );
                         }
                       }
                     },
-                    icon: const Icon(Icons.call, color: AppColors.successGreen),
+                    icon: const Icon(Icons.call, color: AppColors.success),
                   ),
                 ],
               ),
@@ -132,13 +133,13 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: const BorderSide(color: AppColors.outlineVariant),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
                       'Change TL',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.errorRed,
+                        color: AppColors.error,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -153,7 +154,7 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
@@ -227,29 +228,59 @@ void showChangeTLReasonSheet(BuildContext context) {
                   filled: true,
                   fillColor: AppColors.surfaceBright,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
               SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  final reason = reasonController.text.trim();
+                  if (reason.length < 5) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please provide a detailed reason (at least 5 characters)'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                    return;
+                  }
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('Your request has been submitted for approval'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
+                  try {
+                    await ProviderScope.containerOf(context)
+                        .read(supportProvider)
+                        .createTicket(
+                          category: 'GENERAL',
+                          subject: 'Request to change Team Leader',
+                          message: 'Rider request to change Team Leader. Reason: $reason',
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Your TL change request has been submitted for approval'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to submit request: ${e.toString()}'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.errorRed,
+                  backgroundColor: AppColors.error,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                 ),
                 child: Text(
@@ -317,10 +348,10 @@ void showSubscriptionSheet(
             ),
             SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(Spacing.md),
               decoration: BoxDecoration(
                 color: AppColors.surfaceBright,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: AppColors.outlineVariant),
               ),
               child: Column(
@@ -342,12 +373,12 @@ void showSubscriptionSheet(
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.successSurface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
                           'Active',
                           style: AppTypography.labelMedium
-                              .copyWith(color: AppColors.successGreen),
+                              .copyWith(color: AppColors.success),
                         ),
                       ),
                     ],
@@ -381,9 +412,7 @@ void showSubscriptionSheet(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27),
-                ),
+                shape: const StadiumBorder(),
               ),
               child: Text(
                 'Request Plan Change',
@@ -395,14 +424,13 @@ void showSubscriptionSheet(
               key: const Key('endRentalButton'),
               onPressed: () {
                 Navigator.pop(context);
+                startVehicleReturnWorkflow(context, rider);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.errorRed,
+                foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.errorBorder),
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27),
-                ),
+                shape: const StadiumBorder(),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -427,9 +455,7 @@ void showSubscriptionSheet(
                 foregroundColor: AppColors.slate600,
                 side: const BorderSide(color: AppColors.outlineVariant),
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27),
-                ),
+                shape: const StadiumBorder(),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -452,9 +478,7 @@ void showSubscriptionSheet(
                 foregroundColor: AppColors.slate500,
                 side: const BorderSide(color: AppColors.borderMedium),
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(27),
-                ),
+                shape: const StadiumBorder(),
               ),
               child: Text(
                 'Close',
@@ -539,7 +563,7 @@ Future<void> startVehicleReturnWorkflow(
                     backgroundColor: AppColors.primary,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                 ),
@@ -582,7 +606,7 @@ Future<void> startVehicleReturnWorkflow(
             Text(
               'Please do not close the app.',
               style:
-                  GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey),
+                  GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.onSurfaceVariant),
             ),
           ],
         ),
@@ -590,7 +614,7 @@ Future<void> startVehicleReturnWorkflow(
     );
 
     final success = await ProviderScope.containerOf(context)
-        .read(appProvider)
+        .read(riderProvider)
         .submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
@@ -606,7 +630,7 @@ Future<void> startVehicleReturnWorkflow(
             icon: const Icon(
               Icons.check_circle,
               size: 48,
-              color: AppColors.successGreen,
+              color: AppColors.success,
             ),
             title: const Text('Return Request Submitted'),
             content: const Text(
@@ -624,7 +648,7 @@ Future<void> startVehicleReturnWorkflow(
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to submit return request. Please try again.'),
-            backgroundColor: AppColors.errorRed,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -675,16 +699,31 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
   );
 }
 
-void _updateIntent(BuildContext context, RiderModel rider, String newIntent) {
-  final updated = rider.copyWith(intent: newIntent);
-  ProviderScope.containerOf(context).read(appProvider).updateRider(updated);
-  Navigator.pop(context);
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Intent updated successfully'),
-      backgroundColor: AppColors.success,
-    ),
-  );
+Future<void> _updateIntent(BuildContext context, RiderModel rider, String newIntent) async {
+  final provider = ProviderScope.containerOf(context).read(riderProvider);
+  try {
+    await ApiClient().put('/api/rider/profile', body: {'intent': newIntent});
+    final updated = rider.copyWith(intent: newIntent);
+    provider.updateRider(updated);
+    if (context.mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Intent updated successfully'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update intent: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
 }
 
 class _IntentOption extends ConsumerWidget {

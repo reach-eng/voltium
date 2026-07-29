@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:universal_io/io.dart';
 import '../models/rider_model.dart';
 import '../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,14 +28,14 @@ class TopUpRequestSentCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
+            color: AppColors.shadowSoft,
             blurRadius: 24,
             offset: Offset(0, 8),
           ),
@@ -56,7 +57,7 @@ class TopUpRequestSentCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusBg,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   statusText.toUpperCase(),
@@ -69,10 +70,10 @@ class TopUpRequestSentCard extends StatelessWidget {
           if (isRejected && record?.rejectionReason != null) ...[
             SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.errorSurface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border:
                     Border.all(color: AppColors.error.withValues(alpha: 0.2)),
               ),
@@ -102,6 +103,49 @@ class TopUpRequestSentCard extends StatelessWidget {
             child: Divider(height: 1, color: AppColors.outlineVariant),
           ),
           _buildRow('Total Pending', '₹$topUpAmount', isBold: true),
+          if (record?.proofUrl != null && record!.proofUrl!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text(
+                  'Uploaded Proof:',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.slate500,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Builder(
+                  builder: (ctx) {
+                    var imgUrl = record.proofUrl!;
+                    final host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
+                    if (imgUrl.startsWith('http')) {
+                      imgUrl = imgUrl.replaceAll('localhost', host);
+                    } else if (imgUrl.startsWith('/')) {
+                      imgUrl = 'http://$host:8081$imgUrl';
+                    } else {
+                      imgUrl = 'http://$host:8081/api/files/download/$imgUrl';
+                    }
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: Image.network(
+                        imgUrl,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image,
+                          size: 32,
+                          color: AppColors.slate400,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
           if (isRejected) ...[
             SizedBox(height: 20),
             SizedBox(
@@ -113,7 +157,7 @@ class TopUpRequestSentCard extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   elevation: 0,
                 ),
@@ -147,7 +191,7 @@ class TopUpRequestSentCard extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             color: AppColors.slate800,
             fontSize: isBold ? 16 : 14,
-            fontWeight: isBold ? FontWeight.w900 : FontWeight.w600,
+            fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
           ),
         ),
       ],

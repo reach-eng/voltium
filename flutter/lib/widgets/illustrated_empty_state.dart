@@ -65,7 +65,7 @@ class IllustratedEmptyState extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                   ),
                 ),
                 child: Text(actionLabel!),

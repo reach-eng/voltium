@@ -20,13 +20,13 @@ class StatusTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
-    final Color dotColor = isApproved ? AppColors.success : AppColors.errorRed;
+    final Color dotColor = isApproved ? AppColors.success : AppColors.error;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -92,7 +92,7 @@ class QuickLinkItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -104,7 +104,7 @@ class QuickLinkItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -221,10 +221,10 @@ class ProfileGuarantorCard extends StatelessWidget {
     final isApproved = rider.guarantorStatus == GuarantorStatus.verified ||
         rider.guarantorStatus == GuarantorStatus.approved;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -310,7 +310,7 @@ class ProfileGuarantorCard extends StatelessWidget {
                   color: isApproved
                       ? AppColors.successSurfaceAlt
                       : AppColors.warningSurface,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(
                     color: isApproved
                         ? AppColors.success.withValues(alpha: 0.2)
@@ -366,13 +366,13 @@ class ProfileEmergencySosTile extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.errorSurface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.errorBorder),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -387,7 +387,7 @@ class ProfileEmergencySosTile extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.emergency_outlined,
-                    color: AppColors.errorRed,
+                    color: AppColors.error,
                     size: 22,
                   ),
                 ),
@@ -396,7 +396,7 @@ class ProfileEmergencySosTile extends StatelessWidget {
                   child: Text(
                     'Emergency SOS',
                     style: AppTypography.titleSmall
-                        .copyWith(color: AppColors.errorRed),
+                        .copyWith(color: AppColors.error),
                   ),
                 ),
                 const Icon(Icons.chevron_right, color: AppColors.error),
@@ -421,12 +421,12 @@ class ProfileLogoutButton extends StatelessWidget {
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.errorRed,
+        foregroundColor: AppColors.error,
         elevation: 0,
         side: const BorderSide(color: AppColors.errorBorder, width: 1.5),
         minimumSize: const Size(double.infinity, 54),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
         ),
       ),
       child: Row(
@@ -547,8 +547,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('feedbackLink'),
             icon: Icons.rate_review_outlined,
-            iconColor: const Color(0xFF7E22CE),
-            iconBgColor: const Color(0xFFF3E8FF),
+            iconColor: AppColors.purpleIcon,
+            iconBgColor: AppColors.purpleIconSurface,
             title: 'Feedback',
             onTap: onFeedbackTap,
           ),
@@ -559,8 +559,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('legalLink'),
             icon: Icons.gavel_outlined,
-            iconColor: const Color(0xFF0F766E), // teal-700
-            iconBgColor: const Color(0xFFCCFBF1), // teal-50
+            iconColor: AppColors.tealIcon, // teal-700
+            iconBgColor: AppColors.tealIconSurface, // teal-50
             title: 'Legal',
             onTap: onLegalTap,
           ),

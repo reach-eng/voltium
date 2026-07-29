@@ -29,10 +29,10 @@ class WeekSelector extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
+            color: AppColors.shadowSoft,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
@@ -44,7 +44,7 @@ class WeekSelector extends StatelessWidget {
           InkWell(
             onTap: onPrev,
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: Spacing.paddingSm,
               decoration: const BoxDecoration(
                 color: AppColors.iconBackground,
                 shape: BoxShape.circle,
@@ -74,7 +74,7 @@ class WeekSelector extends StatelessWidget {
           InkWell(
             onTap: onNext,
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: Spacing.paddingSm,
               decoration: const BoxDecoration(
                 color: AppColors.iconBackground,
                 shape: BoxShape.circle,
@@ -114,16 +114,16 @@ class TotalCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.primary, AppColors.primaryGradientEnd],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x260053C1),
+            color: AppColors.shadowPrimaryStrong,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -133,7 +133,7 @@ class TotalCard extends StatelessWidget {
               Text(
                 'THIS WEEK',
                 style: AppTypography.microOverline.copyWith(
-                  color: Color(0xB3FFFFFF),
+                  color: AppColors.white70,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -141,7 +141,7 @@ class TotalCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   children: [
@@ -186,10 +186,10 @@ class TotalCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: Colors.white.withAlpha(38),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +197,7 @@ class TotalCard extends StatelessWidget {
                       Text(
                         'TRIPS',
                         style: AppTypography.microBadge.copyWith(
-                          color: Color(0xB3FFFFFF),
+                          color: AppColors.white70,
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -214,10 +214,10 @@ class TotalCard extends StatelessWidget {
               SizedBox(width: 12),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: Colors.white.withAlpha(38),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +225,7 @@ class TotalCard extends StatelessWidget {
                       Text(
                         'HOURS',
                         style: AppTypography.microBadge.copyWith(
-                          color: Color(0xB3FFFFFF),
+                          color: AppColors.white70,
                           letterSpacing: 0.8,
                         ),
                       ),
@@ -274,12 +274,12 @@ class DayCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: hasEntries ? null : Border.all(color: AppColors.outlineVariant),
         boxShadow: hasEntries
             ? const [
                 BoxShadow(
-                  color: Color(0x0A0F172A),
+                  color: AppColors.shadowSoft,
                   blurRadius: 48,
                   offset: Offset(0, 24),
                 ),
@@ -292,7 +292,7 @@ class DayCard extends StatelessWidget {
 
   Widget _buildEntryCard() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -342,7 +342,7 @@ class DayCard extends StatelessWidget {
                   Text(
                     '\u20B9${amount.toStringAsFixed(0)}',
                     style: AppTypography.titleMedium
-                        .copyWith(color: AppColors.successGreen),
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
@@ -362,7 +362,7 @@ class DayCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.primarySurface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -387,7 +387,7 @@ class DayCard extends StatelessWidget {
 
   Widget _buildEmptyCard() {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -413,7 +413,7 @@ class DayCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -473,16 +473,16 @@ class SummaryCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: AppGradients.success,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x2610B981),
+            color: AppColors.shadowSuccessStrong,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -524,10 +524,10 @@ class SummaryCard extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(Spacing.sm),
             decoration: BoxDecoration(
               color: Colors.white.withAlpha(38),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
@@ -585,7 +585,7 @@ class EarningsEmptyState extends StatelessWidget {
             width: 80,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 20),
               ],

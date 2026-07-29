@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Brand Colors
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryLight = Color(0xFF60A5FA);
+  // Brand Colors — Voltium Blue
+  // Source of truth: docs/design-system.md + web/src/app/globals.css (--color-vf-primary).
+  // The web side uses #0053C1; this file previously used #2563EB (audit AUDIT_DESIGN_SYSTEM.md §3.1).
+  // Aligned on 2026-07-29 as part of Phase 7 follow-up.
+  static const Color primary = Color(0xFF0053C1);
+  static const Color primaryLight = Color(0xFF2F6DDE);
   static const Color primaryLighter = Color(0xFFDBEAFE);
-  static const Color primaryDark = Color(0xFF1D4ED8);
-  static const Color primaryGradientEnd = Color(0xFF3B82F6);
+  static const Color primaryDark = Color(0xFF003E92);
+  static const Color primaryGradientEnd = Color(0xFF2F6DDE);
 
   // Status & Semantic Colors
   static const Color success = Color(0xFF10B981); // emerald-500
@@ -56,19 +59,13 @@ class AppColors {
   static const Color outline = Color(0xFFD0D5DD);
   static const Color outlineVariant = Color(0xFFE2E8F0);
 
-  // Slate palette
+  // Slate palette (used for dark mode surfaces and text)
   static const Color slate400 = Color(0xFF94A3B8);
   static const Color slate500 = Color(0xFF64748B);
   static const Color slate600 = Color(0xFF475569);
   static const Color slate700 = Color(0xFF334155);
   static const Color slate800 = Color(0xFF1E293B);
   static const Color slate900 = Color(0xFF0F172A);
-
-  // Extended text colors
-  static const Color textPrimary = Color(0xFF111827); // gray-900
-  static const Color textSecondary = Color(0xFF4B5563); // gray-600
-  static const Color textMuted = Color(0xFF667085); // gray-500
-  static const Color textTertiary = Color(0xFF6B7280); // gray-500 alt
 
   // Extended surface colors
   static const Color surfaceBright = Color(0xFFF8FAFC); // slate-50
@@ -81,15 +78,12 @@ class AppColors {
   static const Color borderMedium = Color(0xFFCBD5E1); // slate-300
 
   // Success extended
-  static const Color successGreen = Color(0xFF16A34A); // green-600
   static const Color successBright = Color(0xFF4ADE80); // green-400
   static const Color successSurface = Color(0xFFDCFCE7); // green-100
   static const Color successSurfaceLight = Color(0xFFF0FDF4); // green-50
   static const Color successSurfaceAlt = Color(0xFFECFDF5); // green-50 alt
 
   // Error extended
-  static const Color errorRed = Color(0xFFDC2626); // red-600
-  static const Color errorRedAlt = Color(0xFFD92D20); // red-600 alt
   static const Color errorSurface = Color(0xFFFEF2F2); // red-50
   static const Color errorBorder = Color(0xFFFECACA); // red-200
   static const Color errorRose = Color(0xFFFFE4E6); // rose-100
@@ -102,7 +96,6 @@ class AppColors {
   static const Color primarySurface = Color(0xFFEFF6FF); // blue-50
   static const Color primaryLightBlue = Color(0xFF93C5FD); // blue-300
   static const Color primaryDeep = Color(0xFF142B5B); // dark blue
-  static const Color primaryCyan = Color(0xFF0053C1); // brand cyan-blue
 
   // Purple extended
   static const Color purpleDark = Color(0xFF7C3AED); // violet-600
@@ -111,8 +104,79 @@ class AppColors {
 
   // Feature Colors
   static const Color evPurple = Color(0xFF8B5CF6);
-  static const Color evPurpleLight = Color(0xFFEDE9FE);
   static const Color whatsappGreen = Color(0xFF25D366);
+  static const Color voltAccent = Color(0xFF00E5FF); // Electric Cyan
+
+  // ── Feather palette ──────────────────────────────────────────────────────
+  // Lightweight accent surface/icon pairs. Use these instead of raw
+  // Color(0xFF...) for icon tiles, status chips, and small background swatches
+  // where a fully-themed ThemeColors extension is overkill. Pair `xxxIcon`
+  // (foreground, ~600 weight) with `xxxIconSurface` (background, ~50/100).
+  static const Color amberIcon = Color(0xFFEAB308); // yellow-500
+  static const Color amberIconSurface = Color(0xFFFEF9C3); // yellow-100
+
+  static const Color purpleIcon = Color(0xFF7E22CE); // purple-700
+  static const Color purpleIconSurface = Color(0xFFF3E8FF); // purple-100
+  static const Color purpleIconVivid = Color(0xFF6D28D9); // purple-800 (gradient end)
+  static const Color purpleLightSurface = Color(0xFFFAF5FF); // purple-50
+
+  static const Color tealIcon = Color(0xFF0F766E); // teal-700
+  static const Color tealIconSurface = Color(0xFFCCFBF1); // teal-100
+
+  // Danger-zone text — used for delete-account/kyc-rejected labels.
+  static const Color dangerText = Color(0xFF991B1B); // red-800
+  static const Color dangerShadow = Color(0x40BA1A1A); // 25% red-700
+
+  // Orange / accent pair — used for "PENDING KYC" badges, top-up screens.
+  static const Color orangeAccent = Color(0xFFEA580C); // orange-600
+  static const Color orangeAccentDark = Color(0xFFC2410C); // orange-700
+  static const Color orangeAccentSurface = Color(0xFFFFF7ED); // orange-50
+  static const Color orangeAccentBorder = Color(0xFFFED7AA); // orange-200
+  static const Color orangeAccentLight = Color(0xFFFFE082); // amber-200 (warmer)
+
+  // Sky / cool blues — used for "info" spark, OTP spark, and gentle hints.
+  static const Color skySpark = Color(0xFF38BDF8); // sky-400
+  static const Color skySparkSurface = Color(0xFFE0F2FE); // sky-100
+
+  // Royal blue — used for "active" / "selected" status pill text + bg.
+  static const Color royalBlue = Color(0xFF1B60DA);
+  static const Color royalBlueTint = Color(0xFFDEE9FF);
+  static const Color royalBlueStrong = Color(0xFF2176FF);
+
+  // Success tints — used for "completed" / "OK" pills and disabled-but-OK buttons.
+  static const Color successTint = Color(0xFFA7F3D0); // emerald-200
+  static const Color successBorderLight = Color(0xFF6EE7B7); // emerald-300
+  static const Color successOutline = Color(0xFFBBF7D0); // green-200
+
+  // Rental / status pills.
+  static const Color greenFill = Color(0xFF86EFAC); // green-300
+
+  // Referral / earning gradient endpoints.
+  static const Color indigoVivid = Color(0xFF4F46E5); // indigo-600
+
+  // Translucent text/shadow — used over brand gradient backgrounds.
+  static const Color white70 = Color(0xB3FFFFFF); // 70% white (over gradient)
+
+  // Shimmer skeleton colors (light mode). Dark mode uses AppColors.slate800/700.
+  static const Color shimmerBase = Color(0xFFE8EDF5);
+  static const Color shimmerHighlight = Color(0xFFF5F8FF);
+
+  // Card / glow shadows.
+  static const Color shadowSoft = Color(0x0A0F172A); // 4% onSurface
+  static const Color shadowPrimaryStrong = Color(0x260053C1); // 15% primary
+  static const Color shadowSuccessStrong = Color(0x2610B981); // 15% success
+
+  // Electric burst — used by ElectricBurst success animation. Pairs a 6-stop
+  // blue ramp so the particles visibly cascade from light → dark → white spark.
+  static const List<Color> electricBurstPalette = [
+    Color(0xFFDBEAFE), // blue-100
+    Color(0xFF93C5FD), // blue-300
+    Color(0xFF60A5FA), // blue-400
+    Color(0xFF3B82F6), // blue-500
+    Color(0xFF2563EB), // blue-600
+    Color(0xFF1D4ED8), // blue-700
+    Color(0xFFFFFFFF), // white spark
+  ];
 
   /// Get theme-aware colors for the current brightness.
   ///
@@ -122,8 +186,10 @@ class AppColors {
   /// Container(color: colors.surface)
   /// ```
   static ThemeColors of(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? ThemeColors.dark : ThemeColors.light;
+    return Theme.of(context).extension<ThemeColors>() ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? ThemeColors.dark
+            : ThemeColors.light);
   }
 
   AppColors._();
@@ -131,8 +197,9 @@ class AppColors {
 
 class AppGradients {
   /// Primary brand gradient: #0053C1 → #2F6DDE (135deg)
+  /// Matches web `vf-gradient` in `web/src/app/globals.css`.
   static const LinearGradient primary = LinearGradient(
-    colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+    colors: [Color(0xFF0053C1), Color(0xFF2F6DDE)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -208,12 +275,24 @@ class AppShadows {
 }
 
 class Spacing {
+  // 4px grid (canonical). Use these wherever possible.
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 16;
   static const double lg = 24;
   static const double xl = 32;
   static const double xxl = 48;
+
+  // Sub-grid values for tight UI (badges, inline chips, small inline paddings).
+  // These are also part of the design system — just at half-step granularity.
+  static const double xxs = 2;
+  static const double xs2 = 6; // between xs and sm
+  static const double sm2 = 10; // between sm and md
+  static const double sm3 = 12; // exactly between sm and md
+  static const double md2 = 14; // between md and lg
+  static const double md3 = 18; // between md and lg
+  static const double lg2 = 20; // between lg and xl
+  static const double lg3 = 22; // between lg and xl
 
   static const EdgeInsets paddingXs = EdgeInsets.all(xs);
   static const EdgeInsets paddingSm = EdgeInsets.all(sm);
@@ -233,13 +312,22 @@ class Spacing {
 }
 
 class AppRadius {
+  // 4px grid (canonical). Use these wherever possible.
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;
-  static const double lg = 24;
+  static const double lg = 16;
   static const double xl = 24;
-  static const double xxl = 28;
+  static const double xxl = 32;
   static const double full = 9999;
+
+  // Sub-grid values for tight UI (badges, inline chips, small icon backgrounds).
+  static const double xxs = 2;
+  static const double xs2 = 6;
+  static const double sm2 = 10;
+  static const double md2 = 14;
+  static const double lg2 = 18;
+  static const double xl2 = 22;
 
   static const BorderRadius radiusXs = BorderRadius.all(Radius.circular(xs));
   static const BorderRadius radiusSm = BorderRadius.all(Radius.circular(sm));
@@ -301,6 +389,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.outlineVariant,
+          disabledForegroundColor: AppColors.slate400,
           elevation: 2,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
@@ -335,7 +425,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF1F5F9), // slate-100
+        fillColor: AppColors.iconBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -365,7 +455,7 @@ class AppTheme {
             GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceDisabled),
       ),
       cardTheme: CardThemeData(
-        color: Colors.white,
+        color: ThemeColors.light.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -376,6 +466,7 @@ class AppTheme {
         color: AppColors.divider,
         thickness: 1,
       ),
+      extensions: const [ThemeColors.light],
     );
   }
 
@@ -412,6 +503,8 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.slate700,
+          disabledForegroundColor: AppColors.slate500,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -484,6 +577,7 @@ class AppTheme {
         color: darkColors.divider,
         thickness: 1,
       ),
+      extensions: const [ThemeColors.dark],
     );
   }
 
@@ -501,7 +595,7 @@ class AppTheme {
 /// final colors = AppColors.of(context);
 /// Container(color: colors.surface, child: Text('Hello', style: TextStyle(color: colors.onSurface)))
 /// ```
-class ThemeColors {
+class ThemeColors extends ThemeExtension<ThemeColors> {
   static const ThemeColors light = ThemeColors._(
     surface: Color(0xFFF7F9FB),
     surfaceAlt: Color(0xFFF5F7FA),
@@ -519,12 +613,11 @@ class ThemeColors {
     success: Color(0xFF16A34A),
     successSurface: Color(0xFFDCFCE7),
     error: Color(0xFFEF4444),
-    errorRed: Color(0xFFDC2626),
     errorSurface: Color(0xFFFEF2F2),
     warning: Color(0xFFF59E0B),
     warningSurface: Color(0xFFFFFBEB),
     primarySurface: Color(0xFFEFF6FF),
-    successGreen: Color(0xFF16A34A),
+    voltAccent: Color(0xFF00E5FF),
   );
 
   static const ThemeColors dark = ThemeColors._(
@@ -544,12 +637,11 @@ class ThemeColors {
     success: Color(0xFF34D399),
     successSurface: Color(0xFF064E3B),
     error: Color(0xFFFCA5A5),
-    errorRed: Color(0xFFFCA5A5),
     errorSurface: Color(0xFF7F1D1D),
     warning: Color(0xFFFBBF24),
     warningSurface: Color(0xFF78350F),
     primarySurface: Color(0xFF1E293B),
-    successGreen: Color(0xFF34D399),
+    voltAccent: Color(0xFF00E5FF),
   );
 
   final Color surface;
@@ -568,12 +660,11 @@ class ThemeColors {
   final Color success;
   final Color successSurface;
   final Color error;
-  final Color errorRed;
   final Color errorSurface;
   final Color warning;
   final Color warningSurface;
   final Color primarySurface;
-  final Color successGreen;
+  final Color voltAccent;
 
   const ThemeColors._({
     required this.surface,
@@ -592,11 +683,87 @@ class ThemeColors {
     required this.success,
     required this.successSurface,
     required this.error,
-    required this.errorRed,
     required this.errorSurface,
     required this.warning,
     required this.warningSurface,
     required this.primarySurface,
-    required this.successGreen,
+    required this.voltAccent,
   });
+
+  @override
+  ThemeColors copyWith({
+    Color? surface,
+    Color? surfaceAlt,
+    Color? surfaceBright,
+    Color? surfaceSubtle,
+    Color? card,
+    Color? onSurface,
+    Color? onSurfaceVariant,
+    Color? onSurfaceMuted,
+    Color? divider,
+    Color? outline,
+    Color? outlineVariant,
+    Color? inputFill,
+    Color? iconBackground,
+    Color? success,
+    Color? successSurface,
+    Color? error,
+    Color? errorSurface,
+    Color? warning,
+    Color? warningSurface,
+    Color? primarySurface,
+    Color? voltAccent,
+  }) {
+    return ThemeColors._(
+      surface: surface ?? this.surface,
+      surfaceAlt: surfaceAlt ?? this.surfaceAlt,
+      surfaceBright: surfaceBright ?? this.surfaceBright,
+      surfaceSubtle: surfaceSubtle ?? this.surfaceSubtle,
+      card: card ?? this.card,
+      onSurface: onSurface ?? this.onSurface,
+      onSurfaceVariant: onSurfaceVariant ?? this.onSurfaceVariant,
+      onSurfaceMuted: onSurfaceMuted ?? this.onSurfaceMuted,
+      divider: divider ?? this.divider,
+      outline: outline ?? this.outline,
+      outlineVariant: outlineVariant ?? this.outlineVariant,
+      inputFill: inputFill ?? this.inputFill,
+      iconBackground: iconBackground ?? this.iconBackground,
+      success: success ?? this.success,
+      successSurface: successSurface ?? this.successSurface,
+      error: error ?? this.error,
+      errorSurface: errorSurface ?? this.errorSurface,
+      warning: warning ?? this.warning,
+      warningSurface: warningSurface ?? this.warningSurface,
+      primarySurface: primarySurface ?? this.primarySurface,
+      voltAccent: voltAccent ?? this.voltAccent,
+    );
+  }
+
+  @override
+  ThemeColors lerp(ThemeExtension<ThemeColors>? other, double t) {
+    if (other is! ThemeColors) return this;
+    return ThemeColors._(
+      surface: Color.lerp(surface, other.surface, t)!,
+      surfaceAlt: Color.lerp(surfaceAlt, other.surfaceAlt, t)!,
+      surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
+      surfaceSubtle: Color.lerp(surfaceSubtle, other.surfaceSubtle, t)!,
+      card: Color.lerp(card, other.card, t)!,
+      onSurface: Color.lerp(onSurface, other.onSurface, t)!,
+      onSurfaceVariant: Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
+      onSurfaceMuted: Color.lerp(onSurfaceMuted, other.onSurfaceMuted, t)!,
+      divider: Color.lerp(divider, other.divider, t)!,
+      outline: Color.lerp(outline, other.outline, t)!,
+      outlineVariant: Color.lerp(outlineVariant, other.outlineVariant, t)!,
+      inputFill: Color.lerp(inputFill, other.inputFill, t)!,
+      iconBackground: Color.lerp(iconBackground, other.iconBackground, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      successSurface: Color.lerp(successSurface, other.successSurface, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      errorSurface: Color.lerp(errorSurface, other.errorSurface, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      warningSurface: Color.lerp(warningSurface, other.warningSurface, t)!,
+      primarySurface: Color.lerp(primarySurface, other.primarySurface, t)!,
+      voltAccent: Color.lerp(voltAccent, other.voltAccent, t)!,
+    );
+  }
 }

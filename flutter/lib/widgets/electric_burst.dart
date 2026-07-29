@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 /// An electric burst success animation: 20 electric-blue particles that radiate
 /// outward and dissolve. Uses [CustomPainter] for zero-widget overhead.
@@ -88,15 +89,7 @@ class _BurstPainter extends CustomPainter {
 
     // 20 electric-blue particles
     const particleCount = 20;
-    const colors = [
-      Color(0xFFDBEAFE), // blue-100
-      Color(0xFF93C5FD), // blue-300
-      Color(0xFF60A5FA), // blue-400
-      Color(0xFF3B82F6), // blue-500
-      Color(0xFF2563EB), // blue-600
-      Color(0xFF1D4ED8), // blue-700
-      Color(0xFFFFFFFF), // white spark
-    ];
+    const colors = AppColors.electricBurstPalette;
 
     for (int i = 0; i < particleCount; i++) {
       final angle = random.nextDouble() * math.pi * 2;

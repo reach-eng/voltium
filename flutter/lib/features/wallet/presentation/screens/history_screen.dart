@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/widgets/animated_bottom_nav.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web HistoryScreen.tsx:
@@ -15,7 +13,11 @@ import 'package:voltium_rider/theme/app_typography.dart';
 /// - Each card shows: icon, title, date, status (color-coded), amount (color-coded)
 /// - Expanded state shows breakdown items (Charge, Tax, Discount, Penalty)
 
-class HistoryScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/models/transaction_model.dart';
+
+class HistoryScreen extends ConsumerStatefulWidget {
   final String riderId;
   final VoidCallback? onBack;
 
@@ -26,16 +28,14 @@ class HistoryScreen extends StatefulWidget {
   });
 
   @override
-  State<HistoryScreen> createState() => _HistoryScreenState();
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen>
+class _HistoryScreenState extends ConsumerState<HistoryScreen>
     with SingleTickerProviderStateMixin {
   String _activeFilter = 'All';
   String _searchQuery = '';
   String? _expandedId;
-  List<dynamic> _transactions = [];
-  bool _isLoading = true;
   late final AnimationController _entryCtrl;
 
   @override
@@ -45,7 +45,12 @@ class _HistoryScreenState extends State<HistoryScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
-    _fetchTransactions();
+    Future.microtask(() {
+      final riderId = ref.read(riderProvider).riderId;
+      if (riderId != null) {
+        ref.read(walletProvider).refreshTransactions(riderId: riderId);
+      }
+    });
   }
 
   @override
@@ -55,59 +60,51 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   Future<void> _fetchTransactions() async {
-    setState(() => _isLoading = true);
-    try {
-      final res = await VoltiumApiService()
-          .fetchTransactionHistory(riderId: widget.riderId);
-      if (mounted) {
-        final rawData = res['data'];
-        final List<dynamic> txList = (rawData is Map)
-            ? (rawData['transactions'] ?? [])
-            : (rawData is List ? rawData : []);
-        setState(() {
-          _transactions = txList;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    final riderId = ref.read(riderProvider).riderId;
+    if (riderId != null) {
+      await ref.read(walletProvider).refreshTransactions(riderId: riderId);
     }
   }
 
-  List<dynamic> get _filteredTx {
-    return _transactions.where((tx) {
-      final type = (tx['type'] as String? ?? '').toUpperCase();
-      final isCredit = type == 'CREDIT' || type == 'TOP_UP';
+  List<TransactionModel> _filteredTx(List<TransactionModel> transactions) {
+    return transactions.where((tx) {
+      final isCredit = tx.isCredit;
       final matchesFilter = _activeFilter == 'All' ||
           (_activeFilter == 'Credits' && isCredit) ||
           (_activeFilter == 'Debits' && !isCredit);
-      final description = (tx['description'] ?? '').toString().toLowerCase();
+      final description = (tx.description ?? tx.purpose ?? '').toLowerCase();
       final matchesSearch = _searchQuery.isEmpty ||
           description.contains(_searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     }).toList();
   }
 
-  double get _totalCredits => _transactions
+  double _totalCredits(List<TransactionModel> transactions) => transactions
       .where(
         (t) =>
-            (t['type'] == 'CREDIT' || t['type'] == 'TOP_UP') &&
-            (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'),
+            t.isCredit &&
+            (t.status == TransactionStatus.approved ||
+                t.status == TransactionStatus.success),
       )
-      .fold(0.0, (sum, t) => sum + ((t['amount'] as num?) ?? 0).toDouble());
+      .fold(0.0, (sum, t) => sum + t.amount);
 
-  double get _totalDebits => _transactions
+  double _totalDebits(List<TransactionModel> transactions) => transactions
       .where(
         (t) =>
-            (t['type'] == 'DEBIT') &&
-            (t['status'] == 'APPROVED' || t['status'] == 'SUCCESS'),
+            !t.isCredit &&
+            (t.status == TransactionStatus.approved ||
+                t.status == TransactionStatus.success),
       )
-      .fold(0.0, (sum, t) => sum + ((t['amount'] as num?) ?? 0).toDouble());
+      .fold(0.0, (sum, t) => sum + t.amount);
 
   @override
   Widget build(BuildContext context) {
+    final transactions = ref.watch(walletProvider.select((p) => p.transactions));
+    final isRefreshing = ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
+    final filtered = _filteredTx(transactions);
+    final credits = _totalCredits(transactions);
+    final debits = _totalDebits(transactions);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -115,21 +112,18 @@ class _HistoryScreenState extends State<HistoryScreen>
           children: [
             _buildHeader(),
             Expanded(
-              child: _isLoading ? _buildLoading() : _buildContent(),
+              child: isRefreshing && transactions.isEmpty
+                  ? _buildLoading()
+                  : _buildContent(filtered, credits, debits),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: 1,
-        onTap: (i) {
-          // Navigation handled by parent
-        },
       ),
     );
   }
 
   Widget _buildHeader() {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
@@ -139,15 +133,15 @@ class _HistoryScreenState extends State<HistoryScreen>
             child: Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: colors.card,
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: AppColors.onSurface,
+                color: colors.onSurface,
               ),
             ),
           ),
@@ -155,7 +149,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           Text(
             'Transaction History',
             style: AppTypography.titleMediumLarge
-                .copyWith(color: AppColors.onSurface),
+                .copyWith(color: colors.onSurface),
           ),
           const Spacer(),
           GestureDetector(
@@ -163,15 +157,15 @@ class _HistoryScreenState extends State<HistoryScreen>
             child: Container(
               width: 36,
               height: 36,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: colors.card,
                 shape: BoxShape.circle,
                 boxShadow: AppShadows.glass,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.refresh,
                 size: 16,
-                color: AppColors.onSurfaceVariant,
+                color: colors.onSurfaceMuted,
               ),
             ),
           ),
@@ -186,45 +180,86 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildContent() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      child: Column(
-        children: [
-          _buildSummaryCards(),
-          const SizedBox(height: 16),
-          _buildSearchBar(),
-          const SizedBox(height: 16),
-          _buildFilterTabs(),
-          const SizedBox(height: 16),
-          _buildInfoHint(),
-          const SizedBox(height: 16),
-          _buildTransactionList(),
-        ],
-      ),
+  Widget _buildContent(
+      List<TransactionModel> filtered, double credits, double debits) {
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              children: [
+                _buildSummaryCards(credits, debits),
+                const SizedBox(height: 16),
+                _buildSearchBar(),
+                const SizedBox(height: 16),
+                _buildFilterTabs(),
+                const SizedBox(height: 16),
+                _buildInfoHint(),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+        if (filtered.isEmpty)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 40),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.filter_list_off,
+                    size: 48,
+                    color: AppColors.outline,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No transactions found',
+                    style: AppTypography.labelLarge
+                        .copyWith(color: AppColors.onSurfaceAlt),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            sliver: SliverList.separated(
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final tx = filtered[index];
+                final id = tx.id ?? index.toString();
+                final isExpanded = _expandedId == id;
+                return _buildTransactionCard(tx, isExpanded);
+              },
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildSummaryCards() {
+  Widget _buildSummaryCards(double credits, double debits) {
     return Row(
       children: [
         _buildSummaryItem(
           'Credits',
-          '+₹${_totalCredits.toInt()}',
-          AppColors.successGreen,
+          '+₹${credits.toInt()}',
+          AppColors.success,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
           'Debits',
-          '-₹${_totalDebits.toInt()}',
+          '-₹${debits.toInt()}',
           AppColors.error,
         ),
         const SizedBox(width: 8),
         _buildSummaryItem(
           'Net',
-          '₹${(_totalCredits - _totalDebits).toInt()}',
-          (_totalCredits - _totalDebits) >= 0
-              ? AppColors.successGreen
+          '₹${(credits - debits).toInt()}',
+          (credits - debits) >= 0
+              ? AppColors.success
               : AppColors.error,
         ),
       ],
@@ -289,6 +324,7 @@ class _HistoryScreenState extends State<HistoryScreen>
   }
 
   Widget _buildFilterTabs() {
+    final colors = AppColors.of(context);
     final tabs = ['All', 'Credits', 'Debits'];
     return Row(
       children: tabs.map((tab) {
@@ -302,8 +338,8 @@ class _HistoryScreenState extends State<HistoryScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(999),
+                  color: isActive ? AppColors.primary : colors.card,
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow:
                       isActive ? AppShadows.primaryButton : AppShadows.card,
                 ),
@@ -313,7 +349,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                     style: AppTypography.labelMedium.copyWith(
                         color: isActive
                             ? Colors.white
-                            : AppColors.onSurfaceVariant),
+                            : colors.onSurfaceMuted),
                   ),
                 ),
               ),
@@ -353,50 +389,14 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildTransactionList() {
-    if (_filteredTx.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 40),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.filter_list_off,
-              size: 48,
-              color: AppColors.outline,
-            ),
-            SizedBox(height: 12),
-            Text(
-              'No transactions found',
-              style: AppTypography.labelLarge
-                  .copyWith(color: AppColors.onSurfaceAlt),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _filteredTx.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final tx = _filteredTx[index];
-        final id = tx['id'] as String;
-        final isExpanded = _expandedId == id;
-        return _buildTransactionCard(tx, isExpanded);
-      },
-    );
-  }
-
-  Widget _buildTransactionCard(dynamic tx, bool isExpanded) {
-    final type = (tx['type'] as String).toUpperCase();
-    final isCredit = type == 'CREDIT' || type == 'TOP_UP';
-    final amount = (tx['amount'] as num).toDouble();
-    final status = (tx['status'] as String).toUpperCase();
-    final date = tx['createdAt'] != null
-        ? tx['createdAt'].toString().substring(0, 10)
+  Widget _buildTransactionCard(TransactionModel tx, bool isExpanded) {
+    final isCredit = tx.isCredit;
+    final amount = tx.amount;
+    final status = tx.status.value.toUpperCase();
+    final date = tx.createdAt != null
+        ? tx.createdAt!.toIso8601String().substring(0, 10)
         : '';
+    final id = tx.id ?? '';
 
     return Container(
       decoration: BoxDecoration(
@@ -412,10 +412,10 @@ class _HistoryScreenState extends State<HistoryScreen>
         children: [
           GestureDetector(
             onTap: () =>
-                setState(() => _expandedId = isExpanded ? null : tx['id']),
+                setState(() => _expandedId = isExpanded ? null : id),
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               child: Row(
                 children: [
                   Container(
@@ -431,7 +431,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
                       color:
-                          isCredit ? AppColors.successGreen : AppColors.error,
+                          isCredit ? AppColors.success : AppColors.error,
                     ),
                   ),
                   SizedBox(width: 12),
@@ -440,7 +440,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tx['description'] ?? tx['purpose'] ?? 'Transaction',
+                          tx.description ?? tx.purpose ?? 'Transaction',
                           style: AppTypography.labelLarge
                               .copyWith(color: AppColors.onSurfaceAlt),
                           maxLines: 1,
@@ -469,8 +469,9 @@ class _HistoryScreenState extends State<HistoryScreen>
                               status,
                               style: AppTypography.microLabel.copyWith(
                                   color: status == 'SUCCESS' ||
-                                          status == 'APPROVED'
-                                      ? AppColors.successGreen
+                                          status == 'APPROVED' ||
+                                          status == 'COMPLETED'
+                                      ? AppColors.success
                                       : AppColors.warningDark),
                             ),
                           ],
@@ -486,7 +487,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                             : Icons.remove_circle_outline,
                         size: 14,
                         color: isCredit
-                            ? AppColors.successGreen
+                            ? AppColors.success
                             : AppColors.errorDark,
                       ),
                       SizedBox(width: 4),
@@ -494,7 +495,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                         '₹${amount.toInt()}',
                         style: AppTypography.bodyMediumStrong.copyWith(
                             color: isCredit
-                                ? AppColors.successGreen
+                                ? AppColors.success
                                 : AppColors.errorDark),
                       ),
                     ],
@@ -509,23 +510,23 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildBreakdown(dynamic tx) {
-    final breakdowns = tx['breakdowns'] as List<dynamic>? ?? [];
+  Widget _buildBreakdown(TransactionModel tx) {
+    final breakdowns = tx.breakdowns;
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainer,
         border: Border(top: BorderSide(color: AppColors.surfaceSubtle)),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (tx['description'] != null)
+          if (tx.description != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
-                tx['description'],
+                tx.description!,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: AppColors.onSurfaceVariant,
@@ -544,7 +545,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                     .copyWith(color: AppColors.onSurfaceVariant),
               ),
               Text(
-                '₹${(tx['amount'] as num).toInt()}',
+                '₹${tx.amount.toInt()}',
                 style: AppTypography.bodyMediumStrong
                     .copyWith(color: AppColors.onSurfaceAlt),
               ),
@@ -555,18 +556,18 @@ class _HistoryScreenState extends State<HistoryScreen>
     );
   }
 
-  Widget _buildBreakdownItem(dynamic b) {
-    final type = b['type'] as String;
-    final label = b['label'] as String;
-    final amount = (b['amount'] as num).toDouble();
+  Widget _buildBreakdownItem(TransactionBreakdown b) {
+    final type = b.type.name.toUpperCase();
+    final label = b.label;
+    final amount = b.amount;
 
     Color color = AppColors.onSurfaceAlt;
     Color bg = AppColors.surfaceSubtle;
     String prefix = '';
 
     if (type == 'TAX') {
-      color = const Color(0xFFC2410C);
-      bg = const Color(0xFFFFF7ED);
+      color = AppColors.orangeAccentDark;
+      bg = AppColors.orangeAccentSurface;
     }
     if (type == 'DISCOUNT') {
       color = AppColors.successDark;
@@ -593,7 +594,7 @@ class _HistoryScreenState extends State<HistoryScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: bg,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
                 child: Text(
                   type,

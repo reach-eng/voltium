@@ -34,7 +34,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
     final points = rider?.totalRewardPoints ?? 0;
 
     // Tier calculation logic
@@ -85,7 +85,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -94,42 +94,44 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               children: [
                 // Background Glow
                 Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _pulseCtrl,
-                    builder: (context, child) {
-                      return Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.evPurple.withValues(
-                                  alpha: 0.2 + (_pulseCtrl.value * 0.15)),
-                              blurRadius: 30 + (_pulseCtrl.value * 20),
-                              spreadRadius: 2 + (_pulseCtrl.value * 5),
-                            )
-                          ],
-                        ),
-                      );
-                    },
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
+                      animation: _pulseCtrl,
+                      builder: (context, child) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.evPurple.withValues(
+                                    alpha: 0.2 + (_pulseCtrl.value * 0.15)),
+                                blurRadius: 30 + (_pulseCtrl.value * 20),
+                                spreadRadius: 2 + (_pulseCtrl.value * 5),
+                              )
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 // Glass Card
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: Spacing.paddingLg,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
                             AppColors.evPurple.withValues(alpha: 0.8),
-                            const Color(0xFF6D28D9).withValues(alpha: 0.9),
+                            AppColors.purpleIconVivid.withValues(alpha: 0.9),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                             width: 1.5),
@@ -145,7 +147,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                   return Transform.scale(
                                     scale: 1.0 + (_pulseCtrl.value * 0.1),
                                     child: Container(
-                                      padding: const EdgeInsets.all(16),
+                                      padding: Spacing.paddingMd,
                                       decoration: BoxDecoration(
                                         color:
                                             Colors.white.withValues(alpha: 0.2),
@@ -216,7 +218,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                     decoration: BoxDecoration(
                                       color:
                                           Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(AppRadius.xs),
                                     ),
                                   ),
                                   FractionallySizedBox(
@@ -225,7 +227,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                       height: 8,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(4),
+                                        borderRadius: BorderRadius.circular(AppRadius.xs),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.white

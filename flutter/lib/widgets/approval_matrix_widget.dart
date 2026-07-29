@@ -72,20 +72,20 @@ class ApprovalMatrixWidget extends StatelessWidget {
       _StepData(
         label: 'KYC',
         status: _getStepStatus(
-          rank >= 7,
-          rank >= 6 && rank < 7 && !isKycRejected,
+          rank >= 8,
+          rank >= 6 && rank < 8 && !isKycRejected,
           isKycRejected,
         ),
         icon: Icons.shield_outlined,
         subtitle: isKycRejected
             ? 'Update Documents'
-            : (rank >= 2 && rank < 7 && !isKycRejected ? 'Under Review' : null),
+            : (rank >= 2 && rank < 8 && !isKycRejected ? 'Under Review' : null),
       ),
       _StepData(
         label: 'Pickup',
         status: _getStepStatus(
-          rank >= 8,
-          rank >= 7 && rank < 8,
+          rank >= 9,
+          rank >= 8 && rank < 9,
           false,
         ),
         icon: Icons.electric_scooter_outlined,
@@ -188,7 +188,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                     color: step.isDone
                         ? AppColors.successText
                         : step.isRejected
-                            ? const Color(0xFF991B1B)
+                            ? AppColors.dangerText
                             : colors.onSurface,
                   ),
                 ),

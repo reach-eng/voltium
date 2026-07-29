@@ -150,7 +150,7 @@ class _NotificationPreferencesScreenState
                         children: [
                           _buildToggleTile(
                             icon: Icons.currency_rupee,
-                            iconColor: AppColors.successGreen,
+                            iconColor: AppColors.success,
                             iconBg: AppColors.successSurfaceLight,
                             title: 'Payments',
                             subtitle: 'Top-ups, rent deductions, refunds',
@@ -180,7 +180,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.campaign_outlined,
                             iconColor: AppColors.purpleDeep,
-                            iconBg: const Color(0xFFFAF5FF),
+                            iconBg: AppColors.purpleLightSurface,
                             title: 'Announcements',
                             subtitle: 'Promotions, offers, platform updates',
                             value: _announcementsEnabled,
@@ -284,16 +284,16 @@ class _NotificationPreferencesScreenState
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
+            color: AppColors.shadowSoft,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -328,7 +328,7 @@ class _NotificationPreferencesScreenState
             height: 44,
             decoration: BoxDecoration(
               color: iconBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: iconColor, size: 20),
           ),

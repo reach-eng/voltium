@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/main.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'dart:ui' as ui;
 import 'package:voltium_rider/utils/phone_validator.dart';
@@ -24,7 +25,7 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 /// - "Enter" gradient pill button (56px)
 /// - Footer terms links (12px, #475467)
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   /// Called when OTP is sent successfully. Passes (phoneNumber, referralCode).
   final Function(String phone, String? referralCode)? onNext;
   final bool isSignUp;
@@ -32,10 +33,10 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onNext, this.isSignUp = false});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _referralController = TextEditingController();
@@ -100,6 +101,8 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
     final digits = _phoneController.text.replaceAll(RegExp(r'\D'), '');
     final error = PhoneValidator.validate(digits);
     if (error != null) {
@@ -113,10 +116,10 @@ class _LoginScreenState extends State<LoginScreen>
     });
     try {
       final referralCode = _referralController.text.trim();
-      await VoltiumApiService().sendOtp(
-        phone: digits,
-        referralCode: referralCode.isNotEmpty ? referralCode : null,
-      );
+      await ref.read(authRepositoryProvider).sendOtp(
+            digits,
+            referralCode: referralCode.isNotEmpty ? referralCode : null,
+          );
       PostHogService.capture('otp_requested', properties: {
         'has_referral': (referralCode.isNotEmpty).toString(),
         'is_sign_up': widget.isSignUp.toString(),
@@ -126,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen>
             ?.call(digits, referralCode.isNotEmpty ? referralCode : null);
       }
     } catch (e) {
+      debugPrint('[LoginScreen] Error in sendOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
         String errorMsg = 'Network error. Please try again.';
@@ -242,14 +246,14 @@ class _LoginScreenState extends State<LoginScreen>
                   child: Container(
                     width: 72,
                     height: 72,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x331B60DA),
+                          color: AppColors.royalBlue.withValues(alpha: 0.2),
                           blurRadius: 20,
-                          offset: Offset(0, 8),
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
@@ -356,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
                 color: _phoneError != null
                     ? AppColors.errorSurface
                     : AppColors.of(context).card,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
                 border: Border.all(
                   color: _phoneError != null
                       ? AppColors.error
@@ -437,7 +441,7 @@ class _LoginScreenState extends State<LoginScreen>
                   child: Text(
                     _phoneError!,
                     style: AppTypography.bodySmall
-                        .copyWith(color: AppColors.errorRed),
+                        .copyWith(color: AppColors.error),
                   ),
                 ),
               ),
@@ -465,7 +469,7 @@ class _LoginScreenState extends State<LoginScreen>
           height: 56,
           decoration: BoxDecoration(
             color: AppColors.of(context).card,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: AppColors.of(context).outline.withValues(alpha: 0.4),
               width: 1.5,
@@ -565,7 +569,7 @@ class _LoginScreenState extends State<LoginScreen>
                 height: 56,
                 decoration: BoxDecoration(
                   gradient: AppGradients.primary,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow: _canSubmit ? AppShadows.primaryButton : null,
                 ),
                 child: Center(
@@ -671,3 +675,5 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 }
+
+

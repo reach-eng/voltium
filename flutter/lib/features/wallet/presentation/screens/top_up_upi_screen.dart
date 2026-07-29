@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web TopUpUpiScreen.tsx:
@@ -64,7 +66,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
 
   Future<void> _pickImage() async {
     if (AppConstants.isTestMode) {
-      setState(() => _imageFile = File('/data/local/tmp/mock_proof.png'));
+      setState(() => _imageFile = File('${Directory.systemTemp.path}/mock_proof.png'));
       return;
     }
 
@@ -83,15 +85,16 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      final photoUrl =
-          await VoltiumApiService().uploadFile(_imageFile!, 'TOPUP_PROOF');
+      final client = ApiClient();
+      final filesRepo = FilesRepository(client, VoltiumApiClient(client));
+      final photoUrl = await filesRepo.uploadFile(_imageFile!, 'TOPUP_PROOF');
       if (!mounted) return;
 
-      final provider = ref.read(appProvider);
-      final riderId = ref.watch(appProvider).riderId;
+      final riderId = ref.read(riderProvider).riderId;
       if (riderId == null) throw Exception('Not logged in');
 
-      await provider.topUpWallet(
+      await ref.read(walletProvider).topUpWallet(
+        riderId: riderId,
         amount: widget.amount.toDouble(),
         method: 'UPI',
         screenshotUrl: photoUrl,
@@ -208,7 +211,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Text(
                     ' Step 2 of 2 ',
@@ -231,14 +234,15 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
   }
 
   Widget _buildAmountSummary() {
+    final colors = AppColors.of(context);
     final anim =
         CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.1, 0.6));
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
           boxShadow: AppShadows.card,
@@ -252,7 +256,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 Text(
                   'TOP-UP AMOUNT',
                   style: AppTypography.bodySmallStrong.copyWith(
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
+                    color: colors.onSurfaceMuted,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -288,14 +292,15 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
   }
 
   Widget _buildInfoBox() {
+    final colors = AppColors.of(context);
     final anim =
         CurvedAnimation(parent: _entryCtrl, curve: const Interval(0.2, 0.7));
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.sm),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.card,
         ),
@@ -349,7 +354,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -477,14 +482,14 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 children: [
                   const Icon(
                     Icons.check_circle,
-                    color: AppColors.successGreen,
+                    color: AppColors.success,
                     size: 14,
                   ),
                   SizedBox(width: 4),
                   Text(
                     'Photo uploaded successfully',
                     style: AppTypography.bodyMedium
-                        .copyWith(color: AppColors.successGreen),
+                        .copyWith(color: AppColors.success),
                   ),
                 ],
               ),
@@ -501,7 +506,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     return FadeTransition(
       opacity: anim,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
           color: AppColors.warningSurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -540,7 +545,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
         decoration: BoxDecoration(
           gradient: canSubmit ? AppGradients.primary : null,
           color: canSubmit ? null : AppColors.divider,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: canSubmit ? AppShadows.primaryButton : null,
         ),
         child: Center(

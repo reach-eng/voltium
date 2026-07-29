@@ -12,7 +12,7 @@ class TlDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider).rider;
     final tlName = (rider?.teamLeader == null ||
             rider!.teamLeader!.isEmpty ||
             rider.teamLeader == 'Not Assigned')
@@ -87,7 +87,7 @@ class TlDetailsScreen extends ConsumerWidget {
 
   Widget _buildTLProfileCard(String name) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -120,7 +120,7 @@ class TlDetailsScreen extends ConsumerWidget {
 
   Widget _buildContactCard(String phone) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -145,13 +145,13 @@ class TlDetailsScreen extends ConsumerWidget {
               }
             },
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: Spacing.paddingSm,
               decoration: BoxDecoration(
                 color: AppColors.successSurface,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(Icons.call,
-                  color: AppColors.successGreen, size: 18),
+                  color: AppColors.success, size: 18),
             ),
           ),
         ],
@@ -161,7 +161,7 @@ class TlDetailsScreen extends ConsumerWidget {
 
   Widget _buildInfoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: AppColors.primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -192,7 +192,7 @@ class TlDetailsScreen extends ConsumerWidget {
         _buildActionBtn(
           label: 'Change Team Leader',
           icon: Icons.swap_horiz,
-          color: AppColors.errorRed,
+          color: AppColors.error,
           onTap: () {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -227,7 +227,7 @@ class TlDetailsScreen extends ConsumerWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.3),

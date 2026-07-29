@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class CustomPullToRefresh extends StatefulWidget {
   final Widget child;
@@ -199,7 +200,7 @@ class _RefreshingIndicatorState extends State<_RefreshingIndicator>
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(Spacing.xs),
           child: CircularProgressIndicator(
             strokeWidth: 2,
             valueColor: AlwaysStoppedAnimation(widget.color),

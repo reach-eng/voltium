@@ -26,6 +26,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
   bool _isLoading = true;
   String? _error;
   String? _selectedPlanId;
+  bool _payAdvanceRent = false;
   bool _isSubmitting = false;
 
   @override
@@ -51,7 +52,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
           _isLoading = false;
 
           // Pre-select the plan matching current plan if any, otherwise default to first plan
-          final currentPlanName = ref.read(appProvider).rider?.currentPlan;
+          final currentPlanName = ref.read(riderProvider).rider?.currentPlan;
           if (currentPlanName != null && currentPlanName.isNotEmpty) {
             final matchingIndex = _plans.indexWhere(
               (p) => p.name.toLowerCase() == currentPlanName.toLowerCase(),
@@ -91,8 +92,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final provider = ref.read(appProvider);
-      final riderId = ref.watch(appProvider).riderId;
+      final provider = ref.read(riderProvider);
+      final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +102,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         }
         return;
       }
-      final hubId = ref.watch(appProvider).rider?.pickupHub ?? '';
+      final hubId = ref.watch(riderProvider).rider?.pickupHub ?? '';
       final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
       final securityDeposit =
           AppConstants.getPlanSecurityDeposit(selectedPlan.name);
@@ -109,6 +110,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         hubId: hubId,
         planId: _selectedPlanId!,
         securityDeposit: securityDeposit,
+        advanceRentPaid: _payAdvanceRent,
       );
 
       // If no exception was thrown, the API call succeeded.
@@ -175,13 +177,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.white.withValues(alpha: 0.2)
-            : const Color(0xFFF3E8FF),
+            : AppColors.purpleIconSurface,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         'BEST VALUE',
         style: AppTypography.bodySmallStrong.copyWith(
-          color: isSelected ? Colors.white : const Color(0xFF7E22CE),
+          color: isSelected ? Colors.white : AppColors.purpleIcon,
           letterSpacing: 0.5,
         ),
       ),
@@ -250,13 +252,13 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             if (widget.onBack != null) ...[
                               InkWell(
                                 onTap: () => widget.onBack?.call(),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
                                 child: Container(
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(AppRadius.md),
                                     border: Border.all(
                                       color: AppColors.outlineVariant,
                                     ),
@@ -305,7 +307,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             final plan = _plans[index];
                             final isSelected = _selectedPlanId == plan.id;
                             final currentPlanName =
-                                ref.read(appProvider).rider?.currentPlan;
+                                ref.read(riderProvider).rider?.currentPlan;
                             final isCurrentPlan = currentPlanName != null &&
                                 plan.name.toLowerCase() ==
                                     currentPlanName.toLowerCase();
@@ -327,7 +329,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   color: isSelected
                                       ? AppColors.primary
                                       : Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(AppRadius.xl),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.transparent
@@ -347,7 +349,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   ],
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(24),
+                                  padding: Spacing.paddingLg,
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -546,7 +548,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                               style:
                                                   GoogleFonts.plusJakartaSans(
                                                 fontSize: 18,
-                                                fontWeight: FontWeight.w900,
+                                                fontWeight: FontWeight.w800,
                                                 color: isSelected
                                                     ? Colors.white
                                                     : AppColors.slate900,
@@ -576,7 +578,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: Spacing.paddingLg,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           boxShadow: [
@@ -587,39 +589,72 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             ),
                           ],
                         ),
-                        child: ElevatedButton(
-                          key: const Key('confirmPlanButton'),
-                          onPressed: _selectedPlanId == null || _isSubmitting
-                              ? null
-                              : _subscribe,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            disabledBackgroundColor: AppColors.borderMedium,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: Center(
-                              child: _isSubmitting
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              key: const Key('advanceRentCheckbox'),
+                              onTap: () => setState(() => _payAdvanceRent = !_payAdvanceRent),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _payAdvanceRent,
+                                      activeColor: AppColors.primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(AppRadius.xs),
                                       ),
-                                    )
-                                  : Text(
-                                      'Confirm Plan',
-                                      style: AppTypography.titleSmall
-                                          .copyWith(color: Colors.white),
+                                      onChanged: (val) => setState(() => _payAdvanceRent = val ?? false),
                                     ),
+                                    Expanded(
+                                      child: Text(
+                                        'Pay advance rent along with security deposit',
+                                        style: AppTypography.bodySmallStrong.copyWith(
+                                          color: AppColors.slate800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
+                            ElevatedButton(
+                              key: const Key('confirmPlanButton'),
+                              onPressed: _selectedPlanId == null || _isSubmitting
+                                  ? null
+                                  : _subscribe,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                disabledBackgroundColor: AppColors.borderMedium,
+                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: Center(
+                                  child: _isSubmitting
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(
+                                          'Confirm Plan',
+                                          style: AppTypography.titleSmall
+                                              .copyWith(color: Colors.white),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

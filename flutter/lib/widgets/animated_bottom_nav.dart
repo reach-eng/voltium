@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'electric_arc.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web BottomNav.tsx exactly:
@@ -38,9 +37,6 @@ class _AppBottomNavState extends State<AppBottomNav>
   late AnimationController _entryCtrl;
   late Animation<Offset> _slideAnim;
   late Animation<double> _fadeAnim;
-
-  final GlobalKey<_ElectricArcNavState> _arcKey = GlobalKey();
-  int _previousIndex = 0;
 
   static const _tabs = [
     _TabInfo(
@@ -100,49 +96,41 @@ class _AppBottomNavState extends State<AppBottomNav>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return _ElectricArcNav(
-      key: _arcKey,
-      child: SlideTransition(
-        position: _slideAnim,
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                height: 80 + MediaQuery.of(context).padding.bottom,
-                decoration: BoxDecoration(
-                  // glass: card 95% opacity
-                  color: colors.card.withValues(alpha: 0.95),
-                  border: const Border(
-                    top: BorderSide(color: AppColors.outlineVariant, width: 1),
-                  ),
+    return SlideTransition(
+      position: _slideAnim,
+      child: FadeTransition(
+        opacity: _fadeAnim,
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              height: 80 + MediaQuery.of(context).padding.bottom,
+              decoration: BoxDecoration(
+                // glass: card 95% opacity
+                color: colors.card.withValues(alpha: 0.95),
+                border: const Border(
+                  top: BorderSide(color: AppColors.outlineVariant, width: 1),
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: SizedBox(
-                    height: 80,
-                    child: Row(
-                      children: List.generate(_tabs.length, (index) {
-                        return _NavButton(
-                          key: widget.tabKeys != null &&
-                                  index < widget.tabKeys!.length
-                              ? widget.tabKeys![index]
-                              : null,
-                          tab: _tabs[index],
-                          isActive: index == widget.currentIndex,
-                          hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
-                          onTap: () {
-                            _arcKey.currentState?.animateTo(
-                              _previousIndex,
-                              index,
-                            );
-                            _previousIndex = index;
-                            widget.onTap(index);
-                          },
-                        );
-                      }),
-                    ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: SizedBox(
+                  height: 80,
+                  child: Row(
+                    children: List.generate(_tabs.length, (index) {
+                      return _NavButton(
+                        key: widget.tabKeys != null &&
+                                index < widget.tabKeys!.length
+                            ? widget.tabKeys![index]
+                            : null,
+                        tab: _tabs[index],
+                        isActive: index == widget.currentIndex,
+                        hasNotification: (widget.badgeCounts[index] ?? 0) > 0,
+                        onTap: () {
+                          widget.onTap(index);
+                        },
+                      );
+                    }),
                   ),
                 ),
               ),
@@ -258,7 +246,7 @@ class _NavButtonState extends State<_NavButton>
                             height: 32,
                             decoration: BoxDecoration(
                               color: activeColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(AppRadius.full),
                             ),
                           ),
                         ),
@@ -282,7 +270,7 @@ class _NavButtonState extends State<_NavButton>
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: Colors.red,
+                                    color: AppColors.error,
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: colors.card,
@@ -329,32 +317,6 @@ class _NavButtonState extends State<_NavButton>
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Thin wrapper that exposes a GlobalKey-based [animateTo] for the parent
-/// state to trigger the electric arc between tabs.
-class _ElectricArcNav extends StatefulWidget {
-  final Widget child;
-  const _ElectricArcNav({super.key, required this.child});
-
-  @override
-  State<_ElectricArcNav> createState() => _ElectricArcNavState();
-}
-
-class _ElectricArcNavState extends State<_ElectricArcNav> {
-  final GlobalKey<ElectricArcState> _arcStateKey = GlobalKey();
-
-  void animateTo(int from, int to) {
-    _arcStateKey.currentState?.animateTo(from, to);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ElectricArc(
-      key: _arcStateKey,
-      child: widget.child,
     );
   }
 }

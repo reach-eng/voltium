@@ -36,9 +36,9 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final faqItems = ref.watch(appProvider.select((p) => p.faqs));
+    final faqItems = ref.watch(supportProvider.select((p) => p.faqs));
 
-    final categories = ['All', ...faqItems.map((f) => f.category).toSet()];
+    final categories = <String>['All', ...faqItems.map((f) => f.category).toSet()];
 
     final filteredFaqs = faqItems.where((f) {
       final matchesSearch =
@@ -154,7 +154,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
             key: const Key('backButton'),
             onTap: () => Navigator.pop(context),
             child: Container(
-              padding: const EdgeInsets.all(13),
+              padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -186,7 +186,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -226,7 +226,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : Colors.white,
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
@@ -282,7 +282,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -324,10 +324,10 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
 
   Widget _buildContactSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -339,7 +339,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 width: 40,
                 decoration: BoxDecoration(
                   color: AppColors.primarySurface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
                   Icons.message_outlined,
@@ -407,7 +407,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(16)),
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.lg)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

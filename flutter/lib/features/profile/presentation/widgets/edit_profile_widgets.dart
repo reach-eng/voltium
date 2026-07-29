@@ -42,15 +42,15 @@ class EditProfileTextField extends StatelessWidget {
             fillColor:
                 AppColors.iconBackground, // AppColors.slate100 equivalent
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -110,15 +110,15 @@ class EditProfileDateField extends StatelessWidget {
             fillColor:
                 AppColors.iconBackground, // AppColors.slate100 equivalent
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
@@ -158,11 +158,11 @@ class EditProfileAdminNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFED7AA)),
+        color: AppColors.orangeAccentSurface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.orangeAccentBorder),
       ),
       child: Row(
         children: [
@@ -173,7 +173,7 @@ class EditProfileAdminNote extends StatelessWidget {
             child: Text(
               'Profile changes require admin approval before becoming active.',
               style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF9A3412),
+                color: AppColors.orangeAccentDark,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 height: 1.4,

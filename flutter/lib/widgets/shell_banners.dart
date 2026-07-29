@@ -16,9 +16,9 @@ class SyncBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isOnline = ref.watch(appProvider.select((p) => p.isOnline));
+    final isOnline = ref.watch(connectivityProvider.select((p) => p.isOnline));
     final pendingCount =
-        ref.watch(appProvider.select((p) => p.pendingSyncCount));
+        ref.watch(connectivityProvider.select((p) => p.pendingSyncCount));
 
     if (isOnline && pendingCount == 0) return const SizedBox.shrink();
 
@@ -31,7 +31,7 @@ class SyncBanner extends ConsumerWidget {
       decoration: BoxDecoration(
         color:
             isOnline ? AppColors.successSurfaceLight : AppColors.surfaceBright,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isOnline ? AppColors.successSurface : AppColors.outlineVariant,
         ),
@@ -41,7 +41,7 @@ class SyncBanner extends ConsumerWidget {
           Icon(
             isOnline ? Icons.check_circle_outline : Icons.wifi_off_outlined,
             size: 20,
-            color: isOnline ? AppColors.successGreen : AppColors.slate500,
+            color: isOnline ? AppColors.success : AppColors.slate500,
           ),
           SizedBox(width: 12),
           Expanded(
@@ -63,7 +63,7 @@ class SyncBanner extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color:
-                        isOnline ? AppColors.successGreen : AppColors.slate500,
+                        isOnline ? AppColors.success : AppColors.slate500,
                   ),
                 ),
               ],
@@ -76,7 +76,7 @@ class SyncBanner extends ConsumerWidget {
                 color: isOnline
                     ? AppColors.successSurface
                     : AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 '$pendingCount',
@@ -103,7 +103,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final rider = ref.watch(appProvider.select((p) => p.rider));
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
     if (rider == null) return const SizedBox.shrink();
 
     // Mirroring web's getSuspensionReasons logic
@@ -168,7 +168,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isCritical ? AppColors.errorSurface : AppColors.warningSurface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isCritical ? AppColors.errorBorder : AppColors.warningBorder,
         ),
@@ -185,7 +185,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
               'Action Required',
               style: AppTypography.bodyMediumEmphasis.copyWith(
                 color: isCritical
-                    ? const Color(0xFF991B1B)
+                    ? AppColors.dangerText
                     : AppColors.warningText,
               ),
             ),
@@ -194,7 +194,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                   (reasons.length > 1 ? ' + ${reasons.length - 1} more' : ''),
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: isCritical ? AppColors.errorRed : AppColors.warningDark,
+                color: isCritical ? AppColors.error : AppColors.warningDark,
               ),
             ),
             trailing: Row(
@@ -221,7 +221,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
                   color: isCritical
-                      ? const Color(0xFF991B1B)
+                      ? AppColors.dangerText
                       : AppColors.warningText,
                 ),
               ],
@@ -245,8 +245,8 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: r.severity == _Severity.critical
-                                    ? Colors.red
-                                    : Colors.orange,
+                                    ? AppColors.error
+                                    : AppColors.warningDark,
                               ),
                             ),
                             SizedBox(width: 12),

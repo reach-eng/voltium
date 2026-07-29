@@ -27,6 +27,14 @@ class SupportCenterScreen extends ConsumerStatefulWidget {
 class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
   @override
   Widget build(BuildContext context) {
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final dataState = ref.watch(riderProvider.select((p) => p.dataState));
+    final tlName = rider?.teamLeader;
+    final tlPhone = rider?.emergencyContact;
+    final isLoading = rider == null &&
+        (dataState == DataState.initial ||
+            dataState == DataState.loading);
+
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
       appBar: AppBar(
@@ -42,22 +50,15 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
               .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
         ),
       ),
-      body: Consumer(
-        builder: (context, ref, child) {
-          final rider = ref.watch(appProvider.select((p) => p.rider));
-          final dataState = ref.watch(appProvider.select((p) => p.dataState));
-          final tlName = rider?.teamLeader;
-          final tlPhone = rider?.emergencyContact;
-          final isLoading = rider == null &&
-              (dataState == DataState.initial ||
-                  dataState == DataState.loading);
-
-          if (isLoading) {
-            return const SupportSkeleton();
-          }
-
-          return CustomScrollView(
-            slivers: [
+      body: isLoading
+          ? const SupportSkeleton()
+          : RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(supportTicketsProvider.notifier).fetchTickets();
+                await ref.read(supportProvider).refreshTickets();
+              },
+              child: CustomScrollView(
+                slivers: [
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 sliver: SliverList(
@@ -81,7 +82,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                           hintText: 'Search FAQs, topics...',
                           elevation: const WidgetStatePropertyAll(0),
                           backgroundColor:
-                              WidgetStatePropertyAll(Colors.grey.shade100),
+                              WidgetStatePropertyAll(AppColors.iconBackground),
                         );
                       },
                       suggestionsBuilder:
@@ -138,10 +139,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
 
                     // Create Ticket Container
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(Spacing.md),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.05),
@@ -183,7 +184,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
                                 ),
                               ),
                               child: Text('Create Ticket',
@@ -237,12 +238,11 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         subtitle: 'support@voltium.in',
                         actionLabel: 'Send',
                         actionIcon: Icons.open_in_new,
-                        color: const Color(0xFF1B60DA),
+                        color: AppColors.royalBlue,
                         onTap: () =>
                             launchUrl(Uri.parse('mailto:support@voltium.in')),
                       ),
                       const SizedBox(height: 12),
-                      // Call us
                       _buildContactCard(
                         icon: Icons.phone_outlined,
                         title: 'Call Us',
@@ -257,18 +257,17 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        ),
     );
   }
 
   Widget _buildQuickChip(IconData icon, String label, VoidCallback onTap) {
     return Material(
       color: AppColors.surfaceBright,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -297,10 +296,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     VoidCallback? onTap,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -335,13 +334,13 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
           if (onTap != null)
             InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -369,10 +368,10 @@ class RecentTicketsContainer extends ConsumerWidget {
     final ticketState = ref.watch(supportTicketsProvider);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -421,7 +420,7 @@ class RecentTicketsContainer extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'No tickets found in this category.',
-                style: GoogleFonts.plusJakartaSans(color: Colors.grey),
+                style: GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceVariant),
               ),
             )
           else
@@ -438,7 +437,7 @@ class RecentTicketsContainer extends ConsumerWidget {
                     'Status: ${ticket.status.name.toUpperCase()}',
                     style: GoogleFonts.plusJakartaSans(
                       color: ticket.status.name.toLowerCase() == 'closed'
-                          ? Colors.grey
+                          ? AppColors.onSurfaceVariant
                           : AppColors.primary,
                     ),
                   ),

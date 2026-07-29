@@ -78,6 +78,13 @@ jobs:
       - name: Run Flutter analyze
         run: flutter analyze --no-fatal-infos
 
+      - name: Run design system lint
+        # Ticket #32: design-system gate. Catches raw `Color(0xFF...)` in
+        # non-theme files, off-grid `EdgeInsets.all(N)`, and off-grid
+        # `BorderRadius.circular(N)`. Bypass with `ALLOW_DESIGN_LINT=1` only
+        # in emergencies; that env var is checked inside the script.
+        run: bash flutter/scripts/lint-design-system.sh
+
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest
@@ -299,3 +306,23 @@ jobs:
         with:
           name: voltium-release.apk
           path: flutter/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Clean up keystore
+        if: always()
+        run: |
+          # Overwrite keystore with random bytes before deletion (defense in depth)
+          if [ -f android/app/voltium-release.jks ]; then
+            dd if=/dev/urandom of=android/app/voltium-release.jks bs=1M count=1 2>/dev/null || true
+            rm -f android/app/voltium-release.jks
+          fi
+          rm -f android/app/key.properties
+
+          # Verify cleanup actually happened (defense against silent partial cleanup)
+          REMAINING=""
+          [ -f android/app/voltium-release.jks ] && REMAINING="$REMAINING voltium-release.jks"
+          [ -f android/app/key.properties ]     && REMAINING="$REMAINING key.properties"
+          if [ -n "$REMAINING" ]; then
+            echo "::error:: Keystore cleanup incomplete — files still on disk:$REMAINING"
+            exit 1
+          fi
+          echo "Keystore and key.properties cleaned up and verified gone."

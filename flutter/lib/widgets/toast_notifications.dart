@@ -147,15 +147,15 @@ class _ToastWidgetState extends State<_ToastWidget>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Material(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             elevation: 8,
             child: GestureDetector(
               onTap: widget.onTap,
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: Spacing.paddingMd,
                 decoration: BoxDecoration(
                   color: _getBackgroundColor(),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: _getBorderColor()),
                 ),
                 child: Row(
@@ -190,16 +190,16 @@ class _ToastWidgetState extends State<_ToastWidget>
       case ToastType.warning:
         return AppColors.warningLight;
       case ToastType.info:
-        return const Color(0xFFE0F2FE);
+        return AppColors.skySparkSurface;
     }
   }
 
   Color _getBorderColor() {
     switch (widget.type) {
       case ToastType.success:
-        return AppColors.successGreen;
+        return AppColors.success;
       case ToastType.error:
-        return AppColors.errorRed;
+        return AppColors.error;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:
@@ -223,9 +223,9 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getIconColor() {
     switch (widget.type) {
       case ToastType.success:
-        return AppColors.successGreen;
+        return AppColors.success;
       case ToastType.error:
-        return AppColors.errorRed;
+        return AppColors.error;
       case ToastType.warning:
         return AppColors.warning;
       case ToastType.info:
@@ -320,13 +320,13 @@ class _ToastItemState extends State<_ToastItem>
     return SizeTransition(
       sizeFactor: _animation,
       child: Material(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         elevation: 4,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.sm),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: Text(widget.toast.message),
         ),

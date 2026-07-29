@@ -117,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 128,
                           height: 128,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(32),
+                            borderRadius: BorderRadius.circular(AppRadius.xxl),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primaryGradientEnd
@@ -128,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
                             ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(32),
+                            borderRadius: BorderRadius.circular(AppRadius.xxl),
                             child: Image.asset(
                               'assets/logo.png',
                               width: 128,
@@ -190,7 +190,7 @@ class _SplashScreenState extends State<SplashScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
                         child: BackdropFilter(
                           filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                           child: Container(
@@ -198,7 +198,7 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 6,
                             decoration: BoxDecoration(
                               color: AppColors.slate900.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: BorderRadius.circular(AppRadius.full),
                               border: Border.all(
                                 color:
                                     AppColors.slate900.withValues(alpha: 0.1),
@@ -218,7 +218,7 @@ class _SplashScreenState extends State<SplashScreen>
                                           AppColors.purpleDark,
                                         ],
                                       ),
-                                      borderRadius: BorderRadius.circular(999),
+                                      borderRadius: BorderRadius.circular(AppRadius.full),
                                       boxShadow: [
                                         BoxShadow(
                                           color: AppColors.primaryGradientEnd

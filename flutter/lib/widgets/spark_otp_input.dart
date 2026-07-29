@@ -226,7 +226,7 @@ class SparkOtpInputState extends State<SparkOtpInput>
             child: Text(
               _error,
               style: GoogleFonts.plusJakartaSans(
-                color: Colors.red,
+                color: AppColors.error,
                 fontSize: 12,
               ),
             ),
@@ -273,7 +273,7 @@ class _SparkOtpBox extends StatelessWidget {
           final hasValue = controller.text.isNotEmpty;
 
           // Spark color: bright cyan for entry glow
-          const sparkColor = Color(0xFF38BDF8);
+          const sparkColor = AppColors.skySpark;
 
           // Build electric glow intensity — more intense at peak, fades smoothly
           final glowIntensity = glow * (0.55 + 0.25 * (1 - glow));
@@ -283,7 +283,7 @@ class _SparkOtpBox extends StatelessWidget {
           // Border color: transitions from normal → spark color → back
           Color borderColor;
           if (hasError) {
-            borderColor = Colors.red;
+            borderColor = AppColors.error;
           } else if (glow > 0.02) {
             borderColor = Color.lerp(
               isFocused ? AppColors.primary : AppColors.outlineVariant,
@@ -300,7 +300,7 @@ class _SparkOtpBox extends StatelessWidget {
 
           // Glass container
           return ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
               child: Container(
@@ -308,7 +308,7 @@ class _SparkOtpBox extends StatelessWidget {
                 height: height,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: borderColor,
                     width: glow > 0.02 ? 2.5 : (isFocused ? 2.0 : 1.5),
@@ -366,7 +366,7 @@ class _SparkOtpBox extends StatelessWidget {
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               gradient: RadialGradient(
                                 colors: [
                                   sparkColor.withValues(

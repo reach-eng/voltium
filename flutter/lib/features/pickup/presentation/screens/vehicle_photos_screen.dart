@@ -10,15 +10,16 @@ class VehiclePhotosScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider).rider;
     final vehicle = rider?.assignedVehicle ?? 'Not Assigned';
     final pickupPhoto = rider?.pickupPhotoFront;
 
     final photos = [
       {'label': 'Front View', 'url': pickupPhoto},
+      {'label': 'Back View', 'url': rider?.pickupPhotoBack},
       {'label': 'Left Side', 'url': rider?.pickupPhotoLeft},
       {'label': 'Right Side', 'url': rider?.pickupPhotoRight},
-      {'label': 'Speedometer', 'url': rider?.pickupPhotoWithVehicle},
+      {'label': 'Photo with Vehicle', 'url': rider?.pickupPhotoWithVehicle},
     ];
 
     return Scaffold(
@@ -34,11 +35,47 @@ class VehiclePhotosScreen extends ConsumerWidget {
                   children: [
                     _buildVehicleInfoCard(vehicle),
                     const SizedBox(height: 20),
-                    _buildPhotosGrid(photos),
+                    _buildPhotosGrid(context, photos),
                     const SizedBox(height: 32),
                     _buildBackButton(context),
                   ],
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showZoomModal(BuildContext context, String url, String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                child: Image.network(url, fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              left: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+            Positioned(
+              bottom: 30,
+              left: 20,
+              right: 20,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -82,7 +119,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
 
   Widget _buildVehicleInfoCard(String vehicle) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -95,7 +132,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
             height: 48,
             decoration: BoxDecoration(
               color: AppColors.primarySurface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
               Icons.electric_bike,
@@ -127,7 +164,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPhotosGrid(List<Map<String, dynamic>> photos) {
+  Widget _buildPhotosGrid(BuildContext context, List<Map<String, dynamic>> photos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,57 +184,66 @@ class VehiclePhotosScreen extends ConsumerWidget {
             childAspectRatio: 1.2,
           ),
           itemCount: photos.length,
-          itemBuilder: (context, index) {
+          itemBuilder: (ctx, index) {
             final photo = photos[index];
             final url = photo['url'] as String?;
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(16),
-                image: url != null && url.isNotEmpty
-                    ? DecorationImage(
-                        image: ResizeImage(
-                          NetworkImage(url),
-                          width: 400,
-                          height: 300,
-                        ),
-                        fit: BoxFit.cover,
+            final label = photo['label'] as String;
+            return GestureDetector(
+              onTap: (url != null && url.isNotEmpty)
+                  ? () => _showZoomModal(context, url, label)
+                  : null,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.iconBackground,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  image: url != null && url.isNotEmpty
+                      ? DecorationImage(
+                          image: ResizeImage(
+                            NetworkImage(url),
+                            width: 400,
+                            height: 300,
+                          ),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: url == null || url.isEmpty
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.camera_alt_outlined,
+                            color: AppColors.onSurfaceVariant,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            label,
+                            style: AppTypography.bodySmallEmphasis
+                                .copyWith(color: AppColors.onSurfaceVariant),
+                          ),
+                        ],
                       )
-                    : null,
-              ),
-              child: url == null || url.isEmpty
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.camera_alt_outlined,
-                          color: AppColors.onSurfaceVariant,
-                          size: 32,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          photo['label'],
-                          style: AppTypography.bodySmallEmphasis
-                              .copyWith(color: AppColors.onSurfaceVariant),
-                        ),
-                      ],
-                    )
-                  : Align(
-                      alignment: Alignment.bottomRight,
-                      child: Container(
-                        margin: const EdgeInsets.all(8),
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.zoom_in,
-                          color: Colors.white,
-                          size: 16,
+                    : Align(
+                        alignment: Alignment.bottomRight,
+                        child: GestureDetector(
+                          onTap: () => _showZoomModal(context, url, label),
+                          child: Container(
+                            margin: Spacing.paddingSm,
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.zoom_in,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+              ),
             );
           },
         ),
@@ -214,7 +260,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: AppGradients.primary,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadows.primaryButton,
         ),
         child: Center(

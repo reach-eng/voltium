@@ -25,9 +25,9 @@ class PreDashboardBanner extends StatelessWidget {
       return _buildRejectedBanner();
     }
     if (kycVerified) {
-      return _buildApprovedBanner();
+      return _buildApprovedBanner(context);
     }
-    return _buildActionRequiredBanner();
+    return _buildActionRequiredBanner(context);
   }
 
   Widget _buildRejectedBanner() {
@@ -36,7 +36,7 @@ class PreDashboardBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.errorRose,
-        borderRadius: BorderRadius.circular(9999),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -53,13 +53,13 @@ class PreDashboardBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildApprovedBanner() {
+  Widget _buildApprovedBanner(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: AppColors.warningSurface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFFE082)),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.orangeAccentLight),
       ),
       child: Row(
         children: [
@@ -93,8 +93,8 @@ class PreDashboardBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              color: AppColors.of(context).card,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: AppColors.warningDark),
             ),
             child: Text(
@@ -108,12 +108,12 @@ class PreDashboardBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildActionRequiredBanner() {
+  Widget _buildActionRequiredBanner(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: AppColors.errorSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.errorBorder),
       ),
       child: Row(
@@ -139,7 +139,7 @@ class PreDashboardBanner extends StatelessWidget {
                 Text(
                   'Account Action',
                   style: AppTypography.labelLarge.copyWith(
-                    color: Color(0xFF991B1B),
+                    color: AppColors.dangerText,
                   ),
                 ),
                 Text(
@@ -153,8 +153,8 @@ class PreDashboardBanner extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              color: AppColors.of(context).card,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: AppColors.error),
             ),
             child: Text(
@@ -197,10 +197,10 @@ class PreDashboardProfileCard extends StatelessWidget {
         builder: (context) {
           final colors = AppColors.of(context);
           return Container(
-            padding: const EdgeInsets.all(24),
+            padding: Spacing.paddingLg,
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -314,11 +314,11 @@ class PreDashboardProfileCard extends StatelessWidget {
   Widget _buildNormalProfile() {
     final String badgeText = kycVerified ? 'KYC VERIFIED' : 'PENDING KYC';
     final Color badgeBg =
-        kycVerified ? AppColors.successSurfaceLight : const Color(0xFFFFF7ED);
+        kycVerified ? AppColors.successSurfaceLight : AppColors.orangeAccentSurface;
     final Color badgeTextColor =
-        kycVerified ? AppColors.successGreen : const Color(0xFFEA580C);
+        kycVerified ? AppColors.success : AppColors.orangeAccent;
     final Color badgeBorder =
-        kycVerified ? const Color(0xFFBBF7D0) : const Color(0xFFFED7AA);
+        kycVerified ? AppColors.successOutline : AppColors.orangeAccentBorder;
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
@@ -326,10 +326,10 @@ class PreDashboardProfileCard extends StatelessWidget {
           builder: (context) {
             final colors = AppColors.of(context);
             return Container(
-              padding: const EdgeInsets.all(24),
+              padding: Spacing.paddingLg,
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.02),
@@ -379,7 +379,7 @@ class PreDashboardProfileCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     decoration: BoxDecoration(
                       color: badgeBg,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: badgeBorder),
                     ),
                     child: Text(
@@ -438,11 +438,11 @@ class RejectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.errorRose,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.errorBorder, width: 1.5),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -453,7 +453,7 @@ class RejectionCard extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.errorRose,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: const Icon(
                     Icons.error_outline,
@@ -498,7 +498,7 @@ class RejectionCard extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   elevation: 0,
                 ),
@@ -579,14 +579,14 @@ class PreDashboardCtaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: gradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: gradientColors.first.withValues(alpha: 0.3),
@@ -618,11 +618,11 @@ class PreDashboardCtaCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.of(context).card,
                 foregroundColor: buttonColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 elevation: 0,
               ),
@@ -666,7 +666,7 @@ class PickupButton extends StatelessWidget {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           elevation: 8,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
@@ -697,16 +697,16 @@ class NeedHelpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [AppColors.primary, AppColors.primaryDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.3),

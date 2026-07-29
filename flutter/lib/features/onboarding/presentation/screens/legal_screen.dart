@@ -218,7 +218,7 @@ class _LegalScreenState extends State<LegalScreen>
         height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadows.glass,
         ),
         child: const Icon(
@@ -504,7 +504,7 @@ class _LegalScreenState extends State<LegalScreen>
                     height: 56,
                     decoration: BoxDecoration(
                       gradient: AppGradients.primary,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
                       boxShadow: _accepted ? AppShadows.primaryButton : null,
                     ),
                     child: Center(

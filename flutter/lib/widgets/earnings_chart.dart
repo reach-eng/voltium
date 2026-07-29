@@ -22,16 +22,16 @@ class EarningsChart extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A0F172A),
+            color: AppColors.shadowSoft,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

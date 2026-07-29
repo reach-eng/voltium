@@ -5,6 +5,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/animated_balance_counter.dart';
 import '../../../../widgets/streak_celebration_bar.dart';
+import '../../../../widgets/effect_widgets.dart';
 import '../screens/top_up_flow.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -53,7 +54,7 @@ class TransactionListTile extends StatelessWidget {
     Color statusBgColor = AppColors.warningSurface;
 
     if (status == 'rejected' || status == 'failed') {
-      statusTextColor = AppColors.errorRed;
+      statusTextColor = AppColors.error;
       statusBgColor = AppColors.errorSurface;
     } else if (status == 'pending') {
       statusTextColor = AppColors.warningDark;
@@ -63,13 +64,13 @@ class TransactionListTile extends StatelessWidget {
         statusTextColor = AppColors.warning;
         statusBgColor = AppColors.warningSurface;
       } else if (purpose.contains('REFUND')) {
-        statusTextColor = const Color(0xFF1B60DA);
+        statusTextColor = AppColors.royalBlue;
         statusBgColor = AppColors.primarySurface;
       } else if (isCredit) {
-        statusTextColor = AppColors.successGreen;
+        statusTextColor = AppColors.success;
         statusBgColor = AppColors.successSurface;
       } else {
-        statusTextColor = const Color(0xFF1B60DA);
+        statusTextColor = AppColors.royalBlue;
         statusBgColor = AppColors.primarySurface;
       }
     }
@@ -84,7 +85,7 @@ class TransactionListTile extends StatelessWidget {
             width: 40,
             decoration: BoxDecoration(
               color: colors.surfaceAlt,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               Icons.account_balance_wallet,
@@ -109,7 +110,7 @@ class TransactionListTile extends StatelessWidget {
                         padding: EdgeInsets.only(left: 4),
                         child: Icon(
                           Icons.arrow_outward,
-                          color: AppColors.errorRed,
+                          color: AppColors.error,
                           size: 12,
                         ),
                       ),
@@ -144,14 +145,14 @@ class TransactionListTile extends StatelessWidget {
                 '${isCredit ? '+' : '-'}\u20B9${amount.abs().toStringAsFixed(0)}',
                 style: AppTypography.bodyMediumEmphasis.copyWith(
                     color:
-                        isCredit ? AppColors.successGreen : colors.onSurface),
+                        isCredit ? AppColors.success : colors.onSurface),
               ),
               SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusBgColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   status.toUpperCase(),
@@ -183,17 +184,17 @@ class MethodChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? AppColors.primary : AppColors.iconBackground,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Text(
           label,
           style: AppTypography.bodySmallEmphasis.copyWith(
-              color: isSelected ? Colors.white : Colors.grey.shade700),
+              color: isSelected ? Colors.white : AppColors.slate600),
         ),
       ),
     );
@@ -214,16 +215,16 @@ class SecurityDepositCard extends StatelessWidget {
     final colors = AppColors.of(context);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           width: double.infinity,
           margin: const EdgeInsets.only(top: 12),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(Spacing.md),
           decoration: BoxDecoration(
             color: colors.surfaceSubtle.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
                 color: colors.outlineVariant.withValues(alpha: 0.5), width: 1),
             boxShadow: AppShadows.glass,
@@ -244,23 +245,23 @@ class SecurityDepositCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: (isRefundable
-                              ? AppColors.successGreen
-                              : AppColors.errorRed)
+                              ? AppColors.success
+                              : AppColors.error)
                           .withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       boxShadow: [
                         BoxShadow(
                           color: (isRefundable
-                                  ? AppColors.successGreen
-                                  : AppColors.errorRed)
+                                  ? AppColors.success
+                                  : AppColors.error)
                               .withValues(alpha: 0.3),
                           blurRadius: 12,
                         ),
                       ],
                       border: Border.all(
                         color: (isRefundable
-                                ? AppColors.successGreen
-                                : AppColors.errorRed)
+                                ? AppColors.success
+                                : AppColors.error)
                             .withValues(alpha: 0.3),
                       ),
                     ),
@@ -268,8 +269,8 @@ class SecurityDepositCard extends StatelessWidget {
                       isRefundable ? 'Refundable' : 'Non-Refundable',
                       style: AppTypography.labelMedium.copyWith(
                           color: isRefundable
-                              ? AppColors.successGreen
-                              : AppColors.errorRed),
+                              ? AppColors.success
+                              : AppColors.error),
                     ),
                   ),
                 ],
@@ -325,11 +326,52 @@ class WalletBalanceCard extends StatelessWidget {
     final int streak = rider?.paymentStreak ?? 0;
     final colors = AppColors.of(context);
 
-    return Container(
+    final double rentAmount = (rider?.currentPlanPrice != null)
+        ? (rider!.currentPlanPrice as num).toDouble()
+        : AppConstants.defaultRentalPrice;
+    final DateTime? planEndDate = rider?.planEndDate as DateTime?;
+    final int daysUntilDue =
+        planEndDate != null ? planEndDate.difference(DateTime.now()).inDays : 0;
+
+    // Rule 1: Pulsating red halo around amount text only if balance < top up required AND days <= 3
+    final bool hasPulsatingRedAmountHalo =
+        (balance < rentAmount) && (daysUntilDue <= 3);
+
+    // Rule 2 & 3: Amount text color (Green if >= rent required, Amber if < rent required)
+    final Color amountTextColor =
+        (balance >= rentAmount) ? colors.success : colors.warning;
+
+    // Rule 4: Whole card red halo if balance < rent required AND days <= 1
+    final bool hasWholeCardRedHalo =
+        (balance < rentAmount) && (daysUntilDue <= 1);
+
+    Widget balanceCounter = AnimatedBalanceCounter(
+      value: balance,
+      textStyle: GoogleFonts.plusJakartaSans(
+        color: amountTextColor,
+        fontSize: 36,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+      ),
+      duration: const Duration(milliseconds: 700),
+    );
+
+    if (hasPulsatingRedAmountHalo) {
+      balanceCounter = AnimatedGlow(
+        color: AppColors.error,
+        duration: const Duration(milliseconds: 1500),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: balanceCounter,
+        ),
+      );
+    }
+
+    Widget cardContent = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.glass,
         border: Border.all(color: colors.outlineVariant, width: 1),
       ),
@@ -368,7 +410,7 @@ class WalletBalanceCard extends StatelessWidget {
           ),
           // Content
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: Spacing.paddingLg,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -402,14 +444,14 @@ class WalletBalanceCard extends StatelessWidget {
                           ),
                         );
                       },
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           border: Border.all(
                               color: AppColors.primary.withValues(alpha: 0.2)),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: const Icon(Icons.add,
                             color: AppColors.primary, size: 20),
@@ -418,23 +460,14 @@ class WalletBalanceCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                AnimatedBalanceCounter(
-                  value: balance,
-                  textStyle: GoogleFonts.plusJakartaSans(
-                    color: colors.onSurface,
-                    fontSize: 36,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                  duration: const Duration(milliseconds: 700),
-                ),
+                balanceCounter,
                 const SizedBox(height: 24),
                 // Streak section
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: colors.surfaceSubtle.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                         color: colors.outlineVariant.withValues(alpha: 0.5)),
                   ),
@@ -488,6 +521,16 @@ class WalletBalanceCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (hasWholeCardRedHalo) {
+      return AnimatedGlow(
+        color: AppColors.error,
+        duration: const Duration(milliseconds: 1800),
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }
 
@@ -511,16 +554,16 @@ class WalletActionButtons extends StatelessWidget {
           child: InkWell(
             key: const Key('topUpButton'),
             onTap: onTopUp,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: colors.card.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(color: colors.outlineVariant, width: 1),
                     boxShadow: AppShadows.glass,
                   ),
@@ -536,7 +579,7 @@ class WalletActionButtons extends StatelessWidget {
                         ),
                         child: const Icon(
                           Icons.add,
-                          color: AppColors.successGreen,
+                          color: AppColors.success,
                           size: 18,
                         ),
                       ),
@@ -558,16 +601,16 @@ class WalletActionButtons extends StatelessWidget {
           child: InkWell(
             key: const Key('historyButton'),
             onTap: onHistory,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: colors.card.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(color: colors.outlineVariant, width: 1),
                     boxShadow: AppShadows.glass,
                   ),
@@ -661,11 +704,11 @@ class TransactionHistorySection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: colors.outlineVariant, width: 1),
         boxShadow: AppShadows.glass,
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -712,7 +755,7 @@ class TransactionHistorySection extends StatelessWidget {
                             ? AppColors.primary
                             : colors.outlineVariant),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
+                        borderRadius: BorderRadius.circular(AppRadius.lg)),
                     onSelected: (_) => onFilterChanged(f),
                   ),
                 );

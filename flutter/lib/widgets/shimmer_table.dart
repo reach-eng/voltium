@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class ShimmerTable extends StatefulWidget {
   final int rows;
@@ -47,6 +48,11 @@ class _ShimmerTableState extends State<ShimmerTable>
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseShimmer = isDark ? AppColors.slate800 : AppColors.shimmerBase;
+    final highlightShimmer = isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -57,7 +63,7 @@ class _ShimmerTableState extends State<ShimmerTable>
                 height: widget.rowHeight,
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300),
+                    bottom: BorderSide(color: colors.divider),
                   ),
                 ),
                 child: Row(
@@ -70,6 +76,8 @@ class _ShimmerTableState extends State<ShimmerTable>
                       width: width,
                       isHeader: true,
                       widthFactor: 0.6,
+                      baseColor: baseShimmer,
+                      highlightColor: highlightShimmer,
                     );
                   }),
                 ),
@@ -79,7 +87,7 @@ class _ShimmerTableState extends State<ShimmerTable>
                 height: widget.rowHeight,
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+                    bottom: BorderSide(color: colors.divider),
                   ),
                 ),
                 child: Row(
@@ -91,6 +99,8 @@ class _ShimmerTableState extends State<ShimmerTable>
                     return _buildShimmerCell(
                       width: width,
                       widthFactor: colIndex == 0 ? 0.8 : 0.5,
+                      baseColor: baseShimmer,
+                      highlightColor: highlightShimmer,
                     );
                   }),
                 ),
@@ -106,6 +116,8 @@ class _ShimmerTableState extends State<ShimmerTable>
     double? width,
     bool isHeader = false,
     required double widthFactor,
+    required Color baseColor,
+    required Color highlightColor,
   }) {
     return Expanded(
       child: Container(
@@ -113,14 +125,14 @@ class _ShimmerTableState extends State<ShimmerTable>
         padding: EdgeInsets.all(widget.cellPadding),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             gradient: LinearGradient(
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value + 1, 0),
-              colors: const [
-                Color(0xFFE8EDF5),
-                Color(0xFFF5F8FF),
-                Color(0xFFE8EDF5),
+              colors: [
+                baseColor,
+                highlightColor,
+                baseColor,
               ],
             ),
           ),
@@ -141,7 +153,7 @@ class ShimmerList extends StatefulWidget {
     super.key,
     this.itemCount = 5,
     this.itemHeight = 72,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = Spacing.paddingMd,
     this.separatorHeight = 8,
   });
 
@@ -193,10 +205,14 @@ class _ShimmerListState extends State<ShimmerList>
   }
 
   Widget _buildShimmerItem() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? AppColors.slate800 : AppColors.shimmerBase;
+    final highlightColor = isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
+
     return Container(
       height: widget.itemHeight,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
@@ -209,9 +225,9 @@ class _ShimmerListState extends State<ShimmerList>
                 begin: Alignment(_animation.value - 1, 0),
                 end: Alignment(_animation.value + 1, 0),
                 colors: [
-                  Colors.grey.shade300,
-                  Colors.grey.shade100,
-                  Colors.grey.shade300,
+                  baseColor,
+                  highlightColor,
+                  baseColor,
                 ],
               ),
             ),
@@ -226,14 +242,14 @@ class _ShimmerListState extends State<ShimmerList>
                   height: 14,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
                     gradient: LinearGradient(
                       begin: Alignment(_animation.value - 1, 0),
                       end: Alignment(_animation.value + 1, 0),
                       colors: [
-                        Colors.grey.shade300,
-                        Colors.grey.shade100,
-                        Colors.grey.shade300,
+                        baseColor,
+                        highlightColor,
+                        baseColor,
                       ],
                     ),
                   ),
@@ -243,14 +259,14 @@ class _ShimmerListState extends State<ShimmerList>
                   height: 10,
                   width: 150,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
                     gradient: LinearGradient(
                       begin: Alignment(_animation.value - 1, 0),
                       end: Alignment(_animation.value + 1, 0),
                       colors: [
-                        Colors.grey.shade300,
-                        Colors.grey.shade100,
-                        Colors.grey.shade300,
+                        baseColor,
+                        highlightColor,
+                        baseColor,
                       ],
                     ),
                   ),
@@ -277,7 +293,7 @@ class ShimmerGrid extends StatefulWidget {
     this.crossAxisCount = 2,
     this.childAspectRatio = 1,
     this.spacing = 16,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = Spacing.paddingMd,
   });
 
   @override
@@ -326,14 +342,14 @@ class _ShimmerGridState extends State<ShimmerGrid>
           itemBuilder: (context, index) {
             return Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 gradient: LinearGradient(
                   begin: Alignment(_animation.value - 1, 0),
                   end: Alignment(_animation.value + 1, 0),
                   colors: [
-                    const Color(0xFFE8EDF5),
-                    const Color(0xFFF5F8FF),
-                    const Color(0xFFE8EDF5),
+                    AppColors.shimmerBase,
+                    AppColors.shimmerHighlight,
+                    AppColors.shimmerBase,
                   ],
                 ),
               ),

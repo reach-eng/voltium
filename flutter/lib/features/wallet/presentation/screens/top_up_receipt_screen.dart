@@ -148,13 +148,14 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
   }
 
   Widget _buildStatusCard() {
+    final colors = AppColors.of(context);
     return FadeTransition(
       opacity:
           CurvedAnimation(parent: _mainCtrl, curve: const Interval(0.6, 0.9)),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.card,
         ),
@@ -241,7 +242,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           height: 56,
           decoration: BoxDecoration(
             gradient: AppGradients.primary,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             boxShadow: AppShadows.primaryButton,
           ),
           child: Row(

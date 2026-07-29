@@ -13,7 +13,7 @@ import 'package:voltium_rider/features/referrals/presentation/screens/referral_s
 
 import 'package:voltium_rider/features/device_compliance/presentation/screens/emergency_sos_screen.dart';
 import 'package:voltium_rider/features/workflows/presentation/screens/rider_workflow_hub_screen.dart';
-import 'package:voltium_rider/features/profile/presentation/screens/controls_screen.dart';
+import 'package:voltium_rider/features/profile/presentation/screens/settings_screen.dart';
 import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,8 +39,8 @@ class ProfileScreen extends ConsumerWidget {
       appBar: _buildAppBar(context),
       body: Consumer(
         builder: (context, innerRef, _) {
-          final rider = innerRef.watch(appProvider).rider;
-          final dataState = innerRef.watch(appProvider).dataState;
+          final rider = innerRef.watch(riderProvider.select((p) => p.rider));
+          final dataState = innerRef.watch(riderProvider.select((p) => p.dataState));
           final localeProv = innerRef.watch(localeProviderRef);
           final currentLocale = localeProv.locale.languageCode;
           final isLoading = rider == null &&
@@ -51,9 +51,14 @@ class ProfileScreen extends ConsumerWidget {
             return const ProfileSkeleton();
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Column(
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(riderProvider).refreshFromApi();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── Compact rider header ──────────────────────────────────
@@ -152,14 +157,14 @@ class ProfileScreen extends ConsumerWidget {
                 FadeUpWidget(
                   delay: 340,
                   child: QuickLinkItem(
-                    key: const Key('controlsLink'),
+                    key: const Key('appSettingsLink'),
                     icon: Icons.tune_outlined,
                     activeIcon: Icons.tune,
-                    iconColor: const Color(0xFF0F766E),
-                    iconBgColor: const Color(0xFFCCFBF1),
-                    title: l10n.menu_controls,
+                    iconColor: AppColors.tealIcon,
+                    iconBgColor: AppColors.tealIconSurface,
+                    title: l10n.menu_appSettings,
                     onTap: () =>
-                        AppNavigator.push(context, const ControlsScreen()),
+                        AppNavigator.push(context, const SettingsScreen()),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -204,7 +209,8 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 48),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );
@@ -322,121 +328,137 @@ class _CompactRiderHeader extends StatelessWidget {
     final bool isVerified =
         kycStatusName == 'VERIFIED' || kycStatusName == 'APPROVED';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: isVerified ? AppColors.success : AppColors.primary,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+    return InkWell(
+      onTap: () => AppNavigator.push(context, const ProfileDetailScreen()),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            alignment: Alignment.center,
-            child: avatarUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: CachedNetworkImage(
-                      imageUrl: avatarUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 112,
-                      memCacheHeight: 112,
-                      placeholder: (_, __) => const SizedBox(
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: isVerified ? AppColors.success : AppColors.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: avatarUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      child: CachedNetworkImage(
+                        imageUrl: avatarUrl,
                         width: 56,
                         height: 56,
-                        child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2)),
+                        fit: BoxFit.cover,
+                        memCacheWidth: 112,
+                        memCacheHeight: 112,
+                        placeholder: (_, __) => const SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(Icons.person,
+                            size: 28, color: Colors.white),
                       ),
-                      errorWidget: (_, __, ___) => const Icon(Icons.person,
-                          size: 28, color: Colors.white),
+                    )
+                  : Text(
+                      initial,
+                      style: AppTypography.headingMedium
+                          .copyWith(color: Colors.white),
                     ),
-                  )
-                : Text(
-                    initial,
-                    style: AppTypography.headingMedium
-                        .copyWith(color: Colors.white),
+            ),
+            const SizedBox(width: 16),
+            // Name + KYC pill + Edit Icon
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          rider?.name ?? 'Rider',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: colors.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: colors.onSurfaceMuted,
+                      ),
+                    ],
                   ),
-          ),
-          const SizedBox(width: 16),
-          // Name + KYC pill
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  rider?.name ?? 'Rider',
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.shield_outlined,
+                        size: 12,
+                        color: isVerified
+                            ? AppColors.success
+                            : AppColors.warningDark,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
+                        style: AppTypography.bodySmallEmphasis.copyWith(
+                            color: isVerified
+                                ? AppColors.success
+                                : AppColors.warningDark),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Phone chip
+            if (rider?.phone != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: colors.iconBackground,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Text(
+                  rider?.phone ?? '',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: colors.onSurface,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurfaceMuted,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.shield_outlined,
-                      size: 12,
-                      color: isVerified
-                          ? AppColors.success
-                          : AppColors.warningDark,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                      style: AppTypography.bodySmallEmphasis.copyWith(
-                          color: isVerified
-                              ? AppColors.success
-                              : AppColors.warningDark),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Phone chip
-          if (rider?.phone != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: colors.iconBackground,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                rider?.phone ?? '',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: colors.onSurfaceMuted,
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

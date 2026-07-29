@@ -23,14 +23,14 @@ class ReferralCard extends StatelessWidget {
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: Spacing.paddingMd,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [AppColors.success, AppColors.successDark],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             boxShadow: AppShadows.glass,
           ),
           child: Column(
@@ -64,7 +64,7 @@ class ReferralCard extends StatelessWidget {
                         Text(
                           'Share your code with friends',
                           style: AppTypography.bodySmall.copyWith(
-                            color: Color(0xFFA7F3D0),
+                            color: AppColors.successTint,
                           ),
                         ),
                       ],
@@ -78,7 +78,7 @@ class ReferralCard extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border:
                       Border.all(color: Colors.white.withValues(alpha: 0.2)),
                 ),
@@ -122,7 +122,7 @@ class ReferralCard extends StatelessWidget {
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: const Icon(
                               Icons.copy,
@@ -147,7 +147,7 @@ class ReferralCard extends StatelessWidget {
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: const Icon(
                               Icons.share,

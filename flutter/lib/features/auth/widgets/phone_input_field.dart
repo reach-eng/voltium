@@ -34,7 +34,7 @@ class PhoneInputField extends StatelessWidget {
           height: 56,
           decoration: BoxDecoration(
             color: AppColors.inputBackground,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.full),
             border: errorText != null
                 ? Border.all(color: AppColors.error, width: 1.5)
                 : null,

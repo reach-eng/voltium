@@ -2,16 +2,13 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/main.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
-import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/spark_otp_input.dart';
-import 'package:voltium_rider/core/platform/platform_info.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -26,7 +23,7 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 /// - "Didn't receive the code?" uppercase + Resend button / timer
 /// - Gradient "Verify & Proceed" + ArrowRight, pill 56px
 
-class OtpVerificationScreen extends StatefulWidget {
+class OtpVerificationScreen extends ConsumerStatefulWidget {
   final void Function(bool isNewRider)? onNext;
   final String phoneNumber;
   final bool isLogin;
@@ -44,10 +41,11 @@ class OtpVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+  ConsumerState<OtpVerificationScreen> createState() =>
+      _OtpVerificationScreenState();
 }
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen>
+class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
     with TickerProviderStateMixin {
   final GlobalKey<SparkOtpInputState> _otpKey = GlobalKey<SparkOtpInputState>();
 
@@ -126,49 +124,33 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     setState(() => _isLoading = true);
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
-      final response =
-          await VoltiumApiService().verifyOtp(phone: phone, otp: code);
+      final result =
+          await ref.read(authRepositoryProvider).verifyOtp(phone, code);
       if (mounted) {
-        final token = response['token'] as String?;
-        final isNewRider = response['isNewRider'] as bool? ?? true;
-        if (token != null && !PlatformInfo.isWeb) {
-          await SecureStorageService().setToken(token);
-
-          final refreshToken = response['refreshToken'] as String?;
-          if (refreshToken != null && refreshToken.isNotEmpty) {
-            await SecureStorageService().setRefreshToken(refreshToken);
-          }
-
-          // Persist the FCM command secret (BLOCKER 1.1).
-          final fcmSecret = response['fcmCommandSecret'] as String?;
-          if (fcmSecret != null && fcmSecret.isNotEmpty) {
-            await SecureStorageService().writeFcmCommandSecret(fcmSecret);
-          }
-        }
-        if (!mounted) return;
-        // VerifyOtpResponse is flat, so we can pass it directly
-        final rider = RiderModel.fromJson(response);
+        final isNewRider = result.isNewRider;
+        final rider = RiderModel.fromJson(result.rawJson);
         await CacheService().cacheRider(rider.toCacheMap());
         if (!mounted) return;
-        context.read<AppProvider>().setRider(rider);
+        ProviderScope.containerOf(context).read(riderProvider).setRider(rider);
         if (rider.riderId.isNotEmpty) {
-          await PostHogService.identify(rider.riderId, properties: {
+          unawaited(PostHogService.identify(rider.riderId, properties: {
             'lifecycle_status': rider.lifecycleStatus,
             'account_status': rider.accountStatus.name,
-          });
+          }));
         }
-        await PostHogService.capture('otp_verified', properties: {
+        unawaited(PostHogService.capture('otp_verified', properties: {
           'is_new_rider': isNewRider.toString(),
-        });
+        }));
         if (isNewRider) {
-          await PostHogService.capture('signup_completed', properties: {
+          unawaited(PostHogService.capture('signup_completed', properties: {
             if (widget.referralCode != null)
               'referral_code': widget.referralCode!,
-          });
+          }));
         }
         widget.onNext?.call(isNewRider);
       }
     } catch (e) {
+      debugPrint('[OtpScreen] Error in verifyOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
         String errorMsg = 'Failed to verify OTP. Please try again.';
@@ -191,7 +173,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     if (_resendCountdown > 0) return;
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
-      await VoltiumApiService().sendOtp(phone: phone);
+      await ref.read(authRepositoryProvider).sendOtp(phone);
       PostHogService.capture('otp_resent');
       if (mounted) {
         _otpKey.currentState?.clear();
@@ -266,7 +248,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                           onTap: widget.onBack ??
                               () => Navigator.maybePop(context),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                             child: BackdropFilter(
                               filter:
                                   ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -298,7 +280,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                         'Voltium',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: AppColors.onSurface,
                           letterSpacing: 1.5,
                         ),
@@ -335,35 +317,37 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                                 curve: Curves.easeOutCubic,
                               ),
                             ),
-                            child: AnimatedBuilder(
-                              animation: _bounceAnim,
-                              builder: (context, child) => Transform.translate(
-                                offset: Offset(0, _bounceAnim.value),
-                                child: child,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(999),
-                                child: BackdropFilter(
-                                  filter: ui.ImageFilter.blur(
-                                      sigmaX: 16, sigmaY: 16),
-                                  child: Container(
-                                    width: 96,
-                                    height: 96,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.7),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
+                            child: RepaintBoundary(
+                              child: AnimatedBuilder(
+                                animation: _bounceAnim,
+                                builder: (context, child) => Transform.translate(
+                                  offset: Offset(0, _bounceAnim.value),
+                                  child: child,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(AppRadius.full),
+                                  child: BackdropFilter(
+                                    filter: ui.ImageFilter.blur(
+                                        sigmaX: 16, sigmaY: 16),
+                                    child: Container(
+                                      width: 96,
+                                      height: 96,
+                                      decoration: BoxDecoration(
                                         color:
-                                            Colors.white.withValues(alpha: 0.4),
-                                        width: 1.5,
+                                            Colors.white.withValues(alpha: 0.7),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.4),
+                                          width: 1.5,
+                                        ),
+                                        boxShadow: AppShadows.glass,
                                       ),
-                                      boxShadow: AppShadows.glass,
-                                    ),
-                                    child: const Icon(
-                                      Icons.smartphone,
-                                      size: 40,
-                                      color: AppColors.primary,
+                                      child: const Icon(
+                                        Icons.smartphone,
+                                        size: 40,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -519,7 +503,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                   height: 56,
                   decoration: BoxDecoration(
                     gradient: AppGradients.primary,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.full),
                     boxShadow: (_isOtpComplete && !_isLoading)
                         ? AppShadows.primaryButton
                         : null,

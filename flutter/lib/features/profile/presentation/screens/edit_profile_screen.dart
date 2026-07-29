@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../widgets/edit_profile_widgets.dart';
@@ -71,7 +73,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final rider = ref.read(appProvider).rider;
+    final rider = ref.read(riderProvider).rider;
     _nameController = TextEditingController(text: rider?.name ?? '');
     _emailController = TextEditingController(text: rider?.email ?? '');
     _phoneController = TextEditingController(text: rider?.phone ?? '');
@@ -82,7 +84,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final dob = rider?.dob;
     _dobController = TextEditingController(
       text: dob != null
-          ? '${dob.year}-${_twoDigits(dob.month)}-${_twoDigits(dob.day)}'
+          ? '${_twoDigits(dob.day)}-${_twoDigits(dob.month)}-${dob.year}'
           : '',
     );
     _addressController =
@@ -99,6 +101,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _originalGPhone = rider?.guarantorPhone ?? '';
     // If guarantor phone already exists, it's already verified
     _isGPhoneVerified = (rider?.guarantorPhone ?? '').isNotEmpty;
+
+    _gPhoneController.addListener(() {
+      final currentClean = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
+      final origClean = _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+      if (_isGPhoneVerified && currentClean != origClean) {
+        setState(() {
+          _isGPhoneVerified = false;
+          _isGOtpSent = false;
+        });
+      }
+    });
   }
 
   String _twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -135,7 +148,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
       return;
     }
-    final rider = ref.read(appProvider).rider;
+    final rider = ref.read(riderProvider).rider;
     if (phone == rider?.phone) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -147,7 +160,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
     setState(() => _isSendingGOtp = true);
     try {
-      final result = await VoltiumApiService().sendOtp(phone: phone);
+      final client = ApiClient();
+      final res = await VoltiumApiClient(client).postAuthSendOtp(SendOtpRequest(phone: phone));
+      final result = res.toJson();
       if (mounted) {
         setState(() {
           _isSendingGOtp = false;
@@ -192,7 +207,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _isVerifyingGOtp = true);
     try {
       await VoltiumApiService()
-          .verifyOtp(phone: phone, otp: _gOtpController.text);
+          .verifyPhone(phone: phone, otp: _gOtpController.text);
       if (mounted) {
         setState(() {
           _isVerifyingGOtp = false;
@@ -220,8 +235,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    final provider = ref.read(appProvider);
-    final rider = ref.watch(appProvider).rider;
+    final provider = ref.read(riderProvider);
+    final rider = ref.watch(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -430,7 +445,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 56),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
+                                borderRadius: BorderRadius.circular(AppRadius.xl),
                               ),
                               elevation: 8,
                               shadowColor:
@@ -448,7 +463,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 : Text(
                                     'SUBMIT FOR APPROVAL',
                                     style: GoogleFonts.plusJakartaSans(
-                                      fontWeight: FontWeight.w900,
+                                      fontWeight: FontWeight.w800,
                                       letterSpacing: 1.2,
                                     ),
                                   ),
@@ -489,7 +504,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           InkWell(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              padding: const EdgeInsets.all(13),
+              padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -519,7 +534,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildAvatarSection() {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider).rider;
     String? getAvatarUrl() {
       if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
         return null;
@@ -534,7 +549,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       child: Stack(
         children: [
           Container(
-            padding: const EdgeInsets.all(4),
+            padding: Spacing.paddingXs,
             decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
@@ -587,7 +602,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: GestureDetector(
               onTap: _pickImage,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: Spacing.paddingSm,
                 decoration: const BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
@@ -624,7 +639,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.02),
@@ -680,7 +695,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     backgroundColor: AppColors.primary,
                     disabledBackgroundColor: AppColors.primaryLightBlue,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
@@ -715,7 +730,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.02),
@@ -752,9 +767,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onPressed: _isVerifyingGOtp ? null : _verifyGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    disabledBackgroundColor: const Color(0xFF6EE7B7),
+                    disabledBackgroundColor: AppColors.successBorderLight,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
@@ -787,7 +802,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.successSurface,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

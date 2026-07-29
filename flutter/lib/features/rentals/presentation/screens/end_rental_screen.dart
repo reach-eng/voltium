@@ -5,22 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
-
-/// Matches web EndRentalScreen.tsx exactly:
-/// - Light bg, glass back btn + "End Rental" header
-/// - Red warning card "Are you sure?"
-/// - 2×2 photo grid (tap to mark taken — green check / camera icon)
-/// - Odometer reading pill input
-/// - Battery bar (static 72%)
-/// - Confirmation checkbox
-/// - "Confirm Return" red pill CTA (disabled until all photos + checkbox)
-/// - Success state: green check circle + "Request Submitted!"
 
 class EndRentalScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
@@ -36,26 +27,63 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     with SingleTickerProviderStateMixin {
   final _odometerCtrl = TextEditingController();
   final Map<String, XFile?> _photos = {
-    'front': null,
-    'rear': null,
     'left': null,
     'right': null,
+    'front': null,
+    'speedometer': null,
   };
   bool _confirmed = false;
   bool _submitting = false;
   bool _submitted = false;
-
-  final _imagePicker = ImagePicker();
 
   Future<void> _takePhoto(String key) async {
     if (AppConstants.isTestMode) {
       setState(() => _photos[key] = XFile('mock_photo.png'));
       return;
     }
-    final image = await _imagePicker.pickImage(source: ImageSource.camera);
-    if (image != null && mounted) {
-      setState(() => _photos[key] = image);
+    final file = await ImageCompressionService().pickAndCompress(source: ImageSource.camera);
+    if (file != null && mounted) {
+      setState(() => _photos[key] = XFile(file.path));
     }
+  }
+
+  void _showPhotoOptionsDialog(String key, String label) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(ctx).colorScheme.surface,
+        title: Text(
+          '$label Photo',
+          style: AppTypography.titleMedium.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.refresh_rounded, color: Theme.of(ctx).colorScheme.primary),
+              title: Text('Retake Photo', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _takePhoto(key);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              title: const Text('Remove Photo', style: TextStyle(color: AppColors.error)),
+              onTap: () {
+                Navigator.pop(ctx);
+                setState(() => _photos[key] = null);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.close, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+              title: Text('Cancel', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              onTap: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   late final AnimationController _entryCtrl;
@@ -67,6 +95,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+    _odometerCtrl.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -77,14 +108,14 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   }
 
   bool get _allPhotosTaken => _photos.values.every((v) => v != null);
-  bool get _canSubmit => _allPhotosTaken && _confirmed && !_submitting;
+  bool get _canSubmit => _allPhotosTaken && _odometerCtrl.text.trim().isNotEmpty && _confirmed && !_submitting;
 
   Future<void> _handleReturn() async {
     if (!_canSubmit) return;
     setState(() => _submitting = true);
 
     try {
-      final rider = ref.read(appProvider).rider;
+      final rider = ref.read(riderProvider).rider;
       final riderId = rider?.riderId ?? '';
       final List<String> photoUrls = [];
       for (final entry in _photos.entries) {
@@ -98,7 +129,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       await VoltiumApiService().submitVehicleReturn(
         riderId: riderId,
         photoUrls: photoUrls,
-        reason: 'End of rental – odometer: ${_odometerCtrl.text}',
+        reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
       );
 
       PostHogService.capture('rental_ended', properties: {
@@ -127,9 +158,13 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final colors = AppColors.of(context);
+
     if (_submitted) {
       return Scaffold(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         body: SafeArea(
           child: Center(
             child: Column(
@@ -148,16 +183,16 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                     size: 40,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Text(
                   'Request Submitted!',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
+                    color: colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 48),
                   child: Text(
@@ -165,7 +200,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
-                      color: AppColors.onSurfaceVariant,
+                      color: colorScheme.onSurfaceVariant,
                       height: 1.6,
                     ),
                   ),
@@ -178,7 +213,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -192,23 +227,23 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                     child: Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: colors.card,
                         shape: BoxShape.circle,
                         boxShadow: AppShadows.glass,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back,
                         size: 18,
-                        color: AppColors.onSurface,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Text(
                     'End Rental',
                     style: AppTypography.titleMediumLarge
-                        .copyWith(color: AppColors.onSurface),
+                        .copyWith(color: colorScheme.onSurface),
                   ),
                 ],
               ),
@@ -221,27 +256,27 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 child: Column(
                   children: [
                     // Warning card
-                    _buildWarningCard(),
+                    _buildWarningCard(colorScheme),
                     const SizedBox(height: 20),
 
                     // Photo grid
-                    _buildPhotoGrid(),
+                    _buildPhotoGrid(colorScheme, colors),
                     const SizedBox(height: 20),
 
                     // Odometer
-                    _buildOdometer(),
+                    _buildOdometer(colorScheme, colors),
                     const SizedBox(height: 16),
 
                     // Battery
-                    _buildBattery(),
+                    _buildBattery(colorScheme, colors),
                     const SizedBox(height: 16),
 
                     // Checkbox
-                    _buildCheckbox(),
+                    _buildCheckbox(colorScheme, colors),
                     const SizedBox(height: 24),
 
                     // Confirm button
-                    _buildConfirmButton(),
+                    _buildConfirmButton(colorScheme),
                   ],
                 ),
               ),
@@ -252,9 +287,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildWarningCard() {
+  Widget _buildWarningCard(ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: AppColors.errorLight,
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -276,7 +311,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               size: 20,
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +321,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                   style: AppTypography.labelLarge
                       .copyWith(color: AppColors.errorDark),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Returning your vehicle will end your current rental period. Make sure to complete all inspection steps.',
                   style: GoogleFonts.plusJakartaSans(
@@ -303,12 +338,28 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildPhotoGrid() {
+  Widget _buildPhotoGrid(ColorScheme colorScheme, ThemeColors colors) {
     final slots = [
-      {'key': 'front', 'label': 'Front'},
-      {'key': 'rear', 'label': 'Rear'},
-      {'key': 'left', 'label': 'Left'},
-      {'key': 'right', 'label': 'Right'},
+      {
+        'key': 'left',
+        'label': 'Left Side',
+        'hint': 'Full side view of vehicle'
+      },
+      {
+        'key': 'right',
+        'label': 'Right Side',
+        'hint': 'Full side view of vehicle'
+      },
+      {
+        'key': 'front',
+        'label': 'Front View',
+        'hint': 'Stand 2m back, include full front'
+      },
+      {
+        'key': 'speedometer',
+        'label': 'Speedometer',
+        'hint': 'Clear photo of odometer reading'
+      },
     ];
 
     return Column(
@@ -317,14 +368,14 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
         Text(
           'RETURN INSPECTION',
           style: AppTypography.bodySmallStrong
-              .copyWith(color: AppColors.onSurface, letterSpacing: 1.2),
+              .copyWith(color: colorScheme.onSurface, letterSpacing: 1.2),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Text(
           'Take return photos of your vehicle',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
-            color: AppColors.onSurfaceVariant,
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
@@ -340,45 +391,58 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             final taken = photo != null;
             return GestureDetector(
               key: Key('photoSlot_$key'),
-              onTap: () => _takePhoto(key),
+              onTap: () => taken ? _showPhotoOptionsDialog(key, slot['label']!) : _takePhoto(key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: taken ? AppColors.successLight : Colors.white,
+                  color: taken ? AppColors.successLight : colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
-                    color: taken ? const Color(0xFF86EFAC) : AppColors.divider,
+                    color: taken ? AppColors.greenFill : AppColors.divider,
                     width: taken ? 2 : 1,
-                    style: taken ? BorderStyle.solid : BorderStyle.solid,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    taken
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(photo.path),
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      taken
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              child: Image.file(
+                                File(photo.path),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Icon(
+                              Icons.camera_alt_outlined,
+                              size: 24,
+                              color: colorScheme.onSurfaceVariant,
                             ),
-                          )
-                        : const Icon(
-                            Icons.camera_alt_outlined,
-                            size: 24,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                    SizedBox(height: 8),
-                    Text(
-                      slot['label']!,
-                      style: AppTypography.bodySmallEmphasis.copyWith(
-                          color: taken
-                              ? AppColors.successText
-                              : AppColors.onSurfaceVariant),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(
+                        slot['label']!,
+                        style: AppTypography.bodySmallEmphasis.copyWith(
+                            color: taken
+                                ? AppColors.successText
+                                : colorScheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        slot['hint']!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -388,11 +452,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildOdometer() {
+  Widget _buildOdometer(ColorScheme colorScheme, ThemeColors colors) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.card,
       ),
@@ -400,18 +464,18 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ODOMETER READING',
+            'ODOMETER READING *',
             style: AppTypography.labelMedium.copyWith(
-                color: AppColors.onSurfaceVariant, letterSpacing: 1.2),
+                color: colorScheme.onSurfaceVariant, letterSpacing: 1.2),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           TextFormField(
             key: const Key('odometerField'),
             controller: _odometerCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             style: AppTypography.bodyMediumEmphasis
-                .copyWith(color: AppColors.onSurface),
+                .copyWith(color: colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Enter current odometer reading',
               hintStyle: GoogleFonts.plusJakartaSans(
@@ -433,11 +497,15 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildBattery() {
+  Widget _buildBattery(ColorScheme colorScheme, ThemeColors colors) {
+    final rider = ref.watch(riderProvider).rider;
+    final double? batteryVal = rider?.batteryPercent;
+    final String batteryText = batteryVal != null ? 'Current battery: ${batteryVal.toInt()}%' : 'Battery level: Unavailable';
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.card,
       ),
@@ -456,7 +524,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               size: 18,
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,13 +533,13 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                   'Battery Level',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  'Current battery: 72%',
+                  batteryText,
                   style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.onSurface),
+                      .copyWith(color: colorScheme.onSurface),
                 ),
               ],
             ),
@@ -479,11 +547,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
           SizedBox(
             width: 80,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: const LinearProgressIndicator(
-                value: 0.72,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
+              child: LinearProgressIndicator(
+                value: batteryVal != null ? (batteryVal / 100.0).clamp(0.0, 1.0) : 0.0,
                 backgroundColor: AppColors.divider,
-                valueColor: AlwaysStoppedAnimation(AppColors.success),
+                valueColor: const AlwaysStoppedAnimation(AppColors.success),
                 minHeight: 8,
               ),
             ),
@@ -493,14 +561,14 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildCheckbox() {
+  Widget _buildCheckbox(ColorScheme colorScheme, ThemeColors colors) {
     return GestureDetector(
       key: const Key('confirmCheckbox'),
       onTap: () => setState(() => _confirmed = !_confirmed),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.card,
         ),
@@ -514,7 +582,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               margin: const EdgeInsets.only(top: 2),
               decoration: BoxDecoration(
                 color: _confirmed ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
                 border: Border.all(
                   color: _confirmed ? AppColors.primary : AppColors.divider,
                   width: 2,
@@ -524,13 +592,13 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                   ? const Icon(Icons.check, color: Colors.white, size: 14)
                   : null,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'I confirm the vehicle is returned in good condition with all accessories intact.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
-                  color: AppColors.onSurface,
+                  color: colorScheme.onSurface,
                   height: 1.6,
                 ),
               ),
@@ -541,7 +609,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 
-  Widget _buildConfirmButton() {
+  Widget _buildConfirmButton(ColorScheme colorScheme) {
     return Column(
       children: [
         GestureDetector(
@@ -552,11 +620,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             height: 56,
             decoration: BoxDecoration(
               color: _canSubmit ? AppColors.errorDark : AppColors.divider,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.full),
               boxShadow: _canSubmit
                   ? const [
                       BoxShadow(
-                        color: Color(0x40BA1A1A),
+                        color: AppColors.dangerShadow,
                         blurRadius: 24,
                         offset: Offset(0, 8),
                       ),
@@ -577,16 +645,16 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                       'Confirm Return',
                       style: AppTypography.buttonMedium.copyWith(
                           color: _canSubmit
-                              ? Colors.white
+                              ? colorScheme.onPrimary
                               : AppColors.onSurfaceDisabled),
                     ),
             ),
           ),
         ),
-        if (!_allPhotosTaken) ...[
-          SizedBox(height: 8),
+        if (!_canSubmit && !_allPhotosTaken) ...[
+          const SizedBox(height: 8),
           Text(
-            'Please take all inspection photos to continue',
+            'Please take all inspection photos and enter odometer reading to continue',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               color: AppColors.error,
@@ -598,3 +666,4 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 }
+

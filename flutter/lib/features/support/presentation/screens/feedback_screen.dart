@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
@@ -77,14 +78,14 @@ class _TutorialDialogState extends State<TutorialDialog> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(AppRadius.xxl),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Column(
@@ -166,7 +167,7 @@ class _TutorialDialogState extends State<TutorialDialog> {
   }
 }
 
-class FeedbackScreen extends StatefulWidget {
+class FeedbackScreen extends ConsumerStatefulWidget {
   final VoidCallback onSubmit;
   final VoidCallback? onCancel;
 
@@ -177,10 +178,10 @@ class FeedbackScreen extends StatefulWidget {
   });
 
   @override
-  State<FeedbackScreen> createState() => _FeedbackScreenState();
+  ConsumerState<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
-class _FeedbackScreenState extends State<FeedbackScreen> {
+class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   final _commentController = TextEditingController();
   int _rating = 0;
   bool _isSubmitting = false;
@@ -292,7 +293,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, Color(0xFFDEE9FF)],
+            colors: [AppColors.iconBackground, AppColors.royalBlueTint],
           ),
         ),
       ),
@@ -348,7 +349,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               child: Icon(
                 isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
                 color: isSelected
-                    ? const Color(0xFFFFB800)
+                    ? AppColors.amberIcon
                     : AppColors.borderMedium,
                 size: 48,
               ),
@@ -361,10 +362,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Widget _buildCommentField() {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: Spacing.paddingSm,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: Colors.white),
       ),
       child: TextFormField(
@@ -377,12 +378,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           hintStyle: GoogleFonts.plusJakartaSans(
               color: AppColors.slate400, fontSize: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.all(20),
+          contentPadding: const EdgeInsets.all(Spacing.md),
         ),
       ),
     );
@@ -394,10 +395,28 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       onPressed: (canSubmit && !_isSubmitting)
           ? () async {
               setState(() => _isSubmitting = true);
-              if (kDebugMode) {
-                await Future.delayed(const Duration(milliseconds: 1000));
+              try {
+                await ApiClient().post(
+                  '/api/support/feedback',
+                  body: {
+                    'rating': _rating,
+                    'comment': _commentController.text.trim(),
+                  },
+                );
+                if (mounted) {
+                  widget.onSubmit();
+                }
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _isSubmitting = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to submit feedback: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
               }
-              widget.onSubmit();
             }
           : null,
       style: ElevatedButton.styleFrom(
@@ -405,7 +424,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         foregroundColor: Colors.white,
         disabledBackgroundColor: AppColors.borderMedium,
         minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
         elevation: canSubmit ? 8 : 0,
         shadowColor: AppColors.primary.withValues(alpha: 0.4),
       ),
@@ -421,7 +440,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           : Text(
               'SUBMIT FEEDBACK',
               style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w900, letterSpacing: 1.2),
+                  fontWeight: FontWeight.w800, letterSpacing: 1.2),
             ),
     );
   }
@@ -441,17 +460,17 @@ class RateAppPrompt {
         builder: (context) => Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(AppRadius.xxl),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.star_rounded,
-                  color: Color(0xFFFFB800),
+                  color: AppColors.amberIcon,
                   size: 64,
                 ),
                 SizedBox(height: 24),
@@ -481,7 +500,7 @@ class RateAppPrompt {
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 54),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9999),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                   ),
                   child: Text(

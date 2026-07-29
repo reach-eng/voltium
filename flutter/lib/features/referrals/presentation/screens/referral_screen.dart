@@ -7,6 +7,8 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 class ReferralScreen extends ConsumerStatefulWidget {
   const ReferralScreen({super.key});
 
@@ -56,7 +58,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
         ),
       );
     }
@@ -68,7 +70,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
 
   @override
   Widget build(BuildContext context) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
     final referralCode = rider?.referralCode ?? 'VOLTIUM-XXXX';
 
     return Scaffold(
@@ -111,15 +113,15 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: Spacing.paddingXl,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -134,28 +136,30 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      AnimatedBuilder(
-                        animation: _glowCtrl,
-                        builder: (context, child) {
-                          return Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.success.withValues(
-                                      alpha: 0.1 + (_glowCtrl.value * 0.15)),
-                                  blurRadius: 20 + (_glowCtrl.value * 10),
-                                  spreadRadius: _glowCtrl.value * 5,
-                                )
-                              ],
-                            ),
-                          );
-                        },
+                      RepaintBoundary(
+                        child: AnimatedBuilder(
+                          animation: _glowCtrl,
+                          builder: (context, child) {
+                            return Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.success.withValues(
+                                        alpha: 0.1 + (_glowCtrl.value * 0.15)),
+                                    blurRadius: 20 + (_glowCtrl.value * 10),
+                                    spreadRadius: _glowCtrl.value * 5,
+                                  )
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(Spacing.md),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -209,7 +213,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                         color: _isCopied
                             ? AppColors.successLight
                             : AppColors.iconBackground,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color: _isCopied
                               ? AppColors.success
@@ -255,11 +259,11 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                     width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppColors.primary, Color(0xFF4F46E5)],
+                        colors: [AppColors.primary, AppColors.indigoVivid],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.3),
@@ -273,12 +277,12 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
                       child: InkWell(
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Share feature coming soon')),
+                          Share.share(
+                            'Join Voltium EV Mobility! Use my referral code $referralCode to earn bonus reward points on your first ride: https://voltium.app/ref/$referralCode',
+                            subject: 'Voltium Referral Code',
                           );
                         },
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           child: Row(
