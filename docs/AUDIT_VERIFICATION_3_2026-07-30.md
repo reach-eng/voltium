@@ -273,7 +273,7 @@ The AUDIT_WORKERS has 30+ findings across 5 sections. The first 10 from §2 (sta
 | 2.7 | `runReaperLoop` reclaims stuck PROCESSING — no idempotency | **STILL TRUE** | Out of scope; deferred to polish |
 | 2.8 | `runScheduledBackupLoop` calls `checkAndRun()` not in `WORKERS` array | **STILL TRUE** | Out of scope |
 | 2.12 | `handleShutdown` exits 0 even if shutdown timed out | **STILL TRUE** | Out of scope |
-| 3.1 | `OutboxService.emit` called WITHOUT a transaction in most code paths | **STILL TRUE (DB audit 2.35 / Ticket #9 / Audit 3.1 question)** | Wallet use-cases don't pass `tx`; this is a P0 data-integrity risk. Highest-leverage unmitigated Worker finding. |
+| 3.1 | `OutboxService.emit` called WITHOUT a transaction in most code paths | **STALE (RE-VERIFIED 2026-07-30)** | Re-verification: `wallet.use-cases.ts:293, 332` and `kyc.use-cases.ts:90, 102` all DO pass `tx` (as the 4th argument). Other callers (jobs, schedulers, auth) are NOT inside `$transaction` blocks, so not passing `tx` is correct. **No code change needed.** Original Pass 3 verdict was wrong; this is closed as audit-correction. |
 | 3.2 | `JobQueue.enqueue` does NOT take a `tx` parameter | ✅ **SHIPPED (Ticket #2 / PR-P1.4 partial)** | `JobQueue.enqueue` deleted; `JobTypes` deduplicated; use-cases migrated to outbox |
 | 3.3 | `JobQueue.processJobs` racy — multiple workers can process same event | **STILL TRUE** | Out of scope; concurrency is a v2 concern |
 | 3.9 | `JobTypes` enum in `job-queue.ts:217-224` is stale | ✅ **SHIPPED (Ticket #2 / PR-P1.4)** | `JobTypes` deleted (duplicate of DB enum) |
@@ -324,17 +324,18 @@ The 26 still-true Top 10 findings, cross-referenced with `FOLLOWUP_TICKETS.md`:
 3. **#6** — `RiderLifecycleStatus` enum split (3-5 d) — biggest DB query-ability win
 4. **#7 sub-B** — drop legacy string columns (1-wk soak gated) — depends on PR-P3.2 staging soak
 5. **#54** — `seed.ts admin123` env var path (30 min) — **production risk**; deferred to polish
-6. **Workers #3.1** — `OutboxService.emit` no transaction (4 hr) — data integrity risk
+6. **(RESOLVED)** Workers #3.1 — `OutboxService.emit` no transaction — **RE-VERIFIED STALE** (2026-07-30); the original Pass 3 verdict was wrong. The fix is "close as audit-correction"; no code change.
 
 ---
 
 ## 11. Action items
 
 1. **Update BACKLOG_FINDINGS.md** — pass 3 changes the Phase 1 backlog from "19 P0s NOT YET SHIPPED" to "0 P0s in the 2026-07-29 list remaining". Pass 3 reframes the dashboard as the current state of every audit doc.
-2. **File the 5 new tickets** that pass 3 surfaced (Worker 3.1 OutboxService.emit, AUDIT_BACKEND 1.5/1.7, AUDIT_DATABASE 2.x, AUDIT_FINDINGS_RIDERAPP 1.2 AuthWrapper no-op).
-3. **Close 2 stale tickets** — AUDIT_SECURITY 3.4 (decryptPii auth tag) and 4.1 (maskEmail) — both verified as already-correct; the audit was wrong.
+2. **File the new tickets that pass 3 surfaced** — Tickets #64 (OutboxService.emit) and #65 (AppProvider stub) already filed in `FOLLOWUP_TICKETS.md`. **Re-verification on 2026-07-30 closed #64 as audit-correction** (the alleged data-integrity bug does not exist; the current code already passes `tx` correctly). Only #65 + #61 (re-verified as REAL) remain as new work.
+3. **Close 3 stale tickets** — AUDIT_SECURITY 3.4 (decryptPii auth tag) and 4.1 (maskEmail) — both verified as already-correct; the audit was wrong. **#64** (OutboxService.emit) — re-verified stale; close as audit-correction.
 4. **Update the audit docs themselves** — add a one-line header note at the top of each audit doc saying "Verified on 2026-07-30; see `AUDIT_VERIFICATION_3_2026-07-30.md` for current status of each Top 10."
 5. **Schedule the 2 PM2 changes** (#39, #42) — these are the highest-leverage and have a 24-48h staging soak requirement.
+6. **Follow the per-file fix plan** in [`FIX_PLAN.md`](./FIX_PLAN.md) — 17 PRs across 4 weeks with explicit ordering, dependencies, and acceptance criteria.
 
 ---
 

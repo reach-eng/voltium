@@ -5,7 +5,7 @@
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** a flat, sortable view of every finding that was raised across the 9-scope audit + 6-plan remediation, with current status (shipped, in-progress, deferred) and a pointer to the source.
 
-> **TL;DR:** The 2026-07-29 backlog (118 trivial + 39 unchecked) is now **0 unchecked Phase 1 P0s** (all 19 shipped in PR-1 through PR-19), **2 partially-shipped P0s** (#54 seed admin123, #59 data-deletion Admin UI), and **3 still-open P0s** (#55 TEST_MODE, #58 rental/return mass-assign, #50 PII key reject). The 14 Phase 2 Medium tickets have **4 shipped, 2 code-shipped-soak-gated (#7 sub-A, #8), 8 still open**. The 20 Phase 3 Low tickets have **8 shipped, 12 still open**. The 131 trivial items are unchanged; 11 are subsumed by tickets already shipped. **Net unchecked: 23 tickets + 120 trivial items = ~143 items, ~25-32 focused days.**
+> **TL;DR:** The 2026-07-29 backlog (118 trivial + 39 unchecked) is now **0 unchecked Phase 1 P0s** (all 19 shipped in PR-1 through PR-19), **2 partially-shipped P0s** (#54 seed admin123, #59 data-deletion Admin UI), and **3 still-open P0s** (#58 rental/return mass-assign, #50 PII key reject, plus #39/#42 PM2 cluster staged-soak). The 14 Phase 2 Medium tickets have **7 shipped, 2 code-shipped-soak-gated (#7 sub-A, #8), 4 still open**. The 20 Phase 3 Low tickets have **8 shipped, 12 still open**. The 131 trivial items are unchanged; 11 are subsumed by tickets already shipped. **Re-verification on 2026-07-30 closed #64 as audit-correction (OutboxService.emit already passes tx). #61 is REAL (x-admin-id read for session lookup) and #55 is partially stale (schema validation exists, only the dev-bypass hardening is needed). Net unchecked: 23 tickets + 120 trivial + 1 new ticket = 144 items, ~24-30 focused days.
 
 ---
 
@@ -224,11 +224,11 @@ The original 2026-07-29 list had 5 open questions. As of 2026-07-30:
 
 ### NEW questions from Pass 3 verification
 
-6. **Workers #3.1 (OutboxService.emit no transaction):** ✅ **VERIFIED REAL.** `wallet.use-cases.ts:330-333` wraps the call in `db.$transaction` but does NOT pass `tx` to `OutboxService.emit` — the transaction and the event insert are separate. `kyc.use-cases.ts:90/102` correctly passes `tx`. **This is a real data-integrity bug** that affects wallet top-up rejection events (if the outer transaction rolls back, the outbox event is still inserted → event is dispatched for a transaction that never happened). The fix is a 4-hr PR + unit tests. **File as a new ticket (priority P0).**
+6. **Workers #3.1 (OutboxService.emit no transaction):** ⚠️ **RE-VERIFIED — STALE.** A second pass at the code (2026-07-30, this doc) shows `wallet.use-cases.ts:293, 332` and `kyc.use-cases.ts:90, 102` all DO pass `tx` correctly (as the 4th argument to `OutboxService.emit`). The original Pass 3 verdict was wrong. **Ticket #64 should be closed as audit-correction.** The other `OutboxService.emit` callers (`auth.use-cases.ts:54`, `rent-reminders.job.ts:111`, `referral-reward.job.ts:91`, `reconciliation.job.ts:115`, `device-compliance.job.ts:69`, `index.ts:135/145/161`) are NOT inside `$transaction` blocks, so not passing `tx` is correct. **No code change needed.** See PR-A in [`FIX_PLAN.md`](./FIX_PLAN.md) for the close-out procedure.
 
 7. **AUDIT_BACKEND 1.5 (withIdempotency only protects POST):** ✅ **STALE / VERIFIED CLEAN.** `web/src/lib/api-middleware.ts:40-41` already handles `['POST', 'PUT', 'PATCH', 'DELETE']`. The audit was on a snapshot; the file has been refactored since. **No action needed.**
 
-8. **AUDIT_BACKEND 1.9 (actorId from x-admin-id header):** ⚠️ **LIKELY STALE.** Grep for `x-admin-id` and `actorId.*headers` across `web/src` returns 0 matches as of 2026-07-30. The audit was on a snapshot; the audit-log callsite has been refactored. **Ticket #61 should be closed as audit-correction** in the next ticket review.
+8. **AUDIT_BACKEND 1.9 (actorId from x-admin-id header):** ⚠️ **RE-VERIFIED — REAL.** Grep for `x-admin-id` returns 2 matches in `web/src/lib/get-session.ts:125` and `web/src/proxy.ts:42/61` (CORS preflight). The header is read for **session lookup** (admin impersonation), not for `actorId`. The audit-log callsite in `web/src/lib/audit-log.ts` does NOT read `x-admin-id`. **However, the underlying concern is real:** the `x-admin-id` header is honored globally for session lookup, which means any route that uses `getSession()` could fall back to the header. **Fix (PR-F in FIX_PLAN.md):** restrict the header to `/api/admin/impersonate*` routes only. **Ticket #61 is REAL, not stale.**
 
 9. **AUDIT_DATABASE 2 (add_payment_gateways schema drift):** ✅ **STALE / VERIFIED CLEAN.** `npx tsc --noEmit` returns 0 errors as of 2026-07-30. The 6 typecheck errors flagged in the audit must have been fixed by recent PRs (likely PR-P3.1 / PR-P3.4 / PR-P3.7). The migration and the schema are in sync. **No action needed.**
 
@@ -283,9 +283,9 @@ Where each finding came from:
 | **Phase 3 Low SHIPPED** | done | 8 of 20 | 2-3 days (already done) |
 | **Phase 3 Low OPEN** | not started | 12 of 20 | 5-7 days |
 | **Trivial/cosmetic** | batchable | 120 items (was 131; 11 subsumed) | 12-15 focused hours across 6 PRs |
-| **NEW from Pass 3 verification** | verified real + 2 stale | 3 new tickets (Workers #3.1, AppProvider stub, +1 of 5 questions) | 4 hr + 1 day = 1.5 days |
-| **Closed as audit-correction** (Pass 3) | 2 stale questions | Q7 (withIdempotency), Q9 (payment-gateways drift), Q8 (x-admin-id) — close #61, #? | (already in work) |
-| **Total net unchecked** | — | 23 tickets + 120 trivial + 3 new tickets = **146 items** | **~24-30 focused days across multiple contributors** |
+| **NEW from Pass 3 verification** | verified real + 3 stale | 2 new tickets (#65 AppProvider stub; #64 closed as audit-correction). #61 is REAL — see PR-F | 1 d (AppProvider) + 2 hr (#61) = 1.25 d |
+| **Closed as audit-correction** (Pass 3) | 3 stale questions | Q6 (OutboxService), Q7 (withIdempotency), Q9 (payment-gateways drift) | (already in work; no PR needed) |
+| **Total net unchecked** | — | 23 tickets + 120 trivial + 1 new ticket = **144 items** | **~24-30 focused days across multiple contributors** |
 
 **For 2 contributors in parallel over 4 weeks:** 24-30 days / 2 = ~12-15 days each. The staged-soak tickets (#39, #42, #7 sub-B, #8) can be worked on while the soaks run. The trivial-batch PRs (12-15 hr total) can be tackled as cleanup work in parallel. The 3 new tickets from Pass 3 (Workers #3.1, AppProvider stub) are small enough to fit in any day.
 
