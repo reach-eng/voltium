@@ -111,6 +111,81 @@ the scale — don't add a domain-specific alias.
 
 ---
 
+## 2.5 Color Tokens (`AppColors`)
+
+Source of truth: `flutter/lib/theme/app_theme.dart` (`AppColors` class).
+Web equivalent: `web/src/app/globals.css` (`--color-*` variables).
+
+### **Canonical 6-base × 3-variant system (R2.2, 2026-07-31)**
+
+Every color used in the app maps to one of these 6 base tokens, with up to
+3 variants each (`Light`, `Dark`, `Surface`, `Border`).
+
+| Base | Light variant | Dark variant | Surface (50/100) | Border (200) | Use case |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `primary` | `primaryLight` | `primaryDark` | `primarySurface` | — | Brand blue (`#0053C1`) |
+| `success` | `successLight` | `successDark` | `successSurface` | `successBorderLight` | Positive states |
+| `warning` | `warningLight` | `warningDark` | `warningSurface` | `warningBorder` | Caution / pending |
+| `error` | `errorLight` | `errorDark` | `errorSurface` | `errorBorder` | Destructive / failure |
+| `info` | `infoLight` | — | — | — | Informational |
+| `surface` | `surfaceBright` | `slate900` | `surfaceSubtle` | `divider` | Backgrounds & containers |
+
+Plus 5 categorical neutrals that don't fit the 6-base pattern:
+- `onSurface` / `onSurfaceMuted` / `onSurfaceVariant` / `onSurfaceDisabled` — text on surfaces (4-step opacity ladder)
+- `iconBackground` / `iconBackgroundBlue` *(renamed → `iconBackground` only as of R2.2)* — icon-tile backgrounds
+
+Plus a 6-step **slate scale** (`slate400`…`slate900`) for dark mode surfaces, text on light backgrounds, and divider lines. The slate scale is the **only** place raw hex is allowed in `app_theme.dart` outside the tokens — every other `Color(0xFF...)` is forbidden.
+
+### **R2.2 cleanup (2026-07-31)**
+
+Removed 5 dead colors that had **0** call-sites in `flutter/lib/`:
+
+| Removed | Reason | Replaced with |
+| :--- | :--- | :--- |
+| `iconBackgroundBlue` (`#F0F4FA`) | Unused | `iconBackground` |
+| `inputBorder` (`#D0D5DD`) | Duplicate of `outline` (9 callers) | `outline` |
+| `voltAccent` (`#00E5FF`) | Unused; "electric cyan" was a flavor-of-the-month | n/a |
+| `purpleIconVivid` (`#6D28D9`) | Unused after caller migration | `purpleIcon` (caller migrated) |
+| `orangeAccentLight` (`#FFE082`) | Unused after caller migration | `warningBorder` (caller migrated) |
+
+After R2.2 part 1: 82 named colors (down from 87 pre-R2.2).
+
+### **Group 7 candidates for R2.2 part 2 (NOT YET CONSOLIDATED)**
+
+These are still in the file but have low usage (1-9 call-sites each). They
+are documented here for the next consolidation pass. **Do not add new
+call-sites to these** — pick the canonical 6-base equivalent instead.
+
+| Low-usage group | Call-sites | Migration target |
+| :--- | :--- | :--- |
+| `orangeAccent`, `orangeAccentDark`, `orangeAccentBorder`, `orangeAccentSurface` | 9 total | `warning` + `warningLight` + `warningBorder` + `warningSurface` |
+| `royalBlue`, `royalBlueTint`, `royalBlueStrong` | 6 | `primary` + `primarySurface` + `primaryLight` |
+| `purpleIcon`, `purpleIconSurface`, `purpleLightSurface` | 8 | `primary` (if it's just a "premium tier" badge) or new `accentPurple` token |
+| `tealIcon`, `tealIconSurface` | 8 | `success` (teal is the success variant) |
+| `amberIcon`, `amberIconSurface` | 6 | `warning` |
+| `skySpark`, `skySparkSurface` | 2 | `info` / `infoLight` |
+| `evPurple`, `purpleDark`, `purpleDeep`, `purpleSurface` | 19 | Consolidate to 1 `accentPurple` or merge with rewards feature |
+| `successBright`, `successOutline`, `successSurfaceAlt`, `successSurfaceLight`, `successTint` | 31 | `success` + `successLight` + `successDark` (only keep canonical) |
+| `shimmerBase`, `shimmerHighlight`, `shadowSoft`, `shadowPrimaryStrong`, `shadowSuccessStrong`, `white70` | 22 | `AppShadows` (move to dedicated class) |
+| `dangerText`, `dangerShadow` | 5 | `errorDark` + `AppShadows.errorShadow` |
+| `whatsappGreen` | 1 | n/a — keep, semantic (third-party brand) |
+
+### **Rule of thumb for new code**
+
+1. **First choice:** one of the 6-base tokens (`primary`, `success`, `warning`, `error`, `info`, `surface`).
+2. **Need a variant?** Use the `Light` / `Dark` / `Surface` / `Border` companion from the canonical table.
+3. **Need text on a surface?** Use one of the 4 `onSurface*` steps.
+4. **Need dark mode support?** Use `ThemeColors.of(context).xxx` (the brightness-aware wrapper).
+5. **Reaching for a "Group 7" color?** Stop. Either:
+   - Pick the canonical equivalent (most have one)
+   - Or open a discussion in the design-system channel before adding
+
+**Automated guard:** `flutter/test/theme/app_colors_no_dead_test.dart` fails CI if any
+`AppColors.*` constant has 0 call-sites in `lib/`. This prevents the
+file from drifting back into dead-color territory.
+
+---
+
 ## 3. Spacing & Radius System
 
 ### **Spacing Tokens (`Spacing`)**
