@@ -15,11 +15,11 @@ library;
 
 /// The 5 high-level lifecycle stages (matches the Prisma enum exactly).
 enum RiderLifecycleStage {
-  newRider,        // 'NEW' on the backend
-  inProgress,      // 'IN_PROGRESS' on the backend
-  active,          // 'ACTIVE' on the backend
-  paused,          // 'PAUSED' on the backend
-  closed,          // 'CLOSED' on the backend
+  newRider, // 'NEW' on the backend
+  inProgress, // 'IN_PROGRESS' on the backend
+  active, // 'ACTIVE' on the backend
+  paused, // 'PAUSED' on the backend
+  closed, // 'CLOSED' on the backend
 }
 
 /// Parse a backend `lifecycleStage` string to a typed enum value.

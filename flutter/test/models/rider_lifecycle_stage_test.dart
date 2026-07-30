@@ -62,8 +62,7 @@ void main() {
       expect(riderLifecycleStageToString(RiderLifecycleStage.inProgress),
           'IN_PROGRESS');
       expect(riderLifecycleStageToString(RiderLifecycleStage.active), 'ACTIVE');
-      expect(riderLifecycleStageToString(RiderLifecycleStage.paused),
-          'PAUSED');
+      expect(riderLifecycleStageToString(RiderLifecycleStage.paused), 'PAUSED');
       expect(riderLifecycleStageToString(RiderLifecycleStage.closed), 'CLOSED');
     });
   });
@@ -115,8 +114,7 @@ void main() {
     });
 
     test('unknown status returns newRider (defensive)', () {
-      expect(lifecycleStageFromStatus('FOO_BAR'),
-          RiderLifecycleStage.newRider);
+      expect(lifecycleStageFromStatus('FOO_BAR'), RiderLifecycleStage.newRider);
     });
   });
 
