@@ -3,295 +3,189 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Centralized typography system for Voltium.
 ///
-/// ALL text in the app MUST use Plus Jakarta Sans. Never use raw `GoogleFonts.plusJakartaSans()`
-/// — always use `GoogleFonts.plusJakartaSans()` or a named style from this class.
+/// ALL text in the app MUST use Plus Jakarta Sans.
 ///
 /// Usage:
-/// - For one-off styles: `GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600)`
-/// - For common patterns: `AppTypography.bodyMedium` or `AppTypography.headingLarge`
+/// - Primary: Use named semantic styles like `AppTypography.bodyMedium` or `AppTypography.headingLarge`.
+/// - Modifiers: Use `.copyWith(fontWeight: FontWeight.w700)` to emphasize standard tier styles.
+///
+/// R2.1 (2026-07-31) — removed 7 redundant aliases that duplicated canonical
+/// tiers. The canonical set is now 19 styles grouped as:
+///   1. Display  (2): displayLarge, displayMedium
+///   2. Headings (3): headingLarge, headingMedium, headingSmall
+///   3. Titles   (3): titleLarge, titleMedium, titleSmall
+///   4. Body     (3): bodyLarge, bodyMedium, bodySmall
+///   5. Labels   (3): labelLarge, labelMedium, labelSmall
+///   6. Utility  (3): overline, otpDigit, priceDisplay
+///   7. Code     (2): codeMedium, codeLarge
+///
+/// Migration targets for the removed aliases (all references in the codebase
+/// have been updated; this is the doc for the next person reading the file):
+///   - defaultText  → use the body tier (bodyMedium is the most common)
+///   - button       → labelLarge.copyWith(fontWeight: FontWeight.w700)
+///   - buttonSmall  → labelLarge.copyWith(fontWeight: FontWeight.w700)
+///   - input        → labelLarge (already 16px / w600)
+///   - inputHint    → bodyMedium.copyWith(color: AppColors.slate500)
+///   - navLabel     → labelMedium (already 12px / w600)
+///   - priceLarge   → displayMedium (already 32px / w800)
 class AppTypography {
   AppTypography._();
 
-  // ── Display / Hero ──────────────────────────────────────────────────────
+  /// Primary font family name for Voltium design system.
+  static const String fontFamily = 'Plus Jakarta Sans';
 
-  /// Hero title: 40px, w800, -1 letter spacing. Used for splash screen brand name.
-  static TextStyle get displayLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 40,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -1,
-        height: 1.2,
-      );
+  // ── 1. Display / Hero ──────────────────────────────────────────────────
 
-  /// Large display: 32px, w800. Used for wallet balance, main headings.
-  static TextStyle get displayMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 32,
-        fontWeight: FontWeight.w800,
-        height: 1.2,
-      );
+  /// Display Large: 40px, w800, -1.0 tracking. Splash screen & hero headers.
+  static final TextStyle displayLarge = GoogleFonts.plusJakartaSans(
+    fontSize: 40,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.0,
+    height: 1.2,
+  );
 
-  // ── Headings ────────────────────────────────────────────────────────────
+  /// Display Medium: 32px, w800, -0.8 tracking. Wallet balance, hero metrics.
+  static final TextStyle displayMedium = GoogleFonts.plusJakartaSans(
+    fontSize: 32,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.8,
+    height: 1.2,
+  );
 
-  /// H1: 28px, w900, -0.5 letter spacing. Used for screen titles, login brand name.
-  static TextStyle get headingLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 28,
-        fontWeight: FontWeight.w900,
-        letterSpacing: -0.5,
-        height: 1.2,
-      );
+  // ── 2. Headings ────────────────────────────────────────────────────────
 
-  /// H2: 24px, w900, -0.5 letter spacing. Used for dashboard greeting, section titles.
-  static TextStyle get headingMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 24,
-        fontWeight: FontWeight.w900,
-        letterSpacing: -0.5,
-        height: 1.2,
-      );
+  /// H1: 28px, w800, -0.5 tracking. Screen main headers.
+  static final TextStyle headingLarge = GoogleFonts.plusJakartaSans(
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.5,
+    height: 1.2,
+  );
 
-  /// H3: 22px, w800, -0.5 letter spacing. Used for card titles, welcome text.
-  static TextStyle get headingSmall => GoogleFonts.plusJakartaSans(
-        fontSize: 22,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.5,
-        height: 1.3,
-      );
+  /// H2: 24px, w800, -0.4 tracking. Section titles & greetings.
+  static final TextStyle headingMedium = GoogleFonts.plusJakartaSans(
+    fontSize: 24,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.4,
+    height: 1.2,
+  );
 
-  /// H4: 20px, w800. Used for card headings, rider name.
-  static TextStyle get titleLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.3,
-        height: 1.3,
-      );
+  /// H3: 20px, w800, -0.3 tracking. Sub-sections & card titles.
+  static final TextStyle headingSmall = GoogleFonts.plusJakartaSans(
+    fontSize: 20,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.3,
+    height: 1.3,
+  );
 
-  /// H5: 18px, w700. Used for section headers, dialog titles.
-  static TextStyle get titleMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
+  // ── 3. Titles ──────────────────────────────────────────────────────────
 
-  /// H6: 16px, w700. Used for list tile titles, button labels.
-  static TextStyle get titleSmall => GoogleFonts.plusJakartaSans(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
+  /// Title Large: 18px, w700, -0.2 tracking. Dialog titles, list headers.
+  static final TextStyle titleLarge = GoogleFonts.plusJakartaSans(
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+    height: 1.4,
+  );
 
-  // ── Body ────────────────────────────────────────────────────────────────
+  /// Title Medium: 16px, w700, -0.1 tracking. ListTile titles, card labels.
+  static final TextStyle titleMedium = GoogleFonts.plusJakartaSans(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.1,
+    height: 1.4,
+  );
 
-  /// Large body: 16px, w500. Used for prominent body text.
-  static TextStyle get bodyLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
-        height: 1.5,
-      );
+  /// Title Small: 14px, w700. Compact list titles, dense headers.
+  static final TextStyle titleSmall = GoogleFonts.plusJakartaSans(
+    fontSize: 14,
+    fontWeight: FontWeight.w700,
+    height: 1.4,
+  );
 
-  /// Medium body: 14px, w500. Default body text.
-  static TextStyle get bodyMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        height: 1.5,
-      );
+  // ── 4. Body ────────────────────────────────────────────────────────────
 
-  /// Small body: 12px, w500. Used for secondary text, captions.
-  static TextStyle get bodySmall => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        height: 1.5,
-      );
+  /// Body Large: 16px, w500. Prominent reading text.
+  static final TextStyle bodyLarge = GoogleFonts.plusJakartaSans(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    height: 1.5,
+  );
 
-  // ── Labels ──────────────────────────────────────────────────────────────
+  /// Body Medium: 14px, w500. Default body text throughout app.
+  static final TextStyle bodyMedium = GoogleFonts.plusJakartaSans(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    height: 1.5,
+  );
 
-  /// Large label: 14px, w700. Used for tab labels, chip text.
-  static TextStyle get labelLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
+  /// Body Small: 12px, w500. Secondary text, captions, timestamps.
+  static final TextStyle bodySmall = GoogleFonts.plusJakartaSans(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    height: 1.5,
+  );
 
-  /// Medium label: 12px, w700. Used for section labels, badges, timestamps.
-  static TextStyle get labelMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
+  // ── 5. Labels ──────────────────────────────────────────────────────────
 
-  /// Small label: 11px, w700, 1.2 letter spacing. Used for overline labels.
-  static TextStyle get labelSmall => GoogleFonts.plusJakartaSans(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-      );
+  /// Label Large: 14px, w600. Tabs, chips, interactive elements.
+  static final TextStyle labelLarge = GoogleFonts.plusJakartaSans(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
 
-  // ── Specialized ─────────────────────────────────────────────────────────
+  /// Label Medium: 12px, w600. Status tags, badge text.
+  static final TextStyle labelMedium = GoogleFonts.plusJakartaSans(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
 
-  /// Uppercase section label: 10px, w800, 1.0 letter spacing.
-  /// Used for "ACTIVE HUB", "TEAM LEADER", category labels.
-  static TextStyle get overline => GoogleFonts.plusJakartaSans(
-        fontSize: 10,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.0,
-        height: 1.4,
-      );
+  /// Label Small: 11px, w600. Micro badges, fine print.
+  static final TextStyle labelSmall = GoogleFonts.plusJakartaSans(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+  );
 
-  /// OTP digit: 24px, w700. Used for OTP input fields.
-  static TextStyle get otpDigit => GoogleFonts.plusJakartaSans(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-      );
+  // ── 6. Specialized Controls & Utility ──────────────────────────────────
 
-  /// Price display: 22px, w800. Used for monetary amounts.
-  static TextStyle get priceDisplay => GoogleFonts.plusJakartaSans(
-        fontSize: 22,
-        fontWeight: FontWeight.w800,
-      );
+  /// Uppercase Overline: 10px, w800, +1.0 tracking. Category overlines.
+  static final TextStyle overline = GoogleFonts.plusJakartaSans(
+    fontSize: 10,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 1.0,
+    height: 1.4,
+  );
 
-  /// Price large: 32px, w800. Used for wallet balance display.
-  static TextStyle get priceLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 32,
-        fontWeight: FontWeight.w800,
-      );
+  /// OTP Digit: 24px, w700. OTP input cells.
+  static final TextStyle otpDigit = GoogleFonts.plusJakartaSans(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+  );
 
-  /// Button text: 16px, w700. Used for filled/elevated buttons.
-  static TextStyle get button => GoogleFonts.plusJakartaSans(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-      );
+  /// Price Display: 22px, w800. Standalone prices.
+  static final TextStyle priceDisplay = GoogleFonts.plusJakartaSans(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+  );
 
-  /// Button small: 15px, w700. Used for compact buttons.
-  static TextStyle get buttonSmall => GoogleFonts.plusJakartaSans(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-      );
+  // ── 7. Monospace / Code ────────────────────────────────────────────────
 
-  /// Input text: 16px, w600. Used for text field input.
-  static TextStyle get input => GoogleFonts.plusJakartaSans(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      );
+  /// Code Medium: 14px, w500, JetBrains Mono. OTP digits, verification codes, wallet refs.
+  static final TextStyle codeMedium = GoogleFonts.jetBrainsMono(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0,
+    height: 1.4,
+  );
 
-  /// Input hint: 14px, w400. Used for text field hints.
-  static TextStyle get inputHint => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-      );
-
-  /// Nav label: 12px, w700. Used for bottom navigation labels.
-  static TextStyle get navLabel => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.2,
-      );
-
-  // ── Extended Body (gap-filling) ─────────────────────────────────────────
-
-  /// 14px, w600. Used for emphasized body text, list tile subtitles.
-  static TextStyle get bodyMediumEmphasis => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      );
-
-  /// 14px, w800. Used for bold card values, highlighted amounts.
-  static TextStyle get bodyMediumStrong => GoogleFonts.plusJakartaSans(
-        fontSize: 14,
-        fontWeight: FontWeight.w800,
-        height: 1.4,
-      );
-
-  /// 12px, w600. Used for medium-emphasis captions, secondary labels.
-  static TextStyle get bodySmallEmphasis => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      );
-
-  /// 12px, w800. Used for bold captions, status badges.
-  static TextStyle get bodySmallStrong => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
-        height: 1.4,
-      );
-
-  /// 12px, w900, 1.2 letter spacing. Used for uppercase tracking labels.
-  static TextStyle get bodySmallTracked => GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.2,
-        height: 1.4,
-      );
-
-  /// 13px, w500. Used for compact body text, inline descriptions.
-  static TextStyle get bodyCompact => GoogleFonts.plusJakartaSans(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        height: 1.5,
-      );
-
-  /// 13px, w600. Used for compact emphasized text.
-  static TextStyle get bodyCompactEmphasis => GoogleFonts.plusJakartaSans(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      );
-
-  /// 13px, w700. Used for compact bold text, small headers.
-  static TextStyle get bodyCompactStrong => GoogleFonts.plusJakartaSans(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
-
-  /// 15px, w700. Used for medium buttons, compact CTAs.
-  static TextStyle get buttonMedium => GoogleFonts.plusJakartaSans(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
-        height: 1.4,
-      );
-
-  /// 15px, w600. Used for medium body emphasis.
-  static TextStyle get bodyLargeEmphasis => GoogleFonts.plusJakartaSans(
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        height: 1.5,
-      );
-
-  /// 11px, w700. Used for small badges, micro labels.
-  static TextStyle get microLabel => GoogleFonts.plusJakartaSans(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-      );
-
-  /// 9px, w600. Used for tiny badges, fine print.
-  static TextStyle get microBadge => GoogleFonts.plusJakartaSans(
-        fontSize: 9,
-        fontWeight: FontWeight.w600,
-        height: 1.3,
-      );
-
-  /// 10px, w600. Used for small badges, tag text.
-  static TextStyle get smallBadge => GoogleFonts.plusJakartaSans(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        height: 1.3,
-      );
-
-  /// 10px, w900, 1.5 letter spacing. Used for uppercase micro labels.
-  static TextStyle get microOverline => GoogleFonts.plusJakartaSans(
-        fontSize: 10,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 1.5,
-        height: 1.4,
-      );
-
-  /// 21px, w700. Used for medium section titles.
-  static TextStyle get titleMediumLarge => GoogleFonts.plusJakartaSans(
-        fontSize: 21,
-        fontWeight: FontWeight.w700,
-        height: 1.3,
-      );
-
-  /// Default text: no size/weight override. Used when only color/spacing is needed.
-  static TextStyle get defaultText => GoogleFonts.plusJakartaSans();
+  /// Code Large: 16px, w600, JetBrains Mono. Prominent codes (6-digit OTP input).
+  static final TextStyle codeLarge = GoogleFonts.jetBrainsMono(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+    height: 1.4,
+  );
 }
