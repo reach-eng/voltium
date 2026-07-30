@@ -48,7 +48,7 @@ class GuarantorDetailsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -56,15 +56,16 @@ class GuarantorDetailsCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'GUARANTOR DETAILS',
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           const SizedBox(height: 24),
@@ -141,15 +142,15 @@ class GuarantorDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: colors.iconBackground,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide(color: colors.outlineVariant, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide(color: colors.outlineVariant, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide:
                   const BorderSide(color: AppColors.primary, width: 1.5),
             ),
@@ -195,17 +196,17 @@ class GuarantorDetailsCard extends StatelessWidget {
                 filled: true,
                 fillColor: colors.iconBackground,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide:
                       BorderSide(color: colors.outlineVariant, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide:
                       BorderSide(color: colors.outlineVariant, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide:
                       const BorderSide(color: AppColors.primary, width: 1.5),
                 ),
@@ -248,17 +249,17 @@ class GuarantorDetailsCard extends StatelessWidget {
                   filled: true,
                   fillColor: colors.iconBackground,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide:
                         BorderSide(color: colors.outlineVariant, width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide:
                         BorderSide(color: colors.outlineVariant, width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide:
                         const BorderSide(color: AppColors.primary, width: 1.5),
                   ),
@@ -277,7 +278,7 @@ class GuarantorDetailsCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.info,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     elevation: 0,
                     minimumSize:
@@ -312,7 +313,8 @@ class GuarantorDetailsCard extends StatelessWidget {
               SizedBox(width: 6),
               Text(
                 'Phone Number Verified',
-                style: AppTypography.bodySmallEmphasis
+                style: AppTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(color: AppColors.success),
               ),
             ],
@@ -322,7 +324,8 @@ class GuarantorDetailsCard extends StatelessWidget {
           SizedBox(height: 16),
           Text(
             'Enter OTP',
-            style: AppTypography.bodyCompactEmphasis
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
                 .copyWith(color: colors.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
@@ -339,7 +342,7 @@ class GuarantorDetailsCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.success,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       elevation: 0,
                     ),
@@ -397,15 +400,15 @@ class GuarantorDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: colors.iconBackground,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide(color: colors.outlineVariant, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide(color: colors.outlineVariant, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide:
                   const BorderSide(color: AppColors.primary, width: 1.5),
             ),
@@ -445,7 +448,7 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -453,15 +456,16 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'DOCUMENTS UPLOAD',
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           SizedBox(height: 4),
@@ -545,7 +549,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -553,15 +557,16 @@ class GuarantorVideoProofCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'CONSENT VIDEO (COMPULSORY)',
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           SizedBox(height: 4),
@@ -581,8 +586,8 @@ class GuarantorVideoProofCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: videoUploaded
                     ? AppColors.success.withValues(alpha: 0.1)
-                    : colors.surfaceSubtle,
-                borderRadius: BorderRadius.circular(16),
+                    : colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color:
                       videoUploaded ? AppColors.success : colors.outlineVariant,
@@ -603,10 +608,12 @@ class GuarantorVideoProofCard extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       videoUploaded ? 'Video Recorded' : 'Record Consent Video',
-                      style: AppTypography.bodyMediumEmphasis.copyWith(
-                          color: videoUploaded
-                              ? AppColors.success
-                              : colors.onSurface),
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
+                          .copyWith(
+                              color: videoUploaded
+                                  ? AppColors.success
+                                  : colors.onSurface),
                     ),
                   ],
                 ),
@@ -636,7 +643,7 @@ class GuarantorSignatureCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -644,15 +651,16 @@ class GuarantorSignatureCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'GUARANTOR SIGNATURE',
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           SizedBox(height: 4),
@@ -672,8 +680,8 @@ class GuarantorSignatureCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: signatureUploaded
                     ? AppColors.success.withValues(alpha: 0.1)
-                    : colors.surfaceSubtle,
-                borderRadius: BorderRadius.circular(16),
+                    : colors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: signatureUploaded
                       ? AppColors.success
@@ -695,10 +703,12 @@ class GuarantorSignatureCard extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       signatureUploaded ? 'Signature Saved' : 'Draw Signature',
-                      style: AppTypography.bodyMediumEmphasis.copyWith(
-                          color: signatureUploaded
-                              ? AppColors.success
-                              : colors.onSurface),
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
+                          .copyWith(
+                              color: signatureUploaded
+                                  ? AppColors.success
+                                  : colors.onSurface),
                     ),
                   ],
                 ),
@@ -755,7 +765,8 @@ class GuarantorOnboardingHeader extends StatelessWidget {
                   ),
                   Text(
                     '2/2',
-                    style: AppTypography.bodySmallEmphasis,
+                    style: AppTypography.bodySmall
+                        .copyWith(fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -780,7 +791,7 @@ class GuarantorOnboardingProgressSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: Container(
               height: 8,
               color: AppColors.success,
@@ -840,11 +851,11 @@ class GuarantorOnboardingOtpBoxes extends StatelessWidget {
               fillColor: colors.iconBackground,
               contentPadding: EdgeInsets.zero,
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 borderSide: BorderSide(color: colors.outlineVariant),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 borderSide:
                     const BorderSide(color: AppColors.primary, width: 2),
               ),
@@ -882,7 +893,7 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.card,
         border: Border(
-          top: BorderSide(color: colors.surfaceSubtle, width: 1),
+          top: BorderSide(color: colors.surface, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -913,7 +924,7 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
                       foregroundColor: colors.onSurfaceMuted,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
                     child: Text('Skip',
@@ -936,7 +947,7 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
                       disabledForegroundColor: colors.onSurfaceMuted,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
                     child: isUploading
@@ -955,14 +966,16 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
                                 SizedBox(width: 12),
                                 Text(
                                   uploadProgressText,
-                                  style: AppTypography.bodyMediumEmphasis,
+                                  style: AppTypography.bodyMedium
+                                      .copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ],
                           )
                         : Text(
                             buttonText,
-                            style: AppTypography.buttonMedium,
+                            style: AppTypography.labelLarge
+                                .copyWith(fontWeight: FontWeight.w700),
                           ),
                   ),
                 ),
@@ -973,10 +986,10 @@ class GuarantorOnboardingBottomButton extends StatelessWidget {
           Text(
             'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
             textAlign: TextAlign.center,
-            style: AppTypography.microBadge.copyWith(
-              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
-              letterSpacing: 1.0,
-            ),
+            style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                  color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                  letterSpacing: 1.0,
+                ),
           ),
         ],
       ),

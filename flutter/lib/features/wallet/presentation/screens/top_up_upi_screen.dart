@@ -66,7 +66,8 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
 
   Future<void> _pickImage() async {
     if (AppConstants.isTestMode) {
-      setState(() => _imageFile = File('${Directory.systemTemp.path}/mock_proof.png'));
+      setState(() =>
+          _imageFile = File('${Directory.systemTemp.path}/mock_proof.png'));
       return;
     }
 
@@ -94,12 +95,12 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
       if (riderId == null) throw Exception('Not logged in');
 
       await ref.read(walletProvider).topUpWallet(
-        riderId: riderId,
-        amount: widget.amount.toDouble(),
-        method: 'UPI',
-        screenshotUrl: photoUrl,
-        purpose: widget.purpose,
-      );
+            riderId: riderId,
+            amount: widget.amount.toDouble(),
+            method: 'UPI',
+            screenshotUrl: photoUrl,
+            purpose: widget.purpose,
+          );
 
       if (mounted) {
         widget.onSubmit?.call();
@@ -175,7 +176,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
       ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryGradientEnd],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -222,7 +223,8 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 SizedBox(height: 4),
                 Text(
                   'Top Up',
-                  style: AppTypography.titleMediumLarge
+                  style: AppTypography.titleLarge
+                      .copyWith(fontSize: 21)
                       .copyWith(color: Colors.white),
                 ),
               ],
@@ -255,10 +257,12 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
               children: [
                 Text(
                   'TOP-UP AMOUNT',
-                  style: AppTypography.bodySmallStrong.copyWith(
-                    color: colors.onSurfaceMuted,
-                    letterSpacing: 1.2,
-                  ),
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
+                      .copyWith(
+                        color: colors.onSurfaceMuted,
+                        letterSpacing: 1.2,
+                      ),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -276,12 +280,15 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                     vertical: 16.0, horizontal: 12.0),
                 child: Text(
                   'Edit',
-                  style: AppTypography.bodySmallStrong.copyWith(
-                    color: AppColors.primary,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.primary.withValues(alpha: 0.3),
-                    decorationThickness: 2,
-                  ),
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
+                      .copyWith(
+                        color: AppColors.primary,
+                        decoration: TextDecoration.underline,
+                        decorationColor:
+                            AppColors.primary.withValues(alpha: 0.3),
+                        decorationThickness: 2,
+                      ),
                 ),
               ),
             ),
@@ -328,7 +335,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                   Text(
                     'Proof of Top Up',
                     style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.onSurfaceAlt),
+                        .copyWith(color: AppColors.onSurfaceMuted),
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -373,8 +380,9 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 SizedBox(width: 8),
                 Text(
                   'Upload Photo Proof',
-                  style: AppTypography.bodyMediumEmphasis
-                      .copyWith(color: AppColors.onSurfaceAlt),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
+                      .copyWith(color: AppColors.onSurfaceMuted),
                 ),
               ],
             ),
@@ -414,8 +422,9 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                       SizedBox(height: 12),
                       Text(
                         'Tap to upload photo',
-                        style: AppTypography.bodyMediumEmphasis
-                            .copyWith(color: AppColors.onSurfaceAlt),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.onSurfaceMuted),
                       ),
                       SizedBox(height: 4),
                       Padding(
@@ -515,7 +524,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
           text: TextSpan(
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.warningText,
+              color: AppColors.onSurface,
               height: 1.5,
             ),
             children: [
@@ -560,10 +569,12 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
                 )
               : Text(
                   'Submit Proof',
-                  style: AppTypography.buttonMedium.copyWith(
-                      color: canSubmit
-                          ? Colors.white
-                          : AppColors.onSurfaceVariant),
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(
+                          color: canSubmit
+                              ? Colors.white
+                              : AppColors.onSurfaceVariant),
                 ),
         ),
       ),

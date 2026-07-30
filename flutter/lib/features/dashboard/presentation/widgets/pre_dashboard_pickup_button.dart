@@ -34,7 +34,9 @@ class PreDashboardPickupButton extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               'PICKUP YOUR VEHICLE',
-              style: AppTypography.buttonMedium.copyWith(letterSpacing: 1.2),
+              style: AppTypography.labelLarge
+                  .copyWith(fontWeight: FontWeight.w700)
+                  .copyWith(letterSpacing: 1.2),
             ),
           ],
         ),

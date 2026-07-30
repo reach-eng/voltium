@@ -255,7 +255,8 @@ class PathSummary extends StatelessWidget {
               size: 18, color: AppColors.onSurfaceDisabled),
           title: Text(
             'Your answers (${path.length})',
-            style: AppTypography.bodyMediumEmphasis
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w600)
                 .copyWith(color: AppColors.slate500),
           ),
           children: [
@@ -276,7 +277,8 @@ class PathSummary extends StatelessWidget {
                       child: Icon(
                         answer.answer ? Icons.check : Icons.close,
                         size: 12,
-                        color: answer.answer ? AppColors.success : AppColors.error,
+                        color:
+                            answer.answer ? AppColors.success : AppColors.error,
                       ),
                     ),
                     SizedBox(width: 10),
@@ -385,8 +387,8 @@ class PathStep extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               '$stepNumber',
-              style: AppTypography.labelMedium
-                  .copyWith(color: answer.answer ? AppColors.success : AppColors.error),
+              style: AppTypography.labelMedium.copyWith(
+                  color: answer.answer ? AppColors.success : AppColors.error),
             ),
           ),
           SizedBox(width: 10),
@@ -478,7 +480,9 @@ class TroubleshooterStepCounter extends StatelessWidget {
           SizedBox(width: 6),
           Text(
             'Step $currentStep of $totalSteps',
-            style: AppTypography.bodyCompactStrong.copyWith(color: vfBlue),
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                .copyWith(color: vfBlue),
           ),
         ],
       ),
@@ -636,7 +640,7 @@ class TroubleshooterSupportTicketButton extends StatelessWidget {
             : const Icon(Icons.send_rounded, size: 18),
         label: Text(
           isSubmitting ? 'Submitting...' : 'Create Support Ticket',
-          style: AppTypography.buttonMedium,
+          style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
     );

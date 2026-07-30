@@ -15,7 +15,7 @@ class RentalDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider).rider;
     final plan = rider?.currentPlan ?? 'No Active Plan';
     final price = rider?.activeRentalPlanPrice ?? 0.0;
     final status = rider?.rentalStatus ?? 'NONE';
@@ -72,15 +72,15 @@ class RentalDetailsScreen extends ConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: Spacing.paddingLg,
               decoration: BoxDecoration(
                 gradient: AppGradients.primary,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),
@@ -105,7 +105,7 @@ class RentalDetailsScreen extends ConsumerWidget {
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Text(
                           status.toUpperCase(),
@@ -154,7 +154,7 @@ class RentalDetailsScreen extends ConsumerWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.03),
@@ -222,7 +222,7 @@ class RentalDetailsScreen extends ConsumerWidget {
                           color: AppColors.outlineVariant, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Row(
@@ -231,7 +231,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                         const Icon(Icons.swap_horiz_rounded, size: 20),
                         SizedBox(width: 8),
                         Text('Change Plan',
-                            style: AppTypography.bodyMediumEmphasis),
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -252,7 +253,7 @@ class RentalDetailsScreen extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 0,
                     ),
@@ -262,7 +263,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                         const Icon(Icons.assignment_return_rounded, size: 20),
                         SizedBox(width: 8),
                         Text('End Rental',
-                            style: AppTypography.bodyMediumEmphasis),
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -283,7 +285,7 @@ class RentalDetailsScreen extends ConsumerWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: Spacing.paddingSm,
             decoration: BoxDecoration(
               color: AppColors.iconBackground,
               borderRadius: BorderRadius.circular(10),
@@ -298,7 +300,8 @@ class RentalDetailsScreen extends ConsumerWidget {
           const Spacer(),
           Text(
             value,
-            style: AppTypography.buttonMedium
+            style: AppTypography.labelLarge
+                .copyWith(fontWeight: FontWeight.w700)
                 .copyWith(color: valueColor ?? AppColors.slate800),
           ),
         ],

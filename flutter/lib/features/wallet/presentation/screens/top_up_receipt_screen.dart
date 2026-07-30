@@ -114,7 +114,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           Text(
             'Payment Submitted',
             style: AppTypography.headingMedium
-                .copyWith(color: AppColors.onSurfaceAlt),
+                .copyWith(color: AppColors.onSurfaceMuted),
           ),
           SizedBox(height: 12),
           RichText(
@@ -132,7 +132,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.onSurfaceAlt,
+                    color: AppColors.onSurfaceMuted,
                   ),
                 ),
                 TextSpan(
@@ -182,7 +182,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   Text(
                     'Verification in Progress',
                     style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.onSurfaceAlt),
+                        .copyWith(color: AppColors.onSurfaceMuted),
                   ),
                   SizedBox(height: 2),
                   Text(
@@ -252,7 +252,9 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
               SizedBox(width: 8),
               Text(
                 'Back to Dashboard',
-                style: AppTypography.buttonMedium.copyWith(color: Colors.white),
+                style: AppTypography.labelLarge
+                    .copyWith(fontWeight: FontWeight.w700)
+                    .copyWith(color: Colors.white),
               ),
             ],
           ),

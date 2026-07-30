@@ -50,7 +50,7 @@ class PersonalDetailsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -58,9 +58,9 @@ class PersonalDetailsCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -159,15 +159,15 @@ class PersonalDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: colors.iconBackground,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
@@ -214,15 +214,15 @@ class PersonalDetailsCard extends StatelessWidget {
                 fillColor:
                     enabled ? colors.iconBackground : colors.outlineVariant,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide:
                       const BorderSide(color: AppColors.primary, width: 2),
                 ),
@@ -246,7 +246,7 @@ class PersonalDetailsCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: colors.outlineVariant, // Disabled slate look
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Row(
             children: [
@@ -293,15 +293,15 @@ class PersonalDetailsCard extends StatelessWidget {
             filled: true,
             fillColor: colors.iconBackground,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
           ),
@@ -313,8 +313,11 @@ class PersonalDetailsCard extends StatelessWidget {
 
 class IdentityVerificationCard extends StatelessWidget {
   final bool aadhaarFrontUploaded;
+  final String? aadhaarFrontPath;
   final bool aadhaarBackUploaded;
+  final String? aadhaarBackPath;
   final bool panUploaded;
+  final String? panPath;
   final bool bankDetailsDone;
   final VoidCallback onPickAadhaarFront;
   final VoidCallback onPickAadhaarBack;
@@ -328,8 +331,11 @@ class IdentityVerificationCard extends StatelessWidget {
   const IdentityVerificationCard({
     super.key,
     required this.aadhaarFrontUploaded,
+    this.aadhaarFrontPath,
     required this.aadhaarBackUploaded,
+    this.aadhaarBackPath,
     required this.panUploaded,
+    this.panPath,
     required this.bankDetailsDone,
     required this.onPickAadhaarFront,
     required this.onPickAadhaarBack,
@@ -348,7 +354,7 @@ class IdentityVerificationCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -356,9 +362,9 @@ class IdentityVerificationCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -381,6 +387,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   label: 'Aadhaar Card\n(Front)',
                   icon: Icons.upload_file,
                   isUploaded: aadhaarFrontUploaded,
+                  filePath: aadhaarFrontPath,
                   onTap: onPickAadhaarFront,
                   enabled: aadhaarFrontEnabled,
                   key: const Key('aadhaarFrontTile'),
@@ -392,6 +399,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   label: 'Aadhaar Card\n(Back)',
                   icon: Icons.upload_file,
                   isUploaded: aadhaarBackUploaded,
+                  filePath: aadhaarBackPath,
                   onTap: onPickAadhaarBack,
                   enabled: aadhaarBackEnabled,
                   key: const Key('aadhaarBackTile'),
@@ -407,6 +415,7 @@ class IdentityVerificationCard extends StatelessWidget {
                   label: 'PAN Card',
                   icon: Icons.upload_file,
                   isUploaded: panUploaded,
+                  filePath: panPath,
                   onTap: onPickPan,
                   enabled: panEnabled,
                   key: const Key('panTile'),
@@ -435,6 +444,7 @@ class DocTile extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isUploaded;
+  final String? filePath;
   final VoidCallback onTap;
   final bool enabled;
 
@@ -443,6 +453,7 @@ class DocTile extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.isUploaded,
+    this.filePath,
     required this.onTap,
     this.enabled = true,
   });
@@ -450,38 +461,57 @@ class DocTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final hasLocalImage = isUploaded &&
+        filePath != null &&
+        filePath!.isNotEmpty &&
+        File(filePath!).existsSync();
+
     Widget content = Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color:
             isUploaded ? AppColors.success.withValues(alpha: 0.1) : colors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isUploaded
-                  ? AppColors.success.withValues(alpha: 0.2)
-                  : colors.iconBackground,
-              borderRadius: BorderRadius.circular(8),
+          if (hasLocalImage)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Image.file(
+                File(filePath!),
+                height: 48,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            Container(
+              padding: Spacing.paddingSm,
+              decoration: BoxDecoration(
+                color: isUploaded
+                    ? AppColors.success.withValues(alpha: 0.2)
+                    : colors.iconBackground,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Icon(
+                isUploaded ? Icons.check_circle : icon,
+                color: isUploaded ? AppColors.success : colors.onSurfaceMuted,
+                size: 20,
+              ),
             ),
-            child: Icon(
-              isUploaded ? Icons.check_circle : icon,
-              color: isUploaded ? AppColors.success : colors.onSurfaceMuted,
-              size: 20,
-            ),
-          ),
-          SizedBox(height: 12),
+          SizedBox(height: 8),
           Text(
             isUploaded ? 'Uploaded' : label,
             textAlign: TextAlign.center,
-            style: AppTypography.bodySmallEmphasis.copyWith(
-                color:
-                    isUploaded ? AppColors.success : colors.onSurfaceVariant),
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w600)
+                .copyWith(
+                    color: isUploaded
+                        ? AppColors.success
+                        : colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -490,7 +520,7 @@ class DocTile extends StatelessWidget {
     if (!isUploaded) {
       content = Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: colors.outlineVariant, width: 1.5),
         ),
         child: content,
@@ -498,7 +528,7 @@ class DocTile extends StatelessWidget {
     } else {
       content = Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.success, width: 1.5),
         ),
         child: content,
@@ -536,7 +566,7 @@ class SelfieCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -544,9 +574,9 @@ class SelfieCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: GestureDetector(
         key: const Key('selfieTile'),
         onTap: enabled ? onTap : null,
@@ -563,7 +593,7 @@ class SelfieCard extends StatelessWidget {
               const SizedBox(height: 24),
               if (selfieUploaded && selfiePath != null)
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Image.file(
                     File(selfiePath!),
                     height: 160,
@@ -574,8 +604,8 @@ class SelfieCard extends StatelessWidget {
                 Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: colors.surfaceSubtle,
-                    borderRadius: BorderRadius.circular(12),
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: colors.outlineVariant, width: 1),
                   ),
                   child: Column(
@@ -585,7 +615,7 @@ class SelfieCard extends StatelessWidget {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: colors.card,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
                         child: Icon(
                           Icons.photo_camera,
@@ -596,7 +626,8 @@ class SelfieCard extends StatelessWidget {
                       SizedBox(height: 12),
                       Text(
                         'Take Rider Photo',
-                        style: AppTypography.bodyMediumEmphasis
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurfaceMuted),
                       ),
                       SizedBox(height: 2),
@@ -620,7 +651,7 @@ class SelfieCard extends StatelessWidget {
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: AppColors.successSurface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -630,7 +661,7 @@ class SelfieCard extends StatelessWidget {
                           Text(
                             'Photo Captured',
                             style: AppTypography.bodySmall
-                                .copyWith(color: AppColors.successText),
+                                .copyWith(color: AppColors.onSurface),
                           ),
                         ],
                       ),
@@ -669,7 +700,7 @@ class SignatureCard extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             boxShadow: [
               BoxShadow(
                 color: colors.onSurface.withValues(alpha: 0.04),
@@ -677,9 +708,9 @@ class SignatureCard extends StatelessWidget {
                 offset: const Offset(0, 8),
               ),
             ],
-            border: Border.all(color: colors.surfaceSubtle, width: 1),
+            border: Border.all(color: colors.surface, width: 1),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: Spacing.paddingLg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -703,8 +734,8 @@ class SignatureCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: signatureUploaded
                         ? AppColors.success.withValues(alpha: 0.1)
-                        : colors.surfaceSubtle,
-                    borderRadius: BorderRadius.circular(12),
+                        : colors.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: signatureUploaded
                           ? AppColors.success
@@ -719,10 +750,12 @@ class SignatureCard extends StatelessWidget {
                           signatureUploaded
                               ? 'Signature Captured'
                               : 'Tap to draw signature',
-                          style: AppTypography.bodyMediumEmphasis.copyWith(
-                              color: signatureUploaded
-                                  ? AppColors.success
-                                  : colors.onSurfaceMuted),
+                          style: AppTypography.bodyMedium
+                              .copyWith(fontWeight: FontWeight.w600)
+                              .copyWith(
+                                  color: signatureUploaded
+                                      ? AppColors.success
+                                      : colors.onSurfaceMuted),
                         ),
                       ),
                       if (signatureUploaded)
@@ -775,7 +808,7 @@ class UserOnboardingBottomButton extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.card,
         border: Border(
-          top: BorderSide(color: colors.surfaceSubtle, width: 1),
+          top: BorderSide(color: colors.surface, width: 1),
         ),
         boxShadow: [
           BoxShadow(
@@ -807,7 +840,7 @@ class UserOnboardingBottomButton extends StatelessWidget {
                 disabledForegroundColor: colors.onSurfaceMuted,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: isUploading
@@ -826,14 +859,16 @@ class UserOnboardingBottomButton extends StatelessWidget {
                           SizedBox(width: 12),
                           Text(
                             uploadProgressText,
-                            style: AppTypography.bodyMediumEmphasis,
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ],
                     )
                   : Text(
                       'Confirm & Proceed',
-                      style: AppTypography.buttonMedium,
+                      style: AppTypography.labelLarge
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
             ),
           ),
@@ -841,10 +876,10 @@ class UserOnboardingBottomButton extends StatelessWidget {
           Text(
             'ENSURE ALL DETAILS ARE ACCURATE BEFORE PROCEEDING',
             textAlign: TextAlign.center,
-            style: AppTypography.microBadge.copyWith(
-              color: colors.onSurfaceMuted.withValues(alpha: 0.7),
-              letterSpacing: 1.0,
-            ),
+            style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                  color: colors.onSurfaceMuted.withValues(alpha: 0.7),
+                  letterSpacing: 1.0,
+                ),
           ),
         ],
       ),
@@ -872,7 +907,9 @@ class UserOnboardingDialogField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.bodyCompact.copyWith(color: colors.onSurface),
+          style: AppTypography.bodyMedium
+              .copyWith(fontSize: 13)
+              .copyWith(color: colors.onSurface),
         ),
         SizedBox(height: 4),
         TextFormField(
@@ -884,15 +921,15 @@ class UserOnboardingDialogField extends StatelessWidget {
                 color: colors.onSurfaceMuted.withValues(alpha: 0.7),
                 fontSize: 14),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: BorderSide(color: colors.outlineVariant),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: BorderSide(color: colors.outlineVariant),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             contentPadding:

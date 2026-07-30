@@ -51,7 +51,8 @@ class StatusTile extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 title,
-                style: AppTypography.bodySmallStrong
+                style: AppTypography.bodySmall
+                    .copyWith(fontWeight: FontWeight.w800)
                     .copyWith(color: AppColors.slate500, letterSpacing: 0.8),
               ),
             ],
@@ -59,7 +60,9 @@ class StatusTile extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             status,
-            style: AppTypography.buttonMedium.copyWith(color: dotColor),
+            style: AppTypography.labelLarge
+                .copyWith(fontWeight: FontWeight.w700)
+                .copyWith(color: dotColor),
           ),
         ],
       ),
@@ -123,7 +126,8 @@ class QuickLinkItem extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: AppTypography.buttonMedium
+                    style: AppTypography.labelLarge
+                        .copyWith(fontWeight: FontWeight.w700)
                         .copyWith(color: AppColors.slate800),
                   ),
                 ),
@@ -195,7 +199,8 @@ class ProfileDetailRow extends StatelessWidget {
               SizedBox(height: 2),
               Text(
                 value,
-                style: AppTypography.bodyMediumEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(color: AppColors.slate800),
               ),
             ],
@@ -291,7 +296,8 @@ class ProfileGuarantorCard extends StatelessWidget {
                   children: [
                     Text(
                       rider.guarantorName ?? 'No Name Provided',
-                      style: AppTypography.bodyMediumEmphasis
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: AppColors.slate800),
                     ),
                     Text(

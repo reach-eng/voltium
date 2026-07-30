@@ -41,7 +41,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       setState(() => _photos[key] = XFile('mock_photo.png'));
       return;
     }
-    final file = await ImageCompressionService().pickAndCompress(source: ImageSource.camera);
+    final file = await ImageCompressionService()
+        .pickAndCompress(source: ImageSource.camera);
     if (file != null && mounted) {
       setState(() => _photos[key] = XFile(file.path));
     }
@@ -54,14 +55,17 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
         backgroundColor: Theme.of(ctx).colorScheme.surface,
         title: Text(
           '$label Photo',
-          style: AppTypography.titleMedium.copyWith(color: Theme.of(ctx).colorScheme.onSurface),
+          style: AppTypography.titleMedium
+              .copyWith(color: Theme.of(ctx).colorScheme.onSurface),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.refresh_rounded, color: Theme.of(ctx).colorScheme.primary),
-              title: Text('Retake Photo', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
+              leading: Icon(Icons.refresh_rounded,
+                  color: Theme.of(ctx).colorScheme.primary),
+              title: Text('Retake Photo',
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.onSurface)),
               onTap: () {
                 Navigator.pop(ctx);
                 _takePhoto(key);
@@ -69,15 +73,19 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('Remove Photo', style: TextStyle(color: AppColors.error)),
+              title: const Text('Remove Photo',
+                  style: TextStyle(color: AppColors.error)),
               onTap: () {
                 Navigator.pop(ctx);
                 setState(() => _photos[key] = null);
               },
             ),
             ListTile(
-              leading: Icon(Icons.close, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
-              title: Text('Cancel', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              leading: Icon(Icons.close,
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+              title: Text('Cancel',
+                  style: TextStyle(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
               onTap: () => Navigator.pop(ctx),
             ),
           ],
@@ -108,7 +116,11 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   }
 
   bool get _allPhotosTaken => _photos.values.every((v) => v != null);
-  bool get _canSubmit => _allPhotosTaken && _odometerCtrl.text.trim().isNotEmpty && _confirmed && !_submitting;
+  bool get _canSubmit =>
+      _allPhotosTaken &&
+      _odometerCtrl.text.trim().isNotEmpty &&
+      _confirmed &&
+      !_submitting;
 
   Future<void> _handleReturn() async {
     if (!_canSubmit) return;
@@ -242,7 +254,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                   const SizedBox(width: 16),
                   Text(
                     'End Rental',
-                    style: AppTypography.titleMediumLarge
+                    style: AppTypography.titleLarge
+                        .copyWith(fontSize: 21)
                         .copyWith(color: colorScheme.onSurface),
                   ),
                 ],
@@ -367,7 +380,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       children: [
         Text(
           'RETURN INSPECTION',
-          style: AppTypography.bodySmallStrong
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800)
               .copyWith(color: colorScheme.onSurface, letterSpacing: 1.2),
         ),
         const SizedBox(height: 6),
@@ -391,7 +405,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             final taken = photo != null;
             return GestureDetector(
               key: Key('photoSlot_$key'),
-              onTap: () => taken ? _showPhotoOptionsDialog(key, slot['label']!) : _takePhoto(key),
+              onTap: () => taken
+                  ? _showPhotoOptionsDialog(key, slot['label']!)
+                  : _takePhoto(key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
@@ -425,10 +441,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                       const SizedBox(height: 6),
                       Text(
                         slot['label']!,
-                        style: AppTypography.bodySmallEmphasis.copyWith(
-                            color: taken
-                                ? AppColors.successText
-                                : colorScheme.onSurfaceVariant),
+                        style: AppTypography.bodySmall
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(
+                                color: taken
+                                    ? AppColors.onSurface
+                                    : colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -436,7 +454,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                         textAlign: TextAlign.center,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9,
-                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.7),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -474,7 +493,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             controller: _odometerCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: AppTypography.bodyMediumEmphasis
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w600)
                 .copyWith(color: colorScheme.onSurface),
             decoration: InputDecoration(
               hintText: 'Enter current odometer reading',
@@ -500,7 +520,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   Widget _buildBattery(ColorScheme colorScheme, ThemeColors colors) {
     final rider = ref.watch(riderProvider).rider;
     final double? batteryVal = rider?.batteryPercent;
-    final String batteryText = batteryVal != null ? 'Current battery: ${batteryVal.toInt()}%' : 'Battery level: Unavailable';
+    final String batteryText = batteryVal != null
+        ? 'Current battery: ${batteryVal.toInt()}%'
+        : 'Battery level: Unavailable';
 
     return Container(
       padding: Spacing.paddingMd,
@@ -549,7 +571,9 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.xs),
               child: LinearProgressIndicator(
-                value: batteryVal != null ? (batteryVal / 100.0).clamp(0.0, 1.0) : 0.0,
+                value: batteryVal != null
+                    ? (batteryVal / 100.0).clamp(0.0, 1.0)
+                    : 0.0,
                 backgroundColor: AppColors.divider,
                 valueColor: const AlwaysStoppedAnimation(AppColors.success),
                 minHeight: 8,
@@ -643,10 +667,12 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                     )
                   : Text(
                       'Confirm Return',
-                      style: AppTypography.buttonMedium.copyWith(
-                          color: _canSubmit
-                              ? colorScheme.onPrimary
-                              : AppColors.onSurfaceDisabled),
+                      style: AppTypography.labelLarge
+                          .copyWith(fontWeight: FontWeight.w700)
+                          .copyWith(
+                              color: _canSubmit
+                                  ? colorScheme.onPrimary
+                                  : AppColors.onSurfaceDisabled),
                     ),
             ),
           ),
@@ -666,4 +692,3 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     );
   }
 }
-

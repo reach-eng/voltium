@@ -100,7 +100,7 @@ class _NotificationPreferencesScreenState
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
+      backgroundColor: colors.surface,
       body: Stack(
         children: [
           _buildBackground(),
@@ -211,7 +211,8 @@ class _NotificationPreferencesScreenState
                               )
                             : Text(
                                 'Save Preferences',
-                                style: AppTypography.buttonMedium
+                                style: AppTypography.labelLarge
+                                    .copyWith(fontWeight: FontWeight.w700)
                                     .copyWith(color: Colors.white),
                               ),
                       ),
@@ -300,7 +301,7 @@ class _NotificationPreferencesScreenState
         children: [
           Text(
             title,
-            style: AppTypography.microOverline
+            style: AppTypography.overline
                 .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.5),
           ),
           const SizedBox(height: 12),
@@ -340,7 +341,8 @@ class _NotificationPreferencesScreenState
               children: [
                 Text(
                   title,
-                  style: AppTypography.bodyMediumEmphasis
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(color: colors.onSurface),
                 ),
                 SizedBox(height: 2),

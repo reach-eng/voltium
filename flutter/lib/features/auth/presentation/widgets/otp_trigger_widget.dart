@@ -84,7 +84,8 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
                         )
                       : Text(
                           'Enter',
-                          style: AppTypography.buttonMedium
+                          style: AppTypography.labelLarge
+                              .copyWith(fontWeight: FontWeight.w700)
                               .copyWith(color: Colors.white),
                         ),
                 ),

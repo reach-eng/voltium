@@ -75,7 +75,10 @@ class VehiclePhotosScreen extends ConsumerWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -109,7 +112,8 @@ class VehiclePhotosScreen extends ConsumerWidget {
           SizedBox(width: 16),
           Text(
             'Vehicle Photos',
-            style: AppTypography.titleMediumLarge
+            style: AppTypography.titleLarge
+                .copyWith(fontSize: 21)
                 .copyWith(color: AppColors.onSurface),
           ),
         ],
@@ -164,13 +168,15 @@ class VehiclePhotosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPhotosGrid(BuildContext context, List<Map<String, dynamic>> photos) {
+  Widget _buildPhotosGrid(
+      BuildContext context, List<Map<String, dynamic>> photos) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'PICKUP PHOTOS',
-          style: AppTypography.bodySmallStrong
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800)
               .copyWith(color: AppColors.onSurface, letterSpacing: 1.2),
         ),
         const SizedBox(height: 12),
@@ -219,7 +225,8 @@ class VehiclePhotosScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           Text(
                             label,
-                            style: AppTypography.bodySmallEmphasis
+                            style: AppTypography.bodySmall
+                                .copyWith(fontWeight: FontWeight.w600)
                                 .copyWith(color: AppColors.onSurfaceVariant),
                           ),
                         ],
@@ -266,7 +273,9 @@ class VehiclePhotosScreen extends ConsumerWidget {
         child: Center(
           child: Text(
             'Back to Dashboard',
-            style: AppTypography.buttonMedium.copyWith(color: Colors.white),
+            style: AppTypography.labelLarge
+                .copyWith(fontWeight: FontWeight.w700)
+                .copyWith(color: Colors.white),
           ),
         ),
       ),

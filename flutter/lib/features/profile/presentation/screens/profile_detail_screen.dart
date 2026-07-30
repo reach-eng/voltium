@@ -22,7 +22,7 @@ class ProfileDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
 
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
@@ -99,7 +99,7 @@ class ProfileDetailScreen extends ConsumerWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () {
                   if (Navigator.canPop(context)) Navigator.pop(context);
                 },
@@ -141,7 +141,7 @@ class ProfileDetailScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -231,7 +231,7 @@ class ProfileDetailScreen extends ConsumerWidget {
               color: isVerified
                   ? AppColors.successSurfaceAlt
                   : AppColors.warningSurface,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
                 color: isVerified
                     ? AppColors.success.withValues(alpha: 0.2)
@@ -249,10 +249,12 @@ class ProfileDetailScreen extends ConsumerWidget {
                 SizedBox(width: 6),
                 Text(
                   'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                  style: AppTypography.bodyCompactStrong.copyWith(
-                      color: isVerified
-                          ? AppColors.success
-                          : AppColors.warningDark),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                      .copyWith(
+                          color: isVerified
+                              ? AppColors.success
+                              : AppColors.warningDark),
                 ),
               ],
             ),
@@ -271,7 +273,7 @@ class ProfileDetailScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -280,7 +282,7 @@ class ProfileDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: [
           ProfileDetailRow(
@@ -402,7 +404,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: AppTypography.bodySmallTracked
+      style: AppTypography.bodySmall
+          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
           .copyWith(color: AppColors.slate600, letterSpacing: 1.2),
     );
   }
@@ -417,7 +420,7 @@ class _EditProfileTile extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -430,7 +433,7 @@ class _EditProfileTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           key: const Key('editProfileLink'),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -450,7 +453,8 @@ class _EditProfileTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Edit Profile',
-                    style: AppTypography.buttonMedium
+                    style: AppTypography.labelLarge
+                        .copyWith(fontWeight: FontWeight.w700)
                         .copyWith(color: AppColors.slate800),
                   ),
                 ),

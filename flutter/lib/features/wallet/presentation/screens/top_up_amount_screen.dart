@@ -39,8 +39,18 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   @override
   void initState() {
     super.initState();
-    // Prefill with plan's security deposit + rental price if provided
-    final planTotal = (widget.securityDeposit ?? 0) + (widget.rentalPrice ?? 0);
+    final isAdvanceRentPaid =
+        ref.read(riderProvider).rider?.advanceRentPaid ?? false;
+    final secDeposit = widget.securityDeposit ?? 0;
+    final rentPrice = widget.rentalPrice ?? 0;
+
+    // Auto-fill required top-up amount:
+    // If Advance Rent was ticked during plan selection -> Security Deposit + Advance Rent Price
+    // Otherwise -> Security Deposit only
+    final planTotal = isAdvanceRentPaid
+        ? (secDeposit + rentPrice)
+        : (secDeposit > 0 ? secDeposit : (rentPrice > 0 ? rentPrice : 0));
+
     _selectedAmount = planTotal > 0 ? planTotal : 1000;
     _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
 
@@ -79,7 +89,11 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   int get _finalAmount => int.tryParse(_customAmountCtrl.text) ?? 0;
 
-  bool get _canProceed => _finalAmount >= 100;
+  bool get _canProceed {
+    final minTopup =
+        ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt();
+    return _finalAmount >= (minTopup > 0 ? minTopup : 100);
+  }
 
   void _selectQuickAmount(int amount) {
     HapticFeedback.lightImpact();
@@ -111,7 +125,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           vertical: 32, horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         boxShadow: AppShadows.glass,
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.5)),
@@ -193,7 +207,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               gradient:
                                   isSelected ? AppGradients.primary : null,
                               color: isSelected ? null : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               boxShadow: isSelected
                                   ? AppShadows.primaryButton
                                   : AppShadows.glass,
@@ -225,7 +239,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                     Consumer(
                       builder: (context, ref, _) {
                         final currentBalance = ref
-                                .watch(appProvider.select((p) => p.rider))
+                                .watch(riderProvider.select((p) => p.rider))
                                 ?.walletBalance ??
                             0.0;
                         return Row(
@@ -237,8 +251,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                   .copyWith(color: AppColors.slate600),
                             ),
                             Text(
-                              'Min: ₹100',
-                              style: AppTypography.bodyMediumEmphasis
+                              'Min: ₹${ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt()}',
+                              style: AppTypography.bodyMedium
+                                  .copyWith(fontWeight: FontWeight.w600)
                                   .copyWith(color: AppColors.slate500),
                             ),
                           ],
@@ -327,7 +342,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Text(
               'Step 1 of 2',
@@ -357,7 +372,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         decoration: BoxDecoration(
           gradient: _canProceed ? AppGradients.primary : null,
           color: _canProceed ? null : AppColors.outlineVariant,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: _canProceed
               ? [
                   BoxShadow(
@@ -377,9 +392,12 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                 child: Text(
                   'PROCEED TO PAYMENT',
                   textAlign: TextAlign.center,
-                  style: AppTypography.buttonMedium.copyWith(
-                      letterSpacing: 0.5,
-                      color: _canProceed ? Colors.white : AppColors.slate400),
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w700)
+                      .copyWith(
+                          letterSpacing: 0.5,
+                          color:
+                              _canProceed ? Colors.white : AppColors.slate400),
                 ),
               ),
               if (_canProceed)
