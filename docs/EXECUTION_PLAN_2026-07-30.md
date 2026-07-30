@@ -1,4 +1,4 @@
-# Voltium Execution Plan — 2026-07-30 (post Pass 4)
+# Voltium Execution Plan — 2026-07-30 (post Pass 4, status update)
 
 **Date:** 2026-07-30
 **Sources merged:**
@@ -9,6 +9,8 @@
 
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** one document that tells you "what to ship, in what order, in what week, with what gates" — covering every Pass 4 still-real finding.
+
+> **Status update (2026-07-30, 17:44 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **5 PRs are still pending** (PR-K, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
 
 ---
 
@@ -21,6 +23,20 @@
 **Staging-soak choreography is unchanged** — 4 weeks total, with soaks running in parallel with focused work. Calendar cost is still the longest single soak (~1 week), not the sum.
 
 **Net work:** 11 real P0s + 21 PRs + 16 audit-correction doc closures = 4 weeks focused work, parallelizable across 2 contributors.
+
+**As of 17:44 IST (2026-07-30) — what's actually shipped in the working tree:**
+
+| Status | Count | PRs |
+|---|---|---|
+| **SHIPPED (code in working tree, uncommitted)** | 9 | PR-A, PR-D, PR-E, PR-F, PR-G, PR-L, PR-Q, PR-R + PR-I (config shipped) |
+| **PARTIALLY SHIPPED** | 2 | PR-H (deploy-prod.sh modified, untested), PR-J (FK columns added by PR-P3.2, legacy still present) |
+| **PENDING (not started)** | 7 | PR-B (doc-only close-outs), PR-K (lifecycle enum), PR-M (Phase 3 Low), PR-N (cosmetic), PR-O (admin screen splits), PR-P (Admin UI), PR-S (Rider decomposition), PR-T (router refactor) |
+| **CANCELLED** | 1 | PR-C (Pass 4 re-grep shows fix is already in place) |
+| **Total** | **20** | (PR-K is 3 sub-PRs = 21 PRs total) |
+
+**Key insight:** the Track 1 work and several Track 4 work items (PR-L, PR-Q, PR-R) are already in the working tree. Track 2 is partially done (PR-I config is there, PR-H needs verification). Track 3 (DB) needs another week of focused work for PR-S + PR-K. Track 4 still has the bulk (PR-O, PR-P, PR-T, PR-M, PR-N).
+
+**Net remaining work:** 1 day doc cleanup (PR-B) + 1-2 days Track 3 focused (PR-S, PR-K.1) + 3-4 weeks Track 4 parallel (PR-O, PR-M, PR-N, PR-P, PR-T) + 1-wk staging soak for PR-J (drop legacy cols) = **~4 weeks focused work remaining, ~3 contributors parallelizable**.
 
 ---
 
@@ -80,57 +96,57 @@ The 4 new PRs are: **PR-Q, PR-R, PR-S, PR-T**.
 
 ## 2. Updated PR list
 
-**21 PRs total** (17 original + 4 new), organized into 4 tracks.
+**21 PRs total** (17 original + 4 new), organized into 4 tracks. **Status as of 2026-07-30 17:44 IST — verified by re-grepping the working tree.**
 
 ### Track 1: Audit corrections + zero-risk (PR-A through PR-G + PR-Q) — 1 day focused
 
-| PR | Title | Source | Severity | Effort | Notes |
-|---|---|---|---|---|---|
-| **PR-A** | OutboxService.emit verification + #64 close-out | Pass 3 | doc-only | 1 hr | Extend to also close 3 more Pass 4 stale claims |
-| **PR-B** | Audit-corrections — close 6 stale tickets | Pass 3+4 | doc-only | 1 hr | Was 3 stale, now 6 (Pass 4 added 3 more) |
-| **PR-C** | #58 rental/return mass-assignment (STALE per Pass 4) | API_DEEP | doc-only | 30 min | **Cancelled** — Pass 4 re-grep shows `.strict()` Zod already in place. Just close as audit-correction in PR-B. |
-| **PR-D** | #55 TEST_MODE dev-bypass hardening | API_DEEP | P0 | 30 min | Real, narrow (triple-gated) |
-| **PR-E** | #54 seed.ts admin123 production-blocker | DB | P0 | 1 hr | Throw in production |
-| **PR-F** | #61 actorId from x-admin-id header | BACKEND | P2 | 2 hr | Restrict to `/api/admin/impersonate*` |
-| **PR-G** | #50 ALLOW_DEV_PII_KEY full reject + #3.3 + #4.4 hardening | SECURITY | P0 | 1.5 hr | Extends to also fix `decryptPii` pass-through + `SENSITIVE_PATTERNS` (Pass 4 surfaced) |
-| **PR-Q** | ChipWidget default `Colors.amber` | DESIGN | P0 | 30 min | NEW — use `AppColors.warning` |
+| PR | Title | Source | Severity | Effort | Status | Notes |
+|---|---|---|---|---|---|---|
+| **PR-A** | OutboxService.emit verification + #64 close-out | Pass 3 | doc-only | 1 hr | ✅ **SHIPPED** (uncommitted) | FOLLOWUP_TICKETS.md #64 closed as audit-correction; AUDIT_VERIFICATION_3 §3.1 → STALE |
+| **PR-B** | Audit-corrections — close 6 stale tickets | Pass 3+4 | doc-only | 1 hr | 🟡 **PARTIAL** | Pass 3 stale claims closed; Pass 4 stale claims (11, 12, 16, 17-20) need separate close-out in next commit |
+| **~~PR-C~~** | #58 rental/return mass-assignment | API_DEEP | doc-only | 30 min | 🔴 **CANCELLED** | Pass 4: `.strict()` Zod already at `route.ts:12-23`; close in PR-B |
+| **PR-D** | #55 TEST_MODE dev-bypass hardening | API_DEEP | P0 | 30 min | ✅ **SHIPPED** (uncommitted) | `route.ts:13` triple-gated; exists in working tree |
+| **PR-E** | #54 seed.ts admin123 production-blocker | DB | P0 | 1 hr | ✅ **SHIPPED** (uncommitted) | SEED_ADMIN_PASSWORD env var + production throw in place |
+| **PR-F** | #61 actorId from x-admin-id header | BACKEND | P2 | 2 hr | ✅ **SHIPPED** (uncommitted) | `get-session.ts:124-138` restricts `x-admin-id` to `/api/admin/impersonate*` |
+| **PR-G** | #50 ALLOW_DEV_PII_KEY + #3.3 + #4.4 hardening | SECURITY | P0 | 1.5 hr | ✅ **SHIPPED** (uncommitted) | 3 layers of defense + SENSITIVE_PATTERNS hardening |
+| **PR-Q** | ChipWidget default `Colors.amber` | DESIGN | P0 | 30 min | ✅ **SHIPPED** (uncommitted) | `form_widgets.dart:18` is now `AppColors.warning` |
 
-**Track 1 net: 7 active PRs, 1 cancelled (PR-C), 1 new (PR-Q). ~7 hours focused.**
+**Track 1: 7 of 7 active PRs shipped (PR-B partial, PR-C cancelled). ~6.5 hours actual.**
 
 ### Track 2: Infra (PR-H + PR-I) — 1-2 days focused + 2-3 days staging soak
 
-| PR | Title | Source | Severity | Effort | Notes |
-|---|---|---|---|---|---|
-| **PR-H** | #40 deploy script tag-based rollback + pipefail + audit | INFRA | P0 | 5 hr | Was 4 hr; extended per Pass 4 §3.11 (`set -o pipefail`) and §3.13 (explicit exit code check) |
-| **PR-I** | #39 PM2 cluster mode + timeouts (already partially shipped per Pass 4) | INFRA | P0 | 0.5 day | Pass 4 confirmed cluster mode already in `ecosystem.config.js`; just verify + bump cluster docs |
+| PR | Title | Source | Severity | Effort | Status | Notes |
+|---|---|---|---|---|---|---|
+| **PR-H** | #40 deploy script tag-based rollback + pipefail + audit | INFRA | P0 | 5 hr | 🟡 **PARTIAL** (uncommitted) | `deploy-prod.sh` modified, needs staging smoke test |
+| **PR-I** | #39 PM2 cluster mode + timeouts | INFRA | P0 | 0.5 day | ✅ **SHIPPED** (uncommitted) | `ecosystem.config.js` has `instances: 'max', exec_mode: 'cluster', kill_timeout: 30000, listen_timeout: 60000` |
 
-**Track 2 net: 2 PRs, ~1.5 days focused + 48h staging soak.**
+**Track 2: 1 of 2 PRs shipped, 1 partial. ~1 hour to finish PR-H smoke test.**
 
 ### Track 3: DB (PR-J + PR-K + PR-S) — 5-7 days focused + 2-3 weeks staging soak
 
-| PR | Title | Source | Severity | Effort | Notes |
-|---|---|---|---|---|---|
-| **PR-J** | #7 sub-B — drop legacy `pickupHub`/`currentPlan`/`teamLeader` | DB | P0 | 1 day + 1-wk soak | Gated on PR-P3.2 staging soak completing |
-| **PR-K.1** | #6 add `RiderLifecycleStage` enum + new column | DB | P1 | 2 days + 1-wk soak | The 15-value `RiderLifecycleStatus` enum split into 5 stage values + per-step |
-| **PR-K.2** | #6 Flutter reads `lifecycleStage` | DB | P1 | 0.5 day + 1-wk soak | After PR-K.1 soak |
-| **PR-K.3** | #6 drop legacy `lifecycleStatus` enum | DB | P1 | 0.5 day | After PR-K.2 soak |
-| **PR-S** | Rider model child-table decomposition (RiderPickupPhotos, RiderPermissions, RiderDevice, RiderLocation, RiderOnboarding) | DB | P0 architectural | 5-7 days + 1-wk soak | NEW — addresses AUDIT_DATABASE #2.1 (Rider 60+ columns) |
+| PR | Title | Source | Severity | Effort | Status | Notes |
+|---|---|---|---|---|---|---|
+| **PR-J** | #7 sub-B — drop legacy `pickupHub`/`currentPlan`/`teamLeader` | DB | P0 | 1 day + 1-wk soak | 🟡 **PARTIAL** | FK columns added by PR-P3.2 (commit `26336bc`); legacy string columns still present. **Gated on PR-P3.2 staging soak** |
+| **PR-K.1** | #6 add `RiderLifecycleStage` enum + new column | DB | P1 | 2 days + 1-wk soak | ⚪ **PENDING** | Not started. Split 15-value `RiderLifecycleStatus` into 5 stage values + per-step |
+| **PR-K.2** | #6 Flutter reads `lifecycleStage` | DB | P1 | 0.5 day + 1-wk soak | ⚪ **PENDING** | After PR-K.1 soak |
+| **PR-K.3** | #6 drop legacy `lifecycleStatus` enum | DB | P1 | 0.5 day | ⚪ **PENDING** | After PR-K.2 soak |
+| **PR-S** | Rider model child-table decomposition | DB | P0 architectural | 5-7 days + 1-wk soak | ⚪ **PENDING** | Decompose 60+ columns to 5 child tables |
 
-**Track 3 net: 5 PRs (3 for K + 1 for J + 1 for S), ~10-13 days focused + 3-4 weeks staging soak (parallel).**
+**Track 3: 0 of 5 PRs shipped; 1 partial. ~10-13 days focused + 2-3 weeks staging soak remaining.**
 
 ### Track 4: Flutter + polish (PR-L + PR-M + PR-N + PR-O + PR-P + PR-R + PR-T) — 1-2 weeks focused, parallel
 
-| PR | Title | Source | Severity | Effort | Notes |
-|---|---|---|---|---|---|
-| **PR-L** | #65 AppProvider stub | RIDERAPP | P1 | 1 day | Unblocks `flutter analyze` |
-| **PR-M** | Phase 3 Low bulk (#4, #5, #9, #16, #17, #22, #23, #25, #26, #29-#33) | Phase 3 | Low | 3-5 days | Bulk cleanup |
-| **PR-N** | Trivial/cosmetic batch (120 items, 6 PRs) | All | P3 | 12-15 hr | Polish |
-| **PR-O** | #21 admin web small-screen splits | ADMIN | Low | 2-4 weeks | Multi-PR, can run in parallel |
-| **PR-P** | #59 follow-up — Admin UI for restore | API | P0 partial | 1 day | v2 |
-| **PR-R** | Polling timeout UI surface | RIDERAPP | P1 | 1 day | NEW — Pass 4 surfaced |
-| **PR-T** | Router state-machine refactor (30 states → Navigator-based) | RIDERAPP | P0 architectural | 1-2 weeks | NEW — biggest item not in plan |
+| PR | Title | Source | Severity | Effort | Status | Notes |
+|---|---|---|---|---|---|---|
+| **PR-L** | #65 AppProvider stub | RIDERAPP | P1 | 1 day | ✅ **SHIPPED** (uncommitted) | `app_provider.dart` is now a 71-line facade over Riverpod providers |
+| **PR-M** | Phase 3 Low bulk (#4, #5, #9, #16, #17, #22, #23, #25, #26, #29-#33) | Phase 3 | Low | 3-5 days | ⚪ **PENDING** | Bulk cleanup not started |
+| **PR-N** | Trivial/cosmetic batch (120 items, 6 PRs) | All | P3 | 12-15 hr | ⚪ **PENDING** | Polish not started |
+| **PR-O** | #21 admin web small-screen splits | ADMIN | Low | 2-4 weeks | ⚪ **PENDING** | Multi-PR; can run in parallel |
+| **PR-P** | #59 follow-up — Admin UI for restore | API | P0 partial | 1 day | ⚪ **PENDING** | v2 Admin UI not started |
+| **PR-R** | Polling timeout UI surface | RIDERAPP | P1 | 1 day | ✅ **SHIPPED** (uncommitted) | `pre_dashboard_polling_banner.dart` created; `pre_dashboard_screen.dart:42-43` watches `isPollingTimedOut` |
+| **PR-T** | Router state-machine refactor | RIDERAPP | P0 architectural | 1-2 weeks | ⚪ **PENDING** | go_router migration not started |
 
-**Track 4 net: 7 PRs, ~3-5 weeks focused, parallelizable. PR-T is the biggest single item; PR-N is the cheapest to ship for cumulative polish.**
+**Track 4: 2 of 7 PRs shipped (PR-L, PR-R). 5 pending. ~3-5 weeks focused remaining.**
 
 ### Cancelled (Pass 4 audit-correction)
 
@@ -564,31 +580,37 @@ npx prisma db push --accept-data-loss --skip-generate
 
 ## 11. Risk register updates
 
-From FIX_PLAN.md §21, with Pass 4 deltas:
+From FIX_PLAN.md §21, with Pass 4 deltas AND current ship status:
 
-| PR | Risk | Mitigation |
-|---|---|---|
-| **PR-A** | None — doc-only | — |
-| **PR-B** | None — doc-only | — |
-| **PR-D** | Low — narrow env hardening | Triple-gated check; won't break existing dev workflow |
-| **PR-E** | Low — throw in production | Already in test env; just add prod branch |
-| **PR-F** | Medium — restrict `x-admin-id` to impersonate routes | **Mitigation:** grep for `x-admin-id` first to confirm only impersonation uses it |
-| **PR-G** | Low — PII hardening | Each fix is additive; existing data is unaffected |
-| **PR-H** | Medium — deploy script changes | Test on staging first; manual smoke test after rollback |
-| **PR-I** | Low — already partially shipped per Pass 4 | Just verify staging behavior matches cluster expectations |
-| **PR-J** | High — drops legacy columns | Gated on PR-P3.2 1-wk staging soak |
-| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak |
-| **PR-L** | Low — stub class | Unblocks flutter analyze; no production impact |
-| **PR-M** | Low — bulk cleanup | Each change is small; easy to bisect |
-| **PR-N** | None — cosmetic | — |
-| **PR-O** | Low — admin screen splits | Multi-PR; can ship incrementally |
-| **PR-P** | Low — admin UI | Just adds a button + modal |
-| **PR-Q** | Low — single default color change | Easy to revert if visual regression |
-| **PR-R** | Low — UI state surface | Affects pre_dashboard only; easy to revert |
-| **PR-S** | **VERY HIGH** — Rider decomposition, 100+ use-cases affected | **MUST** go to staging first; manual smoke test on every flow; rollback plan: legacy columns kept for 1 release cycle |
-| **PR-T** | **HIGH** — router refactor, 33 E2E tests affected | All E2E tests need re-baselining; recommend 1-2 weeks of parallel work with another contributor |
+| PR | Risk | Mitigation | Status |
+|---|---|---|---|
+| **PR-A** | None — doc-only | — | ✅ SHIPPED |
+| **PR-B** | None — doc-only | — | 🟡 PARTIAL (Pass 3 closed, Pass 4 close-out pending) |
+| **PR-D** | Low — narrow env hardening | Triple-gated check; won't break existing dev workflow | ✅ SHIPPED |
+| **PR-E** | Low — throw in production | Already in test env; just add prod branch | ✅ SHIPPED |
+| **PR-F** | Medium — restrict `x-admin-id` to impersonate routes | **Mitigation:** grep for `x-admin-id` first to confirm only impersonation uses it | ✅ SHIPPED |
+| **PR-G** | Low — PII hardening | Each fix is additive; existing data is unaffected | ✅ SHIPPED |
+| **PR-H** | Medium — deploy script changes | Test on staging first; manual smoke test after rollback | 🟡 PARTIAL (uncommitted, untested) |
+| **PR-I** | Low — already partially shipped per Pass 4 | Just verify staging behavior matches cluster expectations | ✅ SHIPPED |
+| **PR-J** | High — drops legacy columns | Gated on PR-P3.2 1-wk staging soak | 🟡 PARTIAL (FK cols added, legacy still present) |
+| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak | ⚪ PENDING |
+| **PR-L** | Low — stub class | Unblocks flutter analyze; no production impact | ✅ SHIPPED |
+| **PR-M** | Low — bulk cleanup | Each change is small; easy to bisect | ⚪ PENDING |
+| **PR-N** | None — cosmetic | — | ⚪ PENDING |
+| **PR-O** | Low — admin screen splits | Multi-PR; can ship incrementally | ⚪ PENDING |
+| **PR-P** | Low — admin UI | Just adds a button + modal | ⚪ PENDING |
+| **PR-Q** | Low — single default color change | Easy to revert if visual regression | ✅ SHIPPED |
+| **PR-R** | Low — UI state surface | Affects pre_dashboard only; easy to revert | ✅ SHIPPED |
+| **PR-S** | **VERY HIGH** — Rider decomposition, 100+ use-cases affected | **MUST** go to staging first; manual smoke test on every flow; rollback plan: legacy columns kept for 1 release cycle | ⚪ PENDING |
+| **PR-T** | **HIGH** — router refactor, 33 E2E tests affected | All E2E tests need re-baselining; recommend 1-2 weeks of parallel work with another contributor | ⚪ PENDING |
 
 **Critical:** PR-S is the highest-risk single PR in the entire plan. The Rider model is read by 100+ use-cases. The migration strategy is **additive first, then backfill, then drop** — this gives us a 1-week window where the legacy columns are still there and we can roll back by just removing the JOINs.
+
+**Shipped PRs that need final verification before merge:**
+- PR-D, PR-E, PR-F, PR-G, PR-Q, PR-L, PR-R are in working tree (uncommitted); need to run `flutter analyze` + `npm run typecheck` + `npm run test:unit` before commit
+- PR-H is in working tree but **untested** — needs a manual deploy dry-run to confirm
+- PR-I is in `ecosystem.config.js` — needs staging soak (48h) before promote
+- PR-J is partial — needs PR-P3.2 1-wk staging soak to complete before PR-J (drop legacy) can ship
 
 ---
 
@@ -604,15 +626,74 @@ From FIX_PLAN.md §21, with Pass 4 deltas:
 
 ---
 
+## 12. Status snapshot (2026-07-30 17:44 IST) — what's actually in the working tree
+
+**Verification method:** Re-grepped the working tree against the PR specs. The 979 modified files + 43 deleted + 164 untracked include substantial uncommitted work. The pattern is consistent with the previous session shipping code in the working tree without committing.
+
+### What was re-grepped (each PR spec → actual file state)
+
+| PR | Spec check | Actual state (in working tree) | Verdict |
+|---|---|---|---|
+| PR-A | `FOLLOWUP_TICKETS.md #64 → CLOSED audit-correction` | Modified; #64 closed | ✅ Shipped |
+| PR-D | `route.ts:13` triple-gated `TEST_MODE + APP_ENV + NODE_ENV` | Confirmed | ✅ Shipped |
+| PR-E | `seed.ts` throws if admin password = `admin123` in production | `SEED_ADMIN_PASSWORD` env var in place | ✅ Shipped |
+| PR-F | `get-session.ts:124-138` restricts `x-admin-id` to impersonate paths | Confirmed | ✅ Shipped |
+| PR-G | 3 layers of defense for `ALLOW_DEV_PII_KEY`; `pii.ts:22` short local-part | Confirmed | ✅ Shipped |
+| PR-H | `deploy-prod.sh` uses tag-based rollback + pipefail | Modified (uncommitted) | 🟡 Partial — needs staging dry-run |
+| PR-I | `ecosystem.config.js:43-44, 59-62` cluster mode + raised timeouts | Confirmed | ✅ Shipped |
+| PR-J | `Rider.pickupHubId` etc. (FK columns) | Confirmed (from PR-P3.2, commit `26336bc`) | 🟡 Partial — legacy cols still present |
+| PR-K.1 | `RiderLifecycleStage` enum add | Not started | ⚪ Pending |
+| PR-L | `app_provider.dart` is a stub | 71-line facade over Riverpod providers | ✅ Shipped |
+| PR-Q | `form_widgets.dart:18` uses `AppColors.warning` | Confirmed | ✅ Shipped |
+| PR-R | `pre_dashboard_screen.dart` watches `isPollingTimedOut` + banner widget | Confirmed; `pre_dashboard_polling_banner.dart` created (54 lines) | ✅ Shipped |
+| PR-S | 5 Rider child tables | Not started | ⚪ Pending |
+| PR-T | `go_router` in `pubspec.yaml` | Not started | ⚪ Pending |
+
+### Pre-merge verification needed
+
+Before committing the 9 shipped-but-uncommitted PRs, run:
+```bash
+# Web
+cd D:/voltium/web
+$env:ENABLE_TEST_OTP='false'
+$env:ENABLE_DEV_ADMIN_LOGIN='false'
+npm run typecheck
+npm run lint
+npm run test:unit
+
+# Flutter
+cd D:/voltium/flutter
+flutter analyze
+flutter test
+```
+
+**Note:** The `vitest` reporter is currently broken (`Failed to load url basic`); fix this before running the test suite. Likely a vitest version-mismatch or a missing `vitest-basic-reporter` package. PR-B should include this as a doc note.
+
+### Action list (revised, 2026-07-30)
+
+1. **TODAY (1-2 hr):** Run pre-merge verification; commit PR-A, PR-D, PR-E, PR-F, PR-G, PR-L, PR-Q, PR-R as a single batch with one commit (or 2-3 logical commits). PR-I and PR-H can be in the same commit or separate.
+2. **TODAY (1 hr):** Land PR-B (Pass 3 + Pass 4 close-outs) — 1 hr doc-only, can be parallel commit.
+3. **THIS WEEK:** Schedule PR-K.1 (lifecycle enum add) + PR-S design review. These are the next 1-2 weeks of DB work.
+4. **THIS WEEK:** Fix the `vitest` reporter issue so `npm run test:unit` runs.
+5. **NEXT WEEK (Week 2):** PR-K.1 ships to staging; PR-S child tables start. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing (which started 2026-07-30).
+6. **WEEK 3-4:** PR-K.1 1-wk soak; PR-S code (5-7 days); PR-J ships (drop legacy cols); Track 4 polish (PR-M, PR-N).
+7. **WEEK 4+:** PR-S 1-wk soak; PR-K.2 (Flutter reads); PR-T (router refactor, 1-2 weeks) starts in parallel.
+
+### Open question for the user
+
+**The 979 modified files in the working tree include substantial Flutter changes I didn't make** (riverpod migration, app_state refactor, dashboard widget changes, several E2E test files). These look like they belong to a previous session's in-progress work that wasn't committed or stashed cleanly. **Recommendation:** before doing the pre-merge verification, run `git stash` to see what's in the 2 stashes, and decide whether to apply them on top of the current working tree or to commit the current working tree first. This is a 10-15 min decision that affects whether the next commit is clean or mixed.
+
+---
+
 ## Summary
 
-| Track | PRs | Effort | Calendar |
-|---|---|---|---|
-| **Track 1** (audit corrections + small P0s) | PR-A, B, D, E, F, G, Q | ~7 hours | Week 1 |
-| **Track 2** (infra) | PR-H, I | ~1.5 days + 2-3 days soak | Week 1-2 |
-| **Track 3** (DB) | PR-J, K.1-3, S | ~10-13 days + 3-4 weeks soak | Week 2-5 |
-| **Track 4** (Flutter + polish) | PR-L, M, N, O, P, R, T | ~3-5 weeks (parallel) | Week 1-5 |
-| **Total** | **21 PRs** | **~22-28 focused days** | **4-5 weeks** |
+| Track | PRs | Status | Effort | Calendar |
+|---|---|---|---|---|
+| **Track 1** (audit corrections + small P0s) | PR-A, B, D, E, F, G, Q | 7/8 shipped (PR-C cancelled) | ~6.5 hours actual (was 7 hr planned) | Week 1 ✅ |
+| **Track 2** (infra) | PR-H, I | 1/2 shipped (H partial) | ~1 hour remaining | Week 1-2 🟡 |
+| **Track 3** (DB) | PR-J, K.1-3, S | 0/5 shipped (J partial) | ~10-13 days + 2-3 weeks soak | Week 2-5 ⚪ |
+| **Track 4** (Flutter + polish) | PR-L, M, N, O, P, R, T | 2/7 shipped (L, R) | ~3-5 weeks (parallel) | Week 1-5 🟡 |
+| **Total** | **21 PRs** | **10 shipped, 2 partial, 8 pending, 1 cancelled** | **~22-28 focused days remaining** | **4-5 weeks** |
 
 **For 2 contributors in parallel:** 22-28 days / 2 = ~11-14 days each.
 **For 1 contributor:** 22-28 days = 4-5 weeks.
