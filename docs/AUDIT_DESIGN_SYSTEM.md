@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `flutter/lib/theme/*` (3 files), `flutter/lib/widgets/*` (79 files), `design-tokens.json` (root), `docs/design-system.md`, `docs/DESIGN.md`.
 
-> **Status (2026-07-30):** 8 of 10 Top 10 P0s FIXED, 2 PARTIALLY FIXED with CI lint enforcement (PR-P1.5). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §4.
+> **Status (2026-07-30, Pass 4):** 8 of 10 Top 10 P0s FIXED, 2 PARTIALLY FIXED with CI lint enforcement (PR-P1.5), **2 STALE (audit was wrong)**: #3.1/#4.1 primary color mismatch (already aligned to #0053C1 on 2026-07-29). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §4.
 **Method:** File-by-file read plus repo-wide grep audits (hardcoded colors, raw spacing, AppColors usage). Every finding has file:line evidence and a concrete fix.
 
 This is the eighth in the audit series. It is focused entirely on the design system: tokens, theme, typography, spacing, radius, colors, icons, components, and consistency across the 79 widget files.

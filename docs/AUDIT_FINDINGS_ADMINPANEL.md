@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `web/src/**` (200+ TypeScript files, ~3 MB source)
 
-> **Status (2026-07-30):** 9 of 10 Top 10 P0s FIXED, 1 PARTIALLY FIXED (#2 Rider child-table extraction, PR-P1.4). Validator split + RBAC consolidation shipped (PR-P1.2). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §5.
+> **Status (2026-07-30, Pass 4):** 9 of 10 Top 10 P0s FIXED, 1 PARTIALLY FIXED (#2 Rider child-table extraction, PR-P1.4), **1 STALE (audit was wrong)**: #1.4 x-rider-id header trust (now strict dev-only opt-in, #61 SHIPPED). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §5.
 **Method:** File-level inventory + targeted read of the highest-leverage files in each module. Findings are evidence-backed, with line numbers and concrete fixes.
 
 This is the long-form audit that backs the executive summary in the chat log. Each section has: **what's wrong**, **file + line evidence**, **why it matters**, **concrete fix**.

@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `flutter/lib/**` (180+ Dart files, ~3 MB source)
 
-> **Status (2026-07-30):** 6 of 10 Top 10 P0s FIXED (LoginScreen, OtpScreen, pre_dashboard, RiderModel getters, appDebug migration), 1 PARTIALLY FIXED, 3 DEFERRED (router state machine, legal_page 34 KB, guarantor 33 KB). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §6.
+> **Status (2026-07-30, Pass 4):** 6 of 10 Top 10 P0s FIXED (LoginScreen, OtpScreen, pre_dashboard, RiderModel getters, appDebug migration), 2 PARTIALLY FIXED, 2 DEFERRED (router state machine, legal_page 34 KB), **1 STALE (audit was wrong)**: #1.4 AppProvider deprecated god-object (file exists at 935 bytes, not missing). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §6.
 **Method:** Read every module, every file. Findings grouped by file, with severity, evidence, and concrete fix.
 
 This is the long-form audit that backs the executive summary in the chat log. Each section has: **what's wrong**, **file + line evidence**, **why it matters**, **concrete fix**.

@@ -5,7 +5,7 @@
 **Format:** `file:line` evidence + concrete fix + severity (P0/P1/P2/P3)
 **Files already covered elsewhere (skipped here):** auth/logout, auth/refresh, auth/send-otp, auth/verify-otp, admin/riders/route.ts.
 
-> **Status (2026-07-30):** 8 of 10 Top 10 P0s are FIXED; 2 are tracked in `FOLLOWUP_TICKETS.md` (#55, #58). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §1 for the per-finding verdict.
+> **Status (2026-07-30, Pass 4):** 5 of 10 Top 10 P0s are FIXED, 1 STILL TRUE (narrow, #2 device/data + device/permissions dev-bypass), **4 STALE (audit was wrong)**: #1 webhook dev grant (already fail-closed), #5 rental/return mass-assignment (strict Zod allowlist), #6/#9/#10 (already shipped per #59, #60). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §1.
 
 ---
 

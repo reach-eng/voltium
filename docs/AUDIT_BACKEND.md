@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `web/src/app/api/**` (130 route files) + `web/src/server/**` (130 module files + 12 job workers)
 
-> **Status (2026-07-30):** 8 of 18 top-level P0s FIXED, 3 STILL TRUE (tracked: #49, #50, #55, #58, #61, #62 follow-up), 7 PARTIALLY FIXED. See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §2 for the per-finding verdict.
+> **Status (2026-07-30, Pass 4):** 4 of 18 top-level P0s FIXED, 3 PARTIALLY FIXED, 0 STILL TRUE, **2 STALE (audit was wrong)**: #1.8 admin impersonation via x-rider-id (already GET-only restricted), #1.16 NODE_ENV !== production header trust (now strict dev-only opt-in). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §2.
 **Method:** File-by-file read. Every finding has file:line evidence and a concrete fix.
 
 This is the third in the audit series, behind `AUDIT_FINDINGS.md` (broad admin web) and `flutter/AUDIT_FINDINGS.md` (Flutter rider app). It is **focused entirely on the backend** — every route handler, every use-case, every state machine, every job worker.

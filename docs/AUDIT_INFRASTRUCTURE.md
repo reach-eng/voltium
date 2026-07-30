@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `ecosystem.config.js` (PM2), `scripts/*.sh` + `scripts/*.ps1` (30 scripts), `.github/workflows/*.yml` (8 GitHub Actions workflows), `docs/DEPLOYMENT.md` + `docs/K8S_PROBES.md` + `docs/RUNBOOK.md` (deployment + ops), `.zscripts/` references, `infra/` (Grafana dashboard), `cloudflared-config.example.yml`, `renovate.json`, `dependabot.yml`, `CODEOWNERS`, `bootstrap.sh` (one-command bootstrap).
 
-> **Status (2026-07-30):** 4 of 17 top P0s FIXED (deploy script cleanup PR-P2.5), 3 PARTIALLY FIXED, 10 STILL TRUE (PM2 cluster/timeouts + rollback = #39, #40, #42 — 24-48h staging soak required). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §7.
+> **Status (2026-07-30, Pass 4):** 4 of 17 top P0s FIXED (deploy script cleanup PR-P2.5), 3 PARTIALLY FIXED, 3 STILL TRUE (deploy script `git revert HEAD` #40, no `set -o pipefail` #43, max_restarts no alert), **3 STALE (audit was wrong)**: #2.1/#2.2/#2.4 PM2 timeouts (already raised to 30s/60s/60s with kill_signal), #2.8 instances: 1 (now `instances: 'max', exec_mode: 'cluster'`). PM2 cluster/timeouts already shipped; #40 deploy script + #42 cluster (now done) remain. See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §7.
 **Method:** File-by-file read. Every finding has file:line evidence and a concrete fix.
 
 This is the seventh in the audit series. It is focused entirely on infrastructure, DevOps, deployment, build, CI, and operational concerns.

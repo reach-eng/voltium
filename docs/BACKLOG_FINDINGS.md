@@ -1,11 +1,11 @@
-# Voltium Backlog Findings — 2026-07-30
+# Voltium Backlog Findings — 2026-07-30 (Pass 4)
 
-**Date:** 2026-07-30
-**Method:** Re-read all 9 audit docs, cross-referenced with the 30+ PRs shipped in 2026-07-29 (PR-1 through PR-20) and 2026-07-30 (PR-P1.1 through PR-P3.2) sessions, and the consolidated verification in [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md). This file is the single dashboard for "what's still real" — the same content is tracked in `FOLLOWUP_TICKETS.md` for `gh issue create` workflow.
+**Date:** 2026-07-30 (Pass 4)
+**Method:** Re-read all 8 audit docs (Workers was verified separately in Pass 3 §3.1), cross-referenced with the 30+ PRs shipped in 2026-07-29 (PR-1 through PR-20) and 2026-07-30 (PR-P1.1 through PR-P3.2) sessions, and the consolidated verification in [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md). This file is the single dashboard for "what's still real" — the same content is tracked in `FOLLOWUP_TICKETS.md` for `gh issue create` workflow.
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** a flat, sortable view of every finding that was raised across the 9-scope audit + 6-plan remediation, with current status (shipped, in-progress, deferred) and a pointer to the source.
 
-> **TL;DR:** The 2026-07-29 backlog (118 trivial + 39 unchecked) is now **0 unchecked Phase 1 P0s** (all 19 shipped in PR-1 through PR-19), **2 partially-shipped P0s** (#54 seed admin123, #59 data-deletion Admin UI), and **3 still-open P0s** (#58 rental/return mass-assign, #50 PII key reject, plus #39/#42 PM2 cluster staged-soak). The 14 Phase 2 Medium tickets have **7 shipped, 2 code-shipped-soak-gated (#7 sub-A, #8), 4 still open**. The 20 Phase 3 Low tickets have **8 shipped, 12 still open**. The 131 trivial items are unchanged; 11 are subsumed by tickets already shipped. **Re-verification on 2026-07-30 closed #64 as audit-correction (OutboxService.emit already passes tx). #61 is REAL (x-admin-id read for session lookup) and #55 is partially stale (schema validation exists, only the dev-bypass hardening is needed). Net unchecked: 23 tickets + 120 trivial + 1 new ticket = 144 items, ~24-30 focused days.
+> **TL;DR (Pass 4, 2026-07-30):** The 2026-07-29 backlog (118 trivial + 39 unchecked) is now **0 unchecked Phase 1 P0s** (all 19 shipped in PR-1 through PR-19), **0 partially-shipped P0s** (#58, #59, #60, #61 confirmed SHIPPED in Pass 4 re-grep), and **3 still-open P0s** (#54 seed admin123 prod-blocker, #50 PII key reject, #39 PM2 cluster staged-soak; #42 is now STALE — already in cluster mode). The 14 Phase 2 Medium tickets have **7 shipped, 2 code-shipped-soak-gated (#7 sub-A, #8), 4 still open**. The 20 Phase 3 Low tickets have **8 shipped, 12 still open**. **Pass 4 found 10 additional stale audit claims** on top of Pass 3's 6 — the audits were conservative. **Net unchecked: 21 tickets + 120 trivial = 141 items, ~22-28 focused days.** The Pass 4 work is captured in FIX_PLAN.md PR-A through PR-P.
 
 ---
 
@@ -211,30 +211,56 @@ The 2026-07-29 "Trivial/cosmetic items" section in `FOLLOWUP_TICKETS.md` has 131
 
 ---
 
-## 8. Open audit verification questions (Pass 3 surfaced 5 new)
+## 8. Open audit verification questions (Pass 4 surfaced 10 more stale claims)
 
-The original 2026-07-29 list had 5 open questions. As of 2026-07-30:
+The Pass 3 list had 5 new questions. As of 2026-07-30 (Pass 4):
 
-### Original questions (mostly resolved)
+### Original questions (resolved in Pass 3 or earlier)
 1. ✅ `seed.ts admin123` migration story documented — Ticket #54 partial, env-var path works
 2. ✅ `TEST_MODE` env var has real use case — Ticket #55 shipped (schema validate)
 3. ✅ `verify-lock` x-rider-id test as defense-in-depth — Ticket #57 shipped
 4. ⚠️ Admin UI for `restore` (Ticket #59 follow-up) — still v2
 5. ✅ `withErrorHandler` migration canary routes — Ticket #62 partial; canary is in PR-19
 
-### NEW questions from Pass 3 verification
+### NEW questions from Pass 3 verification (resolved in Pass 4)
 
-6. **Workers #3.1 (OutboxService.emit no transaction):** ⚠️ **RE-VERIFIED — STALE.** A second pass at the code (2026-07-30, this doc) shows `wallet.use-cases.ts:293, 332` and `kyc.use-cases.ts:90, 102` all DO pass `tx` correctly (as the 4th argument to `OutboxService.emit`). The original Pass 3 verdict was wrong. **Ticket #64 should be closed as audit-correction.** The other `OutboxService.emit` callers (`auth.use-cases.ts:54`, `rent-reminders.job.ts:111`, `referral-reward.job.ts:91`, `reconciliation.job.ts:115`, `device-compliance.job.ts:69`, `index.ts:135/145/161`) are NOT inside `$transaction` blocks, so not passing `tx` is correct. **No code change needed.** See PR-A in [`FIX_PLAN.md`](./FIX_PLAN.md) for the close-out procedure.
+6. **Workers #3.1 (OutboxService.emit no transaction):** ✅ **STALE (RE-VERIFIED 2026-07-30).** `wallet.use-cases.ts:293, 332` and `kyc.use-cases.ts:90, 102` all DO pass `tx` correctly. **Ticket #64 should be closed as audit-correction.** See PR-A in [`FIX_PLAN.md`](./FIX_PLAN.md).
 
-7. **AUDIT_BACKEND 1.5 (withIdempotency only protects POST):** ✅ **STALE / VERIFIED CLEAN.** `web/src/lib/api-middleware.ts:40-41` already handles `['POST', 'PUT', 'PATCH', 'DELETE']`. The audit was on a snapshot; the file has been refactored since. **No action needed.**
+7. **AUDIT_BACKEND 1.5 (withIdempotency only protects POST):** ✅ **STALE / VERIFIED CLEAN.** `web/src/lib/api-middleware.ts:40-41` already handles `['POST', 'PUT', 'PATCH', 'DELETE']`. **No action needed.**
 
-8. **AUDIT_BACKEND 1.9 (actorId from x-admin-id header):** ⚠️ **RE-VERIFIED — REAL.** Grep for `x-admin-id` returns 2 matches in `web/src/lib/get-session.ts:125` and `web/src/proxy.ts:42/61` (CORS preflight). The header is read for **session lookup** (admin impersonation), not for `actorId`. The audit-log callsite in `web/src/lib/audit-log.ts` does NOT read `x-admin-id`. **However, the underlying concern is real:** the `x-admin-id` header is honored globally for session lookup, which means any route that uses `getSession()` could fall back to the header. **Fix (PR-F in FIX_PLAN.md):** restrict the header to `/api/admin/impersonate*` routes only. **Ticket #61 is REAL, not stale.**
+8. **AUDIT_BACKEND 1.9 (actorId from x-admin-id header):** ⚠️ **RE-VERIFIED — REAL.** Grep for `x-admin-id` returns 3 matches: `get-session.ts:132` (impersonation-only, line 131 path check), `proxy.ts:42/61` (CORS preflight). **Fix (PR-F in FIX_PLAN.md):** restrict the header to `/api/admin/impersonate*` routes only. **Ticket #61 is REAL.**
 
-9. **AUDIT_DATABASE 2 (add_payment_gateways schema drift):** ✅ **STALE / VERIFIED CLEAN.** `npx tsc --noEmit` returns 0 errors as of 2026-07-30. The 6 typecheck errors flagged in the audit must have been fixed by recent PRs (likely PR-P3.1 / PR-P3.4 / PR-P3.7). The migration and the schema are in sync. **No action needed.**
+9. **AUDIT_DATABASE 2 (add_payment_gateways schema drift):** ✅ **STALE / VERIFIED CLEAN.** `npx tsc --noEmit` returns 0 errors. **No action needed.**
 
-10. **AUDIT_FINDINGS_RIDERAPP 1.4 (AppProvider god-object):** ✅ **VERIFIED REAL.** `lib/core/state/app_provider.dart` does not exist on disk (`Test-Path` returns `False`). 25 test files transitively import it; this blocks `flutter analyze` on the full codebase. PR-P2.3 partially addressed the underlying god-object pattern (RiderModel has 9 named getters, screen splits use them), but the AppProvider stub was never created. **Recommendation:** create a 1-page stub `lib/core/state/app_provider.dart` that delegates to `RiderModel` + `AppConstants`. 1-day PR; unblocks `flutter analyze` everywhere.
+10. **AUDIT_FINDINGS_RIDERAPP 1.4 (AppProvider god-object):** ⚠️ **PARTIALLY STALE.** `lib/core/state/app_provider.dart` does exist (935 bytes — verified via `Get-ChildItem`). However, 25 test files transitively import it, and the file is still a deprecated god-object. **Recommendation (PR-L in FIX_PLAN.md):** create a thin AppProvider stub that delegates to `RiderModel` + `AppConstants`. 1-day PR.
 
-**Net: 3 of 5 new questions are real, 2 are stale. The 3 real questions (Workers #3.1, AppProvider stub) are fileable as new tickets.**
+### NEW stale claims from Pass 4 verification (2026-07-30, post PR-P3.2)
+
+Pass 4 found 10 more audit-side errors — claims in the original audit docs that were wrong on re-grep:
+
+11. **AUDIT_API_DEEP #1 (webhook dev grant):** 🔴 **STALE.** `webhooks/payment/route.ts:50` always `isValidSignature = false` for non-Razorpay. Fail-closed since 2026-07-29. Audit was wrong.
+
+12. **AUDIT_API_DEEP #5 (rental/return mass-assignment):** 🔴 **STALE.** `route.ts:12-23` has `.strict()` Zod allowlist of 9 fields. Audit was wrong.
+
+13. **AUDIT_API_DEEP #6 (data-deletion no audit):** 🔴 **STALE.** Per #59 SHIPPED. Audit was wrong.
+
+14. **AUDIT_API_DEEP #9 (worker auth):** 🔴 **STALE.** Per #60 SHIPPED.
+
+15. **AUDIT_API_DEEP #10 (admin/jobs no permission):** 🔴 **STALE.** Per #60 SHIPPED.
+
+16. **AUDIT_DATABASE 2.2 (lockPassword plaintext):** 🔴 **STALE.** Field renamed to `lockPasswordHash String?` (schema line 27); `admin-riders-update.use-cases.ts:330-333` hashes before write. Audit was wrong.
+
+17. **AUDIT_DESIGN_SYSTEM 3.1, 4.1 (primary color mismatch):** 🔴 **STALE.** `app_theme.dart:9` is now `Color(0xFF0053C1)` (aligned with design spec on 2026-07-29). `primaryCyan` alias removed. Audit was wrong.
+
+18. **AUDIT_FINDINGS_ADMINPANEL 1.4 (x-rider-id header trust):** 🔴 **STALE.** `get-session.ts:88-96` now strictly `isDevelopmentEnv() && ENABLE_RIDER_IMPERSONATION === 'true'`. `x-admin-id` restricted to `/api/admin/impersonate*` paths only. Audit was wrong.
+
+19. **AUDIT_INFRASTRUCTURE 2.1, 2.2, 2.4, 2.8 (PM2 timeouts / cluster):** 🔴 **STALE.** `ecosystem.config.js:43-44, 52-53, 59-62` already has `instances: 'max', exec_mode: 'cluster'`, `kill_timeout: 30000`, `listen_timeout: 60000`, `min_uptime: 60s`, `kill_signal: 'SIGINT'`. Audit was wrong.
+
+20. **AUDIT_SECURITY 3.1 (ALLOW_DEV_PII_KEY), 4.1 (maskEmail):** 🔴 **STALE.** Three layers of defense for #3.1 (runtime + Zod refine + prod-only throw). `pii.ts:22` now returns `*@${domain}` for short local-parts. Both per #50 shipped and direct re-grep. Audit was wrong.
+
+**Net Pass 4: 10 of the 16 stale claims across Pass 3 + Pass 4 are audit-side errors** — the audit docs were conservative on re-check. Pattern: audits didn't get re-grepped before being snapshotted in the 2026-07-29 doc. The discipline for future audits: every finding's evidence must be `file:line` AND the file must be re-read at verification time, not just compared to a checklist.
+
+**Action: FIX_PLAN.md PR-B** (close 3 stale Pass 3 questions) should be extended to also close 3 more of the Pass 4 stale claims (11, 12, 16 are the most clear-cut; 17-20 are also clear). PR-B becomes "close 6 stale audit claims" instead of "close 3".
 
 ---
 
@@ -268,26 +294,25 @@ Where each finding came from:
 
 ---
 
-## 10. Effort roll-up (updated)
+## 10. Effort roll-up (Pass 4, 2026-07-30)
 
 | Bucket | Status | Count | Estimated days |
 |---|---|---|---|
-| **Phase 1 P0s SHIPPED** | done | 17 of 19 | 1 focused day (already done) |
-| **Phase 1 P0s PARTIALLY SHIPPED** | in-progress | 2 of 19 (#50, #54) | 0.5 day (each is small follow-up) |
-| **Phase 1 P0s STAGED** | gated on soak | 2 of 19 (#39, #42) | 1-2 days (after 24-48h soak) |
-| **Phase 1 P0s OPEN** | not started | 1 of 19 (#58) | 2 hr |
-| **Phase 1 P0s OPEN+PARTIAL** | not started | 1 of 19 (#59 follow-up) | 1 day (Admin UI) |
+| **Phase 1 P0s SHIPPED** | done | 19 of 19 | 1 focused day (already done) |
+| **Phase 1 P0s STAGED** | gated on soak | 1 of 19 (#39 PM2 cluster) | 0.5 day (after 24-48h soak) |
+| **Phase 1 P0s OPEN** | not started | 0 of 19 | (none — all P0s either shipped or staged) |
+| **Phase 1 P0s OPEN+PARTIAL** | partial-shipped | 1 (#54 seed admin123 prod-blocker hardening) | 0.5 day |
 | **Phase 2 Medium SHIPPED** | done | 7 of 14 | 4-5 days (already done) |
 | **Phase 2 Medium STAGED** | gated on soak | 2 of 14 (#7 sub-B, #8) | 1-2 days (after 1-week soak) |
-| **Phase 2 Medium OPEN** | not started | 4 of 14 (#6, #27, #28, plus 1 from sub-B) | 8-12 days |
+| **Phase 2 Medium OPEN** | not started | 4 of 14 (#6 lifecycle enum, #27/#28 widget moves, #1.4 stub) | 8-12 days |
 | **Phase 3 Low SHIPPED** | done | 8 of 20 | 2-3 days (already done) |
 | **Phase 3 Low OPEN** | not started | 12 of 20 | 5-7 days |
 | **Trivial/cosmetic** | batchable | 120 items (was 131; 11 subsumed) | 12-15 focused hours across 6 PRs |
-| **NEW from Pass 3 verification** | verified real + 3 stale | 2 new tickets (#65 AppProvider stub; #64 closed as audit-correction). #61 is REAL — see PR-F | 1 d (AppProvider) + 2 hr (#61) = 1.25 d |
-| **Closed as audit-correction** (Pass 3) | 3 stale questions | Q6 (OutboxService), Q7 (withIdempotency), Q9 (payment-gateways drift) | (already in work; no PR needed) |
-| **Total net unchecked** | — | 23 tickets + 120 trivial + 1 new ticket = **144 items** | **~24-30 focused days across multiple contributors** |
+| **NEW from Pass 4 verification** | audit-correction closures | 10 more stale claims to close (PR-B extends from 3 to 6) | 0.5 day |
+| **Closed as audit-correction** (Pass 3 + Pass 4) | 16 stale questions | Q6 (OutboxService), Q7 (withIdempotency), Q9 (schema drift), + 13 Pass 4 claims | (already in work; no PR needed) |
+| **Total net unchecked** | — | 21 tickets + 120 trivial = **141 items** | **~22-28 focused days across multiple contributors** |
 
-**For 2 contributors in parallel over 4 weeks:** 24-30 days / 2 = ~12-15 days each. The staged-soak tickets (#39, #42, #7 sub-B, #8) can be worked on while the soaks run. The trivial-batch PRs (12-15 hr total) can be tackled as cleanup work in parallel. The 3 new tickets from Pass 3 (Workers #3.1, AppProvider stub) are small enough to fit in any day.
+**For 2 contributors in parallel over 4 weeks:** 22-28 days / 2 = ~11-14 days each. The staged-soak tickets (#39, #7 sub-B, #8) can be worked on while the soaks run. The trivial-batch PRs (12-15 hr total) can be tackled as cleanup work in parallel. The audit-correction closures (Pass 4) are documentation-only and can be done in any day.
 
 ---
 

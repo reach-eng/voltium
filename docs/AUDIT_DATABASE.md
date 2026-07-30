@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `web/prisma/**` — `schema.prisma` (50+ models, 1,484 lines, 37 KB), 13 migrations, 4 helper scripts, `web/src/lib/db.ts` (the Prisma wrapper).
 
-> **Status (2026-07-30):** 4 of 10 Top 10 P0s FIXED, 4 STILL TRACKED (#2, #6, #7 sub-B, #9), 1 STALE. JSON columns and FK columns done (#8, #7 sub-A). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §3.
+> **Status (2026-07-30, Pass 4):** 4 of 10 Top 10 P0s FIXED, 3 PARTIALLY FIXED, 4 STILL TRACKED, **1 STALE (audit was wrong)**: #2.2 lockPassword plaintext (renamed to lockPasswordHash, hashed on write). JSON columns and FK columns done (#8, #7 sub-A). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §3.
 **Method:** File-by-file read. Every finding has file:line evidence and a concrete fix.
 
 This is the fourth in the audit series, behind `AUDIT_FINDINGS.md` (broad admin web), `flutter/AUDIT_FINDINGS.md`, and `AUDIT_BACKEND.md` (backend deep). It is focused entirely on the database / data layer.

@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `web/src/lib/**` (9 security/auth files), `web/src/server/modules/auth/**` (6 files), `web/src/middleware.ts` (CSRF/CORS/CSP), `web/src/lib/firebase-admin.ts`.
 
-> **Status (2026-07-30):** 5 of 20 top P0s FIXED (#49 timingSafeEqual, #50 partial), 2 STALE (audit was wrong: 3.4 auth tag, 4.1 maskEmail), 13 STILL TRUE (most in trivial/cosmetic section, deferred to polish). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §8.
+> **Status (2026-07-30, Pass 4):** 5 of 20 top P0s FIXED (#49 timingSafeEqual, #50 ALLOW_DEV_PII_KEY, etc.), 2 PARTIALLY FIXED, 0 STILL TRUE, **2 STALE (audit was wrong)**: #3.1 ALLOW_DEV_PII_KEY env flag (3 layers of defense, #50 SHIPPED), #4.1 maskEmail 2-char leak (now returns `*@${domain}` for user.length < 3). Real P0s remaining: #3.3 decryptPii pass-through fallback, #4.4 SENSITIVE_PATTERNS only 2 patterns. See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §8.
 **Method:** File-by-file read. Every finding has file:line evidence and a concrete fix.
 
 This is the sixth in the audit series. It is focused entirely on authentication, authorization, security middleware, PII handling, crypto, rate limiting, and OTP.
