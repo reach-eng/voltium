@@ -144,7 +144,7 @@ Quick-reference index for filing tickets in batch by source plan. Ticket numbers
 | **Phase 3–6 follow-ups** | #1, #2, #3, #4, #5 | 5 | Medium–Low |
 | **DB Audit** | #6, #7, #8, #9, #10, #11, #12 | 7 | Medium–Low |
 | **Design System** | #13, #14, #27, #28, #29, #30, #31, #32 | 8 | Medium–Low (1 shipped: #32) |
-| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25, #26, #33 | 13 | Medium–Low |
+| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 17 | Medium–Low (1 audit-done: #26; 3 shipped: #16, #17, #23, #25) |
 | **Infra** | #34, #35, #36, #37, #38, #39, #40, #41, #42, #43 | 10 | P0 (9), P1 (1) |
 | **Security** | #44, #45, #46, #47, #48, #49, #50, #51, #52, #53 | 10 | P0 (all) |
 
@@ -1142,12 +1142,151 @@ Audit the top-level shell for:
 - Any leftover dead routes
 - Any structural improvements
 
+### Status: AUDIT COMPLETE — sub-tickets filed
+
 ### Acceptance criteria
-- [ ] Audit report
-- [ ] Any findings filed as sub-tickets
+- [x] Audit report (`docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md`)
+- [x] Findings filed as sub-tickets (#26.1, #26.2, #26.3, #26.4)
+- [ ] Cleanup PR (separate — tracks the 4 sub-tickets)
 
 ### Files to touch
 - `web/src/app/`
+
+### Sub-tickets
+
+| Ticket | Title | Effort |
+|---|---|---|
+| #26.1 | Move `riders/register-token` → `rider/register-token`; delete orphan `riders/dashboard` | 1 hr |
+| #26.2 | Consolidate `notification/list` into `rider/notifications` (or document distinction) | 0.5 hr |
+| #26.3 | Resolve `metrics/` vs `monitoring/metrics/` duplication | 0.5 hr |
+| #26.4 | Document or remove the `v1/` API prefix | 0.25 hr |
+
+---
+
+## Ticket #26.1: [Admin Web 11.13.1] Move `riders/register-token` → `rider/register-token`; delete orphan `riders/dashboard`
+
+**Source:** `docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md` finding 3.1
+
+**Size:** 1 hour focused
+**Priority:** P3 (code health, low-risk)
+**Labels:** `tech-debt`, `cleanup`, `api-structure`
+
+### Problem
+The `web/src/app/api/riders/` (plural) directory has 2 routes:
+- `riders/register-token` — IN USE (Flutter calls it via the generated API client at `flutter/lib/core/network/generated/api_client.dart:476`)
+- `riders/dashboard` — ORPHAN (Flutter calls `/api/rider/dashboard` singular instead; no other client uses it)
+
+This directory predates the cleaner `rider/` (singular) directory and was not fully cleaned up during the rider-API migration.
+
+### Goal
+1. Move `/api/riders/register-token` → `/api/rider/register-token` (and update the Flutter generated client).
+2. Delete `/api/riders/dashboard` (orphan — provably unused).
+3. Delete the empty `riders/` directory.
+
+### Acceptance criteria
+- [ ] `/api/rider/register-token` returns the same response as the old route
+- [ ] Flutter calls the new path
+- [ ] Old `/api/riders/register-token` returns 404 (or removed entirely)
+- [ ] `/api/riders/dashboard` returns 404 (or removed)
+- [ ] `riders/` directory deleted
+- [ ] `contracts/openapi.ts` regenerated
+- [ ] Test: orphan route check (asserts `/api/riders/*` returns 404)
+
+### Files to touch
+- `web/src/app/api/riders/` — delete entire directory
+- `web/src/app/api/rider/register-token/route.ts` — create
+- `web/src/app/api/rider/register-token/` — same handler as before, just relocated
+- `flutter/lib/core/network/generated/api_client.dart` — regenerate
+- `web/contracts/openapi.ts` — regenerate
+
+### Risk
+Low. The orphan is provably unused. The move is a simple rename + Flutter client regen.
+
+---
+
+## Ticket #26.2: [Admin Web 11.13.2] Consolidate `notification/list` into `rider/notifications` (or document distinction)
+
+**Source:** `docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md` finding 3.2
+
+**Size:** 0.5 hour focused
+**Priority:** P3 (code health)
+**Labels:** `tech-debt`, `cleanup`, `api-structure`
+
+### Problem
+`web/src/app/api/notification/list/route.ts` is a single-route directory. The rider app's notification list is at `web/src/app/api/rider/notifications/route.ts`. These may serve the same purpose (just inconsistent paths) or different purposes (admin notification list vs rider notification list).
+
+### Goal
+Grep both routes. If same purpose, consolidate to one path. If different, document the distinction clearly in the file headers.
+
+### Acceptance criteria
+- [ ] Decision documented: consolidate OR distinguish
+- [ ] If consolidate: only one route remains, Flutter uses the consolidated path
+- [ ] If distinguish: both routes have header comments explaining the difference
+
+### Files to touch
+- `web/src/app/api/notification/list/route.ts` — possibly delete or document
+- `web/src/app/api/rider/notifications/route.ts` — possibly update header
+
+### Risk
+Low.
+
+---
+
+## Ticket #26.3: [Admin Web 11.13.3] Resolve `metrics/` vs `monitoring/metrics/` duplication
+
+**Source:** `docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md` finding 3.3
+
+**Size:** 0.5 hour focused
+**Priority:** P3 (code health)
+**Labels:** `tech-debt`, `cleanup`, `api-structure`
+
+### Problem
+Two near-duplicate metric routes:
+- `web/src/app/api/metrics/route.ts` (top-level)
+- `web/src/app/api/monitoring/metrics/route.ts`
+
+### Goal
+Grep both. If they serve the same purpose, pick one and delete the other. If different, document the distinction.
+
+### Acceptance criteria
+- [ ] Decision documented
+- [ ] Only one route remains (or both are documented distinctly)
+
+### Files to touch
+- `web/src/app/api/metrics/route.ts` — possibly delete
+- `web/src/app/api/monitoring/metrics/route.ts` — possibly update header
+
+### Risk
+Low.
+
+---
+
+## Ticket #26.4: [Admin Web 11.13.4] Document or remove the `v1/` API prefix
+
+**Source:** `docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md` finding 3.4
+
+**Size:** 0.25 hour focused
+**Priority:** P3 (code health)
+**Labels:** `tech-debt`, `docs`, `api-structure`
+
+### Problem
+`web/src/app/api/v1/payment-gateways/active/route.ts` is the only route under a `v1/` prefix. There's no v2/ or other versioned directory, so the `v1/` is unclear in purpose.
+
+### Goal
+Either:
+1. Document the `v1/` convention (e.g., "v1 = stable, externally-documented contract" — see `contracts/openapi.ts`)
+2. Move the route to the top level and drop the `v1/` prefix
+
+### Acceptance criteria
+- [ ] Decision made and documented
+- [ ] If removing: route moved, Flutter regenerated
+- [ ] If keeping: header comment explains the convention
+
+### Files to touch
+- `web/src/app/api/v1/payment-gateways/active/route.ts` — possibly move or annotate
+
+### Risk
+None.
 
 ---
 
