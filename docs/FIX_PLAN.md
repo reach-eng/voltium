@@ -815,7 +815,7 @@ END $$;
 
 ## 13. PR-K: #6 — RiderLifecycleStatus enum split (Medium, 3-5 d)
 
-> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. The 15-value `RiderLifecycleStatus` enum is at `web/prisma/schema.prisma:1080-1096`. No `RiderLifecycleStage` enum exists yet. **Action:** schedule for Week 2-3.
+> **Status (2026-07-30 18:25):** 🟡 **K.1 SHIPPED** (commit `d76d32c`); **K.2, K.3 PENDING**. PR-K.1 is fully done: `RiderLifecycleStage` enum (5 values: `NEW`, `IN_PROGRESS`, `ACTIVE`, `PAUSED`, `CLOSED`) added to `schema.prisma:1186-1192`; `lifecycleStage` column at `schema.prisma:154`; migration `web/prisma/migrations/20260730150000_add_rider_lifecycle_stage/migration.sql` (idempotent, 8 KB, DO $$ ... $$; with `pg_type` + `information_schema.columns` guards); backfill from `lifecycleStatus` (15 → 5 stage values); 14 tests in `web/tests/unit/rider-lifecycle-stage-migration.test.ts`; 122/122 migration suite pass; `tsc --noEmit` clean. **Gated on 1-wk staging soak before K.2.**
 
 **Goal:** Split the 15-value `RiderLifecycleStatus` enum into a 5-value `RiderLifecycleStage` + per-step fields. The audit's plan is in `docs/DB_REMEDIATION_PLAN.md`. This is a 3-PR sequence:
 
