@@ -11,6 +11,8 @@
 
 **Audience:** the team. The PM/CTO can see this — it doesn't expose anything that would be embarrassing in a security review.
 
+> **Status (2026-07-30, post-Pass 4):** 17 original PRs + 4 new Pass 4 PRs (Q, R, S, T) = **21 PRs total**. PR-C (#58 rental/return) is **CANCELLED** as a code PR — Pass 4 re-grep shows the `.strict()` Zod allowlist is already in place. Doc-only close-out happens in PR-B. See [§23](#23-pass-4-deltas--4-new-prs-q-r-s-t--pr-c-cancelled) and [EXECUTION_PLAN_2026-07-30.md](./EXECUTION_PLAN_2026-07-30.md) for full Pass 4 deltas.
+
 ---
 
 ## Table of contents
@@ -1096,7 +1098,137 @@ In parallel:
   - [`docs/BUG_REPORT_TEMPLATE.md`](./BUG_REPORT_TEMPLATE.md) — bug filing template
   - [`docs/RELEASE_READINESS_2026-07-29.md`](./RELEASE_READINESS_2026-07-29.md) — release readiness
   - [`SCOPE.md`](../SCOPE.md) — phase history + audit plan entries
+- **Pass 4 verification (2026-07-30):**
+  - [`docs/AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) — 10 more stale audit claims caught
+  - [`docs/EXECUTION_PLAN_2026-07-30.md`](./EXECUTION_PLAN_2026-07-30.md) — execution plan with 4 new PRs (Q, R, S, T)
 - **Staging-soak references** (existing related migrations):
   - `web/prisma/migrations/20260729160000_add_check_constraints/migration.sql` — precedent for idempotent constraint migration
   - `web/prisma/migrations/20260730131814_convert_json_columns/migration.sql` — PR-P3.1, soak-gated
   - `web/prisma/migrations/20260730140000_add_rider_fk_columns/migration.sql` — PR-P3.2, soak-gated
+
+---
+
+## 23. Pass 4 deltas — 4 new PRs (Q, R, S, T) + PR-C cancelled
+
+**Added 2026-07-30** based on Pass 4 verification in [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md).
+
+Pass 4 found 4 still-real audit findings that were NOT in the original 17-PR plan. Detailed specs in [EXECUTION_PLAN_2026-07-30.md](./EXECUTION_PLAN_2026-07-30.md) §5-8.
+
+| New PR | Source audit | Finding | Severity | Effort |
+|---|---|---|---|---|
+| **PR-Q** | AUDIT_DESIGN_SYSTEM §5.1 | `ChipWidget` default `Colors.amber` (should be `AppColors.warning`) | P0 | 30 min |
+| **PR-R** | AUDIT_FINDINGS_RIDERAPP §1.3 | Polling timeout has `_isPollingTimedOut` getter but no UI surface | P1 | 1 day |
+| **PR-S** | AUDIT_DATABASE §2.1 | Rider 60+ columns; needs decomposition to 5 child tables | P0 architectural | 5-7 days + 1-wk soak |
+| **PR-T** | AUDIT_FINDINGS_RIDERAPP §1.1 | Router is 30-state setState machine; needs go_router migration | P0 architectural | 1-2 weeks |
+
+**PR-C (#58 rental/return mass-assignment) is CANCELLED.** Pass 4 re-grep shows the `.strict()` Zod allowlist is already in place at `web/src/app/api/rider/rental/return/route.ts:12-23`. The audit was wrong. PR-B handles the doc-only close-out.
+
+**Updated PR count: 17 → 21 PRs** (after cancellation: 16 existing + 4 new + 1 cancelled = 20 active PRs, plus PR-K.1/2/3 splits = 21 PRs total).
+
+**Updated effort: ~22-28 focused days** across 2 contributors, with 3-4 weeks of parallel staging soaks.
+
+### Insertion into §2 tracks
+
+Updated 4-track structure with the 4 new PRs:
+
+**Track 1: Audit corrections + zero-risk (PR-A through PR-G + PR-Q) — 1 day focused**
+- PR-A: OutboxService.emit verification + #64 close-out (1 hr, doc-only)
+- PR-B: Audit-corrections — close 6 stale tickets (1 hr, doc-only) — **was 3, now 6 per Pass 4**
+- ~~PR-C: #58 rental/return mass-assignment~~ — **CANCELLED** per Pass 4
+- PR-D: #55 TEST_MODE dev-bypass hardening (P0, 30 min)
+- PR-E: #54 seed.ts admin123 production-blocker (P0, 1 hr)
+- PR-F: #61 actorId from x-admin-id header (P2, 2 hr)
+- PR-G: #50 ALLOW_DEV_PII_KEY full reject + #3.3 + #4.4 hardening (P0, 1.5 hr) — **extended per Pass 4**
+- **PR-Q: ChipWidget default `Colors.amber` (P0, 30 min) — NEW**
+
+**Track 2: Infra (PR-H + PR-I) — 1-2 days focused + 2-3 days staging soak**
+- PR-H: #40 deploy script tag-based rollback + pipefail + audit (P0, 5 hr) — **was 4 hr, extended per Pass 4 §3.11**
+- PR-I: #39 PM2 cluster mode + timeouts (P0, 0.5 day) — **Pass 4 confirmed cluster mode already shipped; just verify**
+
+**Track 3: DB (PR-J + PR-K + PR-S) — 5-7 days focused + 2-3 weeks staging soak**
+- PR-J: #7 sub-B drop legacy string columns (1 day + 1-wk soak)
+- PR-K.1: #6 add `RiderLifecycleStage` enum + new column (2 days + 1-wk soak)
+- PR-K.2: #6 Flutter reads `lifecycleStage` (0.5 day + 1-wk soak)
+- PR-K.3: #6 drop legacy `lifecycleStatus` enum (0.5 day)
+- **PR-S: Rider model decomposition to 5 child tables (5-7 days + 1-wk soak) — NEW**
+
+**Track 4: Flutter + polish (PR-L + PR-M + PR-N + PR-O + PR-P + PR-R + PR-T) — 1-2 weeks focused, parallel**
+- PR-L: #65 AppProvider stub (P1, 1 day)
+- PR-M: Phase 3 Low bulk (3-5 days)
+- PR-N: Trivial/cosmetic batch (12-15 hr across 6 PRs)
+- PR-O: #21 admin web small-screen splits (2-4 weeks)
+- PR-P: #59 follow-up Admin UI for restore (1 day)
+- **PR-R: Polling timeout UI surface (P1, 1 day) — NEW**
+- **PR-T: Router state-machine refactor (P0 architectural, 1-2 weeks) — NEW**
+
+### Updated calendar (4 weeks + optional Week 5)
+
+```
+Week 1: Track 1 ships (PR-A → PR-B → PR-D → PR-E → PR-F → PR-G → PR-Q); Track 2 prep; PR-L + PR-R + PR-N PR-1
+Week 2: PR-H + PR-I ship + staging soak; PR-J + PR-S start; PR-M + PR-T start
+Week 3: PR-H + PR-I promote to prod; PR-J 1-wk soak; PR-K.1 + PR-S continue
+Week 4: PR-J promote; PR-K.1 1-wk soak; PR-S + PR-T continue; PR-K.2 ships
+Week 5 (optional): PR-S + PR-K.2 1-wk soak; PR-T continues
+```
+
+### PR-S detail (NEW)
+
+**Goal:** Decompose `Rider` (60+ columns) into 5 child tables.
+
+**Child tables:**
+1. `RiderPickupPhotos` (1:1, 5 photo fields)
+2. `RiderPermissions` (1:1, 8 permission booleans + 2 device violation fields)
+3. `RiderDevice` (1:1, FCM token + device admin flags + lock password hash + battery level)
+4. `RiderLocation` (1:1, last known lat/lng/at)
+5. `RiderOnboarding` (1:1, hub/plan/team leader FKs + plan dates + emergency contact)
+
+**Migration strategy (matches PR-P3.1/2 pattern):**
+1. ADD child tables with all columns nullable
+2. Backfill from `riders` (one-time INSERT)
+3. Drop legacy columns from `riders`
+4. Add NOT NULL constraints where appropriate
+5. All steps idempotent with `IF NOT EXISTS` guards
+
+**Code change:** Update `flatten-rider.ts` to JOIN across child tables. Update all `riderUseCases` writers to write to child tables.
+
+**Test:** 20+ new unit tests for backfill + flatten + write paths.
+
+**Effort:** 5-7 days focused + 1-wk staging soak. **HIGH RISK** — 100+ use-cases touch the Rider model.
+
+### PR-T detail (NEW)
+
+**Goal:** Replace `app/router.dart` (12 KB) + `app/router_body.dart` (15 KB) + `app/app_state.dart` with `go_router` declarative routes.
+
+**Approach:** Two options. Recommend `go_router: ^14.0.0` for time-to-value.
+
+**Migration strategy:**
+1. Add `go_router` dependency
+2. Define typed route constants (`class Routes { static const login = '/login'; }`)
+3. Migrate auth flow first (splash → legal → permissions → login → OTP → dashboard)
+4. Migrate onboarding (pre_dashboard, KYC, guarantor, deposit, plan)
+5. Migrate main app (dashboard, wallet, profile, support, settings)
+6. Extract `PickupFlowProvider` from router
+7. Delete `app/router_body.dart` once all branches converted
+8. Update 33 E2E tests to use `context.go()`
+
+**Test:** Unit tests for each route's redirect logic + 33 E2E tests + `flutter analyze` clean.
+
+**Effort:** 1-2 weeks focused. **HIGH RISK** — 33 E2E tests affected.
+
+### Risk register updates
+
+| New PR | Risk | Mitigation |
+|---|---|---|
+| **PR-Q** | Low | Single default color change; easy revert |
+| **PR-R** | Low | Affects `pre_dashboard` only; easy revert |
+| **PR-S** | **VERY HIGH** | Add child tables additively first; keep legacy columns for 1 release; manual smoke test every flow |
+| **PR-T** | **HIGH** | 33 E2E tests need re-baselining; recommend 1-2 weeks parallel with another contributor |
+
+For full risk register, see FIX_PLAN.md §21 (updated).
+
+### Cross-references
+
+- **Full execution plan:** [`docs/EXECUTION_PLAN_2026-07-30.md`](./EXECUTION_PLAN_2026-07-30.md) — supersedes this section for Pass 4 deltas
+- **Pass 4 audit verdicts:** [`docs/AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) — the 10 stale claims + 11 still-real
+- **Backlog dashboard:** [`docs/BACKLOG_FINDINGS.md`](./BACKLOG_FINDINGS.md) — current state
+- **Tickets:** [`docs/FOLLOWUP_TICKETS.md`](./FOLLOWUP_TICKETS.md) — 65 tickets, will become 69 with PR-Q/R/S/T as #66/#67/#68/#69
