@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// R2.2 (2026-07-31) — removed 5 dead colors that had **zero** call-sites in
+/// `flutter/lib/`:
+///   - `iconBackgroundBlue` (0xFFF0F4FA) — never used; use `iconBackground` instead
+///   - `inputBorder` (0xFFD0D5DD) — duplicate of `outline` (which has 9 callers)
+///   - `voltAccent` (0xFF00E5FF) — never used; if reintroduced, use `primary`
+///   - `purpleIconVivid` (0xFF6D28D9) — never used; use `purpleIcon` or `purpleDark`
+///   - `orangeAccentLight` (0xFFFFE082) — never used; use `warningLight` instead
+///
+/// The file still has ~80 semantic tokens (down from 87 pre-R2.2). The
+/// next consolidation pass (R2.2 part 2) will trim the low-usage accent
+/// groups (royalBlue*, orangeAccent*, skySpark*, purpleIcon*, etc.) — those
+/// are documented below as "Group 7 misc" candidates.
+///
+/// Rule of thumb: prefer the canonical tokens (`primary`, `success`,
+/// `warning`, `error`, `info`, `surface`, `onSurface*`) and their `Light`/
+/// `Dark` / `Surface` / `Border` variants before reaching for an accent
+/// color. Acents should be reserved for genuinely distinct categories
+/// (rewards/loyalty, KYC, danger-zone, etc.), not for "I want a slightly
+/// different blue today."
+
 class AppColors {
   // Brand Colors — Voltium Blue
   // Source of truth: docs/design-system.md + web/src/app/globals.css (--color-vf-primary).
@@ -8,20 +28,16 @@ class AppColors {
   // Aligned on 2026-07-29 as part of Phase 7 follow-up.
   static const Color primary = Color(0xFF0053C1);
   static const Color primaryLight = Color(0xFF2F6DDE);
-  static const Color primaryLighter = Color(0xFFDBEAFE);
   static const Color primaryDark = Color(0xFF003E92);
-  static const Color primaryGradientEnd = Color(0xFF2F6DDE);
 
   // Status & Semantic Colors
   static const Color success = Color(0xFF10B981); // emerald-500
   static const Color successLight = Color(0xFFD1FAE5); // emerald-100
   static const Color successDark = Color(0xFF059669);
-  static const Color successText = Color(0xFF065F46); // emerald-900
 
   static const Color warning = Color(0xFFF59E0B); // amber-500
   static const Color warningLight = Color(0xFFFEF3C7);
   static const Color warningDark = Color(0xFFD97706);
-  static const Color warningText = Color(0xFF92400E); // amber-800
 
   static const Color error = Color(0xFFEF4444);
   static const Color errorLight = Color(0xFFFEE2E2);
@@ -32,7 +48,6 @@ class AppColors {
 
   // Neutral / Text Colors — matches web exactly
   static const Color onSurface = Color(0xFF101828); // web #101828
-  static const Color onSurfaceAlt = Color(0xFF191C1E); // web #191c1e
   static const Color onSurfaceVariant =
       Color(0xFF475467); // web #475467 / #424653
   static const Color onSurfaceMuted = Color(0xFF737785); // web #737785
@@ -41,18 +56,13 @@ class AppColors {
 
   // Surface / Background Colors
   static const Color surface = Color(0xFFF7F9FB); // web #f7f9fb (main bg)
-  static const Color surfaceAlt = Color(0xFFF5F7FA); // web #F5F7FA (login bg)
-  static const Color surfaceContainer = Color(0xFFF9FAFB);
-  static const Color surfaceWhite = Color(0xFFFFFFFF);
 
   // Input
   static const Color inputBackground =
       Color(0xFFE6EAEF); // web #E6EAEF pill inputs
-  static const Color inputBorder = Color(0xFFD0D5DD); // web border
 
   // Icon backgrounds
   static const Color iconBackground = Color(0xFFF1F5F9); // slate-100
-  static const Color iconBackgroundBlue = Color(0xFFF0F4FA);
 
   // Misc
   static const Color divider = Color(0xFFE0E3E5); // web #e0e3e5
@@ -105,7 +115,6 @@ class AppColors {
   // Feature Colors
   static const Color evPurple = Color(0xFF8B5CF6);
   static const Color whatsappGreen = Color(0xFF25D366);
-  static const Color voltAccent = Color(0xFF00E5FF); // Electric Cyan
 
   // ── Feather palette ──────────────────────────────────────────────────────
   // Lightweight accent surface/icon pairs. Use these instead of raw
@@ -117,7 +126,6 @@ class AppColors {
 
   static const Color purpleIcon = Color(0xFF7E22CE); // purple-700
   static const Color purpleIconSurface = Color(0xFFF3E8FF); // purple-100
-  static const Color purpleIconVivid = Color(0xFF6D28D9); // purple-800 (gradient end)
   static const Color purpleLightSurface = Color(0xFFFAF5FF); // purple-50
 
   static const Color tealIcon = Color(0xFF0F766E); // teal-700
@@ -132,7 +140,6 @@ class AppColors {
   static const Color orangeAccentDark = Color(0xFFC2410C); // orange-700
   static const Color orangeAccentSurface = Color(0xFFFFF7ED); // orange-50
   static const Color orangeAccentBorder = Color(0xFFFED7AA); // orange-200
-  static const Color orangeAccentLight = Color(0xFFFFE082); // amber-200 (warmer)
 
   // Sky / cool blues — used for "info" spark, OTP spark, and gentle hints.
   static const Color skySpark = Color(0xFF38BDF8); // sky-400
@@ -317,8 +324,12 @@ class AppRadius {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
-  static const double xl = 24;
-  static const double xxl = 32;
+  static const double radiusModal = 24;
+  static const double radiusBottomSheet = 32;
+  @Deprecated('Use radiusModal instead')
+  static const double xl = radiusModal;
+  @Deprecated('Use radiusBottomSheet instead')
+  static const double xxl = radiusBottomSheet;
   static const double full = 9999;
 
   // Sub-grid values for tight UI (badges, inline chips, small icon backgrounds).
@@ -353,8 +364,7 @@ class AppDurations {
   static const Curve defaultCurve = Curves.easeInOut;
   static const Curve bounceCurve = Curves.elasticOut;
   static const Curve sharpCurve = Curves.easeOutCubic;
-  static const Curve premiumCurve =
-      Curves.easeOutCubic; // ≈ web [0.22,1,0.36,1]
+  static const Curve premiumCurve = Cubic(0.22, 1.0, 0.36, 1.0);
 
   AppDurations._();
 }
@@ -369,7 +379,7 @@ class AppTheme {
         primary: AppColors.primary,
         onPrimary: Colors.white,
         secondary: AppColors.success,
-        surface: AppColors.surfaceContainer,
+        surface: AppColors.surface,
         onSurface: AppColors.onSurface,
         error: AppColors.error,
       ),
@@ -598,9 +608,6 @@ class AppTheme {
 class ThemeColors extends ThemeExtension<ThemeColors> {
   static const ThemeColors light = ThemeColors._(
     surface: Color(0xFFF7F9FB),
-    surfaceAlt: Color(0xFFF5F7FA),
-    surfaceBright: Color(0xFFF8FAFC),
-    surfaceSubtle: Color(0xFFF3F4F6),
     card: Color(0xFFFFFFFF),
     onSurface: Color(0xFF101828),
     onSurfaceVariant: Color(0xFF475467),
@@ -622,9 +629,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
 
   static const ThemeColors dark = ThemeColors._(
     surface: Color(0xFF0F172A),
-    surfaceAlt: Color(0xFF1E293B),
-    surfaceBright: Color(0xFF1E293B),
-    surfaceSubtle: Color(0xFF1E293B),
     card: Color(0xFF1E293B),
     onSurface: Color(0xFFF1F5F9),
     onSurfaceVariant: Color(0xFF94A3B8),
@@ -645,9 +649,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   );
 
   final Color surface;
-  final Color surfaceAlt;
-  final Color surfaceBright;
-  final Color surfaceSubtle;
   final Color card;
   final Color onSurface;
   final Color onSurfaceVariant;
@@ -668,9 +669,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
 
   const ThemeColors._({
     required this.surface,
-    required this.surfaceAlt,
-    required this.surfaceBright,
-    required this.surfaceSubtle,
     required this.card,
     required this.onSurface,
     required this.onSurfaceVariant,
@@ -693,9 +691,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   @override
   ThemeColors copyWith({
     Color? surface,
-    Color? surfaceAlt,
-    Color? surfaceBright,
-    Color? surfaceSubtle,
     Color? card,
     Color? onSurface,
     Color? onSurfaceVariant,
@@ -716,9 +711,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   }) {
     return ThemeColors._(
       surface: surface ?? this.surface,
-      surfaceAlt: surfaceAlt ?? this.surfaceAlt,
-      surfaceBright: surfaceBright ?? this.surfaceBright,
-      surfaceSubtle: surfaceSubtle ?? this.surfaceSubtle,
       card: card ?? this.card,
       onSurface: onSurface ?? this.onSurface,
       onSurfaceVariant: onSurfaceVariant ?? this.onSurfaceVariant,
@@ -744,12 +736,10 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     if (other is! ThemeColors) return this;
     return ThemeColors._(
       surface: Color.lerp(surface, other.surface, t)!,
-      surfaceAlt: Color.lerp(surfaceAlt, other.surfaceAlt, t)!,
-      surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
-      surfaceSubtle: Color.lerp(surfaceSubtle, other.surfaceSubtle, t)!,
       card: Color.lerp(card, other.card, t)!,
       onSurface: Color.lerp(onSurface, other.onSurface, t)!,
-      onSurfaceVariant: Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
+      onSurfaceVariant:
+          Color.lerp(onSurfaceVariant, other.onSurfaceVariant, t)!,
       onSurfaceMuted: Color.lerp(onSurfaceMuted, other.onSurfaceMuted, t)!,
       divider: Color.lerp(divider, other.divider, t)!,
       outline: Color.lerp(outline, other.outline, t)!,

@@ -60,7 +60,7 @@ class PreDashboardBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.orangeAccentLight),
+        border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(
         children: [

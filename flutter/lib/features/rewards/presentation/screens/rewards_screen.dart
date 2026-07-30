@@ -126,7 +126,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                         gradient: LinearGradient(
                           colors: [
                             AppColors.evPurple.withValues(alpha: 0.8),
-                            AppColors.purpleIconVivid.withValues(alpha: 0.9),
+                            AppColors.purpleIcon.withValues(alpha: 0.9),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -200,7 +200,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                 children: [
                                   Text(
                                     '$currentTier Tier',
-                                    style: AppTypography.bodyMediumEmphasis
+                                    style: AppTypography.bodyMedium
+                                        .copyWith(fontWeight: FontWeight.w600)
                                         .copyWith(color: Colors.white),
                                   ),
                                   Text(
@@ -218,7 +219,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                     decoration: BoxDecoration(
                                       color:
                                           Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.xs),
                                     ),
                                   ),
                                   FractionallySizedBox(
@@ -227,7 +229,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                                       height: 8,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
-                                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.xs),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.white
