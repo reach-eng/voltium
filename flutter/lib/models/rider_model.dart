@@ -2,7 +2,9 @@
 
 import 'package:json_annotation/json_annotation.dart';
 import 'deposit_record.dart';
+import 'rider_lifecycle_stage.dart';
 import '../utils/app_constants.dart';
+import '../utils/lifecycle_rank.dart';
 
 part 'rider_model.g.dart';
 
@@ -133,6 +135,7 @@ class RiderModel {
   final double? currentPlanPrice;
   final DateTime? planStartDate;
   final DateTime? planEndDate;
+  final bool advanceRentPaid;
 
   // ── Rental ──────────────────────────────────────────────────────────────
   final String rentalStatus;
@@ -159,6 +162,10 @@ class RiderModel {
   // ── Account ──────────────────────────────────────────────────────────────────
   final AccountStatus accountStatus;
   final String lifecycleStatus;
+  // PR-K.2: the new canonical 5-value stage. Preferred over `lifecycleStatus`
+  // (15 values) for routing decisions. `lifecycleStatus` is kept for
+  // backward compat with cached payloads and the legacy column.
+  final RiderLifecycleStage lifecycleStage;
   final bool isNewRider;
 
   // ── Referral & Rewards ───────────────────────────────────────────────────────
@@ -224,6 +231,7 @@ class RiderModel {
     this.currentPlanPrice,
     this.planStartDate,
     this.planEndDate,
+    this.advanceRentPaid = false,
     this.rentalStatus = 'NONE',
     this.assignedVehicle,
     this.vehicleModel,
@@ -237,6 +245,7 @@ class RiderModel {
     this.pickupDone = false,
     this.accountStatus = AccountStatus.preActive,
     this.lifecycleStatus = 'NEW',
+    this.lifecycleStage = RiderLifecycleStage.newRider,
     this.isNewRider = false,
     this.referralCode,
     this.totalRewardPoints = 0,
@@ -331,6 +340,7 @@ class RiderModel {
     bool? pickupDone,
     AccountStatus? accountStatus,
     String? lifecycleStatus,
+    RiderLifecycleStage? lifecycleStage,
     bool? isNewRider,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -398,6 +408,7 @@ class RiderModel {
       pickupDone: pickupDone ?? this.pickupDone,
       accountStatus: accountStatus ?? this.accountStatus,
       lifecycleStatus: lifecycleStatus ?? this.lifecycleStatus,
+      lifecycleStage: lifecycleStage ?? this.lifecycleStage,
       isNewRider: isNewRider ?? this.isNewRider,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -438,6 +449,88 @@ class RiderModel {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   double get activeRentalPlanSecurityDeposit => _planFallbacks.$2;
+
+  // ── Derived Lifecycle & Progress Status Getters ─────────────────────────
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  int get lifecycleRankValue => lifecycleRank(this);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isRegistrationDone =>
+      registrationDone ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 3);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPlanDone =>
+      planDone ||
+      (currentPlan?.isNotEmpty ?? false) ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 4);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositDone =>
+      depositDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 6);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycApproved =>
+      kycDone || (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 8);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPickupDone =>
+      pickupDone ||
+      (assignedVehicle?.isNotEmpty ?? false) ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 9);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycRejected => kycStatus == KycStatus.rejected;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isKycSubmitted => kycStatus == KycStatus.submitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isActuallyActive =>
+      accountStatus == AccountStatus.active ||
+      (lifecycleStatus.isNotEmpty && lifecycleRank(this) >= 11);
+
+  // ── Compound State Getters (used by PreDashboardScreen) ────────────────
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isPlanRejected => planStatus == 'REJECTED';
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositRejected => depositRecord?.status == DepositStatus.rejected;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isAwaitingPickup => isPlanDone && !isPickupDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsPlanSelection => isRegistrationDone && !isPlanDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsRegistrationStart =>
+      !isRegistrationDone && !isKycRejected && !isKycSubmitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get needsDeposit => isPlanDone && !isDepositDone;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get canSubmitDeposit =>
+      depositRecord == null ||
+      depositRecord!.status == DepositStatus.notSubmitted;
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isDepositPending =>
+      depositRecord != null &&
+      (depositRecord!.status == DepositStatus.pending ||
+          depositRecord!.status == DepositStatus.pendingVerification ||
+          depositRecord!.status == DepositStatus.rejected);
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool get isReadyForPickup => isDepositDone && isKycApproved && !isPickupDone;
+
+  /// Calculate the required payment amount (plan price + security deposit).
+  double requiredPaymentAmount(double walletMinTopup) =>
+      (activeRentalPlanPrice > 0 ? activeRentalPlanPrice : walletMinTopup) +
+      activeRentalPlanSecurityDeposit;
 
   // ── fromJson ────────────────────────────────────────────────────────────
 
@@ -516,6 +609,12 @@ class RiderModel {
       lifecycleStatus: json['lifecycleStatus'] as String? ??
           json['state'] as String? ??
           'NEW',
+      // PR-K.2: prefer the new 5-value stage column. Fall back to mapping
+      // from the legacy 15-value status if the new column is null/empty.
+      lifecycleStage: (json['lifecycleStage'] as String? ?? '').isNotEmpty
+          ? parseRiderLifecycleStage(json['lifecycleStage'] as String?)
+          : lifecycleStageFromStatus(
+              json['lifecycleStatus'] as String? ?? 'NEW'),
       isNewRider: json['isNewRider'] as bool? ?? false,
       referralCode: json['referralCode'] as String?,
       totalRewardPoints: json['totalRewardPoints'] as int? ?? 0,
@@ -530,6 +629,7 @@ class RiderModel {
           ? DateTime.tryParse(json['submissionDate'] as String)
           : null,
       returnPending: json['returnPending'] as bool? ?? false,
+      advanceRentPaid: json['advanceRentPaid'] as bool? ?? false,
       pickupPhotoFront: json['pickupPhotoFront'] as String?,
       pickupPhotoBack: json['pickupPhotoBack'] as String?,
       pickupPhotoLeft: json['pickupPhotoLeft'] as String?,
