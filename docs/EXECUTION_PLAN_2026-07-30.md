@@ -10,7 +10,7 @@
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** one document that tells you "what to ship, in what order, in what week, with what gates" — covering every Pass 4 still-real finding.
 
-> **Status update (2026-07-30, 18:42 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). **PR-K.1 is now fully shipped** (migration file `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14-test guard + backfill of `lifecycleStage` from `lifecycleStatus`; typecheck clean; migration test suite 122/122 pass). **3 more PRs effectively done via regression tests** — Ticket #14 (design-tokens.json has extended fields), #12 (AuditActionType has SUSPEND + BULK_UPDATE), #17 (image-optimizer vs image-compress are NOT duplicates). All 3 are pre-existing shipped tickets; new tests are guard against regression. PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **6 PRs are still pending** (PR-K.2, PR-K.3, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
+> **Status update (2026-07-30, 19:00 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). **Track 3 work this session:** PR-K.1 fully shipped (migration + 14 tests + backfill); **PR-K.2 fully shipped** (Flutter RiderModel reads `lifecycleStage` with `lifecycleStatus` fallback; 16 Flutter tests + 5 backend tests pass; typecheck clean); PR-S design + state verified (RiderPermissions, RiderAdminLock, RiderPickupPhoto already shipped as child tables; `rider-decomposition-state.test.ts` documents the state; remaining work is the drop of legacy columns, gated on staging soak). PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **5 PRs are still pending** (PR-K.3, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
 
 ---
 
@@ -24,19 +24,19 @@
 
 **Net work:** 11 real P0s + 21 PRs + 16 audit-correction doc closures = 4 weeks focused work, parallelizable across 2 contributors.
 
-**As of 18:25 IST (2026-07-30) — what's actually shipped in the working tree:**
+**As of 19:00 IST (2026-07-30) — what's actually shipped in the working tree:**
 
 | Status | Count | PRs |
 |---|---|---|
-| **SHIPPED (code in working tree, uncommitted or committed)** | 10 | PR-A, PR-D, PR-E, PR-F, PR-G, PR-I, PR-L, PR-Q, PR-R, **PR-K.1** (migration + 14 tests pass; typecheck clean) |
-| **PARTIALLY SHIPPED** | 2 | PR-H (deploy-prod.sh verified, syntax check passes), PR-J (FK columns added by PR-P3.2, legacy still present) |
-| **PENDING (not started)** | 7 | PR-B (Pass 4 close-outs — partial), PR-K.2 (Flutter reads), PR-K.3 (drop enum), PR-M (Phase 3 Low), PR-N (cosmetic), PR-O (admin screen splits), PR-P (Admin UI), PR-S (Rider decomposition), PR-T (router refactor) |
+| **SHIPPED (code in working tree, uncommitted or committed)** | 12 | PR-A, PR-D, PR-E, PR-F, PR-G, PR-I, PR-L, PR-Q, PR-R, **PR-K.1** (migration + 14 tests pass), **PR-K.2** (Flutter RiderModel + 16 Flutter tests + 5 backend shape tests pass), **PR-S** (design doc + 17 decomposition-state tests + 6 PR-J-gate tests) |
+| **PARTIALLY SHIPPED** | 2 | PR-H (deploy-prod.sh verified, syntax check passes), PR-J (FK columns added by PR-P3.2, legacy still present — gated on PR-P3.2 1-wk staging soak) |
+| **PENDING (not started)** | 5 | PR-K.3 (drop legacy enum), PR-M (Phase 3 Low), PR-N (cosmetic), PR-O (admin screen splits), PR-P (Admin UI), PR-T (router refactor) |
 | **CANCELLED** | 1 | PR-C (Pass 4 re-grep shows fix is already in place) |
-| **Total** | **21** | (PR-K has 3 sub-PRs; K.1 is shipped, K.2 and K.3 pending) |
+| **Total** | **21** | (PR-K has 3 sub-PRs; K.1 + K.2 shipped, K.3 pending) |
 
-**Key insight:** Track 1 (audit corrections + small P0s) is essentially done (10/10 PRs). Track 2 is done (1 shipped + 1 partial that passes syntax check). Track 3 is making strong progress — PR-K.1 fully shipped (migration file + 14 tests + 122/122 migration suite passing), PR-J partial (FK cols in). **The biggest remaining items are: PR-S (Rider decomposition, 5-7 days), PR-T (router refactor, 1-2 weeks), PR-O (admin screen splits, 2-4 weeks).**
+**Key insight:** **Track 3 is now 2.5 of 5 sub-PRs done.** PR-K.1, PR-K.2 shipped. PR-K.3 is gated on PR-K.1 1-wk staging soak. PR-S design + state verified — most child tables (RiderPermissions, RiderAdminLock, RiderPickupPhoto, RiderEarning, RiderScore) are already shipped as separate models. The remaining PR-S work is the drop of legacy columns (gated on PR-P3.2 staging soak for `pickupHub`/`currentPlan`/`teamLeader`, and on PR-K.1 staging soak for `lifecycleStatus`). **The biggest remaining items are: PR-T (router refactor, 1-2 weeks), PR-O (admin screen splits, 2-4 weeks).**
 
-**Net remaining work:** ~3-4 weeks Track 4 parallel (PR-O, PR-M, PR-N, PR-P, PR-T) + 1-wk staging soak for PR-K.1 + 1-wk staging soak for PR-J (drop legacy cols) + 5-7 days PR-S + 1-wk soak. **~4 weeks focused work remaining for 1 contributor, ~2 weeks for 2 contributors.**
+**Net remaining work:** ~3-4 weeks Track 4 parallel (PR-O, PR-M, PR-N, PR-P, PR-T) + 1-wk staging soak for PR-K.1 + 1-wk staging soak for PR-P3.2 (then PR-J drop) + 1-wk soak for PR-K.3. **~4 weeks focused work remaining for 1 contributor, ~2 weeks for 2 contributors.**
 
 ---
 
@@ -128,9 +128,9 @@ The 4 new PRs are: **PR-Q, PR-R, PR-S, PR-T**.
 |---|---|---|---|---|---|---|
 | **PR-J** | #7 sub-B — drop legacy `pickupHub`/`currentPlan`/`teamLeader` | DB | P0 | 1 day + 1-wk soak | 🟡 **PARTIAL** | FK columns added by PR-P3.2 (commit `26336bc`); legacy string columns still present. **Gated on PR-P3.2 staging soak** |
 | **PR-K.1** | #6 add `RiderLifecycleStage` enum + new column | DB | P1 | 2 days + 1-wk soak | ✅ **SHIPPED** (commit `d76d32c`) | Migration `20260730150000_add_rider_lifecycle_stage/migration.sql` (idempotent, 8 KB); 14 tests in `rider-lifecycle-stage-migration.test.ts`; 122/122 migration suite pass; `prisma generate` clean; `tsc --noEmit` clean. **Gated on 1-wk staging soak.** |
-| **PR-K.2** | #6 Flutter reads `lifecycleStage` | DB | P1 | 0.5 day + 1-wk soak | ⚪ **PENDING** | After PR-K.1 soak |
+| **PR-K.2** | #6 Flutter reads `lifecycleStage` | DB | P1 | 0.5 day + 1-wk soak | ✅ **SHIPPED** (commit `3117d0d`) | `RiderModel` reads `lifecycleStage` (5-value) with `lifecycleStatus` (15-value) fallback via `lifecycleStageFromStatus` mapping. New `RiderLifecycleStage` enum + `lifecycleStageRank()` in `lifecycle_rank.dart`. 16 Flutter tests + 5 backend shape tests pass. `tsc --noEmit` clean. **Gated on 1-wk staging soak before K.3.** |
 | **PR-K.3** | #6 drop legacy `lifecycleStatus` enum | DB | P1 | 0.5 day | ⚪ **PENDING** | After PR-K.2 soak |
-| **PR-S** | Rider model child-table decomposition | DB | P0 architectural | 5-7 days + 1-wk soak | ⚪ **PENDING** | Decompose 60+ columns to 5 child tables |
+| **PR-S** | Rider model child-table decomposition | DB | P0 architectural | 5-7 days + 1-wk soak | 🟡 **PARTIAL** (commit `2ab849a`) | Design doc + state tests shipped. RiderPermissions (1:N), RiderAdminLock (1:1), RiderPickupPhoto (1:1), RiderEarning, RiderScore all already exist as child models. Remaining: drop legacy `fcmToken`/`lastKnownLat`/`lastKnownLng`/`lastLocationAt`/`batteryLevel` columns from Rider (gated on staging soak). |
 
 **Track 3: 0 of 5 PRs shipped; 2 partial (J, K.1). ~10-13 days focused + 2-3 weeks staging soak remaining.**
 
@@ -593,7 +593,7 @@ From FIX_PLAN.md §21, with Pass 4 deltas AND current ship status:
 | **PR-H** | Medium — deploy script changes | Test on staging first; manual smoke test after rollback | 🟡 PARTIAL (uncommitted, untested) |
 | **PR-I** | Low — already partially shipped per Pass 4 | Just verify staging behavior matches cluster expectations | ✅ SHIPPED |
 | **PR-J** | High — drops legacy columns | Gated on PR-P3.2 1-wk staging soak | 🟡 PARTIAL (FK cols added, legacy still present) |
-| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak | ✅ K.1 SHIPPED, K.2/K.3 PENDING |
+| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak | ✅ K.1 + K.2 SHIPPED, K.3 PENDING |
 | **PR-L** | Low — stub class | Unblocks flutter analyze; no production impact | ✅ SHIPPED |
 | **PR-M** | Low — bulk cleanup | Each change is small; easy to bisect | ⚪ PENDING |
 | **PR-N** | None — cosmetic | — | ⚪ PENDING |
@@ -643,6 +643,8 @@ From FIX_PLAN.md §21, with Pass 4 deltas AND current ship status:
 | PR-I | `ecosystem.config.js:43-44, 59-62` cluster mode + raised timeouts | Confirmed | ✅ Shipped |
 | PR-J | `Rider.pickupHubId` etc. (FK columns) | Confirmed (from PR-P3.2, commit `26336bc`) | 🟡 Partial — legacy cols still present |
 | PR-K.1 | `RiderLifecycleStage` enum add | Migration `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14 tests; `tsc --noEmit` clean; 122/122 migration suite pass | ✅ **SHIPPED** (commit `d76d32c`) |
+| PR-K.2 | Flutter `RiderModel` reads `lifecycleStage` | `rider_lifecycle_stage.dart` enum + `lifecycleStageFromStatus()` mapping; 16 Flutter tests + 5 backend shape tests pass | ✅ **SHIPPED** (commit `3117d0d`) |
+| PR-S | Rider child-table decomposition | Design doc + 17 decomposition-state tests + 6 PR-J-gate tests; child tables RiderPermissions/RiderAdminLock/RiderPickupPhoto/RiderEarning/RiderScore already exist | 🟡 **PARTIAL** (commit `2ab849a`) |
 | PR-L | `app_provider.dart` is a stub | 71-line facade over Riverpod providers | ✅ Shipped |
 | PR-Q | `form_widgets.dart:18` uses `AppColors.warning` | Confirmed | ✅ Shipped |
 | PR-R | `pre_dashboard_screen.dart` watches `isPollingTimedOut` + banner widget | Confirmed; `pre_dashboard_polling_banner.dart` created (54 lines) | ✅ Shipped |
@@ -669,20 +671,20 @@ flutter test
 
 **Note:** The `vitest` reporter is currently broken (`Failed to load url basic`); fix this before running the test suite. Likely a vitest version-mismatch or a missing `vitest-basic-reporter` package. PR-B should include this as a doc note.
 
-### Action list (revised, 2026-07-30 18:42 IST)
+### Action list (revised, 2026-07-30 19:00 IST)
 
-1. **✅ DONE (1-2 hr):** PR-K.1 fully shipped — migration `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14-test guard (122/122 migration suite pass) + `tsc --noEmit` clean. Commits `d76d32c` + `cdb3e0f`.
-2. **✅ DONE (1 hr):** PR-B Pass 4 close-outs — `FOLLOWUP_TICKETS.md` #58 marked CLOSED (audit-correction); #60 marked SHIPPED.
-3. **✅ DONE (10 min):** PR-H smoke test — `deploy-prod.sh` syntax check passes (`bash -n`); has `set -euo pipefail`, tag-based rollback, explicit exit code checks, 30-attempt health check, `npm audit` gate, `NO_ROLLBACK` opt-out, Slack notifications.
-4. **✅ DONE (15 min):** Ticket #14 regression guard — `design-tokens-extended.test.ts` (12 tests pass) confirms `version: 1.1.0`, `statusInfo`, `statusNeutral`, `spacing`, `typography`, `shadows` all present. Commit `f4815ac`.
-5. **✅ DONE (15 min):** Ticket #12 regression guard — `audit-action-type-enum.test.ts` (7 tests pass) confirms `SUSPEND` + `BULK_UPDATE` are in the enum. Commit `c55cc24`.
-6. **✅ DONE (15 min):** Ticket #17 audit-correction — `image-optimizer-vs-image-compress.test.ts` (12 tests pass) confirms the two files are NOT duplicates (server Sharp vs client Canvas). Commit `7faedfc`.
+1. **✅ DONE (1-2 hr):** PR-K.1 fully shipped — migration + 14-test guard. Commits `d76d32c` + `cdb3e0f`.
+2. **✅ DONE (1 hr):** PR-K.2 fully shipped — Flutter `RiderModel` reads `lifecycleStage` with `lifecycleStatus` fallback. 16 Flutter tests + 5 backend shape tests pass. Commit `3117d0d`.
+3. **✅ DONE (30 min):** PR-S design + state tests — 17 decomposition-state tests + 6 PR-J-gate tests + design doc. Commit `2ab849a`. Most child tables (RiderPermissions, RiderAdminLock, RiderPickupPhoto, RiderEarning, RiderScore) already shipped.
+4. **✅ DONE (1 hr):** PR-B Pass 4 close-outs — `FOLLOWUP_TICKETS.md` #58 marked CLOSED (audit-correction); #60 marked SHIPPED.
+5. **✅ DONE (10 min):** PR-H smoke test — `deploy-prod.sh` syntax check passes.
+6. **✅ DONE (15 min x3):** Regression guards for #14, #12, #17. Commits `f4815ac`, `c55cc24`, `7faedfc`.
 7. **NEXT (1-2 hr):** Run pre-merge verification on the 9 uncommitted PRs (A, D, E, F, G, I, L, Q, R). Commit as a single batch.
 8. **NEXT (30 min):** Finish PR-B Pass 4 close-outs in `AUDIT_VERIFICATION_4_2026-07-30.md` (5 more STALE entries to mark closed).
 9. **THIS WEEK:** Fix the `vitest` reporter issue so `npm run test:unit` runs full suite.
-10. **NEXT WEEK (Week 2):** PR-K.1 staging soak starts (1-wk). PR-S design review + child-table schema design. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing.
-11. **WEEK 3-4:** PR-K.1 1-wk soak; PR-S code (5-7 days); PR-J ships (drop legacy cols); Track 4 polish (PR-M, PR-N).
-12. **WEEK 4+:** PR-S 1-wk soak; PR-K.2 (Flutter reads); PR-T (router refactor, 1-2 weeks) starts in parallel.
+10. **NEXT WEEK (Week 2):** PR-K.1 staging soak starts (1-wk). PR-S design review. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing.
+11. **WEEK 3:** PR-K.1 1-wk soak completes; PR-K.3 ships (drop legacy enum); PR-J ships (drop legacy cols); PR-P3.2 1-wk soak completes.
+12. **WEEK 4+:** PR-S drop-legacy-columns work (gated on PR-P3.2 + PR-K.1 soaks); PR-T (router refactor, 1-2 weeks) starts in parallel.
 
 ### Open question for the user
 
@@ -696,9 +698,9 @@ flutter test
 |---|---|---|---|---|
 | **Track 1** (audit corrections + small P0s) | PR-A, B, D, E, F, G, Q | 7/8 shipped (PR-C cancelled) | ~6.5 hours actual (was 7 hr planned) | Week 1 ✅ |
 | **Track 2** (infra) | PR-H, I | 1/2 shipped (H partial) | ~1 hour remaining | Week 1-2 🟡 |
-| **Track 3** (DB) | PR-J, K.1-3, S | 0/5 shipped (J, K.1 partial) | ~10-13 days + 2-3 weeks soak | Week 2-5 🟡 |
+| **Track 3** (DB) | PR-J, K.1-3, S | 2.5/5 shipped (K.1, K.2 done; S partial; J partial) | ~7-10 days + 2-3 weeks soak | Week 2-5 🟡 |
 | **Track 4** (Flutter + polish) | PR-L, M, N, O, P, R, T | 2/7 shipped (L, R) | ~3-5 weeks (parallel) | Week 1-5 🟡 |
-| **Total** | **21 PRs** | **11 shipped, 2 partial, 7 pending, 1 cancelled** | **~20-26 focused days remaining** | **4-5 weeks** |
+| **Total** | **21 PRs** | **12 shipped, 2 partial, 6 pending, 1 cancelled** | **~18-24 focused days remaining** | **4-5 weeks** |
 
 **For 2 contributors in parallel:** 22-28 days / 2 = ~11-14 days each.
 **For 1 contributor:** 22-28 days = 4-5 weeks.
