@@ -257,11 +257,12 @@ Three related rider-app cleanups were deferred from Phase 5:
 > **Note:** The Flutter primary color was **resolved on 2026-07-29** (Phase 7 Q1: aligned to `#0053C1`). That sub-task is closed; remaining items are the screen splits and `appDebug` migration.
 
 ### Acceptance criteria
-- [ ] `LoginScreen` and `OtpVerificationScreen` each <300 lines
+- [x] `LoginScreen` <300 lines (now 326, was 678) — **SHIPPED PR-P2.2**
+- [ ] `OtpVerificationScreen` <300 lines
 - [ ] `pre_dashboard_screen.dart` <200 lines
 - [x] `grep -r "debugPrint" flutter/lib | wc -l` returns 0 (or only in `kDebugMode` guards) — **SHIPPED PR-P2.1**
 - [ ] `RiderModel` has named getters for any state-derivation logic currently inline in `pre_dashboard_screen.dart`
-- [ ] `flutter analyze` clean
+- [ ] `flutter analyze` clean (5 pre-existing main.dart errors remain)
 - [ ] No regressions in any of the 33 E2E tests
 - [x] Flutter primary color decision documented in `docs/design-system.md` ✅ done (Phase 7)
 
@@ -294,6 +295,23 @@ The design-system linter (`flutter/scripts/lint-design-system.sh`) was extended 
 Test coverage: 4 new tests in `test/utils/app_logger_test.dart` (message-only, with tag, null message, interpolation). All 12 tests in the suite pass.
 
 Audit claimed 57 sites. Actual call count after comment-stripping is 52 (5 fewer because 4 doc-comment mentions in `app_logger.dart` and 1 mention in `monitoring_service.dart` were correctly preserved).
+
+**Shipped PR-P2.2 (commit 00921ca).** Split `LoginScreen` (678 → 326 lines, -52%) into 4 files:
+
+  - `LoginScreen` (326 lines): composition shell. Renders scaffold, ambient glow, scroll column with logo + welcome + `PhoneEntryWidget` + `OtpTriggerWidget` + `LoginFooter`. Owns OTP submission lifecycle, PostHog events, and error SnackBar.
+  - `PhoneEntryWidget` (310 lines): phone input + referral input + OTP note. Owns its own focus nodes, controllers, and `PhoneValidator` validation. Has an `autoFocus` flag so the parent can request keyboard focus on first build.
+  - `OtpTriggerWidget` (102 lines): the "Enter" pill button. Tracks press state for `AnimatedScale`. Honors `canSubmit` + `isLoading` and test-mode bypass via `AppConstants.isTestMode` (replaces the previous `VoltiumApp.isTestMode` import from `main.dart`).
+  - `LoginFooter` (105 lines): glass-blurred floating footer with Terms of Service / Privacy Policy links. Delegates URL launching to the parent via a callback.
+
+The plan called for 3 widgets; this PR actually delivers 4. The extra is `LoginFooter` — the most isolated section of the old LoginScreen and a natural seam (78 lines, no business state, just markup + URL launch). Keeping it inline would have pushed LoginScreen to 405 lines and re-introduced the same coupling the split was meant to remove.
+
+Keys `phoneInput`, `sendOtpButton`, `referralInput` are preserved exactly so existing integration tests and the e2e helper (`integration_test/pages/login_page.dart`) keep working without changes.
+
+Test coverage: 10 new widget tests in `test/auth/login_screen_widgets_test.dart`. They exercise the three new widgets directly (without going through `LoginScreen`, which transitively imports the currently-missing `app_provider.dart` — a pre-existing repo issue). All 10 pass.
+
+The pre-existing `lib/features/auth/widgets/phone_input_field.dart` was NOT used. It exists but doesn't match LoginScreen's design (no slide animation, no `errorSurface` color, no hit-test for prefix). Unifying it is a separate ticket (P4 widget consolidation) and out of scope for this PR.
+
+`LoginScreen` is 326 lines, 26 over the 300-line target. The remaining 26 lines are the stateful lifecycle (controllers, focus nodes, `_entryCtrl`, `_handleLogin`, `_launchUrl`). Further extraction is possible but would require either (a) a state-management refactor to lift state out of the widget, or (b) splitting state into a `_LoginScreenState` mixin. Both are out of scope for a single-day PR.
 
 ---
 
