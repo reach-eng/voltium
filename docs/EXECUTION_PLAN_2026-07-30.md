@@ -10,7 +10,7 @@
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** one document that tells you "what to ship, in what order, in what week, with what gates" — covering every Pass 4 still-real finding.
 
-> **Status update (2026-07-30, 17:44 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **5 PRs are still pending** (PR-K, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
+> **Status update (2026-07-30, 18:08 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **PR-K.1 is partially shipped** (RiderLifecycleStage enum added to schema.prisma:1186-1192 + lifecycleStage column at line 154, but no migration file yet). **5 PRs are still pending** (PR-K.2, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
 
 ---
 
@@ -24,19 +24,19 @@
 
 **Net work:** 11 real P0s + 21 PRs + 16 audit-correction doc closures = 4 weeks focused work, parallelizable across 2 contributors.
 
-**As of 17:44 IST (2026-07-30) — what's actually shipped in the working tree:**
+**As of 18:08 IST (2026-07-30) — what's actually shipped in the working tree:**
 
 | Status | Count | PRs |
 |---|---|---|
 | **SHIPPED (code in working tree, uncommitted)** | 9 | PR-A, PR-D, PR-E, PR-F, PR-G, PR-L, PR-Q, PR-R + PR-I (config shipped) |
-| **PARTIALLY SHIPPED** | 2 | PR-H (deploy-prod.sh modified, untested), PR-J (FK columns added by PR-P3.2, legacy still present) |
-| **PENDING (not started)** | 7 | PR-B (doc-only close-outs), PR-K (lifecycle enum), PR-M (Phase 3 Low), PR-N (cosmetic), PR-O (admin screen splits), PR-P (Admin UI), PR-S (Rider decomposition), PR-T (router refactor) |
+| **PARTIALLY SHIPPED** | 3 | PR-H (deploy-prod.sh modified, untested), PR-J (FK columns added by PR-P3.2, legacy still present), **PR-K.1** (RiderLifecycleStage enum added to schema.prisma:1186-1192 + lifecycleStage column at line 154, **no migration file yet**) |
+| **PENDING (not started)** | 6 | PR-B (doc-only close-outs), PR-K.2 (Flutter reads), PR-M (Phase 3 Low), PR-N (cosmetic), PR-O (admin screen splits), PR-P (Admin UI), PR-S (Rider decomposition), PR-T (router refactor) |
 | **CANCELLED** | 1 | PR-C (Pass 4 re-grep shows fix is already in place) |
-| **Total** | **20** | (PR-K is 3 sub-PRs = 21 PRs total) |
+| **Total** | **20** | (PR-K has 3 sub-PRs; K.1 is partial, K.2 and K.3 pending = 21 PRs total) |
 
-**Key insight:** the Track 1 work and several Track 4 work items (PR-L, PR-Q, PR-R) are already in the working tree. Track 2 is partially done (PR-I config is there, PR-H needs verification). Track 3 (DB) needs another week of focused work for PR-S + PR-K. Track 4 still has the bulk (PR-O, PR-P, PR-T, PR-M, PR-N).
+**Key insight:** the Track 1 work and several Track 4 work items (PR-L, PR-Q, PR-R) are already in the working tree. Track 2 is partially done (PR-I config is there, PR-H needs verification). Track 3 (DB) is making progress — PR-K.1 enum is in the schema, just needs the migration file. PR-S is the biggest remaining item. Track 4 still has the bulk (PR-O, PR-P, PR-T, PR-M, PR-N).
 
-**Net remaining work:** 1 day doc cleanup (PR-B) + 1-2 days Track 3 focused (PR-S, PR-K.1) + 3-4 weeks Track 4 parallel (PR-O, PR-M, PR-N, PR-P, PR-T) + 1-wk staging soak for PR-J (drop legacy cols) = **~4 weeks focused work remaining, ~3 contributors parallelizable**.
+**Net remaining work:** 1 day doc cleanup (PR-B) + 1-2 days Track 3 focused (PR-K.1 migration + PR-S design) + 3-4 weeks Track 4 parallel (PR-O, PR-M, PR-N, PR-P, PR-T) + 1-wk staging soak for PR-J (drop legacy cols) + 1-wk staging soak for PR-K.1 = **~4 weeks focused work remaining, ~3 contributors parallelizable**.
 
 ---
 
@@ -127,12 +127,12 @@ The 4 new PRs are: **PR-Q, PR-R, PR-S, PR-T**.
 | PR | Title | Source | Severity | Effort | Status | Notes |
 |---|---|---|---|---|---|---|
 | **PR-J** | #7 sub-B — drop legacy `pickupHub`/`currentPlan`/`teamLeader` | DB | P0 | 1 day + 1-wk soak | 🟡 **PARTIAL** | FK columns added by PR-P3.2 (commit `26336bc`); legacy string columns still present. **Gated on PR-P3.2 staging soak** |
-| **PR-K.1** | #6 add `RiderLifecycleStage` enum + new column | DB | P1 | 2 days + 1-wk soak | ⚪ **PENDING** | Not started. Split 15-value `RiderLifecycleStatus` into 5 stage values + per-step |
+| **PR-K.1** | #6 add `RiderLifecycleStage` enum + new column | DB | P1 | 2 days + 1-wk soak | 🟡 **PARTIAL** | Enum added to `schema.prisma:1186-1192` (`NEW`, `IN_PROGRESS`, `ACTIVE`, `PAUSED`, `CLOSED`); `lifecycleStage` column at `schema.prisma:154`. **Migration file still needed.** |
 | **PR-K.2** | #6 Flutter reads `lifecycleStage` | DB | P1 | 0.5 day + 1-wk soak | ⚪ **PENDING** | After PR-K.1 soak |
 | **PR-K.3** | #6 drop legacy `lifecycleStatus` enum | DB | P1 | 0.5 day | ⚪ **PENDING** | After PR-K.2 soak |
 | **PR-S** | Rider model child-table decomposition | DB | P0 architectural | 5-7 days + 1-wk soak | ⚪ **PENDING** | Decompose 60+ columns to 5 child tables |
 
-**Track 3: 0 of 5 PRs shipped; 1 partial. ~10-13 days focused + 2-3 weeks staging soak remaining.**
+**Track 3: 0 of 5 PRs shipped; 2 partial (J, K.1). ~10-13 days focused + 2-3 weeks staging soak remaining.**
 
 ### Track 4: Flutter + polish (PR-L + PR-M + PR-N + PR-O + PR-P + PR-R + PR-T) — 1-2 weeks focused, parallel
 
@@ -593,7 +593,7 @@ From FIX_PLAN.md §21, with Pass 4 deltas AND current ship status:
 | **PR-H** | Medium — deploy script changes | Test on staging first; manual smoke test after rollback | 🟡 PARTIAL (uncommitted, untested) |
 | **PR-I** | Low — already partially shipped per Pass 4 | Just verify staging behavior matches cluster expectations | ✅ SHIPPED |
 | **PR-J** | High — drops legacy columns | Gated on PR-P3.2 1-wk staging soak | 🟡 PARTIAL (FK cols added, legacy still present) |
-| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak | ⚪ PENDING |
+| **PR-K.1/2/3** | High — enum split, 3-PR sequence | Each step has 1-wk staging soak | 🟡 PARTIAL (K.1: enum in schema, no migration; K.2/K.3 pending) |
 | **PR-L** | Low — stub class | Unblocks flutter analyze; no production impact | ✅ SHIPPED |
 | **PR-M** | Low — bulk cleanup | Each change is small; easy to bisect | ⚪ PENDING |
 | **PR-N** | None — cosmetic | — | ⚪ PENDING |
@@ -642,7 +642,7 @@ From FIX_PLAN.md §21, with Pass 4 deltas AND current ship status:
 | PR-H | `deploy-prod.sh` uses tag-based rollback + pipefail | Modified (uncommitted) | 🟡 Partial — needs staging dry-run |
 | PR-I | `ecosystem.config.js:43-44, 59-62` cluster mode + raised timeouts | Confirmed | ✅ Shipped |
 | PR-J | `Rider.pickupHubId` etc. (FK columns) | Confirmed (from PR-P3.2, commit `26336bc`) | 🟡 Partial — legacy cols still present |
-| PR-K.1 | `RiderLifecycleStage` enum add | Not started | ⚪ Pending |
+| PR-K.1 | `RiderLifecycleStage` enum add | Enum at `schema.prisma:1186-1192`; column at `schema.prisma:154`; **no migration file yet** | 🟡 Partial — needs migration |
 | PR-L | `app_provider.dart` is a stub | 71-line facade over Riverpod providers | ✅ Shipped |
 | PR-Q | `form_widgets.dart:18` uses `AppColors.warning` | Confirmed | ✅ Shipped |
 | PR-R | `pre_dashboard_screen.dart` watches `isPollingTimedOut` + banner widget | Confirmed; `pre_dashboard_polling_banner.dart` created (54 lines) | ✅ Shipped |
@@ -691,9 +691,9 @@ flutter test
 |---|---|---|---|---|
 | **Track 1** (audit corrections + small P0s) | PR-A, B, D, E, F, G, Q | 7/8 shipped (PR-C cancelled) | ~6.5 hours actual (was 7 hr planned) | Week 1 ✅ |
 | **Track 2** (infra) | PR-H, I | 1/2 shipped (H partial) | ~1 hour remaining | Week 1-2 🟡 |
-| **Track 3** (DB) | PR-J, K.1-3, S | 0/5 shipped (J partial) | ~10-13 days + 2-3 weeks soak | Week 2-5 ⚪ |
+| **Track 3** (DB) | PR-J, K.1-3, S | 0/5 shipped (J, K.1 partial) | ~10-13 days + 2-3 weeks soak | Week 2-5 🟡 |
 | **Track 4** (Flutter + polish) | PR-L, M, N, O, P, R, T | 2/7 shipped (L, R) | ~3-5 weeks (parallel) | Week 1-5 🟡 |
-| **Total** | **21 PRs** | **10 shipped, 2 partial, 8 pending, 1 cancelled** | **~22-28 focused days remaining** | **4-5 weeks** |
+| **Total** | **21 PRs** | **10 shipped, 3 partial, 7 pending, 1 cancelled** | **~22-28 focused days remaining** | **4-5 weeks** |
 
 **For 2 contributors in parallel:** 22-28 days / 2 = ~11-14 days each.
 **For 1 contributor:** 22-28 days = 4-5 weeks.
