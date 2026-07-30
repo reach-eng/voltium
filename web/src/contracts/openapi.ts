@@ -928,7 +928,7 @@ function buildSpec(): OpenApiSpec {
           responses: { '200': { description: 'Vehicle details' } },
         },
       },
-      '/api/riders/register-token': {
+      '/api/rider/register-token': {
         post: {
           tags: ['Notifications'],
           summary: 'Register FCM device token',

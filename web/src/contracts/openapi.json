@@ -1989,7 +1989,7 @@
         }
       }
     },
-    "/api/riders/register-token": {
+    "/api/rider/register-token": {
       "post": {
         "tags": [
           "Notifications"

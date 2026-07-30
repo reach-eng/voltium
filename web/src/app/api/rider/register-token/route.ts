@@ -5,6 +5,10 @@ import { validateBody, registerTokenSchema } from '@/lib/validators';
 import { getRiderId } from '@/lib/get-session';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
 
+// PR-M (Ticket #26.1) — moved from /api/riders/register-token (plural) to
+// /api/rider/register-token (singular) to align with the rest of the rider API.
+// The original route predated the rider/ directory migration and was the only
+// leftover plural route.
 export async function POST(req: NextRequest) {
   try {
     const session = await getRiderId(req);

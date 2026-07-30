@@ -473,7 +473,7 @@ class VoltiumApiClient {
   Future<Map<String, dynamic>> postRidersRegisterToken(
       Map<String, dynamic> request) async {
     final response =
-        await _client.post('/api/riders/register-token', body: request);
+        await _client.post('/api/rider/register-token', body: request);
     return response;
   }
 

@@ -144,7 +144,7 @@ Quick-reference index for filing tickets in batch by source plan. Ticket numbers
 | **Phase 3–6 follow-ups** | #1, #2, #3, #4, #5 | 5 | Medium–Low |
 | **DB Audit** | #6, #7, #8, #9, #10, #11, #12 | 7 | Medium–Low |
 | **Design System** | #13, #14, #27, #28, #29, #30, #31, #32 | 8 | Medium–Low (1 shipped: #32) |
-| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 17 | Medium–Low (1 audit-done: #26; 3 shipped: #16, #17, #23, #25) |
+| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 17 | Medium–Low (1 audit-done: #26; 4 shipped: #16, #17, #23, #25, #26.1) |
 | **Infra** | #34, #35, #36, #37, #38, #39, #40, #41, #42, #43 | 10 | P0 (9), P1 (1) |
 | **Security** | #44, #45, #46, #47, #48, #49, #50, #51, #52, #53 | 10 | P0 (all) |
 
@@ -1147,7 +1147,8 @@ Audit the top-level shell for:
 ### Acceptance criteria
 - [x] Audit report (`docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md`)
 - [x] Findings filed as sub-tickets (#26.1, #26.2, #26.3, #26.4)
-- [ ] Cleanup PR (separate — tracks the 4 sub-tickets)
+- [x] #26.1 SHIPPED (PR-M.3 — `riders/register-token` moved to `rider/register-token`; orphan `riders/dashboard` + `riders/` directory deleted)
+- [ ] #26.2, #26.3, #26.4 still pending (covered by separate PRs)
 
 ### Files to touch
 - `web/src/app/`
@@ -1171,6 +1172,8 @@ Audit the top-level shell for:
 **Priority:** P3 (code health, low-risk)
 **Labels:** `tech-debt`, `cleanup`, `api-structure`
 
+### Status: SHIPPED (2026-07-30)
+
 ### Problem
 The `web/src/app/api/riders/` (plural) directory has 2 routes:
 - `riders/register-token` — IN USE (Flutter calls it via the generated API client at `flutter/lib/core/network/generated/api_client.dart:476`)
@@ -1184,13 +1187,13 @@ This directory predates the cleaner `rider/` (singular) directory and was not fu
 3. Delete the empty `riders/` directory.
 
 ### Acceptance criteria
-- [ ] `/api/rider/register-token` returns the same response as the old route
-- [ ] Flutter calls the new path
-- [ ] Old `/api/riders/register-token` returns 404 (or removed entirely)
-- [ ] `/api/riders/dashboard` returns 404 (or removed)
-- [ ] `riders/` directory deleted
-- [ ] `contracts/openapi.ts` regenerated
-- [ ] Test: orphan route check (asserts `/api/riders/*` returns 404)
+- [x] `/api/rider/register-token` returns the same response as the old route
+- [x] Flutter calls the new path
+- [x] Old `/api/riders/register-token` removed entirely
+- [x] `/api/riders/dashboard` removed (orphan)
+- [x] `riders/` directory deleted
+- [x] `contracts/openapi.ts` and `openapi.json` updated
+- [x] Test: regression test `api-routes-rider-vs-riders.test.ts` (6 tests) asserts the move is complete
 
 ### Files to touch
 - `web/src/app/api/riders/` — delete entire directory

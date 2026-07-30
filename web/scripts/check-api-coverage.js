@@ -18,7 +18,7 @@ const EXCLUSIONS = [
   '/api/cron',
   '/api/metrics',
   '/api/monitoring/metrics',
-  '/api/riders/register-token',
+  '/api/rider/register-token',
   '/api/files',
 ];
 
@@ -53,8 +53,15 @@ async function run() {
   for (const [routePath, methods] of Object.entries(openapi.paths)) {
     if (isExcluded(routePath)) continue;
 
-    // Convert OpenAPI path /api/admin/tickets/{id} to regex /api/admin/tickets/\w+ or something similar to match in tests
-    const basePath = routePath.replace(/\{[^}]+\}/g, '').replace(/\/$/, '');
+    // Convert OpenAPI path /api/admin/tickets/{id}/messages → /api/admin/tickets/
+    // so we can match test references like /api/admin/tickets/${id}/messages.
+    // We strip all path segments after the first {param}, AND collapse any
+    // double-slash that the strip leaves behind.
+    // Old buggy logic left a "//" in the basePath which never matched anything.
+    const firstParam = routePath.indexOf('{');
+    const basePath = firstParam === -1
+      ? routePath.replace(/\/$/, '')
+      : routePath.slice(0, firstParam).replace(/\/+$/, '/');
 
     for (const method of Object.keys(methods)) {
       if (['get', 'post', 'put', 'patch', 'delete'].includes(method)) {
@@ -96,13 +103,25 @@ async function run() {
   console.log(`Covered Operations (heuristic): ${operations.length - uncovered}`);
   console.log(`Uncovered Operations: ${uncovered}`);
 
-  // The plan specified a soft warning for now
+  // ━ Ticket #38 hardening: hard-fail on uncovered operations ━
+  // Old behavior: process.exit(0) regardless of uncovered count (SOFT WARNING).
+  // Audit found that CI was silently passing on coverage regressions.
+  // New behavior: exit 1 when uncovered > 0.
+  //
+  // Emergency override: set ALLOW_COVERAGE_GAP=1 to downgrade to a warning
+  // (for hot-fixes where the gap is a known false positive).
   if (uncovered > 0) {
-    console.log(`\n⚠️ SOFT WARNING: There are ${uncovered} uncovered operations.`);
-  } else {
-    console.log(`\n✅ All operations are covered by integration tests!`);
+    if (process.env.ALLOW_COVERAGE_GAP === '1') {
+      console.log(`\n⚠️  COVERAGE GAP OVERRIDE: ALLOW_COVERAGE_GAP=1 set — gap is logged but not enforced.`);
+      console.log(`    Do not use this in normal CI. Emergency-only.`);
+      process.exit(0);
+    }
+    console.log(`\n❌ COVERAGE GAP: There are ${uncovered} uncovered operations.`);
+    console.log(`   Add integration tests, or set ALLOW_COVERAGE_GAP=1 to bypass.`);
+    process.exit(1);
   }
-  
+
+  console.log(`\n✅ All operations are covered by integration tests!`);
   process.exit(0);
 }
 
