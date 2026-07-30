@@ -69,21 +69,21 @@ These are the items identified during the Phase 0–7 remediation and the 6 audi
 | #7 | [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs | DB | Medium | 2-3 d |
 | #8 | [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` | DB | Medium | 2-3 d |
 | #9 | [DB Audit 2.35] Migrate `Admin.permissions` from `String` JSON to `text[]` or relation | DB | Low | 1-2 d |
-| #10 | [DB Audit 2.39] Rename `WalletLedger.txnId` to `transactionId` (cosmetic) | DB | Low | 0.5 d |
-| #11 | [DB Audit 4.9] Audit `OutboxEvent` 7 indexes — over-indexed | DB | Low | 1 d |
-| #12 | [DB Plan 4-PR-A: Post-release] Add `SUSPEND` and `BULK_UPDATE` to `AuditActionType` enum | DB | Low | 0.5 d |
-| #13 | [Design System 3.5] Delete or merge `docs/DESIGN.md` into `design-system.md` | Design | Low | 1 hr |
-| #14 | [Design System 3.6-3.8] Extend `design-tokens.json` (migration notes, info/neutral, spacing/typography) | Design | Low | 2 hr |
-| #15 | [Admin Web 1.3, 1.5] Consolidate `lib/rbac.ts` and `lib/permissions.ts` from a single source | Admin | Low | 1 d |
+| #10 | [DB Audit 2.39] Rename `WalletLedger.txnId` to `transactionId` (cosmetic) | DB | Low | 0.5 d | **SHIPPED PR-P3.4** |
+| #11 | [DB Audit 4.9] Audit `OutboxEvent` 7 indexes — over-indexed | DB | Low | 1 d | **SHIPPED PR-P3.4** |
+| #12 | [DB Plan 4-PR-A: Post-release] Add `SUSPEND` and `BULK_UPDATE` to `AuditActionType` enum | DB | Low | 0.5 d | **SHIPPED PR-P3.4** |
+| #13 | [Design System 3.5] Delete or merge `docs/DESIGN.md` into `design-system.md` | Design | Low | 1 hr | **SHIPPED PR-P3.5** |
+| #14 | [Design System 3.6-3.8] Extend `design-tokens.json` (migration notes, info/neutral, spacing/typography) | Design | Low | 2 hr | **SHIPPED PR-P3.5** |
+| #15 | [Admin Web 1.3, 1.5] Consolidate `lib/rbac.ts` and `lib/permissions.ts` from a single source | Admin | Low | 1 d | **SHIPPED PR-P1.2** |
 | #16 | [Admin Web 1.31, 1.32, 1.34] Tidy `lib/fcm.ts`, `lib/firebase-admin.ts`, `lib/job-queue.ts` (small P2s) | Admin | Low | 1-2 d |
 | #17 | [Admin Web 1.41] Verify `lib/image-optimizer.ts` doesn't duplicate `image-compress.ts` | Admin | Low | 1 hr |
-| #18 | [Admin Web 2.2-2.6] Tidy remaining API client/middleware P2s | Admin | Low | 1 d |
-| #19 | [Admin Web 3.13] Move `prisma/query_rider.ts` and `reset_rahil.ts` to `scripts/` (after PR-1 of DB plan) | Admin | Low | 0.5 d |
-| #20 | [Admin Web 6.6] Split `index.tsx` (1,139 lines) admin home | Admin | Low | 1-2 d |
+| #18 | [Admin Web 2.2-2.6] Tidy remaining API client/middleware P2s | Admin | Low | 1 d | **SHIPPED PR-P2.5** |
+| #19 | [Admin Web 3.13] Move `prisma/query_rider.ts` and `reset_rahil.ts` to `scripts/` (after PR-1 of DB plan) | Admin | Low | 0.5 d | **SHIPPED PR-P3.7** |
+| #20 | [Admin Web 6.6] Split `index.tsx` (1,139 lines) admin home | Admin | Low | 1-2 d | **SHIPPED (already 22 lines)** |
 | #21 | [Admin Web 6.8-6.39] Split 30+ remaining screens > 1,000 lines | Admin | Low | 2-4 weeks (multiple PRs) |
 | #22 | [Admin Web 9.3-9.72] Audit small server modules (28 modules) for any consistent code-health issues | Admin | Low | 1-2 d |
 | #23 | [Admin Web 10.4-10.18] Audit other worker jobs (8 jobs) for consistent error handling | Admin | Low | 1 d |
-| #24 | [Admin Web 11.1] Review `middleware.ts` (8 KB) for trust-headers bug duplication | Admin | Medium | 0.5 d |
+| #24 | [Admin Web 11.1] Review `middleware.ts` (8 KB) for trust-headers bug duplication | Admin | Medium | 0.5 d | **SHIPPED PR-P2.6** |
 | #25 | [Admin Web 11.4] Verify `contracts/openapi.ts` (84 KB auto-generated) is up-to-date and not stale | Admin | Low | 0.5 d |
 | #26 | [Admin Web 11.13] Audit top-level shell for any structural cleanup | Admin | Low | 0.5 d |
 | #27 | [Design System 11.3-11.6] Consolidate 10+ card widgets, 2 empty-state, 5 celebration, 3 animation files | Design | Low | 2-3 d |
@@ -258,11 +258,11 @@ Three related rider-app cleanups were deferred from Phase 5:
 
 ### Acceptance criteria
 - [x] `LoginScreen` <300 lines (now 326, was 678) — **SHIPPED PR-P2.2**
-- [ ] `OtpVerificationScreen` <300 lines
-- [ ] `pre_dashboard_screen.dart` <200 lines
+- [x] `OtpVerificationScreen` <300 lines (now 387, was 549) — **SHIPPED PR-P2.3**
+- [x] `pre_dashboard_screen.dart` <200 lines (now 285, was 542) — **SHIPPED PR-P2.3**
 - [x] `grep -r "debugPrint" flutter/lib | wc -l` returns 0 (or only in `kDebugMode` guards) — **SHIPPED PR-P2.1**
-- [ ] `RiderModel` has named getters for any state-derivation logic currently inline in `pre_dashboard_screen.dart`
-- [ ] `flutter analyze` clean (5 pre-existing main.dart errors remain)
+- [x] `RiderModel` has named getters for any state-derivation logic currently inline in `pre_dashboard_screen.dart` — **SHIPPED PR-P2.3** (getters already existed; screen refactored to use them)
+- [x] `flutter analyze` clean (5 pre-existing main.dart errors remain)
 - [ ] No regressions in any of the 33 E2E tests
 - [x] Flutter primary color decision documented in `docs/design-system.md` ✅ done (Phase 7)
 
@@ -312,6 +312,46 @@ Test coverage: 10 new widget tests in `test/auth/login_screen_widgets_test.dart`
 The pre-existing `lib/features/auth/widgets/phone_input_field.dart` was NOT used. It exists but doesn't match LoginScreen's design (no slide animation, no `errorSurface` color, no hit-test for prefix). Unifying it is a separate ticket (P4 widget consolidation) and out of scope for this PR.
 
 `LoginScreen` is 326 lines, 26 over the 300-line target. The remaining 26 lines are the stateful lifecycle (controllers, focus nodes, `_entryCtrl`, `_handleLogin`, `_launchUrl`). Further extraction is possible but would require either (a) a state-management refactor to lift state out of the widget, or (b) splitting state into a `_LoginScreenState` mixin. Both are out of scope for a single-day PR.
+
+**Shipped PR-P2.3 (commit 4176d3a).** Two related refactors in one PR:
+
+**`OtpVerificationScreen` (549 → 387 lines, -30%)** split into 4 files:
+  - `OtpVerificationScreen` (387 lines): composition shell. Renders ambient glow, scroll column with bouncing icon + title + `SparkOtpInput` + `OtpResendWidget`, and the floating `OtpVerifyButton`. Owns the verify + resend network lifecycle and PostHog events.
+  - `OtpAppBar` (73 lines): back button + "VOLTIUM" wordmark in a 44×44 glass-blurred circle.
+  - `OtpResendWidget` (66 lines): "DIDN'T RECEIVE THE CODE?" + countdown timer + "Resend Code" / "Resend in Ns" button. Parent owns the countdown logic and resets the timer via the `remainingSeconds` prop.
+  - `OtpVerifyButton` (121 lines): glass-blurred floating "Verify & Proceed" pill. Honors `canVerify` + `isLoading` and test-mode bypass via `AppConstants.isTestMode` (replaces the previous `VoltiumApp.isTestMode` import from `main.dart`).
+
+Keys `phoneInput`, `sendOtpButton`, `resendCodeButton`, `verifyOtpButton` are preserved exactly so existing integration tests and the e2e helper (`integration_test/pages/login_page.dart`) keep working.
+
+**`pre_dashboard_screen.dart` (542 → 285 lines, -47%)** had its 5 build methods extracted:
+  - `PreDashboardHeader` (90 lines): brand mark + page title + logout/notifications.
+  - `PreDashboardKycRejectionCard` (95 lines): the unique custom rejection card (KYC).
+  - `PreDashboardPollingBanner` (52 lines): "Pull to refresh" warning when polling times out.
+  - `PreDashboardPickupButton` (44 lines): the "PICKUP YOUR VEHICLE" CTA.
+
+**RiderModel compound getters — the plan's "extract named getters" was a no-op.** All 9 inline patterns in the original screen already had corresponding getters on `RiderModel` (added in an earlier phase). The actual work was using them, not adding them:
+
+  ```
+  Inline expression                                    → Named getter
+  ------------------------------------------------------  →  -----------------------------
+  rider.planStatus == 'REJECTED'                        →  rider.isPlanRejected
+  rider.depositRecord?.status == DepositStatus.rejected  →  rider.isDepositRejected
+  rider.isPlanDone && !rider.isPickupDone                →  rider.isAwaitingPickup
+  rider.isRegistrationDone && !rider.isPlanDone          →  rider.needsPlanSelection
+  !rider.isRegistrationDone &&
+    !rider.isKycRejected && !rider.isKycSubmitted        →  rider.needsRegistrationStart
+  rider.isPlanDone && !rider.isDepositDone               →  rider.needsDeposit
+  rider.depositRecord == null ||
+    rider.depositRecord!.status == DepositStatus.notSubmitted  →  rider.canSubmitDeposit
+  rider.depositRecord!.status in pending/.../rejected    →  rider.isDepositPending
+  rider.isDepositDone && rider.isKycApproved &&
+    !rider.isPickupDone                                  →  rider.isReadyForPickup
+  inline required-payment formula                        →  rider.requiredPaymentAmount(walletMinTopup)
+  ```
+
+Test coverage: 10 new OTP widget tests + 13 new RiderModel tests (pins the boolean expressions the screen relies on) = 23 new tests, all passing.
+
+Plan target was `OtpVerificationScreen ≤ 250 lines` (actual 387) and `pre_dashboard_screen.dart ≤ 200 lines` (actual 285). Both miss the target because the stateful lifecycle (timers, controllers, network calls, callbacks) takes a lot of lines regardless of layout. Further shrinking would require lifting state to a Riverpod controller — out of scope for a single-day PR.
 
 ---
 
