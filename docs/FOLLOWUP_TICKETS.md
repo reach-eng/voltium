@@ -144,7 +144,7 @@ Quick-reference index for filing tickets in batch by source plan. Ticket numbers
 | **Phase 3–6 follow-ups** | #1, #2, #3, #4, #5 | 5 | Medium–Low |
 | **DB Audit** | #6, #7, #8, #9, #10, #11, #12 | 7 | Medium–Low |
 | **Design System** | #13, #14, #27, #28, #29, #30, #31, #32 | 8 | Medium–Low (1 shipped: #32) |
-| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 17 | Medium–Low (1 audit-done: #26; 4 shipped: #16, #17, #23, #25, #26.1) |
+| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #22.1, #22.2, #22.3, #22.4, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 21 | Medium–Low (2 audit-done: #22, #26; 4 shipped: #16, #17, #23, #25, #26.1) |
 | **Infra** | #34, #35, #36, #37, #38, #39, #40, #41, #42, #43 | 10 | P0 (9), P1 (1) |
 | **Security** | #44, #45, #46, #47, #48, #49, #50, #51, #52, #53 | 10 | P0 (all) |
 
@@ -1040,13 +1040,165 @@ Audit all 28 modules for:
 - Consistent audit log calls
 - Any out-of-pattern files
 
+### Status: AUDIT COMPLETE — sub-tickets filed
+
 ### Acceptance criteria
-- [ ] Audit report with findings (file:line for each)
-- [ ] Any P0/P1 findings filed as sub-tickets
-- [ ] P2s noted in a follow-up doc
+- [x] Audit report (`docs/AUDIT_SMALL_SERVER_MODULES_2026-07-30.md`)
+- [x] Findings filed as sub-tickets (#22.1, #22.2, #22.3, #22.4)
+- [ ] Cleanup PRs (separate)
+
+### Audit count correction
+- The audit claimed 28 modules; the actual count is **35 modules**.
+- This is an audit-side error, not a code issue.
+
+### Sub-tickets
+
+| Ticket | Title | Effort | Source |
+|---|---|---|---|
+| #22.1 | Add smoke tests for 12 single-use-cases modules | 1-2 d | 3.1 |
+| #22.2 | Document wiring for 4 modules without routes.ts (analytics, data-management, device-compliance, onboarding) | 1-2 hr | 3.2 |
+| #22.3 | Add or document `support.policy.ts` (or document why not needed) | 0.5-1 d | 3.3 |
+| #22.4 | Split `data-management` into 5 sub-modules (backup, restore, schedule, storage, overview) | 2-3 d | 3.4 |
+
+---
+
+## Ticket #22.1: [Admin Web 9.72.1] Add smoke tests for 12 single-use-cases modules
+
+**Source:** `docs/AUDIT_SMALL_SERVER_MODULES_2026-07-30.md` finding 3.1
+
+**Size:** 1-2 days focused
+**Priority:** P3 (code health)
+**Labels:** `tech-debt`, `tests`, `coverage`
+
+### Problem
+12 modules are single-use-cases files with no policy/repository/routes separation, AND no dedicated unit tests. Affected modules:
+- announcements, coupons, legal, monitoring, offers, plans, pricing, referrals, shifts, sync, telemetry
+
+### Goal
+Add at least 1 smoke test per module — exercise the main use case against a mock or stub.
+
+### Acceptance criteria
+- [ ] 1+ test file per affected module
+- [ ] Each test exercises the module's main exported use case
+- [ ] Tests pass
+- [ ] Coverage increases by at least 5% lines
 
 ### Files to touch
-- All 28 server modules
+- `web/tests/unit/announcements*.test.ts` (new)
+- `web/tests/unit/coupons*.test.ts` (new)
+- `web/tests/unit/legal*.test.ts` (new)
+- `web/tests/unit/monitoring*.test.ts` (new)
+- `web/tests/unit/offers*.test.ts` (new)
+- `web/tests/unit/plans*.test.ts` (new)
+- `web/tests/unit/pricing*.test.ts` (new)
+- `web/tests/unit/referrals*.test.ts` (new — note existing name may collide)
+- `web/tests/unit/shifts*.test.ts` (new)
+- `web/tests/unit/sync*.test.ts` (new)
+- `web/tests/unit/telemetry*.test.ts` (new)
+
+### Risk
+Low.
+
+---
+
+## Ticket #22.2: [Admin Web 9.72.2] Document wiring for 4 modules without routes.ts
+
+**Source:** `docs/AUDIT_SMALL_SERVER_MODULES_2026-07-30.md` finding 3.2
+
+**Size:** 1-2 hours focused
+**Priority:** P3 (code health, docs only)
+**Labels:** `tech-debt`, `docs`, `architecture`
+
+### Problem
+4 modules have `use-cases.ts` but no `routes.ts`:
+- analytics
+- data-management
+- device-compliance
+- onboarding
+
+These are OK if their use-cases are called from other modules' routes. Worth verifying and documenting.
+
+### Goal
+For each of the 4 modules, grep `app/api` and the other modules' routes to find call sites. Document the wiring in the module's README or in a header comment.
+
+### Acceptance criteria
+- [ ] Each of the 4 modules has a documented caller (file:line)
+- [ ] If a module has no caller, mark as dead code and file a follow-up
+
+### Files to touch
+- `web/src/server/modules/analytics/README.md` (new) or analytics.use-cases.ts header
+- `web/src/server/modules/data-management/README.md` (new) or data-management use-cases header
+- `web/src/server/modules/device-compliance/README.md` (new) or device-compliance use-cases header
+- `web/src/server/modules/onboarding/README.md` (new) or onboarding use-cases header
+
+### Risk
+None — documentation only.
+
+---
+
+## Ticket #22.3: [Admin Web 9.72.3] Add or document `support.policy.ts`
+
+**Source:** `docs/AUDIT_SMALL_SERVER_MODULES_2026-07-30.md` finding 3.3
+
+**Size:** 0.5-1 day focused
+**Priority:** P3 (code health)
+**Labels:** `tech-debt`, `rbac`, `architecture`
+
+### Problem
+`web/src/server/modules/support/` has no `policy.ts`, but all other full modules (admin, auth, deposits, files, guarantors, hubs, kyc, notifications, rentals, riders) do. Either:
+1. Add `support.policy.ts` with `requireSupportAgent`, `canViewTicket`, `canReplyToTicket` helpers
+2. Or document why support doesn't need a policy (e.g. all auth is at the route level)
+
+### Goal
+Either add the policy file or document the decision.
+
+### Acceptance criteria
+- [ ] If adding: `support.policy.ts` exists with consistent shape vs other modules
+- [ ] If documenting: README or header comment explains the architecture
+- [ ] If a third option (e.g. use a shared `auth.policy.ts`): document
+
+### Files to touch
+- `web/src/server/modules/support/support.policy.ts` (new, optional)
+- `web/src/server/modules/support/README.md` (new, optional)
+
+### Risk
+Low.
+
+---
+
+## Ticket #22.4: [Admin Web 9.72.4] Split `data-management` into 5 sub-modules
+
+**Source:** `docs/AUDIT_SMALL_SERVER_MODULES_2026-07-30.md` finding 3.4
+
+**Size:** 2-3 days focused
+**Priority:** P3 (architectural)
+**Labels:** `tech-debt`, `refactor`, `large-module`
+
+### Problem
+`web/src/server/modules/data-management/` is the largest module (10 files, 63 KB). `backup.service.ts` alone is 20.5 KB. It mixes backup, restore, schedule, storage, and overview — 5 distinct concerns.
+
+### Goal
+Split into 5 sub-modules:
+- `data-management/backup/` (create, verify, delete, download)
+- `data-management/restore/` (validate, start, history)
+- `data-management/schedule/` (cron configuration)
+- `data-management/storage/` (storage root config)
+- `data-management/overview/` (dashboard data)
+
+Each sub-module has its own `policy.ts` + `repository.ts` + `schemas.ts` + `types.ts` + `use-cases.ts`.
+
+### Acceptance criteria
+- [ ] 5 sub-modules exist
+- [ ] All callers of the old module are updated
+- [ ] Tests pass for the new structure
+- [ ] No regression in behavior
+
+### Files to touch
+- `web/src/server/modules/data-management/` — split into 5 sub-dirs
+- All callers (search for `data-management` imports)
+
+### Risk
+Medium — many callers, but each import is a simple path update.
 
 ---
 
