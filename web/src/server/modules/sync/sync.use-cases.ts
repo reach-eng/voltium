@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 
 export const syncUseCases = {
@@ -32,7 +33,9 @@ export const syncUseCases = {
         data: {
           riderId: riderDbId,
           actionType,
-          payload: JSON.stringify(payload ?? {}),
+          // PR-P3.1: payload is native Json. Cast through InputJsonValue so
+          // the arbitrary object shape passes the type-checker.
+          payload: (payload ?? {}) as Prisma.InputJsonValue,
           endpoint: endpoint || '',
           method: (method || 'POST').toUpperCase() as 'GET' | 'POST' | 'PUT' | 'DELETE',
           status: 'PENDING' as 'PENDING' | 'SYNCING' | 'COMPLETED' | 'FAILED',

@@ -85,7 +85,7 @@ model Vehicle {
   leases         RentalLease[]   @relation("VehicleLeases")
   riders         Rider[]
   tickets        SupportTicket[] @relation("VehicleTickets")
-  hub            Hub             @relation(fields: [hubId], references: [id])
+  hub            Hub             @relation(fields: [hubId], references: [id], onDelete: Restrict)
   returns        VehicleReturn[] @relation("VehicleReturns")
 
   @@index([status])
@@ -118,14 +118,14 @@ model RentalPlan {
   id                   String         @id @default(cuid())
   name                 String
   type                 RentalPlanType
-  price                Int
+  priceInPaise         Int
   durationDays         Int
   description          String?
   isActive             Boolean        @default(true)
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   deletedAt            DateTime?
-  securityDeposit      Int            @default(0)
+  securityDepositInPaise Int          @default(0)
   additionalInfo       String?
   isSecurityRefundable Boolean        @default(true)
   refundableAfterDays  Int?
@@ -154,6 +154,7 @@ model Rider {
   currentPlan             String?
   planStartDate           DateTime?
   planEndDate             DateTime?
+  advanceRentPaid         Boolean                @default(false)
   preferredShift          String?
   teamLeader              String?
   emergencyContact        String?
@@ -173,7 +174,7 @@ model Rider {
   planDoneAt              DateTime?
   fcmToken                String?
   isAdminLocked           Boolean                @default(false)
-  lockPassword            String?
+  lockPasswordHash        String?
   isUninstallBlocked      Boolean                @default(true)
   isLocationMandatory     Boolean                @default(true)
   isAppsControlRestricted Boolean                @default(true)
@@ -202,8 +203,11 @@ model Rider {
   incidents               Incident[]
   kycProfile              KycProfile?
   notifications           Notification[]
+  permissions             RiderPermission[]
+  adminLock               RiderAdminLock?
+  pickupPhoto             RiderPickupPhoto?
   leases                  RentalLease[]
-  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id])
+  vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   earnings                RiderEarning[]
   score                   RiderScore?
   tickets                 SupportTicket[]
@@ -241,6 +245,13 @@ model VehicleReturn {
   longitude        Float?
   reason           String?
   rejectionReason  String?
+  endOdometer          Int?
+  damageAmountInPaise  Int?
+  isFeeWaived          Boolean             @default(false)
+  waiverReason         String?
+  waivedBy             String?
+  inspectedBy          String?
+  inspectedAt          DateTime?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
   rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
@@ -311,7 +322,7 @@ model Wallet {
   id              String         @id @default(cuid())
   riderId         String         @unique
   balanceInPaise  Int            @default(0)
-  securityDeposit Int            @default(0)
+  securityDepositInPaise Int            @default(0)
   depositStatus   DepositStatus  @default(NOT_SUBMITTED)
   paymentStreak   Int            @default(0)
   version         Int            @default(1)
@@ -329,7 +340,7 @@ model WalletLedger {
   id             String          @id @default(cuid())
   walletId       String
   riderId        String
-  txnId          String?
+  transactionId  String?         @map("txnId")
   entryType      LedgerEntryType
   category       LedgerCategory
   amountInPaise  Int
@@ -339,12 +350,12 @@ model WalletLedger {
   actorId        String?
   createdAt      DateTime        @default(now())
   rider          Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  txn            Transaction?    @relation(fields: [txnId], references: [id])
+  txn            Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   wallet         Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
   @@index([riderId])
-  @@index([txnId])
+  @@index([transactionId])
   @@index([category])
   @@index([createdAt])
   @@index([riderId, createdAt])
@@ -372,7 +383,7 @@ model DepositRecord {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
   rider                 Rider         @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  transaction           Transaction?  @relation(fields: [transactionId], references: [id])
+  transaction           Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([riderId])
@@ -388,12 +399,14 @@ model RentalLease {
   startTime  String
   endTime    String?
   status     RentalStatus @default(BOOKED)
-  basePrice  Int
-  finalPrice Int
-  createdAt  DateTime     @default(now())
+  basePriceInPaise       Int
+  finalPriceInPaise      Int
+  startOdometer   Int?
+  startBatteryPct Int?
+  createdAt       DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   rider      Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  shift      Shift        @relation(fields: [shiftId], references: [id])
+  shift      Shift        @relation(fields: [shiftId], references: [id], onDelete: Restrict)
   vehicle    Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@unique([vehicleId, shiftId, leaseDate])
@@ -410,7 +423,7 @@ model Transaction {
   id              String                 @id @default(cuid())
   riderId         String
   type            TransactionType
-  amount          Int
+  amountInPaise   Int
   purpose         TransactionPurpose
   reason          String?
   method          String?
@@ -445,7 +458,7 @@ model TransactionBreakdown {
   id            String        @id @default(cuid())
   transactionId String
   label         String
-  amount        Int
+  amountInPaise Int
   type          BreakdownType @default(CHARGE)
   sortOrder     Int           @default(0)
   createdAt     DateTime      @default(now())
@@ -467,6 +480,9 @@ model SupportTicket {
   troubleshootPath String?
   assignedTo       String?
   resolvedAt       DateTime?
+  isEscalated      Boolean             @default(false)
+  escalatedAt      DateTime?
+  escalatedBy      String?
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
   deletedAt        DateTime?
@@ -562,7 +578,7 @@ model SyncQueue {
   id         String     @id @default(cuid())
   riderId    String
   actionType String
-  payload    String
+  payload    Json
   endpoint   String
   method     HttpMethod @default(POST)
   status     SyncStatus @default(PENDING)
@@ -587,7 +603,7 @@ model FileRecord {
   checksum     String?
   visibility   FileVisibility @default(PRIVATE)
   status       FileStatus     @default(PENDING_UPLOAD)
-  metadata     String?
+  metadata     Json?
   createdAt    DateTime       @default(now())
   uploadedAt   DateTime?
   reviewedAt   DateTime?
@@ -622,7 +638,7 @@ model Coupon {
   code          String       @unique
   description   String
   discountType  DiscountType
-  discountValue Int
+  discountValueInPaise Int
   minAmount     Int?
   maxUses       Int?
   currentUses   Int          @default(0)
@@ -709,7 +725,7 @@ model Announcement {
   message         String
   channel         String
   targetAudience  String
-  targetIds       String                 @default("[]")
+  targetIds       Json                    @default("[]")
   scheduledAt     DateTime?
   sentAt          DateTime?
   status          AnnouncementStatus     @default(DRAFT)
@@ -753,7 +769,7 @@ model Incident {
   location             String?
   latitude             Float?
   longitude            Float?
-  photos               String           @default("[]")
+  photos               Json             @default("[]")
   status               IncidentStatus   @default(OPEN)
   assignedTo           String?
   resolution           String?
@@ -763,8 +779,8 @@ model Incident {
   insuranceClaimNumber String?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
-  rider                Rider?           @relation(fields: [riderId], references: [id])
-  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id])
+  rider                Rider?           @relation(fields: [riderId], references: [id], onDelete: SetNull)
+  vehicle              Vehicle?         @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
 
   @@index([riderId])
   @@index([vehicleId])
@@ -780,7 +796,7 @@ model RiderEarning {
   riderId     String
   date        DateTime
   platform    String?
-  amount      Float
+  amountInPaise Int
   trips       Int      @default(0)
   distance    Float?
   hoursOnline Float?
@@ -815,12 +831,76 @@ model RiderScore {
   @@map("rider_scores")
 }
 
+/// Per-rider permission grants extracted from the flat Rider booleans.
+/// Each row tracks whether a specific permission has been granted,
+/// when it was granted, and by whom (admin or system).
+///
+/// Part of the expand-and-contract migration from Rider's 7 *Granted booleans.
+/// Old columns on Rider are kept for backward compatibility and will be
+/// dropped in a follow-up migration once all readers are updated.
+model RiderPermission {
+  id        String    @id @default(cuid())
+  riderId   String
+  permission String   // e.g. 'LOCATION', 'BATTERY', 'CONTACTS', 'CALL_LOGS', 'MIC', 'CAMERA', 'PHONE'
+  granted   Boolean   @default(false)
+  grantedAt DateTime?
+  grantedBy String?   // admin ID or null for system grants
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  rider     Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@unique([riderId, permission])
+  @@index([riderId])
+  @@map("rider_permissions")
+}
+
+/// Admin lock / device control state for a rider.
+/// Extracted from flat columns on the Rider model (expand-and-contract).
+/// Old columns are kept for backward compatibility.
+model RiderAdminLock {
+  id                     String    @id @default(cuid())
+  riderId                String    @unique
+  isAdminLocked          Boolean   @default(false)
+  lockPasswordHash       String?
+  isUninstallBlocked     Boolean   @default(true)
+  isLocationMandatory    Boolean   @default(true)
+  isAppsControlRestricted Boolean  @default(true)
+  deviceAdminGranted     Boolean   @default(false)
+  displayOverlayGranted  Boolean   @default(false)
+  lastDeviceViolationAt  DateTime?
+  deviceViolationCount   Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  rider                  Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@map("rider_admin_locks")
+}
+
+/// Pickup photos and timestamp for a rider.
+/// Extracted from flat columns on the Rider model (expand-and-contract).
+/// Old columns are kept for backward compatibility.
+model RiderPickupPhoto {
+  id                    String    @id @default(cuid())
+  riderId               String    @unique
+  pickedAt              DateTime?
+  photoFront            String?
+  photoBack             String?
+  photoLeft             String?
+  photoRight            String?
+  photoWithVehicle      String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  rider                 Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+
+  @@map("rider_pickup_photos")
+}
+
 model TrafficFine {
   id              String     @id @default(cuid())
   riderId         String
   vehicleId       String?
   fineId          String     @unique
-  amount          Float
+  amountInPaise Int
   location        String?
   violationType   String
   violationDate   DateTime
@@ -947,11 +1027,9 @@ model OutboxEvent {
   /// See prisma/migrations/20260626000000_add_outbox_readyAt/.
   readyAt     DateTime?
 
-  @@index([status])
   @@index([eventType])
   @@index([createdAt])
   @@index([status, createdAt])
-  @@index([status, eventType])
   @@index([status, eventType, readyAt])
   @@index([status, updatedAt])
   @@map("outbox_events")
@@ -1022,7 +1100,7 @@ model BackupJob {
   completedAt      DateTime?
   createdByAdminId String?
   createdAt        DateTime     @default(now())
-  createdByAdmin   Admin?       @relation(fields: [createdByAdminId], references: [id])
+  createdByAdmin   Admin?       @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
   restoreJobs      RestoreJob[]
 
   @@index([status])
@@ -1043,7 +1121,7 @@ model RestoreJob {
   startedAt          DateTime?
   completedAt        DateTime?
   createdAt          DateTime  @default(now())
-  backupJob          BackupJob @relation(fields: [backupJobId], references: [id])
+  backupJob          BackupJob @relation(fields: [backupJobId], references: [id], onDelete: Restrict)
 
   @@index([backupJobId])
   @@index([status])
@@ -1207,6 +1285,8 @@ enum AuditActionType {
   ROLE_CHANGE
   SYSTEM_CONFIG
   SYSTEM_JOB
+  SUSPEND
+  BULK_UPDATE
 }
 
 enum LedgerEntryType {
@@ -1442,3 +1522,30 @@ enum IdempotencyStatus {
 
   @@map("idempotency_status")
 }
+
+enum MdrBearer {
+  RIDER
+  MERCHANT
+
+  @@map("mdr_bearer")
+}
+
+model PaymentGateway {
+  id              String    @id
+  name            String
+  provider        String
+  isActive        Boolean   @default(false)
+  mdrBearer       MdrBearer @default(RIDER)
+  extraFeePercent Float     @default(2.5)
+  keyId           String?
+  keySecret       String?
+  merchantId      String?
+  webhookSecret   String?
+  apiEndpoint     String?
+  environment     String    @default("TEST")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("payment_gateways")
+}
+

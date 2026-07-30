@@ -73,7 +73,8 @@ export const fileUseCases = {
       originalName: input.fileName,
       mimeType: input.mimeType,
       sizeBytes: input.fileSize,
-      metadata: JSON.stringify({ requestedBy: actor.adminId || actor.riderDbId }),
+      // PR-P3.1: metadata is native Json. Pass the object directly.
+      metadata: { requestedBy: actor.adminId || actor.riderDbId },
     });
 
     // Generate a one-time upload token for local_laptop mode

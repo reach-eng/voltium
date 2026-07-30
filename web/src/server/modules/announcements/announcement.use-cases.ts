@@ -25,13 +25,17 @@ export const announcementUseCases = {
       const delivered = a.deliveries?.filter((d: any) => d.status === 'DELIVERED').length || 0;
       const read = a.deliveries?.filter((d: any) => d.status === 'READ').length || 0;
       const failed = a.deliveries?.filter((d: any) => d.status === 'FAILED').length || 0;
+      // PR-P3.1: targetIds is now native Json. Prisma returns it as a parsed
+      // value (or null when the column is null). Default to [] for the
+      // admin UI which always wants an array.
+      const parsedTargetIds: string[] = Array.isArray(a.targetIds) ? a.targetIds : [];
       return {
         id: a.id,
         title: a.title,
         message: a.message,
         channel: a.channel,
         targetAudience: a.targetAudience,
-        targetIds: JSON.parse(a.targetIds),
+        targetIds: parsedTargetIds,
         scheduledAt: a.scheduledAt,
         sentAt: a.sentAt,
         status: a.status,
@@ -92,7 +96,7 @@ export const announcementUseCases = {
           message: sanitizeHtml(data.message),
           channel: data.channel,
           targetAudience: data.targetAudience,
-          targetIds: JSON.stringify(data.targetIds),
+          targetIds: data.targetIds,
           scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
           sentAt,
           status,

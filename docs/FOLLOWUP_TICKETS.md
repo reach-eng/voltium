@@ -67,7 +67,7 @@ These are the items identified during the Phase 0–7 remediation and the 6 audi
 | #5 | [Phase 6 PR-E] Migrate 60+ raw color hues to ~12 semantic tokens | Phase 6 | Low | 1-2 d |
 | #6 | [DB Audit 2.8] Split `RiderLifecycleStatus` enum (15 values) into stage + per-step | DB | Medium | 3-5 d |
 | #7 | [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs | DB | Medium | 2-3 d |
-| #8 | [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` | DB | Medium | 2-3 d |
+| #8 | [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` | DB | Medium | 2-3 d | **CODE SHIPPED PR-P3.1 — staging-soak gated** |
 | #9 | [DB Audit 2.35] Migrate `Admin.permissions` from `String` JSON to `text[]` or relation | DB | Low | 1-2 d |
 | #10 | [DB Audit 2.39] Rename `WalletLedger.txnId` to `transactionId` (cosmetic) | DB | Low | 0.5 d | **SHIPPED PR-P3.4** |
 | #11 | [DB Audit 4.9] Audit `OutboxEvent` 7 indexes — over-indexed | DB | Low | 1 d | **SHIPPED PR-P3.4** |
@@ -510,6 +510,8 @@ The data migration requires reading the existing string values and looking up th
 **Owner:** TBD
 **Labels:** `tech-debt`, `db`, `db-audit-follow-up`
 
+**Status:** ⚠️ **CODE SHIPPED PR-P3.1** — schema + migration + use-cases done. **Gated on 1-week staging soak** before production.
+
 ### Problem
 Five columns store JSON as a `String` (no schema validation, no query-ability):
 - `SyncQueue.payload: String`
@@ -525,15 +527,40 @@ A malformed payload (e.g. missing `vehicleId` for a pickup action) is accepted b
 - Add a CHECK constraint on `KycProfile.editableFields` to ensure values are valid field names
 
 ### Acceptance criteria
-- [ ] All 5 columns migrated to `Json` or `text[]` with proper type
-- [ ] Existing data parsed and validated before column type change
-- [ ] `editableFields` CHECK constraint added
-- [ ] Staging soak: 1 week minimum
+- [x] All 5 columns migrated to `Json` or `text[]` with proper type
+- [x] Existing data parsed and validated before column type change
+- [x] `editableFields` CHECK constraint added
+- [ ] **Staging soak: 1 week minimum** (apply migration to staging, watch for parse-fail warnings, then promote)
 
-### Files to touch
-- `web/prisma/schema.prisma` (5 model changes)
-- New migration (parse + convert)
-- Use-cases that read/write these columns (JSON parsing)
+### Files touched (PR-P3.1)
+- `web/prisma/schema.prisma` (4 fields → `Json`, 1 stays `text[]` with CHECK)
+- `web/prisma/migrations/20260730131814_convert_json_columns/migration.sql` (NEW, 9.6 KB)
+- `web/src/server/modules/announcements/announcement.use-cases.ts` (drop `JSON.parse` / `JSON.stringify`)
+- `web/src/server/modules/incidents/incident.use-cases.ts` (drop both, coerce read with `Array.isArray`)
+- `web/src/server/modules/sync/sync.use-cases.ts` (drop `JSON.stringify`, cast through `Prisma.InputJsonValue`)
+- `web/src/server/modules/files/files.use-cases.ts` + `files.service.ts` + `files.repository.ts` (drop `JSON.stringify`, type metadata as `Prisma.InputJsonValue`)
+- `web/tests/unit/json-columns-migration.test.ts` (NEW, 25 tests guarding the migration)
+
+### Migration strategy (the "ADD+UPDATE+DROP+RENAME" rationale)
+For each of the 4 native-JSON columns, the migration does:
+1. ADD COLUMN `*_json` (new, JSONB)
+2. UPDATE — parse each existing value; on parse failure, fall back to `[]` / `{}` (NEVER block the migration on bad data; the plan says "default to empty" rather than "fail loud")
+3. DROP the old text column
+4. RENAME the new column back to the original name (so Prisma's field name stays stable)
+
+This is the safest pattern for live data because (a) the app keeps reading the old column without lock contention during the copy, (b) a single bad row does NOT block the migration, (c) the rename keeps `prisma generate` diffs minimal.
+
+Idempotency: each block is wrapped in `IF EXISTS (SELECT 1 FROM information_schema.columns WHERE data_type = 'text')`, and the CHECK constraint uses `IF NOT EXISTS (SELECT 1 FROM pg_constraint ...)`. Re-running the migration on staging (or on a DB that's already been migrated) is a no-op.
+
+`KycProfile.editableFields` stays as `text[]` (it's an enum allowlist, not arbitrary JSON), but gains a CHECK constraint validating against `['name', 'email', 'dob', 'currentAddress', 'emergencyContact']`.
+
+### Staging-soak checklist
+- [ ] Apply migration to staging
+- [ ] Spot-check before/after: `SELECT id, payload FROM sync_queues LIMIT 5;` — values should be valid JSON objects, not escaped strings
+- [ ] Spot-check: `SELECT id, "targetIds" FROM announcements LIMIT 5;` — should be JSON arrays
+- [ ] Spot-check: `SELECT id, photos FROM incidents LIMIT 5;` — should be JSON arrays
+- [ ] Confirm: `SELECT count(*) FROM pg_constraint WHERE conname = 'kyc_editable_fields_allowlist';` returns 1
+- [ ] Watch app logs for the next 7 days for any `json_migration_warnings` references — the migration is silent on parse-fail (defaults to empty) but if any are observed, they were already-bad data in production and the affected rows need manual review.
 
 ### Notes
 The data migration must read each existing string value, parse as JSON, validate, and write back. A malformed value requires manual decision: drop, default, or fail loud.
@@ -2393,7 +2420,7 @@ When the team is ready to file these as GitHub issues, follow the priority group
 - [ ] **#3** [Phase 5 PR-C] Rider app screen splits + complete `appDebug` migration
 - [ ] **#6** [DB Audit 2.8] Split `RiderLifecycleStatus` enum
 - [ ] **#7** [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs
-- [ ] **#8** [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json`
+- [ ] **#8** [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` — code shipped PR-P3.1, awaiting 1-week staging soak
 - [x] **#15** [Admin Web 1.3, 1.5] Consolidate `lib/rbac.ts` and `lib/permissions.ts` — shipped in PR-P1.2
 - [ ] **#18** [Admin Web 2.2-2.6] Tidy remaining API client/middleware P2s
 - [x] **#20** [Admin Web 6.6] Split `index.tsx` admin home — closed as audit-correction (file is 21 lines)
