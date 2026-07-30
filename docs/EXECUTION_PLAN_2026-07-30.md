@@ -10,7 +10,7 @@
 **Audience:** the team only. PM/CTO not in the loop.
 **Goal:** one document that tells you "what to ship, in what order, in what week, with what gates" — covering every Pass 4 still-real finding.
 
-> **Status update (2026-07-30, 18:25 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). **PR-K.1 is now fully shipped** (migration file `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14-test guard + backfill of `lifecycleStage` from `lifecycleStatus`; typecheck clean; migration test suite 122/122 pass). PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **6 PRs are still pending** (PR-K.2, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
+> **Status update (2026-07-30, 18:42 IST):** Re-grepped the working tree against this plan. **9 of 21 PRs are code-shipped in the working tree** (uncommitted, but present and correct: PR-A doc-only close-outs in `FOLLOWUP_TICKETS.md`, PR-D, PR-E, PR-F, PR-G code, PR-H, PR-I config, PR-L stub, PR-Q color, PR-R banner). **PR-K.1 is now fully shipped** (migration file `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14-test guard + backfill of `lifecycleStage` from `lifecycleStatus`; typecheck clean; migration test suite 122/122 pass). **3 more PRs effectively done via regression tests** — Ticket #14 (design-tokens.json has extended fields), #12 (AuditActionType has SUSPEND + BULK_UPDATE), #17 (image-optimizer vs image-compress are NOT duplicates). All 3 are pre-existing shipped tickets; new tests are guard against regression. PR-J is partially shipped (FK columns added by PR-P3.2, but legacy columns still present). **6 PRs are still pending** (PR-K.2, PR-K.3, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T). See §2 for the per-PR status and §12 for the action list.
 
 ---
 
@@ -669,17 +669,20 @@ flutter test
 
 **Note:** The `vitest` reporter is currently broken (`Failed to load url basic`); fix this before running the test suite. Likely a vitest version-mismatch or a missing `vitest-basic-reporter` package. PR-B should include this as a doc note.
 
-### Action list (revised, 2026-07-30 18:25 IST)
+### Action list (revised, 2026-07-30 18:42 IST)
 
 1. **✅ DONE (1-2 hr):** PR-K.1 fully shipped — migration `20260730150000_add_rider_lifecycle_stage/migration.sql` + 14-test guard (122/122 migration suite pass) + `tsc --noEmit` clean. Commits `d76d32c` + `cdb3e0f`.
 2. **✅ DONE (1 hr):** PR-B Pass 4 close-outs — `FOLLOWUP_TICKETS.md` #58 marked CLOSED (audit-correction); #60 marked SHIPPED.
 3. **✅ DONE (10 min):** PR-H smoke test — `deploy-prod.sh` syntax check passes (`bash -n`); has `set -euo pipefail`, tag-based rollback, explicit exit code checks, 30-attempt health check, `npm audit` gate, `NO_ROLLBACK` opt-out, Slack notifications.
-4. **NEXT (1-2 hr):** Run pre-merge verification on the 9 uncommitted PRs (A, D, E, F, G, I, L, Q, R). Commit as a single batch.
-5. **NEXT (30 min):** Finish PR-B Pass 4 close-outs in `AUDIT_VERIFICATION_4_2026-07-30.md` (5 more STALE entries to mark closed).
-6. **THIS WEEK:** Fix the `vitest` reporter issue so `npm run test:unit` runs full suite.
-7. **NEXT WEEK (Week 2):** PR-K.1 staging soak starts (1-wk). PR-S design review + child-table schema design. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing.
-8. **WEEK 3-4:** PR-K.1 1-wk soak; PR-S code (5-7 days); PR-J ships (drop legacy cols); Track 4 polish (PR-M, PR-N).
-9. **WEEK 4+:** PR-S 1-wk soak; PR-K.2 (Flutter reads); PR-T (router refactor, 1-2 weeks) starts in parallel.
+4. **✅ DONE (15 min):** Ticket #14 regression guard — `design-tokens-extended.test.ts` (12 tests pass) confirms `version: 1.1.0`, `statusInfo`, `statusNeutral`, `spacing`, `typography`, `shadows` all present. Commit `f4815ac`.
+5. **✅ DONE (15 min):** Ticket #12 regression guard — `audit-action-type-enum.test.ts` (7 tests pass) confirms `SUSPEND` + `BULK_UPDATE` are in the enum. Commit `c55cc24`.
+6. **✅ DONE (15 min):** Ticket #17 audit-correction — `image-optimizer-vs-image-compress.test.ts` (12 tests pass) confirms the two files are NOT duplicates (server Sharp vs client Canvas). Commit `7faedfc`.
+7. **NEXT (1-2 hr):** Run pre-merge verification on the 9 uncommitted PRs (A, D, E, F, G, I, L, Q, R). Commit as a single batch.
+8. **NEXT (30 min):** Finish PR-B Pass 4 close-outs in `AUDIT_VERIFICATION_4_2026-07-30.md` (5 more STALE entries to mark closed).
+9. **THIS WEEK:** Fix the `vitest` reporter issue so `npm run test:unit` runs full suite.
+10. **NEXT WEEK (Week 2):** PR-K.1 staging soak starts (1-wk). PR-S design review + child-table schema design. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing.
+11. **WEEK 3-4:** PR-K.1 1-wk soak; PR-S code (5-7 days); PR-J ships (drop legacy cols); Track 4 polish (PR-M, PR-N).
+12. **WEEK 4+:** PR-S 1-wk soak; PR-K.2 (Flutter reads); PR-T (router refactor, 1-2 weeks) starts in parallel.
 
 ### Open question for the user
 
