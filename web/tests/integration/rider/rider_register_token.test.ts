@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { api, riderLogin } from '../helpers';
 
-describe('POST /api/riders/register-token', () => {
+// PR-M.3 (Ticket #26.1): route moved from plural to singular form. See
+// docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md finding 3.1.
+describe('POST /api/rider/register-token', () => {
   let riderToken: string;
 
   beforeAll(async () => {
@@ -10,7 +12,7 @@ describe('POST /api/riders/register-token', () => {
   });
 
   it('should return 401 if auth is missing', async () => {
-    const res = await api('/api/riders/register-token', {
+    const res = await api('/api/rider/register-token', {
       method: 'POST',
       json: { fcmToken: 'test-token' },
     });
@@ -18,7 +20,7 @@ describe('POST /api/riders/register-token', () => {
   });
 
   it('should return 422 for validation error (missing fcmToken)', async () => {
-    const res = await api('/api/riders/register-token', {
+    const res = await api('/api/rider/register-token', {
       method: 'POST',
       json: {}, // fcmToken is missing
       token: riderToken,
@@ -29,7 +31,7 @@ describe('POST /api/riders/register-token', () => {
   });
 
   it('should return 200 on happy path', async () => {
-    const res = await api('/api/riders/register-token', {
+    const res = await api('/api/rider/register-token', {
       method: 'POST',
       json: { fcmToken: 'test-fcm-token-123' },
       token: riderToken,

@@ -24,8 +24,8 @@ describe('Public Routes', () => {
     expect(status).toBeGreaterThanOrEqual(200); 
   });
 
-  it('GET /api/notification/list - requires auth', async () => {
-    const { status } = await api('/api/notification/list', { method: 'GET' });
+  it('GET /api/rider/notifications - requires auth', async () => {
+    const { status } = await api('/api/rider/notifications', { method: 'GET' });
     expect(status).toBeGreaterThanOrEqual(400); 
   });
 
@@ -82,9 +82,11 @@ describe('Public Routes', () => {
     expect(status).toBeGreaterThanOrEqual(400);
   });
 
-  it('POST /api/riders/register-token - validates payload', async () => {
-    const { status } = await api('/api/riders/register-token', { 
-      method: 'POST', body: JSON.stringify({ token: '' }) 
+  it('POST /api/rider/register-token - validates payload', async () => {
+    // PR-M.3 (Ticket #26.1): moved from plural to singular form. See
+    // docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md finding 3.1.
+    const { status } = await api('/api/rider/register-token', {
+      method: 'POST', body: JSON.stringify({ fcmToken: '' })
     });
     expect(status).toBeGreaterThanOrEqual(400);
   });

@@ -144,7 +144,7 @@ Quick-reference index for filing tickets in batch by source plan. Ticket numbers
 | **Phase 3–6 follow-ups** | #1, #2, #3, #4, #5 | 5 | Medium–Low |
 | **DB Audit** | #6, #7, #8, #9, #10, #11, #12 | 7 | Medium–Low |
 | **Design System** | #13, #14, #27, #28, #29, #30, #31, #32 | 8 | Medium–Low (1 shipped: #32) |
-| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #22.1, #22.2, #22.3, #22.4, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 21 | Medium–Low (2 audit-done: #22, #26; 4 shipped: #16, #17, #23, #25, #26.1) |
+| **Admin Web** | #15, #16, #17, #18, #19, #20, #21, #22, #22.1, #22.2, #22.3, #22.4, #23, #24, #25, #26, #26.1, #26.2, #26.3, #26.4, #33 | 21 | Medium–Low (2 audit-done: #22, #26; 7 shipped: #16, #17, #23, #25, #26.1, #26.2, #26.3, #26.4) |
 | **Infra** | #34, #35, #36, #37, #38, #39, #40, #41, #42, #43 | 10 | P0 (9), P1 (1) |
 | **Security** | #44, #45, #46, #47, #48, #49, #50, #51, #52, #53 | 10 | P0 (all) |
 
@@ -1300,7 +1300,10 @@ Audit the top-level shell for:
 - [x] Audit report (`docs/AUDIT_TOP_LEVEL_SHELL_2026-07-30.md`)
 - [x] Findings filed as sub-tickets (#26.1, #26.2, #26.3, #26.4)
 - [x] #26.1 SHIPPED (PR-M.3 — `riders/register-token` moved to `rider/register-token`; orphan `riders/dashboard` + `riders/` directory deleted)
-- [ ] #26.2, #26.3, #26.4 still pending (covered by separate PRs)
+- [x] #26.2 SHIPPED (audit-correction — route was already removed in a previous session; Flutter client already migrated; only `rider/notifications` remains)
+- [x] #26.3 SHIPPED (audit-correction — both routes already had header comments distinguishing Prometheus text format vs admin JSON)
+- [x] #26.4 SHIPPED (route has header comment; `docs/API.md` has the v1/ convention noted)
+- [x] Re-verification 2026-07-30 22:26 IST — caught 2 stale tests in `web/tests/` that referenced the old `/api/riders/register-token` path; both fixed; regression test strengthened to walk `web/tests/` too
 
 ### Files to touch
 - `web/src/app/`
@@ -1367,16 +1370,26 @@ Low. The orphan is provably unused. The move is a simple rename + Flutter client
 **Priority:** P3 (code health)
 **Labels:** `tech-debt`, `cleanup`, `api-structure`
 
+### Status: SHIPPED (2026-07-30) — audit-correction
+
 ### Problem
 `web/src/app/api/notification/list/route.ts` is a single-route directory. The rider app's notification list is at `web/src/app/api/rider/notifications/route.ts`. These may serve the same purpose (just inconsistent paths) or different purposes (admin notification list vs rider notification list).
 
 ### Goal
 Grep both routes. If same purpose, consolidate to one path. If different, document the distinction clearly in the file headers.
 
+### Audit-correction close-out (2026-07-30 22:26 IST)
+On re-verification, the consolidation had **already been completed** in a previous session:
+- `/api/notification/list/route.ts` deleted (and the entire `notification/` directory)
+- `flutter/lib/core/network/generated/api_client.dart` already uses `/api/rider/notifications` for both `getRiderNotifications` (GET) and `putRiderNotifications` (PUT)
+- `web/src/contracts/openapi.ts` and `openapi.json` no longer reference `/api/notification/list`
+
+No code change needed in this PR. **Closed as audit-correction.**
+
 ### Acceptance criteria
-- [ ] Decision documented: consolidate OR distinguish
-- [ ] If consolidate: only one route remains, Flutter uses the consolidated path
-- [ ] If distinguish: both routes have header comments explaining the difference
+- [x] Decision documented: consolidate (already done)
+- [x] Only one route remains (only `rider/notifications`)
+- [x] Flutter uses the consolidated path (already migrated)
 
 ### Files to touch
 - `web/src/app/api/notification/list/route.ts` — possibly delete or document
@@ -1395,6 +1408,8 @@ Low.
 **Priority:** P3 (code health)
 **Labels:** `tech-debt`, `cleanup`, `api-structure`
 
+### Status: SHIPPED (2026-07-30) — audit-correction
+
 ### Problem
 Two near-duplicate metric routes:
 - `web/src/app/api/metrics/route.ts` (top-level)
@@ -1403,16 +1418,16 @@ Two near-duplicate metric routes:
 ### Goal
 Grep both. If they serve the same purpose, pick one and delete the other. If different, document the distinction.
 
+### Audit-correction close-out (2026-07-30 22:26 IST)
+On re-verification, the documentation had **already been added** in a previous session:
+- `web/src/app/api/metrics/route.ts:1-5` has a header comment: "Prometheus scraper endpoint. Outputs metrics in Prometheus text format. For the admin dashboard JSON metrics, see /api/monitoring/metrics"
+- `web/src/app/api/monitoring/metrics/route.ts:1-4` has a header comment: "Admin dashboard JSON metrics endpoint. For the Prometheus text format scraper, see /api/metrics"
+
+The two routes serve **distinct purposes** (Prometheus text format vs admin dashboard JSON) and both must stay. No code change needed. **Closed as audit-correction.**
+
 ### Acceptance criteria
-- [ ] Decision documented
-- [ ] Only one route remains (or both are documented distinctly)
-
-### Files to touch
-- `web/src/app/api/metrics/route.ts` — possibly delete
-- `web/src/app/api/monitoring/metrics/route.ts` — possibly update header
-
-### Risk
-Low.
+- [x] Decision documented: KEEP BOTH, document the distinction
+- [x] Both routes have header comments explaining the difference
 
 ---
 
@@ -1424,6 +1439,8 @@ Low.
 **Priority:** P3 (code health)
 **Labels:** `tech-debt`, `docs`, `api-structure`
 
+### Status: SHIPPED (2026-07-30) — kept the `v1/` prefix + documented
+
 ### Problem
 `web/src/app/api/v1/payment-gateways/active/route.ts` is the only route under a `v1/` prefix. There's no v2/ or other versioned directory, so the `v1/` is unclear in purpose.
 
@@ -1432,16 +1449,17 @@ Either:
 1. Document the `v1/` convention (e.g., "v1 = stable, externally-documented contract" — see `contracts/openapi.ts`)
 2. Move the route to the top level and drop the `v1/` prefix
 
+### Decision: KEEP the `v1/` prefix
+The `v1/` prefix signals that the route's path, request shape, and response shape are part of the published API surface (mirrored in `web/src/contracts/openapi.ts` and `openapi.json`) and will not change without a deprecation cycle.
+
+### Implementation
+- `web/src/app/api/v1/payment-gateways/active/route.ts:1` — header comment added: `// v1 prefix = stable, externally-documented contract. See contracts/openapi.ts.`
+- `docs/API.md` — new "API Versioning" section added: "Routes under `/api/v1/*` are **stable, externally-documented contracts**."
+
 ### Acceptance criteria
-- [ ] Decision made and documented
-- [ ] If removing: route moved, Flutter regenerated
-- [ ] If keeping: header comment explains the convention
-
-### Files to touch
-- `web/src/app/api/v1/payment-gateways/active/route.ts` — possibly move or annotate
-
-### Risk
-None.
+- [x] Decision made: KEEP the `v1/` prefix
+- [x] Header comment on the route explains the convention
+- [x] API contract doc (`docs/API.md`) has the convention noted
 
 ---
 

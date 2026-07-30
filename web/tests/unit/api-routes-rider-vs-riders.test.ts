@@ -69,16 +69,18 @@ describe('PR-M (Ticket #26.1): /api/riders/ orphan cleanup', () => {
     expect(content).not.toMatch(/\/api\/riders\/register-token/);
   });
 
-  it('No file in src/ still references /api/riders/ (other than this test)', () => {
-    // Walk the source tree and assert no source file (other than the audit
-    // doc and the test file itself) references the old path.
+  it('No file in src/ or tests/ still references /api/riders/ (other than this test)', () => {
+    // Walk the source AND test trees and assert no file (other than the audit
+    // doc, this test, and the moved route's header comment) references the
+    // old path. The previous version only walked src/ + flutter/, which
+    // missed stale test files in web/tests/ (caught in audit re-verify 2026-07-30).
     const offenders: string[] = [];
     function walk(dir: string) {
       for (const entry of readdirSync(dir)) {
         const full = join(dir, entry);
         const st = statSync(full);
         if (st.isDirectory()) {
-          // Skip test directories and coverage artifacts
+          // Skip node_modules, coverage, .next
           if (entry === 'node_modules' || entry === 'coverage' || entry === '.next') continue;
           walk(full);
         } else if (st.isFile()) {
@@ -86,7 +88,7 @@ describe('PR-M (Ticket #26.1): /api/riders/ orphan cleanup', () => {
           if (!/\.(ts|tsx|js|jsx|dart|json|md)$/.test(entry)) continue;
           // Skip the test itself
           if (full === resolve(__filename)) continue;
-          // Skip the audit doc (historical reference) and this test
+          // Skip the audit doc (historical reference)
           if (full.includes('AUDIT_TOP_LEVEL_SHELL_2026-07-30.md')) continue;
           // Skip the comments inside the moved route file (they mention /api/riders/ for context)
           if (full === ROUTE_REGISTER_TOKEN_NEW) continue;
@@ -100,6 +102,7 @@ describe('PR-M (Ticket #26.1): /api/riders/ orphan cleanup', () => {
     }
     walk(API_DIR);
     walk(join(WEB, 'src'));
+    walk(join(WEB, 'tests'));
     walk(resolve(WEB, '../flutter/lib'));
     walk(resolve(WEB, '../flutter/test'));
     walk(resolve(WEB, '../flutter/integration_test'));
@@ -107,5 +110,6 @@ describe('PR-M (Ticket #26.1): /api/riders/ orphan cleanup', () => {
       // Debug: print the offenders so the test output shows what to fix
       throw new Error(`Files still referencing /api/riders/* (old path):\n  ${offenders.join('\n  ')}`);
     }
+    expect(offenders).toEqual([]);
   });
 });

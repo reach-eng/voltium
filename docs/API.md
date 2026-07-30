@@ -2,6 +2,12 @@
 
 This document describes the primary REST endpoints available to client applications (Flutter App and Admin Web).
 
+## API Versioning
+
+Routes under `/api/v1/*` are **stable, externally-documented contracts**. The `v1/` prefix signals that the route's path, request shape, and response shape are part of the published API surface (mirrored in `web/src/contracts/openapi.ts` and `web/src/contracts/openapi.json`) and will not change without a deprecation cycle. Routes outside the `v1/` prefix are internal and may evolve without notice.
+
+**Current v1 routes:** `/api/v1/payment-gateways/active` (active payment gateway list for the rider app's payment screen).
+
 ## Authentication Flow
 
 Voltium uses HTTP-only cookies for authentication tokens (`auth_token`, `refresh_token`), protecting against XSS attacks.
