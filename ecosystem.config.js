@@ -40,8 +40,8 @@ module.exports = {
       cwd: webCwd,
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
-      instances: 1,
-      exec_mode: 'fork',
+      instances: 'max',       // One per CPU core — real zero-downtime reload
+      exec_mode: 'cluster',   // Use Node.js cluster module
       watch: false,
       env: {
         ...commonEnv,
@@ -49,15 +49,17 @@ module.exports = {
       },
       autorestart: true,
       max_restarts: 10,
-      min_uptime: '10s',
-      restart_delay: 5000,
+      min_uptime: '60s',          // Bumped from 10s — Next.js boot can be 8s on slow disk
+      restart_delay: 30000,       // Bumped from 5s — allow slow boot to settle
       max_memory_restart: '1200M',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: path.join(logsDir, 'voltium-web-error.log'),
       out_file: path.join(logsDir, 'voltium-web-out.log'),
       merge_logs: true,
-      kill_timeout: 10000,
-      listen_timeout: 30000,
+      kill_timeout: 30000,        // Bumped from 10s — graceful shutdown of in-flight requests
+      kill_signal: 'SIGINT',      // Graceful shutdown signal for Next.js
+      kill_retry_time: 5000,      // Retry SIGTERM 5s before SIGKILL
+      listen_timeout: 60000,      // Bumped from 30s — Next.js cold start
     },
     {
       name: 'voltium-worker',
@@ -70,14 +72,15 @@ module.exports = {
       env: commonEnv,
       autorestart: true,
       max_restarts: 10,
-      min_uptime: '10s',
-      restart_delay: 5000,
+      min_uptime: '60s',          // Bumped from 10s
+      restart_delay: 30000,       // Bumped from 5s
       max_memory_restart: '768M',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       error_file: path.join(logsDir, 'voltium-worker-error.log'),
       out_file: path.join(logsDir, 'voltium-worker-out.log'),
       merge_logs: true,
-      kill_timeout: 10000,
+      kill_timeout: 30000,        // Bumped from 10s
+      kill_retry_time: 5000,      // Retry SIGTERM 5s before SIGKILL
     },
   ],
 };

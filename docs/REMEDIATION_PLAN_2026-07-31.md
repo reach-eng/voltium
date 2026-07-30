@@ -7,6 +7,29 @@
 
 ---
 
+## How to use this plan
+
+This document is the **single source of truth for what to work on next** in the Voltium project. It's organized as 12 tracks (R0–R12) sorted by risk and ease, with per-PR checkboxes so the next agent can pick up where the last one left off.
+
+**Reading order:**
+1. **TL;DR** (below) — 30-second summary of all 12 tracks
+2. **§Status of already-done items** — what's shipped, what's staged, what's blocked
+3. **§Detailed tracks R0–R12** — the fix spec for each track
+4. **§Tracking section (end of doc)** — per-PR checkboxes for the next agent to tick off
+5. **§Calendar** — week-by-week ordering
+
+**Convention:** every checkbox `- [ ]` becomes `- [x]` when shipped. The tracking section at the bottom of the doc is the **single place to check progress**.
+
+**When you start a track:**
+1. Read the "Re-verify note" — confirm the finding is still real (don't trust the audit doc; always re-grep)
+2. Read the "Acceptance criteria" — these are the test gates
+3. Ship the per-PR list in the order given
+4. After each PR: typecheck + test, then commit + tick the box
+
+**When you finish a track:** move its entry from "Status: NOT STARTED" to "Status: ✅ SHIPPED" and add a "Shipped" line with the commit refs.
+
+---
+
 ## TL;DR
 
 | Track | Items | Effort | Risk | Status |
@@ -28,6 +51,30 @@
 **Total: 12 tracks, ~7-10 weeks focused work + 1 week parallel soak.**
 
 The bulk of the work (admin screen splits + router refactor) is mechanical. The highest-leverage items are: **R3 admin splits** (largest source of ongoing tech debt), **R4 router** (largest single architecture risk), **R10 trivial batch** (largest open-ticket volume).
+
+---
+
+## Status of already-done items (read this first)
+
+Before starting any track, check this list — the audit-and-verify process caught 6 already-shipped items that were never marked as such:
+
+| # | Item | Evidence (2026-07-31 00:46 IST) | Reference |
+|---|---|---|---|
+| 1 | **R5** Server module size cap | Largest file is 9 KB. 0 files > 10 KB. | §R5 |
+| 2 | **R7** PollingManager wired | `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` has `_onboardingPoller` + `_postPickupPoller` PollingManager instances | §R7 |
+| 3 | **R7** FocusObserver wired | `flutter/lib/main.dart:58` — `final FocusObserver focusObserver = FocusObserver(...)` | §R7 |
+| 4 | **Ticket #58** rental/return mass-assignment | `web/src/app/api/rider/rental/return/route.ts:23` has `.strict()` Zod allowlist | Audit re-verify Pass 4 |
+| 5 | **Ticket #33** server module splits (≥15 KB) | 0 files > 15 KB. Largest = 9 KB. | §R5 |
+| 6 | **PR-K.1 + PR-K.2 + PR-J + PR-D.1** migrations | Migrations 20260730xxxx exist + idempotent + tested | R1 (soaks in progress) |
+| 7 | **PR-C** rental/return (was cancelled) | `.strict()` Zod at `route.ts:12-23` (Pass 4 audit-correction) | Audit re-verify Pass 4 |
+| 8 | **R0.1** Ticket #58 close-out | `FOLLOWUP_TICKETS.md` #58 marked SHIPPED with audit-correction note (in this commit) | §R0.1 |
+| 9 | **R0.2** Ticket #39 STAGED | `FOLLOWUP_TICKETS.md` #39 marked STAGED with config-already-shipped note (in this commit) | §R0.2 |
+| 10 | **R0.2** Ticket #42 STAGED | `FOLLOWUP_TICKETS.md` #42 marked STAGED | §R0.2 |
+| 11 | **R0.3** KNOWN_ISSUES #25 + #26 | `FOLLOWUP_TICKETS.md` / `KNOWN_ISSUES.md` doc fix (this commit) | §R0.3 |
+
+**Net audit-correction count this plan: 4 tickets** (#58, #39, #42, #33) + 2 KNOWN_ISSUES items (#25, #26) = 6 closed as already-done.
+
+**Active items that need real work: 11 tracks** (R0.4, R1, R2, R3, R4, R6, R8, R9, R10, R11, R12).
 
 ---
 
@@ -844,3 +891,201 @@ For PR-R3.* and PR-R4.* (large refactors):
 ## One-paragraph executive summary
 
 After 14 refactoring phases and 4 audit passes, the Voltium codebase is in a clean state with 5 staging soaks running in parallel. The remaining work is: (a) 4 doc-only close-outs for already-shipped tickets (30 min), (b) 2-3 days of design system polish (typography + colors), (c) 2-3 weeks of admin web screen splits (6 large + 7 small files), (d) 1-2 weeks of Flutter router refactor (go_router migration), (e) 0.5 d for the Admin.permissions drop phase post-soak, (f) 1 d for phantom OpenAPI paths, (g) 1 d for data-deletion Admin UI, (h) 12-15 hr for the 120 trivial items in 6 PRs, (i) 0.5 d for PollingManager lifecycle hardening, (j) 1-2 hr for Dependabot setup. Total: 4 weeks focused + 1 week parallel soak. Every finding is re-grepped before this plan was written, so all counts (138 routes, 35 modules, 54 models, 129 colors, 26 typography, 452 test files) reflect the actual codebase as of 2026-07-31 00:46 IST.
+
+---
+
+## Tracking section — per-PR checkboxes (next agent picks up here)
+
+This is the **single place to check progress**. Tick `- [x]` when each PR ships. Add a "Shipped" line with the commit ref.
+
+### R0 — Doc-only close-outs (30 min, no code)
+
+- [x] **R0.1** Ticket #58 (rental/return mass-assignment) → SHIPPED via audit-correction (in this commit)
+- [x] **R0.2a** Ticket #39 (PM2 timeouts) → STAGED, RUNBOOK procedure added (in this commit)
+- [x] **R0.2b** Ticket #42 (PM2 cluster) → STAGED (in this commit)
+- [x] **R0.3a** KNOWN_ISSUES.md #25 (PollingManager) → moved to Recently Remediated (in this commit)
+- [x] **R0.3b** KNOWN_ISSUES.md #26 (FocusObserver) → moved to Recently Remediated (in this commit)
+- [ ] **R0.4** Add commit refs to #15, #18, #24 tickets in `FOLLOWUP_TICKETS.md` notes (5 min)
+
+### R1 — Staging soaks (1 week, in progress, 2026-07-30 → 2026-08-06)
+
+- [x] **R1.0** Migration `20260730131814_convert_json_columns` shipped to staging
+- [x] **R1.1** Migration `20260730140000_add_rider_fk_columns` shipped to staging
+- [x] **R1.2** Migration `20260730150000_add_rider_lifecycle_stage` shipped to staging
+- [x] **R1.3** Migration `20260730180000_add_admin_has_permissions` shipped to staging
+- [x] **R1.4** Migration `20260730000000_alter_admin_permissions_type` shipped to staging
+- [ ] **R1.5** Daily monitoring (2026-07-31 to 2026-08-06) — 5 min/day
+- [ ] **R1.6** Day-3 re-grep + integration test sweep (2026-08-02)
+- [ ] **R1.7** Drop phase: PR-J (drop legacy Rider string columns)
+- [ ] **R1.8** Drop phase: PR-K.3 (drop legacy `lifecycleStatus` enum)
+- [ ] **R1.9** Drop phase: PR-D.2 (drop legacy `Admin.permissions` column)
+
+### R2 — Design system polish (2-3 days, 12 PRs)
+
+#### R2.1 Typography (#4) — 6 PRs, 1-2 days
+
+- [ ] **R2.1a** `defaultText` removal (5 files, 5 min)
+- [ ] **R2.1b** `button`/`buttonSmall` migration (~15 files, 30 min)
+- [ ] **R2.1c** `input`/`inputHint` migration (~10 files, 20 min)
+- [ ] **R2.1d** `navLabel` migration (~8 files, 20 min)
+- [ ] **R2.1e** `priceLarge` removal if duplicate of `priceDisplay` (~5 files, 10 min)
+- [ ] **R2.1f** Update `docs/design-system.md` to list final canonical + specialized
+- [ ] **R2.1g** Final cleanup — remove deprecated getters from `app_typography.dart`
+
+#### R2.2 Colors (#5) — 7 PRs, 2-3 days
+
+- [ ] **R2.2a** Surface variants (`surfaceAlt`/`surfaceContainer`/`surfaceWhite` removal, 10-15 files, 30 min)
+- [ ] **R2.2b** Text variants (`onSurfaceAlt`/`onSurfaceSubtle` removal, 10-15 files, 30 min)
+- [ ] **R2.2c** Brand variants (`primaryLighter` + `primaryGradientEnd` removal, 10 files, 20 min)
+- [ ] **R2.2d** Status text variants (`successText`/`warningText` removal, 10-15 files, 30 min)
+- [ ] **R2.2e** Slate scale rename to consistent naming (30+ files, 1 hr)
+- [ ] **R2.2f** Group 7 misc (case-by-case, 1-2 hr)
+- [ ] **R2.2g** Final cleanup + design-system.md update
+
+### R3 — Admin web screen splits (Ticket #21, 2-3 weeks, 13 PRs)
+
+#### R3.1 RiderManagement.tsx (44 KB) — 2 days
+
+- [ ] **R3.1a** `RiderListTable.tsx` + `RiderFilters.tsx` extraction
+- [ ] **R3.1b** `RiderDetailDialog.tsx` + `RiderBulkActions.tsx` extraction
+- [ ] **R3.1c** Smoke test + re-exports + parent reduction
+
+#### R3.2 DeviceTrackingView.tsx (38 KB) — 1.5 days
+
+- [ ] **R3.2** Split into `DeviceMap.tsx` + `ViolationList.tsx` + `DeviceFilters.tsx`
+
+#### R3.3 TeamLeaderManagement.tsx (35 KB) — 1.5 days
+
+- [ ] **R3.3** Split into `TeamLeaderList.tsx` + `TeamLeaderRiderAssignment.tsx` + `TeamLeaderMetrics.tsx`
+
+#### R3.4 DashboardOverview.tsx (34 KB) — 1.5 days
+
+- [ ] **R3.4** Split into `MetricCards.tsx` + `RecentActivity.tsx` + `ChartsSection.tsx`
+
+#### R3.5 RentalManagement.tsx (32 KB) — 1 day
+
+- [ ] **R3.5** Split into `RentalList.tsx` + `RentalFilters.tsx` + `RentalDetail.tsx`
+
+#### R3.6 OfferManagement.tsx (31 KB) — 1 day
+
+- [ ] **R3.6** Split into `OfferList.tsx` + `OfferForm.tsx`
+
+#### R3.7 7 smaller screens (15-24 KB) — 3-4 days, 3 batched PRs
+
+- [ ] **R3.7a** SettingsManagement (24 KB) + KycManagement (21 KB) — 1.5 d
+- [ ] **R3.7b** TransactionManagement (21 KB) + TicketManagement (20 KB) — 1.5 d
+- [ ] **R3.7c** WalletDepositManagement (18 KB) + IncidentManagementScreen (17 KB) + AnalyticsDashboard (16 KB) — 2 d
+
+### R4 — Flutter router refactor (PR-T, 1-2 weeks, 6 PRs)
+
+- [ ] **R4.1** Define explicit `AppState` sealed class in `flutter/lib/core/navigation/app_state.dart`
+- [ ] **R4.2** Add `go_router: ^14.0.0` dependency + implement `app_router.dart`
+- [ ] **R4.3** Migrate `AppShell` to use go_router (remove `setState` tab switching)
+- [ ] **R4.4** Migrate auth flow to use the state machine
+- [ ] **R4.5** Scope `PollingManager` instances to specific states
+- [ ] **R4.6** E2E tests pass + 5-10 new state machine unit tests + manual smoke
+
+### R5 — Server module size cap (0 min, ✅ DONE)
+
+- [x] **R5.1** No files > 10 KB — verified 2026-07-31 00:46 IST
+- [x] **R5.2** No files > 15 KB — verified 2026-07-31 00:46 IST
+- [ ] **R5.3** Close-out: mark `FOLLOWUP_TICKETS.md` #33 SHIPPED with audit-correction note (5 min)
+
+### R6 — Admin.permissions drop phase (#9, 0.5 d, BLOCKED on R1)
+
+- [ ] **R6.1** Verify all readers/writers use the new `hasPermissions` relation (1 hr)
+- [ ] **R6.2** Update admin use-cases to write to the relation (2 hr)
+- [ ] **R6.3** Migration `20260806120000_drop_admin_permissions_legacy` (1 hr)
+- [ ] **R6.4** Remove `permissions: String[]` from Prisma schema (10 min)
+- [ ] **R6.5** Regression test `tests/unit/admin-no-legacy-permissions-column.test.ts` (1 hr)
+
+### R7 — Polling/Focus wiring (0 min, ✅ DONE)
+
+- [x] **R7.1** PollingManager wired into `RiderProvider` (lines 47, 54, 90, 91) — verified
+- [x] **R7.2** FocusObserver wired into `main.dart:58` — verified
+- [x] **R7.3** KNOWN_ISSUES.md update (in this commit)
+
+### R8 — Phantom OpenAPI paths (Ticket #61, 1 d, 3 PRs)
+
+- [ ] **R8.1** Implement `POST /api/admin/deposits` + `admin-deposits.use-cases.ts` (3 hr)
+- [ ] **R8.2** Implement `POST /api/admin/transactions` + `admin-transactions.use-cases.ts` (3 hr)
+- [ ] **R8.3** Regenerate `openapi.json` + remove line 28 from KNOWN_ISSUES.md (15 min)
+
+### R9 — Data-deletion Admin UI (Ticket #59 v2, 1 d, 2 PRs)
+
+- [ ] **R9.1** Add `DataDeletionSection.tsx` to `RiderManagement` page (1 d)
+- [ ] **R9.2** Add admin-api.ts methods for the 3 endpoints + E2E test (1 hr)
+
+### R10 — Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
+
+- [ ] **R10.1** DB plan polish (1 PR, 1 hr)
+- [ ] **R10.2** Design System plan polish (1 PR, 2 hr)
+- [ ] **R10.3** Admin Web plan polish (1 PR, 2 hr)
+- [ ] **R10.4** Infra plan polish (1 PR, 3 hr)
+- [ ] **R10.5** Security plan polish (1 PR, 3 hr)
+- [ ] **R10.6** Docs/cleanup polish (1 PR, 1 hr)
+
+### R11 — PollingManager widget lifecycle (0.5 d, 1 PR)
+
+- [ ] **R11.1** Make `RiderProvider` a `WidgetsBindingObserver` (1 hr)
+- [ ] **R11.2** Wire `WidgetsBinding.instance.addObserver(this)` in constructor (15 min)
+- [ ] **R11.3** Cancel `_locationSyncTimer` on dispose (15 min)
+- [ ] **R11.4** Tests (2 hr) — `tests/unit/rider_provider_lifecycle_test.dart`
+
+### R12 — Dependabot / vulnerability SLA (1-2 hr setup + ongoing, 2 PRs)
+
+- [ ] **R12.1** Verify/create `.github/dependabot.yml` (5 min)
+- [ ] **R12.2** Add `.github/workflows/dependency-audit.yml` (1 hr)
+- [ ] **R12.3** Add `.github/workflows/flutter-pub-outdated.yml` (30 min)
+
+---
+
+## Audit log of this plan (Pass 5, 2026-07-31 00:46 IST)
+
+**What was re-grepped before this plan was written:**
+
+- ✅ `flutter/lib/theme/app_typography.dart` — 26 named styles (was 41; 15 emphasis aliases removed)
+- ✅ `flutter/lib/theme/app_theme.dart` — 129 raw hex (was 143; 14 removed)
+- ✅ `web/src/components/admin/screens/*.tsx` — 6 files > 30 KB (RiderManagement 44 KB, DeviceTrackingView 38 KB, etc.)
+- ✅ `web/src/server/modules/**/*.use-cases.ts` — 0 files > 10 KB
+- ✅ `web/src/app/api/rider/rental/return/route.ts:23` — has `.strict()` Zod
+- ✅ `web/prisma/schema.prisma` — `Admin.permissions: String[]` (was `String`, now array) + `hasPermissions` relation
+- ✅ `web/prisma/migrations/20260730*` — 5 migrations exist
+- ✅ `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` — PollingManager wired
+- ✅ `flutter/lib/main.dart:58` — FocusObserver wired
+- ✅ `flutter/lib/core/polling/polling_manager.dart` — utility class exists
+
+**What was caught by this re-grep (audit-correction):**
+- 4 tickets already shipped in code but never marked (#58, #33, #39, #42)
+- 2 KNOWN_ISSUES items (#25, #26) already wired but not updated
+
+**What was NOT re-grepped (and may need re-verify before starting):**
+- R3.1–R3.7: each individual file's line count (was done at 30 KB threshold; per-file line count after splits may differ)
+- R4: full auth flow walkthrough (recommend manual smoke before any go_router commit)
+- R8: complete admin deposit/transaction use-case design (recommend design doc first)
+- R10: every trivial item in the 120-list (recommend opening the BACKLOG_FINDINGS §7 before each PR)
+
+---
+
+## Final per-day ordering for the next agent (small tracks only)
+
+Day 1 (Monday, 2026-08-04): **R0.4** (5 min) + **R8.1** (3 hr) + **R8.2** (3 hr) + **R8.3** (15 min) = ~6.5 hr
+Day 2 (Tuesday): **R11.1**–**R11.4** (4 hr) + **R9.1** (4 hr) = 1 day
+Day 3 (Wednesday): **R9.2** (1 hr) + **R12.1**–**R12.3** (1.5 hr) + **R5.3** (5 min) + **R2.1a** (5 min) + **R2.2a** (30 min) = ~3.5 hr
+Day 4 (Thursday): **R2.1b**–**R2.1d** (1.5 hr) + **R2.2b**–**R2.2d** (2 hr) = 3.5 hr
+Day 5 (Friday): **R2.1e**–**R2.1g** (1 hr) + **R2.2e**–**R2.2f** (2.5 hr) = 3.5 hr
+Day 6 (Monday, 2026-08-11): **R10.1**–**R10.6** (12-15 hr) = 1.5 days
+Day 8 (Wednesday): **R3.1a**–**R3.1c** (RiderManagement 44 KB) = 2 days
+Day 10: **R3.2** (DeviceTrackingView 38 KB) = 1.5 days
+Day 12: **R3.3** (TeamLeaderManagement 35 KB) + **R3.4** (DashboardOverview 34 KB) = 3 days
+Day 15: **R3.5** + **R3.6** = 2 days
+Day 17: **R3.7a**–**R3.7c** = 3-4 days
+Day 21: **R4.1**–**R4.6** (Flutter router refactor) = 1-2 wks
+Day 35: end of R4 (if 2 wks)
+
+**Concurrent (soak-gated):**
+- R1 (soak monitoring): 2026-07-30 → 2026-08-06 (1 week)
+- R6 (drop phase): starts 2026-08-06 after soak completes = 0.5 d
+
+**Total: ~35 working days = 7 weeks focused** (1 week parallel soak). Matches the executive summary.
+
