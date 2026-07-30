@@ -51,4 +51,26 @@ void main() {
           returnsNormally);
     });
   });
+
+  group('appDebug (replacement for debugPrint)', () {
+    // appDebug gates on kDebugMode (true in test mode) so it routes through
+    // the structured logger. Since logger has no return value, the best
+    // guarantees are "does not throw" + "accepts both signatures".
+    test('does not throw with message only', () {
+      expect(() => appDebug('AppRouter: state changed'), returnsNormally);
+    });
+
+    test('does not throw with tag', () {
+      expect(() => appDebug('state changed', tag: 'STATE'), returnsNormally);
+    });
+
+    test('does not throw with null message (matches debugPrint signature)', () {
+      // Flutter's debugPrint(String?) accepts null; appDebug does too.
+      expect(() => appDebug(null), returnsNormally);
+    });
+
+    test('does not throw with interpolation', () {
+      expect(() => appDebug('Error: ${Exception('boom')}'), returnsNormally);
+    });
+  });
 }

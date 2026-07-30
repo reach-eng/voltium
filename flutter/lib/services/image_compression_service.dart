@@ -2,6 +2,7 @@ import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import '../utils/app_logger.dart';
 
 class ImageCompressionService {
   static final ImageCompressionService _instance =
@@ -32,7 +33,7 @@ class ImageCompressionService {
 
       return compressed;
     } catch (e) {
-      debugPrint('Error picking image: $e');
+      appDebug('Error picking image: $e');
       return null;
     }
   }
@@ -46,22 +47,34 @@ class ImageCompressionService {
     }
 
     try {
-      final image = img.decodeImage(bytes);
-      if (image == null) return file;
+      final compressedBytes = await compute(_compressImageIsolate, {
+        'bytes': bytes,
+        'quality': quality,
+      });
 
-      img.Image resized = image;
-      if (image.width > 1024 || image.height > 1024) {
-        resized = img.copyResize(image, width: 1024);
-      }
+      if (compressedBytes == null) return file;
 
-      final compressed = img.encodeJpg(resized, quality: quality);
-
-      final compressedFile = await _writeToTempFile(compressed, file.path);
+      final compressedFile = await _writeToTempFile(compressedBytes, file.path);
       return compressedFile;
     } catch (e) {
-      debugPrint('Error compressing image: $e');
+      appDebug('Error compressing image: $e');
       return file;
     }
+  }
+
+  static Uint8List? _compressImageIsolate(Map<String, dynamic> params) {
+    final Uint8List bytes = params['bytes'];
+    final int quality = params['quality'];
+
+    final image = img.decodeImage(bytes);
+    if (image == null) return null;
+
+    img.Image resized = image;
+    if (image.width > 1024 || image.height > 1024) {
+      resized = img.copyResize(image, width: 1024);
+    }
+
+    return Uint8List.fromList(img.encodeJpg(resized, quality: quality));
   }
 
   Future<File> _writeToTempFile(Uint8List bytes, String originalPath) async {
@@ -97,7 +110,7 @@ class ImageCompressionService {
 
       return compressed;
     } catch (e) {
-      debugPrint('Error picking multiple images: $e');
+      appDebug('Error picking multiple images: $e');
       return [];
     }
   }

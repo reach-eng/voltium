@@ -1,5 +1,6 @@
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 // Token and host are injected at build time via --dart-define or
 // --dart-define-from-file referencing the project .env file.
@@ -13,7 +14,7 @@ class PostHogService {
   static Future<void> initialize() async {
     if (_token.isEmpty) {
       if (kDebugMode) {
-        debugPrint(
+        appDebug(
             '[PostHog] No API key — pass via --dart-define=POSTHOG_API_KEY=phc_xxx or --dart-define-from-file=.env');
       }
       return;
@@ -23,7 +24,7 @@ class PostHogService {
     config.debug = kDebugMode;
     await Posthog().setup(config);
     if (kDebugMode) {
-      debugPrint('[PostHog] Initialized with host: $_host');
+      appDebug('[PostHog] Initialized with host: $_host');
     }
   }
 

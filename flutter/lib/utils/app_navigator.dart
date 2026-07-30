@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'page_transitions.dart';
+import 'app_logger.dart';
 
 class AppNavigator {
   static void push(BuildContext context, Widget page, {String? routeName}) {
@@ -7,7 +8,7 @@ class AppNavigator {
       context,
       AppPageTransitions.slide(page),
     ).catchError((e) {
-      debugPrint('[AppNavigator] Navigation error on push: $e');
+      appDebug('[AppNavigator] Navigation error on push: $e');
     });
   }
 
@@ -20,7 +21,7 @@ class AppNavigator {
       context,
       AppPageTransitions.slide(page),
     ).catchError((e) {
-      debugPrint('[AppNavigator] Navigation error on pushReplacement: $e');
+      appDebug('[AppNavigator] Navigation error on pushReplacement: $e');
     });
   }
 

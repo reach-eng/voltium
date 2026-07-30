@@ -50,6 +50,7 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'utils/app_logger.dart';
 
 bool get isTestModeOverride => AppConstants.isTestModeOverride;
 set isTestModeOverride(bool val) => AppConstants.isTestModeOverride = val;
@@ -65,7 +66,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
     try {
       enableFlutterDriverExtension();
     } catch (e) {
-      debugPrint('Driver extension already enabled or binding initialized: $e');
+      appDebug('Driver extension already enabled or binding initialized: $e');
     }
   }
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,7 +81,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
   await PostHogService.initialize();
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
-    debugPrint('[FlutterError] ${details.exception}');
+    appDebug('[FlutterError] ${details.exception}');
     AnalyticsService().trackError('FlutterError', details.exception.toString());
     MonitoringService.logError(
       details.exception,
@@ -180,7 +181,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
             rider: appInstance.riderProvider,
           );
         } catch (e) {
-          debugPrint('Failed to initialize Firebase: $e');
+          appDebug('Failed to initialize Firebase: $e');
         }
       }
       AnalyticsService().track(AnalyticsEvent.appOpened);
@@ -245,7 +246,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       );
     },
     (error, stackTrace) {
-      debugPrint('[ZoneError] $error');
+      appDebug('[ZoneError] $error');
       AnalyticsService().trackError('ZoneError', error.toString());
       MonitoringService.logError(error, stackTrace, reason: 'ZoneError');
       PostHogService.captureError(error, stackTrace, reason: 'ZoneError');

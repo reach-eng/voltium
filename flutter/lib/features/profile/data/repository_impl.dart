@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
+import '../../../utils/app_logger.dart';
 
 /// Implementation of [RiderRepository] using the Voltium API.
 class RiderRepositoryImpl implements RiderRepository {
@@ -21,7 +21,7 @@ class RiderRepositoryImpl implements RiderRepository {
         'rider': response.toJson(),
       };
     } catch (e) {
-      debugPrint('GET_RIDER_PROFILE_ERROR: $e');
+      appDebug('GET_RIDER_PROFILE_ERROR: $e');
       rethrow;
     }
   }

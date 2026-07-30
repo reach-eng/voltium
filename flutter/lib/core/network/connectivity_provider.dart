@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:voltium_rider/services/connectivity_service.dart';
 import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import '../../utils/app_logger.dart';
 
 class ConnectivityProvider extends ChangeNotifier {
   StreamSubscription<bool>? _connectivitySubscription;
@@ -40,7 +41,7 @@ class ConnectivityProvider extends ChangeNotifier {
 
       if (pending.isEmpty) return;
 
-      debugPrint(
+      appDebug(
           '[Connectivity] Flushing ${pending.length} pending offline operations');
 
       final apiClient = ApiClient();
@@ -63,14 +64,13 @@ class ConnectivityProvider extends ChangeNotifier {
           await offlineStorage.removePendingOperation(op['id'] as int);
           _updatePendingCount();
         } catch (e) {
-          debugPrint(
-              '[Connectivity] Failed to flush operation ${op['id']}: $e');
+          appDebug('[Connectivity] Failed to flush operation ${op['id']}: $e');
           // Leave in queue for next retry
           break; // Stop on first failure to preserve ordering
         }
       }
     } catch (e) {
-      debugPrint('[Connectivity] Error flushing offline queue: $e');
+      appDebug('[Connectivity] Error flushing offline queue: $e');
     }
   }
 

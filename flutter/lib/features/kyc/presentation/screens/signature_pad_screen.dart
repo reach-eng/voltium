@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import '../../../../utils/app_logger.dart';
 
 class SignaturePadScreen extends StatefulWidget {
   const SignaturePadScreen({super.key});
@@ -55,7 +56,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
 
       if (mounted) Navigator.of(context).pop(path);
     } catch (e) {
-      debugPrint('Error saving signature: $e');
+      appDebug('Error saving signature: $e');
       if (mounted) Navigator.of(context).pop();
     }
   }
@@ -74,7 +75,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         title: Text(
           'Draw Signature',
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.textPrimary,
+            color: AppColors.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -99,7 +100,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           children: [
             Expanded(
@@ -109,7 +110,7 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(color: AppColors.borderSubtle),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Stack(
                     children: [
@@ -145,7 +146,7 @@ class _SignaturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.textPrimary
+      ..color = AppColors.onSurface
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 3;
     for (int i = 0; i < points.length - 1; i++) {

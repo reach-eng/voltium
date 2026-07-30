@@ -6,6 +6,7 @@ import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import '../../../../utils/app_logger.dart';
 
 String _getMonth(int month) {
   const months = [
@@ -45,7 +46,7 @@ Future<void> pickSupportPhoto(
       onPhotoPicked(File(photo.path));
     }
   } catch (e) {
-    debugPrint('Support photo picker failed: $e');
+    appDebug('Support photo picker failed: $e');
   }
 }
 

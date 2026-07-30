@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'api_client.dart';
 import 'generated/api_client.dart';
 import 'generated/api_models.dart';
+import '../../utils/app_logger.dart';
 
 class FilesRepository {
   final ApiClient _client;
@@ -77,7 +78,7 @@ class FilesRepository {
       // Callers should request a signed read URL via /api/files/request-read when needed.
       return storagePath;
     } catch (e) {
-      debugPrint('[FilesRepository] Signed URL upload failed: $e');
+      appDebug('[FilesRepository] Signed URL upload failed: $e');
       throw Exception('File upload failed: $e');
     }
   }

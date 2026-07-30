@@ -6,6 +6,8 @@ import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import '../theme/app_theme.dart';
+import '../utils/app_logger.dart';
 
 class LockedOverlay extends ConsumerStatefulWidget {
   const LockedOverlay({super.key});
@@ -46,7 +48,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
       final data = response['data'] as Map<String, dynamic>? ?? response;
       final adminLocked = data['isAdminLocked'] as bool?;
       if (mounted) {
-        final provider = ref.read(appProvider);
+        final provider = ref.read(devicePolicyProvider);
         if (adminLocked == true && !provider.lockedByAdmin) {
           provider.setLockedByAdmin(true);
         } else if (adminLocked == false && provider.lockedByAdmin) {
@@ -54,7 +56,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
         }
       }
     } catch (e) {
-      debugPrint('Failed to poll lock state on resume: $e');
+      appDebug('Failed to poll lock state on resume: $e');
     }
   }
 
@@ -87,7 +89,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
 
       if (mounted) {
         if (isValid) {
-          final provider = ref.read(appProvider);
+          final provider = ref.read(devicePolicyProvider);
           provider.setLockedByAdmin(false);
           _passwordController.clear();
           setState(() {
@@ -117,19 +119,20 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final isLocked = ref.watch(appProvider.select((p) => p.lockedByAdmin));
+    final isLocked =
+        ref.watch(devicePolicyProvider.select((p) => p.lockedByAdmin));
     if (!isLocked) return const SizedBox.shrink();
 
     if (PlatformInfo.isWeb) {
       return Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.lock_person_rounded,
-                    size: 64, color: Colors.amber),
+                    size: 64, color: AppColors.warning),
                 SizedBox(height: 16),
                 Text(
                   'Your account has been locked by Voltium.',
@@ -139,7 +142,8 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                 SizedBox(height: 8),
                 Text(
                   'Please contact support to unlock.',
-                  style: GoogleFonts.plusJakartaSans(color: Colors.grey),
+                  style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -160,14 +164,14 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
               end: Alignment.bottomRight,
               colors: [
                 Colors.black,
-                Colors.red.withValues(alpha: 0.2),
+                AppColors.error.withValues(alpha: 0.2),
                 Colors.black,
               ],
             ),
           ),
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
+              padding: Spacing.paddingXl,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -224,7 +228,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                               borderSide: BorderSide(color: Colors.white24),
                             ),
                             focusedBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Colors.red),
+                              borderSide: BorderSide(color: AppColors.error),
                             ),
                           ),
                           onFieldSubmitted: (_) => _verifyPassword(),
@@ -250,7 +254,8 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                               ),
                             ),
                             child: _loading

@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../core/network/api_client.dart';
 import 'consent_service.dart';
+import '../utils/app_logger.dart';
 
 class BackgroundLocationService {
   static const String notificationChannelId = 'voltium_background_location';
@@ -98,7 +99,7 @@ class BackgroundLocationService {
           }
         }
       } catch (e) {
-        debugPrint('BackgroundLocationService: Error getting settings: $e');
+        appDebug('BackgroundLocationService: Error getting settings: $e');
       }
 
       if (lastFetchTime != null) {
@@ -138,7 +139,7 @@ class BackgroundLocationService {
 
         lastFetchTime = DateTime.now();
       } catch (e) {
-        debugPrint('BackgroundLocationService: Error getting location: $e');
+        appDebug('BackgroundLocationService: Error getting location: $e');
       }
     });
   }

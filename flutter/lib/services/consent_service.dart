@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
-
 import '../core/network/api_client.dart';
 import 'secure_storage_service.dart';
+import '../utils/app_logger.dart';
 
 enum ConsentType {
   location('LOCATION'),
@@ -43,7 +42,7 @@ class ConsentService {
         },
       );
     } catch (e) {
-      debugPrint('ConsentService: failed to sync consent: $e');
+      appDebug('ConsentService: failed to sync consent: $e');
     }
   }
 }

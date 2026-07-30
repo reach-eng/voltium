@@ -2,10 +2,12 @@
 # =============================================================================
 # Voltium Flutter — Design System Lint
 # =============================================================================
-# Fails CI on raw Color(0xFF...) outside flutter/lib/theme/ and on
-# off-grid spacing/border-radius values that violate the design system.
+# Fails CI on:
+#   1. Raw Color(0xFF...) outside flutter/lib/theme/        (Ticket #32)
+#   2. Off-grid EdgeInsets.all(N) / BorderRadius.circular(N) (Ticket #32)
+#   3. Stray debugPrint(...) outside lib/theme/             (Ticket #3 sub-A)
 #
-# Ticket #32 hardening — prevent design-system drift via CI gate.
+# Tickets: #32 (design-system enforcement), #3 sub-A (appDebug migration)
 #
 # Usage:
 #   bash flutter/scripts/lint-design-system.sh                  # lint
@@ -22,9 +24,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FLUTTER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# Allowed areas: the theme module is the canonical home for raw colors.
-# Theme defines the semantic tokens; everything else must use AppColors.* tokens.
+# Allowed areas: the theme module is the canonical home for raw colors and
+# the logger file is the canonical home for the debugPrint→appDebug hint.
 ALLOWED_PATTERN='lib/theme/'
+LOGGER_PATTERN='lib/utils/app_logger.dart'
 
 # Patterns we want to catch.
 # 1. Raw Color(0xFF...) in non-theme code
@@ -40,6 +43,11 @@ RAW_COLOR_PATTERN='Color\(0xFF[A-Fa-f0-9]{6,8}\)'
 # Match the call sites; the awk filter narrows to odd values.
 EDGE_INSETS_PATTERN='EdgeInsets\.all\([-]?[0-9]+\)'
 BORDER_RADIUS_PATTERN='BorderRadius\.circular\([-]?[0-9]+\)'
+
+# 3. Stray debugPrint(...) outside lib/utils/app_logger.dart.
+# The logger file intentionally references `debugPrint` in doc comments as
+# the canonical example; everywhere else must use `appDebug(...)`.
+DEBUG_PRINT_PATTERN='\bdebugPrint\s*\('
 
 VIOLATIONS=0
 
@@ -122,12 +130,31 @@ if [ -n "$RADIUS_HITS" ]; then
   VIOLATIONS=$((VIOLATIONS + RADIUS_COUNT))
 fi
 
+# ── Check 4: Stray debugPrint(...) outside lib/utils/app_logger.dart ────────
+echo "[lint-design-system] Checking for stray debugPrint(...) outside lib/utils/app_logger.dart..."
+DEBUG_HITS=$(grep -rEn "$DEBUG_PRINT_PATTERN" lib \
+  --include='*.dart' \
+  --exclude-dir=build \
+  --exclude-dir=.dart_tool 2>/dev/null \
+  | grep -v "$LOGGER_PATTERN" \
+  | awk -F: '{ line=""; for (i=3; i<=NF; i++) line = (line == "" ? $i : line ":" $i); if (line !~ /^\s*\/\//) print }' \
+  || true)
+
+if [ -n "$DEBUG_HITS" ]; then
+  DEBUG_COUNT=$(echo "$DEBUG_HITS" | wc -l | tr -d ' ')
+  echo "  ❌ Found $DEBUG_COUNT stray debugPrint(...) call(s):"
+  echo "$DEBUG_HITS" | sed 's/^/      /'
+  echo "    Fix: replace debugPrint(...) with appDebug(...) from utils/app_logger.dart."
+  VIOLATIONS=$((VIOLATIONS + DEBUG_COUNT))
+fi
+
 # ── Summary ─────────────────────────────────────────────────────────────────
 echo ""
 if [ "$VIOLATIONS" -gt 0 ]; then
   echo "[lint-design-system] ❌ FAILED: $VIOLATIONS violation(s)."
   echo "    Fix: replace raw Color(0xFF...) with AppColors.* tokens,"
-  echo "    or use the AppSpacing / AppRadius constants for spacing/radius."
+  echo "    use AppSpacing / AppRadius for spacing/radius, and use appDebug()"
+  echo "    instead of debugPrint() (with the app_logger.dart import)."
   echo "    Emergency override: ALLOW_DESIGN_LINT=1 (NOT recommended)."
   exit 1
 fi

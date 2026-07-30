@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../models/rider_model.dart' show AccountStatus;
+import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../utils/app_constants.dart';
+import '../utils/app_logger.dart';
 import '../utils/toast.dart';
 
-import '../core/state/app_provider.dart';
 import '../core/state/riverpod_providers.dart';
 import '../services/cache_service.dart';
 import '../main.dart' show AppShell;
@@ -55,14 +58,15 @@ import 'app_state.dart';
 
 part 'router_body.dart';
 
-class AppRouter extends StatefulWidget {
+class AppRouter extends ConsumerStatefulWidget {
   const AppRouter({super.key});
 
   @override
-  State<AppRouter> createState() => _AppRouterState();
+  ConsumerState<AppRouter> createState() => _AppRouterState();
 }
 
-class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
+class _AppRouterState extends ConsumerState<AppRouter>
+    with WidgetsBindingObserver {
   AuthState _currentState = AuthState.splash;
 
   bool _isSignUpFlow = true;
@@ -117,7 +121,10 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<AppProvider>().init();
+        ref.read(riderProvider).init();
+        ref.read(supportProvider).initSupportData();
+        ref.read(engagementProvider).initEngagementData();
+        ref.read(devicePolicyProvider).checkSystemPermissions();
       }
     });
   }
@@ -131,24 +138,24 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
-    final provider = context.read<AppProvider>();
-    final riderProvider = provider.riderProvider;
+    final rProvider = ref.read(riderProvider);
+    final wProvider = ref.read(walletProvider);
 
     switch (state) {
       case AppLifecycleState.resumed:
         _checkPermissionsOnResume();
-        riderProvider.setPollingActive();
-        riderProvider.refreshFromApi();
-        if (riderProvider.riderId != null) {
-          provider.walletProvider.refreshTransactions(
-            riderId: riderProvider.riderId!,
+        rProvider.setPollingActive();
+        rProvider.refreshFromApi();
+        if (rProvider.riderId != null) {
+          wProvider.refreshTransactions(
+            riderId: rProvider.riderId!,
           );
         }
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
-        riderProvider.setPollingInactive();
+        rProvider.setPollingInactive();
         break;
       case AppLifecycleState.detached:
         break;
@@ -157,8 +164,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
 
   Future<void> _checkPermissionsOnResume() async {
     if (!mounted) return;
-    final provider = context.read<AppProvider>();
-    await provider.checkSystemPermissions();
+    await ref.read(devicePolicyProvider).checkSystemPermissions();
     if (!mounted) return;
     final allRequiredGranted = await _areAllRequiredPermissionsGranted();
     if (!allRequiredGranted &&
@@ -173,7 +179,8 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final provider = context.watch<AppProvider>();
+    final riderProv = ref.watch(riderProvider);
+    final rider = riderProv.rider;
 
     final isUnauthenticatedState = _currentState == AuthState.splash ||
         _currentState == AuthState.legal ||
@@ -181,8 +188,8 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
         _currentState == AuthState.login ||
         _currentState == AuthState.otp;
 
-    if (provider.rider != null && !isUnauthenticatedState) {
-      final r = provider.rider!;
+    if (rider != null && !isUnauthenticatedState) {
+      final r = rider;
 
       // Delegate lifecycle routing to RiderLifecycleGate
       final correctState =
@@ -211,7 +218,9 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
           if (mounted) {
             setState(() {
               _currentState = correctState;
-              _isOnboarding = correctState != AuthState.dashboard;
+              // accountClosed is terminal — never treat as onboarding
+              _isOnboarding = correctState != AuthState.dashboard &&
+                  correctState != AuthState.accountClosed;
             });
             CacheService()
                 .setString('voltium_saved_auth_state', correctState.name);
@@ -220,9 +229,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       }
     }
 
-    if (provider.rider == null &&
-        provider.riderId == null &&
-        !isUnauthenticatedState) {
+    if (rider == null && riderProv.riderId == null && !isUnauthenticatedState) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           setState(() {
@@ -240,6 +247,7 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       _currentState = nextState;
       if (nextState == AuthState.preDashboard) _isOnboarding = true;
       if (nextState == AuthState.dashboard) _isOnboarding = false;
+      if (nextState == AuthState.accountClosed) _isOnboarding = false;
     });
 
     if (nextState != AuthState.splash) {
@@ -286,8 +294,15 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       case LifecycleTarget.dashboard:
         return AuthState.dashboard;
       case LifecycleTarget.suspended:
-      case LifecycleTarget.terminated:
+        // Suspended riders may be reactivated — keep them on pre-dashboard
+        // so they see the (already-correct) "your account is suspended"
+        // banner handled by PreDashboardScreen.
         return AuthState.preDashboard;
+      case LifecycleTarget.terminated:
+        // Terminated accounts are terminal: do NOT route to pre-dashboard
+        // (which would show onboarding CTAs). Show the dedicated
+        // account-closed surface instead.
+        return AuthState.accountClosed;
       case LifecycleTarget.unknown:
         return AuthState.login;
     }
@@ -306,6 +321,10 @@ class _AppRouterState extends State<AppRouter> with WidgetsBindingObserver {
       case AuthState.topUpProof:
       case AuthState.topUpReceipt:
       case AuthState.endRental:
+      case AuthState.accountClosed:
+        // Account-closed is terminal: do not allow back navigation to
+        // a pre-onboarding screen, which would let the rider re-enter
+        // onboarding with a closed account.
         return false;
       default:
         return true;

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart';
 
 class ReferralCode {
   final String code;
@@ -116,7 +116,7 @@ class ReferralService {
                 .toList() ??
             [];
       } catch (e) {
-        debugPrint('ReferralService: failed to parse referral cache: $e');
+        appDebug('ReferralService: failed to parse referral cache: $e');
       }
     }
 
@@ -127,7 +127,7 @@ class ReferralService {
             .map((e) => PromoCode.fromJson(e))
             .toList();
       } catch (e) {
-        debugPrint('ReferralService: failed to parse promo cache: $e');
+        appDebug('ReferralService: failed to parse promo cache: $e');
       }
     }
   }

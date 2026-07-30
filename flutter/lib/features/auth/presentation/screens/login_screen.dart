@@ -12,6 +12,7 @@ import 'package:voltium_rider/utils/phone_validator.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
 
 /// Matches web LoginScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -129,7 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ?.call(digits, referralCode.isNotEmpty ? referralCode : null);
       }
     } catch (e) {
-      debugPrint('[LoginScreen] Error in sendOtp: $e');
+      appDebug('[LoginScreen] Error in sendOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_request_failed');
       if (mounted) {
         String errorMsg = 'Network error. Please try again.';
@@ -675,5 +676,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 }
-
-

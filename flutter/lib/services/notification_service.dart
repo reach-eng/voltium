@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_logger.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -61,7 +61,7 @@ class NotificationService {
     String? payload,
   }) async {
     if (!_notificationsEnabled) {
-      debugPrint('NotificationService: notifications disabled, skipping');
+      appDebug('NotificationService: notifications disabled, skipping');
       return;
     }
 

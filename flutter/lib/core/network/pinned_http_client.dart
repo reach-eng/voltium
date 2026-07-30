@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:crypto/crypto.dart';
+import '../../utils/app_logger.dart';
 
 /// TLS Certificate Pinning Interceptor.
 ///
@@ -15,12 +16,19 @@ import 'package:crypto/crypto.dart';
 class PinnedHttpInterceptor {
   /// Default production SHA-256 certificate fingerprints for Voltium's TLS cert.
   ///
-  /// 🔐 IMPORTANT: Replace with actual production fingerprints before release.
-  static const List<String> productionFingerprints = [
-    // TODO: Add your production certificate hashes here
-    'SHA256_HASH_1=',
-    'SHA256_HASH_2=',
-  ];
+  static const List<String> productionFingerprints = [];
+
+  static List<String> get configuredFingerprints {
+    const envPins = String.fromEnvironment('TLS_PIN_SHA256');
+    if (envPins.isNotEmpty) {
+      return envPins
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return productionFingerprints.where((fp) => !fp.contains('HASH_')).toList();
+  }
 
   /// Creates an [http.Client] with certificate pinning awareness.
   static http.Client createClient() {
@@ -28,10 +36,11 @@ class PinnedHttpInterceptor {
       return http.Client();
     }
 
-    if (productionFingerprints.isEmpty) {
-      debugPrint(
+    final activeFingerprints = configuredFingerprints;
+    if (activeFingerprints.isEmpty) {
+      appDebug(
         '[PinnedHttpClient] WARNING: No production fingerprints configured. '
-        'TLS pinning is not active. Set productionFingerprints before release.',
+        'TLS pinning is not active. Set TLS_PIN_SHA256 dart-define before release.',
       );
       return http.Client();
     }
@@ -43,11 +52,11 @@ class PinnedHttpInterceptor {
         final digest = sha256.convert(cert.der);
         final extractedFingerprint = base64.encode(digest.bytes);
 
-        final isValid = productionFingerprints.contains(extractedFingerprint);
+        final isValid = activeFingerprints.contains(extractedFingerprint);
         if (!isValid) {
-          debugPrint(
+          appDebug(
             '[PinnedHttpClient] Certificate pinning validation failed for $host. '
-            'Expected one of $productionFingerprints but got $extractedFingerprint',
+            'Expected one of $activeFingerprints but got $extractedFingerprint',
           );
         }
         return isValid;

@@ -12,6 +12,7 @@ import 'package:voltium_rider/widgets/spark_otp_input.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
 
 /// Matches web OtpScreen.tsx exactly:
 /// - bg #F5F7FA (light)
@@ -150,7 +151,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         widget.onNext?.call(isNewRider);
       }
     } catch (e) {
-      debugPrint('[OtpScreen] Error in verifyOtp: $e');
+      appDebug('[OtpScreen] Error in verifyOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
         String errorMsg = 'Failed to verify OTP. Please try again.';
@@ -320,12 +321,14 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
                             child: RepaintBoundary(
                               child: AnimatedBuilder(
                                 animation: _bounceAnim,
-                                builder: (context, child) => Transform.translate(
+                                builder: (context, child) =>
+                                    Transform.translate(
                                   offset: Offset(0, _bounceAnim.value),
                                   child: child,
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(AppRadius.full),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.full),
                                   child: BackdropFilter(
                                     filter: ui.ImageFilter.blur(
                                         sigmaX: 16, sigmaY: 16),
@@ -337,8 +340,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
                                             Colors.white.withValues(alpha: 0.7),
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color:
-                                              Colors.white.withValues(alpha: 0.4),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.4),
                                           width: 1.5,
                                         ),
                                         boxShadow: AppShadows.glass,

@@ -13,6 +13,7 @@ import 'package:voltium_rider/widgets/earnings_add_sheet.dart';
 import '../widgets/earnings_widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import '../../../../utils/app_logger.dart';
 
 class EarningsScreen extends StatefulWidget {
   const EarningsScreen({super.key});
@@ -78,7 +79,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             .toList();
       }
     } catch (e) {
-      debugPrint('EarningsScreen: failed to load cached entries: $e');
+      appDebug('EarningsScreen: failed to load cached entries: $e');
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -369,7 +370,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             width: 80,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),

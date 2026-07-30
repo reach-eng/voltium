@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,8 +14,12 @@ import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_sc
 import 'package:voltium_rider/models/rider_model.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
 
 class UserOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
@@ -59,7 +62,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   String? _signaturePath;
 
   void _saveCache() {
-    final riderId = ref.read(appProvider).riderId;
+    final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
     final cacheData = {
       'name': _nameController.text,
@@ -81,7 +84,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   void _loadCache() {
-    final riderId = ref.read(appProvider).riderId;
+    final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
     KycRepository.loadFormCache(riderId: riderId).then((cacheData) {
       if (cacheData == null) return;
@@ -153,7 +156,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
             _bankIfscController.text = 'TEST0001234';
         });
       }
-      final rider = ref.read(appProvider).rider;
+      final rider = ref.read(riderProvider).rider;
       if (rider != null) {
         if (_nameController.text.isEmpty) {
           setState(() {
@@ -388,17 +391,18 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       return;
     }
 
-    final provider = ref.read(appProvider);
-    final rider = ref.watch(appProvider).rider;
+    final rider = ref.watch(riderProvider).rider;
     if (rider == null) {
       _showError('Session lost. Please log in again.');
       return;
     }
     final riderId = rider.id ?? rider.riderId;
 
+    final client = ApiClient();
+    final voltiumClient = VoltiumApiClient(client);
     _kycRepository ??= KycRepository(
-      provider.voltiumApiClient,
-      provider.filesRepository,
+      voltiumClient,
+      FilesRepository(client, voltiumClient),
     );
 
     setState(() => _isUploading = true);
@@ -486,7 +490,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl: signatureUrl,
       );
       await KycRepository.clearFormCache(riderId: riderId);
-      await provider.refresh();
+      await ref.read(riderProvider).refresh();
       PostHogService.capture('kyc_submitted', properties: {
         'has_aadhaar':
             (_aadhaarFrontUploaded && _aadhaarBackUploaded).toString(),
@@ -502,19 +506,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       if (mounted) {
         String userMessage = 'Something went wrong. Please try again.';
         final msg = e.toString();
-        debugPrint('Profile update error: $msg');
+        appDebug('Profile update error: $msg');
 
-        // Extract real validation error if available (e.g. from DioException)
-        if (e is DioException && e.response?.data != null) {
-          final data = e.response!.data;
-          debugPrint('Backend error data: $data');
-          if (data is Map && data['message'] != null) {
-            userMessage = data['message'];
-            if (data['errors'] != null) {
-              userMessage += ': ${data['errors']}';
-            }
-          }
-        } else if (msg.contains('422') || msg.contains('VALIDATION')) {
+        if (msg.contains('422') || msg.contains('VALIDATION')) {
           final match = RegExp(r'"message":"([^"]+)"').firstMatch(msg);
           userMessage = match != null
               ? match.group(1)!
@@ -560,8 +554,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: AppTypography.bodySmallEmphasis
-            .copyWith(color: isActive ? Colors.white : AppColors.textSecondary),
+        style: AppTypography.bodySmallEmphasis.copyWith(
+            color: isActive ? Colors.white : AppColors.onSurfaceVariant),
       ),
     );
   }
@@ -604,7 +598,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   bool _isFieldEditable(String fieldName) {
-    final rider = ref.read(appProvider).rider;
+    final rider = ref.read(riderProvider).rider;
     if (rider?.kycStatus != KycStatus.rejected ||
         rider?.kycEditableFields == null ||
         rider!.kycEditableFields!.isEmpty) {
@@ -616,104 +610,127 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  buildCurtainHeader(
-                    title: 'Rider Profile',
-                    subtitle: 'Complete your details to finish onboarding',
-                    onBack: () {
-                      if (_currentStep > 1) {
-                        setState(() {
-                          _currentStep--;
-                        });
-                      } else {
-                        widget.onBack?.call();
-                      }
-                    },
-                  ),
-                  Transform.translate(
-                    offset: const Offset(0, -32),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        children: [
-                          _buildStepIndicator(),
-                          if (_currentStep == 1)
-                            PersonalDetailsCard(
-                              nameController: _nameController,
-                              nameEnabled: _isFieldEditable('fullName'),
-                              dobController: _dobController,
-                              dobEnabled: _isFieldEditable('dob'),
-                              emailController: _emailController,
-                              emailEnabled: _isFieldEditable('email'),
-                              fatherNameController: _fatherNameController,
-                              fatherNameEnabled: _isFieldEditable('fatherName'),
-                              motherNameController: _motherNameController,
-                              motherNameEnabled: _isFieldEditable('motherName'),
-                              addressController: _addressController,
-                              addressEnabled:
-                                  _isFieldEditable('currentAddress'),
-                              phone: ref.read(appProvider).rider?.phone ?? '',
-                              onSelectDob: _selectDob,
-                            ),
-                          if (_currentStep == 2)
-                            IdentityVerificationCard(
-                              aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                              aadhaarFrontEnabled:
-                                  _isFieldEditable('aadhaarFront'),
-                              aadhaarBackUploaded: _aadhaarBackUploaded,
-                              aadhaarBackEnabled:
-                                  _isFieldEditable('aadhaarBack'),
-                              panUploaded: _panUploaded,
-                              panEnabled: _isFieldEditable('panCard'),
-                              bankDetailsDone:
-                                  _bankAccountController.text.isNotEmpty,
-                              bankEnabled: _isFieldEditable('accountNumber') ||
-                                  _isFieldEditable('bankName') ||
-                                  _isFieldEditable('ifscCode'),
-                              onPickAadhaarFront: () =>
-                                  _showDocumentSourceDialog('aadhaar_front'),
-                              onPickAadhaarBack: () =>
-                                  _showDocumentSourceDialog('aadhaar_back'),
-                              onPickPan: () => _showDocumentSourceDialog('pan'),
-                              onShowBankDialog: () => _showBankDetailsDialog(),
-                            ),
-                          if (_currentStep == 3) ...[
-                            SelfieCard(
-                              selfieUploaded: _selfieUploaded,
-                              selfiePath: _selfiePath,
-                              enabled: _isFieldEditable('profilePhoto'),
-                              onTap: () => _showDocumentSourceDialog('selfie'),
-                            ),
-                            const SizedBox(height: 24),
-                            SignatureCard(
-                              signatureUploaded: _signatureUploaded,
-                              enabled: _isFieldEditable('signature'),
-                              onTap: _openSignaturePad,
-                            ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_currentStep > 1) {
+          setState(() {
+            _currentStep--;
+          });
+        } else {
+          widget.onBack?.call();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: colors.surfaceSubtle,
+        body: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    buildCurtainHeader(
+                      title: 'Rider Profile',
+                      subtitle: 'Complete your details to finish onboarding',
+                      onBack: () {
+                        if (_currentStep > 1) {
+                          setState(() {
+                            _currentStep--;
+                          });
+                        } else {
+                          widget.onBack?.call();
+                        }
+                      },
+                    ),
+                    Transform.translate(
+                      offset: const Offset(0, -32),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          children: [
+                            _buildStepIndicator(),
+                            if (_currentStep == 1)
+                              PersonalDetailsCard(
+                                nameController: _nameController,
+                                nameEnabled: _isFieldEditable('fullName'),
+                                dobController: _dobController,
+                                dobEnabled: _isFieldEditable('dob'),
+                                emailController: _emailController,
+                                emailEnabled: _isFieldEditable('email'),
+                                fatherNameController: _fatherNameController,
+                                fatherNameEnabled:
+                                    _isFieldEditable('fatherName'),
+                                motherNameController: _motherNameController,
+                                motherNameEnabled:
+                                    _isFieldEditable('motherName'),
+                                addressController: _addressController,
+                                addressEnabled:
+                                    _isFieldEditable('currentAddress'),
+                                phone:
+                                    ref.read(riderProvider).rider?.phone ?? '',
+                                onSelectDob: _selectDob,
+                              ),
+                            if (_currentStep == 2)
+                              IdentityVerificationCard(
+                                aadhaarFrontUploaded: _aadhaarFrontUploaded,
+                                aadhaarFrontPath: _aadhaarFrontPath,
+                                aadhaarFrontEnabled:
+                                    _isFieldEditable('aadhaarFront'),
+                                aadhaarBackUploaded: _aadhaarBackUploaded,
+                                aadhaarBackPath: _aadhaarBackPath,
+                                aadhaarBackEnabled:
+                                    _isFieldEditable('aadhaarBack'),
+                                panUploaded: _panUploaded,
+                                panPath: _panPath,
+                                panEnabled: _isFieldEditable('panCard'),
+                                bankDetailsDone:
+                                    _bankAccountController.text.isNotEmpty,
+                                bankEnabled:
+                                    _isFieldEditable('accountNumber') ||
+                                        _isFieldEditable('bankName') ||
+                                        _isFieldEditable('ifscCode'),
+                                onPickAadhaarFront: () =>
+                                    _showDocumentSourceDialog('aadhaar_front'),
+                                onPickAadhaarBack: () =>
+                                    _showDocumentSourceDialog('aadhaar_back'),
+                                onPickPan: () =>
+                                    _showDocumentSourceDialog('pan'),
+                                onShowBankDialog: () =>
+                                    _showBankDetailsDialog(),
+                              ),
+                            if (_currentStep == 3) ...[
+                              SelfieCard(
+                                selfieUploaded: _selfieUploaded,
+                                selfiePath: _selfiePath,
+                                enabled: _isFieldEditable('profilePhoto'),
+                                onTap: () =>
+                                    _showDocumentSourceDialog('selfie'),
+                              ),
+                              const SizedBox(height: 24),
+                              SignatureCard(
+                                signatureUploaded: _signatureUploaded,
+                                enabled: _isFieldEditable('signature'),
+                                onTap: _openSignaturePad,
+                              ),
+                            ],
+                            const SizedBox(height: 120),
                           ],
-                          const SizedBox(height: 120),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          UserOnboardingBottomButton(
-            canProceed: _canProceedCurrentStep,
-            isUploading: _isUploading,
-            uploadProgressText: _uploadProgressText,
-            onNext: _onBottomButtonPressed,
-          ),
-        ],
+            UserOnboardingBottomButton(
+              canProceed: _canProceedCurrentStep,
+              isUploading: _isUploading,
+              uploadProgressText: _uploadProgressText,
+              onNext: _onBottomButtonPressed,
+            ),
+          ],
+        ),
       ),
     );
   }

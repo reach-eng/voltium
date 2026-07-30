@@ -5,6 +5,7 @@ import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import '../../../../utils/app_logger.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -54,7 +55,7 @@ class _NotificationPreferencesScreenState
         _announcementsEnabled = prefs.getBool(_keyAnnouncements) ?? true;
       });
     } catch (e) {
-      debugPrint('Failed to load notification preferences: $e');
+      appDebug('Failed to load notification preferences: $e');
     }
   }
 
@@ -82,7 +83,7 @@ class _NotificationPreferencesScreenState
         );
       }
     } catch (e) {
-      debugPrint('Failed to save notification preferences: $e');
+      appDebug('Failed to save notification preferences: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(

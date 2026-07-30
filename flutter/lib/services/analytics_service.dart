@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../utils/app_logger.dart';
 
 enum AnalyticsEvent {
   appOpened,
@@ -32,7 +33,7 @@ class AnalyticsService {
       if (params != null) ...params.map((k, v) => MapEntry(k, v as Object)),
     };
 
-    debugPrint('[Analytics] $eventName: $properties');
+    appDebug('[Analytics] $eventName: $properties');
     PostHogService.capture(eventName, properties: properties);
   }
 
@@ -80,7 +81,7 @@ class AnalyticsService {
 
   void setUserProperties(String riderId, Map<String, dynamic> properties) {
     if (!_isEnabled) return;
-    debugPrint('[Analytics] User properties set for $riderId: $properties');
+    appDebug('[Analytics] User properties set for $riderId: $properties');
     PostHogService.identify(
       riderId.hashCode.toString(),
       properties: properties.map((k, v) => MapEntry(k, v as Object)),
@@ -89,7 +90,7 @@ class AnalyticsService {
 
   void clearUser() {
     if (!_isEnabled) return;
-    debugPrint('[Analytics] User cleared');
+    appDebug('[Analytics] User cleared');
     PostHogService.reset();
   }
 }

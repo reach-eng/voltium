@@ -4,6 +4,7 @@ import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/models/transaction_model.dart';
+import '../../../../utils/app_logger.dart';
 
 TransactionStatus _parseTransactionStatus(String status) {
   switch (status.toUpperCase()) {
@@ -159,7 +160,7 @@ class WalletProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _lastError = 'Couldn\'t load your transactions. Pull to retry.';
-      debugPrint('WalletProvider: refresh failed: $e');
+      appDebug('WalletProvider: refresh failed: $e');
       notifyListeners();
     }
   }

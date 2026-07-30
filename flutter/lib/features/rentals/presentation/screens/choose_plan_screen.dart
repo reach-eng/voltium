@@ -10,6 +10,7 @@ import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import '../../../../utils/app_logger.dart';
 
 class ChoosePlanScreen extends ConsumerStatefulWidget {
   final VoidCallback onNext;
@@ -73,8 +74,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
         });
       }
     } catch (e, stack) {
-      debugPrint('FETCH PLANS ERROR: $e');
-      debugPrint('$stack');
+      appDebug('FETCH PLANS ERROR: $e');
+      appDebug('$stack');
       if (!mounted) return;
       setState(() {
         if (e is ApiException) {
@@ -252,13 +253,15 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             if (widget.onBack != null) ...[
                               InkWell(
                                 onTap: () => widget.onBack?.call(),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
                                 child: Container(
                                   width: 44,
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
                                     border: Border.all(
                                       color: AppColors.outlineVariant,
                                     ),
@@ -329,7 +332,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   color: isSelected
                                       ? AppColors.primary
                                       : Colors.white,
-                                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.xl),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.transparent
@@ -594,7 +598,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                           children: [
                             InkWell(
                               key: const Key('advanceRentCheckbox'),
-                              onTap: () => setState(() => _payAdvanceRent = !_payAdvanceRent),
+                              onTap: () => setState(
+                                  () => _payAdvanceRent = !_payAdvanceRent),
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 16.0),
@@ -604,14 +609,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                       value: _payAdvanceRent,
                                       activeColor: AppColors.primary,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.xs),
                                       ),
-                                      onChanged: (val) => setState(() => _payAdvanceRent = val ?? false),
+                                      onChanged: (val) => setState(
+                                          () => _payAdvanceRent = val ?? false),
                                     ),
                                     Expanded(
                                       child: Text(
                                         'Pay advance rent along with security deposit',
-                                        style: AppTypography.bodySmallStrong.copyWith(
+                                        style: AppTypography.bodySmallStrong
+                                            .copyWith(
                                           color: AppColors.slate800,
                                         ),
                                       ),
@@ -622,15 +630,18 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                             ),
                             ElevatedButton(
                               key: const Key('confirmPlanButton'),
-                              onPressed: _selectedPlanId == null || _isSubmitting
-                                  ? null
-                                  : _subscribe,
+                              onPressed:
+                                  _selectedPlanId == null || _isSubmitting
+                                      ? null
+                                      : _subscribe,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 disabledBackgroundColor: AppColors.borderMedium,
-                                padding: const EdgeInsets.symmetric(vertical: 18),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.xl),
                                 ),
                                 elevation: 0,
                               ),
