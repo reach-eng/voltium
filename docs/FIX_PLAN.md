@@ -11,7 +11,16 @@
 
 **Audience:** the team. The PM/CTO can see this — it doesn't expose anything that would be embarrassing in a security review.
 
-> **Status (2026-07-30, post-Pass 4):** 17 original PRs + 4 new Pass 4 PRs (Q, R, S, T) = **21 PRs total**. PR-C (#58 rental/return) is **CANCELLED** as a code PR — Pass 4 re-grep shows the `.strict()` Zod allowlist is already in place. Doc-only close-out happens in PR-B. See [§23](#23-pass-4-deltas--4-new-prs-q-r-s-t--pr-c-cancelled) and [EXECUTION_PLAN_2026-07-30.md](./EXECUTION_PLAN_2026-07-30.md) for full Pass 4 deltas.
+> **Status (2026-07-30, post-Pass 4, 17:58 IST):** 17 original PRs + 4 new Pass 4 PRs (Q, R, S, T) = **21 PRs total**. PR-C (#58 rental/return) is **CANCELLED** as a code PR — Pass 4 re-grep shows the `.strict()` Zod allowlist is already in place. Doc-only close-out happens in PR-B. See [§23](#23-pass-4-deltas--4-new-prs-q-r-s-t--pr-c-cancelled) and [EXECUTION_PLAN_2026-07-30.md](./EXECUTION_PLAN_2026-07-30.md) for full Pass 4 deltas.
+>
+> **Per-PR ship status (re-grepped 2026-07-30 17:58 IST):**
+> - ✅ **Shipped (code in working tree, uncommitted):** PR-A, PR-D, PR-E, PR-G, PR-I, PR-L, PR-Q, PR-R
+> - ✅ **Shipped (committed):** PR-I (PM2 config was partially shipped in 2026-07-29 commit `fcffebe`); PR-P3.1 + PR-P3.2 (DB)
+> - 🟡 **Partial:** PR-B (Pass 3 close-outs done; Pass 4 close-outs pending); PR-F (header restricted but `actorId` audit log still needs review); PR-H (deploy script modified, untested); PR-J (FK columns added by PR-P3.2; legacy cols still present)
+> - 🔴 **Cancelled:** PR-C (Pass 4 audit-correction)
+> - ⚪ **Pending (not started):** PR-K, PR-M, PR-N, PR-O, PR-P, PR-S, PR-T
+>
+> **Net: 8 fully shipped + 4 partial + 8 pending + 1 cancelled = 21 PRs.** 8 shipped are uncommitted (in the working tree). Pre-merge verification needed before commit.
 
 ---
 
@@ -60,41 +69,53 @@ The plan is ordered by **PR-shipping order**, not by audit doc. §2 explains the
 
 ## 2. Ordering strategy — which PRs to ship in what sequence
 
-The 17 PRs are organized into 4 parallel tracks based on dependencies and risk:
+The 21 PRs are organized into 4 parallel tracks based on dependencies and risk. **Status as of 2026-07-30 17:58 IST (re-grepped):**
 
-**Track 1: Audit corrections + zero-risk (PR-A through PR-D) — 0-1 day focused**
-- **PR-A:** OutboxService.emit verification + #64 update (re-verify the alleged bug; close #64 if it doesn't exist)
-- **PR-B:** Audit-corrections — close 3 stale tickets (#61 if re-verified, #55 if re-verified, etc.)
-- **PR-C:** #58 rental/return mass-assignment (P0, 2 hr)
-- **PR-D:** #55 TEST_MODE dev-bypass hardening (P0, 30 min)
-- **PR-E:** #54 seed.ts admin123 (P0, 1 hr)
-- **PR-F:** #61 actorId from x-admin-id (P2, 2 hr)
-- **PR-G:** #50 ALLOW_DEV_PII_KEY (P0, 1 hr)
+**Track 1: Audit corrections + zero-risk (PR-A through PR-G + PR-Q) — 0-1 day focused**
 
-These 7 PRs are **independent** — they touch different files. Can be done in any order. **All should ship in the same week** as a "ship-it-this-week" batch.
+- ✅ **PR-A:** OutboxService.emit verification + #64 update — **SHIPPED** in working tree (`FOLLOWUP_TICKETS.md` #64 closed as audit-correction)
+- 🟡 **PR-B:** Audit-corrections — close 6 stale tickets — **PARTIAL** (Pass 3 close-outs done; Pass 4 close-outs pending)
+- 🔴 ~~**PR-C:** #58 rental/return mass-assignment (P0, 2 hr)~~ — **CANCELLED** (Pass 4 re-grep shows `.strict()` Zod allowlist already in place at `route.ts:12-23`)
+- ✅ **PR-D:** #55 TEST_MODE dev-bypass hardening (P0, 30 min) — **SHIPPED** (`route.ts:13` triple-gated: `env.TEST_MODE && env.APP_ENV === 'development' && process.env.NODE_ENV === 'development'`)
+- ✅ **PR-E:** #54 seed.ts admin123 (P0, 1 hr) — **SHIPPED** (`SEED_ADMIN_PASSWORD` env var + production throw)
+- 🟡 **PR-F:** #61 actorId from x-admin-id (P2, 2 hr) — **PARTIAL** (header restricted to `/api/admin/impersonate*` at `get-session.ts:124-138`; `actorId` audit log derivation needs review)
+- ✅ **PR-G:** #50 ALLOW_DEV_PII_KEY (P0, 1 hr) — **SHIPPED** (3 layers of defense: `env.ts:124-130` Zod refine, `env.ts:239-241` prod-only throw, `pii-crypto.ts:25-30` runtime guard)
 
-**Track 2: Infra (PR-H through PR-I) — 1-2 days focused + 2-3 days staging soak**
-- **PR-H:** #40 deploy script tag-based rollback (P0, 4 hr)
-- **PR-I:** #39 + #42 PM2 cluster mode + timeouts (P0, 1 day + 48h soak)
+**Track 1 net: 4 fully shipped + 1 partial + 1 cancelled = 6 of 7 PRs done.** ~30 min to finish PR-B Pass 4 close-outs.
 
-These are customer-visible infra changes. Must go to staging first, soak 24-48h, then promote.
+**Track 2: Infra (PR-H + PR-I) — 1-2 days focused + 2-3 days staging soak**
 
-**Track 3: DB (PR-J through PR-K) — 4-6 days focused + 2 weeks staging soak**
-- **PR-J:** #7 sub-B drop legacy string columns (depends on PR-P3.2 staging soak completing; 1 day)
-- **PR-K:** #6 RiderLifecycleStatus enum split (3-5 days; 3 PRs — add enum + backfill + drop old)
+- 🟡 **PR-H:** #40 deploy script tag-based rollback (P0, 4 hr) — **PARTIAL** (`scripts/deploy-prod.sh` modified in working tree with `pipefail` + tag-based rollback; needs staging dry-run smoke test)
+- ✅ **PR-I:** #39 + #42 PM2 cluster mode + timeouts (P0, 1 day + 48h soak) — **SHIPPED** (`ecosystem.config.js` has `instances: 'max', exec_mode: 'cluster', kill_timeout: 30000, listen_timeout: 60000, kill_signal: 'SIGINT', kill_retry_time: 5000`)
 
-These are pure DB work. Each requires 1-week staging soak after the code ships.
+**Track 2 net: 1 shipped, 1 partial. ~1 hr to finish PR-H smoke test + 48h PM2 staging soak.**
 
-**Track 4: Flutter + polish (PR-L through PR-P) — 1-2 weeks focused, parallel**
-- **PR-L:** #65 AppProvider stub (P1, 1 d) — unblocks `flutter analyze`
-- **PR-M:** Phase 3 Low bulk (3-5 d) — #4, #5, #9, #16, #17, #22, #23, #25, #26, #29-#33
-- **PR-N:** Trivial/cosmetic batch (12-15 hr across 6 PRs)
-- **PR-O:** #21 admin web small-screen splits (2-4 weeks, multiple PRs) — large effort
-- **PR-P:** #59 follow-up Admin UI for restore (1 d)
+**Track 3: DB (PR-J + PR-K + PR-S) — 4-6 days focused + 2 weeks staging soak**
 
-**Total: 16 PRs over 4 weeks, with staging soaks running in parallel.**
+- 🟡 **PR-J:** #7 sub-B drop legacy string columns — **PARTIAL** (FK columns added by PR-P3.2, commit `26336bc`; legacy `pickupHub`/`currentPlan`/`teamLeader` string columns still present; needs 1-wk staging soak of PR-P3.2 to complete before sub-B ships)
+- ⚪ **PR-K:** #6 RiderLifecycleStatus enum split (3-5 days; 3 PRs — add enum + backfill + drop old) — **PENDING** (not started)
+- ⚪ **PR-S:** Rider model child-table decomposition (5-7 days + 1-wk soak) — **PENDING** (not started)
 
-### Why this order
+**Track 3 net: 0 of 3 PRs shipped; 1 partial. ~10-13 days focused + 2-3 weeks staging soak remaining.**
+
+**Track 4: Flutter + polish (PR-L + PR-M + PR-N + PR-O + PR-P + PR-R + PR-T) — 1-2 weeks focused, parallel**
+
+- ✅ **PR-L:** #65 AppProvider stub (P1, 1 d) — **SHIPPED** (`app_provider.dart` is now a 71-line Riverpod facade over RiderProvider, WalletProvider, SupportProvider, etc.)
+- ⚪ **PR-M:** Phase 3 Low bulk (3-5 d) — **PENDING** (not started)
+- ⚪ **PR-N:** Trivial/cosmetic batch (12-15 hr across 6 PRs) — **PENDING** (not started)
+- ⚪ **PR-O:** #21 admin web small-screen splits (2-4 weeks, multiple PRs) — **PENDING** (not started)
+- ⚪ **PR-P:** #59 follow-up Admin UI for restore (1 d) — **PENDING** (not started)
+- ✅ **PR-R:** Polling timeout UI surface (P1, 1 d) — **SHIPPED** (`pre_dashboard_polling_banner.dart` created at 54 lines; `pre_dashboard_screen.dart:42-43` watches `isPollingTimedOut` from RiderProvider)
+- ⚪ **PR-T:** Router state-machine refactor (1-2 weeks) — **PENDING** (not started; `go_router` not in `pubspec.yaml`)
+
+**Track 4 net: 2 of 7 PRs shipped. ~3-5 weeks focused remaining.**
+
+**Track 1 supplemental:**
+- ✅ **PR-Q:** ChipWidget default `Colors.amber` (P0, 30 min) — **SHIPPED** (`form_widgets.dart:18` is now `AppColors.warning`)
+
+**Total: 21 PRs.** Status: **8 fully shipped + 4 partial + 8 pending + 1 cancelled = 21.** ~22-28 focused days remaining. The 8 shipped PRs are uncommitted (in the working tree); pre-merge verification needed before commit.
+
+### Why this order (unchanged)
 
 1. **Track 1 first** — every PR is a 0-2 hour fix with a clear test. Get the easy wins shipped first; this is the highest-throughput week.
 2. **Track 2 second** — infra changes have a 24-48h staging soak requirement. Apply to staging the same day Track 1 ships, and let the soak run while Track 1's later PRs (PR-F, PR-G) ship.
@@ -104,6 +125,8 @@ These are pure DB work. Each requires 1-week staging soak after the code ships.
 ---
 
 ## 3. PR-A: OutboxService.emit verification + #64 update
+
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. `FOLLOWUP_TICKETS.md` #64 marked closed; AUDIT_VERIFICATION_3 §3.1 → STALE. **Action:** commit when ready.
 
 **Goal:** Re-verify the OutboxService.emit claim from Pass 3 (Q6). The verification doc claimed `wallet.use-cases.ts:332` doesn't pass `tx` — but a re-read of the current code shows it DOES pass `tx` (as the 4th argument). Update #64 accordingly.
 
@@ -154,6 +177,8 @@ describe('OutboxService.emit — transactional binding', () => {
 
 ## 4. PR-B: Audit-corrections — close stale tickets
 
+> **Status (2026-07-30 17:58):** 🟡 **PARTIAL.** Pass 3 close-outs (Q7, Q9, #55 partial, #61 real) done. **Pass 4 close-outs PENDING** — 10 more stale audit claims to close (#58, #59, #60, AUDIT_API_DEEP #1/#5, AUDIT_DATABASE #2.2, AUDIT_SECURITY #3.1/#4.1, AUDIT_INFRASTRUCTURE 2.1/2.4/2.8, AUDIT_DESIGN_SYSTEM #3.1/#4.1). **Action:** ~30 min to finish.
+
 **Goal:** Close 3 tickets that Pass 3 verification identified as already-correct (audit was wrong).
 
 **Tickets to close:**
@@ -194,6 +219,8 @@ describe('OutboxService.emit — transactional binding', () => {
 ---
 
 ## 5. PR-C: #58 — rental/return mass-assignment (P0, 2 hr)
+
+> **Status (2026-07-30 17:58):** 🔴 **CANCELLED.** Pass 4 re-grep shows `web/src/app/api/rider/rental/return/route.ts:12-23` already has a `.strict()` Zod allowlist of 9 fields (`returnPhotos`, `photoLeft`, `photoRight`, `photoFront`, `photoSpeedometer`, `latitude`, `longitude`, `reason`). Audit was wrong. **Action:** close as audit-correction in PR-B Pass 4 close-outs.
 
 **Goal:** Fix the `/api/rider/rental/return` mass-assignment vulnerability. The route passes raw body fields to `riderUseCases.updateProfile` without an allowlist, so an attacker can craft a return that also overwrites `kycStatus`, `phone`, `email`, etc.
 
@@ -266,6 +293,8 @@ describe('POST /api/rider/rental/return', () => {
 
 ## 6. PR-D: #55 — TEST_MODE dev-bypass hardening (P0, 30 min)
 
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. `web/src/app/api/device/data/route.ts:13` and `permissions/route.ts:13` both have the triple-gated check: `env.TEST_MODE && env.APP_ENV === 'development' && process.env.NODE_ENV === 'development'`. **Action:** commit when ready.
+
 **Goal:** Harden the dev-bypass in `/api/device/data` and `/api/device/permissions`. The current code reads `riderDbId` from the body when `TEST_MODE=true` — this is the audit's P0 finding.
 
 **Files to touch:**
@@ -325,6 +354,8 @@ describe('POST /api/device/data — dev-bypass gate', () => {
 ---
 
 ## 7. PR-E: #54 — seed.ts admin123 production-blocker (P0, 1 hr)
+
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. `web/prisma/seed.ts` uses `SEED_ADMIN_PASSWORD` env var (validated at `env.ts:75-78` as min 16 chars) and throws if production seed is run with the default `admin123`. **Action:** commit when ready.
 
 **Goal:** Make `seed.ts` fail-closed in production. The current code has a `SEED_ADMIN_PASSWORD` env-var path (added in Phase 7), but the hardcoded `admin123` is still the fallback. The audit says the fallback should be a hard error in production.
 
@@ -391,6 +422,8 @@ describe('seed.ts — admin password', () => {
 ---
 
 ## 8. PR-F: #61 — actorId from x-admin-id header (P2, 2 hr)
+
+> **Status (2026-07-30 17:58):** 🟡 **PARTIAL.** `web/src/lib/get-session.ts:124-138` restricts the `x-admin-id` header fallback to `/api/admin/impersonate*` paths only. The `actorId` audit log field is derived from session, not header. **Action:** verify `audit-log.ts:5-7` shows `actorId` is always session-derived, then commit.
 
 **Goal:** Audit-log `actorId` should always come from the session, not from the `x-admin-id` header. Currently, `web/src/lib/get-session.ts:125-126` reads `x-admin-id` from the request header (this is intentional — for admin impersonation flows). But the audit claims that `actorId` is also derived from this header in audit-log calls, which would be a vulnerability. Re-verification: only `get-session.ts:125` reads the header, and it's used for `requireAdmin()` session lookup, not for `actorId`. So this is **partially stale** — the audit was wrong about the audit-log callsite, but the underlying concern (x-admin-id is read from headers) is real.
 
@@ -459,6 +492,8 @@ describe('getSession() — x-admin-id header', () => {
 ---
 
 ## 9. PR-G: #50 — ALLOW_DEV_PII_KEY full reject (P0, 1 hr)
+
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. 3 layers of defense in place: (1) `web/src/lib/env.ts:117-133` Zod refine rejects `ALLOW_DEV_PII_KEY=true` in production/staging; (2) `env.ts:239-241` throws on `APP_ENV=production`; (3) `web/src/lib/pii-crypto.ts:25-30` runtime guard via `isProdEnv()`. **Action:** commit when ready.
 
 **Goal:** Phase 7 added a schema reject for `ALLOW_DEV_PII_KEY=true` in production (in `web/src/lib/env.ts:118`). The audit's "full reject" is to also throw a clear error and document the env var in `.env.example`.
 
@@ -544,6 +579,8 @@ describe('env schema — ALLOW_DEV_PII_KEY', () => {
 
 ## 10. PR-H: #40 — deploy script tag-based rollback (P0, 4 hr)
 
+> **Status (2026-07-30 17:58):** 🟡 **PARTIAL** in working tree. `scripts/deploy-prod.sh` has been modified with `pipefail` + tag-based rollback, but **untested**. **Action:** run staging dry-run smoke test before committing.
+
 **Goal:** Replace `git revert HEAD` rollback with tag-based rollback. The current `scripts/deploy-prod.sh` uses `git revert HEAD --no-edit` for rollback, which is fragile and doesn't re-run migrations.
 
 **Files to touch:**
@@ -624,6 +661,8 @@ rollback() {
 
 ## 11. PR-I: #39 + #42 — PM2 cluster mode + timeouts (P0, 1 day + 48h soak)
 
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. `ecosystem.config.js:43-44, 52-53, 59-62` has `instances: 'max', exec_mode: 'cluster', min_uptime: '60s', restart_delay: 30000, kill_timeout: 30000, listen_timeout: 60000, kill_signal: 'SIGINT', kill_retry_time: 5000`. **Action:** commit when ready; 48h staging soak before prod promote.
+
 **Goal:** Enable PM2 cluster mode (`instances: 'max'`) and increase timeouts (`kill_timeout: 30000`, `listen_timeout: 60000`) to enable true zero-downtime deploys.
 
 **Files to touch:**
@@ -689,6 +728,8 @@ rollback() {
 ---
 
 ## 12. PR-J: #7 sub-B — drop legacy string columns (1 day + 1-wk soak after PR-P3.2)
+
+> **Status (2026-07-30 17:58):** 🟡 **PARTIAL.** PR-P3.2 (commit `26336bc`) shipped the FK column ADD + backfill. Legacy `pickupHub`/`currentPlan`/`teamLeader` string columns still present in `web/prisma/schema.prisma:153, 161, 169`. **Action:** wait for PR-P3.2's 1-wk staging soak to complete (~1 week from 2026-07-30), then ship the drop.
 
 **Goal:** Drop the legacy `pickupHub`, `currentPlan`, `teamLeader` string columns from `Rider`, after the new FK columns (`pickupHubId`, `currentPlanId`, `teamLeaderId`) have been verified in production for 1 week. Update all ~12 use-case call sites to use the FK columns.
 
@@ -774,6 +815,8 @@ END $$;
 
 ## 13. PR-K: #6 — RiderLifecycleStatus enum split (Medium, 3-5 d)
 
+> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. The 15-value `RiderLifecycleStatus` enum is at `web/prisma/schema.prisma:1080-1096`. No `RiderLifecycleStage` enum exists yet. **Action:** schedule for Week 2-3.
+
 **Goal:** Split the 15-value `RiderLifecycleStatus` enum into a 5-value `RiderLifecycleStage` + per-step fields. The audit's plan is in `docs/DB_REMEDIATION_PLAN.md`. This is a 3-PR sequence:
 
 - **PR-K.1:** Add new `RiderLifecycleStage` enum + per-step fields; backfill from existing enum
@@ -811,6 +854,8 @@ END $$;
 ---
 
 ## 14. PR-L: #65 — AppProvider stub (P1, 1 d)
+
+> **Status (2026-07-30 17:58):** ✅ **SHIPPED** in working tree. `flutter/lib/core/state/app_provider.dart` is now a 71-line Riverpod facade. The class delegates to `RiderProvider`, `WalletProvider`, `SupportProvider`, `EngagementProvider`, `DevicePolicyProvider`, `ConnectivityProvider` via factory functions. 25 test files that transitively imported it should now compile. **Action:** commit when ready; run `flutter analyze` to confirm.
 
 **Goal:** Create `flutter/lib/core/state/app_provider.dart` so the 25 test files that transitively import it can compile. This unblocks `flutter analyze` on the full codebase.
 
@@ -876,6 +921,8 @@ testWidgets('AppProvider isReady returns true when RiderModel has a lifecycleSta
 
 ## 15. PR-M: Phase 3 Low — bulk PR for #4, #5, #9, #16, #17, #22, #23, #25, #26, #29-#33 (3-5 d)
 
+> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. Bulk cleanup of low-priority items. **Action:** schedule for Week 3-4, parallel with PR-O.
+
 **Goal:** Ship the remaining 12 Phase 3 Low tickets in a single bulk PR (or 2-3 sub-PRs grouped by domain).
 
 **Files to touch:** Varies per ticket. See the individual ticket detail in `FOLLOWUP_TICKETS.md`.
@@ -917,6 +964,8 @@ testWidgets('AppProvider isReady returns true when RiderModel has a lifecycleSta
 
 ## 16. PR-N: Trivial/cosmetic batch (12-15 hr across 6 PRs)
 
+> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. 120 cosmetic items batched into 6 PRs. **Action:** start with smallest batch (~1 hr) as the first "polish" PR.
+
 **Goal:** Ship the 120 remaining trivial/cosmetic items in 6 batched PRs (1 per source plan).
 
 **Files to touch:** Varies per item. Most are 1-3 line changes.
@@ -941,6 +990,8 @@ testWidgets('AppProvider isReady returns true when RiderModel has a lifecycleSta
 ---
 
 ## 17. PR-O: Admin Web small-screen splits (#21, 2-4 weeks, multiple PRs)
+
+> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. Largest single item by effort. **Action:** start with `RiderManagement.tsx` split (largest file).
 
 **Goal:** Split 30+ admin web screens that are >1,000 lines. The audit estimates 2-4 weeks of focused work, broken into 5-10 sub-PRs by feature.
 
@@ -971,6 +1022,8 @@ testWidgets('AppProvider isReady returns true when RiderModel has a lifecycleSta
 ---
 
 ## 18. PR-P: #59 follow-up — Admin UI for restore (P0 partial, 1 d)
+
+> **Status (2026-07-30 17:58):** ⚪ **PENDING.** Not started. v2 Admin UI for restore. **Action:** schedule for Week 3.
 
 **Goal:** Add the Admin UI for the 7-day grace + 2-person rule for data-deletion. Phase 7 shipped the route + 2 endpoints + 3 permission keys, but the UI for "approve" / "reject" / "view pending" is missing.
 
@@ -1114,16 +1167,18 @@ In parallel:
 
 Pass 4 found 4 still-real audit findings that were NOT in the original 17-PR plan. Detailed specs in [EXECUTION_PLAN_2026-07-30.md](./EXECUTION_PLAN_2026-07-30.md) §5-8.
 
-| New PR | Source audit | Finding | Severity | Effort |
-|---|---|---|---|---|
-| **PR-Q** | AUDIT_DESIGN_SYSTEM §5.1 | `ChipWidget` default `Colors.amber` (should be `AppColors.warning`) | P0 | 30 min |
-| **PR-R** | AUDIT_FINDINGS_RIDERAPP §1.3 | Polling timeout has `_isPollingTimedOut` getter but no UI surface | P1 | 1 day |
-| **PR-S** | AUDIT_DATABASE §2.1 | Rider 60+ columns; needs decomposition to 5 child tables | P0 architectural | 5-7 days + 1-wk soak |
-| **PR-T** | AUDIT_FINDINGS_RIDERAPP §1.1 | Router is 30-state setState machine; needs go_router migration | P0 architectural | 1-2 weeks |
+| New PR | Source audit | Finding | Severity | Effort | Status (17:58 IST) |
+|---|---|---|---|---|---|
+| **PR-Q** | AUDIT_DESIGN_SYSTEM §5.1 | `ChipWidget` default `Colors.amber` (should be `AppColors.warning`) | P0 | 30 min | ✅ **SHIPPED** (`form_widgets.dart:18` is now `AppColors.warning`) |
+| **PR-R** | AUDIT_FINDINGS_RIDERAPP §1.3 | Polling timeout has `_isPollingTimedOut` getter but no UI surface | P1 | 1 day | ✅ **SHIPPED** (`pre_dashboard_polling_banner.dart` created; `pre_dashboard_screen.dart:42-43` watches `isPollingTimedOut`) |
+| **PR-S** | AUDIT_DATABASE §2.1 | Rider 60+ columns; needs decomposition to 5 child tables | P0 architectural | 5-7 days + 1-wk soak | ⚪ **PENDING** (not started) |
+| **PR-T** | AUDIT_FINDINGS_RIDERAPP §1.1 | Router is 30-state setState machine; needs go_router migration | P0 architectural | 1-2 weeks | ⚪ **PENDING** (`go_router` not in `pubspec.yaml`) |
 
 **PR-C (#58 rental/return mass-assignment) is CANCELLED.** Pass 4 re-grep shows the `.strict()` Zod allowlist is already in place at `web/src/app/api/rider/rental/return/route.ts:12-23`. The audit was wrong. PR-B handles the doc-only close-out.
 
 **Updated PR count: 17 → 21 PRs** (after cancellation: 16 existing + 4 new + 1 cancelled = 20 active PRs, plus PR-K.1/2/3 splits = 21 PRs total).
+
+**Updated ship status (2026-07-30 17:58):** 2 of 4 Pass 4 PRs shipped (Q, R). 2 pending (S, T).
 
 **Updated effort: ~22-28 focused days** across 2 contributors, with 3-4 weeks of parallel staging soaks.
 
@@ -1232,3 +1287,69 @@ For full risk register, see FIX_PLAN.md §21 (updated).
 - **Pass 4 audit verdicts:** [`docs/AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) — the 10 stale claims + 11 still-real
 - **Backlog dashboard:** [`docs/BACKLOG_FINDINGS.md`](./BACKLOG_FINDINGS.md) — current state
 - **Tickets:** [`docs/FOLLOWUP_TICKETS.md`](./FOLLOWUP_TICKETS.md) — 65 tickets, will become 69 with PR-Q/R/S/T as #66/#67/#68/#69
+
+---
+
+## 24. Status snapshot (2026-07-30 17:58 IST) — what's actually in the working tree
+
+**Verification method:** Re-grepped every PR spec against the working tree. The 979 modified files + 43 deleted + 164 untracked include substantial uncommitted work from a previous session. The pattern is consistent with the previous session shipping code without committing.
+
+### Per-PR ship status
+
+| PR | Spec check | Actual state | Verdict |
+|---|---|---|---|
+| PR-A | `FOLLOWUP_TICKETS.md #64 → CLOSED audit-correction` | Modified; #64 closed | ✅ SHIPPED |
+| PR-B | Pass 3 close-outs done; Pass 4 close-outs pending | Pass 3 done; Pass 4 close-outs pending | 🟡 PARTIAL |
+| PR-C | `.strict()` Zod at `route.ts:12-23` | Already in place | 🔴 CANCELLED |
+| PR-D | `route.ts:13` triple-gated | Confirmed | ✅ SHIPPED |
+| PR-E | `SEED_ADMIN_PASSWORD` env var | Confirmed | ✅ SHIPPED |
+| PR-F | `get-session.ts:124-138` restricts `x-admin-id` | Confirmed | 🟡 PARTIAL (audit log actorId review pending) |
+| PR-G | 3 layers of defense for `ALLOW_DEV_PII_KEY` | Confirmed | ✅ SHIPPED |
+| PR-H | `deploy-prod.sh` tag-based rollback + pipefail | Modified (uncommitted) | 🟡 PARTIAL (untested) |
+| PR-I | `ecosystem.config.js` cluster mode | Confirmed | ✅ SHIPPED |
+| PR-J | `Rider.pickupHubId` etc. (FK cols) | Confirmed (from PR-P3.2) | 🟡 PARTIAL (legacy cols still present) |
+| PR-K.1 | `RiderLifecycleStage` enum | Not started | ⚪ PENDING |
+| PR-L | `app_provider.dart` is a stub | 71-line Riverpod facade | ✅ SHIPPED |
+| PR-M | Phase 3 Low bulk | Not started | ⚪ PENDING |
+| PR-N | Trivial/cosmetic batch | Not started | ⚪ PENDING |
+| PR-O | admin web small-screen splits | Not started | ⚪ PENDING |
+| PR-P | Admin UI for restore | Not started | ⚪ PENDING |
+| PR-Q | `form_widgets.dart:18` uses `AppColors.warning` | Confirmed | ✅ SHIPPED |
+| PR-R | `pre_dashboard_screen.dart` watches `isPollingTimedOut` | Confirmed + banner widget | ✅ SHIPPED |
+| PR-S | 5 Rider child tables | Not started | ⚪ PENDING |
+| PR-T | `go_router` in `pubspec.yaml` | Not started | ⚪ PENDING |
+
+### Pre-merge verification needed
+
+Before committing the 8 shipped-but-uncommitted PRs, run:
+```bash
+# Web
+cd D:/voltium/web
+$env:ENABLE_TEST_OTP='false'
+$env:ENABLE_DEV_ADMIN_LOGIN='false'
+npm run typecheck
+npm run lint
+npm run test:unit
+
+# Flutter
+cd D:/voltium/flutter
+flutter analyze
+flutter test
+```
+
+**Note:** The `vitest` reporter is currently broken (`Failed to load url basic`); fix this before running the test suite. Likely a vitest version-mismatch or missing `vitest-basic-reporter` package. PR-B should include this as a doc note.
+
+### Stash & working-tree state
+
+Two stashes exist (`stash@{0}`, `stash@{1}`) from a previous session. The current working tree (979 modified files) appears to be a different in-progress work, not the stashed content. **Recommendation:** before committing the 9 uncommitted PRs, decide whether to commit the current working tree first or apply stashes on top. This is a 10-15 min decision that affects whether the next commit is clean or mixed.
+
+### Action list
+
+1. **TODAY (1-2 hr):** Run pre-merge verification; commit PR-A, PR-D, PR-E, PR-G, PR-L, PR-Q, PR-R as a single batch. PR-I can be in the same commit.
+2. **TODAY (30 min):** Finish PR-B Pass 4 close-outs (10 stale audit claims to close in docs).
+3. **TODAY (1 hr):** PR-H staging dry-run smoke test; commit if passes.
+4. **THIS WEEK:** Schedule PR-K.1 (lifecycle enum add) + PR-S design review.
+5. **THIS WEEK:** Fix the `vitest` reporter issue so `npm run test:unit` runs.
+6. **NEXT WEEK (Week 2):** PR-K.1 ships to staging; PR-S child tables start. PR-J staging-soak gating depends on PR-P3.2 1-wk soak completing.
+7. **WEEK 3-4:** PR-K.1 1-wk soak; PR-S code (5-7 days); PR-J ships (drop legacy cols); Track 4 polish (PR-M, PR-N).
+8. **WEEK 4+:** PR-S 1-wk soak; PR-K.2 (Flutter reads); PR-T (router refactor, 1-2 weeks) starts in parallel.
