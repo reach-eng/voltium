@@ -144,7 +144,10 @@ class _AppRouterState extends ConsumerState<AppRouter>
     switch (state) {
       case AppLifecycleState.resumed:
         _checkPermissionsOnResume();
-        rProvider.setPollingActive();
+        // R11 — polling lifecycle (active/inactive cadence + location-sync
+        // timer) is now owned by `RiderProvider` itself. The router only
+        // triggers a manual refresh + wallet refresh + permission re-check
+        // on resume.
         rProvider.refreshFromApi();
         if (rProvider.riderId != null) {
           wProvider.refreshTransactions(
@@ -155,9 +158,8 @@ class _AppRouterState extends ConsumerState<AppRouter>
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
-        rProvider.setPollingInactive();
-        break;
       case AppLifecycleState.detached:
+        // No-op: RiderProvider handles its own polling pause + timer cancel.
         break;
     }
   }
