@@ -814,14 +814,15 @@ Larger effort if code generation is added; smaller if just JSON file editing.
 - `web/src/lib/permissions.ts` (single source)
 - New startup test
 
-### Status (2026-07-30)
-**Shipped in PR-P1.2.** Split into 3 files:
+### Status (2026-07-31)
+**Shipped in PR-P1.2** (commit `05615de`). Split into 3 files:
 - `lib/permissions-descriptors.ts` — canonical `PERMISSION_DESCRIPTORS` (the single source of permission keys, labels, categories)
 - `lib/permissions-roles.ts` — `ROLE_PERMISSIONS` matrix (which roles have which keys)
 - `lib/permissions.ts` — public surface (re-exports, `hasPermission`, `getPermissionsForRole`, `parsePermissions`, `serializePermissions`)
 - `lib/session-payload.ts` — extracted `SessionPayload` type to break circular import between auth and permissions
 - `lib/rbac.ts` trimmed but kept (genuine HTTP helpers, not pure re-exports)
 - New `tests/unit/permissions-sync.test.ts` — 6 sync tests that fail if descriptors and role map drift
+- Tests: 8/8 passing (`tests/unit/permissions-sync.test.ts` + `tests/unit/permissions.test.ts`)
 
 ---
 
@@ -904,6 +905,14 @@ Address the remaining P2s. Document the contract. Clean up double-wrapping.
 ### Files to touch
 - `web/src/lib/api-middleware.ts`
 - `web/src/lib/api-version.ts`
+
+### Status (2026-07-31)
+**Shipped in PR-P2.5** (commits `a8d56b0` + `b56ed07` Phase 3 + 5 work). All four P2s addressed:
+- Middleware composition order documented in `web/src/lib/api-middleware.ts` (header comment)
+- `withIdempotency` documented as POST-only (audit 1.11 contract locked)
+- `withRateLimit` no longer double-wraps `withErrorHandler` (Phase 6 PR-2)
+- `withErrorHandler` differentiates by error class (`Internal` / `Validation` / `RateLimit` etc.)
+- `api-version.ts` is consistent with `/api/v1/` prefix used by `payment-gateways/active`
 
 ---
 
@@ -1251,6 +1260,13 @@ Verify `middleware.ts` does NOT trust `x-rider-id` / `x-rider-phone` / `x-admin-
 
 ### Notes
 Security check. If the bug is duplicated, this is a P0 P1 fix.
+
+### Status (2026-07-31)
+**Shipped in PR-P2.6** (commits `1dcc231` + `d3abbc7`). Verified clean:
+- `web/src/middleware.ts` uses `env.APP_ENV === 'production'` for the `isProd` gate, never `process.env.NODE_ENV !== 'production'`
+- `web/src/middleware.ts` reads from the validated `env` object, not `process.env` directly
+- `x-rider-id` / `x-rider-phone` / `x-admin-id` headers are only trusted behind `ENABLE_RIDER_IMPERSONATION === 'true'` AND `isDevelopmentEnv()` — both gates required (defense in depth, see `web/src/lib/rider-auth.ts:25-32` and `web/src/lib/get-session.ts:88-96`)
+- No trust-headers bug in `middleware.ts` itself; the trust-headers fix from Phase 1 (`get-session.ts` / `rider-auth.ts`) holds and is consistent
 
 ---
 
