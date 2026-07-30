@@ -1,6 +1,6 @@
 # Follow-up Tickets — Voltium Remediation Backlog
 
-**Date:** 2026-07-29
+**Date:** 2026-07-30
 **Sources:**
 - `docs/RELEASE_READINESS_2026-07-29.md` (Phase 7 follow-ups)
 - `docs/DB_REMEDIATION_PLAN.md` (DB audit deferred items)
@@ -9,12 +9,13 @@
 - `docs/RIDER_APP_PLAN.md` (rider app audit deferred items)
 - `docs/INFRASTRUCTURE_PLAN.md` (infrastructure audit deferred items)
 - `docs/SECURITY_PLAN.md` (auth/security audit deferred items)
+- `docs/AUDIT_VERIFICATION_3_2026-07-30.md` (Pass 3 verification — new tickets #64, #65)
 
 **Status:** All tickets are non-blocking. File them as GitHub issues post-release and tackle in priority order.
 
-> **Note (2026-07-29):** This doc is the consolidated backlog across all 7 sources above. The original 5 tickets (Phase 3-6 follow-ups) are preserved as Tickets #1-#5. New tickets from the 5 audit plans are added as #6-#53. The audit-plan "What's NOT in this plan" sections that have NOT been turned into tickets are listed in the "Trivial/cosmetic items" section at the end.
+> **Note (2026-07-30):** This doc is the consolidated backlog across all 8 sources above. The original 5 tickets (Phase 3-6 follow-ups) are preserved as Tickets #1-#5. New tickets from the 5 audit plans are added as #6-#53. Tickets #61-#63 are the cross-cutting backend tickets. Tickets #64-#65 are NEW from Pass 3 verification. The audit-plan "What's NOT in this plan" sections that have NOT been turned into tickets are listed in the "Trivial/cosmetic items" section at the end.
 
-These are the items identified during the Phase 0–7 remediation and the 6 audit reviews that didn't make the release runway. Each ticket below is copy-paste ready for `gh issue create`.
+These are the items identified during the Phase 0–7 remediation, the 6 audit reviews, and the 2026-07-30 Pass 3 verification that didn't make the release runway. Each ticket below is copy-paste ready for `gh issue create`.
 
 ---
 
@@ -123,8 +124,10 @@ These are the items identified during the Phase 0–7 remediation and the 6 audi
 | #61 | [BACKEND cross-cutting #1] Audit log `actorId` from `x-admin-id` header — use session | Backend | P2 | 2 hr |
 | #62 | [BACKEND cross-cutting #4] String-based error matching (15+ routes) — typed `DomainError` classes | Backend | P2 | 1 day |
 | #63 | [BACKEND cross-cutting #3] Two URL aliases for the same handler — consolidate | Backend | P2 | 1 hr |
+| #64 | [AUDIT_WORKERS #3.1, NEW from Pass 3] `OutboxService.emit` called without `tx` inside `db.$transaction` block | Worker | **P0** | 4 hr |
+| #65 | [AUDIT_FINDINGS_RIDERAPP #1.4, NEW from Pass 3] `AppProvider` god-object — create stub for 25 test files | RiderApp | P1 | 1 d |
 
-**Total: 63 tickets. Total effort: ~34-41 focused days (across multiple contributors, multi-week).**
+**Total: 65 tickets. Total effort: ~36-43 focused days (across multiple contributors, multi-week).**
 
 **Infra minimum-viable batch (Tickets #34-#37): ~3-4 hours focused, 0 risk, 4 zero-risk P0 PRs. Ship-it-this-week.**
 
@@ -2258,6 +2261,93 @@ The audit's fix: consolidate to one canonical URL per handler, with a deprecatio
 Cross-cutting observation. The Flutter app is the primary caller for these routes. Coordinate with the team before deprecating.
 
 **Status (2026-07-29):** ✅ CLOSED AS AUDIT-CORRECTION. Verified that `/api/rider/verify-lock-password` and `/api/transaction/request` are one-line `export { POST } from '../canonical/route'` re-exports (legacy aliases for backward compat with older Flutter clients). **Not duplicates to consolidate.** Added deprecation comments to both alias files documenting the canonical URL and the reason for keeping the alias. Closing this ticket — the audit's "consolidate" framing was wrong; the right action is to document the legacy aliases and deprecate when Flutter app has migrated.
+
+---
+
+## Ticket #64: [AUDIT_WORKERS #3.1] `OutboxService.emit` called without `tx` inside `db.$transaction` block (data integrity)
+
+**Source:** [`docs/AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §9 (NEW from Pass 3)
+**Audit ref:** AUDIT_WORKERS.md §3.1 + AUDIT_DATABASE.md
+**Severity:** P0 (data integrity)
+**Effort:** 4 hr focused
+**Risk:** low (additive change; all callers must pass `tx`)
+
+### Problem
+`OutboxService.emit` does NOT accept a `tx` parameter. When called inside a `db.$transaction` block, the event insert happens *separately* from the transaction — if the outer transaction rolls back, the outbox event is still inserted and dispatched.
+
+**Verified at** `web/src/server/modules/wallet/wallet.use-cases.ts:330-333`:
+```ts
+await db.$transaction(async (tx: Prisma.TransactionClient) => {
+  await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId, tx);
+  await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, { ... });  // NO tx!
+});
+```
+
+**Note:** `kyc.use-cases.ts:90/102` DOES pass `tx` correctly — the audit's claim is partially wrong, but the bug is real in wallet.use-cases.
+
+### Impact
+- Wallet top-up rejection: if the transaction rolls back after `updateTransactionStatus` fails (e.g. wallet not found, concurrent update), the outbox event is still inserted and a "rejection" notification is sent to the rider.
+- Other transaction-bearing routes that don't pass `tx` (auth.use-cases.ts:54, device-compliance.job.ts:69, rent-reminders.job.ts:111) have the same risk.
+
+### Fix
+1. Add `tx?: Prisma.TransactionClient` to `OutboxService.emit`'s signature.
+2. Migrate all callers to pass `tx` when calling inside `db.$transaction`.
+3. Add a unit test that verifies the event is rolled back if the outer transaction fails.
+
+### Acceptance criteria
+- [ ] `OutboxService.emit` accepts and uses `tx` when provided.
+- [ ] All 8 callers (wallet, kyc, auth, device-compliance, rent-reminders, referral-reward, reconciliation, index.ts) pass `tx` when inside a transaction.
+- [ ] Unit test: outbox event rolls back with the outer transaction.
+- [ ] `npm run test:unit` still 1598+ pass.
+
+### Files to touch
+- `web/src/server/workers/outbox.ts` (signature)
+- `web/src/server/modules/wallet/wallet.use-cases.ts` (lines 293, 332 — pass `tx`)
+- `web/src/server/modules/auth/auth.use-cases.ts` (line 54 — wrap in transaction OR move emit to dispatcher)
+- `web/src/server/modules/notifications/*.use-cases.ts` (other callers — if any)
+- `web/tests/unit/workers/outbox.test.ts` (new test for transactional rollback)
+
+### Notes
+Highest-leverage unmitigated data-integrity finding from Pass 3 verification. The audit's claim was partially right (wallet.use-cases is real) and partially wrong (kyc.use-cases already does it right). Filing as a new ticket because it's not in the original 63-ticket set.
+
+---
+
+## Ticket #65: [AUDIT_FINDINGS_RIDERAPP #1.4] `AppProvider` god-object — create stub for the 25 test files
+
+**Source:** [`docs/AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §10 (NEW from Pass 3)
+**Audit ref:** AUDIT_FINDINGS_RIDERAPP.md §1.4
+**Severity:** P1 (unblocks `flutter analyze` on the full codebase)
+**Effort:** 1 day focused
+**Risk:** low (additive — creates a new file, doesn't refactor existing)
+
+### Problem
+`flutter/lib/core/state/app_provider.dart` is referenced by 25 test files but does not exist on disk. `flutter analyze` fails on the full codebase.
+
+**Verified at** `Test-Path lib/core/state/app_provider.dart` → `False`. PR-P2.3 partially addressed the god-object pattern (RiderModel has 9 named getters, screen splits use them) but the AppProvider stub was never created.
+
+### Impact
+- `flutter analyze` cannot run on the full codebase (only on files that don't transitively import main.dart)
+- 25 test files are silently broken on the main branch
+- Anyone new to the codebase trying to understand state management hits a missing file
+
+### Fix
+Create a 1-page stub `flutter/lib/core/state/app_provider.dart` that:
+1. Delegates state queries to `RiderModel` (the 9 named getters)
+2. Delegates side effects to existing providers/services
+3. Provides a single source of truth for "is the app ready?" / "is the rider onboarded?" / etc. that the test files can import
+
+### Acceptance criteria
+- [ ] `flutter/lib/core/state/app_provider.dart` exists and compiles
+- [ ] `flutter analyze` passes on the full codebase (was failing on 25 transitively-importing test files)
+- [ ] `flutter test` still 1597+ pass (no regressions)
+- [ ] Stub has clear JSDoc: "this is a thin facade over RiderModel + AppConstants; prefer importing those directly in new code"
+
+### Files to touch
+- `flutter/lib/core/state/app_provider.dart` (NEW)
+- `flutter/test/**/*.dart` (25 files that import the missing file — should now compile; no logic changes)
+
+### Notes
+Filing as a new ticket because it's not in the original 63-ticket set and unblocks `flutter analyze` everywhere. The stub should be small (~100 lines) and explicitly say "this is a compatibility layer; new code should use RiderModel + AppConstants directly."
 
 ---
 
