@@ -259,11 +259,11 @@ Three related rider-app cleanups were deferred from Phase 5:
 ### Acceptance criteria
 - [ ] `LoginScreen` and `OtpVerificationScreen` each <300 lines
 - [ ] `pre_dashboard_screen.dart` <200 lines
-- [ ] `grep -r "debugPrint" flutter/lib | wc -l` returns 0 (or only in `kDebugMode` guards)
+- [x] `grep -r "debugPrint" flutter/lib | wc -l` returns 0 (or only in `kDebugMode` guards) — **SHIPPED PR-P2.1**
 - [ ] `RiderModel` has named getters for any state-derivation logic currently inline in `pre_dashboard_screen.dart`
 - [ ] `flutter analyze` clean
 - [ ] No regressions in any of the 33 E2E tests
-- [ ] Flutter primary color decision documented in `docs/design-system.md` ✅ done (Phase 7)
+- [x] Flutter primary color decision documented in `docs/design-system.md` ✅ done (Phase 7)
 
 ### Files to touch
 - `flutter/lib/features/auth/presentation/screens/login_screen.dart` (split)
@@ -276,6 +276,24 @@ Three related rider-app cleanups were deferred from Phase 5:
 
 ### Notes
 The `appDebug` migration is mechanical — recommend doing it as the first sub-step (low risk, quick win) before tackling the screen splits. Use the same pattern as `services/device_data_service.dart` and `services/monitoring_service.dart` from Phase 5.
+
+### Status (2026-07-30)
+**Shipped PR-P2.1 (commit 5c31304).** Migrated **52 code-level `debugPrint(...)` calls** across 29 production files to the existing `appDebug(...)` helper in `lib/utils/app_logger.dart`. `appDebug` already gates on `kDebugMode`, so the migration is a true semantic replacement (it no longer logs in release builds — `debugPrint` did).
+
+Mechanical migration driven by `flutter/scripts/migrate-debug-print.py` (idempotent). The script:
+- Skips `//` / `///` line comments (preserves the 4 doc-comment references to `debugPrint` in `app_logger.dart`).
+- Adds the `app_logger.dart` relative import after the last existing import.
+- Only counts code-level calls (not comment mentions) when reporting.
+
+Two manual fixups were needed because the script can't reason about Dart's part-file model or the import graph:
+- `lib/app/router_body.dart` is `part of 'router.dart'`. The `app_logger` import was moved up to the parent library.
+- 4 files (consent_service, notification_service, referral_service, profile/repository_impl) had `package:flutter/foundation.dart` imports only for `debugPrint`; these were removed.
+
+The design-system linter (`flutter/scripts/lint-design-system.sh`) was extended with a 4th check: stray `debugPrint(...)` outside `lib/utils/app_logger.dart` (which is the canonical home for the `debugPrint → appDebug` hint in doc comments). The new check passed on a fresh tree and fails on a synthetic injection. Three existing checks (raw `Color(0xFF...)`, off-grid `EdgeInsets.all(N)`, off-grid `BorderRadius.circular(N)`) are unchanged.
+
+Test coverage: 4 new tests in `test/utils/app_logger_test.dart` (message-only, with tag, null message, interpolation). All 12 tests in the suite pass.
+
+Audit claimed 57 sites. Actual call count after comment-stripping is 52 (5 fewer because 4 doc-comment mentions in `app_logger.dart` and 1 mention in `monitoring_service.dart` were correctly preserved).
 
 ---
 
