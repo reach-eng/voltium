@@ -77,7 +77,7 @@ These are the items identified during the Phase 0–7 remediation, the 6 audit r
 | #14 | [Design System 3.6-3.8] Extend `design-tokens.json` (migration notes, info/neutral, spacing/typography) | Design | Low | 2 hr | **SHIPPED PR-P3.5** |
 | #15 | [Admin Web 1.3, 1.5] Consolidate `lib/rbac.ts` and `lib/permissions.ts` from a single source | Admin | Low | 1 d | **SHIPPED PR-P1.2** |
 | #16 | [Admin Web 1.31, 1.32, 1.34] Tidy `lib/fcm.ts`, `lib/firebase-admin.ts`, `lib/job-queue.ts` (small P2s) | Admin | Low | 1-2 d |
-| #17 | [Admin Web 1.41] Verify `lib/image-optimizer.ts` doesn't duplicate `image-compress.ts` | Admin | Low | 1 hr |
+| #17 | [Admin Web 1.41] Verify `lib/image-optimizer.ts` doesn't duplicate `image-compress.ts` | Admin | Low | 1 hr | **SHIPPED (audit-correction)** — the two files are NOT duplicates. `image-optimizer.ts` is server-side Sharp pipeline (KYC, payment proofs); `image-compress.ts` is client-side Canvas compression (pre-upload). Different runtimes, different APIs, complementary. 12 tests in `image-optimizer-vs-image-compress.test.ts` document the boundary. |
 | #18 | [Admin Web 2.2-2.6] Tidy remaining API client/middleware P2s | Admin | Low | 1 d | **SHIPPED PR-P2.5** |
 | #19 | [Admin Web 3.13] Move `prisma/query_rider.ts` and `reset_rahil.ts` to `scripts/` (after PR-1 of DB plan) | Admin | Low | 0.5 d | **SHIPPED PR-P3.7** |
 | #20 | [Admin Web 6.6] Split `index.tsx` (1,139 lines) admin home | Admin | Low | 1-2 d | **SHIPPED (already 22 lines)** |
