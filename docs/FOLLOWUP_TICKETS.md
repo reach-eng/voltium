@@ -66,7 +66,7 @@ These are the items identified during the Phase 0–7 remediation and the 6 audi
 | #4 | [Phase 6 PR-D] Migrate 24 typography aliases to canonical 15 tiers | Phase 6 | Low | 1 d |
 | #5 | [Phase 6 PR-E] Migrate 60+ raw color hues to ~12 semantic tokens | Phase 6 | Low | 1-2 d |
 | #6 | [DB Audit 2.8] Split `RiderLifecycleStatus` enum (15 values) into stage + per-step | DB | Medium | 3-5 d |
-| #7 | [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs | DB | Medium | 2-3 d |
+| #7 | [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs | DB | Medium | 2-3 d | **sub-A SHIPPED PR-P3.2 — sub-B (PR-P3.3) gated on 1-week staging soak** |
 | #8 | [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` | DB | Medium | 2-3 d | **CODE SHIPPED PR-P3.1 — staging-soak gated** |
 | #9 | [DB Audit 2.35] Migrate `Admin.permissions` from `String` JSON to `text[]` or relation | DB | Low | 1-2 d |
 | #10 | [DB Audit 2.39] Rename `WalletLedger.txnId` to `transactionId` (cosmetic) | DB | Low | 0.5 d | **SHIPPED PR-P3.4** |
@@ -471,6 +471,8 @@ This is the largest single refactor from the DB audit. Touches every use-case th
 **Owner:** TBD
 **Labels:** `tech-debt`, `db`, `db-audit-follow-up`
 
+**Status:** ⚠️ **sub-A SHIPPED PR-P3.2** (FK columns added + backfilled, legacy columns KEPT). sub-B (drop step) is PR-P3.3, **gated on 1-week staging soak** after PR-P3.2.
+
 ### Problem
 Three `Rider` fields are free-form `String?` instead of foreign keys:
 - `pickupHub: String?` — should FK to `Hub.id`
@@ -485,18 +487,57 @@ A rider can have `pickupHub: 'not-a-real-hub'` without DB-level rejection. Renam
 - Drop the old string columns
 
 ### Acceptance criteria
-- [ ] `Rider` has 3 new FK columns with `@relation(...)` and `onDelete: Restrict` (or `SetNull` if nullable)
-- [ ] All string values mapped to FK IDs via a data migration
-- [ ] Old string columns dropped after backfill
-- [ ] Migrations are backward-compatible
-- [ ] Staging soak: 1 week minimum
-- [ ] `npm run test:unit` still 1422+ pass
+- [x] `Rider` has 3 new FK columns with `@relation(...)` and `onDelete: SetNull` (nullable) — shipped PR-P3.2
+- [x] All string values mapped to FK IDs via a data migration (with mixed-type name+id lookup) — shipped PR-P3.2
+- [ ] Old string columns dropped after backfill — PR-P3.3 (next)
+- [ ] Use-cases migrated to use the new FK columns instead of the legacy strings — PR-P3.3
+- [ ] Flutter `rider_model.dart` updated to use FK IDs — PR-P3.3
+- [ ] **Staging soak: 1 week minimum** (cumulative: PR-P3.2 soak, then PR-P3.3 can ship)
 
-### Files to touch
-- `web/prisma/schema.prisma`
-- New migration (backfill + drop)
-- `web/src/server/modules/riders/*.use-cases.ts` (use FK columns)
-- `flutter/lib/models/rider_model.dart` (use FK IDs)
+### Files touched (PR-P3.2 — sub-A)
+- `web/prisma/schema.prisma` (3 new FK fields, 3 new relations on Hub/RentalPlan/TeamLeader)
+- `web/prisma/migrations/20260730140000_add_rider_fk_columns/migration.sql` (NEW, 8.6 KB)
+- `web/tests/unit/rider-fk-columns-migration.test.ts` (NEW, 28 tests)
+
+### Files to touch (PR-P3.3 — sub-B, after soak)
+- `web/prisma/schema.prisma` (drop 3 legacy columns)
+- `web/prisma/migrations/<ts>_drop_rider_legacy_string_columns/migration.sql`
+- `web/src/server/modules/riders/*.use-cases.ts` (~12 call sites)
+- `web/src/server/modules/announcements/announcement.use-cases.ts` (BY_HUB, BY_PLAN queries)
+- `web/src/server/modules/rentals/*` (writes)
+- `web/src/server/modules/plans/*` (writes)
+- `web/src/server/modules/onboarding/*` (writes)
+- `web/src/server/modules/team-leaders/*` (writes)
+- `flutter/lib/models/rider_model.dart` (consume FK IDs)
+
+### Mixed-type backfill design (PR-P3.2)
+
+The audit verified the legacy columns are **mixed-type**:
+- `pickupHub` has been written as BOTH a Hub **name** (e.g. "Central Hub" in `rental.use-cases.ts:277` and `admin-riders-update.use-cases.ts:284`) AND a Hub **id** (in `rental.repository.ts:88`). The codebase already acknowledges this: `admin-riders-list.use-cases.ts:281-282` queries `pickupHub: X OR hub: { name: X }`.
+- `currentPlan` similarly has been written as both Plan **name** (e.g. "Weekly Premium" in `plan.use-cases.ts:88` and `onboarding.use-cases.ts:101`) AND Plan **id** (in `rental.repository.ts:57`).
+- `teamLeader` is verified clean (all writers use `TeamLeader.id`).
+
+The backfill handles this with COALESCE: for each row, try `Hub.id = X`, then `Hub.name = X`, then NULL. Same for plans. Unmapped rows become NULL and are logged via `RAISE NOTICE` (the audit's "default to NULL" decision — safer than "fail loud" for live data).
+
+Reviewer can spot-check after staging with:
+```sql
+-- rows that have a legacy value but no mapped FK
+SELECT count(*) FROM riders
+ WHERE "pickupHub" IS NOT NULL AND "pickupHubId" IS NULL;
+SELECT count(*) FROM riders
+ WHERE "currentPlan" IS NOT NULL AND "currentPlanId" IS NULL;
+SELECT count(*) FROM riders
+ WHERE "teamLeader" IS NOT NULL AND "teamLeaderId" IS NULL;
+```
+
+### Staging-soak checklist (PR-P3.2 → PR-P3.3)
+- [ ] Apply migration to staging
+- [ ] Confirm 3 new columns exist: `pickupHubId`, `currentPlanId`, `teamLeaderId` on `riders`
+- [ ] Confirm 3 FK constraints exist (pg_constraint)
+- [ ] Confirm 3 new indexes exist (pg_indexes)
+- [ ] Run the 3 spot-check queries above; capture baseline unmapped counts
+- [ ] Watch app logs for any unexpected FK violations (Hub/RentalPlan/TeamLeader deletes that try to cascade)
+- [ ] After 1 week: review the unmapped-count baseline; if stable, proceed with PR-P3.3
 
 ### Notes
 The data migration requires reading the existing string values and looking up the corresponding FK IDs. If a rider's `pickupHub` is `'deleted-hub'`, the migration must decide: default to NULL, or fail loud.
@@ -2419,7 +2460,7 @@ When the team is ready to file these as GitHub issues, follow the priority group
 - [x] **#2** [Phase 4 PR-B] Outbox persistence — shipped in PR-P1.4 (option b: deleted `JobQueue.enqueue` + `notifyOnFailSet` + duplicate `JobTypes`)
 - [ ] **#3** [Phase 5 PR-C] Rider app screen splits + complete `appDebug` migration
 - [ ] **#6** [DB Audit 2.8] Split `RiderLifecycleStatus` enum
-- [ ] **#7** [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs
+- [ ] **#7** [DB Audit 2.10-2.12] Convert `pickupHub`/`currentPlan`/`teamLeader` to FKs — sub-A shipped PR-P3.2 (FK columns + backfill), sub-B (PR-P3.3, drop) awaiting 1-week staging soak
 - [ ] **#8** [DB Audit 2.19-2.23] Convert `String` JSON-as-string columns to `Json` — code shipped PR-P3.1, awaiting 1-week staging soak
 - [x] **#15** [Admin Web 1.3, 1.5] Consolidate `lib/rbac.ts` and `lib/permissions.ts` — shipped in PR-P1.2
 - [ ] **#18** [Admin Web 2.2-2.6] Tidy remaining API client/middleware P2s

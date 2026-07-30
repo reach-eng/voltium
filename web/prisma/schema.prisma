@@ -54,14 +54,16 @@ model RolePermission {
 }
 
 model Hub {
-  id        String    @id @default(cuid())
-  name      String
-  location  String?
-  city      String?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  vehicles  Vehicle[]
+  id              String    @id @default(cuid())
+  name            String
+  location        String?
+  city            String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  vehicles        Vehicle[]
+  // PR-P3.2: back-relation for Rider.pickupHubRef
+  pickupHubRiders Rider[]   @relation("RiderPickupHub")
 
   @@index([isActive])
   @@map("hubs")
@@ -115,20 +117,22 @@ model Shift {
 /// The `durationDays` represents the billing cycle length, which is strictly hardcoded
 /// based on `type` (DAILY = 1, WEEKLY = 7, MONTHLY = 30) in the backend use-cases.
 model RentalPlan {
-  id                   String         @id @default(cuid())
-  name                 String
-  type                 RentalPlanType
-  priceInPaise         Int
-  durationDays         Int
-  description          String?
-  isActive             Boolean        @default(true)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  deletedAt            DateTime?
-  securityDepositInPaise Int          @default(0)
-  additionalInfo       String?
-  isSecurityRefundable Boolean        @default(true)
-  refundableAfterDays  Int?
+  id                     String         @id @default(cuid())
+  name                   String
+  type                   RentalPlanType
+  priceInPaise           Int
+  durationDays           Int
+  description            String?
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  deletedAt              DateTime?
+  securityDepositInPaise Int            @default(0)
+  additionalInfo         String?
+  isSecurityRefundable   Boolean        @default(true)
+  refundableAfterDays    Int?
+  // PR-P3.2: back-relation for Rider.currentPlanRef
+  currentPlanRiders      Rider[]        @relation("RiderCurrentPlan")
 
   @@map("rental_plans")
 }
@@ -151,12 +155,21 @@ model Rider {
   deliveryId              String?
   assignedVehicle         String?
   pickupHub               String?
+  // PR-P3.2: FK column next to the legacy `pickupHub` string. Backfilled from
+  // Hub.id or Hub.name. NULL when the legacy value doesn't match anything.
+  pickupHubId             String?
   currentPlan             String?
+  // PR-P3.2: FK column next to the legacy `currentPlan` string. Backfilled
+  // from RentalPlan.id or RentalPlan.name. NULL when no match.
+  currentPlanId           String?
   planStartDate           DateTime?
   planEndDate             DateTime?
   advanceRentPaid         Boolean                @default(false)
   preferredShift          String?
   teamLeader              String?
+  // PR-P3.2: FK column next to the legacy `teamLeader` string. Verified
+  // ID-only in all writers, so backfill is a single ID lookup.
+  teamLeaderId            String?
   emergencyContact        String?
   referralCode            String                 @unique
   referredBy              String?
@@ -208,6 +221,13 @@ model Rider {
   pickupPhoto             RiderPickupPhoto?
   leases                  RentalLease[]
   vehicle                 Vehicle?               @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  // PR-P3.2: FK columns added next to the legacy string columns. The legacy
+  // columns are kept for backward compatibility (PR-P3.3 will drop them after
+  // 1-week staging soak). Each FK uses ON DELETE SET NULL to match the legacy
+  // column's nullability semantics.
+  pickupHubRef            Hub?                   @relation("RiderPickupHub", fields: [pickupHubId], references: [id], onDelete: SetNull, map: "riders_pickupHubId_fkey")
+  currentPlanRef          RentalPlan?            @relation("RiderCurrentPlan", fields: [currentPlanId], references: [id], onDelete: SetNull, map: "riders_currentPlanId_fkey")
+  teamLeaderRef           TeamLeader?            @relation("RiderTeamLeader", fields: [teamLeaderId], references: [id], onDelete: SetNull, map: "riders_teamLeaderId_fkey")
   earnings                RiderEarning[]
   score                   RiderScore?
   tickets                 SupportTicket[]
@@ -232,30 +252,30 @@ model Rider {
 }
 
 model VehicleReturn {
-  id               String              @id @default(cuid())
-  riderId          String
-  vehicleId        String
-  status           VehicleReturnStatus @default(SUBMITTED)
-  photoFront       String?
-  photoBack        String?
-  photoLeft        String?
-  photoRight       String?
-  photoSpeedometer String?
-  latitude         Float?
-  longitude        Float?
-  reason           String?
-  rejectionReason  String?
-  endOdometer          Int?
-  damageAmountInPaise  Int?
-  isFeeWaived          Boolean             @default(false)
-  waiverReason         String?
-  waivedBy             String?
-  inspectedBy          String?
-  inspectedAt          DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  rider            Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  vehicle          Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
+  id                  String              @id @default(cuid())
+  riderId             String
+  vehicleId           String
+  status              VehicleReturnStatus @default(SUBMITTED)
+  photoFront          String?
+  photoBack           String?
+  photoLeft           String?
+  photoRight          String?
+  photoSpeedometer    String?
+  latitude            Float?
+  longitude           Float?
+  reason              String?
+  rejectionReason     String?
+  endOdometer         Int?
+  damageAmountInPaise Int?
+  isFeeWaived         Boolean             @default(false)
+  waiverReason        String?
+  waivedBy            String?
+  inspectedBy         String?
+  inspectedAt         DateTime?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  rider               Rider               @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  vehicle             Vehicle             @relation("VehicleReturns", fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([vehicleId])
@@ -319,17 +339,17 @@ model Guarantor {
 }
 
 model Wallet {
-  id              String         @id @default(cuid())
-  riderId         String         @unique
-  balanceInPaise  Int            @default(0)
+  id                     String         @id @default(cuid())
+  riderId                String         @unique
+  balanceInPaise         Int            @default(0)
   securityDepositInPaise Int            @default(0)
-  depositStatus   DepositStatus  @default(NOT_SUBMITTED)
-  paymentStreak   Int            @default(0)
-  version         Int            @default(1)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  rider           Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  ledgerEntries   WalletLedger[]
+  depositStatus          DepositStatus  @default(NOT_SUBMITTED)
+  paymentStreak          Int            @default(0)
+  version                Int            @default(1)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  rider                  Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  ledgerEntries          WalletLedger[]
 
   @@index([riderId])
   @@index([depositStatus])
@@ -391,23 +411,23 @@ model DepositRecord {
 }
 
 model RentalLease {
-  id         String       @id @default(cuid())
-  vehicleId  String
-  riderId    String
-  shiftId    String
-  leaseDate  String
-  startTime  String
-  endTime    String?
-  status     RentalStatus @default(BOOKED)
-  basePriceInPaise       Int
-  finalPriceInPaise      Int
-  startOdometer   Int?
-  startBatteryPct Int?
-  createdAt       DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  rider      Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
-  shift      Shift        @relation(fields: [shiftId], references: [id], onDelete: Restrict)
-  vehicle    Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
+  id                String       @id @default(cuid())
+  vehicleId         String
+  riderId           String
+  shiftId           String
+  leaseDate         String
+  startTime         String
+  endTime           String?
+  status            RentalStatus @default(BOOKED)
+  basePriceInPaise  Int
+  finalPriceInPaise Int
+  startOdometer     Int?
+  startBatteryPct   Int?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  rider             Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  shift             Shift        @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  vehicle           Vehicle      @relation("VehicleLeases", fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@unique([vehicleId, shiftId, leaseDate])
   @@index([riderId, leaseDate])
@@ -634,19 +654,19 @@ model Offer {
 }
 
 model Coupon {
-  id            String       @id @default(cuid())
-  code          String       @unique
-  description   String
-  discountType  DiscountType
+  id                   String       @id @default(cuid())
+  code                 String       @unique
+  description          String
+  discountType         DiscountType
   discountValueInPaise Int
-  minAmount     Int?
-  maxUses       Int?
-  currentUses   Int          @default(0)
-  validFrom     DateTime
-  validUntil    DateTime
-  isActive      Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  minAmount            Int?
+  maxUses              Int?
+  currentUses          Int          @default(0)
+  validFrom            DateTime
+  validUntil           DateTime
+  isActive             Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   @@map("coupons")
 }
@@ -708,13 +728,15 @@ model Faq {
 }
 
 model TeamLeader {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String
-  email     String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  phone            String
+  email            String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  // PR-P3.2: back-relation for Rider.teamLeaderRef
+  teamLeaderRiders Rider[]  @relation("RiderTeamLeader")
 
   @@map("team_leaders")
 }
@@ -725,7 +747,7 @@ model Announcement {
   message         String
   channel         String
   targetAudience  String
-  targetIds       Json                    @default("[]")
+  targetIds       Json                   @default("[]")
   scheduledAt     DateTime?
   sentAt          DateTime?
   status          AnnouncementStatus     @default(DRAFT)
@@ -792,18 +814,18 @@ model Incident {
 }
 
 model RiderEarning {
-  id          String   @id @default(cuid())
-  riderId     String
-  date        DateTime
-  platform    String?
+  id            String   @id @default(cuid())
+  riderId       String
+  date          DateTime
+  platform      String?
   amountInPaise Int
-  trips       Int      @default(0)
-  distance    Float?
-  hoursOnline Float?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  rider       Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  trips         Int      @default(0)
+  distance      Float?
+  hoursOnline   Float?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  rider         Rider    @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@index([riderId])
   @@index([date])
@@ -839,15 +861,15 @@ model RiderScore {
 /// Old columns on Rider are kept for backward compatibility and will be
 /// dropped in a follow-up migration once all readers are updated.
 model RiderPermission {
-  id        String    @id @default(cuid())
-  riderId   String
-  permission String   // e.g. 'LOCATION', 'BATTERY', 'CONTACTS', 'CALL_LOGS', 'MIC', 'CAMERA', 'PHONE'
-  granted   Boolean   @default(false)
-  grantedAt DateTime?
-  grantedBy String?   // admin ID or null for system grants
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  rider     Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  riderId    String
+  permission String // e.g. 'LOCATION', 'BATTERY', 'CONTACTS', 'CALL_LOGS', 'MIC', 'CAMERA', 'PHONE'
+  granted    Boolean   @default(false)
+  grantedAt  DateTime?
+  grantedBy  String? // admin ID or null for system grants
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  rider      Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@unique([riderId, permission])
   @@index([riderId])
@@ -858,20 +880,20 @@ model RiderPermission {
 /// Extracted from flat columns on the Rider model (expand-and-contract).
 /// Old columns are kept for backward compatibility.
 model RiderAdminLock {
-  id                     String    @id @default(cuid())
-  riderId                String    @unique
-  isAdminLocked          Boolean   @default(false)
-  lockPasswordHash       String?
-  isUninstallBlocked     Boolean   @default(true)
-  isLocationMandatory    Boolean   @default(true)
-  isAppsControlRestricted Boolean  @default(true)
-  deviceAdminGranted     Boolean   @default(false)
-  displayOverlayGranted  Boolean   @default(false)
-  lastDeviceViolationAt  DateTime?
-  deviceViolationCount   Int       @default(0)
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  rider                  Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  id                      String    @id @default(cuid())
+  riderId                 String    @unique
+  isAdminLocked           Boolean   @default(false)
+  lockPasswordHash        String?
+  isUninstallBlocked      Boolean   @default(true)
+  isLocationMandatory     Boolean   @default(true)
+  isAppsControlRestricted Boolean   @default(true)
+  deviceAdminGranted      Boolean   @default(false)
+  displayOverlayGranted   Boolean   @default(false)
+  lastDeviceViolationAt   DateTime?
+  deviceViolationCount    Int       @default(0)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  rider                   Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@map("rider_admin_locks")
 }
@@ -880,17 +902,17 @@ model RiderAdminLock {
 /// Extracted from flat columns on the Rider model (expand-and-contract).
 /// Old columns are kept for backward compatibility.
 model RiderPickupPhoto {
-  id                    String    @id @default(cuid())
-  riderId               String    @unique
-  pickedAt              DateTime?
-  photoFront            String?
-  photoBack             String?
-  photoLeft             String?
-  photoRight            String?
-  photoWithVehicle      String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  rider                 Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  riderId          String    @unique
+  pickedAt         DateTime?
+  photoFront       String?
+  photoBack        String?
+  photoLeft        String?
+  photoRight       String?
+  photoWithVehicle String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  rider            Rider     @relation(fields: [riderId], references: [id], onDelete: Cascade)
 
   @@map("rider_pickup_photos")
 }
@@ -900,7 +922,7 @@ model TrafficFine {
   riderId         String
   vehicleId       String?
   fineId          String     @unique
-  amountInPaise Int
+  amountInPaise   Int
   location        String?
   violationType   String
   violationDate   DateTime
@@ -1548,4 +1570,3 @@ model PaymentGateway {
 
   @@map("payment_gateways")
 }
-
