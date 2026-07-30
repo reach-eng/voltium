@@ -43,10 +43,12 @@ describe('PR-K.1 Rider lifecycle stage migration', () => {
   });
 
   it('is idempotent — uses IF NOT EXISTS guards for enum + column + backfill', () => {
-    // Enum creation guard
+    // Enum creation guard (uses pg_type check)
     expect(sql).toMatch(/CREATE\s+TYPE\s+"RiderLifecycleStage".*IF\s+NOT\s+EXISTS/s);
-    // Column add guard
-    expect(sql).toMatch(/ADD\s+COLUMN\s+"lifecycleStage".*IF\s+NOT\s+EXISTS/s);
+    // Column add guard (uses information_schema.columns check)
+    expect(sql).toMatch(
+      /SELECT\s+1\s+FROM\s+information_schema\.columns[\s\S]{0,200}ADD\s+COLUMN\s+"lifecycleStage"/
+    );
     // Backfill WHERE clause excludes already-mapped rows
     expect(sql).toMatch(/WHERE\s+"lifecycleStage"\s*=\s*'NEW'/);
   });
