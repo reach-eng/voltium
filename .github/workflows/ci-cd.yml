@@ -114,7 +114,7 @@ jobs:
           cache-dependency-path: './web/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Run ESLint
         run: npm run lint
@@ -141,7 +141,7 @@ jobs:
           cache-dependency-path: './web/package-lock.json'
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Validate Prisma schema
         run: npx prisma validate
@@ -151,6 +151,12 @@ jobs:
 
       - name: Check migration status
         run: npx prisma migrate status
+
+      - name: Check migration safety
+        run: bash ../scripts/check-migration-safety.sh
+
+      - name: Check secret rotation & PII security
+        run: bash ../scripts/check-secret-rotation.sh
 
   # ─── OpenAPI Staleness Check ──────────────────────────────────────────────
   openapi-check:
@@ -253,39 +259,28 @@ jobs:
       - name: Run unit tests with coverage
         run: npm run test:coverage
 
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: web/coverage/lcov.info
-
-      - name: Coverage threshold check
-        run: npm run test:coverage:check
-
       - name: Run contract tests
         run: npm run test:contracts
 
       - name: Seed database
         run: npm run db:seed
 
-      - name: Start dev server
-        run: |
-          npm run dev > /tmp/next-dev.log 2>&1 &
-          echo "DEV_PID=$!" >> $GITHUB_ENV
-
-      - name: Wait for dev server
-        run: npx wait-on tcp:8081 --timeout 60000 --interval 1000
-
-      - name: Run all integration tests
-        run: npm run test:integration:all
+      - name: Run integration tests with coverage
+        run: npm run test:coverage:integration
 
       - name: Check API coverage gap
         run: npm run test:coverage-gap
-        continue-on-error: true
 
-      - name: Stop dev server
-        if: always()
-        run: kill ${{ env.DEV_PID }} || true
+      - name: Merge coverage & enforce 85% line coverage gate
+        run: npm run test:coverage:merge
+        env:
+          MIN_COVERAGE: '85.0'
+
+      - name: Upload combined coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: web/coverage-combined/lcov.info
 
   # ─── Workflow Coverage Gates ────────────────────────────────────────────────
   workflow-gates:
@@ -305,27 +300,16 @@ jobs:
       - name: Run screen workflow coverage gate
         run: bash scripts/check-screen-workflow-coverage.sh
 
-  # ─── Deploy Staging ──────────────────────────────────────────────────────────
-  deploy-staging:
-    name: Deploy Staging
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    needs: [test]
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: './web/package-lock.json'
-
-      - name: Deploy & Restart
-        run: npm ci && npm run build && pm2 restart voltium-staging-web voltium-staging-worker
-
-      - name: Health Check
-        run: curl -f http://localhost:8082/api/health
+  # ─── Deploy Staging (DISABLED — see note) ─────────────────────────────────
+  # NOTE: This job previously ran on ubuntu-latest (fresh VM each run) which
+  # meant PM2 had no persistent state and the deploy was a no-op. Staging
+  # deploys are run manually via `./scripts/deploy-staging.sh` on the staging
+  # server. To re-enable automated deploys, use a self-hosted runner with
+  # PM2 state or SSH to the staging server via appleboy/ssh-action@v1.
+  # deploy-staging:
+  #   name: Deploy Staging
+  #   runs-on: [self-hosted, staging-runner]
+  #   ...
 
   flutter-test:
     name: Flutter Tests
@@ -334,6 +318,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
       - run: cd flutter && flutter pub get
+      - name: Run i18n localization tests
+        run: cd flutter && flutter test test/core/i18n_test.dart
       - run: cd flutter && flutter test --coverage
       - name: Enforce 85% coverage
         run: |
@@ -347,3 +333,6 @@ jobs:
         with:
           name: flutter-coverage
           path: flutter/coverage/lcov.info
+      - name: Cleanup keystore artifacts
+        if: always()
+        run: rm -f flutter/android/app/key.jks flutter/android/key.properties
