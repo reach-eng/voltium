@@ -135,11 +135,6 @@ class AppColors {
   static const Color orangeAccentSurface = Color(0xFFFFF7ED); // orange-50
   static const Color orangeAccentBorder = Color(0xFFFED7AA); // orange-200
 
-  // Royal blue — used for "active" / "selected" status pill text + bg.
-  static const Color royalBlue = Color(0xFF1B60DA);
-  static const Color royalBlueTint = Color(0xFFDEE9FF);
-  static const Color royalBlueStrong = Color(0xFF2176FF);
-
   // Success tints — used for "completed" / "OK" pills and disabled-but-OK buttons.
   static const Color successTint = Color(0xFFA7F3D0); // emerald-200
   static const Color successBorderLight = Color(0xFF6EE7B7); // emerald-300

@@ -300,7 +300,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.royalBlueTint],
+            colors: [AppColors.iconBackground, AppColors.primarySurface],
           ),
         ),
       ),

@@ -32,8 +32,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     final tlName = rider?.teamLeader;
     final tlPhone = rider?.emergencyContact;
     final isLoading = rider == null &&
-        (dataState == DataState.initial ||
-            dataState == DataState.loading);
+        (dataState == DataState.initial || dataState == DataState.loading);
 
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
@@ -59,206 +58,209 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
               },
               child: CustomScrollView(
                 slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    // Search
-                    SearchAnchor(
-                      builder:
-                          (BuildContext context, SearchController controller) {
-                        return SearchBar(
-                          controller: controller,
-                          padding: const WidgetStatePropertyAll<EdgeInsets>(
-                              EdgeInsets.symmetric(horizontal: 16.0)),
-                          onTap: () {
-                            controller.openView();
-                          },
-                          onChanged: (_) {
-                            controller.openView();
-                          },
-                          leading: const Icon(Icons.search,
-                              color: AppColors.slate500),
-                          hintText: 'Search FAQs, topics...',
-                          elevation: const WidgetStatePropertyAll(0),
-                          backgroundColor:
-                              WidgetStatePropertyAll(AppColors.iconBackground),
-                        );
-                      },
-                      suggestionsBuilder:
-                          (BuildContext context, SearchController controller) {
-                        final keyword = controller.text.toLowerCase();
-                        final staticFaqs = [
-                          'How to lock the scooter?',
-                          'Payment failed',
-                          'Report a damaged vehicle',
-                          'Refund policy'
-                        ];
-                        final matches = staticFaqs
-                            .where((f) => f.toLowerCase().contains(keyword))
-                            .toList();
-                        return matches.map((faq) => ListTile(
-                              title: Text(faq),
-                              leading: const Icon(Icons.help_outline),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        // Search
+                        SearchAnchor(
+                          builder: (BuildContext context,
+                              SearchController controller) {
+                            return SearchBar(
+                              controller: controller,
+                              padding: const WidgetStatePropertyAll<EdgeInsets>(
+                                  EdgeInsets.symmetric(horizontal: 16.0)),
                               onTap: () {
-                                controller.closeView(faq);
-                                AppNavigator.push(context, const FaqScreen());
+                                controller.openView();
                               },
-                            ));
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Quick Help section (Moved to top)
-                    Text(
-                      'Quick Help',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: AppColors.slate800),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildQuickChip(
-                            Icons.help_outline,
-                            'FAQ',
-                            () =>
-                                AppNavigator.push(context, const FaqScreen())),
-                        _buildQuickChip(
-                            Icons.build_circle_outlined,
-                            'Troubleshoot',
-                            () => AppNavigator.push(
-                                context, const TroubleshooterScreen())),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Low battery warning removed — not data-driven.
-                    // Re-add when vehicle battery level is available in RiderModel.
-
-                    // Create Ticket Container
-                    Container(
-                      padding: const EdgeInsets.all(Spacing.md),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.headset_mic,
-                              size: 48, color: AppColors.primary),
-                          SizedBox(height: 16),
-                          Text(
-                            'Contact Support',
-                            style: AppTypography.titleMedium,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Our team is here to help you with any issues.',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
-                                color: AppColors.slate500),
-                          ),
-                          SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              key: const Key('createTicketButton'),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const CreateTicketScreen(),
-                                  ),
-                                );
+                              onChanged: (_) {
+                                controller.openView();
                               },
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
-                                ),
-                              ),
-                              child: Text('Create Ticket',
-                                  style: GoogleFonts.plusJakartaSans(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                              leading: const Icon(Icons.search,
+                                  color: AppColors.slate500),
+                              hintText: 'Search FAQs, topics...',
+                              elevation: const WidgetStatePropertyAll(0),
+                              backgroundColor: WidgetStatePropertyAll(
+                                  AppColors.iconBackground),
+                            );
+                          },
+                          suggestionsBuilder: (BuildContext context,
+                              SearchController controller) {
+                            final keyword = controller.text.toLowerCase();
+                            final staticFaqs = [
+                              'How to lock the scooter?',
+                              'Payment failed',
+                              'Report a damaged vehicle',
+                              'Refund policy'
+                            ];
+                            final matches = staticFaqs
+                                .where((f) => f.toLowerCase().contains(keyword))
+                                .toList();
+                            return matches.map((faq) => ListTile(
+                                  title: Text(faq),
+                                  leading: const Icon(Icons.help_outline),
+                                  onTap: () {
+                                    controller.closeView(faq);
+                                    AppNavigator.push(
+                                        context, const FaqScreen());
+                                  },
+                                ));
+                          },
+                        ),
+                        const SizedBox(height: 24),
 
-                    // Recent Tickets Section
-                    const RecentTicketsContainer(),
-                    const SizedBox(height: 24),
-                  ]),
-                ),
-              ),
-
-              // Bottom anchored contact cards
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Team Leader card
-                      if (tlName != null && tlName.isNotEmpty) ...[
-                        _buildContactCard(
-                          icon: Icons.person_outline,
-                          title: 'Your Team Leader',
-                          subtitle: tlName,
-                          actionLabel: 'Call',
-                          actionIcon: Icons.call,
-                          color: AppColors.primary,
-                          onTap: tlPhone != null && tlPhone.isNotEmpty
-                              ? () {
-                                  final sanitized =
-                                      tlPhone.replaceAll(RegExp(r'[^\d+]'), '');
-                                  launchUrl(Uri.parse('tel:$sanitized'));
-                                }
-                              : null,
+                        // Quick Help section (Moved to top)
+                        Text(
+                          'Quick Help',
+                          style: AppTypography.titleMedium
+                              .copyWith(color: AppColors.slate800),
                         ),
                         const SizedBox(height: 12),
-                      ],
-                      // Email us
-                      _buildContactCard(
-                        icon: Icons.email_outlined,
-                        title: 'Email Us',
-                        subtitle: 'support@voltium.in',
-                        actionLabel: 'Send',
-                        actionIcon: Icons.open_in_new,
-                        color: AppColors.royalBlue,
-                        onTap: () =>
-                            launchUrl(Uri.parse('mailto:support@voltium.in')),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildContactCard(
-                        icon: Icons.phone_outlined,
-                        title: 'Call Us',
-                        subtitle: '+91-9876543210',
-                        actionLabel: 'Call',
-                        actionIcon: Icons.call,
-                        color: AppColors.success,
-                        onTap: () => launchUrl(Uri.parse('tel:9876543210')),
-                      ),
-                    ],
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _buildQuickChip(
+                                Icons.help_outline,
+                                'FAQ',
+                                () => AppNavigator.push(
+                                    context, const FaqScreen())),
+                            _buildQuickChip(
+                                Icons.build_circle_outlined,
+                                'Troubleshoot',
+                                () => AppNavigator.push(
+                                    context, const TroubleshooterScreen())),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Low battery warning removed — not data-driven.
+                        // Re-add when vehicle battery level is available in RiderModel.
+
+                        // Create Ticket Container
+                        Container(
+                          padding: const EdgeInsets.all(Spacing.md),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.headset_mic,
+                                  size: 48, color: AppColors.primary),
+                              SizedBox(height: 16),
+                              Text(
+                                'Contact Support',
+                                style: AppTypography.titleMedium,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Our team is here to help you with any issues.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                    color: AppColors.slate500),
+                              ),
+                              SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  key: const Key('createTicketButton'),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const CreateTicketScreen(),
+                                      ),
+                                    );
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.md),
+                                    ),
+                                  ),
+                                  child: Text('Create Ticket',
+                                      style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Recent Tickets Section
+                        const RecentTicketsContainer(),
+                        const SizedBox(height: 24),
+                      ]),
+                    ),
                   ),
-                ),
+
+                  // Bottom anchored contact cards
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // Team Leader card
+                          if (tlName != null && tlName.isNotEmpty) ...[
+                            _buildContactCard(
+                              icon: Icons.person_outline,
+                              title: 'Your Team Leader',
+                              subtitle: tlName,
+                              actionLabel: 'Call',
+                              actionIcon: Icons.call,
+                              color: AppColors.primary,
+                              onTap: tlPhone != null && tlPhone.isNotEmpty
+                                  ? () {
+                                      final sanitized = tlPhone.replaceAll(
+                                          RegExp(r'[^\d+]'), '');
+                                      launchUrl(Uri.parse('tel:$sanitized'));
+                                    }
+                                  : null,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          // Email us
+                          _buildContactCard(
+                            icon: Icons.email_outlined,
+                            title: 'Email Us',
+                            subtitle: 'support@voltium.in',
+                            actionLabel: 'Send',
+                            actionIcon: Icons.open_in_new,
+                            color: AppColors.primary,
+                            onTap: () => launchUrl(
+                                Uri.parse('mailto:support@voltium.in')),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildContactCard(
+                            icon: Icons.phone_outlined,
+                            title: 'Call Us',
+                            subtitle: '+91-9876543210',
+                            actionLabel: 'Call',
+                            actionIcon: Icons.call,
+                            color: AppColors.success,
+                            onTap: () => launchUrl(Uri.parse('tel:9876543210')),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
     );
   }
 
@@ -277,7 +279,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
               Icon(icon, color: AppColors.primary, size: 18),
               SizedBox(width: 8),
               Text(label,
-                  style: AppTypography.bodyCompactStrong
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
                       .copyWith(color: AppColors.slate800)),
             ],
           ),
@@ -324,7 +327,9 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.bodyMediumEmphasis),
+                Text(title,
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)),
                 Text(subtitle,
                     style: GoogleFonts.plusJakartaSans(
                         color: AppColors.slate500, fontSize: 12)),
@@ -420,7 +425,8 @@ class RecentTicketsContainer extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'No tickets found in this category.',
-                style: GoogleFonts.plusJakartaSans(color: AppColors.onSurfaceVariant),
+                style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.onSurfaceVariant),
               ),
             )
           else

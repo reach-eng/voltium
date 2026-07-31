@@ -81,7 +81,7 @@ class RaiseTicketCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.royalBlueStrong],
+          colors: [AppColors.primary, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -123,7 +123,8 @@ class RaiseTicketCard extends StatelessWidget {
           SizedBox(height: 20),
           Text(
             'ISSUE TYPE',
-            style: AppTypography.bodySmallTracked
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
                 .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
           SizedBox(height: 8),
@@ -144,7 +145,8 @@ class RaiseTicketCard extends StatelessWidget {
                   Icons.keyboard_arrow_down,
                   color: Colors.white70,
                 ),
-                style: AppTypography.bodyMediumEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(color: Colors.white),
                 onChanged: (value) {
                   if (value != null) onCategoryChanged(value);
@@ -158,7 +160,8 @@ class RaiseTicketCard extends StatelessWidget {
           SizedBox(height: 16),
           Text(
             'DESCRIPTION',
-            style: AppTypography.bodySmallTracked
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
                 .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
           SizedBox(height: 8),
@@ -206,7 +209,8 @@ class RaiseTicketCard extends StatelessWidget {
           SizedBox(height: 16),
           Text(
             'ATTACH PHOTOS (MAX 5)',
-            style: AppTypography.bodySmallTracked
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
                 .copyWith(color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 8),
@@ -379,7 +383,8 @@ class TicketListItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             ticket.subject,
-                            style: AppTypography.bodyMediumEmphasis
+                            style: AppTypography.bodyMedium
+                                .copyWith(fontWeight: FontWeight.w600)
                                 .copyWith(color: AppColors.slate800),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -396,7 +401,10 @@ class TicketListItem extends StatelessWidget {
                           ),
                           child: Text(
                             ticket.status.replaceAll('_', ' '),
-                            style: AppTypography.bodySmallTracked
+                            style: AppTypography.bodySmall
+                                .copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.2)
                                 .copyWith(color: statusColor),
                           ),
                         ),
@@ -503,7 +511,8 @@ class TopActionCard extends StatelessWidget {
                 SizedBox(height: 12),
                 Text(
                   label,
-                  style: AppTypography.bodyCompactStrong
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
                       .copyWith(color: AppColors.slate800),
                 ),
               ],

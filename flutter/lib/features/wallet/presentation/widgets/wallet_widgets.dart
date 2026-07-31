@@ -64,13 +64,13 @@ class TransactionListTile extends StatelessWidget {
         statusTextColor = AppColors.warning;
         statusBgColor = AppColors.warningSurface;
       } else if (purpose.contains('REFUND')) {
-        statusTextColor = AppColors.royalBlue;
+        statusTextColor = AppColors.primary;
         statusBgColor = AppColors.primarySurface;
       } else if (isCredit) {
         statusTextColor = AppColors.success;
         statusBgColor = AppColors.successSurface;
       } else {
-        statusTextColor = AppColors.royalBlue;
+        statusTextColor = AppColors.primary;
         statusBgColor = AppColors.primarySurface;
       }
     }
@@ -84,7 +84,7 @@ class TransactionListTile extends StatelessWidget {
             height: 40,
             width: 40,
             decoration: BoxDecoration(
-              color: colors.surfaceAlt,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
@@ -102,7 +102,8 @@ class TransactionListTile extends StatelessWidget {
                   children: [
                     Text(
                       displayLabel,
-                      style: AppTypography.bodyMediumEmphasis
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: colors.onSurface),
                     ),
                     if (!isCredit)
@@ -143,9 +144,10 @@ class TransactionListTile extends StatelessWidget {
             children: [
               Text(
                 '${isCredit ? '+' : '-'}\u20B9${amount.abs().toStringAsFixed(0)}',
-                style: AppTypography.bodyMediumEmphasis.copyWith(
-                    color:
-                        isCredit ? AppColors.success : colors.onSurface),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
+                    .copyWith(
+                        color: isCredit ? AppColors.success : colors.onSurface),
               ),
               SizedBox(height: 4),
               Container(
@@ -156,7 +158,8 @@ class TransactionListTile extends StatelessWidget {
                 ),
                 child: Text(
                   status.toUpperCase(),
-                  style: AppTypography.bodySmallTracked
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
                       .copyWith(color: statusTextColor),
                 ),
               ),
@@ -193,8 +196,9 @@ class MethodChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppTypography.bodySmallEmphasis.copyWith(
-              color: isSelected ? Colors.white : AppColors.slate600),
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w600)
+              .copyWith(color: isSelected ? Colors.white : AppColors.slate600),
         ),
       ),
     );
@@ -223,7 +227,7 @@ class SecurityDepositCard extends StatelessWidget {
           margin: const EdgeInsets.only(top: 12),
           padding: const EdgeInsets.all(Spacing.md),
           decoration: BoxDecoration(
-            color: colors.surfaceSubtle.withValues(alpha: 0.7),
+            color: colors.surface.withValues(alpha: 0.7),
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
                 color: colors.outlineVariant.withValues(alpha: 0.5), width: 1),
@@ -237,17 +241,18 @@ class SecurityDepositCard extends StatelessWidget {
                 children: [
                   Text(
                     'SECURITY DEPOSIT',
-                    style: AppTypography.bodySmallStrong.copyWith(
-                        color: colors.onSurfaceMuted, letterSpacing: 1.0),
+                    style: AppTypography.bodySmall
+                        .copyWith(fontWeight: FontWeight.w800)
+                        .copyWith(
+                            color: colors.onSurfaceMuted, letterSpacing: 1.0),
                   ),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: (isRefundable
-                              ? AppColors.success
-                              : AppColors.error)
-                          .withValues(alpha: 0.15),
+                      color:
+                          (isRefundable ? AppColors.success : AppColors.error)
+                              .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       boxShadow: [
                         BoxShadow(
@@ -259,10 +264,9 @@ class SecurityDepositCard extends StatelessWidget {
                         ),
                       ],
                       border: Border.all(
-                        color: (isRefundable
-                                ? AppColors.success
-                                : AppColors.error)
-                            .withValues(alpha: 0.3),
+                        color:
+                            (isRefundable ? AppColors.success : AppColors.error)
+                                .withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
@@ -466,7 +470,7 @@ class WalletBalanceCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
-                    color: colors.surfaceSubtle.withValues(alpha: 0.5),
+                    color: colors.surface.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                         color: colors.outlineVariant.withValues(alpha: 0.5)),
@@ -586,7 +590,8 @@ class WalletActionButtons extends StatelessWidget {
                       SizedBox(width: 8),
                       Text(
                         'Top Up',
-                        style: AppTypography.bodyMediumEmphasis
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurface),
                       ),
                     ],
@@ -633,7 +638,8 @@ class WalletActionButtons extends StatelessWidget {
                       SizedBox(width: 8),
                       Text(
                         'History',
-                        style: AppTypography.bodyMediumEmphasis
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: colors.onSurface),
                       ),
                     ],
@@ -718,7 +724,7 @@ class TransactionHistorySection extends StatelessWidget {
               Text(
                 'Recent Transactions',
                 style: AppTypography.labelLarge
-                    .copyWith(color: AppColors.onSurfaceAlt),
+                    .copyWith(color: AppColors.onSurfaceMuted),
               ),
             ],
           ),
@@ -749,7 +755,7 @@ class TransactionHistorySection extends StatelessWidget {
                     ),
                     selected: isSelected,
                     selectedColor: AppColors.primary,
-                    backgroundColor: colors.surfaceSubtle,
+                    backgroundColor: colors.surface,
                     side: BorderSide(
                         color: isSelected
                             ? AppColors.primary
