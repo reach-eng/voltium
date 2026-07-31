@@ -32,7 +32,7 @@ class WeekSelectorBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSoft,
+            color: AppColors.shadowSoftColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
@@ -118,7 +118,7 @@ class TotalEarningsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowPrimaryStrong,
+            color: AppColors.shadowPrimaryStrongColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
@@ -277,7 +277,7 @@ class DayEarningsCard extends StatelessWidget {
         boxShadow: hasEntries
             ? const [
                 BoxShadow(
-                  color: AppColors.shadowSoft,
+                  color: AppColors.shadowSoftColor,
                   blurRadius: 48,
                   offset: Offset(0, 24),
                 ),
@@ -494,7 +494,7 @@ class WeeklySummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSuccessStrong,
+            color: AppColors.shadowSuccessStrongColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),

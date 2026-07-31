@@ -51,7 +51,8 @@ class _ShimmerTableState extends State<ShimmerTable>
     final colors = AppColors.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseShimmer = isDark ? AppColors.slate800 : AppColors.shimmerBase;
-    final highlightShimmer = isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
+    final highlightShimmer =
+        isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -207,7 +208,8 @@ class _ShimmerListState extends State<ShimmerList>
   Widget _buildShimmerItem() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? AppColors.slate800 : AppColors.shimmerBase;
-    final highlightColor = isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
+    final highlightColor =
+        isDark ? AppColors.slate700 : AppColors.shimmerHighlight;
 
     return Container(
       height: widget.itemHeight,

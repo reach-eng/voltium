@@ -119,11 +119,6 @@ class AppColors {
   // Danger-zone colors — used for delete-account/kyc-rejected labels.
   static const Color errorShadowColor = Color(0x40BA1A1A); // 25% red-700
 
-  // Success tints — used for "completed" / "OK" pills and disabled-but-OK buttons.
-  static const Color successTint = Color(0xFFA7F3D0); // emerald-200
-  static const Color successBorderLight = Color(0xFF6EE7B7); // emerald-300
-  static const Color successOutline = Color(0xFFBBF7D0); // green-200
-
   // Rental / status pills.
   static const Color greenFill = Color(0xFF86EFAC); // green-300
 
@@ -137,10 +132,13 @@ class AppColors {
   static const Color shimmerBase = Color(0xFFE8EDF5);
   static const Color shimmerHighlight = Color(0xFFF5F8FF);
 
-  // Card / glow shadows.
-  static const Color shadowSoft = Color(0x0A0F172A); // 4% onSurface
-  static const Color shadowPrimaryStrong = Color(0x260053C1); // 15% primary
-  static const Color shadowSuccessStrong = Color(0x2610B981); // 15% success
+  // Card / glow shadow color values (used inline as `BoxShadow(color: ...)`).
+  // See `AppShadows` for the corresponding `List<BoxShadow>` recipes.
+  static const Color shadowSoftColor = Color(0x0A0F172A); // 4% onSurface
+  static const Color shadowPrimaryStrongColor =
+      Color(0x260053C1); // 15% primary
+  static const Color shadowSuccessStrongColor =
+      Color(0x2610B981); // 15% success
 
   // Electric burst — used by ElectricBurst success animation. Pairs a 6-stop
   // blue ramp so the particles visibly cascade from light → dark → white spark.
@@ -253,6 +251,33 @@ class AppShadows {
       color: AppColors.errorShadowColor,
       blurRadius: 8,
       offset: Offset(0, 2),
+    ),
+  ];
+
+  /// Soft card shadow: 4% onSurface (R2.2 — uses AppColors.shadowSoftColor)
+  static const List<BoxShadow> soft = [
+    BoxShadow(
+      color: AppColors.shadowSoftColor,
+      blurRadius: 12,
+      offset: Offset(0, 4),
+    ),
+  ];
+
+  /// Primary strong shadow: 15% primary (R2.2 — uses AppColors.shadowPrimaryStrongColor)
+  static const List<BoxShadow> primaryStrong = [
+    BoxShadow(
+      color: AppColors.shadowPrimaryStrongColor,
+      blurRadius: 24,
+      offset: Offset(0, 8),
+    ),
+  ];
+
+  /// Success strong shadow: 15% success (R2.2 — uses AppColors.shadowSuccessStrongColor)
+  static const List<BoxShadow> successStrong = [
+    BoxShadow(
+      color: AppColors.shadowSuccessStrongColor,
+      blurRadius: 24,
+      offset: Offset(0, 8),
     ),
   ];
 

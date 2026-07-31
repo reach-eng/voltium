@@ -289,7 +289,7 @@ class _NotificationPreferencesScreenState
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSoft,
+            color: AppColors.shadowSoftColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
