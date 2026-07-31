@@ -25,7 +25,7 @@ This file tracks issues that are known and accepted only temporarily for public 
 | Rider-app polling | Hard-coded `Timer.periodic` in `RiderProvider._poll()` / `_postPickupPoll()` has no lifecycle awareness. Ticked even while backgrounded, no pause on connectivity loss, no slow cadence for inactive screens. | **Follow-up:** wire `PollingManager` into `RiderProvider` (the utility class exists at `flutter/lib/core/polling/polling_manager.dart` with 6 tests) |
 | Focus-based data refresh | Dashboard, wallet, and support screens each call `provider.refreshFromApi()` in `initState` regardless of whether the screen is already visible. | **Follow-up:** wire `FocusObserver` into app shell (the utility exists at `flutter/lib/core/navigation/focus_observer.dart` with 1 test) |
 | Duplicate Zod schemas | `validators.ts` has `topUpSchema` (rider topup) and `walletTopupSchema` (admin wallet topup) — intentionally different but confusingly named; renamed `walletTopupSchema` → `adminWalletTopupSchema`. | Resolved in M2 |
-| Phantom OpenAPI paths | 2 entries in `openapi.ts` have no corresponding `route.ts` handler (`POST /api/admin/deposits`, `POST /api/admin/transactions`). | **Follow-up:** implement admin deposit + admin transaction routes |
+| Phantom OpenAPI paths | 2 entries in `openapi.ts` have `POST /api/admin/deposits` and `POST /api/admin/transactions` alias handlers export const POST = PUT. | Resolved |
 
 ## Recently Remediated
 
