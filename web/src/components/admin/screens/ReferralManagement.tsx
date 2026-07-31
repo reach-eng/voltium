@@ -1,504 +1,65 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import {
-  Users,
-  UserCheck,
-  TrendingUp,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Plus,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { logger } from '@/lib/logger';
-import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { useReferrals } from './referrals/useReferrals';
+import { ReferralsHeader } from './referrals/ReferralsHeader';
+import { IssueReferralDialog } from './referrals/IssueReferralDialog';
+import { ReferralsSummaryCards } from './referrals/ReferralsSummaryCards';
+import { ReferralsFiltersBar } from './referrals/ReferralsFiltersBar';
+import { ReferralsTable } from './referrals/ReferralsTable';
 
-interface Referral {
-  id: string;
-  refereeId: string;
-  refereeName: string;
-  refereePhone: string;
-  refereeState: string;
-  referredAt: string;
-  referrerName: string;
-  referrerCode: string;
-  earningForReferrer: number;
-  refereePlanStatus?: string;
-  refereeLifecycleStatus?: string;
-  refereeRentalStatus?: string;
-}
-
+/**
+ * R3.7o split — Referral management shell.
+ *
+ * Pre-split: 18.1 KB / 504 lines with 14 useState + 3 fetch + create
+ * handler + 4 cards + filters + table + pagination + dialog all inline.
+ * Post-split: thin orchestrator that wires the data hook and 5
+ * subcomponents. State machine + all network logic live in
+ * `useReferrals` (5.8 KB); the rest live in focused files under
+ * `referrals/`.
+ */
 export default function ReferralManagement() {
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [referralBonus, setReferralBonus] = useState(500);
-  const [summary, setSummary] = useState({ totalLeads: 0, activeRiders: 0, totalEarnings: 0 });
-
-  // Manual Referral State
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [riders, setRiders] = useState<{ id: string; fullName: string; riderId: string }[]>([]);
-  const [riderSearch, setRiderSearch] = useState('');
-  const [referrerId, setReferrerId] = useState('');
-  const [refereeId, setRefereeId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Debounce search
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  const fetchRiders = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', '50');
-      if (riderSearch) params.set('search', riderSearch);
-      const res = await fetch(`/api/admin/riders?${params}`);
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json.success && json.data) {
-        setRiders(json.data.riders || []);
-      }
-    } catch {
-      logger.error('Failed to fetch riders');
-    }
-  }, [riderSearch]);
-
-  useEffect(() => {
-    if (showCreateModal) fetchRiders();
-  }, [showCreateModal, riderSearch, fetchRiders]);
-
-  const handleCreateReferral = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!referrerId || !refereeId) {
-      toast.error('Please select both Referrer and Referee');
-      return;
-    }
-    if (referrerId === refereeId) {
-      toast.error('Referrer and Referee cannot be the same person');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const res = await fetch('/api/admin/referrals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referrerId, refereeId }),
-      });
-
-      const json = await res.json();
-      if (json.success) {
-        toast.success('Referral processed successfully!');
-        setReferrerId('');
-        setRefereeId('');
-        setShowCreateModal(false);
-        fetchReferrals();
-      } else {
-        toast.error(json.message || 'Failed to process referral');
-      }
-    } catch {
-      toast.error('An error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const fetchReferrals = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '20');
-      if (debouncedSearch) params.set('search', debouncedSearch);
-      if (filter !== 'all') params.set('status', filter);
-
-      const res = await fetch(`/api/admin/referrals?${params}`);
-      if (res.ok) {
-        const json = await res.json();
-        const inner = json.data || {};
-        setReferrals(Array.isArray(inner.referrals) ? inner.referrals : []);
-        setTotalPages(Math.ceil((inner.total || 0) / 20));
-        if (inner.summary) setSummary(inner.summary);
-        setTotalCount(inner.total || 0);
-      } else {
-        setReferrals([]);
-      }
-    } catch {
-      setReferrals([]);
-      toast.error('Failed to load referrals');
-    } finally {
-      setLoading(false);
-    }
-  }, [page, debouncedSearch, filter]);
-
-  const fetchReferralBonus = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const json = await res.json();
-        const settings = json.data || {};
-        if (settings.referralBonus) setReferralBonus(Number(settings.referralBonus));
-      }
-    } catch {
-      logger.error('Failed to fetch referral bonus');
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchReferrals();
-    fetchReferralBonus();
-  }, [fetchReferrals, fetchReferralBonus]);
-
-  // Summary stats (now with earnings info)
-  const stats = {
-    total: summary.totalLeads,
-    completed: summary.activeRiders,
-    pending: summary.totalLeads - summary.activeRiders,
-    totalEarningsInRupees: summary.totalEarnings,
-  };
-
-  const handleFilterChange = (v: string) => {
-    setFilter(v);
-    setPage(1);
-  };
-  const handleSearchChange = (v: string) => {
-    setSearch(v);
-    setPage(1);
-  };
-
-  const formatDate = (d: string) => {
-    try {
-      return formatDateDDMMYYYY(d);
-    } catch {
-      return d;
-    }
-  };
+  const r = useReferrals();
 
   return (
     <div className="space-y-6 px-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground tracking-tight">Referral Intelligence</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Track conversions, payment updates, and earnings distribution.
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Issue Referral
-        </Button>
-      </div>
+      <ReferralsHeader onIssueClick={() => r.setShowCreateModal(true)} />
 
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Issue Manual Referral</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateReferral} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Referrer (Who is receiving the bonus?)</Label>
-              <Input
-                placeholder="Search referrer..."
-                value={riderSearch}
-                onChange={(e) => setRiderSearch(e.target.value)}
-                className="mb-2"
-              />
-              <Select value={referrerId} onValueChange={setReferrerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Referrer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {riders.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.fullName} ({r.riderId})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Referee (Who joined?)</Label>
-              <Select value={refereeId} onValueChange={setRefereeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Referee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {riders.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.fullName} ({r.riderId})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter className="mt-4">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Process Referral
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <IssueReferralDialog
+        open={r.showCreateModal}
+        onOpenChange={r.setShowCreateModal}
+        riders={r.riders}
+        riderSearch={r.riderSearch}
+        setRiderSearch={r.setRiderSearch}
+        referrerId={r.referrerId}
+        setReferrerId={r.setReferrerId}
+        refereeId={r.refereeId}
+        setRefereeId={r.setRefereeId}
+        isSubmitting={r.isSubmitting}
+        onSubmit={r.handleCreateReferral}
+      />
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card rounded-xl border shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Total Leads
-                </p>
-                <p className="text-2xl font-black mt-1">{stats.total}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card rounded-xl border shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-500/5">
-                <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Active Riders
-                </p>
-                <p className="text-2xl font-black mt-1">{stats.completed}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card rounded-xl border shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-blue-500/5">
-                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Total Earnings
-                </p>
-                <p className="text-2xl font-black mt-1">₹{stats.totalEarningsInRupees}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card rounded-xl border shadow-sm">
-          <CardContent className="p-6 text-center flex flex-col items-center justify-center bg-primary/5 border-primary/20">
-            <p className="text-[10px] font-black uppercase text-primary tracking-widest">
-              Reward per rider
-            </p>
-            <p className="text-3xl font-black text-primary mt-1">₹{referralBonus}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <ReferralsSummaryCards
+        total={r.stats.total}
+        completed={r.stats.completed}
+        totalEarningsInRupees={r.stats.totalEarningsInRupees}
+        referralBonus={r.referralBonus}
+      />
 
-      {/* Search & Filter */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name or code..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 h-9 rounded-xl border-muted-foreground/20 text-sm"
-          />
-        </div>
-        <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-          Status:
-        </span>
-        <Select value={filter} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-[180px] rounded-lg">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Referrals</SelectItem>
-            <SelectItem value="NEW">New</SelectItem>
-            <SelectItem value="KYC_SUBMITTED">KYC Submitted</SelectItem>
-            <SelectItem value="ACTIVE">Verified Active</SelectItem>
-            <SelectItem value="SUSPENDED">Suspended</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <ReferralsFiltersBar
+        search={r.search}
+        setSearch={r.setSearch}
+        filter={r.filter}
+        setFilter={r.setFilter}
+        onPageReset={() => r.setPage(1)}
+      />
 
-      {/* Referrals Table */}
-      <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-muted/30">
-            <TableRow>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                Referrer (Code)
-              </TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                Referred (Referee)
-              </TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                Payment Status
-              </TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                KYC Status
-              </TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                Earning (Referrer)
-              </TableHead>
-              <TableHead className="text-[10px] font-black uppercase tracking-widest">
-                Action Date
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading && (
-              <TableRow key="loading">
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Analyzing referral
-                  data...
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading && referrals.length === 0 && (
-              <TableRow key="empty">
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-12 text-muted-foreground font-medium"
-                >
-                  No records matching criteria.
-                </TableCell>
-              </TableRow>
-            )}
-            {!loading &&
-              referrals.length > 0 &&
-              referrals.map((r: Referral) => (
-                <TableRow key={r.refereeId} className="hover:bg-muted/10 transition-colors">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black text-sm">
-                        {(r.referrerName || 'U')[0]}
-                      </div>
-                      <div>
-                        <p className="font-bold text-sm">{r.referrerName || 'Unknown Referrer'}</p>
-                        <p className="text-[10px] text-primary font-black font-mono tracking-widest">
-                          {r.referrerCode || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-bold text-sm">{r.refereeName}</p>
-                      <p className="text-[10px] font-medium text-muted-foreground">
-                        {r.refereePhone}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span
-                        className={`text-[11px] font-black uppercase tracking-tight ${r.refereeLifecycleStatus === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-600'}`}
-                      >
-                        {r.refereeLifecycleStatus === 'ACTIVE' ? 'Paid & Active' : 'No Active Plan'}
-                      </span>
-                      {r.refereeRentalStatus && (
-                        <span className="text-[9px] font-medium text-muted-foreground">
-                          Rental: {r.refereeRentalStatus}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={`text-[9px] font-black uppercase px-2 py-0.5 ${
-                        r.refereeState === 'ACTIVE' || r.refereeState === 'POST_ACTIVE'
-                          ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400'
-                          : r.refereeState === 'SUSPENDED'
-                            ? 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400'
-                            : 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400'
-                      }`}
-                    >
-                      {r.refereeState}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <p
-                      className={`text-sm font-black ${r.earningForReferrer > 0 ? 'text-emerald-600' : 'text-muted-foreground/40'}`}
-                    >
-                      {r.earningForReferrer > 0 ? `₹${r.earningForReferrer}` : '—'}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-[11px] font-medium">
-                    {formatDate(r.referredAt)}
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Page {page}</p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-          </Button>
-          <span className="text-sm font-medium px-2">{page}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-      </div>
+      <ReferralsTable
+        loading={r.loading}
+        referrals={r.referrals}
+        page={r.page}
+        totalPages={r.totalPages}
+        onPageChange={r.setPage}
+      />
     </div>
   );
 }
