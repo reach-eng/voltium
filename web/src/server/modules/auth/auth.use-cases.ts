@@ -49,7 +49,7 @@ export const authUseCases = {
 
     // Send via SMS/Push
     const flags = await getFeatureFlags();
-    const message = `Your Ryd verification code is: ${otp}. Do not share this code with anyone.`;
+    const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
     await OutboxService.emit(OutboxEventTypes.SMS_SEND, {
       phone,
