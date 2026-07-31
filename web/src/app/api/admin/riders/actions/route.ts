@@ -142,11 +142,11 @@ async function handleSecurityAction(
       if (!isSuperAdmin) {
         if (!password) return errors.unauthorized('Invalid recovery password');
         const { verifyPassword } = await import('@/lib/password');
-        const { valid } = await verifyPassword(password, rider.lockPassword);
+        const { valid } = await verifyPassword(password, rider.lockPasswordHash);
         if (!valid) return errors.unauthorized('Invalid recovery password');
       }
       dbUpdate.isAdminLocked = false;
-      dbUpdate.lockPassword = generateRandomPassword(12).toUpperCase();
+      dbUpdate.lockPasswordHash = generateRandomPassword(12).toUpperCase();
       if (rider.fcmToken) fcmResult = await fcmService.sendUnlockDevice(rider.fcmToken);
       else fcmResult = { success: true };
       break;
