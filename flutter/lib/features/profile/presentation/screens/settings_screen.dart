@@ -189,8 +189,8 @@ class SettingsScreen extends ConsumerWidget {
               child: QuickLinkItem(
                 key: const Key('termsTile'),
                 icon: Icons.description_outlined,
-                iconColor: AppColors.tealIcon,
-                iconBgColor: AppColors.tealIconSurface,
+                iconColor: AppColors.successDark,
+                iconBgColor: AppColors.successSurface,
                 title: l10n.settings_termsOfService,
                 onTap: () => AppNavigator.push(
                     context,
@@ -204,8 +204,8 @@ class SettingsScreen extends ConsumerWidget {
               child: QuickLinkItem(
                 key: const Key('privacyTile'),
                 icon: Icons.privacy_tip_outlined,
-                iconColor: AppColors.tealIcon,
-                iconBgColor: AppColors.tealIconSurface,
+                iconColor: AppColors.successDark,
+                iconBgColor: AppColors.successSurface,
                 title: l10n.settings_privacyPolicy,
                 onTap: () => AppNavigator.push(
                     context,

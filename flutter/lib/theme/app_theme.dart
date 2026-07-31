@@ -125,9 +125,6 @@ class AppColors {
   static const Color purpleIconSurface = Color(0xFFF3E8FF); // purple-100
   static const Color purpleLightSurface = Color(0xFFFAF5FF); // purple-50
 
-  static const Color tealIcon = Color(0xFF0F766E); // teal-700
-  static const Color tealIconSurface = Color(0xFFCCFBF1); // teal-100
-
   // Danger-zone text — used for delete-account/kyc-rejected labels.
   static const Color dangerText = Color(0xFF991B1B); // red-800
   static const Color dangerShadow = Color(0x40BA1A1A); // 25% red-700

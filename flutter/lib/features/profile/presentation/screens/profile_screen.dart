@@ -40,7 +40,8 @@ class ProfileScreen extends ConsumerWidget {
       body: Consumer(
         builder: (context, innerRef, _) {
           final rider = innerRef.watch(riderProvider.select((p) => p.rider));
-          final dataState = innerRef.watch(riderProvider.select((p) => p.dataState));
+          final dataState =
+              innerRef.watch(riderProvider.select((p) => p.dataState));
           final localeProv = innerRef.watch(localeProviderRef);
           final currentLocale = localeProv.locale.languageCode;
           final isLoading = rider == null &&
@@ -59,158 +60,158 @@ class ProfileScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Compact rider header ──────────────────────────────────
-                FadeUpWidget(
-                  delay: 0,
-                  child: _CompactRiderHeader(rider: rider),
-                ),
-                const SizedBox(height: 24),
-
-                // ── Menu sections ─────────────────────────────────────────
-                _SectionLabel(l10n.menu_account),
-                const SizedBox(height: 12),
-
-                // Profile (opens full detail screen)
-                FadeUpWidget(
-                  delay: 100,
-                  child: QuickLinkItem(
-                    key: const Key('profileMenuLink'),
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    iconColor: AppColors.primary,
-                    iconBgColor: AppColors.primarySurface,
-                    title: l10n.menu_profile,
-                    onTap: () =>
-                        AppNavigator.push(context, const ProfileDetailScreen()),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Compact rider header ──────────────────────────────────
+                  FadeUpWidget(
+                    delay: 0,
+                    child: _CompactRiderHeader(rider: rider),
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
-                FadeUpWidget(
-                  delay: 150,
-                  child: QuickLinkItem(
-                    key: const Key('myDocumentsLink'),
-                    icon: Icons.contact_page_outlined,
-                    activeIcon: Icons.contact_page,
-                    iconColor: AppColors.success,
-                    iconBgColor: AppColors.successSurfaceAlt,
-                    title: l10n.menu_myDocuments,
-                    onTap: () =>
-                        AppNavigator.push(context, const MyDocumentsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                  // ── Menu sections ─────────────────────────────────────────
+                  _SectionLabel(l10n.menu_account),
+                  const SizedBox(height: 12),
 
-                _SectionLabel(l10n.menu_rewardsMore),
-                const SizedBox(height: 12),
-
-                FadeUpWidget(
-                  delay: 200,
-                  child: QuickLinkItem(
-                    key: const Key('rewardsLink'),
-                    icon: Icons.card_giftcard_outlined,
-                    activeIcon: Icons.card_giftcard,
-                    iconColor: AppColors.evPurple,
-                    iconBgColor: AppColors.purpleSurface,
-                    title: l10n.menu_rewards,
-                    onTap: () =>
-                        AppNavigator.push(context, const RewardsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                FadeUpWidget(
-                  delay: 250,
-                  child: QuickLinkItem(
-                    key: const Key('referralLink'),
-                    icon: Icons.people_outline,
-                    activeIcon: Icons.people,
-                    iconColor: AppColors.warning,
-                    iconBgColor: AppColors.warningSurface,
-                    title: l10n.menu_referralProgram,
-                    onTap: () =>
-                        AppNavigator.push(context, const ReferralScreen()),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                _SectionLabel(l10n.menu_general),
-                const SizedBox(height: 12),
-
-                FadeUpWidget(
-                  delay: 300,
-                  child: QuickLinkItem(
-                    key: const Key('workflowHubLink'),
-                    icon: Icons.route_outlined,
-                    activeIcon: Icons.route,
-                    iconColor: AppColors.primary,
-                    iconBgColor: AppColors.primarySurface,
-                    title: l10n.menu_workflowServices,
-                    onTap: () => AppNavigator.push(
-                        context, const RiderWorkflowHubScreen()),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                FadeUpWidget(
-                  delay: 340,
-                  child: QuickLinkItem(
-                    key: const Key('appSettingsLink'),
-                    icon: Icons.tune_outlined,
-                    activeIcon: Icons.tune,
-                    iconColor: AppColors.tealIcon,
-                    iconBgColor: AppColors.tealIconSurface,
-                    title: l10n.menu_appSettings,
-                    onTap: () =>
-                        AppNavigator.push(context, const SettingsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                FadeUpWidget(
-                  delay: 350,
-                  child: QuickLinkItem(
-                    key: const Key('languageLink'),
-                    icon: Icons.language,
-                    iconColor: AppColors.success,
-                    iconBgColor: AppColors.successSurfaceAlt,
-                    title: l10n.menu_language,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currentLocale == 'hi'
-                              ? l10n.settings_hindi
-                              : l10n.settings_english,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: colors.onSurfaceMuted,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(Icons.chevron_right,
-                            color: colors.outline, size: 20),
-                      ],
+                  // Profile (opens full detail screen)
+                  FadeUpWidget(
+                    delay: 100,
+                    child: QuickLinkItem(
+                      key: const Key('profileMenuLink'),
+                      icon: Icons.person_outline,
+                      activeIcon: Icons.person,
+                      iconColor: AppColors.primary,
+                      iconBgColor: AppColors.primarySurface,
+                      title: l10n.menu_profile,
+                      onTap: () => AppNavigator.push(
+                          context, const ProfileDetailScreen()),
                     ),
-                    onTap: () => _showLanguageDialog(context, localeProv),
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                FadeUpWidget(
-                  delay: 360,
-                  child: ProfileEmergencySosTile(
-                    onTap: () =>
-                        AppNavigator.push(context, const EmergencySOSScreen()),
+                  FadeUpWidget(
+                    delay: 150,
+                    child: QuickLinkItem(
+                      key: const Key('myDocumentsLink'),
+                      icon: Icons.contact_page_outlined,
+                      activeIcon: Icons.contact_page,
+                      iconColor: AppColors.success,
+                      iconBgColor: AppColors.successSurfaceAlt,
+                      title: l10n.menu_myDocuments,
+                      onTap: () =>
+                          AppNavigator.push(context, const MyDocumentsScreen()),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 48),
-              ],
+                  const SizedBox(height: 24),
+
+                  _SectionLabel(l10n.menu_rewardsMore),
+                  const SizedBox(height: 12),
+
+                  FadeUpWidget(
+                    delay: 200,
+                    child: QuickLinkItem(
+                      key: const Key('rewardsLink'),
+                      icon: Icons.card_giftcard_outlined,
+                      activeIcon: Icons.card_giftcard,
+                      iconColor: AppColors.evPurple,
+                      iconBgColor: AppColors.purpleSurface,
+                      title: l10n.menu_rewards,
+                      onTap: () =>
+                          AppNavigator.push(context, const RewardsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 250,
+                    child: QuickLinkItem(
+                      key: const Key('referralLink'),
+                      icon: Icons.people_outline,
+                      activeIcon: Icons.people,
+                      iconColor: AppColors.warning,
+                      iconBgColor: AppColors.warningSurface,
+                      title: l10n.menu_referralProgram,
+                      onTap: () =>
+                          AppNavigator.push(context, const ReferralScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _SectionLabel(l10n.menu_general),
+                  const SizedBox(height: 12),
+
+                  FadeUpWidget(
+                    delay: 300,
+                    child: QuickLinkItem(
+                      key: const Key('workflowHubLink'),
+                      icon: Icons.route_outlined,
+                      activeIcon: Icons.route,
+                      iconColor: AppColors.primary,
+                      iconBgColor: AppColors.primarySurface,
+                      title: l10n.menu_workflowServices,
+                      onTap: () => AppNavigator.push(
+                          context, const RiderWorkflowHubScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 340,
+                    child: QuickLinkItem(
+                      key: const Key('appSettingsLink'),
+                      icon: Icons.tune_outlined,
+                      activeIcon: Icons.tune,
+                      iconColor: AppColors.successDark,
+                      iconBgColor: AppColors.successSurface,
+                      title: l10n.menu_appSettings,
+                      onTap: () =>
+                          AppNavigator.push(context, const SettingsScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 350,
+                    child: QuickLinkItem(
+                      key: const Key('languageLink'),
+                      icon: Icons.language,
+                      iconColor: AppColors.success,
+                      iconBgColor: AppColors.successSurfaceAlt,
+                      title: l10n.menu_language,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            currentLocale == 'hi'
+                                ? l10n.settings_hindi
+                                : l10n.settings_english,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: colors.onSurfaceMuted,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(Icons.chevron_right,
+                              color: colors.outline, size: 20),
+                        ],
+                      ),
+                      onTap: () => _showLanguageDialog(context, localeProv),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  FadeUpWidget(
+                    delay: 360,
+                    child: ProfileEmergencySosTile(
+                      onTap: () => AppNavigator.push(
+                          context, const EmergencySOSScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                ],
+              ),
             ),
-          ),
-        );
+          );
         },
       ),
     );
@@ -297,7 +298,8 @@ class _SectionLabel extends StatelessWidget {
     final colors = AppColors.of(context);
     return Text(
       label,
-      style: AppTypography.bodySmallTracked
+      style: AppTypography.bodySmall
+          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
           .copyWith(color: colors.onSurfaceVariant, letterSpacing: 1.2),
     );
   }
@@ -430,10 +432,12 @@ class _CompactRiderHeader extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
-                        style: AppTypography.bodySmallEmphasis.copyWith(
-                            color: isVerified
-                                ? AppColors.success
-                                : AppColors.warningDark),
+                        style: AppTypography.bodySmall
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(
+                                color: isVerified
+                                    ? AppColors.success
+                                    : AppColors.warningDark),
                       ),
                     ],
                   ),
@@ -443,7 +447,8 @@ class _CompactRiderHeader extends StatelessWidget {
             // Phone chip
             if (rider?.phone != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: colors.iconBackground,
                   borderRadius: BorderRadius.circular(AppRadius.lg),

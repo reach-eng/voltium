@@ -565,8 +565,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('legalLink'),
             icon: Icons.gavel_outlined,
-            iconColor: AppColors.tealIcon, // teal-700
-            iconBgColor: AppColors.tealIconSurface, // teal-50
+            iconColor: AppColors.successDark, // teal-700
+            iconBgColor: AppColors.successSurface, // teal-50
             title: 'Legal',
             onTap: onLegalTap,
           ),
