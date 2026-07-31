@@ -73,9 +73,9 @@ export const getRevenueTrend = async (days = 7) => {
   const result = await db.$queryRaw<Array<{ date: string; revenue: bigint; riderCount: bigint }>>`
     SELECT
       DATE("createdAt") as date,
-      SUM(amount) as revenue,
+      SUM("amountInPaise") as revenue,
       COUNT(DISTINCT "riderId") as "riderCount"
-    FROM "Transaction"
+    FROM "transactions"
     WHERE "createdAt" >= ${startDate} AND status = 'APPROVED' AND type = 'CREDIT'
     GROUP BY DATE("createdAt")
     ORDER BY date ASC

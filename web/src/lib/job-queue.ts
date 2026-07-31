@@ -75,11 +75,11 @@ export const JobQueue = {
         readyAt: Date | null;
       }>
     >`
-      UPDATE "OutboxEvent"
+      UPDATE "outbox_events"
       SET status = 'PROCESSING'
       WHERE id IN (
         SELECT id
-        FROM "OutboxEvent"
+        FROM "outbox_events"
         WHERE "eventType" = ${type}
           AND status = 'PENDING'
           AND attempts < "maxAttempts"
@@ -214,6 +214,18 @@ export const JobQueue = {
     await db.outboxEvent.deleteMany({
       where: { eventType: type, status: { in: ['PENDING', 'PROCESSING'] } },
     });
+  },
+
+  async purgeCompletedEvents(olderThanDays = 30): Promise<number> {
+    const cutoff = new Date(clock.now().getTime() - olderThanDays * 24 * 60 * 60 * 1000);
+    const result = await db.outboxEvent.deleteMany({
+      where: {
+        status: { in: ['COMPLETED', 'FAILED'] },
+        updatedAt: { lt: cutoff },
+      },
+    });
+    logger.info('[JobQueue] Purged old outbox events', { deletedCount: result.count, olderThanDays });
+    return result.count;
   },
 };
 

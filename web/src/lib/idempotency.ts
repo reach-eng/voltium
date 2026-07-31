@@ -57,7 +57,7 @@ export async function checkOrClaimIdempotency(
     // If the INSERT succeeds (1 row inserted), we own the lock.
     // If it returns 0, the key already existed — we need to check its status.
     const inserted = await db.$executeRawUnsafe(
-      `INSERT INTO "IdempotencyKey" (id, key, status, response, "expiresAt", "createdAt")
+      `INSERT INTO "idempotency_keys" (id, key, status, response, "expiresAt", "createdAt")
        VALUES (gen_random_uuid()::text, $1, 'PROCESSING', NULL, $2, NOW())
        ON CONFLICT (key) DO NOTHING`,
       key,

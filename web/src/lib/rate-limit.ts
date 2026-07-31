@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { Prisma } from '@prisma/client';
 
 export interface RateLimitConfig {
   windowMs: number;
@@ -28,20 +29,16 @@ const memoryStore = new Map<string, RateLimitEntry>();
 const MAX_MEMORY_STORE_SIZE = 50_000;
 
 function evictIfFull(): void {
-  while (memoryStore.size > MAX_MEMORY_STORE_SIZE) {
+  if (memoryStore.size >= MAX_MEMORY_STORE_SIZE) {
     const oldestKey = memoryStore.keys().next().value;
-    if (oldestKey === undefined) break;
-    memoryStore.delete(oldestKey);
+    if (oldestKey !== undefined) {
+      memoryStore.delete(oldestKey);
+    }
   }
 }
 
 function shouldUseDatabaseLimiter(): boolean {
-  return (
-    process.env.APP_ENV === 'production' ||
-    process.env.APP_ENV === 'staging' ||
-    process.env.RATE_LIMIT_STORE_PROVIDER === 'postgres' ||
-    process.env.RATE_LIMIT_STORE_PROVIDER === 'db'
-  );
+  return process.env.NODE_ENV === 'production' || process.env.USE_DB_RATE_LIMITER === 'true';
 }
 
 if (typeof globalThis !== 'undefined' && !('$_rateLimitCleanup' in globalThis)) {
@@ -62,33 +59,29 @@ export async function checkRateLimit(
   config: RateLimitConfig = API_RATE_LIMIT
 ): Promise<RateLimitResult> {
   const key = `ratelimit:${identifier}`;
-  const now = Date.now();    if (shouldUseDatabaseLimiter()) {
+  const now = Date.now();
+  if (shouldUseDatabaseLimiter()) {
     const resetAt = new Date(now + config.windowMs);
     await db.rateLimitBucket
       .deleteMany({ where: { resetAt: { lte: new Date(now - config.windowMs) } } })
       .catch(() => {});
 
     try {
-      // Atomic conditional upsert: create or increment only if under limit
-      // Note: Prisma maps camelCase model fields to camelCase PostgreSQL columns by default
-      const result = (await db.$queryRawUnsafe(
-        `INSERT INTO "RateLimitBucket" (id, key, points, "resetAt", "createdAt", "updatedAt")
-         VALUES ($1, $2, 1, $3, NOW(), NOW())
+      // Atomic conditional upsert using parameterized Prisma.sql template for compile-time safety
+      const result = (await db.$queryRaw(
+        Prisma.sql`INSERT INTO "rate_limit_buckets" (id, key, points, "resetAt", "createdAt", "updatedAt")
+         VALUES (${key}, ${key}, 1, ${resetAt}, NOW(), NOW())
          ON CONFLICT (key) DO UPDATE SET
            points = CASE
-             WHEN "RateLimitBucket".points < $4 + 1 THEN "RateLimitBucket".points + 1
-             ELSE "RateLimitBucket".points
+             WHEN "rate_limit_buckets".points < ${config.maxRequests} + 1 THEN "rate_limit_buckets".points + 1
+             ELSE "rate_limit_buckets".points
            END,
            "resetAt" = CASE
-             WHEN "RateLimitBucket"."resetAt" <= NOW() THEN $3
-             ELSE "RateLimitBucket"."resetAt"
+             WHEN "rate_limit_buckets"."resetAt" <= NOW() THEN ${resetAt}
+             ELSE "rate_limit_buckets"."resetAt"
            END,
            "updatedAt" = NOW()
-         RETURNING points, "resetAt"`,
-        key,
-        key,
-        resetAt,
-        config.maxRequests
+         RETURNING points, "resetAt"`
       )) as Array<{ points: number; resetAt: Date }>;
 
       if (result.length > 0 && result[0].points <= config.maxRequests) {
