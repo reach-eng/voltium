@@ -141,7 +141,7 @@ class PreDashboardBanner extends StatelessWidget {
                 Text(
                   'Account Action',
                   style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.dangerText,
+                    color: AppColors.errorDark,
                   ),
                 ),
                 Text(

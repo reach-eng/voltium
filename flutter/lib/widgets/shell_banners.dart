@@ -187,7 +187,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                   .copyWith(fontWeight: FontWeight.w600)
                   .copyWith(
                     color:
-                        isCritical ? AppColors.dangerText : AppColors.onSurface,
+                        isCritical ? AppColors.errorDark : AppColors.onSurface,
                   ),
             ),
             subtitle: Text(
@@ -223,8 +223,7 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                   ),
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
-                  color:
-                      isCritical ? AppColors.dangerText : AppColors.onSurface,
+                  color: isCritical ? AppColors.errorDark : AppColors.onSurface,
                 ),
               ],
             ),

@@ -648,7 +648,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               boxShadow: _canSubmit
                   ? const [
                       BoxShadow(
-                        color: AppColors.dangerShadow,
+                        color: AppColors.errorShadowColor,
                         blurRadius: 24,
                         offset: Offset(0, 8),
                       ),

@@ -190,7 +190,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                         color: step.isDone
                             ? AppColors.onSurface
                             : step.isRejected
-                                ? AppColors.dangerText
+                                ? AppColors.errorDark
                                 : colors.onSurface,
                       ),
                 ),

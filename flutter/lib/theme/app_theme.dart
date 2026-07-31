@@ -116,9 +116,8 @@ class AppColors {
   // where a fully-themed ThemeColors extension is overkill. Pair `xxxIcon`
   // (foreground, ~600 weight) with `xxxIconSurface` (background, ~50/100).
 
-  // Danger-zone text — used for delete-account/kyc-rejected labels.
-  static const Color dangerText = Color(0xFF991B1B); // red-800
-  static const Color dangerShadow = Color(0x40BA1A1A); // 25% red-700
+  // Danger-zone colors — used for delete-account/kyc-rejected labels.
+  static const Color errorShadowColor = Color(0x40BA1A1A); // 25% red-700
 
   // Success tints — used for "completed" / "OK" pills and disabled-but-OK buttons.
   static const Color successTint = Color(0xFFA7F3D0); // emerald-200
@@ -243,6 +242,15 @@ class AppShadows {
   static const List<BoxShadow> checkboxAccepted = [
     BoxShadow(
       color: Color(0x400053C1),
+      blurRadius: 8,
+      offset: Offset(0, 2),
+    ),
+  ];
+
+  /// Error / danger-zone shadow: 25% red-700 (R2.2 — uses AppColors.errorShadowColor)
+  static const List<BoxShadow> errorShadow = [
+    BoxShadow(
+      color: AppColors.errorShadowColor,
       blurRadius: 8,
       offset: Offset(0, 2),
     ),
