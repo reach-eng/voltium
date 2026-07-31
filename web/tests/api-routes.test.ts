@@ -513,6 +513,8 @@ describe('API response format consistency', () => {
     { path: '/api/admin/dashboard', method: 'GET' },
     { path: '/api/admin/transactions?limit=1', method: 'GET' },
     { path: '/api/admin/tickets', method: 'GET' },
+    { path: '/api/notification/list', method: 'GET' },
+    { path: '/api/notification/list', method: 'PUT' },
   ];
 
   for (const ep of endpoints) {

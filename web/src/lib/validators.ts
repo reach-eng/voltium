@@ -297,8 +297,10 @@ export const createTeamLeaderSchema = z.object({
 // ==================== ADMIN - TICKETS (UPDATE) ====================
 export const updateTicketSchema = z.object({
   id: z.string().min(1, 'id is required').optional(),
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'WAITING_ON_RIDER', 'RESOLVED', 'CLOSED']).optional(),
   assignedTo: z.string().optional(),
+  isEscalated: z.boolean().optional(),
+  refundAmountInPaise: z.number().int().nonnegative().optional(),
 });
 
 export const ticketReplySchema = z.object({
@@ -431,7 +433,7 @@ export const transactionBulkActionSchema = z.object({
 
 export const ticketBulkActionSchema = z.object({
   ids: z.array(z.string()).min(1, 'IDs array required').max(500, 'Max 500 IDs'),
-  action: z.enum(['changeStatus', 'assign', 'changePriority', 'closeResolved', 'revert']),
+  action: z.enum(['changeStatus', 'assign', 'changePriority', 'closeResolved', 'revert', 'escalate']),
   value: z.string().optional(),
 });
 

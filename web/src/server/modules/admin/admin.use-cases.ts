@@ -149,10 +149,17 @@ export const adminUseCases = {
       const admin = await adminRepository.findById(adminId);
       if (admin) {
         let perms: string[] = [];
-        try {
-          perms = JSON.parse(admin.permissions || '[]');
-        } catch {
-          perms = [];
+        const hasPerms = (admin as any).hasPermissions;
+        if (Array.isArray(hasPerms) && hasPerms.length > 0) {
+          perms = hasPerms.map((hp: any) => hp.permission);
+        } else if (Array.isArray(admin.permissions)) {
+          perms = admin.permissions;
+        } else {
+          try {
+            perms = typeof admin.permissions === 'string' ? JSON.parse(admin.permissions) : [];
+          } catch {
+            perms = [];
+          }
         }
         return { ...admin, permissions: perms, adminPermissions: perms };
       }

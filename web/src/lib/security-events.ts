@@ -67,26 +67,24 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
       logger.info(message, logContext);
   }
 
-  // For critical events, also write to audit log table for persistence
-  if (severity === 'critical' || severity === 'warning') {
-    try {
-      await createAuditLog({
-        actorId: actorId || 'SYSTEM',
-        actorType: actorType || 'SYSTEM',
-        action: `security.${type}`,
-        entity: 'securityEvent',
-        entityId: undefined,
-        details: JSON.stringify({
-          severity,
-          ...sanitizedDetails,
-          ip,
-          userAgent,
-          correlationId,
-        }),
-      });
-    } catch (err) {
-      logger.error('[SecurityEvents] Failed to write audit log', { eventType: type, err });
-    }
+  // Write to audit log table for persistence
+  try {
+    await createAuditLog({
+      actorId: actorId || 'SYSTEM',
+      actorType: actorType || 'SYSTEM',
+      action: `security.${type}`,
+      entity: 'securityEvent',
+      entityId: undefined,
+      details: JSON.stringify({
+        severity,
+        ...sanitizedDetails,
+        ip,
+        userAgent,
+        correlationId,
+      }),
+    });
+  } catch (err) {
+    logger.error('[SecurityEvents] Failed to write audit log', { eventType: type, err });
   }
 }
 

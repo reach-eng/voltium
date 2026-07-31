@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object({
   // Base
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
@@ -59,6 +59,8 @@ const envSchema = z.object({
     .default('false')
     .transform((v) => v === 'true'),
 
+  ALLOW_DEV_PII_KEY: z.string().optional(),
+
   // Features
   NEXT_PUBLIC_ENABLE_KYC: z
     .string()
@@ -76,7 +78,19 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v === 'true'),
-});
+}).refine(
+  (data) => {
+    const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
+    if (isProd && data.ALLOW_DEV_PII_KEY === 'true') {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'ALLOW_DEV_PII_KEY=true is strictly forbidden in production and staging environments',
+    path: ['ALLOW_DEV_PII_KEY'],
+  }
+);
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DATABASE_URL =

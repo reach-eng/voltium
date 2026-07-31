@@ -36,6 +36,11 @@ export function withApiHandler(
         return errors.badRequest((err instanceof Error ? err.message : String(err)));
       }
 
+      // Prisma P2025 "record not found"
+      if ((err as any)?.code === 'P2025') {
+        return errors.notFound(domainErr.message);
+      }
+
       // Handle domain-specific exceptions by naming convention
       if (domainErr.name === 'RentalBookError') {
         const code = domainErr.code;
@@ -51,10 +56,6 @@ export function withApiHandler(
         domainErr.name === 'RentalStateError'
       ) {
         return errors.conflict(domainErr.message);
-      }
-
-      if (domainErr.message.includes('not found') || domainErr.message.includes('Not found')) {
-        return errors.notFound(domainErr.message);
       }
 
       return errors.internal(domainErr.message || 'Internal Server Error');

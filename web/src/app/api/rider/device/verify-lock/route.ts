@@ -16,6 +16,9 @@ const verifyLockSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (request.headers.get('x-rider-id')) {
+      return errors.forbidden('Impersonation is strictly forbidden on lock verification');
+    }
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;

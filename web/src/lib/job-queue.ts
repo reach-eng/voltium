@@ -1,9 +1,7 @@
 /**
- * PostgreSQL-backed Job Queue
- *
- * Uses the OutboxEvent table as a reliable job queue — no PostgreSQL-backed local store dependency.
- * enqueue() writes an event; processJobs() polls pending events, processes
- * them, and marks COMPLETED or FAILED.
+ * ━ Ticket #2 hardening ━
+ * PostgreSQL-backed Job Queue using OutboxEvent and OutboxEventTypes.
+ * Removed JobQueue.enqueue because it had zero callers; use OutboxService.emit.
  *
  * Features:
  * - Exponential backoff: delay = 2^attempts × 5s before retry
@@ -14,6 +12,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { OutboxEventTypes } from '@/server/workers/outbox';
 
 export interface QueueJob {
   id: string;
@@ -27,31 +26,6 @@ export interface QueueJob {
 }
 
 export const JobQueue = {
-  async enqueue(
-    type: string,
-    payload: Record<string, unknown>,
-    _delayMs = 0,
-    maxAttempts = 3
-  ): Promise<string> {
-    try {
-      const event = await db.outboxEvent.create({
-        data: {
-          eventType: type,
-          payload: JSON.stringify(payload),
-          status: 'PENDING',
-          maxAttempts,
-        },
-        select: { id: true },
-      });
-
-      logger.debug('[JobQueue] Job enqueued', { type, jobId: event.id });
-      return event.id;
-    } catch (err) {
-      logger.error('[JobQueue] Failed to enqueue job', { type, err });
-      throw err;
-    }
-  },
-
   async processJobs(
     type: string,
     processor: (job: QueueJob) => Promise<void>,
@@ -229,11 +203,4 @@ export const JobQueue = {
   },
 };
 
-export const JobTypes = {
-  SEND_SMS: 'sms.send',
-  SEND_EMAIL: 'send_email',
-  NOTIFICATION: 'notification.send',
-  RIDE_REMINDER: 'ride_reminder',
-  REFERRAL_REWARD: 'referral.reward',
-  REFUND_PROCESSING: 'refund_processing',
-};
+

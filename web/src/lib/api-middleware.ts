@@ -83,11 +83,26 @@ export async function withRequestSizeLimit(
   };
 }
 
-export async function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse>) {
+import { ApiError } from '@/lib/api-error';
+
+export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
       return await handler(req);
     } catch (error) {
+      if (error instanceof ApiError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: error.code,
+              message: error.message,
+            },
+          },
+          { status: error.status }
+        );
+      }
+
       // Redact PII from error data before logging to prevent credential leaks
       const errorInfo: Record<string, unknown> = {
         path: req.nextUrl.pathname,

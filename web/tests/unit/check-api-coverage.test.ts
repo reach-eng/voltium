@@ -45,9 +45,9 @@ describe('check-api-coverage.js (#38)', () => {
     expect(result.stdout).toMatch(/All operations are covered/);
   });
 
-  it('reports correct coverage count (161 operations)', () => {
+  it('reports correct coverage count (163 operations)', () => {
     const result = runScript();
-    expect(result.stdout).toMatch(/Total Operations \(excluding skipped\): 161/);
+    expect(result.stdout).toMatch(/Total Operations \(excluding skipped\): 163/);
   });
 
   it('basePath no longer has double-slash (regression guard for #38 bug #1)', async () => {

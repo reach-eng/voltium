@@ -14,7 +14,7 @@ export default defineConfig({
     hookTimeout: 120000,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'json-summary', 'html'],
+      reporter: ['text', 'lcov', 'json', 'json-summary', 'html'],
       reportsDirectory: './coverage',
       // Unit tests cover server-side business logic (lib/, server/, lib/).
       // src/app/ (Next.js pages and route handlers) is covered by
@@ -40,8 +40,10 @@ export default defineConfig({
       // docs/TESTING_STRATEGY.md). Unit tests alone cover ~25-30% of
       // src/lib/ and src/server/ because many code paths require a
       // running Next.js dev server (covered by integration tests).
-      // These thresholds are set to match the current unit-test
-      // reality; increase as more unit tests are added.
+      // Progressive threshold schedule:
+      // - Phase A (Current): Unit: 25% lines, Combined: 85% lines
+      // - Phase B (Q3 2026): Unit: 50% lines, Combined: 88% lines
+      // - Phase C (Q4 2026): Unit: 75% lines, Combined: 90% lines
       thresholds: {
         lines: 25,
         functions: 20,

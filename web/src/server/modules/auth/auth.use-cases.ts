@@ -60,7 +60,6 @@ export const authUseCases = {
     logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
 
     return {
-      exists: !!existingRider,
       otp: process.env.NODE_ENV !== 'production' ? otp : undefined,
     };
   },
