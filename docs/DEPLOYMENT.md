@@ -1,7 +1,5 @@
 # Voltium Deployment Guide
 
-> **Note**: This repository represents a trimmed deployment package containing primarily the Flutter Android application and related infrastructure scripts. The `web/` frontend has been omitted from this version.
-
 > Deployment instructions for the Voltium platform.
 > **Voltium runs entirely on a local workstation.** Database, files, and backups stay on local disk.
 > Public access is provided via Cloudflare Tunnel (routing only — no data storage).

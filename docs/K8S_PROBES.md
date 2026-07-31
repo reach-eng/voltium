@@ -1,5 +1,13 @@
 # Kubernetes Probes Configuration
 
+> ⚠️ **STALE (as of 2026-07-31)** — Voltium runs on a local workstation, not Kubernetes. The
+> probe paths (`/api/health`, `/api/ready`) are still useful as manual health-check
+> endpoints (e.g. for PM2 + Uptime Kuma), so this doc is **kept as a reference for
+> the endpoint semantics** rather than deleted. The actual deployment topology is
+> local-only (see `DEPLOYMENT.md` and `RUNBOOK.md`).
+>
+> **Audit reference:** INFRASTRUCTURE_PLAN.md §8.1.
+
 To ensure the Voltium application runs reliably in Kubernetes, you must configure Liveness and Readiness probes.
 
 ## Liveness Probe
