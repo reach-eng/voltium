@@ -6,12 +6,19 @@ on:
   pull_request:
     branches: [main, develop]
 
+# R10 polish #13 (Infra 4.17) — concurrency group so we don't run multiple
+# Lighthouse audits on rapid pushes to the same branch.
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   lighthouse:
     name: Lighthouse Performance Audit
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     defaults:
       run:
         working-directory: ./web
@@ -35,6 +42,8 @@ jobs:
       - name: Build Next.js app
         run: npm run build
 
+      # R10 polish #13 (Infra 4.12) — lighthouserc.json now provides the
+      # collect / assert / upload config that lhci autorun consumes.
       - name: Run Lighthouse CI
         run: |
           npm install -g @lhci/cli

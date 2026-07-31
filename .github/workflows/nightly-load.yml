@@ -1,9 +1,17 @@
-name: Nightly Load Test
+name: Weekly Load Test
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Run at 2 AM every day
+    - cron: '0 4 * * 0' # Sundays at 4:00 AM (after mutation tests)
   workflow_dispatch: # Allow manual triggering
+
+# R10 polish #13 (Infra 4.17) — concurrency group so re-runs don't overlap.
+concurrency:
+  group: load-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 defaults:
   run:
@@ -84,3 +92,18 @@ jobs:
       - name: Stop server
         if: always()
         run: kill ${{ env.PROD_PID }} || true
+
+      # R10 polish #13 (Infra 4.14) — k6 already runs with
+      # `continue-on-error: true` so the job always uploads the artifact;
+      # we explicitly post a Slack summary so the team sees SLO drift.
+      - name: Notify Slack with k6 summary
+        if: always()
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            STATUS="${{ job.status }}"
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"📊 Weekly Load Test: ${STATUS}. Artifact: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+              "${{ secrets.SLACK_WEBHOOK_URL }}"
+          else
+            echo "SLACK_WEBHOOK_URL not configured. Notification skipped."
+          fi
