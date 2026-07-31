@@ -190,7 +190,7 @@ class _ToastWidgetState extends State<_ToastWidget>
       case ToastType.warning:
         return AppColors.warningLight;
       case ToastType.info:
-        return AppColors.skySparkSurface;
+        return AppColors.infoLight;
     }
   }
 

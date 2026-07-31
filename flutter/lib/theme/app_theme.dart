@@ -141,10 +141,6 @@ class AppColors {
   static const Color orangeAccentSurface = Color(0xFFFFF7ED); // orange-50
   static const Color orangeAccentBorder = Color(0xFFFED7AA); // orange-200
 
-  // Sky / cool blues — used for "info" spark, OTP spark, and gentle hints.
-  static const Color skySpark = Color(0xFF38BDF8); // sky-400
-  static const Color skySparkSurface = Color(0xFFE0F2FE); // sky-100
-
   // Royal blue — used for "active" / "selected" status pill text + bg.
   static const Color royalBlue = Color(0xFF1B60DA);
   static const Color royalBlueTint = Color(0xFFDEE9FF);

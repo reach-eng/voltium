@@ -273,7 +273,7 @@ class _SparkOtpBox extends StatelessWidget {
           final hasValue = controller.text.isNotEmpty;
 
           // Spark color: bright cyan for entry glow
-          const sparkColor = AppColors.skySpark;
+          const sparkColor = AppColors.info;
 
           // Build electric glow intensity — more intense at peak, fades smoothly
           final glowIntensity = glow * (0.55 + 0.25 * (1 - glow));
