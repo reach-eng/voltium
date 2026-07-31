@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { restoreService } from '@/server/modules/data-management/restore.service';
-import { backupRepository } from '@/server/modules/data-management/backup.repository';
-import { backupService } from '@/server/modules/data-management/backup.service';
+import { restoreService } from '@/server/modules/data-management/restore/restore.service';
+import { backupRepository } from '@/server/modules/data-management/backup/backup.repository';
+import { backupService } from '@/server/modules/data-management/backup/backup.service';
+import { backupLockService } from '@/server/modules/data-management/backup/backup-lock.service';
 import { db } from '@/lib/db';
 import * as shell from '@/lib/shell';
 import { existsSync } from 'fs';
 
-vi.mock('@/server/modules/data-management/backup.repository', () => ({
+vi.mock('@/server/modules/data-management/backup/backup.repository', () => ({
   backupRepository: {
     getBackupJob: vi.fn(),
     createRestoreJob: vi.fn(),
@@ -14,10 +15,15 @@ vi.mock('@/server/modules/data-management/backup.repository', () => ({
   },
 }));
 
-vi.mock('@/server/modules/data-management/backup.service', () => ({
+vi.mock('@/server/modules/data-management/backup/backup.service', () => ({
   backupService: {
     verifyBackup: vi.fn(),
     createBackup: vi.fn().mockResolvedValue(null),
+  },
+}));
+
+vi.mock('@/server/modules/data-management/backup/backup-lock.service', () => ({
+  backupLockService: {
     setBackupLock: vi.fn().mockResolvedValue(null),
   },
 }));
@@ -138,7 +144,7 @@ describe('Restore Safety Tests', () => {
       expect(backupService.createBackup).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'PRE_RESTORE' })
       );
-      expect(backupService.setBackupLock).toHaveBeenCalledWith(true);
+      expect(backupLockService.setBackupLock).toHaveBeenCalledWith(true);
       expect(db.systemSetting.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ create: expect.objectContaining({ key: 'MAINTENANCE_MODE', value: 'true' }) })
       );

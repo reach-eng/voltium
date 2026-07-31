@@ -326,9 +326,10 @@ describe('topUpSchema — negative', () => {
     proofUrl: 'https://example.com/receipt.jpg',
   };
 
-  it('rejects missing riderId', () => {
+  it('allows optional riderId for session-based top-ups', () => {
     const { riderId, ...rest } = validTopUp;
-    expectInvalid(topUpSchema, rest);
+    const result = validateBody(topUpSchema, rest);
+    expect(result.success).toBe(true);
   });
 
   it('rejects zero amount', () => {
@@ -860,8 +861,8 @@ describe('adminWalletTopupSchema — negative', () => {
     expectInvalid(adminWalletTopupSchema, { riderId: 'r-1', amount: 5 });
   });
 
-  it('rejects amount above maximum (10000)', () => {
-    expectInvalid(adminWalletTopupSchema, { riderId: 'r-1', amount: 10001 });
+  it('rejects amount above maximum (50000)', () => {
+    expectInvalid(adminWalletTopupSchema, { riderId: 'r-1', amount: 50001 });
   });
 
   it('rejects zero amount', () => {
@@ -904,12 +905,9 @@ describe('updateLegalSchema — negative', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// updateTicketSchema
-// ═══════════════════════════════════════════════════════════════════════════════
-
 describe('updateTicketSchema — negative', () => {
-  it('rejects missing id', () => {
-    expectInvalid(updateTicketSchema, { status: 'IN_PROGRESS' });
+  it('accepts update without id (id supplied via route param)', () => {
+    expectValid(updateTicketSchema, { status: 'IN_PROGRESS' });
   });
 
   it('rejects invalid status', () => {

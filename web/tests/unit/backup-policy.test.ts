@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { backupPolicy } from '@/server/modules/data-management/backup.policy';
+import { backupPolicy } from '@/server/modules/data-management/backup/backup.policy';
 import { AdminRole } from '@/server/modules/admin/admin.types';
 
 describe('Backup Policy — RBAC', () => {

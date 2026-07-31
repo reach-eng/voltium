@@ -13,7 +13,7 @@ import {
   backupQuerySchema,
   restoreValidateSchema,
   restoreStartSchema,
-} from '@/server/modules/data-management/backup.schemas';
+} from '@/server/modules/data-management/backup/backup.schemas';
 
 describe('Backup Query Schema', () => {
   it('accepts valid query params', () => {

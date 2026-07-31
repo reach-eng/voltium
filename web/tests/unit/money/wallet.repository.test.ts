@@ -16,7 +16,7 @@ describe('walletRepository', () => {
   let riderDbId: string;
   
   beforeEach(async () => {
-    riderId = `RD-${uuidv4().substring(0, 6)}`;
+    riderId = `RD-${uuidv4().substring(0, 12)}`;
     riderDbId = uuidv4();
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
     const referralCode = `REF-${uuidv4().substring(0, 12)}`;
@@ -91,13 +91,13 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
         idempotencyKey: `idem-${uuidv4()}`,
       });
 
       expect(txn.id).toBeDefined();
-      expect(txn.amount).toBe(5000);
+      expect(txn.amountInPaise).toBe(5000);
       expect(txn.status).toBe(TransactionStatus.PENDING);
     });
 
@@ -106,7 +106,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.DEBIT,
-        amount: 3000,
+        amountInPaise: 3000,
         purpose: TransactionPurpose.RENT_PAYMENT,
         method: 'RAZORPAY',
         proofUrl: 'https://example.com/proof.jpg',
@@ -129,7 +129,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
         idempotencyKey: idKey,
       });
@@ -152,7 +152,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
         idempotencyKey: `idem-${uuidv4()}`,
       });
@@ -166,14 +166,14 @@ describe('walletRepository', () => {
       await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
         idempotencyKey: `idem-${uuidv4()}`,
       });
       await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 3000,
+        amountInPaise: 3000,
         purpose: TransactionPurpose.TOP_UP,
         idempotencyKey: `idem-${uuidv4()}`,
       });
@@ -191,7 +191,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.DEBIT,
-        amount: 1000,
+        amountInPaise: 1000,
         purpose: TransactionPurpose.RENT_PAYMENT,
       });
 
@@ -207,7 +207,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
       });
 
@@ -220,7 +220,7 @@ describe('walletRepository', () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: TransactionPurpose.TOP_UP,
       });
 
@@ -236,7 +236,7 @@ describe('walletRepository', () => {
         data: {
           riderId: riderDbId,
           balanceInPaise: 5000,
-          securityDeposit: 0,
+          securityDepositInPaise: 0,
         }
       });
 
@@ -267,7 +267,7 @@ describe('walletRepository', () => {
         data: {
           riderId: riderDbId,
           balanceInPaise: 15000,
-          securityDeposit: 0,
+          securityDepositInPaise: 0,
         }
       });
 

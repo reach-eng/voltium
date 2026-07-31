@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { testDb } from '../../_setup/test-postgres';
 import { startWorkers, stopWorkers } from '../../../src/server/workers/index';
 import { JobQueue } from '../../../src/lib/job-queue';
+import { OutboxService } from '../../../src/server/workers/outbox';
 import { clock } from '../../../src/lib/clock';
 
 describe('Worker Dispatcher & Clock Injection Integration', () => {
@@ -50,7 +51,7 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
 
     // We will manually enqueue a job and call JobQueue.processJobs
     // directly with a failing processor to verify the backoff logic.
-    const testJobId = await JobQueue.enqueue('test.backoff', { msg: 'fail' }, 0, 3);
+    const testJobId = await OutboxService.emit('test.backoff', { msg: 'fail' }, 3);
 
     let processCount = 0;
     const failingProcessor = async () => {

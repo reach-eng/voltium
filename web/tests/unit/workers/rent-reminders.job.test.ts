@@ -58,7 +58,7 @@ describe('Rent Reminders Job', () => {
       data: {
         id: planId,
         name: `Test Plan ${uuidv4().slice(0, 8)}`,
-        price: 5000,
+        priceInPaise: 5000,
         type: 'MONTHLY',
         durationDays: 30,
         isActive: true,
@@ -103,8 +103,8 @@ describe('Rent Reminders Job', () => {
         vehicleId,
         status: 'BOOKED',
         leaseDate: clock.now().toISOString().split('T')[0],
-        basePrice: 5000,
-        finalPrice: 5000,
+        basePriceInPaise: 5000,
+        finalPriceInPaise: 5000,
         startTime: '10:00',
       }
     });
@@ -118,7 +118,7 @@ describe('Rent Reminders Job', () => {
     expect(updatedWallet?.balanceInPaise).toBe(1000);
 
     const txn = await testDb.transaction.findFirst({ where: { riderId } });
-    expect(txn?.amount).toBe(5000);
+    expect(txn?.amountInPaise).toBe(5000);
     expect(txn?.purpose).toBe('RENT_PAYMENT');
   });
 
@@ -138,8 +138,8 @@ describe('Rent Reminders Job', () => {
         vehicleId,
         status: 'BOOKED',
         leaseDate: clock.now().toISOString().split('T')[0],
-        basePrice: 5000,
-        finalPrice: 5000,
+        basePriceInPaise: 5000,
+        finalPriceInPaise: 5000,
         startTime: '10:00',
       }
     });

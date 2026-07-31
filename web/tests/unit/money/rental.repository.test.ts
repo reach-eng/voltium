@@ -17,9 +17,9 @@ describe('rentalRepository', () => {
 
   beforeEach(async () => {
     riderDbId = uuidv4();
-    const riderId = `RD-${uuidv4().substring(0, 6)}`;
+    const riderId = `RD-${uuidv4().substring(0, 12)}`;
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
-    const referralCode = `REF-${uuidv4().substring(0, 6)}`;
+    const referralCode = `REF-${uuidv4().substring(0, 12)}`;
     
     await testDb.rider.create({
       data: {
@@ -37,7 +37,7 @@ describe('rentalRepository', () => {
         id: uuidv4(),
         name: 'Weekly Saver',
         type: 'WEEKLY',
-        price: 14000,
+        priceInPaise: 14000,
         durationDays: 7,
         isActive: true,
       }
@@ -132,8 +132,8 @@ describe('rentalRepository', () => {
           leaseDate: '2026-06-29',
           startTime: '09:00',
           status: 'BOOKED',
-          basePrice: 14000,
-          finalPrice: 14000,
+          basePriceInPaise: 14000,
+          finalPriceInPaise: 14000,
         },
         include: { rider: true, vehicle: true },
       });

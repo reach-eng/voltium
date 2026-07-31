@@ -28,6 +28,9 @@ try {
 
 process.env.TEST_BASE_URL = 'http://localhost:8081';
 
+// Allow PII dev key fallback in test environment
+process.env.ALLOW_DEV_PII_KEY = 'true';
+
 // Set NODE_ENV=test so the Prisma client uses the higher test pool size
 // (see src/lib/db.ts). Tests run with NODE_ENV=development by default
 // (loaded from .env), which would cap the pool at 10 and cause

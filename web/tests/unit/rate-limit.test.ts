@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.stubEnv('NODE_ENV', 'production');
+vi.stubEnv('APP_ENV', 'production');
 
 vi.mock('@/lib/db', () => ({
   db: {

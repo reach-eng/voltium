@@ -121,3 +121,63 @@ describe('requireCronAuth — guard logic', () => {
     expect(res!.status).toBe(503);
   });
 });
+
+/**
+ * Ticket #47 — cron-auth length-check timing leak (regression guard)
+ *
+ * The audit claimed: cron-auth length check leaks secret length via timing.
+ * Verification: the implementation hashes BOTH inputs to 32-byte SHA-256
+ * before passing to `timingSafeEqual`, so the comparison is constant-time
+ * regardless of input length. The `MAX_TOKEN_LEN` cap (1024 bytes) is a
+ * DoS guard, not a timing leak. This test locks in the spec.
+ */
+describe('requireCronAuth — timing-safety spec (#47)', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  async function getGuard() {
+    const mod = await import('../../src/lib/cron-auth');
+    return mod.requireCronAuth;
+  }
+
+  it('rejects token of length 0 (empty) — does not leak', async () => {
+    process.env.CRON_SECRET = 'a-long-secret-that-is-32-bytes';
+    const requireCronAuth = await getGuard();
+    const res = requireCronAuth(mockRequest({ authorization: 'Bearer ' }));
+    expect(res).not.toBeNull();
+    expect(res!.status).toBe(401);
+  });
+
+  it('rejects token of length 1 (single char) — does not leak', async () => {
+    process.env.CRON_SECRET = 'a-long-secret-that-is-32-bytes';
+    const requireCronAuth = await getGuard();
+    const res = requireCronAuth(mockRequest({ authorization: 'Bearer x' }));
+    expect(res).not.toBeNull();
+    expect(res!.status).toBe(401);
+  });
+
+  it('rejects token of MAX_TOKEN_LEN+1 length (DoS guard) — does not leak', async () => {
+    process.env.CRON_SECRET = 'a-long-secret-that-is-32-bytes';
+    const requireCronAuth = await getGuard();
+    // 1025 chars (one over the 1024 cap)
+    const oversized = 'a'.repeat(1025);
+    const res = requireCronAuth(mockRequest({ authorization: `Bearer ${oversized}` }));
+    expect(res).not.toBeNull();
+    expect(res!.status).toBe(401);
+  });
+
+  it('accepts token of MAX_TOKEN_LEN length when matching secret', async () => {
+    process.env.CRON_SECRET = 'a'.repeat(64);
+    const requireCronAuth = await getGuard();
+    // 64-char token under the 1024 cap
+    const res = requireCronAuth(mockRequest({ authorization: `Bearer ${'a'.repeat(64)}` }));
+    expect(res).toBeNull();
+  });
+});

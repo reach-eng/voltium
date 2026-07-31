@@ -35,16 +35,16 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-import { calculateNextRun } from '@/server/modules/data-management/backup.service';
+import { scheduleService } from '@/server/modules/data-management/schedule/schedule.service';
 import {
   scheduleUpdateSchema,
   createBackupSchema,
-} from '@/server/modules/data-management/backup.schemas';
+} from '@/server/modules/data-management/backup/backup.schemas';
 
 describe('calculateNextRun', () => {
   describe('DAILY frequency', () => {
     it('returns a date in the future', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'DAILY',
         timeOfDay: '02:00',
         timezone: 'Asia/Kolkata',
@@ -56,7 +56,7 @@ describe('calculateNextRun', () => {
     });
 
     it('returns null for MANUAL frequency', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'MANUAL',
         timeOfDay: '02:00',
         timezone: 'UTC',
@@ -71,7 +71,7 @@ describe('calculateNextRun', () => {
       futureTime.setHours(futureTime.getHours() + 1);
       const timeStr = `${String(futureTime.getHours()).padStart(2, '0')}:${String(futureTime.getMinutes()).padStart(2, '0')}`;
 
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'DAILY',
         timeOfDay: timeStr,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -87,7 +87,7 @@ describe('calculateNextRun', () => {
 
   describe('WEEKLY frequency', () => {
     it('returns a future date for weekly schedule', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'WEEKLY',
         timeOfDay: '02:00',
         timezone: 'Asia/Kolkata',
@@ -100,7 +100,7 @@ describe('calculateNextRun', () => {
 
     it('returns a future date when time has passed today', () => {
       // Use a time in the past to ensure the weekly calculation kicks in
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'WEEKLY',
         timeOfDay: '00:01',
         timezone: 'UTC',
@@ -119,7 +119,7 @@ describe('calculateNextRun', () => {
 
   describe('MONTHLY frequency', () => {
     it('returns a future date for monthly schedule', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'MONTHLY',
         timeOfDay: '02:00',
         timezone: 'Asia/Kolkata',
@@ -131,7 +131,7 @@ describe('calculateNextRun', () => {
     });
 
     it('clamps dayOfMonth to 28', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'MONTHLY',
         timeOfDay: '02:00',
         timezone: 'UTC',
@@ -145,7 +145,7 @@ describe('calculateNextRun', () => {
 
   describe('edge cases', () => {
     it('handles empty frequency string', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: '',
         timeOfDay: '02:00',
         timezone: 'UTC',
@@ -156,7 +156,7 @@ describe('calculateNextRun', () => {
     });
 
     it('handles empty timeOfDay (defaults to 02:00)', () => {
-      const next = calculateNextRun({
+      const next = scheduleService.calculateNextRun({
         frequency: 'DAILY',
         timeOfDay: '',
         timezone: 'UTC',

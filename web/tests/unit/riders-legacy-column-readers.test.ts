@@ -76,6 +76,9 @@ describe('PR-J: legacy column reader inventory (drop gate)', () => {
         'server/modules/rentals/rental.repository.ts',
         'server/modules/rentals/rental.use-cases.ts',
         'server/modules/riders/admin-riders-list.use-cases.ts',
+        'server/modules/riders/admin-riders-list-fleet.use-cases.ts',
+        'server/modules/riders/admin-riders-update.use-cases.ts',
+        'server/modules/riders/admin-riders-complete-pickup.use-cases.ts',
       ];
       for (const file of expected) {
         const found = readers.some((r) => r.file === file);

@@ -19,9 +19,9 @@ describe('depositLedgerService', () => {
   beforeEach(async () => {
     riderDbId = uuidv4();
     transactionId = `txn-${uuidv4()}`;
-    const riderId = `RD-${uuidv4().substring(0, 6)}`;
+    const riderId = `RD-${uuidv4().replace(/-/g, '').substring(0, 8)}`;
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
-    const referralCode = `REF-${uuidv4().substring(0, 6)}`;
+    const referralCode = `REF-${uuidv4().replace(/-/g, '').substring(0, 10)}`;
     
     await testDb.rider.create({
       data: {
@@ -37,7 +37,7 @@ describe('depositLedgerService', () => {
       data: {
         riderId: riderDbId,
         balanceInPaise: 0,
-        securityDeposit: 0,
+        securityDepositInPaise: 0,
         depositStatus: 'PENDING',
       }
     });
@@ -47,7 +47,7 @@ describe('depositLedgerService', () => {
         id: transactionId,
         riderId: riderDbId,
         type: 'CREDIT',
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: 'SECURITY_DEPOSIT',
         status: 'PENDING',
         method: 'RAZORPAY',
@@ -91,7 +91,7 @@ describe('depositLedgerService', () => {
     expect(record?.status).toBe('APPROVED');
 
     const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
-    expect(wallet?.securityDeposit).toBe(5000);
+    expect(wallet?.securityDepositInPaise).toBe(5000);
     
     const entries = await walletRepository.getLedgerEntries(riderDbId);
     expect(entries).toHaveLength(1);
@@ -129,7 +129,7 @@ describe('depositLedgerService', () => {
 
     await testDb.wallet.update({
       where: { riderId: riderDbId },
-      data: { securityDeposit: 5000 },
+      data: { securityDepositInPaise: 5000 },
     });
 
     await depositLedgerService.refund({
@@ -141,7 +141,7 @@ describe('depositLedgerService', () => {
     expect(record?.status).toBe('REFUNDED');
 
     const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
-    expect(wallet?.securityDeposit).toBe(0);
+    expect(wallet?.securityDepositInPaise).toBe(0);
   });
   it('should forfeit deposit', async () => {
     await testDb.depositRecord.create({
@@ -154,7 +154,7 @@ describe('depositLedgerService', () => {
 
     await testDb.wallet.update({
       where: { riderId: riderDbId },
-      data: { securityDeposit: 5000 },
+      data: { securityDepositInPaise: 5000 },
     });
 
     await depositLedgerService.forfeit({
@@ -168,7 +168,7 @@ describe('depositLedgerService', () => {
     expect(record?.forfeitReason).toBe('Vehicle damaged');
 
     const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
-    expect(wallet?.securityDeposit).toBe(0);
+    expect(wallet?.securityDepositInPaise).toBe(0);
   });
 
   describe('Edge cases and State Transitions', () => {
@@ -185,10 +185,10 @@ describe('depositLedgerService', () => {
       await testDb.rider.create({
         data: {
           id: noWalletRiderId,
-          riderId: `RD-${uuidv4().substring(0, 6)}`,
+          riderId: `RD-${uuidv4().substring(0, 12)}`,
           phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
           fullName: 'No Wallet Rider',
-          referralCode: `REF-${uuidv4().substring(0, 6)}`,
+          referralCode: `REF-${uuidv4().substring(0, 12)}`,
         }
       });
       await testDb.depositRecord.create({
@@ -251,7 +251,7 @@ describe('depositLedgerService', () => {
       });
 
       const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
-      expect(wallet?.securityDeposit).toBe(5000); // the deposit
+      expect(wallet?.securityDepositInPaise).toBe(5000); // the deposit
       expect(wallet?.balanceInPaise).toBe(1000);  // the bonus
       
       const entries = await walletRepository.getLedgerEntries(riderDbId);
@@ -273,7 +273,7 @@ describe('depositLedgerService', () => {
 
       await testDb.wallet.update({
         where: { riderId: riderDbId },
-        data: { securityDeposit: 5000 },
+        data: { securityDepositInPaise: 5000 },
       });
 
       await depositLedgerService.refund({
@@ -289,7 +289,7 @@ describe('depositLedgerService', () => {
 
       const wallet = await testDb.wallet.findUnique({ where: { riderId: riderDbId } });
       // Security deposit is debited by 2000, leaving 3000
-      expect(wallet?.securityDeposit).toBe(3000);
+      expect(wallet?.securityDepositInPaise).toBe(3000);
       // General balance is credited by 2000
       expect(wallet?.balanceInPaise).toBe(2000);
       

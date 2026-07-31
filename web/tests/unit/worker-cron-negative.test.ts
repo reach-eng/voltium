@@ -108,20 +108,19 @@ describe('Job Queue — exponential backoff calculation', () => {
 // Job Queue — Job Types
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('Job Queue — JobTypes constants', () => {
-  it('defines expected job types', async () => {
-    const { JobTypes } = await import('../../src/lib/job-queue');
-    expect(JobTypes.SEND_SMS).toBe('sms.send');
-    expect(JobTypes.SEND_EMAIL).toBe('send_email');
-    expect(JobTypes.NOTIFICATION).toBe('notification.send');
-    expect(JobTypes.RIDE_REMINDER).toBe('ride_reminder');
-    expect(JobTypes.REFERRAL_REWARD).toBe('referral.reward');
-    expect(JobTypes.REFUND_PROCESSING).toBe('refund_processing');
+describe('Outbox Event Types — canonical job type strings (#2)', () => {
+  it('defines expected canonical event types', async () => {
+    const { OutboxEventTypes } = await import('../../src/server/workers/outbox');
+    expect(OutboxEventTypes.SMS_SEND).toBe('sms.send');
+    expect(OutboxEventTypes.NOTIFICATION_SEND).toBe('notification.send');
+    expect(OutboxEventTypes.REFERRAL_REWARD).toBe('referral.reward');
+    expect(OutboxEventTypes.RENT_DUE_CHECK).toBe('rent.due_check');
+    expect(OutboxEventTypes.WALLET_RECONCILIATION).toBe('wallet.reconciliation');
   });
 
-  it('all job type values are non-empty strings', async () => {
-    const { JobTypes } = await import('../../src/lib/job-queue');
-    for (const [key, value] of Object.entries(JobTypes)) {
+  it('all event type values are non-empty strings', async () => {
+    const { OutboxEventTypes } = await import('../../src/server/workers/outbox');
+    for (const [key, value] of Object.entries(OutboxEventTypes)) {
       expect(typeof value).toBe('string');
       expect(value.length).toBeGreaterThan(0);
     }

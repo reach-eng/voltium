@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { backupService } from '@/server/modules/data-management/backup.service';
+import { backupLockService } from '@/server/modules/data-management/backup/backup-lock.service';
 import { db } from '@/lib/db';
 
 vi.mock('@/lib/db', () => ({
@@ -30,7 +30,7 @@ describe('Backup Lock Service Tests', () => {
     vi.mocked(db.systemSetting.findUnique).mockResolvedValue(null); // defaults to NONE
     vi.mocked(db.systemSetting.upsert).mockResolvedValue({} as any);
 
-    const result = await backupService.acquireLock('BACKUP_RUNNING', 'test-owner');
+    const result = await backupLockService.acquireLock('BACKUP_RUNNING', 'test-owner');
     expect(result).toBe(true);
     expect(db.systemSetting.upsert).toHaveBeenCalledTimes(3);
   });
@@ -43,7 +43,7 @@ describe('Backup Lock Service Tests', () => {
       updatedAt: new Date(),
     });
 
-    const result = await backupService.acquireLock('BACKUP_RUNNING', 'test-owner');
+    const result = await backupLockService.acquireLock('BACKUP_RUNNING', 'test-owner');
     expect(result).toBe(false);
     expect(db.systemSetting.upsert).not.toHaveBeenCalled();
   });
@@ -51,7 +51,7 @@ describe('Backup Lock Service Tests', () => {
   it('releases lock correctly', async () => {
     vi.mocked(db.systemSetting.upsert).mockResolvedValue({} as any);
 
-    await backupService.releaseLock();
+    await backupLockService.releaseLock();
     expect(db.systemSetting.upsert).toHaveBeenCalledTimes(3);
     expect(db.systemSetting.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ create: { key: 'BACKUP_LOCK_STATUS', value: 'NONE', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false } })
@@ -64,7 +64,7 @@ describe('Backup Lock Service Tests', () => {
       .mockResolvedValueOnce({ value: '2026-06-16T00:00:00.000Z' } as any) // startedAt
       .mockResolvedValueOnce({ value: 'scheduled-worker' } as any); // owner
 
-    const status = await backupService.getLockStatus();
+    const status = await backupLockService.getLockStatus();
     expect(status.status).toBe('BACKUP_RUNNING');
     expect(status.startedAt).toBe('2026-06-16T00:00:00.000Z');
     expect(status.owner).toBe('scheduled-worker');

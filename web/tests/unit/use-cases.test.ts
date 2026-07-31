@@ -79,6 +79,7 @@ const mockDb = {
   shift: { findUnique: vi.fn() },
   rentalLease: { count: vi.fn(), findFirst: vi.fn(), create: vi.fn() },
   setting: { findUnique: vi.fn() },
+  systemSetting: { findUnique: vi.fn() },
   $transaction: vi.fn(),
   supportTicket: { count: vi.fn() },
 };
@@ -134,7 +135,7 @@ vi.mock('@/lib/dynamic-pricing', () => ({
 }));
 vi.mock('@/lib/flatten-rider', () => ({ flattenRider: (r: any) => r }));
 vi.mock('@/lib/sign-rider', () => ({ signRiderUrls: (r: any) => r }));
-vi.mock('@/lib/services/deposit-service', () => ({
+vi.mock('@/server/modules/deposits/deposit.service', () => ({
   upsertDepositRecord: () => Promise.resolve(undefined),
 }));
 vi.mock('isomorphic-dompurify', () => ({
@@ -150,9 +151,13 @@ vi.mock('isomorphic-dompurify', () => ({
 const { kycUseCases } = await import('@/server/modules/kyc/kyc.use-cases');
 const { guarantorUseCases } = await import('@/server/modules/guarantors/guarantor.use-cases');
 const { walletUseCases } = await import('@/server/modules/wallet/wallet.use-cases');
-const { rentalUseCases, RentalBookError } =
-  await import('@/server/modules/rentals/rental.use-cases');
-const { supportUseCases } = await import('@/server/modules/support/support.use-cases');
+const { bookRental } = await import('@/server/modules/rentals/use-cases/book-rental.use-case');
+const { syncPickup } = await import('@/server/modules/rentals/use-cases/sync-pickup.use-case');
+const { RentalBookError } = await import('@/server/modules/rentals/use-cases/errors');
+const rentalUseCases = { bookRental, syncPickup };
+const { riderSupportUseCases } = await import('@/server/modules/support/rider-support.use-cases');
+const { sharedSupportUseCases } = await import('@/server/modules/support/shared-support.use-cases');
+const { adminSupportUseCases } = await import('@/server/modules/support/admin-support.use-cases');
 
 // ===========================================================================
 // KYC Use Cases
@@ -390,7 +395,7 @@ describe('Wallet — Top-up', () => {
       id: 'txn-1',
       status: 'PENDING',
       riderId: 'rider-123',
-      amount: 50000,
+      amountInPaise: 50000,
     });
 
     const result = await walletUseCases.requestTopup('rider-123', 50000, 'TOP_UP', 'upi');
@@ -398,7 +403,7 @@ describe('Wallet — Top-up', () => {
     expect(mockWalletRepository.createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         riderId: 'rider-123',
-        amount: 50000,
+        amountInPaise: 50000,
         purpose: 'TOP_UP',
         status: 'PENDING',
       })
@@ -533,7 +538,8 @@ describe('Wallet — Approval', () => {
     expect(mockWalletRepository.updateTransactionStatus).toHaveBeenCalledWith(
       'txn-1',
       'REJECTED',
-      'admin-1'
+      'admin-1',
+      expect.anything()
     );
     expect(mockAuditLog.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -606,7 +612,7 @@ describe('Rental — Book Rental', () => {
     mockDb.rentalLease.count.mockResolvedValue(2);
     mockDb.rentalLease.findFirst.mockResolvedValue(null); // no duplicate
     mockDb.vehicle.count.mockResolvedValue(10);
-    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
 
     const mockTx = {
       rentalLease: {
@@ -666,7 +672,7 @@ describe('Rental — Book Rental', () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
     mockDb.vehicle.count.mockResolvedValue(10);
-    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
     const mockTxFullyBooked = {
       rentalLease: { count: vi.fn().mockResolvedValue(5) },
       vehicle: {},
@@ -688,7 +694,7 @@ describe('Rental — Book Rental', () => {
     mockDb.vehicle.findUnique.mockResolvedValue(mockVehicle);
     mockDb.shift.findUnique.mockResolvedValue(mockShift);
     mockDb.vehicle.count.mockResolvedValue(10);
-    mockDb.setting.findUnique.mockResolvedValue({ value: '18000' });
+    mockDb.systemSetting.findUnique.mockResolvedValue({ value: '18000' });
     const mockTxDuplicateRider = {
       rentalLease: {
         count: vi.fn().mockResolvedValue(2),
@@ -788,7 +794,7 @@ describe('Support — Ticket Flow', () => {
       status: 'OPEN',
     });
 
-    const result = await supportUseCases.createTicket('rider-123', {
+    const result = await riderSupportUseCases.createTicket('rider-123', {
       subject: 'App crash',
       message: 'App crashes on login',
       category: 'technical',
@@ -808,7 +814,7 @@ describe('Support — Ticket Flow', () => {
     mockSupportRepository.findById.mockResolvedValue({ id: 'ticket-1', status: 'OPEN' });
     mockSupportRepository.addMessage.mockResolvedValue({ id: 'msg-1', ticketId: 'ticket-1' });
 
-    await supportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {
+    await sharedSupportUseCases.replyToTicket('ticket-1', 'rider-123', 'rider', {
       message: 'Still experiencing the issue',
       attachments: [],
     });
@@ -825,7 +831,7 @@ describe('Support — Ticket Flow', () => {
   it('retrieves rider tickets', async () => {
     mockSupportRepository.findByRiderId.mockResolvedValue([{ id: 'ticket-1', status: 'OPEN' }]);
 
-    const result = await supportUseCases.getTickets('rider-123');
+    const result = await riderSupportUseCases.getTickets('rider-123');
 
     expect(result).toHaveLength(1);
   });
@@ -835,7 +841,7 @@ describe('Support — Ticket Flow', () => {
       { id: 'faq-1', question: 'How to top up?', category: 'wallet' },
     ]);
 
-    const result = await supportUseCases.getFAQs();
+    const result = await riderSupportUseCases.getFAQs();
 
     expect(result).toHaveLength(1);
   });
@@ -851,7 +857,7 @@ describe('Support — Admin Audit', () => {
   it('creates audit log for admin ticket actions', async () => {
     mockAuditLog.createAuditLog.mockResolvedValue(undefined);
 
-    await supportUseCases.logAdminAction('admin-1', {
+    await adminSupportUseCases.logAdminAction('admin-1', {
       action: 'ticket.assign',
       ticketId: 'ticket-1',
       details: { assignedTo: 'admin-2' },

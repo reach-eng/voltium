@@ -21,9 +21,9 @@ describe('transactionService', () => {
 
   beforeEach(async () => {
     riderDbId = uuidv4();
-    const riderId = `RD-${uuidv4().substring(0, 6)}`;
+    const riderId = `RD-${uuidv4().substring(0, 12)}`;
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
-    const referralCode = `REF-${uuidv4().substring(0, 6)}`;
+    const referralCode = `REF-${uuidv4().substring(0, 12)}`;
     
     await testDb.rider.create({
       data: {
@@ -42,7 +42,7 @@ describe('transactionService', () => {
         data: {
           riderId: riderDbId,
           type: TransactionType.CREDIT,
-          amount: 5000,
+          amountInPaise: 5000,
           purpose: TransactionPurpose.TOP_UP,
           status: TransactionStatus.PENDING,
         }

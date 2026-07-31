@@ -4,7 +4,7 @@ import { testDb } from '../../_setup/test-postgres';
 import { reconciliationJob } from '../../../src/server/workers/jobs/reconciliation.job';
 import { clock } from '../../../src/lib/clock';
 import { JobQueue } from '../../../src/lib/job-queue';
-import { OutboxEventTypes } from '../../../src/server/workers/outbox';
+import { OutboxEventTypes, OutboxService } from '../../../src/server/workers/outbox';
 
 describe('Reconciliation Job', () => {
   beforeAll(async () => {
@@ -38,13 +38,13 @@ describe('Reconciliation Job', () => {
         entryType: 'CREDIT',
         amountInPaise: 1000,
         category: 'TOP_UP',
-        txnId: null,
+        transactionId: null,
         balanceAfter: 1000,
         idempotencyKey: `backfill:opening:${wallet.id}`,
       }
     });
 
-    const eventId = await JobQueue.enqueue(OutboxEventTypes.WALLET_RECONCILIATION, {});
+    const eventId = await OutboxService.emit(OutboxEventTypes.WALLET_RECONCILIATION, {});
     let result: any;
     await JobQueue.processJobs(OutboxEventTypes.WALLET_RECONCILIATION, async (job) => {
       result = await reconciliationJob.process(job);
@@ -78,13 +78,13 @@ describe('Reconciliation Job', () => {
         entryType: 'CREDIT',
         amountInPaise: 1000,
         category: 'TOP_UP',
-        txnId: null,
+        transactionId: null,
         balanceAfter: 1000,
         idempotencyKey: `backfill:opening:${wallet.id}`,
       }
     });
 
-    const eventId = await JobQueue.enqueue(OutboxEventTypes.WALLET_RECONCILIATION, {});
+    const eventId = await OutboxService.emit(OutboxEventTypes.WALLET_RECONCILIATION, {});
     let result: any;
     await JobQueue.processJobs(OutboxEventTypes.WALLET_RECONCILIATION, async (job) => {
       result = await reconciliationJob.process(job);
@@ -130,7 +130,7 @@ describe('Reconciliation Job', () => {
     });
     await testDb.wallet.create({ data: { riderId, balanceInPaise: 100 } });
 
-    const eventId = await JobQueue.enqueue(OutboxEventTypes.WALLET_RECONCILIATION, {});
+    const eventId = await OutboxService.emit(OutboxEventTypes.WALLET_RECONCILIATION, {});
     let result: any;
     await JobQueue.processJobs(OutboxEventTypes.WALLET_RECONCILIATION, async (job) => {
       result = await reconciliationJob.process(job);

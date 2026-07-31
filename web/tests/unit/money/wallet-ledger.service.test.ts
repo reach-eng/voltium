@@ -18,10 +18,10 @@ describe('walletLedgerService', () => {
   let walletId: string;
 
   beforeEach(async () => {
-    riderId = `RD-${uuidv4().substring(0, 6)}`;
+    riderId = `RD-${uuidv4().replace(/-/g, '')}`;
     riderDbId = uuidv4();
     const phone = Math.floor(Math.random() * 9000000000 + 1000000000).toString();
-    const referralCode = `REF-${uuidv4().substring(0, 6)}`;
+    const referralCode = `REF-${uuidv4().replace(/-/g, '')}`;
     
     await testDb.rider.create({
       data: {
@@ -37,7 +37,7 @@ describe('walletLedgerService', () => {
       data: {
         riderId: riderDbId,
         balanceInPaise: 0,
-        securityDeposit: 0,
+        securityDepositInPaise: 0,
         depositStatus: 'PENDING',
       }
     });
@@ -122,7 +122,7 @@ describe('walletLedgerService', () => {
     });
 
     const wallet = await walletRepository.findByRiderId(riderDbId);
-    expect(wallet?.securityDeposit).toBe(5000);
+    expect(wallet?.securityDepositInPaise).toBe(5000);
 
     const entries = await walletRepository.getLedgerEntries(riderDbId);
     expect(entries).toHaveLength(1);
@@ -228,7 +228,7 @@ describe('walletLedgerService', () => {
       data: {
         riderId: riderDbId,
         type: 'CREDIT',
-        amount: 5000,
+        amountInPaise: 5000,
         purpose: 'TOP_UP',
         status: 'APPROVED',
       },

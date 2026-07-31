@@ -59,7 +59,7 @@ describe('Referral Reward Job', () => {
     expect(ledger?.amountInPaise).toBe(10000);
     
     const txn = await testDb.transaction.findFirst({ where: { riderId: referrerId } });
-    expect(txn?.amount).toBe(10000);
+    expect(txn?.amountInPaise).toBe(10000);
   });
 
   it('should return error if payload is missing', async () => {

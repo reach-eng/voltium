@@ -1,20 +1,21 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { testDb } from '../../_setup/test-postgres';
 import { scheduledBackupJob } from '../../../src/server/workers/jobs/scheduled-backup.job';
-import { backupService } from '../../../src/server/modules/data-management/backup.service';
-import { backupRepository } from '../../../src/server/modules/data-management/backup.repository';
+import { scheduleService } from '../../../src/server/modules/data-management/schedule/schedule.service';
+import { getFreeDiskBytes } from '../../../src/server/modules/data-management/storage/storage.service';
+import { backupRepository } from '../../../src/server/modules/data-management/backup/backup.repository';
 import { clock } from '../../../src/lib/clock';
 
-vi.mock('../../../src/server/modules/data-management/backup.service', async () => {
-  const actual = await vi.importActual<any>('../../../src/server/modules/data-management/backup.service');
-  return {
-    ...actual,
-    getFreeDiskBytes: vi.fn().mockResolvedValue(100 * 1024 * 1024 * 1024), // 100 GB
-    backupService: {
-      runScheduledBackup: vi.fn().mockResolvedValue({ id: 'backup-job', backupId: 'backup', sizeBytes: 100 }),
-    },
-  };
-});
+vi.mock('../../../src/server/modules/data-management/storage/storage.service', () => ({
+  getFreeDiskBytes: vi.fn().mockResolvedValue(100 * 1024 * 1024 * 1024), // 100 GB
+}));
+
+vi.mock('../../../src/server/modules/data-management/schedule/schedule.service', () => ({
+  scheduleService: {
+    runScheduledBackup: vi.fn().mockResolvedValue({ id: 'backup-job', backupId: 'backup', sizeBytes: 100 }),
+    calculateNextRun: vi.fn().mockReturnValue(new Date()),
+  }
+}));
 
 describe('Scheduled Backup Job', () => {
   beforeAll(async () => {
@@ -28,7 +29,7 @@ describe('Scheduled Backup Job', () => {
   beforeEach(async () => {
     await testDb.backupSchedule.deleteMany();
     await testDb.auditLog.deleteMany();
-    await testDb.setting.deleteMany();
+    await testDb.systemSetting.deleteMany();
     clock.reset();
     vi.clearAllMocks();
   });
@@ -78,6 +79,6 @@ describe('Scheduled Backup Job', () => {
 
     const result = await scheduledBackupJob.checkAndRun();
     expect(result.ran).toBe(true);
-    expect(backupService.runScheduledBackup).toHaveBeenCalled();
+    expect(scheduleService.runScheduledBackup).toHaveBeenCalled();
   });
 });

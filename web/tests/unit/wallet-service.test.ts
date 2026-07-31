@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 vi.mock('@/lib/db', () => ({ db: {} }));
-import { WalletServiceError } from '@/lib/services/wallet-service';
+import { WalletServiceError } from '@/server/modules/wallet/wallet.errors';
 
 // ---------------------------------------------------------------------------
 // Wallet Ledger Semantics (pure logic)
