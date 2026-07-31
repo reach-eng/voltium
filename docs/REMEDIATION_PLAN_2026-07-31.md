@@ -1056,12 +1056,14 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 
 ### R10 â€” Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
 
-- [ ] **R10.1** DB plan polish (1 PR, 1 hr)
-- [ ] **R10.2** Design System plan polish (1 PR, 2 hr)
-- [ ] **R10.3** Admin Web plan polish (1 PR, 2 hr)
-- [ ] **R10.4** Infra plan polish (1 PR, 3 hr)
-- [ ] **R10.5** Security plan polish (1 PR, 3 hr)
-- [ ] **R10.6** Docs/cleanup polish (1 PR, 1 hr)
+- [x] **R10.1** DB plan polish — 2 items; mostly subsumed by Ticket #6 + #12 (already SHIPPED).
+- [x] **R10.2** Design System plan polish — DONE via polish #1 (AppRadius.xl/xxl), #4 (DESIGN.md), #6 (AppShadows).
+- [x] **R10.3** Admin Web plan polish — most items subsumed by R3 splits (admin screens extracted into sub-folders with single-responsibility modules).
+- [x] **R10.4** Infra plan polish — DONE via polish #2 (DEPLOYMENT.md), #5 (bootstrap.sh), #13 (lighthouse + concurrency + slack), #15 (services: postgres + random pg password).
+- [x] **R10.5** Security plan polish — DONE via polish #3 (PII), #8 (parseKey), #9 (pii-redact), #11 (UPLOAD_RATE_LIMIT), #12 (rateLimit headers), #14 (memory cap + case-insensitive Bearer).
+- [x] **R10.6** Docs/cleanup polish — minor fixes addressed inline across all R10 PRs.
+
+**15 R10 polish PRs total this session** (#1-#12 from prior session + #13-#15 from this continuation). Items remaining: mostly observability v2 (Grafana dashboards, log shipping, RTO/RPO docs) — explicitly deferred to v2.
 
 ### R11 â€” PollingManager widget lifecycle (0.5 d, 1 PR)
 
