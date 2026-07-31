@@ -93,7 +93,7 @@ These are the items identified during the Phase 0–7 remediation, the 6 audit r
 | #30 | [Design System 4.14] Pre-build `AppTypography` 17 styles in static initializer (perf) | Design | Low | 0.5 d |
 | #31 | [Design System 6.3, 6.4, 8.7, 10.3] Various small P2/P3 design system tidy-ups | Design | Low | 1 d total |
 | #32 | [Design System 6.6, 12.14] Add CI lint for raw `Color(0xFF...)`, off-grid spacing, and `FontWeight.w900` | Design | Medium | 0.5 d | **SHIPPED PR-P1.5** |
-| #33 | [Admin Web 9.1, 9.2, 9.6] Additional server module splits (after PR-11 ships) | Admin | Low | 2-3 d |
+| #33 | [Admin Web 9.1, 9.2, 9.6] Additional server module splits | Admin | Low | 2-3 d | **SHIPPED (audit-correction)** — server modules split in PR-C.3/PR-C.4 |
 | #34 | [Infra Plan PR-1] `check-migration-safety.sh` always exits 0 — destructive migrations pass silently | Infra | P0 | 30 min |
 | #35 | [Infra Plan PR-2] Replace `check-secret-rotation.sh` fake check with a real rotation check | Infra | P0 | 3 hr |
 | #36 | [Infra Plan PR-3] `db-backup.sh` writes plaintext SQL dumps with PII — add encryption | Infra | P0 | 1 hr |
