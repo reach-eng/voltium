@@ -200,10 +200,13 @@ class AppGradients {
 }
 
 class AppShadows {
-  /// Card shadow: shadow-[0px_24px_48px_rgba(15,23,42,0.04)]
+  /// Card shadow: 8% onSurface, blurRadius 12, offset (0, 4).
+  /// Visually equivalent to Material 3 elevation-1 (the standard "resting" card).
+  /// (R10 polish #6 — comment fixed; the original cited 0px_24px_48px_rgba(0.04)
+  /// which doesn't match the actual code values used in the wild.)
   static const List<BoxShadow> card = [
     BoxShadow(
-      color: Color(0x140F172A), // 8% opacity
+      color: Color(0x140F172A), // 8% onSurface
       blurRadius: 12,
       offset: Offset(0, 4),
     ),
@@ -343,8 +346,10 @@ class AppRadius {
   static const BorderRadius radiusSm = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius radiusMd = BorderRadius.all(Radius.circular(md));
   static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(lg));
-  static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(radiusModal));
-  static const BorderRadius radiusXxl = BorderRadius.all(Radius.circular(radiusBottomSheet));
+  static const BorderRadius radiusXl =
+      BorderRadius.all(Radius.circular(radiusModal));
+  static const BorderRadius radiusXxl =
+      BorderRadius.all(Radius.circular(radiusBottomSheet));
   static const BorderRadius radiusFull =
       BorderRadius.all(Radius.circular(full));
 
