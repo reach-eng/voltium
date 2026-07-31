@@ -12,6 +12,9 @@ node_modules
 
 # testing
 /coverage
+/web/coverage/
+/web/coverage-integration/
+/web/coverage-combined/
 
 # next.js
 /web/.next/
@@ -65,7 +68,10 @@ local-*
 
 # logs, pids, and generated reports
 *.log
+**/*.log
 *.pid
+nul
+**/nul
 *_output.txt
 *_report.txt
 *_verification.txt
@@ -179,3 +185,5 @@ web/public/bolt-test.svg
 # Stale Inter font downloaded during build experiments
 flutter/Inter_*.ttf
 
+
+.qoder/
