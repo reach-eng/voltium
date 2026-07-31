@@ -1002,7 +1002,17 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 - [x] **R3.7u** RiderScoringScreen (25.7 KB, full split) — DONE (commit `dac2da0`)
 - [x] **R3.7v** HubManagement (27.6 KB, hook extraction) — DONE (commit `63586d5`)
 
-**22 R3 splits total this session, all 1863 tests passing, tsc + eslint clean.** 7 screens in 25+ KB range still open: BulkMessaging 25.7, OfferManagement 30.9, RentalManagement 31.6, DashboardOverview 33.8, TeamLeaderManagement 35, DeviceTracking 38.4, RiderManagement 43.8.
+**Session 3 update (2026-07-31, end of session):** 9 more R3 splits done — ALL 25+ KB admin screens now split:
+
+- [x] **R3.7w** OfferManagement (30.9 KB, hook extraction) — DONE (commit `cf11c5f`)
+- [x] **R3.7x** BulkMessagingScreen (25.7 KB, full split) — DONE (commit `046b7e6`)
+- [x] **R3.7y** RentalManagement (31.6 KB, full split) — DONE (commit `5eebcf6`)
+- [x] **R3.7z** DashboardOverview (33.8 KB, full split — 13 files in `dashboard/`) — DONE (commit `3cd6aee`)
+- [x] **R3.7aa** TeamLeaderManagement (35 KB, full split) — DONE (commit `80e6243`)
+- [x] **R3.7bb** DeviceTrackingView (38.4 KB, full split — 12 files in `device-tracking/`) — DONE (commit `21872bd`)
+- [x] **R3.7cc** RiderManagement (43.8 KB, hook + sub-folder split — 8 new files) — DONE (commit `3845a78`)
+
+**31 R3 splits total across all 3 sessions, all 1863 tests passing, tsc + eslint clean.** Largest remaining top-level files: OfferManagement 22.9 KB (with `offers/` subdirectory, R3.7w) and HubManagement 19.9 KB (with `hub-management/` subdirectory, R3.7v) — both have hook extraction only because of dense form / table JSX in single views; further splitting would be a full table-extraction refactor beyond R3 scope.
 
 ### R4 â€” Flutter router refactor (PR-T, 1-2 weeks, 6 PRs)
 
