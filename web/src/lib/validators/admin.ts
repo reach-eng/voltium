@@ -18,7 +18,7 @@ export const dataDeletionApproveSchema = z.object({
 
 export const dataDeletionRejectSchema = z.object({
   requestId: z.string().min(1),
-  reason: z.string().min(1).max(500),
+  reason: z.string().min(5).max(500),
 });
 
 export const dataDeletionRestoreSchema = z.object({

@@ -3,7 +3,7 @@
  */
 
 export class WalletServiceError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(message: string, public code: string = 'WALLET_ERROR') {
     super(message);
     this.name = 'WalletServiceError';
   }

@@ -113,7 +113,7 @@ export const submitGuarantorSchema = z.object({
 
 // ==================== TRANSACTIONS ====================
 export const topUpSchema = z.object({
-  riderId: z.string().min(1, 'Rider ID required'),
+  riderId: z.string().min(1, 'Rider ID required').optional(),
   amount: z.number().positive('Amount must be positive').max(50000, 'Max ₹50,000 per top-up'),
   purpose: z.enum(['TOP_UP', 'SECURITY_DEPOSIT']),
   method: z.enum(['UPI', 'CASH', 'CARD']),
@@ -296,7 +296,7 @@ export const createTeamLeaderSchema = z.object({
 
 // ==================== ADMIN - TICKETS (UPDATE) ====================
 export const updateTicketSchema = z.object({
-  id: z.string().min(1, 'id is required'),
+  id: z.string().min(1, 'id is required').optional(),
   status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
   assignedTo: z.string().optional(),
 });
