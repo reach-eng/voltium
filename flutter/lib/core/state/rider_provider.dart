@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'dart:async';
 import 'package:universal_io/io.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
