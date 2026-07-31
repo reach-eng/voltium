@@ -8,19 +8,24 @@ datasource db {
 }
 
 model Admin {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  password     String
-  name         String
-  role         AdminRole      @default(OPERATIONS_ADMIN)
-  isActive     Boolean        @default(true)
-  lastLoginAt  DateTime?
-  permissions  String         @default("[]")
-  tokenVersion Int            @default(1)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  sessions     AdminSession[]
-  backupJobs   BackupJob[]
+  id             String               @id @default(cuid())
+  email          String               @unique
+  password       String
+  name           String
+  role           AdminRole            @default(OPERATIONS_ADMIN)
+  isActive       Boolean              @default(true)
+  lastLoginAt    DateTime?
+  // R6 — legacy `permissions String[]` column. Will be dropped in migration
+  // 20260806000000_drop_admin_legacy_permissions after 1-week staging soak
+  // (ends 2026-08-06). Until then, kept for backward compatibility — new
+  // writers go to `AdminHasPermission`; old writers/readers still use this.
+  permissions    String[]             @default([])
+  tokenVersion   Int                  @default(1)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  sessions       AdminSession[]
+  backupJobs     BackupJob[]
+  hasPermissions AdminHasPermission[]
 
   @@index([role])
   @@index([email])
@@ -39,6 +44,19 @@ model AdminSession {
   @@index([token])
   @@index([expiresAt])
   @@map("admin_sessions")
+}
+
+model AdminHasPermission {
+  id         String   @id @default(cuid())
+  adminId    String
+  permission String
+  createdAt  DateTime @default(now())
+  admin      Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([adminId, permission])
+  @@index([adminId])
+  @@index([permission])
+  @@map("admin_has_permissions")
 }
 
 model RolePermission {
@@ -150,14 +168,23 @@ model Rider {
   currentAddress          String?
   tokenVersion            Int                    @default(1)
   intent                  String?
+  // PR-K.3 — legacy `lifecycleStatus` enum column. Will be dropped in
+  // migration 20260806020000_drop_rider_legacy_lifecycle_status after the
+  // 1-week staging soak (ends 2026-08-06). Until then, kept for backfill;
+  // new readers/writers prefer `lifecycleStage` (5-value enum) when set.
   lifecycleStatus         RiderLifecycleStatus   @default(NEW)
+  lifecycleStage          RiderLifecycleStage?   @default(NEW)
   vehicleId               String?
   deliveryId              String?
   assignedVehicle         String?
+  // PR-J — legacy `pickupHub` string column. Will be dropped in migration
+  // 20260806010000_drop_rider_legacy_string_columns after the staging soak.
+  // Until then, kept for backfill gap handling.
   pickupHub               String?
   // PR-P3.2: FK column next to the legacy `pickupHub` string. Backfilled from
   // Hub.id or Hub.name. NULL when the legacy value doesn't match anything.
   pickupHubId             String?
+  // PR-J — legacy `currentPlan` string column. Will be dropped after soak.
   currentPlan             String?
   // PR-P3.2: FK column next to the legacy `currentPlan` string. Backfilled
   // from RentalPlan.id or RentalPlan.name. NULL when no match.
@@ -166,6 +193,7 @@ model Rider {
   planEndDate             DateTime?
   advanceRentPaid         Boolean                @default(false)
   preferredShift          String?
+  // PR-J — legacy `teamLeader` string column. Will be dropped after soak.
   teamLeader              String?
   // PR-P3.2: FK column next to the legacy `teamLeader` string. Verified
   // ID-only in all writers, so backfill is a single ID lookup.
@@ -1179,6 +1207,14 @@ enum RiderLifecycleStatus {
   ACTIVE
   SUSPENDED
   RETURN_PENDING
+  CLOSED
+}
+
+enum RiderLifecycleStage {
+  NEW
+  IN_PROGRESS
+  ACTIVE
+  PAUSED
   CLOSED
 }
 
