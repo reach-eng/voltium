@@ -99,8 +99,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final transactions = ref.watch(walletProvider.select((p) => p.transactions));
-    final isRefreshing = ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
+    final transactions =
+        ref.watch(walletProvider.select((p) => p.transactions));
+    final isRefreshing =
+        ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
     final filtered = _filteredTx(transactions);
     final credits = _totalCredits(transactions);
     final debits = _totalDebits(transactions);
@@ -148,7 +150,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           SizedBox(width: 16),
           Text(
             'Transaction History',
-            style: AppTypography.titleMediumLarge
+            style: AppTypography.titleLarge
+                .copyWith(fontSize: 21)
                 .copyWith(color: colors.onSurface),
           ),
           const Spacer(),
@@ -216,7 +219,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   Text(
                     'No transactions found',
                     style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.onSurfaceAlt),
+                        .copyWith(color: AppColors.onSurfaceMuted),
                   ),
                 ],
               ),
@@ -258,9 +261,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         _buildSummaryItem(
           'Net',
           '₹${(credits - debits).toInt()}',
-          (credits - debits) >= 0
-              ? AppColors.success
-              : AppColors.error,
+          (credits - debits) >= 0 ? AppColors.success : AppColors.error,
         ),
       ],
     );
@@ -289,7 +290,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
             SizedBox(height: 4),
             Text(
               value,
-              style: AppTypography.bodyMediumStrong.copyWith(color: color),
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w800)
+                  .copyWith(color: color),
             ),
           ],
         ),
@@ -347,9 +350,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                   child: Text(
                     tab,
                     style: AppTypography.labelMedium.copyWith(
-                        color: isActive
-                            ? Colors.white
-                            : colors.onSurfaceMuted),
+                        color: isActive ? Colors.white : colors.onSurfaceMuted),
                   ),
                 ),
               ),
@@ -411,8 +412,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       child: Column(
         children: [
           GestureDetector(
-            onTap: () =>
-                setState(() => _expandedId = isExpanded ? null : id),
+            onTap: () => setState(() => _expandedId = isExpanded ? null : id),
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: Spacing.paddingMd,
@@ -430,8 +430,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     child: Icon(
                       isCredit ? Icons.trending_up : Icons.trending_down,
                       size: 18,
-                      color:
-                          isCredit ? AppColors.success : AppColors.error,
+                      color: isCredit ? AppColors.success : AppColors.error,
                     ),
                   ),
                   SizedBox(width: 12),
@@ -442,7 +441,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                         Text(
                           tx.description ?? tx.purpose ?? 'Transaction',
                           style: AppTypography.labelLarge
-                              .copyWith(color: AppColors.onSurfaceAlt),
+                              .copyWith(color: AppColors.onSurfaceMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -467,7 +466,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             SizedBox(width: 8),
                             Text(
                               status,
-                              style: AppTypography.microLabel.copyWith(
+                              style: AppTypography.labelSmall.copyWith(
                                   color: status == 'SUCCESS' ||
                                           status == 'APPROVED' ||
                                           status == 'COMPLETED'
@@ -486,17 +485,18 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                             ? Icons.add_circle_outline
                             : Icons.remove_circle_outline,
                         size: 14,
-                        color: isCredit
-                            ? AppColors.success
-                            : AppColors.errorDark,
+                        color:
+                            isCredit ? AppColors.success : AppColors.errorDark,
                       ),
                       SizedBox(width: 4),
                       Text(
                         '₹${amount.toInt()}',
-                        style: AppTypography.bodyMediumStrong.copyWith(
-                            color: isCredit
-                                ? AppColors.success
-                                : AppColors.errorDark),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w800)
+                            .copyWith(
+                                color: isCredit
+                                    ? AppColors.success
+                                    : AppColors.errorDark),
                       ),
                     ],
                   ),
@@ -515,7 +515,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.surfaceSubtle)),
       ),
       padding: Spacing.paddingMd,
@@ -546,8 +546,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               ),
               Text(
                 '₹${tx.amount.toInt()}',
-                style: AppTypography.bodyMediumStrong
-                    .copyWith(color: AppColors.onSurfaceAlt),
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w800)
+                    .copyWith(color: AppColors.onSurfaceMuted),
               ),
             ],
           ),
@@ -561,13 +562,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final label = b.label;
     final amount = b.amount;
 
-    Color color = AppColors.onSurfaceAlt;
+    Color color = AppColors.onSurfaceMuted;
     Color bg = AppColors.surfaceSubtle;
     String prefix = '';
 
     if (type == 'TAX') {
-      color = AppColors.orangeAccentDark;
-      bg = AppColors.orangeAccentSurface;
+      color = AppColors.warningDark;
+      bg = AppColors.warningSurface;
     }
     if (type == 'DISCOUNT') {
       color = AppColors.successDark;
@@ -598,14 +599,16 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 ),
                 child: Text(
                   type,
-                  style: AppTypography.microBadge.copyWith(color: color),
+                  style: AppTypography.labelSmall
+                      .copyWith(fontSize: 9)
+                      .copyWith(color: color),
                 ),
               ),
               SizedBox(width: 8),
               Text(
                 label,
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.onSurfaceAlt),
+                    .copyWith(color: AppColors.onSurfaceMuted),
               ),
             ],
           ),

@@ -26,7 +26,8 @@ class EditProfileTextField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: AppColors.slate500),
           ),
         ),
@@ -34,7 +35,8 @@ class EditProfileTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          style: AppTypography.bodyLargeEmphasis
+          style: AppTypography.bodyLarge
+              .copyWith(fontWeight: FontWeight.w600)
               .copyWith(color: AppColors.slate800),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.slate400, size: 18),
@@ -85,7 +87,8 @@ class EditProfileDateField extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             label,
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: AppColors.slate500),
           ),
         ),
@@ -93,7 +96,8 @@ class EditProfileDateField extends StatelessWidget {
         TextFormField(
           controller: controller,
           readOnly: true,
-          style: AppTypography.bodyLargeEmphasis
+          style: AppTypography.bodyLarge
+              .copyWith(fontWeight: FontWeight.w600)
               .copyWith(color: AppColors.slate800),
           decoration: InputDecoration(
             prefixIcon: const Icon(
@@ -145,7 +149,8 @@ class EditProfileSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: AppTypography.bodySmallTracked
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
             .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
       ),
     );
@@ -160,9 +165,9 @@ class EditProfileAdminNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: AppColors.orangeAccentSurface,
+        color: AppColors.warningSurface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.orangeAccentBorder),
+        border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(
         children: [
@@ -173,7 +178,7 @@ class EditProfileAdminNote extends StatelessWidget {
             child: Text(
               'Profile changes require admin approval before becoming active.',
               style: GoogleFonts.plusJakartaSans(
-                color: AppColors.orangeAccentDark,
+                color: AppColors.warningDark,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 height: 1.4,

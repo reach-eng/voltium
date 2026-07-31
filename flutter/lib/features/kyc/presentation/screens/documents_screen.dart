@@ -266,13 +266,17 @@ class MyDocumentsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'SECURITY PROFILE',
-                        style: AppTypography.bodySmallTracked.copyWith(
-                            color: AppColors.successText, letterSpacing: 1.2),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.onSurface, letterSpacing: 1.2),
                       ),
                       SizedBox(height: 2),
                       Text(
                         'Verified & Secure',
-                        style: AppTypography.bodyMediumEmphasis
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: AppColors.slate800),
                       ),
                     ],
@@ -317,7 +321,8 @@ class MyDocumentsScreen extends ConsumerWidget {
       children: [
         Text(
           title,
-          style: AppTypography.bodySmallTracked
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
               .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
         ),
         const SizedBox(width: 8),
@@ -328,8 +333,9 @@ class MyDocumentsScreen extends ConsumerWidget {
         SizedBox(width: 8),
         Text(
           '$count FILES',
-          style:
-              AppTypography.bodySmallTracked.copyWith(color: AppColors.primary),
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
+              .copyWith(color: AppColors.primary),
         ),
       ],
     );
@@ -404,7 +410,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               width: 48,
               decoration: BoxDecoration(
                 color: isVideo
-                    ? AppColors.orangeAccentSurface
+                    ? AppColors.warningSurface
                     : AppColors.primarySurface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
@@ -421,7 +427,8 @@ class MyDocumentsScreen extends ConsumerWidget {
                 children: [
                   Text(
                     doc.label,
-                    style: AppTypography.bodyMediumEmphasis
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.slate800),
                   ),
                   SizedBox(height: 4),
@@ -429,8 +436,11 @@ class MyDocumentsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'VERIFIED',
-                        style: AppTypography.bodySmallTracked.copyWith(
-                            color: AppColors.success, letterSpacing: 1),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.success, letterSpacing: 1),
                       ),
                       const SizedBox(width: 6),
                       Container(
@@ -444,8 +454,11 @@ class MyDocumentsScreen extends ConsumerWidget {
                       SizedBox(width: 6),
                       Text(
                         isVideo ? 'VIDEO' : 'IMAGE',
-                        style: AppTypography.bodySmallTracked.copyWith(
-                            color: AppColors.slate500, letterSpacing: 1),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.slate500, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -499,7 +512,8 @@ class MyDocumentsScreen extends ConsumerWidget {
               children: [
                 Text(
                   'Having trouble with documents?',
-                  style: AppTypography.bodyMediumEmphasis
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(color: AppColors.primary),
                 ),
                 SizedBox(height: 4),
@@ -516,8 +530,11 @@ class MyDocumentsScreen extends ConsumerWidget {
                     children: [
                       Text(
                         'CONTACT SUPPORT',
-                        style: AppTypography.bodySmallTracked.copyWith(
-                            color: AppColors.primary, letterSpacing: 1.2),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.primary, letterSpacing: 1.2),
                       ),
                       SizedBox(width: 4),
                       Icon(

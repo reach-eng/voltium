@@ -129,12 +129,6 @@ class AppColors {
   static const Color dangerText = Color(0xFF991B1B); // red-800
   static const Color dangerShadow = Color(0x40BA1A1A); // 25% red-700
 
-  // Orange / accent pair — used for "PENDING KYC" badges, top-up screens.
-  static const Color orangeAccent = Color(0xFFEA580C); // orange-600
-  static const Color orangeAccentDark = Color(0xFFC2410C); // orange-700
-  static const Color orangeAccentSurface = Color(0xFFFFF7ED); // orange-50
-  static const Color orangeAccentBorder = Color(0xFFFED7AA); // orange-200
-
   // Success tints — used for "completed" / "OK" pills and disabled-but-OK buttons.
   static const Color successTint = Color(0xFFA7F3D0); // emerald-200
   static const Color successBorderLight = Color(0xFF6EE7B7); // emerald-300
