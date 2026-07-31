@@ -15,9 +15,20 @@ The following paths and file types are excluded from coverage calculations:
 
 ## 3. Coverage Thresholds
 We strictly enforce coverage thresholds via CI gates.
-- **Web**: 85% lines, 75% branches, 85% functions, 85% statements.
-- **Flutter**: 80% lines, 70% branches, 80% functions, 80% statements.
-- **New Code**: 95% lines, 90% branches, 95% functions, 95% statements (diff requirement).
+
+### Two-Tier Web Coverage Gate
+1. **Tier 1 (Unit Gate)**: Enforced directly via Vitest (`npm run test:coverage`).
+   - Line threshold: 25% (unit tests cover pure business logic, schemas, and helper functions).
+2. **Tier 2 (Combined Gate)**: Enforced by merging V8 dev-server integration coverage (`.v8-coverage` / `coverage-integration/`) with unit coverage (`coverage/`) via `web/scripts/coverage/merge-coverage.mjs` (`npm run test:coverage:combined`).
+   - Combined Line Threshold: **85%** (enforces full API route, handler, and database path coverage).
+
+### Progressive Threshold Schedule
+- **Phase A (Current)**: Unit: 25% lines, Combined: 85% lines
+- **Phase B (Q3 2026)**: Unit: 50% lines, Combined: 88% lines
+- **Phase C (Q4 2026)**: Unit: 75% lines, Combined: 90% lines
+
+### Flutter Coverage Gate
+- **Threshold**: 85% lines (enforced via `bash scripts/flutter-coverage.sh`).
 
 ## 4. Test Pyramid
 We aim for the following test distribution to balance speed and confidence:
