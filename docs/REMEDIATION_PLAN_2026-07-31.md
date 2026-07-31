@@ -1016,9 +1016,10 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 
 ### R4 â€” Flutter router refactor (PR-T, 1-2 weeks, 6 PRs)
 
-- [x] **R4.1** Define explicit `AppState` sealed class in `flutter/lib/core/navigation/app_state.dart` â€” DONE (commit `38e6028`)
-- [x] **R4.2** Add `go_router: ^14.0.0` dependency â€” DONE (commit `2dc1533`)
-- [ ] **R4.3** Migrate `AppShell` to use go_router (remove `setState` tab switching)
+- [x] **R4.1** Define explicit `AppState` sealed class in `flutter/lib/core/navigation/app_state.dart` — DONE (commit `38e6028`)
+- [x] **R4.2** Add `go_router: ^14.0.0` dependency — DONE (commit `2dc1533`)
+- [x] **R4.3a** `appStateProvider` (Riverpod Notifier wrapping the state machine) — DONE (commit `86ece89`). 5 new unit tests.
+- [ ] **R4.3b** Migrate `AppShell` to use go_router (remove `setState` tab switching)
 - [ ] **R4.4** Migrate auth flow to use the state machine
 - [ ] **R4.5** Scope `PollingManager` instances to specific states
 - [ ] **R4.6** E2E tests pass + 5-10 new state machine unit tests + manual smoke
