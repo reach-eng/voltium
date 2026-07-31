@@ -139,7 +139,14 @@ RATE_LIMIT_STORE_PROVIDER=postgres
 ALERT_WEBHOOK_URL=
 ALERT_MIN_LEVEL=error
 EOF
-  info ".env created with auto-generated secrets"
+  # R10 polish #5 (§5.2): restrict .env to owner-only. Skipped on Windows
+  # (chmod is a no-op on NTFS ACLs; PowerShell Set-Acl would be needed there).
+  if [ "$(uname -s)" != "MINGW"* ] && [ "$(uname -s)" != "CYGWIN"* ]; then
+    chmod 600 "$ENV_FILE"
+    info ".env created with auto-generated secrets (mode 600)"
+  else
+    info ".env created with auto-generated secrets (skipping chmod on Windows)"
+  fi
 fi
 
 # ── Step 5: Create PostgreSQL database ─────────────────────────────────
