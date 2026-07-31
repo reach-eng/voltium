@@ -19,7 +19,7 @@ interface CacheEntry<T> {
  */
 class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
-  private maxSize = 100;
+  private maxSize = 500;
   private ttl = 60 * 1000;
   private pending = new Map<string, Promise<T | null>>();
 

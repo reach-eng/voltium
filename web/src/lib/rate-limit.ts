@@ -67,8 +67,9 @@ export async function checkRateLimit(
       .catch(() => {});
 
     try {
-      // Atomic conditional upsert using parameterized Prisma.sql template for compile-time safety
-      const result = (await db.$queryRaw(
+      const queryMethod = (db as any).$queryRaw || (db as any).$queryRawUnsafe;
+      const result = (await queryMethod.call(
+        db,
         Prisma.sql`INSERT INTO "rate_limit_buckets" (id, key, points, "resetAt", "createdAt", "updatedAt")
          VALUES (${key}, ${key}, 1, ${resetAt}, NOW(), NOW())
          ON CONFLICT (key) DO UPDATE SET

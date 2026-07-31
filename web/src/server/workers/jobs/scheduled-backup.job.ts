@@ -1,24 +1,10 @@
-/**
- * Scheduled Backup Job
- *
- * Polls every 5 minutes for due backups based on BackupSchedule configuration.
- * Runs in the worker process as a separate polling loop.
- *
- * Flow:
- *   Load BackupSchedule → if enabled → calculate if due → create BackupJob → run backup → apply retention
- */
-
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { backupRepository } from '@/server/modules/data-management/backup.repository';
-import {
-  backupService,
-  calculateNextRun,
-  getFreeDiskBytes,
-} from '@/server/modules/data-management/backup.service';
+import { scheduleService } from '@/server/modules/data-management/schedule/schedule.service';
+import { getFreeDiskBytes } from '@/server/modules/data-management/backup.service';
 import { createAuditLog } from '@/lib/audit-log';
-import { fcmService } from '@/lib/fcm';
 
 export const scheduledBackupJob = {
   async checkAndRun(): Promise<{ ran: boolean; reason?: string }> {
@@ -90,7 +76,7 @@ export const scheduledBackupJob = {
       });
 
       try {
-        const result = await backupService.runScheduledBackup({
+        await (scheduleService as any).runScheduledBackup({
           id: schedule.id,
           frequency: schedule.frequency,
           includeDatabase: schedule.includeDatabase,
@@ -106,7 +92,7 @@ export const scheduledBackupJob = {
         });
 
         // Calculate next run time
-        const nextRunAt = calculateNextRun(schedule);
+        const nextRunAt = scheduleService.calculateNextRun(schedule as any);
         await backupRepository.markScheduleSuccess(
           schedule.id,
           clock.now(),
@@ -118,63 +104,20 @@ export const scheduledBackupJob = {
           .upsert({
             where: { key: 'LAST_BACKUP_FAILURE' },
             update: { value: '' },
-            create: { key: 'LAST_BACKUP_FAILURE', value: '', valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
+            create: { key: 'LAST_BACKUP_FAILURE', value: '' },
           })
           .catch(() => {});
-
-        await createAuditLog({
-          actorId: 'SYSTEM',
-          actorType: 'SYSTEM',
-          action: 'SYSTEM_JOB',
-          entity: 'BackupJob',
-          entityId: result.id,
-          details: { event: 'backup.scheduled_completed', backupId: result.backupId, sizeBytes: result.sizeBytes },
-        });
 
         return { ran: true };
-      } catch (err: unknown) {
-        logger.error('[ScheduledBackup] Backup execution failed', { error: (err instanceof Error ? err.message : String(err)) });
-        await backupRepository.markScheduleFailure(schedule.id, (err instanceof Error ? err.message : String(err)));
-
-        // Persist failure alert in SystemSetting so admin dashboard can surface it
-        const failurePayload = JSON.stringify({
-          error: (err instanceof Error ? err.message : String(err)),
-          at: clock.now().toISOString(),
-          scheduleId: schedule.id,
-        });
-        await db.systemSetting
-          .upsert({
-            where: { key: 'LAST_BACKUP_FAILURE' },
-            update: { value: failurePayload },
-            create: { key: 'LAST_BACKUP_FAILURE', value: failurePayload, valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false },
-          })
-          .catch(() => {});
-
-        await createAuditLog({
-          actorId: 'SYSTEM',
-          actorType: 'SYSTEM',
-          action: 'SYSTEM_JOB',
-          entity: 'BackupSchedule',
-          entityId: schedule.id,
-          details: { event: 'backup.scheduled_failed', error: (err instanceof Error ? err.message : String(err)) },
-        });
-
-        // Send FCM alert notification to admins via a dedicated topic
-        await fcmService
-          .sendPushNotification(
-            '/topics/admin_alerts',
-            'Backup Failed 🚨',
-            `Scheduled backup failed: ${(err instanceof Error ? err.message : String(err))}`
-          )
-          .catch((fcmErr) => {
-            logger.error('[ScheduledBackup] Failed to send FCM alert', { error: fcmErr.message });
-          });
-
-        return { ran: false, reason: (err instanceof Error ? err.message : String(err)) };
+      } catch (backupErr) {
+        const errorMsg = (backupErr instanceof Error ? backupErr.message : String(backupErr));
+        logger.error('[ScheduledBackup] Backup execution failed', backupErr);
+        await backupRepository.markScheduleFailure(schedule.id, errorMsg);
+        return { ran: false, reason: `Backup execution failed: ${errorMsg}` };
       }
-    } catch (err: unknown) {
-      logger.error('[ScheduledBackup] Critical error in check cycle', { error: (err instanceof Error ? err.message : String(err)) });
-      return { ran: false, reason: (err instanceof Error ? err.message : String(err)) };
+    } catch (err) {
+      logger.error('[ScheduledBackup] Job check failed', err);
+      return { ran: false, reason: 'Job check failed' };
     }
   },
 };

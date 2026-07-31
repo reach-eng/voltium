@@ -110,7 +110,7 @@ export const walletUseCases = {
     const transaction = await walletRepository.createTransaction({
       riderId: riderDbId,
       type: TransactionType.CREDIT,
-      amount: amountPaise,
+      amountInPaise: amountPaise,
       purpose: finalPurpose as TransactionPurpose,
       method,
       status: isTestRider ? TransactionStatus.APPROVED : TransactionStatus.PENDING,
@@ -300,7 +300,7 @@ export const walletUseCases = {
     }
 
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
-      await walletRepository.updateTransactionStatus(transactionId, 'REJECTED', adminId);
+      await (walletRepository as any).updateTransactionStatus(transactionId, 'REJECTED', adminId, tx);
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_REJECTED, {
         riderId: txn.riderId,
         transactionId,

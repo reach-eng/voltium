@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     let riderDbId = '';
-    if (process.env.TEST_MODE === 'true' || process.env.NODE_ENV === 'development') {
+    const isProdOrStaging =
+      process.env.APP_ENV === 'production' ||
+      process.env.APP_ENV === 'staging' ||
+      process.env.NODE_ENV === 'production';
+    if (!isProdOrStaging && (process.env.TEST_MODE === 'true' || process.env.NODE_ENV === 'development')) {
       const body = await request.clone().json();
       riderDbId = body.riderId || 'test-rider-001';
     } else {

@@ -6,7 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { JobQueue, JobTypes } from '@/lib/job-queue';
+import { JobQueue } from '@/lib/job-queue';
+import { OutboxEventTypes } from '@/server/workers/outbox';
 import { sendSms } from '@/lib/sms-provider';
 import { logger } from '@/lib/logger';
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Process pending jobs from the PostgreSQL-backed outbox queue
-    await JobQueue.processJobs(JobTypes.SEND_SMS, async (job) => {
+    await JobQueue.processJobs(OutboxEventTypes.SMS_SEND, async (job) => {
       const { phone, message } = job.payload as { phone: string; message: string };
       const success = await sendSms(phone, message);
       if (!success) throw new Error('SMS Provider failure');

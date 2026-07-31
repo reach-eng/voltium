@@ -43,17 +43,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  try {
-    const auth = await requireRiderSession(request);
-    if (auth instanceof Response) return auth;
-    const riderDbId = auth.riderDbId;
-
-    await transactionUseCases.deleteHistory(riderDbId);
-
-    logger.info('Transaction history cleared', { riderId: riderDbId });
-    return success(null, 'Transaction history cleared');
-  } catch (err) {
-    logger.error('Failed to clear transaction history', err);
-    return errors.internal('Failed to clear history');
-  }
+  const auth = await requireRiderSession(request);
+  if (auth instanceof Response) return auth;
+  return errors.forbidden('Transaction history is immutable and cannot be deleted');
 }

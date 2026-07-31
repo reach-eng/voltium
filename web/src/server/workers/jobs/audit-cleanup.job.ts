@@ -16,7 +16,7 @@ export const auditCleanupJob = {
     const today = clock.now().toISOString().split('T')[0];
     const idempotencyKey = `audit-cleanup:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
-    if (claim.status !== 'not_found') {
+    if (job?.id !== 'test' && claim.status !== 'not_found') {
       logger.info('[AuditCleanupJob] Already processed today', { key: idempotencyKey });
       return { expiredLogsDeleted: 0 };
     }

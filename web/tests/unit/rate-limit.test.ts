@@ -3,12 +3,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.stubEnv('NODE_ENV', 'production');
 vi.stubEnv('APP_ENV', 'production');
 
+const mockQuery = vi.fn().mockResolvedValue([{ points: 1, resetAt: new Date(Date.now() + 60000) }]);
+
 vi.mock('@/lib/db', () => ({
   db: {
     rateLimitBucket: {
       deleteMany: vi.fn().mockResolvedValue(undefined),
     },
-    $queryRawUnsafe: vi.fn().mockResolvedValue([{ points: 1, resetAt: new Date(Date.now() + 60000) }]),
+    $queryRawUnsafe: mockQuery,
+    $queryRaw: mockQuery,
   },
 }));
 

@@ -83,7 +83,12 @@ export async function runWalletReconciliation(): Promise<ReconciliationResult> {
   });
 
   if (result.drifted > 0) {
-    alerter.send('Wallet drift detected', { count: result.drifted, totalDrift: result.totalDrift });
+    alerter.send({
+      level: 'error',
+      title: 'Wallet drift detected',
+      message: `Found ${result.drifted} drifted wallets with total drift ${result.totalDrift} paise`,
+      details: { count: result.drifted, totalDrift: result.totalDrift },
+    });
   }
 
   return result;

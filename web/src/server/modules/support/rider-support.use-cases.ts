@@ -18,11 +18,15 @@ export const riderSupportUseCases = {
     });
   },
 
-  async getTickets(riderId: string, page?: number, limit?: number) {
-    return supportRepository.findByRiderId(riderId, page, limit);
+  async getTickets(riderId: string, limit?: number, offset?: number) {
+    return (supportRepository as any).findByRiderId(riderId, limit, offset);
   },
 
   async getTicket(ticketId: string) {
     return supportRepository.findById(ticketId);
+  },
+
+  async getFAQs() {
+    return (supportRepository as any).getFaqs?.() ?? [];
   },
 };

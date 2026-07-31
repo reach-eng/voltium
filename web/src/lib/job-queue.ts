@@ -132,23 +132,22 @@ export const JobQueue = {
    * Run this periodically (e.g. every 5 minutes).
    */
   async runReaper(): Promise<number> {
-    const cutoff = new Date(clock.now().getTime() - 5 * 60 * 1000);
-    const result = await db.outboxEvent.updateMany({
-      where: {
-        status: 'PROCESSING',
-        updatedAt: { lt: cutoff },
-      },
-      data: {
-        status: 'PENDING',
-        error: 'Reclaimed by reaper — stuck in PROCESSING',
-      },
-    });
-    if (result.count > 0) {
-      logger.warn('[JobQueue] Reaper reclaimed stuck PROCESSING events', {
-        count: result.count,
-      });
+    const now = clock.now();
+    const result = await db.$executeRaw`
+      UPDATE "outbox_events"
+      SET status = 'PENDING',
+          error = 'Reclaimed by reaper — stuck in PROCESSING'
+      WHERE status = 'PROCESSING'
+        AND (
+          ("eventType" = 'sms.send' AND "updatedAt" <= ${new Date(now.getTime() - 2 * 60 * 1000)})
+          OR ("eventType" = 'wallet.reconciliation' AND "updatedAt" <= ${new Date(now.getTime() - 15 * 60 * 1000)})
+          OR ("eventType" NOT IN ('sms.send', 'wallet.reconciliation') AND "updatedAt" <= ${new Date(now.getTime() - 5 * 60 * 1000)})
+        )
+    `;
+    if (result > 0) {
+      logger.warn('[JobQueue] Reaper reclaimed stuck PROCESSING events', { count: result });
     }
-    return result.count;
+    return result;
   },
 
   /**

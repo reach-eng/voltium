@@ -10,6 +10,7 @@ import { calculateDynamicPrice } from '@/lib/dynamic-pricing';
 import { flattenRider } from '@/lib/flatten-rider';
 import { signRiderUrls } from '@/lib/sign-rider';
 import { rentalRepository } from './rental.repository';
+import { RentalBookError } from './use-cases/errors';
 
 export const rentalUseCases = {
   async getPlans() {
@@ -282,12 +283,4 @@ export const rentalUseCases = {
     return rentalRepository.endRental(riderDbId);
   },
 };
-
-export class RentalBookError extends Error {
-  code: string;
-  constructor(message: string, code = 'RENTAL_ERROR') {
-    super(message);
-    this.name = 'RentalBookError';
-    this.code = code;
-  }
-}
+export { RentalBookError };

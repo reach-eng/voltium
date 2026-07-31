@@ -9,7 +9,7 @@
  *   npx tsx src/server/workers/index.ts
  */
 
-import { JobQueue, JobTypes } from '@/lib/job-queue';
+import { JobQueue } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { JOB_TYPES } from './queues';

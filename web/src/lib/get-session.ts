@@ -8,8 +8,12 @@ import {
 import { logger } from './logger';
 
 async function getCookie(name: string): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  return cookieStore.get(name)?.value;
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get(name)?.value;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -108,10 +112,17 @@ export async function getRiderPhone(request?: Request): Promise<string | null> {
  */
 export async function getAdminId(request?: Request): Promise<string | null> {
   if (process.env.NODE_ENV !== 'production' && request) {
-    const headerId = request.headers.get('x-admin-id');
-    if (headerId) return headerId;
+    try {
+      const url = new URL(request.url);
+      if (url.pathname.includes('/impersonate')) {
+        const headerId = request.headers.get('x-admin-id');
+        if (headerId) return headerId;
+      }
+    } catch {
+      // invalid URL, ignore header
+    }
   }
 
-  const session = await getAdminSession();
+  const session = await getAdminSession(request);
   return session?.adminId ?? session?.riderDbId ?? null;
 }

@@ -80,6 +80,7 @@ export async function PUT_updateTicket(request: NextRequest) {
   const body = await request.json();
   const validation = validateBody(updateTicketSchema, body);
   if (!validation.success) return errors.validation(validation.error);
+  if (!validation.data.id) return errors.badRequest('Ticket id is required');
 
   const ticket = await supportUseCases.updateTicket(validation.data.id, validation.data);
   return success(ticket, 'Ticket updated');

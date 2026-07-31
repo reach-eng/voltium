@@ -39,12 +39,9 @@ export async function POST(request: NextRequest) {
 
     const response = success(
       {
-        exists: result.exists,
         otp: result.otp,
       },
-      result.exists
-        ? 'Welcome back! Please enter the OTP to login.'
-        : 'OTP requested successfully and is being delivered',
+      'OTP requested successfully and is being delivered',
       200,
       undefined,
       { correlationId }

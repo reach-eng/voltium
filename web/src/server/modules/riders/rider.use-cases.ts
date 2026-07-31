@@ -305,7 +305,7 @@ export const riderUseCases = {
    *
    * `riderDbId` must be the internal database id (the `riderDbId` claim
    * from the verified session), not the public `riderId`. Callers (e.g. the
-   * /api/riders/register-token route) are responsible for ensuring this.
+   * /api/rider/register-token route) are responsible for ensuring this.
    */
   async registerFcmToken(riderDbId: string, fcmToken: string) {
     const rider = await db.rider.findUnique({ where: { id: riderDbId } });
