@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceWhite,
+      backgroundColor: AppColors.surface,
       body: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -120,7 +120,7 @@ class _SplashScreenState extends State<SplashScreen>
                             borderRadius: BorderRadius.circular(AppRadius.xxl),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primaryGradientEnd
+                                color: AppColors.primaryLight
                                     .withValues(alpha: 0.15),
                                 blurRadius: 40,
                                 offset: const Offset(0, 15),
@@ -198,7 +198,8 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 6,
                             decoration: BoxDecoration(
                               color: AppColors.slate900.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(AppRadius.full),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.full),
                               border: Border.all(
                                 color:
                                     AppColors.slate900.withValues(alpha: 0.1),
@@ -214,14 +215,15 @@ class _SplashScreenState extends State<SplashScreen>
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
                                         colors: [
-                                          AppColors.primaryGradientEnd,
-                                          AppColors.purpleDark,
+                                          AppColors.primaryLight,
+                                          AppColors.accentPurple,
                                         ],
                                       ),
-                                      borderRadius: BorderRadius.circular(AppRadius.full),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.full),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.primaryGradientEnd
+                                          color: AppColors.primaryLight
                                               .withValues(alpha: 0.3),
                                           blurRadius: 8,
                                           offset: const Offset(0, 0),
@@ -238,7 +240,7 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(height: 16),
                       Text(
                         'CONNECTING TO GRID',
-                        style: AppTypography.microLabel.copyWith(
+                        style: AppTypography.labelSmall.copyWith(
                             color: AppColors.slate400, letterSpacing: 2.5),
                       ),
                     ],

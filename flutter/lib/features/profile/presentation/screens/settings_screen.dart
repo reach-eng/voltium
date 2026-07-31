@@ -176,8 +176,8 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('feedbackLink'),
                 icon: Icons.rate_review_outlined,
                 activeIcon: Icons.rate_review,
-                iconColor: AppColors.purpleIcon,
-                iconBgColor: AppColors.purpleIconSurface,
+                iconColor: AppColors.accentPurple,
+                iconBgColor: AppColors.accentPurpleSurface,
                 title: l10n.settings_feedback,
                 onTap: () => AppNavigator.push(context,
                     FeedbackScreen(onSubmit: () => Navigator.pop(context))),
@@ -498,9 +498,8 @@ class _RiderIdentityCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: verified
-                  ? AppColors.successLight
-                  : AppColors.warningSurface,
+              color:
+                  verified ? AppColors.successLight : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(
                 color: verified

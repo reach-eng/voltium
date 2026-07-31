@@ -505,8 +505,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('rewardsLink'),
             icon: Icons.card_giftcard_outlined,
-            iconColor: AppColors.evPurple, // violet-500
-            iconBgColor: AppColors.purpleSurface, // violet-50
+            iconColor: AppColors.accentPurple, // violet-500
+            iconBgColor: AppColors.accentPurpleSurface, // violet-50
             title: 'Rewards',
             onTap: onRewardsTap,
           ),
@@ -553,8 +553,8 @@ class ProfileQuickLinks extends StatelessWidget {
           child: QuickLinkItem(
             key: const Key('feedbackLink'),
             icon: Icons.rate_review_outlined,
-            iconColor: AppColors.purpleIcon,
-            iconBgColor: AppColors.purpleIconSurface,
+            iconColor: AppColors.accentPurple,
+            iconBgColor: AppColors.accentPurpleSurface,
             title: 'Feedback',
             onTap: onFeedbackTap,
           ),

@@ -391,8 +391,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   child: _buildContactButton(
                     Icons.email_outlined,
                     'Email Us',
-                    AppColors.purpleSurface,
-                    AppColors.purpleDark,
+                    AppColors.accentPurpleSurface,
+                    AppColors.accentPurple,
                   ),
                 ),
               ),

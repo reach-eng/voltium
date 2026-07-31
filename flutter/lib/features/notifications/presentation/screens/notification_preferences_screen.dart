@@ -126,8 +126,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.volume_up,
-                            iconColor: AppColors.purpleDark,
-                            iconBg: AppColors.purpleSurface,
+                            iconColor: AppColors.accentPurple,
+                            iconBg: AppColors.accentPurpleSurface,
                             title: 'Sound',
                             subtitle: 'Play sound for notifications',
                             value: _soundEnabled,
@@ -161,8 +161,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.shield_outlined,
-                            iconColor: AppColors.purpleDark,
-                            iconBg: AppColors.purpleSurface,
+                            iconColor: AppColors.accentPurple,
+                            iconBg: AppColors.accentPurpleSurface,
                             title: 'KYC',
                             subtitle: 'Document verification updates',
                             value: _kycEnabled,
@@ -180,8 +180,8 @@ class _NotificationPreferencesScreenState
                           ),
                           _buildToggleTile(
                             icon: Icons.campaign_outlined,
-                            iconColor: AppColors.purpleDeep,
-                            iconBg: AppColors.purpleLightSurface,
+                            iconColor: AppColors.accentPurple,
+                            iconBg: AppColors.accentPurpleSurface,
                             title: 'Announcements',
                             subtitle: 'Promotions, offers, platform updates',
                             value: _announcementsEnabled,

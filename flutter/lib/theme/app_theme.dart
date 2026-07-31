@@ -101,13 +101,13 @@ class AppColors {
   static const Color primaryLightBlue = Color(0xFF93C5FD); // blue-300
   static const Color primaryDeep = Color(0xFF142B5B); // dark blue
 
-  // Purple extended
-  static const Color purpleDark = Color(0xFF7C3AED); // violet-600
-  static const Color purpleSurface = Color(0xFFF5F3FF); // violet-50
-  static const Color purpleDeep = Color(0xFF9333EA); // purple-600
+  // Accent purple (rewards, referral, premium-tier features).
+  // Distinct from `primary` (brand blue) — used to signal a non-default path
+  // through the app. Pairs a 600-weight foreground with a 50-weight surface.
+  static const Color accentPurple = Color(0xFF7C3AED); // violet-600
+  static const Color accentPurpleSurface = Color(0xFFF5F3FF); // violet-50
 
   // Feature Colors
-  static const Color evPurple = Color(0xFF8B5CF6);
   static const Color whatsappGreen = Color(0xFF25D366);
 
   // ── Feather palette ──────────────────────────────────────────────────────
@@ -115,9 +115,6 @@ class AppColors {
   // Color(0xFF...) for icon tiles, status chips, and small background swatches
   // where a fully-themed ThemeColors extension is overkill. Pair `xxxIcon`
   // (foreground, ~600 weight) with `xxxIconSurface` (background, ~50/100).
-  static const Color purpleIcon = Color(0xFF7E22CE); // purple-700
-  static const Color purpleIconSurface = Color(0xFFF3E8FF); // purple-100
-  static const Color purpleLightSurface = Color(0xFFFAF5FF); // purple-50
 
   // Danger-zone text — used for delete-account/kyc-rejected labels.
   static const Color dangerText = Color(0xFF991B1B); // red-800

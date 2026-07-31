@@ -113,8 +113,8 @@ class ProfileScreen extends ConsumerWidget {
                       key: const Key('rewardsLink'),
                       icon: Icons.card_giftcard_outlined,
                       activeIcon: Icons.card_giftcard,
-                      iconColor: AppColors.evPurple,
-                      iconBgColor: AppColors.purpleSurface,
+                      iconColor: AppColors.accentPurple,
+                      iconBgColor: AppColors.accentPurpleSurface,
                       title: l10n.menu_rewards,
                       onTap: () =>
                           AppNavigator.push(context, const RewardsScreen()),

@@ -178,15 +178,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       decoration: BoxDecoration(
         color: isSelected
             ? Colors.white.withValues(alpha: 0.2)
-            : AppColors.purpleIconSurface,
+            : AppColors.accentPurpleSurface,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         'BEST VALUE',
-        style: AppTypography.bodySmallStrong.copyWith(
-          color: isSelected ? Colors.white : AppColors.purpleIcon,
-          letterSpacing: 0.5,
-        ),
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w800)
+            .copyWith(
+              color: isSelected ? Colors.white : AppColors.accentPurple,
+              letterSpacing: 0.5,
+            ),
       ),
     );
   }
@@ -375,13 +377,20 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                             ? 'CURRENT PLAN'
                                                             : 'SELECTED PLAN',
                                                         style: AppTypography
-                                                            .bodySmallStrong
+                                                            .bodySmall
                                                             .copyWith(
-                                                          color: Colors.white
-                                                              .withValues(
-                                                                  alpha: 0.8),
-                                                          letterSpacing: 0.5,
-                                                        ),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w800)
+                                                            .copyWith(
+                                                              color: Colors
+                                                                  .white
+                                                                  .withValues(
+                                                                      alpha:
+                                                                          0.8),
+                                                              letterSpacing:
+                                                                  0.5,
+                                                            ),
                                                       ),
                                                       const SizedBox(height: 6),
                                                       Row(
@@ -561,14 +570,17 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             TextSpan(
                                               text:
                                                   ' / ${AppConstants.planDurationLabel(plan.durationDays)}',
-                                              style: AppTypography
-                                                  .bodyMediumEmphasis
+                                              style: AppTypography.bodyMedium
                                                   .copyWith(
-                                                color: isSelected
-                                                    ? Colors.white
-                                                        .withValues(alpha: 0.7)
-                                                    : AppColors.slate500,
-                                              ),
+                                                      fontWeight:
+                                                          FontWeight.w600)
+                                                  .copyWith(
+                                                    color: isSelected
+                                                        ? Colors.white
+                                                            .withValues(
+                                                                alpha: 0.7)
+                                                        : AppColors.slate500,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -618,10 +630,12 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                     Expanded(
                                       child: Text(
                                         'Pay advance rent along with security deposit',
-                                        style: AppTypography.bodySmallStrong
+                                        style: AppTypography.bodySmall
                                             .copyWith(
-                                          color: AppColors.slate800,
-                                        ),
+                                                fontWeight: FontWeight.w800)
+                                            .copyWith(
+                                              color: AppColors.slate800,
+                                            ),
                                       ),
                                     ),
                                   ],

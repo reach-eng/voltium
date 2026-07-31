@@ -656,8 +656,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('document')) {
       return (
         icon: Icons.shield_outlined,
-        color: AppColors.purpleDark,
-        bgColor: AppColors.purpleSurface,
+        color: AppColors.accentPurple,
+        bgColor: AppColors.accentPurpleSurface,
         label: 'KYC'
       );
     }
@@ -679,8 +679,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
         title.contains('announcement')) {
       return (
         icon: Icons.campaign_outlined,
-        color: AppColors.purpleDeep,
-        bgColor: AppColors.purpleLightSurface,
+        color: AppColors.accentPurple,
+        bgColor: AppColors.accentPurpleSurface,
         label: 'Announcement'
       );
     }

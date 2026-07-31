@@ -23,14 +23,14 @@ class ReferralCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: Spacing.paddingMd,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.primary, AppColors.info],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.3),
@@ -40,7 +40,7 @@ class ReferralCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -59,32 +59,32 @@ class ReferralCard extends StatelessWidget {
                       Text(
                         'Hey $userName!',
                         style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: Colors.white70,
                           fontSize: 14,
                         ),
                       ),
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.electric_bolt,
-                    color: Colors.amber,
-                    size: 30,
+                    Icons.card_giftcard,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 children: [
@@ -95,7 +95,7 @@ class ReferralCard extends StatelessWidget {
                         Text(
                           'Your Referral Code',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppColors.textMuted,
+                            color: AppColors.onSurfaceMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -127,8 +127,8 @@ class ReferralCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.warning,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -160,7 +160,7 @@ class ReferralCard extends StatelessWidget {
                   foregroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
               ),
@@ -203,7 +203,7 @@ class ReferralStatsCard extends StatelessWidget {
               icon: Icons.attach_money,
               value: '\$${totalEarnings.toStringAsFixed(0)}',
               label: 'Earned',
-              color: AppColors.successGreen,
+              color: AppColors.success,
             ),
           ),
           Expanded(
@@ -236,11 +236,11 @@ class _StatItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(16),
+      margin: Spacing.paddingSm,
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         children: [
@@ -254,7 +254,7 @@ class _StatItem extends StatelessWidget {
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: AppColors.textMuted,
+              color: AppColors.onSurfaceMuted,
             ),
           ),
         ],
@@ -276,7 +276,7 @@ class ReferralShareOptions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -314,7 +314,7 @@ class ReferralShareOptions extends StatelessWidget {
               _ShareOption(
                 icon: Icons.qr_code,
                 label: 'QR Code',
-                color: AppColors.evPurple,
+                color: AppColors.accentPurple,
                 onTap: () {},
               ),
             ],
@@ -342,13 +342,13 @@ class _ShareOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.sm),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,

@@ -103,7 +103,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                             borderRadius: BorderRadius.circular(AppRadius.xl),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.evPurple.withValues(
+                                color: AppColors.accentPurple.withValues(
                                     alpha: 0.2 + (_pulseCtrl.value * 0.15)),
                                 blurRadius: 30 + (_pulseCtrl.value * 20),
                                 spreadRadius: 2 + (_pulseCtrl.value * 5),
@@ -125,8 +125,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.evPurple.withValues(alpha: 0.8),
-                            AppColors.purpleIcon.withValues(alpha: 0.9),
+                            AppColors.accentPurple.withValues(alpha: 0.8),
+                            AppColors.accentPurple.withValues(alpha: 0.9),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -291,7 +291,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                             child: Container(
                               padding: const EdgeInsets.all(6),
                               decoration: const BoxDecoration(
-                                color: AppColors.evPurple,
+                                color: AppColors.accentPurple,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.lock_outline_rounded,
