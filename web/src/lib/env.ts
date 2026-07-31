@@ -111,7 +111,6 @@ const parseTarget = isServer
 const _env = envSchema.safeParse(parseTarget);
 
 if (!_env.success) {
-  // eslint-disable-next-line no-console
   console.error('❌ Invalid environment variables:', JSON.stringify(_env.error.format(), null, 2));
   throw new Error('Invalid environment variables');
 }
