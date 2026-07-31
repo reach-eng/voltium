@@ -9,6 +9,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { NotFoundError } from "@/lib/api-error";
 
 // ── State Definition ─────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ export async function transitionRiderStatus(
     where: { id: riderDbId },
     select: { id: true, riderId: true, lifecycleStatus: true },
   });
-  if (!rider) throw new Error(`Rider not found: ${riderDbId}`);
+  if (!rider) throw new NotFoundError(`Rider not found: ${riderDbId}`);
 
   validateTransition(rider.lifecycleStatus, targetStatus);
 

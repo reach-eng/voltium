@@ -288,7 +288,6 @@ export function useTransactionManagement() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorted, lastAction, bulkLoading]);
 
   const handleSort = (key: string) => {

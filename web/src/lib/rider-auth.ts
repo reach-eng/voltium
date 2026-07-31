@@ -4,6 +4,7 @@ import { errors } from '@/lib/api-response';
 import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { db } from '@/lib/db';
 
 export async function requireRiderSession(
   request: NextRequest
@@ -19,10 +20,15 @@ export async function requireRiderSession(
   }
 
   // Allow admin to bypass auth if viewing a specific rider (deep-linking/dev-mode support)
+  // Gated behind ENABLE_RIDER_IMPERSONATION env flag. Must be explicitly set even in dev
+  // to prevent accidental enablement in any shared environment.
   const adminSession = await getAdminSession(request);
-  if (adminSession) {
-    const riderId =
-      request.nextUrl.searchParams.get('riderId') || request.headers.get('x-rider-id');
+  if (
+    adminSession &&
+    process.env.ENABLE_RIDER_IMPERSONATION === 'true' &&
+    process.env.APP_ENV !== 'production'
+  ) {
+    const riderId = request.headers.get('x-rider-id');
     if (riderId) {
       if (request.method !== 'GET') {
         return errors.forbidden('Impersonation is restricted to GET operations only');
@@ -32,10 +38,22 @@ export async function requireRiderSession(
         return errors.forbidden('Impersonation requires impersonate_riders permission');
       }
 
+      // Validate rider exists in DB
+      const targetRider = await db.rider.findFirst({
+        where: {
+          OR: [{ id: riderId }, { riderId: riderId }],
+        },
+        select: { id: true, phone: true },
+      });
+
+      if (!targetRider) {
+        return errors.notFound('Impersonated rider not found');
+      }
+
       const adminId = adminSession.adminId || adminSession.riderDbId;
       const rateLimitResult = await checkRateLimit(`impersonation:${adminId}`, {
         windowMs: 60 * 1000,
-        maxRequests: 10,
+        maxRequests: 30,
       });
 
       if (!rateLimitResult.allowed) {
@@ -47,10 +65,10 @@ export async function requireRiderSession(
         actorType: 'ADMIN',
         action: 'IMPERSONATE_RIDER',
         entity: 'rider',
-        entityId: riderId,
+        entityId: targetRider.id,
         details: JSON.stringify({ adminRole: adminSession.adminRole }),
       });
-      return { riderDbId: riderId, phone: '0000000000' };
+      return { riderDbId: targetRider.id, phone: targetRider.phone };
     }
   }
 

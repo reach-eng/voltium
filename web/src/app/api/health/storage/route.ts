@@ -63,6 +63,7 @@ export async function GET() {
 
     const healthy = uploads.writable && backups.writable && (!secondary || secondary.writable);
 
+    // Non-standard response shape — left as-is (health diagnostic contract)
     return NextResponse.json(
       {
         status: healthy ? 'healthy' : 'degraded',
@@ -78,6 +79,7 @@ export async function GET() {
     );
   } catch (err: unknown) {
     const message = errorMessage(err);
+    // Non-standard response shape — left as-is (health diagnostic contract)
     return NextResponse.json(
       {
         status: 'unhealthy',

@@ -1,3 +1,8 @@
+/**
+ * Prometheus scraper endpoint.
+ * Outputs metrics in Prometheus text format.
+ * For the admin dashboard JSON metrics, see /api/monitoring/metrics
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { collectDefaultMetrics, Registry } from 'prom-client';
 import { success, errors } from '@/lib/api-response';
@@ -13,10 +18,13 @@ const register = new Registry();
 collectDefaultMetrics({ register });
 
 export async function GET(req: NextRequest) {
-  // If Prometheus is scraping, it usually expects text format and doesn't send auth headers by default,
-  // but to protect internal metrics we could enforce a basic auth or IP whitelist. 
-  // For this project, we'll allow scraping or fallback to JSON for admin dashboard.
-  
+  const authHeader = req.headers.get('authorization');
+  const secret = process.env.METRICS_SECRET;
+  if (secret && authHeader !== `Bearer ${secret}`) {
+    const session = await requireAdmin();
+    if (!session) return adminUnauthorized();
+  }
+
   const format = req.nextUrl.searchParams.get('format');
   const type = req.nextUrl.searchParams.get('type') || 'summary';
 

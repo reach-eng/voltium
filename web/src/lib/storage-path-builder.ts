@@ -14,7 +14,7 @@
  *  - To generate a relative storage key for a new upload, use generateStorageKey().
  */
 
-import { join } from 'path';
+import { join, resolve, sep } from 'path';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 
@@ -134,7 +134,6 @@ export const StoragePathBuilder = {
    * Validate that a resolved path does not escape the base directory (path traversal protection).
    */
   resolveAbsolute(baseDir: string, relativePath: string): string {
-    const { resolve, sep } = require('path') as typeof import('path');
     const resolved = resolve(join(baseDir, relativePath));
     if (!resolved.startsWith(resolve(baseDir) + sep) && resolved !== resolve(baseDir)) {
       throw new Error(`Path traversal detected: ${relativePath} resolves outside ${baseDir}`);

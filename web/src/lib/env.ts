@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object({
   // Base
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
@@ -9,6 +9,8 @@ const envSchema = z.object({
 
   // Security
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
+  JWT_ISSUER: z.string().default('voltium-api'),
+  JWT_AUDIENCE: z.string().default('voltium-app'),
   FCM_COMMAND_HMAC_SECRET: z
     .string()
     .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters'),
@@ -16,6 +18,11 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
   CRON_SECRET: z.string().optional(),
   WORKER_SECRET: z.string().optional(),
+
+  // Alerting — see docs/RUNBOOK.md §"Alerting" for setup
+  ALERT_WEBHOOK_URL: z.string().url().optional(),
+  ALERT_WEBHOOK_CHANNEL: z.enum(['slack', 'discord', 'generic']).default('generic'),
+  ALERT_MIN_LEVEL: z.enum(['info', 'warn', 'error', 'critical']).default('error'),
 
   // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:8081'),
@@ -26,6 +33,9 @@ const envSchema = z.object({
   SMS_PROVIDER: z.enum(['mock', 'msg91']).default('mock'),
   MSG91_AUTH_KEY: z.string().optional(),
   MSG91_TEMPLATE_ID: z.string().optional(),
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
 
   // Data mode — 'default' (any) or 'local_laptop' (all data stays on laptop)
   DATA_MODE: z.enum(['default', 'local_laptop']).default('default'),
@@ -58,6 +68,19 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((v) => v === 'true'),
+  TEST_MODE: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
+  SEED_ADMIN_PASSWORD: z
+    .string()
+    .min(16, 'SEED_ADMIN_PASSWORD must be at least 16 characters when set')
+    .optional(),
+  ALLOW_DEV_PII_KEY: z.string().optional(),
+  TRUST_PROXY_HEADERS: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true'),
 
   // Features
   NEXT_PUBLIC_ENABLE_KYC: z
@@ -76,7 +99,56 @@ const envSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v === 'true'),
-});
+}).refine(
+  (data) => {
+    if (data.NODE_ENV === 'production' || data.APP_ENV === 'production' || data.APP_ENV === 'staging') {
+      if (data.ENABLE_TEST_OTP || data.ENABLE_DEV_ADMIN_LOGIN) {
+        return false;
+      }
+      if (data.TEST_MODE) {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: 'ENABLE_TEST_OTP, ENABLE_DEV_ADMIN_LOGIN, and TEST_MODE MUST be false in production and staging environments',
+  }
+).refine(
+  // ━ Ticket #50 hardening ━
+  // Reject ALLOW_DEV_PII_KEY=true in production/staging at parse time.
+  // This is a defense-in-depth check; the runtime guard in env.ts also
+  // catches it but parsing-time rejection gives faster, more visible
+  // failure on startup.
+  (data) => {
+    if (data.NODE_ENV === 'production' || data.APP_ENV === 'production' || data.APP_ENV === 'staging') {
+      if (data.ALLOW_DEV_PII_KEY === 'true') {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: 'ALLOW_DEV_PII_KEY MUST be unset or false in production. The hardcoded dev PII key is a security risk. Rotate the production key and unset this flag.',
+  }
+).refine(
+  (data) => {
+    if (data.NODE_ENV === 'production' || data.APP_ENV === 'production' || data.APP_ENV === 'staging') {
+      const placeholderRegex = /(YOUR_SECURE_|CHANGE_ME|SECRET_HERE|PLACEHOLDER)/i;
+      if (
+        placeholderRegex.test(data.JWT_SECRET) ||
+        placeholderRegex.test(data.FCM_COMMAND_HMAC_SECRET) ||
+        (data.SESSION_SECRET && placeholderRegex.test(data.SESSION_SECRET))
+      ) {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: 'Placeholder values for JWT_SECRET, FCM_COMMAND_HMAC_SECRET, or SESSION_SECRET are rejected in production and staging',
+  }
+);
 
 if (process.env.NODE_ENV === 'test') {
   process.env.DATABASE_URL =
@@ -111,14 +183,13 @@ const parseTarget = isServer
 const _env = envSchema.safeParse(parseTarget);
 
 if (!_env.success) {
-  // eslint-disable-next-line no-console
   console.error('❌ Invalid environment variables:', JSON.stringify(_env.error.format(), null, 2));
   throw new Error('Invalid environment variables');
 }
 
 const parsedEnv = _env.data;
 
-if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 'production')) {
+if (isServer && parsedEnv.APP_ENV === 'production') {
   if (process.env.DATABASE_OFFLINE === 'true') {
     throw new Error(
       'Production architecture violation: DATABASE_OFFLINE mock fallback is not allowed in production.'
@@ -162,6 +233,22 @@ if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 
 
   if (parsedEnv.ENABLE_TEST_OTP || parsedEnv.ENABLE_DEV_ADMIN_LOGIN) {
     throw new Error('Production architecture violation: dev OTP/admin bypass flags must be false.');
+  }
+
+  if (parsedEnv.ALLOW_DEV_PII_KEY === 'true') {
+    throw new Error('Production architecture violation: ALLOW_DEV_PII_KEY must not be "true" in production. Dev PII encryption key is not allowed.');
+  }
+
+  // Phase 7 follow-up: ALERT_WEBHOOK_URL is recommended in production but
+  // not strictly required — log-only mode is valid for initial rollout.
+  // We log a warning at startup (see assertAlerterConfigured in alerter.ts)
+  // and re-check here for fail-fast visibility.
+  if (!process.env.ALERT_WEBHOOK_URL) {
+    console.warn(
+      '[env] ALERT_WEBHOOK_URL is not set in production. ' +
+        'Alerts will be written to logs only. ' +
+        'See docs/RUNBOOK.md §"Alerting" to configure a Slack/Discord webhook.'
+    );
   }
 }
 
@@ -210,3 +297,29 @@ if (isServer) {
 }
 
 export const env = parsedEnv;
+
+/**
+ * Canonical helper for security-gate decisions.
+ *
+ * ━ Ticket #48 hardening ━
+ * Use `isProductionEnv()` instead of `process.env.NODE_ENV === 'production'`
+ * for any check that gates a security-relevant behavior (cookie `secure` flag,
+ * dev OTP bypass, dev admin login, etc.). `NODE_ENV` is set by the framework
+ * and is brittle; `APP_ENV` is the team's canonical environment identifier.
+ *
+ *   - production → true (production-like: tight security)
+ *   - staging    → true (production-like: tight security)
+ *   - test       → false (test mode: lax)
+ *   - development → false (dev mode: lax)
+ */
+export function isProductionEnv(): boolean {
+  return parsedEnv.APP_ENV === 'production' || parsedEnv.APP_ENV === 'staging';
+}
+
+/**
+ * Canonical helper for the inverse: is this a development-like environment
+ * where dev bypasses and lenient behavior are appropriate?
+ */
+export function isDevelopmentEnv(): boolean {
+  return parsedEnv.APP_ENV === 'development' || parsedEnv.APP_ENV === 'test';
+}

@@ -6,9 +6,11 @@ import { requireRiderSession } from '@/lib/rider-auth';
 import { planUseCases } from '@/server/modules/plans/plan.use-cases';
 import { WalletServiceError } from '@/server/modules/wallet/wallet-ledger.service';
 
+import { getOrSetResponse } from '@/lib/cache';
+
 export async function GET() {
   try {
-    const plans = await planUseCases.listActivePlans();
+    const plans = await getOrSetResponse('rider_plans', async () => planUseCases.listActivePlans(), 300);
     return success(plans, `${plans.length} plans fetched`);
   } catch (err) {
     logger.error('[GET /api/rider/plans]', err);
@@ -28,9 +30,9 @@ export async function POST(req: NextRequest) {
       return errors.validation(validation.error!);
     }
 
-    const { planId } = validation.data;
+    const { planId, advanceRentPaid } = validation.data;
 
-    const result = await planUseCases.subscribeToPlan(riderDbId, planId);
+    const result = await planUseCases.subscribeToPlan(riderDbId, planId, advanceRentPaid);
     return success(result, `Subscribed to ${result.planName} plan`);
   } catch (err) {
     if (err instanceof Error && (err instanceof Error ? err.message : String(err)) === 'INSUFFICIENT_BALANCE') {

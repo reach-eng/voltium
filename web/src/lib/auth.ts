@@ -8,29 +8,42 @@
  */
 
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
-import { env } from './env';
+import { env, isProductionEnv } from './env';
 import { logger } from './logger';
 import { db } from './db';
 import { getOrSetResponse } from './cache';
 
-import { type SessionPayload } from './permissions';
-export { ADMIN_ROLES, type AdminRole, type SessionPayload } from './permissions';
+import { type SessionPayload } from './session-payload';
+export { ADMIN_ROLES, type AdminRole } from './permissions';
+export type { SessionPayload } from './session-payload';
 
 // Session cookie configuration
+// ━ Ticket #48 hardening ━ secure flag uses APP_ENV (via isProductionEnv()),
+// not NODE_ENV. Staging is production-like; cookies must be Secure there too.
 export const SESSION_COOKIE_NAME = 'voltium-session';
 export const ADMIN_SESSION_COOKIE_NAME = 'voltium-admin-session';
 
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: isProductionEnv(),
   sameSite: 'strict' as const,
   path: '/',
-  maxAge: 60 * 60 * 24 * 7, // 7 days (cookie TTL; token itself is shorter)
+  maxAge: 60 * 60 * 24, // 24 hours session timeout
+};
+
+export const ADMIN_SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: isProductionEnv(),
+  sameSite: 'strict' as const,
+  path: '/',
+  maxAge: 60 * 60, // 1 hour for admin session timeout
 };
 
 const ACTUAL_SECRET = new TextEncoder().encode(env.JWT_SECRET);
-const ACCESS_TOKEN_TTL = '2h';
-const REFRESH_TOKEN_TTL = '30d';
+const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_TTL || '2h';
+const REFRESH_TOKEN_TTL = process.env.JWT_REFRESH_TTL || '30d';
+const JWT_ISSUER = env.JWT_ISSUER;
+const JWT_AUDIENCE = env.JWT_AUDIENCE;
 
 // ── Token creation ──────────────────────────────────────────────────────────
 
@@ -58,8 +71,8 @@ export async function createSessionToken(payload: {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_TTL)
-    .setIssuer('voltium-api')
-    .setAudience('voltium-app')
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setSubject(payload.riderDbId)
     .sign(ACTUAL_SECRET);
 
@@ -88,8 +101,8 @@ export async function createRefreshToken(payload: {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_TTL)
-    .setIssuer('voltium-api')
-    .setAudience('voltium-app')
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setSubject(payload.riderDbId)
     .sign(ACTUAL_SECRET);
 
@@ -125,8 +138,8 @@ export async function verifySessionToken(
     }
 
     const { payload } = await jwtVerify(token, ACTUAL_SECRET, {
-      issuer: 'voltium-api',
-      audience: 'voltium-app',
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
     });
 
     const decoded = payload as VoltiumJwtPayload;
@@ -155,7 +168,7 @@ export async function verifySessionToken(
               permissions: admin?.permissions ?? null,
             };
           },
-          30
+          5
         );
         if (!cached) return null;
         currentVersion = cached.tokenVersion;
@@ -171,9 +184,11 @@ export async function verifySessionToken(
 
         if (cached.permissions) {
           try {
-            decoded.adminPermissions = JSON.parse(cached.permissions);
-          } catch {
-            // ignore parse errors
+            decoded.adminPermissions = typeof cached.permissions === 'string'
+              ? JSON.parse(cached.permissions)
+              : cached.permissions;
+          } catch (err) {
+            logger.warn('[Auth] Failed to parse admin permissions JSON:', { adminId, error: String(err) });
           }
         }
       } else {
@@ -187,7 +202,7 @@ export async function verifySessionToken(
             });
             return rider?.tokenVersion ?? 1;
           },
-          30
+          5
         );
       }
     } catch (err) {

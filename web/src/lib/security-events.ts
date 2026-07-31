@@ -16,6 +16,7 @@
 
 import { logger } from './logger';
 import { createAuditLog } from './audit-log';
+import { redactPii } from './pii-redact';
 
 export type SecurityEventSeverity = 'info' | 'warning' | 'critical';
 
@@ -39,11 +40,21 @@ const SECURITY_EVENT_PREFIX = '[Security]';
 export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
   const { type, severity, actorId, actorType, details, ip, userAgent, correlationId } = event;
 
+  // ━ Ticket #45 hardening: redact PII in BOTH the application logger
+  // and the audit log path. The previous code only redacted the audit log
+  // path; the application logger relied on the pino formatter's
+  // `maskSensitiveData` which only masks with `****1234` (last 4 chars) —
+  // leaking partial PII (e.g. last 4 of a phone is enough to identify
+  // a user in a small dataset).
+  // Fix: redact at the source using `redactPii` (full `[REDACTED]`) so both
+  // paths get the same treatment.
+  const redactedDetails = redactPii(details);
+
   const logContext: Record<string, unknown> = {
     eventType: type,
     severity,
     actorId: actorId || 'anonymous',
-    ...details,
+    ...redactedDetails,
   };
 
   if (ip) logContext.ip = ip;
@@ -64,26 +75,25 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
       logger.info(message, logContext);
   }
 
-  // For critical events, also write to audit log table for persistence
-  if (severity === 'critical' || severity === 'warning') {
-    try {
-      await createAuditLog({
-        actorId: actorId || 'SYSTEM',
-        actorType: actorType || 'SYSTEM',
-        action: `security.${type}`,
-        entity: 'securityEvent',
-        entityId: undefined,
-        details: JSON.stringify({
-          severity,
-          ...details,
-          ip,
-          userAgent,
-          correlationId,
-        }),
-      });
-    } catch (err) {
-      logger.error('[SecurityEvents] Failed to write audit log', { eventType: type, err });
-    }
+  // Write ALL security events to audit log (SOC2 compliance).
+  // PII in details is redacted before persisting.
+  try {
+    await createAuditLog({
+      actorId: actorId || 'SYSTEM',
+      actorType: actorType || 'SYSTEM',
+      action: `security.${type}`,
+      entity: 'securityEvent',
+      entityId: undefined,
+      details: JSON.stringify({
+        severity,
+        ...redactedDetails,
+        ip,
+        userAgent,
+        correlationId,
+      }),
+    });
+  } catch (err) {
+    logger.error('[SecurityEvents] failed to write audit log', { eventType: type, err });
   }
 }
 

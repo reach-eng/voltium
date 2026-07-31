@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { validateIncidentTransition, type IncidentStatus } from './incident-state-machine';
+import { NotFoundError } from "@/lib/api-error";
 
 export const incidentUseCases = {
   async list(params: {
@@ -86,11 +87,11 @@ export const incidentUseCases = {
   ) {
     if (data.riderId) {
       const rider = await db.rider.findUnique({ where: { id: data.riderId } });
-      if (!rider) throw new Error('Rider not found');
+      if (!rider) throw new NotFoundError('Rider not found');
     }
     if (data.vehicleId) {
       const vehicle = await db.vehicle.findUnique({ where: { id: data.vehicleId } });
-      if (!vehicle) throw new Error('Vehicle not found');
+      if (!vehicle) throw new NotFoundError('Vehicle not found');
     }
 
     const incidentId = `INC-${Date.now()}`;
@@ -195,7 +196,7 @@ export const incidentUseCases = {
   async updateIncident(id: string, data: Record<string, unknown>, actorId: string) {
     if (data.status) {
       const existing = await db.incident.findUnique({ where: { id }, select: { status: true } });
-      if (!existing) throw new Error('Incident not found');
+      if (!existing) throw new NotFoundError('Incident not found');
       validateIncidentTransition(existing.status as IncidentStatus, data.status as IncidentStatus);
     }
 

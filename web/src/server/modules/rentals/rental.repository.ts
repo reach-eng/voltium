@@ -14,6 +14,10 @@ import type { RentalStatus } from './rental.types';
 import { validateTransition as validateRiderTransition } from '@/server/modules/riders/rider-lifecycle.service';
 import { Prisma } from '@prisma/client';
 
+import { fcmService } from '@/lib/fcm';
+import { logger } from '@/lib/logger';
+import { ValidationError } from "@/lib/api-error";
+
 export const rentalRepository = {
   async findPlans() {
     return db.rentalPlan.findMany({ where: { isActive: true } });
@@ -142,8 +146,19 @@ export const rentalRepository = {
     });
   },
 
-  async executeLeaseAction(lease: any, action: string) {
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+  async executeLeaseAction(
+    lease: any,
+    action: string,
+    options?: {
+      adminId?: string;
+      endOdometer?: number;
+      damageFeeInPaise?: number;
+      waiveDamageFee?: boolean;
+      waiverReason?: string;
+      inspectionNotes?: string;
+    }
+  ) {
+    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       const currentStatus = lease.rider.lifecycleStatus;
 
       if (action === 'START' || action === 'PICKUP_COMPLETE') {
@@ -182,6 +197,49 @@ export const rentalRepository = {
       }
       if (action === 'APPROVE_RETURN' || action === 'CLOSE') {
         validateRiderTransition(currentStatus, 'CLOSED');
+
+        // Update VehicleReturn status from SUBMITTED to APPROVED and store inspection audit details
+        await tx.vehicleReturn.updateMany({
+          where: { riderId: lease.riderId, status: 'SUBMITTED' },
+          data: {
+            status: 'APPROVED',
+            inspectedBy: options?.adminId || null,
+            inspectedAt: new Date(),
+            ...(typeof options?.endOdometer === 'number' ? { endOdometer: options.endOdometer } : {}),
+            ...(typeof options?.damageFeeInPaise === 'number' ? { damageAmountInPaise: options.damageFeeInPaise } : {}),
+            isFeeWaived: !!options?.waiveDamageFee,
+            waiverReason: options?.waiverReason || null,
+            waivedBy: options?.waiveDamageFee ? options?.adminId || null : null,
+          },
+        });
+
+        // Deduct damage fee from general wallet balance if damage fee specified and not waived
+        if (
+          typeof options?.damageFeeInPaise === 'number' &&
+          options.damageFeeInPaise > 0 &&
+          !options.waiveDamageFee
+        ) {
+          const wallet = await tx.wallet.findUnique({ where: { riderId: lease.riderId } });
+          if (wallet) {
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: { balanceInPaise: { decrement: options.damageFeeInPaise } },
+            });
+            await tx.transaction.create({
+              data: {
+                riderId: lease.riderId,
+                type: 'DEBIT',
+                amountInPaise: options.damageFeeInPaise,
+                status: 'APPROVED',
+                purpose: 'ADMIN_ADJUSTMENT',
+                approvedAt: new Date(),
+                approvedBy: options.adminId || null,
+                description: `Vehicle return damage fee${options.inspectionNotes ? `: ${options.inspectionNotes}` : ''}`,
+              },
+            });
+          }
+        }
+
         await tx.vehicle.update({
           where: { id: lease.vehicleId },
           data: { status: 'AVAILABLE', assignedAt: null },
@@ -203,7 +261,24 @@ export const rentalRepository = {
         });
         return tx.rentalLease.update({ where: { id: lease.id }, data: { status: 'SUSPENDED' } });
       }
-      throw new Error(`Unsupported rental action: ${action}`);
+      throw new ValidationError(`Unsupported rental action: ${action}`);
     });
+
+    // Notify rider mobile app via FCM overlay push trigger
+    if (action === 'APPROVE_RETURN' || action === 'CLOSE') {
+      try {
+        const rider = await db.rider.findUnique({
+          where: { id: lease.riderId },
+          select: { fcmToken: true },
+        });
+        if (rider?.fcmToken) {
+          await fcmService.sendOverlayTrigger(rider.fcmToken, 'RETURN_APPROVED');
+        }
+      } catch (err) {
+        logger.warn('[rentalRepository] Failed to send FCM return notification', { riderId: lease.riderId, err });
+      }
+    }
+
+    return result;
   },
 };

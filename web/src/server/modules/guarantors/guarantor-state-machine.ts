@@ -27,7 +27,12 @@ const VALID_TRANSITIONS: TransitionMap = {
   REPLACED: [],
 };
 
-export class GuarantorStateError extends Error {
+import { DomainError } from '@/lib/domain-error';
+
+export class GuarantorStateError extends DomainError {
+  readonly httpStatus = 409;
+  readonly errorCode = 'GUARANTOR_STATE_CONFLICT';
+
   constructor(
     message: string,
     public readonly currentStatus: GuarantorStatus,

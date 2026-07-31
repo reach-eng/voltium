@@ -64,24 +64,24 @@
 
 :root {
   --radius: 0.75rem; /* 12px = Flutter md */
-  --background: #f8fafc;
-  --foreground: #020617;
-  --card: #ffffff;
-  --card-foreground: #020617;
-  --popover: #ffffff;
-  --popover-foreground: #020617;
-  --primary: #0369a1;
+  --background: var(--color-vf-surface);
+  --foreground: var(--color-vf-on-surface);
+  --card: var(--color-vf-surface-container-lowest);
+  --card-foreground: var(--color-vf-on-surface);
+  --popover: var(--color-vf-surface-container-lowest);
+  --popover-foreground: var(--color-vf-on-surface);
+  --primary: var(--color-vf-primary);
   --primary-foreground: #ffffff;
   --secondary: #334155;
   --secondary-foreground: #ffffff;
-  --muted: #f1f5f9;
-  --muted-foreground: #475569;
+  --muted: var(--color-vf-surface-container-low);
+  --muted-foreground: var(--color-vf-on-surface-variant);
   --accent: #f59e0b;
   --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --border: #e2e8f0;
-  --input: #ffffff;
-  --ring: #0369a1;
+  --destructive: var(--color-vf-error);
+  --border: var(--color-vf-outline-variant);
+  --input: var(--color-vf-surface-container-lowest);
+  --ring: var(--color-vf-primary);
 }
 
 .dark {
@@ -91,7 +91,7 @@
   --card-foreground: #f8fafc;
   --popover: #1e293b;
   --popover-foreground: #f8fafc;
-  --primary: #0369a1; /* Consistent primary */
+  --primary: var(--color-vf-primary);
   --primary-foreground: #ffffff;
   --secondary: #334155;
   --secondary-foreground: #ffffff;
@@ -99,10 +99,10 @@
   --muted-foreground: #94a3b8;
   --accent: #f59e0b;
   --accent-foreground: #ffffff;
-  --destructive: #ef4444;
+  --destructive: var(--color-vf-error);
   --border: #334155;
   --input: #1e293b;
-  --ring: #0369a1;
+  --ring: var(--color-vf-primary);
 }
 
 @layer base {
@@ -127,6 +127,9 @@
 ::-webkit-scrollbar-thumb {
   background: #d8dadc;
   border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
 }
 
 /* Mesh Gradient Backgrounds */

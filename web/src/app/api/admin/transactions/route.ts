@@ -19,8 +19,8 @@ import {
   TransactionError,
 } from '@/server/modules/transactions/transaction.use-cases';
 import { TransactionStateError } from '@/server/modules/transactions/transaction-state-machine';
-import { WalletServiceError } from '@/lib/services/wallet-service';
-import { DepositStateError } from '@/lib/services/deposit-service';
+import { WalletServiceError } from '@/server/modules/wallet/wallet.errors';
+import { DepositStateError } from '@/server/modules/deposits/deposit.service';
 
 // GET /api/admin/transactions — list with filters, amounts in rupees
 export async function GET(req: NextRequest) {

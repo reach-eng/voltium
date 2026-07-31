@@ -12,12 +12,21 @@ import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { walletUseCases } from '@/server/modules/wallet/wallet.use-cases';
 import { paiseToRupees, rupeesToPaise } from '@/lib/flatten-rider';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;
+
+    const rateLimit = await checkRateLimit(`topup:${riderDbId}`, {
+      windowMs: 60 * 1000,
+      maxRequests: 10,
+    });
+    if (!rateLimit.allowed) {
+      return errors.tooManyRequests('Top-up rate limit exceeded. Please wait a minute before trying again.');
+    }
 
     let body;
     try {

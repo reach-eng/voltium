@@ -30,7 +30,7 @@ function errorMessage(error: unknown): string {
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'shifts_manage')) return adminForbidden();
   try {
     const search = req.nextUrl.searchParams.get('search') || '';
     const activeOnly = req.nextUrl.searchParams.get('active') === 'true';
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'shifts_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(shiftSchema, body);
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'shifts_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(shiftSchema.partial().extend({ id: z.string().min(1) }), body);
@@ -78,7 +78,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
+  if (!hasPermission(session, 'shifts_manage')) return adminForbidden();
   try {
     const body = await req.json();
     const validation = validateBody(deleteShiftSchema, body);

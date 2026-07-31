@@ -4,6 +4,7 @@ import { ADMIN_SESSION_COOKIE_NAME } from '@/lib/auth';
 import { requireAdmin } from '@/lib/rbac';
 import { createAuditLog } from '@/lib/audit-log';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
+import { isProductionEnv } from '@/lib/env';
 
 // POST /api/admin/auth/logout — Clear admin session cookie
 export async function POST(request: NextRequest) {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
   // Clear the admin session cookie
   response.cookies.set(ADMIN_SESSION_COOKIE_NAME, '', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionEnv(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 0, // Expire immediately

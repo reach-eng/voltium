@@ -3,7 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
-import { referralUseCases } from '@/server/modules/referrals/referral.use-cases';
+import { referralUseCases } from '@/server/modules/referrals';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();

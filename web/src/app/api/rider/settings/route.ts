@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     if (auth instanceof Response) return auth;
 
     const result = await settingUseCases.getPublic();
-    return success(result);
+    const response = success(result);
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    return response;
   } catch (err) {
     return errors.internal('Failed to fetch settings');
   }

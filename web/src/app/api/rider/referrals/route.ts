@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
-import { referralUseCases } from '@/server/modules/referrals/referral.use-cases';
+import { referralUseCases } from '@/server/modules/referrals';
 
 export async function GET(req: NextRequest) {
   try {

@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { AuditActionType } from '@prisma/client';
 
+// PR-F (Ticket #61): actorId is always derived from the session via
+// `getSession()`, NEVER directly from request headers. Impersonation routes
+// set session.actorId to the impersonated admin's ID, and the audit log
+// records the original admin in `details.impersonatedBy`.
+
 export const RETENTION_PERIODS: Record<string, number> = {
   auth: 90,
   kyc: 365,
@@ -89,6 +94,20 @@ export async function getExpiredLogs(): Promise<number> {
   } catch (err) {
     logger.error('[AuditLog] Failed to count expired logs:', err);
     return 0;
+  }
+}
+
+/**
+ * Safely parse audit log details JSON string into typed object.
+ */
+export function parseAuditLogDetails<T = Record<string, unknown>>(
+  details: string | null | undefined
+): T | null {
+  if (!details || typeof details !== 'string') return null;
+  try {
+    return JSON.parse(details) as T;
+  } catch {
+    return null;
   }
 }
 

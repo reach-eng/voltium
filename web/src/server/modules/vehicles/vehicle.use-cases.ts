@@ -4,6 +4,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
 import { VehicleStatus, Prisma } from '@prisma/client';
 import { invalidateCache } from '@/lib/cache';
+import { ValidationError, NotFoundError } from "@/lib/api-error";
 
 export const vehicleUseCases = {
   async listVehicles(params?: { hubId?: string; status?: VehicleStatus }) {
@@ -33,19 +34,19 @@ export const vehicleUseCases = {
   async assignVehicle(vehicleId: string, riderDbId: string) {
     const vehicle = await db.vehicle.findUnique({ where: { id: vehicleId } });
     if (!vehicle || vehicle.status !== 'AVAILABLE') {
-      throw new Error('Vehicle is not available for assignment');
+      throw new ValidationError('Vehicle is not available for assignment');
     }
 
     const rider = await db.rider.findUnique({ where: { id: riderDbId } });
     if (!rider || rider.lifecycleStatus !== 'ACTIVE') {
-      throw new Error('Rider is not in ACTIVE state');
+      throw new ValidationError('Rider is not in ACTIVE state');
     }
 
     const existingRental = await db.rentalLease.findFirst({
       where: { riderId: riderDbId, status: 'ACTIVE' },
     });
     if (existingRental) {
-      throw new Error('Rider already has an active rental');
+      throw new ValidationError('Rider already has an active rental');
     }
 
     const result = await vehicleRepository.assignToRider(vehicleId, riderDbId);
@@ -58,7 +59,7 @@ export const vehicleUseCases = {
       where: { vehicleId, status: 'ACTIVE' },
     });
     if (activeLease) {
-      throw new Error(
+      throw new ValidationError(
         'Vehicle is currently on an active rental and cannot be marked for maintenance'
       );
     }
@@ -131,7 +132,7 @@ export const vehicleUseCases = {
       where: { id: hubId },
       select: { id: true, name: true, isActive: true },
     });
-    if (!hub) throw new Error('Hub not found');
+    if (!hub) throw new NotFoundError('Hub not found');
 
     const vehicles = await db.vehicle.findMany({
       where: { hubId },
@@ -202,7 +203,7 @@ export const vehicleUseCases = {
       },
       include: { hub: { select: { id: true, name: true } } },
     })) as any;
-    if (!vehicle) throw new Error('Vehicle not found at this hub');
+    if (!vehicle) throw new NotFoundError('Vehicle not found at this hub');
     return {
       id: vehicle.id,
       vehicleId: vehicle.vehicleId,
@@ -229,7 +230,7 @@ export const vehicleUseCases = {
 
     switch (action) {
       case 'changeStatus': {
-        if (!value) throw new Error('Status value is required');
+        if (!value) throw new ValidationError('Status value is required');
         const result = await vehicleRepository.bulkUpdateStatus(ids, {
           status: value as VehicleStatus,
         });
@@ -238,7 +239,7 @@ export const vehicleUseCases = {
         break;
       }
       case 'reassignHub': {
-        if (!value) throw new Error('Hub ID is required');
+        if (!value) throw new ValidationError('Hub ID is required');
         // Update individually because hubId is not allowed in updateMany mutation input
         await db.$transaction(
           ids.map((id) =>
@@ -259,7 +260,7 @@ export const vehicleUseCases = {
         break;
       }
       default:
-        throw new Error('Invalid action');
+        throw new ValidationError('Invalid action');
     }
 
     createAuditLog({

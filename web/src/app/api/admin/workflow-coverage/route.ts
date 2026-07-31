@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { requireAdmin } from '@/lib/rbac';
+import { requireAdmin, adminForbidden } from '@/lib/rbac';
+import { hasPermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
 
 interface WorkflowStatus {
@@ -28,8 +29,11 @@ export async function GET(req: NextRequest) {
     if (!admin) {
       return errors.unauthorized('Admin authentication required');
     }
+    if (!hasPermission(admin, 'health_view')) {
+      return adminForbidden();
+    }
 
-    const baseUrl = new URL(req.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `http://localhost:${process.env.PORT || 8081}`;
     const cookie = req.headers.get('cookie');
 
     // Check backend API health per workflow group

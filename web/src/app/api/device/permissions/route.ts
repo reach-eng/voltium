@@ -3,13 +3,14 @@ import { success, errors } from '@/lib/api-response';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { deviceComplianceUseCases } from '@/server/modules/device-compliance/device-compliance.use-cases';
 import { logger } from '@/lib/logger';
+import { env } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     let riderDbId = '';
-    if (process.env.TEST_MODE === 'true' || process.env.NODE_ENV === 'development') {
+    if (env.TEST_MODE && env.APP_ENV === 'development' && process.env.NODE_ENV === 'development') {
       const body = await request.clone().json();
       riderDbId = body.riderId || 'test-rider-001';
     } else {

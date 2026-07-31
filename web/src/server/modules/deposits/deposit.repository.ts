@@ -54,14 +54,20 @@ export const depositRepository = {
     const currentStatus: DepositStatus = (existing?.status as DepositStatus) || 'NOT_SUBMITTED';
     validateDepositTransition(currentStatus, 'APPROVED');
 
-    return db.depositRecord.update({
-      where: { riderId: riderDbId },
+    const updated = await db.depositRecord.updateMany({
+      where: { riderId: riderDbId, status: currentStatus as any },
       data: {
         status: 'APPROVED',
         approvedAt: new Date(),
         approvedBy: reviewerId,
       },
     });
+
+    if (updated.count === 0) {
+      throw new DepositStateMachineError(`Deposit record state changed concurrently from ${currentStatus}`, currentStatus, 'APPROVED');
+    }
+
+    return db.depositRecord.findUnique({ where: { riderId: riderDbId } });
   },
 
   async findAllPaginated(params: { where: Record<string, unknown>; page: number; limit: number }) {
@@ -90,8 +96,8 @@ export const depositRepository = {
     const currentStatus: DepositStatus = (existing?.status as DepositStatus) || 'NOT_SUBMITTED';
     validateDepositTransition(currentStatus, 'REJECTED');
 
-    return db.depositRecord.update({
-      where: { riderId: riderDbId },
+    const updated = await db.depositRecord.updateMany({
+      where: { riderId: riderDbId, status: currentStatus as any },
       data: {
         status: 'REJECTED',
         rejectedAt: new Date(),
@@ -99,5 +105,11 @@ export const depositRepository = {
         rejectionReason: reason,
       },
     });
+
+    if (updated.count === 0) {
+      throw new DepositStateMachineError(`Deposit record state changed concurrently from ${currentStatus}`, currentStatus, 'REJECTED');
+    }
+
+    return db.depositRecord.findUnique({ where: { riderId: riderDbId } });
   },
 };

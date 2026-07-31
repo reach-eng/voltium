@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
-import { dataManagementUseCases } from '@/server/modules/data-management/data-management.use-cases';
+import { overviewUseCases } from '@/server/modules/data-management/overview/overview.use-cases';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 import { withApiHandler } from '@/lib/api-handler';
 import { success, errors } from '@/lib/api-response';
@@ -23,7 +23,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     return errors.unauthorized('Unauthorized');
   }
 
-  const overview = await dataManagementUseCases.getOverview(session.adminRole as AdminRole);
+  const overview = await overviewUseCases.getOverview(session.adminRole as AdminRole);
 
   // Count running jobs
   const runningBackups = await db.backupJob.count({

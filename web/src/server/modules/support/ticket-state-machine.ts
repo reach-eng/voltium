@@ -11,7 +11,7 @@ export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_ON_RIDER' | 'RESOLV
 
 type TransitionMap = Record<TicketStatus, TicketStatus[]>;
 
-const VALID_TRANSITIONS: TransitionMap = {
+export const VALID_TRANSITIONS: TransitionMap = {
   OPEN: ['IN_PROGRESS', 'WAITING_ON_RIDER'],
   IN_PROGRESS: ['WAITING_ON_RIDER', 'RESOLVED'],
   WAITING_ON_RIDER: ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
@@ -55,4 +55,14 @@ export function canTransitionTicket(current: TicketStatus, target: TicketStatus)
 
 export function getValidNextTicketStates(status: TicketStatus): TicketStatus[] {
   return VALID_TRANSITIONS[status] ?? [];
+}
+
+export function getValidSourceTicketStates(target: TicketStatus): TicketStatus[] {
+  const sources: TicketStatus[] = [target];
+  for (const [src, allowed] of Object.entries(VALID_TRANSITIONS)) {
+    if (allowed.includes(target)) {
+      sources.push(src as TicketStatus);
+    }
+  }
+  return sources;
 }

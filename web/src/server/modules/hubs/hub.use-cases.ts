@@ -2,36 +2,41 @@ import { hubRepository } from './hub.repository';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { Prisma } from '@prisma/client';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
+import { ValidationError } from "@/lib/api-error";
 
 export const hubUseCases = {
   async listHubs() {
-    return hubRepository.findAll();
+    return (await getOrSetResponse('hubs_list', () => hubRepository.findAll(), 30)) ?? [];
   },
 
   async listAdminHubs(page: number, limit: number) {
-    const { hubs, total } = await hubRepository.findAllPaginated(page, limit);
-    const hubsWithBreakdown = hubs.map((hub: any) => {
-      const breakdown = {
-        available: 0,
-        assigned: 0,
-        maintenance: 0,
-        retired: 0,
-        total: hub.vehicles?.length || 0,
-      };
-      hub.vehicles.forEach((v: any) => {
-        const s = v.status.toUpperCase();
-        if (s === 'AVAILABLE') breakdown.available++;
-        else if (s === 'ASSIGNED' || s === 'RENTED') breakdown.assigned++;
-        else if (s === 'MAINTENANCE') breakdown.maintenance++;
-        else if (s === 'RETIRED') breakdown.retired++;
+    const cacheKey = `admin_hubs_list:${page}:${limit}`;
+    return getOrSetResponse(cacheKey, async () => {
+      const { hubs, total } = await hubRepository.findAllPaginated(page, limit);
+      const hubsWithBreakdown = hubs.map((hub: any) => {
+        const breakdown = {
+          available: 0,
+          assigned: 0,
+          maintenance: 0,
+          retired: 0,
+          total: hub.vehicles?.length || 0,
+        };
+        hub.vehicles.forEach((v: any) => {
+          const s = v.status.toUpperCase();
+          if (s === 'AVAILABLE') breakdown.available++;
+          else if (s === 'ASSIGNED' || s === 'RENTED') breakdown.assigned++;
+          else if (s === 'MAINTENANCE') breakdown.maintenance++;
+          else if (s === 'RETIRED') breakdown.retired++;
+        });
+        const { vehicles, ...rest } = hub;
+        return { ...rest, _count: { vehicles: breakdown.total }, vehicleBreakdown: breakdown };
       });
-      const { vehicles, ...rest } = hub;
-      return { ...rest, _count: { vehicles: breakdown.total }, vehicleBreakdown: breakdown };
-    });
-    return {
-      hubs: hubsWithBreakdown,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    };
+      return {
+        hubs: hubsWithBreakdown,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }, 30);
   },
 
   async getHub(hubId: string) {
@@ -40,6 +45,8 @@ export const hubUseCases = {
 
   async createHub(input: Prisma.HubCreateInput, actorId: string) {
     const hub = await hubRepository.create(input);
+    invalidateCache('hubs_list*');
+    invalidateCache('admin_hubs_list*');
     createAuditLog({
       actorId,
       action: 'hub.create',
@@ -52,6 +59,8 @@ export const hubUseCases = {
 
   async updateHub(hubId: string, input: Prisma.HubUpdateInput, actorId: string) {
     const hub = await hubRepository.update(hubId, input);
+    invalidateCache('hubs_list*');
+    invalidateCache('admin_hubs_list*');
     createAuditLog({
       actorId,
       action: 'hub.update',
@@ -65,11 +74,13 @@ export const hubUseCases = {
   async deleteHub(hubId: string, actorId: string) {
     const vehicleCount = await hubRepository.getVehicleCount(hubId);
     if (vehicleCount > 0) {
-      throw new Error(
+      throw new ValidationError(
         `Cannot delete hub: ${vehicleCount} vehicle(s) still assigned. Reassign them first.`
       );
     }
     await hubRepository.hardDelete(hubId);
+    invalidateCache('hubs_list*');
+    invalidateCache('admin_hubs_list*');
     createAuditLog({ actorId, action: 'hub.delete', entity: 'hub', entityId: hubId }).catch(
       () => {}
     );
@@ -109,7 +120,7 @@ export const hubUseCases = {
       select: { id: true },
     });
     if (hubsWithVehicles.length > 0) {
-      throw new Error(
+      throw new ValidationError(
         `Cannot delete ${hubsWithVehicles.length} hub(s) with vehicles still assigned. Reassign them first.`
       );
     }

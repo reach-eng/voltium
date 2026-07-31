@@ -38,6 +38,7 @@ export async function GET() {
 
     const latencyMs = Date.now() - start;
 
+    // Non-standard response shape — left as-is (health diagnostic contract)
     return NextResponse.json({
       status: 'healthy',
       latencyMs,
@@ -49,6 +50,7 @@ export async function GET() {
     const message = errorMessage(err);
     logger.error('[Health/DB] Database check failed', { error: message });
 
+    // Non-standard response shape — left as-is (health diagnostic contract)
     return NextResponse.json(
       {
         status: 'unhealthy',

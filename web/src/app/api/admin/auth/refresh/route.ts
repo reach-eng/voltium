@@ -52,12 +52,7 @@ export async function POST(request: NextRequest) {
       data: { tokenVersion: { increment: 1 } },
     });
 
-    let parsedPermissions: string[] = [];
-    try {
-      parsedPermissions = admin.permissions ? JSON.parse(admin.permissions) : [];
-    } catch {
-      parsedPermissions = [];
-    }
+    let parsedPermissions: string[] = admin.permissions || [];
 
     const payload = {
       riderId: admin.id, // For compatibility

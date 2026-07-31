@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { success, errors } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
@@ -6,25 +7,21 @@ import { createAuditLog } from '@/lib/audit-log';
 export async function GET() {
   try {
     const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session) return errors.unauthorized();
 
     const [modeSetting, messageSetting] = await Promise.all([
       db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MODE' } }),
       db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MESSAGE' } }),
     ]);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        enabled: modeSetting?.value === 'true',
-        message:
-          messageSetting?.value ??
-          'System is currently under maintenance. Please check back later.',
-      },
+    return success({
+      enabled: modeSetting?.value === 'true',
+      message:
+        messageSetting?.value ??
+        'System is currently under maintenance. Please check back later.',
     });
   } catch (err: unknown) {
+    // Non-standard response shape — left as-is (flat error string, not standard error object)
     return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
   }
 }
@@ -32,23 +29,18 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session) return errors.unauthorized();
 
     // Only SUPER_ADMIN can change maintenance mode in production.
     if (session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden: SUPER_ADMIN required' }, { status: 403 });
+      return errors.forbidden('Forbidden: SUPER_ADMIN required');
     }
 
     const body = await request.json();
     const { enabled, message } = body;
 
     if (enabled === undefined || message === undefined) {
-      return NextResponse.json(
-        { error: 'enabled and message fields are required' },
-        { status: 400 }
-      );
+      return errors.badRequest('enabled and message fields are required');
     }
 
     // Upsert key/value configs
@@ -92,8 +84,9 @@ export async function PUT(request: NextRequest) {
       details: { enabled, message },
     });
 
-    return NextResponse.json({ success: true, data: { enabled, message } });
+    return success({ enabled, message });
   } catch (err: unknown) {
+    // Non-standard response shape — left as-is (flat error string, not standard error object)
     return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
   }
 }

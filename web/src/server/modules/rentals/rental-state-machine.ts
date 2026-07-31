@@ -36,7 +36,12 @@ const VALID_TRANSITIONS: TransitionMap = {
   CLOSED: [],
 };
 
-export class RentalStateError extends Error {
+import { DomainError } from '@/lib/domain-error';
+
+export class RentalStateError extends DomainError {
+  readonly httpStatus = 409;
+  readonly errorCode = 'RENTAL_STATE_CONFLICT';
+
   constructor(
     message: string,
     public readonly currentStatus: RentalStatus,

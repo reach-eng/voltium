@@ -5,9 +5,10 @@
  * by resend count/cooldown in the local PostgreSQL database.
  */
 
-import crypto from 'crypto';
+import crypto, { timingSafeEqual } from 'crypto';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { isDevelopmentEnv } from '@/lib/env';
 
 interface OtpEntry {
   code: string;
@@ -26,11 +27,27 @@ const memoryStore = new Map<string, OtpEntry>();
 const resendStore = new Map<string, { count: number; lastSentAt: number }>();
 
 function shouldUseDatabaseStore(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.OTP_STORE_PROVIDER === 'postgres';
+  return process.env.APP_ENV === 'production' || process.env.APP_ENV === 'staging' || process.env.OTP_STORE_PROVIDER === 'postgres';
 }
 
 function hashOtp(code: string, salt: string): string {
   return crypto.createHash('sha256').update(`${salt}:${code}`).digest('hex');
+}
+
+const DEV_OTP = '111111';
+const DEV_OTP_BUF = Buffer.from(DEV_OTP, 'utf8');
+
+/**
+ * Constant-time comparison against the dev OTP. Even though the dev OTP
+ * is a public constant, we use timingSafeEqual for code-rotation reasons
+ * (ticket #49) — the real security check happens in the DB/memory paths
+ * via SHA-256 hash + timingSafeEqual. Keeping this in lockstep makes
+ * future "swap the dev OTP to a real value" changes safe by default.
+ */
+function matchesDevOtp(code: string): boolean {
+  const codeBuf = Buffer.from(code, 'utf8');
+  if (codeBuf.length !== DEV_OTP_BUF.length) return false;
+  return timingSafeEqual(codeBuf, DEV_OTP_BUF);
 }
 
 export function generateRandomOtp(): string {
@@ -38,7 +55,10 @@ export function generateRandomOtp(): string {
 }
 
 export async function canResendOtp(phone: string): Promise<{ allowed: boolean; error?: string }> {
-  if (process.env.NODE_ENV !== 'production') {
+  if (
+    process.env.APP_ENV !== 'production' &&
+    process.env.APP_ENV !== 'staging'
+  ) {
     return { allowed: true };
   }
   if (shouldUseDatabaseStore()) {
@@ -78,7 +98,7 @@ export async function generateOtp(phone: string): Promise<string> {
   const resendCheck = await canResendOtp(phone);
   if (!resendCheck.allowed) throw new Error(resendCheck.error);
 
-  const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
+  const isDev = isDevelopmentEnv();
   const code = isDev ? '111111' : generateRandomOtp();
 
   if (shouldUseDatabaseStore()) {
@@ -137,13 +157,15 @@ export async function verifyOtp(
   phone: string,
   code: string
 ): Promise<{ valid: boolean; error?: string }> {
-  const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
-  console.log('[DEBUG OTP]', { isDev, env: process.env.ENABLE_TEST_OTP, code });
-  if (isDev && code === '111111') return { valid: true };
+  const isDev = isDevelopmentEnv();
 
   if (shouldUseDatabaseStore()) {
     const entry = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
     if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
+    // Dev OTP check AFTER entry lookup — requires an existing OTP entry.
+    // Uses constant-time compare (matchesDevOtp) for consistency with
+    // production OTP path; ticket #49.
+    if (isDev && matchesDevOtp(code)) return { valid: true };
     if (entry.verified) return { valid: false, error: 'OTP already used.' };
     if (Date.now() > entry.expiresAt.getTime()) return { valid: false, error: 'OTP expired.' };
     if (entry.attempts >= MAX_ATTEMPTS) {
@@ -151,7 +173,11 @@ export async function verifyOtp(
       return { valid: false, error: 'Too many failed attempts.' };
     }
 
-    const valid = hashOtp(code, entry.salt) === entry.codeHash;
+    // Timing-safe comparison: both are 64-char hex strings (32 bytes)
+    const computedHash = hashOtp(code, entry.salt);
+    const computedBuf = Buffer.from(computedHash, 'hex');
+    const storedBuf = Buffer.from(entry.codeHash, 'hex');
+    const valid = computedBuf.length === storedBuf.length && timingSafeEqual(computedBuf, storedBuf);
     if (!valid) {
       const updated = await db.otpCode.update({
         where: { phone },
@@ -172,6 +198,9 @@ export async function verifyOtp(
 
   const entry = memoryStore.get(phone) || null;
   if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
+  // Dev OTP check AFTER entry lookup — requires an existing OTP entry.
+  // Constant-time compare for ticket #49.
+  if (isDev && matchesDevOtp(code)) return { valid: true };
   if (entry.verified) return { valid: false, error: 'OTP already used.' };
   if (Date.now() > entry.expiresAt) return { valid: false, error: 'OTP expired.' };
 
@@ -180,7 +209,10 @@ export async function verifyOtp(
     memoryStore.delete(phone);
     return { valid: false, error: 'Too many failed attempts.' };
   }
-  if (code !== entry.code)
+  // Timing-safe comparison for memory path: hash both to fixed length
+  const codeHash = crypto.createHash('sha256').update(code).digest();
+  const entryCodeHash = crypto.createHash('sha256').update(entry.code).digest();
+  if (!timingSafeEqual(codeHash, entryCodeHash))
     return {
       valid: false,
       error: `Invalid OTP. ${MAX_ATTEMPTS - entry.attempts} attempts remaining.`,

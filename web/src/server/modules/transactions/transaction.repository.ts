@@ -67,7 +67,7 @@ export const transactionRepository = {
 
     const formatted = transactions.map((t: any) => ({
       ...t,
-      amount: paiseToRupees(t.amount),
+      amount: paiseToRupees(t.amountInPaise),
       rider: t.rider
         ? {
             ...t.rider,
@@ -76,7 +76,7 @@ export const transactionRepository = {
         : null,
       breakdowns: (t.breakdowns || []).map((b: any) => ({
         ...b,
-        amount: paiseToRupees(b.amount),
+        amount: paiseToRupees(b.amountInPaise),
       })),
     }));
 
@@ -118,10 +118,10 @@ export const transactionRepository = {
     return {
       transactions: transactions.map((t: any) => ({
         ...t,
-        amount: paiseToRupees(t.amount),
+        amount: paiseToRupees(t.amountInPaise),
         breakdowns: (t.breakdowns || []).map((b: any) => ({
           ...b,
-          amount: paiseToRupees(b.amount),
+          amount: paiseToRupees(b.amountInPaise),
         })),
       })),
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },

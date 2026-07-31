@@ -20,10 +20,15 @@ import { success, errors } from '@/lib/api-response';
  *   ENABLE_TEST_OTP, ENABLE_DEV_ADMIN_LOGIN
  */
 
+import { hasPermission } from '@/lib/permissions';
+
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await getAdminSession(request);
   if (!session) {
     return errors.unauthorized('Unauthorized');
+  }
+  if (!hasPermission(session, 'settings_manage')) {
+    return errors.forbidden('Forbidden: settings_manage permission required');
   }
 
   // Fetch editable settings from DB

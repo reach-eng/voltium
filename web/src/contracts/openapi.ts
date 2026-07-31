@@ -710,31 +710,6 @@ function buildSpec(): OpenApiSpec {
           },
         },
       },
-      '/api/notification/list': {
-        get: {
-          tags: ['Notifications'],
-          summary: 'List notifications',
-          security: [{ riderSession: [] }],
-          responses: {
-            '200': {
-              description: 'Notification list',
-              content: {
-                'application/json': {
-                  schema: { $ref: '#/components/schemas/ListNotificationsResponse' },
-                },
-              },
-            },
-          },
-        },
-      
-        
-        put: {
-          tags: ['Notifications'],
-          summary: 'Bulk update List',
-          security: [{ riderSession: [] }],
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
-          responses: { '200': { description: 'OK' } },
-        },},
       '/api/pricing': {
         get: {
           tags: ['Rentals'],

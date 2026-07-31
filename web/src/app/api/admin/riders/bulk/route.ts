@@ -25,7 +25,7 @@ async function postHandler(req: NextRequest) {
       return errors.badRequest('ids must be a non-empty array');
     }
 
-    const requiredPerm = action === 'delete' ? 'riders_delete' : 'riders_update';
+    const requiredPerm = action === 'delete' ? 'riders_delete' : action === 'bulkKyc' ? 'kyc_bulk_approve' : 'riders_update';
     if (!hasPermission(session, requiredPerm as any)) return adminForbidden();
 
     const adminId = session.adminId || session.riderDbId;

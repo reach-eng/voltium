@@ -7,13 +7,17 @@
 import { NextRequest } from 'next/server';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { requirePermission } from '@/lib/rbac';
-import { rentalUseCases } from './rental.use-cases';
+import { getPlans } from './use-cases/get-plans.use-case';
+import { selectPlan } from './use-cases/select-plan.use-case';
+import { getActiveRental } from './use-cases/get-active-rental.use-case';
+import { startRental } from './use-cases/start-rental.use-case';
+import { requestReturn } from './use-cases/request-return.use-case';
 import { subscribePlanSchema, startRentalSchema, endRentalSchema } from './rental.schemas';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 
 export async function GET_plans() {
-  const plans = await rentalUseCases.getPlans();
+  const plans = await getPlans();
   return success(plans);
 }
 
@@ -25,7 +29,7 @@ export async function POST_selectPlan(request: NextRequest) {
   const validation = validateBody(subscribePlanSchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const result = await rentalUseCases.selectPlan(session.riderDbId, validation.data.planId);
+  const result = await selectPlan(session.riderDbId, validation.data.planId);
   return success(result, 'Plan selected');
 }
 
@@ -33,7 +37,7 @@ export async function GET_active(request: NextRequest) {
   const session = await requireRiderSession(request);
   if ('status' in session) return session;
 
-  const rental = await rentalUseCases.getActiveRental(session.riderDbId);
+  const rental = await getActiveRental(session.riderDbId);
   return success(rental);
 }
 
@@ -45,7 +49,7 @@ export async function POST_startRental(request: NextRequest) {
   const validation = validateBody(startRentalSchema, body);
   if (!validation.success) return errors.validation(validation.error);
 
-  const result = await rentalUseCases.startRental(
+  const result = await startRental(
     validation.data.riderId,
     validation.data.vehicleId,
     validation.data.hubId,
@@ -62,6 +66,6 @@ export async function POST_requestReturn(request: NextRequest) {
   const validation = validateBody(endRentalSchema, { ...body, riderId: session.riderDbId });
   if (!validation.success) return errors.validation(validation.error);
 
-  const result = await rentalUseCases.requestReturn(session.riderDbId);
+  const result = await requestReturn(session.riderDbId);
   return success(result, 'Return requested');
 }

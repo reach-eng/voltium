@@ -22,11 +22,11 @@ export interface UpdateAdminParams {
 
 export const adminRepository = {
   async findById(id: string) {
-    return db.admin.findUnique({ where: { id } });
+    return db.admin.findUnique({ where: { id }, include: { hasPermissions: true } });
   },
 
   async findByEmail(email: string) {
-    return db.admin.findUnique({ where: { email } });
+    return db.admin.findUnique({ where: { email }, include: { hasPermissions: true } });
   },
 
   async list(filters?: {
@@ -47,6 +47,7 @@ export const adminRepository = {
       orderBy: { createdAt: 'desc' },
       skip: filters?.page ? (filters.page - 1) * (filters.limit || 20) : undefined,
       take: filters?.limit || undefined,
+      include: { hasPermissions: true },
     });
   },
 
@@ -58,8 +59,12 @@ export const adminRepository = {
         password: hashed,
         name: params.name,
         role: params.role,
-        permissions: JSON.stringify(params.permissions || []),
+        permissions: params.permissions || [],
+        hasPermissions: {
+          create: (params.permissions || []).map(p => ({ permission: p }))
+        }
       },
+      include: { hasPermissions: true }
     });
   },
 
@@ -69,8 +74,14 @@ export const adminRepository = {
     if (params.name !== undefined) data.name = params.name;
     if (params.role !== undefined) data.role = params.role;
     if (params.password !== undefined) data.password = params.password;
-    if (params.permissions !== undefined) data.permissions = JSON.stringify(params.permissions);
     if (params.isActive !== undefined) data.isActive = params.isActive;
+    if (params.permissions !== undefined) {
+      data.permissions = params.permissions;
+      data.hasPermissions = {
+        deleteMany: {},
+        create: params.permissions.map(p => ({ permission: p }))
+      };
+    }
 
     const shouldInvalidateSession =
       params.role !== undefined || params.permissions !== undefined || params.isActive !== undefined;
@@ -78,11 +89,11 @@ export const adminRepository = {
     if (shouldInvalidateSession) {
       return db.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.admin.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });
-        return tx.admin.update({ where: { id }, data });
+        return tx.admin.update({ where: { id }, data, include: { hasPermissions: true } });
       });
     }
 
-    return db.admin.update({ where: { id }, data });
+    return db.admin.update({ where: { id }, data, include: { hasPermissions: true } });
   },
 
   async delete(id: string) {

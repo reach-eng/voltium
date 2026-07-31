@@ -11,9 +11,11 @@ interface CacheEntry<T> {
 
 class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
-  private maxSize = 100;
+  private maxSize = 500;
   private ttl = 60 * 1000;
   private pending = new Map<string, Promise<T | null>>();
+  private hits = 0;
+  private misses = 0;
 
   set(key: string, data: T, ttlMs?: number): void {
     if (this.cache.has(key)) {
@@ -33,21 +35,27 @@ class MemoryCache<T> {
 
   get(key: string): T | null {
     const entry = this.cache.get(key);
-    if (!entry) return null;
+    if (!entry) {
+      this.misses++;
+      return null;
+    }
 
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
+      this.misses++;
       return null;
     }
 
     if (entry.version !== CACHE_VERSION) {
       this.cache.delete(key);
+      this.misses++;
       return null;
     }
 
     // Move to end (LRU)
     this.cache.delete(key);
     this.cache.set(key, entry);
+    this.hits++;
     return entry.data;
   }
 
@@ -112,11 +120,15 @@ class MemoryCache<T> {
   }
 
   getStats() {
+    const total = this.hits + this.misses;
     return {
       size: this.cache.size,
       maxSize: this.maxSize,
       version: CACHE_VERSION,
       keys: Array.from(this.cache.keys()),
+      hits: this.hits,
+      misses: this.misses,
+      hitRate: total > 0 ? Number((this.hits / total).toFixed(4)) : 0,
     };
   }
 

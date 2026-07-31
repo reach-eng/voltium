@@ -9,7 +9,7 @@ import { earningUseCases } from '@/server/modules/earnings/earning.use-cases';
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'riders_view')) return adminForbidden();
+  if (!hasPermission(session, 'earnings_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;

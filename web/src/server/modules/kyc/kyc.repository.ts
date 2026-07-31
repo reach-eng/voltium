@@ -116,7 +116,6 @@ export const kycRepository = {
   },
 
   async approveKyc(riderDbId: string, reviewerId: string) {
-    // Read current status to validate transition
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
       select: { status: true },
@@ -126,11 +125,17 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const kyc = await tx.kycProfile.update({
-        where: { riderId: riderDbId },
+      const updated = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'APPROVED' },
       });
-      await tx.rider.update({
+
+      if (updated.count === 0) {
+        throw new KycStateError(`KYC profile state changed concurrently from ${currentStatus}`, currentStatus, 'APPROVED');
+      }
+
+      const kyc = await tx.kycProfile.findUnique({ where: { riderId: riderDbId } });
+      await tx.rider.updateMany({
         where: { id: riderDbId },
         data: { kycDoneAt: new Date() },
       });
@@ -149,21 +154,11 @@ export const kycRepository = {
         data: { lifecycleStatus: 'KYC_APPROVED' },
       });
 
-      // BLOCKER 2.7: notification is dispatched by the outbox worker
-      // (kyc.use-cases.ts emits NOTIFICATION_SEND inside the same
-      // transaction). The repository no longer fires a duplicate
-      // notificationService.notifyKycStatusChange call.
-      //
-      // The use-case's emit() is committed atomically with the KYC
-      // approval, and notificationDispatchJob (Phase 1.4) handles
-      // the actual delivery with retry/backoff.
-
-      return kyc;
+      return decryptKycData(kyc);
     });
   },
 
   async rejectKyc(riderDbId: string, reviewerId: string, reason: string, editableFields: string[] = []) {
-    // Read current status to validate transition
     const existing = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
       select: { status: true },
@@ -173,19 +168,22 @@ export const kycRepository = {
     validateKycTransition(currentStatus, 'REJECTED');
 
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const kyc = await tx.kycProfile.update({
-        where: { riderId: riderDbId },
+      const updated = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
         data: { status: 'REJECTED', rejectionReason: reason, editableFields },
       });
+
+      if (updated.count === 0) {
+        throw new KycStateError(`KYC profile state changed concurrently from ${currentStatus}`, currentStatus, 'REJECTED');
+      }
+
+      const kyc = await tx.kycProfile.findUnique({ where: { riderId: riderDbId } });
       await tx.rider.updateMany({
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
       });
 
-      // BLOCKER 2.7: notification is dispatched by the outbox worker.
-      // See the comment on approveKyc above.
-
-      return kyc;
+      return decryptKycData(kyc);
     });
   },
 
@@ -198,12 +196,21 @@ export const kycRepository = {
     const currentStatus: KycStatus = (existing?.status as KycStatus) || 'DRAFT';
     validateKycTransition(currentStatus, 'INFO_REQUIRED');
 
-    return db.kycProfile.update({
-      where: { riderId: riderDbId },
-      data: {
-        status: 'INFO_REQUIRED',
-        rejectionReason: infoRequest,
-      },
+    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.kycProfile.updateMany({
+        where: { riderId: riderDbId, status: currentStatus },
+        data: {
+          status: 'INFO_REQUIRED',
+          rejectionReason: infoRequest,
+        },
+      });
+
+      if (updated.count === 0) {
+        throw new KycStateError(`KYC profile state changed concurrently from ${currentStatus}`, currentStatus, 'INFO_REQUIRED');
+      }
+
+      const kyc = await tx.kycProfile.findUnique({ where: { riderId: riderDbId } });
+      return decryptKycData(kyc);
     });
   },
 };

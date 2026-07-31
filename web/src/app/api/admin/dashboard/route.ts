@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
-import { getDashboardStats, getRevenueTrend } from '@/lib/services/dashboard';
+import { getDashboardStats, getRevenueTrend } from '@/server/modules/analytics/dashboard.service';
 import { getCachedResponse, cacheResponse } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 

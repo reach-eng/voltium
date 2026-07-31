@@ -11,9 +11,11 @@ import {
   createVehicleSchema,
 } from './lib/validators';
 import { env } from './lib/env';
+import { getSecurityHeaders } from './lib/csp';
+import { handleCors } from './lib/cors';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const isProd = process.env.NODE_ENV === 'production';
+const isProd = env.APP_ENV === 'production';
 
 const VALIDATION_MAP: Record<string, Record<string, any>> = {
   '/api/auth/send-otp': { POST: sendOtpSchema },
@@ -26,60 +28,22 @@ const VALIDATION_MAP: Record<string, Record<string, any>> = {
   '/api/admin/vehicles': { POST: createVehicleSchema },
 };
 
-const getDevCsp = (nonce: string) =>
-  [
-    "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
-    "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
-    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' http://localhost:* https://api.voltium.app ws://localhost:* wss://localhost:* https://*.googleapis.com https://*.google.com",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-  ].join('; ');
-
-const getProdCsp = (nonce: string) =>
-  [
-    "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://*.google.com https://*.googleapis.com`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
-    "img-src 'self' data: https://placehold.co https://*.unsplash.com https://*.googleapis.com https://*.google.com https://*.gstatic.com blob:",
-    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
-    "connect-src 'self' https://api.voltium.app https://*.googleapis.com https://*.google.com",
-    "frame-ancestors 'none'",
-    "form-action 'self'",
-    "base-uri 'self'",
-    "object-src 'none'",
-  ].join('; ');
-
-function getSecurityHeaders(nonce: string): Record<string, string> {
-  const headers: Record<string, string> = {
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(self)',
-    'Content-Security-Policy': isProd ? getProdCsp(nonce) : getDevCsp(nonce),
-  };
-
-  if (isProd) {
-    headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
-  }
-
-  return headers;
-}
-
 function isSafeMethod(method: string): boolean {
   return SAFE_METHODS.has(method);
 }
 
 function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  const reqAny = request as any;
+  if (env.TRUST_PROXY_HEADERS) {
+    return (
+      request.headers.get('cf-connecting-ip') ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      reqAny.ip ||
+      'unknown'
+    );
+  }
+  return reqAny.ip || 'unknown';
 }
 
 function rejectCsrf(message: string): NextResponse {
@@ -158,20 +122,9 @@ export async function middleware(request: NextRequest) {
   });
 
   // ── CORS ────────────────────────────────────────────────────────────────
-  const origin = request.headers.get('origin');
-  const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) ?? [];
-  const isLocalhost = origin && origin.startsWith('http://localhost:');
-
-  if (origin && (allowedOrigins.includes(origin) || !isProd || isLocalhost)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-correlation-id, Idempotency-Key, Api-Version, Accept, Origin, X-Requested-With');
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Max-Age', '86400');
-  }
-
-  if (request.method === 'OPTIONS') {
-    return new NextResponse(null, { status: 204, headers: response.headers });
+  const corsResponse = handleCors(request, response);
+  if (corsResponse) {
+    return corsResponse;
   }
 
   // Skip CSRF for safe methods
@@ -180,6 +133,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Reject unsafe requests with null origin (sandboxed iframes, data: URIs, etc.)
+  const origin = request.headers.get('origin');
+  const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map((s) => s.trim()) ?? [];
   if (origin === 'null') {
     return rejectCsrf('CSRF validation failed: null origin not allowed');
   }
@@ -203,3 +158,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|rider-app|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
+

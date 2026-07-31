@@ -3,7 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { validateBody, ticketReplySchema } from '@/lib/validators';
-import { supportUseCases } from '@/server/modules/support/support.use-cases';
+import { sharedSupportUseCases } from '@/server/modules/support/shared-support.use-cases';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return errors.validation(validation.error);
     }
 
-    const newMessage = await supportUseCases.replyToTicket(
+    const newMessage = await sharedSupportUseCases.replyToTicket(
       id,
       session.adminId || 'admin',
       'ADMIN',

@@ -25,21 +25,24 @@ export const supportRepository = {
     });
   },
 
-  async findByRiderId(riderDbId: string) {
+  async findByRiderId(riderDbId: string, page = 1, limit = 20) {
     return db.supportTicket.findMany({
       where: { riderId: riderDbId },
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
       include: {
         messages: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
           select: {
             id: true,
             message: true,
             senderType: true,
             createdAt: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
   },
 

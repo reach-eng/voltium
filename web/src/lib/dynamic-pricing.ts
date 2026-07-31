@@ -1,5 +1,5 @@
 /**
- * Ryd Dynamic Pricing Engine
+ * Voltium Dynamic Pricing Engine
  *
  * Prices adjust based on real-time supply/demand at each hub:
  * - High availability (>80%) → 10% discount (incentivize usage)
