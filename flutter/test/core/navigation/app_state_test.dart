@@ -1,0 +1,165 @@
+// R4.1 — State machine transition tests.
+//
+// Locks in the contract:
+//   1. Allowed transitions don't throw and return true
+//   2. Forbidden transitions throw AppStateError when throwOnForbidden
+//   3. The transition table matches the spec in REMEDIATION_PLAN §R4.1
+//   4. AccountClosed is terminal
+//   5. allowedNextStates returns the expected list for each state
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/core/navigation/app_state.dart';
+
+void main() {
+  group('AppState transitions (R4.1)', () {
+    group('allowed transitions', () {
+      test('Splash → any top-level state is allowed', () {
+        const splash = Splash();
+        expect(isAllowedTransition(splash, const LegalGate()), isTrue);
+        expect(isAllowedTransition(splash, const AuthFlow(AuthStep.phoneEntry)),
+            isTrue);
+        expect(isAllowedTransition(splash, const PreDashboard()), isTrue);
+        expect(isAllowedTransition(splash, const ActiveDashboard()), isTrue);
+      });
+
+      test('LegalGate → AuthFlow is allowed', () {
+        const from = LegalGate();
+        expect(isAllowedTransition(from, const AuthFlow(AuthStep.phoneEntry)),
+            isTrue);
+      });
+
+      test('AuthFlow → Onboarding or PreDashboard/ActiveDashboard is allowed',
+          () {
+        const from = AuthFlow(AuthStep.phoneEntry);
+        expect(
+            isAllowedTransition(
+                from, const Onboarding(OnboardingStep.kycSubmit)),
+            isTrue);
+        expect(isAllowedTransition(from, const PreDashboard()), isTrue);
+        expect(isAllowedTransition(from, const ActiveDashboard()), isTrue);
+        expect(isAllowedTransition(from, const AccountClosed()), isTrue);
+      });
+
+      test('Onboarding → PreDashboard is allowed', () {
+        const from = Onboarding(OnboardingStep.kycSubmit);
+        expect(isAllowedTransition(from, const PreDashboard()), isTrue);
+      });
+
+      test('PreDashboard → ActiveDashboard is allowed', () {
+        const from = PreDashboard();
+        expect(isAllowedTransition(from, const ActiveDashboard()), isTrue);
+      });
+
+      test('PreDashboard → Onboarding is allowed (re-plan flow)', () {
+        const from = PreDashboard();
+        expect(
+            isAllowedTransition(
+                from, const Onboarding(OnboardingStep.planSelect)),
+            isTrue);
+      });
+
+      test('ActiveDashboard → AccountClosed is allowed', () {
+        const from = ActiveDashboard();
+        expect(isAllowedTransition(from, const AccountClosed()), isTrue);
+      });
+
+      test('same state is always allowed (no-op)', () {
+        const from = ActiveDashboard();
+        expect(isAllowedTransition(from, const ActiveDashboard()), isTrue);
+      });
+    });
+
+    group('forbidden transitions', () {
+      test('LegalGate → ActiveDashboard is forbidden (skip auth)', () {
+        const from = LegalGate();
+        expect(isAllowedTransition(from, const ActiveDashboard()), isFalse);
+      });
+
+      test('AuthFlow → Splash is forbidden (no going back)', () {
+        const from = AuthFlow(AuthStep.otpVerify);
+        expect(isAllowedTransition(from, const Splash()), isFalse);
+      });
+
+      test('Onboarding → Splash is forbidden', () {
+        const from = Onboarding(OnboardingStep.guarantor);
+        expect(isAllowedTransition(from, const Splash()), isFalse);
+      });
+
+      test('AccountClosed is terminal — no transitions out', () {
+        const from = AccountClosed();
+        expect(isAllowedTransition(from, const ActiveDashboard()), isFalse);
+        expect(isAllowedTransition(from, const PreDashboard()), isFalse);
+        expect(isAllowedTransition(from, const Splash()), isFalse);
+        expect(isAllowedTransition(from, const AuthFlow(AuthStep.phoneEntry)),
+            isFalse);
+      });
+    });
+
+    group('throwOnForbidden behaviour', () {
+      test('forbidden transition throws AppStateError with from/to', () {
+        const from = AccountClosed();
+        const to = ActiveDashboard();
+        expect(
+          () => isAllowedTransition(from, to, throwOnForbidden: true),
+          throwsA(
+            isA<AppStateError>()
+                .having((e) => e.from, 'from', from)
+                .having((e) => e.to, 'to', to),
+          ),
+        );
+      });
+
+      test('allowed transition does not throw even with throwOnForbidden', () {
+        const from = Splash();
+        const to = AuthFlow(AuthStep.phoneEntry);
+        expect(
+          () => isAllowedTransition(from, to, throwOnForbidden: true),
+          returnsNormally,
+        );
+      });
+    });
+
+    group('allowedNextStates helper', () {
+      test(
+          'Splash can go to LegalGate, PermissionsGate, AuthFlow, PreDashboard, ActiveDashboard',
+          () {
+        final allowed = allowedNextStates(const Splash());
+        expect(allowed, contains(const LegalGate()));
+        expect(allowed, contains(const PermissionsGate()));
+        expect(allowed, contains(const AuthFlow(AuthStep.phoneEntry)));
+        expect(allowed, contains(const PreDashboard()));
+        expect(allowed, contains(const ActiveDashboard()));
+        // Splash cannot go directly to Onboarding (must go through auth)
+        expect(allowed,
+            isNot(contains(const Onboarding(OnboardingStep.kycSubmit))));
+      });
+
+      test('AccountClosed has no allowed next states (terminal)', () {
+        final allowed = allowedNextStates(const AccountClosed());
+        // No-op is always allowed, so AccountClosed → AccountClosed is
+        // in the list. But no *different* state is allowed (terminal).
+        expect(allowed.length, 1);
+        expect(allowed.first.runtimeType, AccountClosed);
+      });
+    });
+
+    group('state identity', () {
+      test('state classes are properly sealed (exhaustive switch in Dart 3)',
+          () {
+        // This test ensures the sealed class compiles cleanly.
+        AppState s = const ActiveDashboard();
+        final name = switch (s) {
+          Splash() => 'splash',
+          LegalGate() => 'legal',
+          PermissionsGate() => 'permissions',
+          AuthFlow() => 'auth',
+          Onboarding() => 'onboarding',
+          PreDashboard() => 'pre',
+          ActiveDashboard() => 'active',
+          AccountClosed() => 'closed',
+        };
+        expect(name, 'active');
+      });
+    });
+  });
+}
