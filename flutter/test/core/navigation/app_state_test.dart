@@ -1,4 +1,5 @@
 // R4.1 — State machine transition tests.
+// R4.3 — Riverpod StateNotifier tests (appStateProvider).
 //
 // Locks in the contract:
 //   1. Allowed transitions don't throw and return true
@@ -6,9 +7,12 @@
 //   3. The transition table matches the spec in REMEDIATION_PLAN §R4.1
 //   4. AccountClosed is terminal
 //   5. allowedNextStates returns the expected list for each state
+//   6. The Riverpod StateNotifier honors the same transition rules
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/navigation/app_state.dart';
+import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 
 void main() {
   group('AppState transitions (R4.1)', () {
@@ -160,6 +164,61 @@ void main() {
         };
         expect(name, 'active');
       });
+    });
+  });
+
+  // ── R4.3 ── Riverpod StateNotifier integration ────────────────────────
+  group('AppStateNotifier (R4.3)', () {
+    test('starts at Splash', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      expect(container.read(appStateProvider), isA<Splash>());
+    });
+
+    test('transitionTo: Splash → LegalGate succeeds and updates state', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(appStateProvider.notifier);
+
+      notifier.transitionTo(const LegalGate());
+      expect(container.read(appStateProvider), isA<LegalGate>());
+    });
+
+    test('transitionTo: rejects forbidden jump with AppStateError', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(appStateProvider.notifier);
+
+      // Splash → Onboarding is not allowed (must go through auth first).
+      expect(
+        () => notifier.transitionTo(const Onboarding(OnboardingStep.kycSubmit)),
+        throwsA(isA<AppStateError>()),
+      );
+      // State should not have changed.
+      expect(container.read(appStateProvider), isA<Splash>());
+    });
+
+    test('replaceState: same-family step transitions succeed', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(appStateProvider.notifier);
+
+      notifier.transitionTo(const AuthFlow(AuthStep.phoneEntry));
+      notifier.replaceState(const AuthFlow(AuthStep.otpVerify));
+      expect(
+        container.read(appStateProvider),
+        const AuthFlow(AuthStep.otpVerify),
+      );
+    });
+
+    test('reset(): returns to Splash', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(appStateProvider.notifier);
+
+      notifier.transitionTo(const LegalGate());
+      notifier.reset();
+      expect(container.read(appStateProvider), isA<Splash>());
     });
   });
 }
