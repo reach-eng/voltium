@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class KeyboardAwareScrollView extends StatelessWidget {
   final Widget child;
@@ -17,7 +18,7 @@ class KeyboardAwareScrollView extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
-          padding: padding ?? const EdgeInsets.all(16),
+          padding: padding ?? Spacing.paddingMd,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: constraints.maxHeight,

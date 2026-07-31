@@ -208,7 +208,7 @@ class _AnimatedBalanceCounterState extends State<AnimatedBalanceCounter>
                 builder: (context, _) {
                   return Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: [
                         BoxShadow(
                           color: _isIncrease

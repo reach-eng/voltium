@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 
@@ -26,7 +28,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.surfaceAlt, // Light bluish background
+      backgroundColor: AppColors.surface, // Light bluish background
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -112,13 +114,13 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
 
                     // Info banner
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: Spacing.paddingMd,
                       decoration: BoxDecoration(
-                        color: AppColors
-                            .primaryLighter, // Soft blue tint container
-                        borderRadius: BorderRadius.circular(16),
+                        color:
+                            AppColors.primaryLight, // Soft blue tint container
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.primaryLighter,
+                          color: AppColors.primaryLight,
                           width: 1,
                         ),
                       ),
@@ -171,9 +173,9 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                                 _selectedIntent == IntentType.delivery
                                     ? 'deliver'
                                     : 'personal';
-                            final provider = ref.read(appProvider);
-                            final riderId = ref.watch(appProvider).riderId ??
-                                ref.watch(appProvider).rider?.id;
+                            final provider = ref.read(riderProvider);
+                            final riderId = ref.watch(riderProvider).riderId ??
+                                ref.watch(riderProvider).rider?.id;
                             final messenger = ScaffoldMessenger.of(context);
                             if (riderId == null) {
                               messenger.showSnackBar(
@@ -185,9 +187,9 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                               return;
                             }
                             try {
-                              await VoltiumApiService().updateProfile(
-                                riderId: riderId,
-                                data: {'intent': intentStr},
+                              await VoltiumApiClient(ApiClient())
+                                  .putRiderProfile(
+                                UpdateProfileRequest(intent: intentStr),
                               );
                               await provider.refresh();
                               PostHogService.capture(
@@ -215,7 +217,8 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                     disabledForegroundColor: Colors.white70,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.radiusModal),
                     ),
                   ),
                   child: Text(
@@ -251,10 +254,10 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           border: Border.all(
             color: isSelected ? AppColors.primary : Colors.transparent,
             width: 2,

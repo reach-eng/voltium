@@ -72,7 +72,7 @@ class AssignmentDetailsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -80,15 +80,16 @@ class AssignmentDetailsCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'ASSIGNMENT DETAILS',
-            style: AppTypography.bodySmallStrong
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.5),
           ),
           const SizedBox(height: 24),
@@ -140,7 +141,7 @@ class AssignmentDetailsCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -153,7 +154,8 @@ class AssignmentDetailsCard extends StatelessWidget {
                   SizedBox(width: 8),
                   Text(
                     'Emergency contact verified successfully',
-                    style: AppTypography.bodySmallEmphasis
+                    style: AppTypography.bodySmall
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.success),
                   ),
                 ],
@@ -212,7 +214,7 @@ class VehicleConditionCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -220,9 +222,9 @@ class VehicleConditionCard extends StatelessWidget {
             offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: colors.surfaceSubtle, width: 1),
+        border: Border.all(color: colors.surface, width: 1),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -252,7 +254,8 @@ class VehicleConditionCard extends StatelessWidget {
                 ),
                 child: Text(
                   'MANDATORY',
-                  style: AppTypography.bodySmallStrong
+                  style: AppTypography.bodySmall
+                      .copyWith(fontWeight: FontWeight.w800)
                       .copyWith(color: AppColors.error, letterSpacing: 0.5),
                 ),
               ),
@@ -333,7 +336,8 @@ class VehicleConditionCard extends StatelessWidget {
           SizedBox(height: 20),
           Text(
             'Photo with Vehicle',
-            style: AppTypography.bodyCompactEmphasis
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
                 .copyWith(color: colors.onSurface),
           ),
           SizedBox(height: 4),

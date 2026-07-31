@@ -166,7 +166,7 @@ class EditProfileAdminNote extends StatelessWidget {
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: AppColors.warningSurface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(

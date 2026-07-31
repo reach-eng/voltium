@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/data/troubleshooter_tree.dart';
-import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
 
 import 'troubleshooter_result.dart';
 import '../widgets/troubleshooter_widgets.dart';
@@ -20,14 +18,18 @@ import 'package:voltium_rider/theme/app_typography.dart';
 /// 1. [_Mode.categorySelect] — rider picks an issue category.
 /// 2. [_Mode.question]      — animated yes/no questions.
 /// 3. [_Mode.result]        — display resolution / support prompt.
-class TroubleshooterScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
+
+class TroubleshooterScreen extends ConsumerStatefulWidget {
   const TroubleshooterScreen({super.key});
 
   @override
-  State<TroubleshooterScreen> createState() => _TroubleshooterScreenState();
+  ConsumerState<TroubleshooterScreen> createState() =>
+      _TroubleshooterScreenState();
 }
 
-class _TroubleshooterScreenState extends State<TroubleshooterScreen>
+class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
     with TickerProviderStateMixin {
   // ── Mode ───────────────────────────────────────────────────────────────────
 
@@ -217,7 +219,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.warning, color: Colors.red),
+            Icon(Icons.warning, color: AppColors.error),
             SizedBox(width: 8),
             Text('Emergency SOS'),
           ],
@@ -236,7 +238,7 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
                 await launchUrl(uri);
               }
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Call Now'),
           ),
         ],
@@ -251,40 +253,37 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
     setState(() => _isSubmitting = true);
 
     try {
-      final payload = {
-        'type': 'TROUBLESHOOTER',
-        'category': _result!.category,
-        'resolutionType': _result!.resolutionType,
-        'path': _result!.path.map((a) => a.toJson()).toList(),
-        'resolution': _result!.resolution,
-      };
+      final categoryName =
+          _result!.category ?? _selectedCategory?.label ?? 'General Issue';
+      final subject = 'Troubleshooter: $categoryName';
+      final pathText = _result!.path
+          .map((a) => '${a.question}: ${a.answer ? "Yes" : "No"}')
+          .join('\n');
+      final message =
+          'Diagnostic Resolution:\n${_result!.resolution}\n\nDiagnostic Steps:\n$pathText';
 
-      await VoltiumApiService().post('/api/support/tickets', body: payload);
+      final provider = ref.read(supportProvider);
+      await provider.createTicket(
+        category: 'TROUBLESHOOTER',
+        subject: subject.length < 5 ? '$subject (Diagnostic)' : subject,
+        message: message.length < 10 ? '$message (Auto-generated)' : message,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_ticketCreatedMessage()),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         _resetToCategories();
       }
-    } on ApiException catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_errorMessage()),
-            backgroundColor: Colors.red,
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -295,10 +294,6 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen>
 
   String _ticketCreatedMessage() {
     return 'Support ticket created successfully';
-  }
-
-  String _errorMessage() {
-    return 'Something went wrong. Please try again.';
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────

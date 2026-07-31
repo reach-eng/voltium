@@ -274,7 +274,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     controller: _referralController,
                     focusNode: _referralFocusNode,
                     textCapitalization: TextCapitalization.characters,
-                    style: AppTypography.bodyMediumEmphasis
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.onSurface),
                     decoration: InputDecoration(
                       border: InputBorder.none,
@@ -283,7 +284,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                       filled: true,
                       fillColor: Colors.transparent,
                       hintText: 'Referral Code (Optional)',
-                      hintStyle: AppTypography.inputHint
+                      hintStyle: AppTypography.bodyMedium
+                          .copyWith(color: AppColors.onSurfaceMuted)
                           .copyWith(color: AppColors.onSurfaceDisabled),
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -311,7 +313,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
         const SizedBox(width: 8),
         Text(
           'A secure OTP will be sent',
-          style: AppTypography.bodySmallStrong
+          style: AppTypography.bodySmall
+              .copyWith(fontWeight: FontWeight.w800)
               .copyWith(letterSpacing: 1.2, color: AppColors.onSurfaceVariant),
         ),
       ],

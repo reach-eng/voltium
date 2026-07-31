@@ -5,13 +5,17 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_models.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
+import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/features/pickup/widgets/pickup_vehicle_search_sheet.dart';
 import 'package:voltium_rider/features/pickup/presentation/widgets/pickup_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
+import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -95,8 +99,10 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: AppTypography.bodySmallEmphasis
-            .copyWith(color: isActive ? Colors.white : AppColors.textSecondary),
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w600)
+            .copyWith(
+                color: isActive ? Colors.white : AppColors.onSurfaceVariant),
       ),
     );
   }
@@ -182,9 +188,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
       _selectedVehicleLabel = null;
     });
     try {
-      debugPrint('Fetching vehicles for hub: $hubId');
       final response = await VoltiumApiService().fetchVehicles(hubId);
-      debugPrint('Fetch response: $response');
       if (!mounted) return;
       // The API wraps the response in { success, data }. The data may
       // be a list directly (GET /api/vehicles) or nested under a key.
@@ -193,16 +197,13 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
           ? data
           : (data is Map ? data['vehicles'] : response['vehicles']);
       final list = (rawList as List<dynamic>?) ?? [];
-      debugPrint('Vehicle list length: ${list.length}');
       setState(() {
         _vehicles = list
             .map((v) => v as Map<String, dynamic>)
             .where((v) => v['status'] == 'AVAILABLE')
             .toList();
       });
-      debugPrint('Available vehicles: ${_vehicles.length}');
     } catch (e) {
-      debugPrint('Fetch error: $e');
       _showError('Failed to fetch vehicles: $e');
     } finally {
       if (mounted) setState(() => _isLoadingVehicles = false);
@@ -245,7 +246,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
             Expanded(
               child: Text(
                 msg,
-                style: AppTypography.bodyCompactEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
                     .copyWith(color: Colors.white),
               ),
             ),
@@ -253,7 +255,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
         ),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         duration: const Duration(seconds: 3),
       ),
@@ -276,7 +279,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
             Expanded(
               child: Text(
                 msg,
-                style: AppTypography.bodyCompactEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.w600)
                     .copyWith(color: Colors.white),
               ),
             ),
@@ -284,7 +288,8 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
         ),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md)),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         duration: const Duration(seconds: 3),
       ),
@@ -293,15 +298,15 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
 
   Future<void> _sendEmergencyOtp() async {
     final phone = _emergencyContactController.text;
-    final digits = phone.replaceAll(RegExp(r'\\D'), '');
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
 
     if (digits.length != 10) {
       _showError('Enter a valid 10-digit number');
       return;
     }
 
-    final riderPhone = ref.watch(appProvider).rider?.phone ?? '';
-    final guarantorPhone = ref.watch(appProvider).rider?.guarantorPhone ?? '';
+    final riderPhone = ref.watch(riderProvider).rider?.phone ?? '';
+    final guarantorPhone = ref.watch(riderProvider).rider?.guarantorPhone ?? '';
 
     if (digits == riderPhone) {
       _showError('Emergency contact cannot be the same as your phone number');
@@ -319,23 +324,24 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     });
 
     try {
-      debugPrint('Sending OTP to $digits');
-      final response = await VoltiumApiService().sendOtp(phone: digits);
-      debugPrint('OTP send response: $response');
+      final client = ApiClient();
+      final res = await VoltiumApiClient(client)
+          .postAuthSendOtp(SendOtpRequest(phone: digits));
+      final response = res.toJson();
       if (!mounted) return;
       setState(() {
         _isOtpSent = true;
         _isOtpVerified = false;
       });
       _showSuccess('OTP sent to emergency contact');
-      // API response is { success, data: { exists, otp } }
-      final testOtp =
-          response['data'] is Map ? (response['data'] as Map)['otp'] : null;
-      if (testOtp != null) {
-        _otpController.text = testOtp.toString();
+      if (AppConstants.isTestMode) {
+        final testOtp =
+            response['data'] is Map ? (response['data'] as Map)['otp'] : null;
+        if (testOtp != null) {
+          _otpController.text = testOtp.toString();
+        }
       }
     } catch (e) {
-      debugPrint('OTP send error: $e');
       if (!mounted) return;
       _showError('Failed to send OTP. Please try again. $e');
     } finally {
@@ -345,7 +351,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
 
   Future<void> _verifyEmergencyOtp() async {
     final phone =
-        _emergencyContactController.text.replaceAll(RegExp(r'\\D'), '');
+        _emergencyContactController.text.replaceAll(RegExp(r'\D'), '');
     final otp = _otpController.text;
 
     if (otp.length != 6) {
@@ -356,7 +362,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     setState(() => _isVerifyingOtp = true);
 
     try {
-      await VoltiumApiService().verifyOtp(phone: phone, otp: otp);
+      await VoltiumApiService().verifyPhone(phone: phone, otp: otp);
       if (!mounted) return;
       setState(() => _isOtpVerified = true);
       _showSuccess('Emergency contact verified successfully ✓');
@@ -394,6 +400,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
         entry.photoUrl = url;
         entry.isUploading = false;
       });
+      DocumentLocalCache.save('pickup_$type', compressed.path);
       _showSuccess('Photo uploaded successfully');
     } catch (e) {
       if (mounted) {
@@ -435,7 +442,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
   Widget _buildLoadingState(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
+      backgroundColor: colors.surface,
       body: Center(
         child: CircularProgressIndicator(
           color: AppColors.primary,
@@ -447,10 +454,10 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
   Widget _buildErrorState(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
+      backgroundColor: colors.surface,
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: Spacing.paddingLg,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -477,12 +484,13 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   child: Text(
                     'Retry',
-                    style: AppTypography.bodyMediumStrong,
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -504,7 +512,7 @@ class _PickupHubScreenState extends ConsumerState<PickupHubScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
+      backgroundColor: colors.surface,
       body: Column(
         children: [
           Expanded(

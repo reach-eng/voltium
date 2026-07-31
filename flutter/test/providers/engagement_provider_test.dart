@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() {
+    AppConstants.isTestModeOverride = true;
+  });
   test('EngagementProvider initializes with debug dummy data', () {
     final provider = EngagementProvider();
     provider.initEngagementData();

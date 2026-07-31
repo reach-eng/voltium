@@ -443,7 +443,7 @@ class TroubleshooterHeaderIcon extends StatelessWidget {
         height: 80,
         decoration: BoxDecoration(
           color: vfBlueLight,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         child: const Icon(
           Icons.build_circle_rounded,

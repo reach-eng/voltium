@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class TicketDetailScreen extends StatelessWidget {
@@ -10,32 +11,35 @@ class TicketDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Scaffold(
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        title: Text(ticket.ticketId),
-        backgroundColor: Colors.white,
+        title: Text(ticket.ticketId, style: TextStyle(color: colors.onSurface)),
+        backgroundColor: colors.surface,
         elevation: 0,
-        foregroundColor: Colors.black87,
+        foregroundColor: colors.onSurface,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         children: [
           // Original Complaint
           Text(
             'Issue: ${ticket.subject}',
-            style: AppTypography.titleSmall,
+            style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             ticket.message,
             style: GoogleFonts.plusJakartaSans(
-                fontSize: 14, color: Colors.black87),
+                fontSize: 14, color: colors.onSurfaceVariant),
           ),
-          const Divider(height: 32),
+          Divider(height: 32, color: colors.divider),
 
           Text(
             'Resolution History:',
-            style: AppTypography.titleSmall,
+            style: AppTypography.titleSmall.copyWith(color: colors.onSurface),
           ),
           const SizedBox(height: 12),
 
@@ -43,7 +47,7 @@ class TicketDetailScreen extends StatelessWidget {
             Text(
               'No remarks yet.',
               style: GoogleFonts.plusJakartaSans(
-                  color: Colors.grey, fontStyle: FontStyle.italic),
+                  color: colors.onSurfaceMuted, fontStyle: FontStyle.italic),
             ),
 
           // Timeline of Admin Remarks vs Rider Messages
@@ -52,12 +56,13 @@ class TicketDetailScreen extends StatelessWidget {
 
             return Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
-                color: isAdmin ? Colors.blue.shade50 : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border:
-                    isAdmin ? Border.all(color: Colors.blue.shade200) : null,
+                color: isAdmin ? colors.primarySurface : colors.card,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: isAdmin ? colors.outline : colors.divider,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,16 +71,19 @@ class TicketDetailScreen extends StatelessWidget {
                     isAdmin ? 'Support Team' : 'You',
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
-                      color: isAdmin ? Colors.blue.shade800 : Colors.black87,
+                      color: isAdmin ? AppColors.primary : colors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(msg.message),
-                  SizedBox(height: 4),
+                  Text(
+                    msg.message,
+                    style: GoogleFonts.plusJakartaSans(color: colors.onSurface),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     _formatDate(msg.createdAt),
                     style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10, color: Colors.grey.shade600),
+                        fontSize: 10, color: colors.onSurfaceMuted),
                   )
                 ],
               ),

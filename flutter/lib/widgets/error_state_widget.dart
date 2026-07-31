@@ -100,7 +100,7 @@ class ErrorStateWidget extends StatelessWidget {
               child: Icon(
                 icon,
                 size: iconSize,
-                color: iconColor ?? AppColors.errorRed,
+                color: iconColor ?? AppColors.error,
               ),
             ),
             const SizedBox(height: 20),

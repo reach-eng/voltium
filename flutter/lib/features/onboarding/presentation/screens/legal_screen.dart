@@ -224,7 +224,7 @@ class _LegalScreenState extends State<LegalScreen>
         child: const Icon(
           Icons.arrow_back,
           size: 20,
-          color: AppColors.onSurfaceAlt,
+          color: AppColors.onSurfaceMuted,
         ),
       ),
     );
@@ -267,7 +267,7 @@ class _LegalScreenState extends State<LegalScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceAlt,
+                color: AppColors.onSurfaceMuted,
                 letterSpacing: -0.5,
               ),
             ),
@@ -311,8 +311,9 @@ class _LegalScreenState extends State<LegalScreen>
                   children: [
                     Text(
                       title,
-                      style: AppTypography.bodyLargeEmphasis
-                          .copyWith(color: AppColors.onSurfaceAlt),
+                      style: AppTypography.bodyLarge
+                          .copyWith(fontWeight: FontWeight.w600)
+                          .copyWith(color: AppColors.onSurfaceMuted),
                     ),
                     AnimatedRotation(
                       turns: isExpanded ? 0.5 : 0.0,
@@ -451,7 +452,10 @@ class _LegalScreenState extends State<LegalScreen>
                               ),
                               TextSpan(
                                 text: 'Terms of Service',
-                                style: AppTypography.bodyCompactEmphasis
+                                style: AppTypography.bodyMedium
+                                    .copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)
                                     .copyWith(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline),
@@ -468,7 +472,10 @@ class _LegalScreenState extends State<LegalScreen>
                               const TextSpan(text: ' and '),
                               TextSpan(
                                 text: 'Privacy Policy',
-                                style: AppTypography.bodyCompactEmphasis
+                                style: AppTypography.bodyMedium
+                                    .copyWith(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)
                                     .copyWith(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline),
@@ -510,7 +517,8 @@ class _LegalScreenState extends State<LegalScreen>
                     child: Center(
                       child: Text(
                         'Continue',
-                        style: AppTypography.bodyLargeEmphasis
+                        style: AppTypography.bodyLarge
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: Colors.white),
                       ),
                     ),

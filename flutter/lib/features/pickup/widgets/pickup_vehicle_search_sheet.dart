@@ -123,7 +123,8 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                   ),
                   Text(
                     '${widget.vehicles.length} available',
-                    style: AppTypography.bodySmallEmphasis
+                    style: AppTypography.bodySmall
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: _success),
                   ),
                 ],
@@ -160,15 +161,15 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: const BorderSide(color: _outline),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: const BorderSide(color: _outline),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     borderSide: const BorderSide(color: _primary, width: 1.5),
                   ),
                 ),
@@ -182,7 +183,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
               ),
               child: _filtered.isEmpty
                   ? Padding(
-                      padding: const EdgeInsets.all(32),
+                      padding: Spacing.paddingXl,
                       child: Column(
                         children: [
                           const Icon(
@@ -266,7 +267,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                     SizedBox(width: 2),
                                     Text(
                                       battery,
-                                      style: AppTypography.microLabel.copyWith(
+                                      style: AppTypography.labelSmall.copyWith(
                                         color: _batteryColor(v),
                                       ),
                                     ),

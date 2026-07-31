@@ -116,7 +116,7 @@ class TotalCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.primary, AppColors.primaryLight],
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowPrimaryStrongColor,
@@ -483,7 +483,7 @@ class SummaryCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: AppGradients.success,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowSuccessStrongColor,
@@ -597,7 +597,7 @@ class EarningsEmptyState extends StatelessWidget {
             width: 80,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               boxShadow: [
                 BoxShadow(color: Colors.black.withAlpha(10), blurRadius: 20),
               ],

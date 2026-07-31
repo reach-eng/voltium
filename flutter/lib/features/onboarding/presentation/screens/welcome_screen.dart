@@ -38,7 +38,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               color: AppColors.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            padding: const EdgeInsets.all(24),
+            padding: Spacing.paddingLg,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -158,7 +158,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primaryCyan, AppColors.primaryGradientEnd],
+                colors: [AppColors.primary, AppColors.primaryLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -200,7 +200,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       backgroundColor: Colors.white,
                       foregroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 8,
                       shadowColor: Colors.black.withValues(alpha: 0.3),

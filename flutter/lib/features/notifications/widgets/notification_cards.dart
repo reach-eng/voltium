@@ -29,13 +29,13 @@ class NotificationCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
-        color: isRead ? colors.surfaceAlt : colors.card,
-        borderRadius: BorderRadius.circular(12),
+        color: isRead ? colors.surface : colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: Spacing.paddingMd,
             decoration: BoxDecoration(
               border: Border(
                 left: BorderSide(
@@ -139,11 +139,11 @@ class NotificationCard extends StatelessWidget {
       case NotificationType.ride:
         return AppColors.primary;
       case NotificationType.payment:
-        return AppColors.successGreen;
+        return AppColors.success;
       case NotificationType.promo:
         return AppColors.warningDark;
       case NotificationType.alert:
-        return AppColors.errorRedAlt;
+        return AppColors.error;
       case NotificationType.system:
         return AppColors.onSurfaceMuted;
     }
@@ -184,10 +184,10 @@ class NotificationListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: Spacing.paddingSm,
         decoration: BoxDecoration(
           color: _getColor().withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
         child: Icon(_getIcon(), color: _getColor(), size: 20),
       ),
@@ -218,11 +218,11 @@ class NotificationListTile extends StatelessWidget {
       case NotificationType.ride:
         return AppColors.primary;
       case NotificationType.payment:
-        return AppColors.successGreen;
+        return AppColors.success;
       case NotificationType.promo:
         return AppColors.warningDark;
       case NotificationType.alert:
-        return AppColors.errorRedAlt;
+        return AppColors.error;
       case NotificationType.system:
         return AppColors.onSurfaceMuted;
     }
@@ -250,7 +250,8 @@ class NotificationGroup extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             title,
-            style: AppTypography.bodyMediumEmphasis
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w600)
                 .copyWith(color: AppColors.of(context).onSurfaceMuted),
           ),
         ),
@@ -281,16 +282,18 @@ class NotificationBadge extends StatelessWidget {
             right: -5,
             top: -5,
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: Spacing.paddingXs,
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               decoration: BoxDecoration(
-                color: AppColors.errorRedAlt,
+                color: AppColors.error,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
                 child: Text(
                   count > 99 ? '99+' : count.toString(),
-                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
+                  style: AppTypography.labelSmall
+                      .copyWith(fontSize: 10)
+                      .copyWith(color: Colors.white),
                 ),
               ),
             ),

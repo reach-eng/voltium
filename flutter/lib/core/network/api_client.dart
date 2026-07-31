@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../services/secure_storage_service.dart';
 import '../../services/offline_storage_service.dart';
+import '../../services/monitoring_service.dart';
 import '../platform/platform_info.dart';
 import 'pinned_http_client.dart';
 
@@ -17,8 +18,9 @@ class ApiClient {
   static final http.Client _sharedHttpClient =
       PinnedHttpInterceptor.createClient();
   static ApiClient? _sharedInstance;
-  static const Duration requestTimeout = Duration(seconds: 30);
-  static const int shortRetryMaxAttempts = 3;
+  static const Duration requestTimeout = Duration(seconds: 10);
+  static const Duration uploadTimeout = Duration(seconds: 60);
+  static const int shortRetryMaxAttempts = kDebugMode ? 1 : 3;
   static const Duration shortRetryBaseDelay = Duration(milliseconds: 200);
   static final Random _requestRandom = Random.secure();
 
@@ -41,6 +43,12 @@ class ApiClient {
     String? baseUrl,
   }) {
     if (client != null || storage != null || baseUrl != null) {
+      assert(
+        _sharedInstance == null,
+        'ApiClient: creating a custom instance after the shared singleton was '
+        'initialized. This may cause inconsistent auth state. Use the shared '
+        'instance or create custom instances before the first ApiClient() call.',
+      );
       return ApiClient._(
         client: client ?? _sharedHttpClient,
         storage: storage ?? SecureStorageService(),
@@ -155,9 +163,16 @@ class ApiClient {
               return completer.future;
             }
           }
+        } else if (response.statusCode == 401 || response.statusCode == 403) {
+          // Explicit token rejection (revoked or expired refresh token).
+          // Clear stale credentials to prevent persistent 401 loops on launch.
+          MonitoringService.logInfo(
+              'ApiClient: refresh token explicitly rejected (${response.statusCode}), clearing credentials');
+          await _storage.clearAll();
         }
-      } catch (e) {
-        debugPrint('ApiClient: refresh failed: $e');
+      } catch (e, stack) {
+        MonitoringService.logError(e, stack,
+            reason: 'ApiClient: refresh failed');
       }
 
       completer.complete(false);
@@ -174,7 +189,7 @@ class ApiClient {
     try {
       return jsonDecode(body);
     } on FormatException catch (e) {
-      debugPrint('ApiClient: non-JSON response body: $e');
+      MonitoringService.logInfo('ApiClient: non-JSON response body: $e');
       return null;
     }
   }
@@ -188,13 +203,22 @@ class ApiClient {
   /// ultimately fails we return a 401 to the caller instead of wiping
   /// stored credentials.
   Future<Map<String, dynamic>> _executeWithRetry(
-    Future<http.Response> Function(Map<String, String> headers) request,
-  ) async {
+    Future<http.Response> Function(Map<String, String> headers) request, {
+    Future<void>? cancelSignal,
+  }) async {
     for (var attempt = 0; attempt < shortRetryMaxAttempts; attempt++) {
       final headers = await _getHeaders();
       http.Response response;
       try {
-        response = await request(headers);
+        if (cancelSignal != null) {
+          final res = await Future.any<dynamic>([
+            request(headers),
+            cancelSignal.then((_) => throw RequestCancelledException()),
+          ]);
+          response = res as http.Response;
+        } else {
+          response = await request(headers);
+        }
       } on TimeoutException {
         if (attempt < shortRetryMaxAttempts - 1) {
           await _backoffBeforeRetry(attempt);
@@ -244,6 +268,7 @@ class ApiClient {
   Future<Map<String, dynamic>> get(
     String path, {
     Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
@@ -251,6 +276,7 @@ class ApiClient {
     try {
       return await _executeWithRetry(
         (headers) => _client.get(uri, headers: headers).timeout(requestTimeout),
+        cancelSignal: cancelSignal,
       );
     } on SocketException catch (_) {
       await _maybeQueueOffline('GET', path, null);
@@ -266,6 +292,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? idempotencyKey,
+    Future<void>? cancelSignal,
   }) async {
     final uri = Uri.parse('$_baseUrl$path');
 
@@ -281,7 +308,7 @@ class ApiClient {
               body: body != null ? jsonEncode(body) : null,
             )
             .timeout(requestTimeout);
-      });
+      }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
       await _maybeQueueOffline('POST', path, body);
       rethrow;
@@ -297,6 +324,7 @@ class ApiClient {
     Map<String, dynamic>? body,
     String? idempotencyKey,
     Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
   }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
@@ -313,7 +341,7 @@ class ApiClient {
               body: body != null ? jsonEncode(body) : null,
             )
             .timeout(requestTimeout);
-      });
+      }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
       await _maybeQueueOffline('PUT', path, body);
       rethrow;
@@ -324,8 +352,12 @@ class ApiClient {
   }
 
   /// DELETE request
-  Future<Map<String, dynamic>> delete(String path,
-      {String? idempotencyKey, Map<String, String>? queryParams}) async {
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    String? idempotencyKey,
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
     final uri =
         Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
 
@@ -337,7 +369,7 @@ class ApiClient {
         return await _client
             .delete(uri, headers: headers)
             .timeout(requestTimeout);
-      });
+      }, cancelSignal: cancelSignal);
     } on SocketException catch (_) {
       await _maybeQueueOffline('DELETE', path, null);
       rethrow;
@@ -408,7 +440,7 @@ class ApiClient {
           .add(await http.MultipartFile.fromPath(fieldName, file.path));
 
       final streamedResponse =
-          await _client.send(request).timeout(requestTimeout);
+          await _client.send(request).timeout(uploadTimeout);
       return await http.Response.fromStream(streamedResponse);
     });
   }
@@ -456,4 +488,12 @@ class ApiException implements Exception {
 
   @override
   String toString() => 'ApiException($statusCode, $code): $message';
+}
+
+class RequestCancelledException implements Exception {
+  final String message;
+  RequestCancelledException([this.message = 'Request was cancelled']);
+
+  @override
+  String toString() => 'RequestCancelledException: $message';
 }

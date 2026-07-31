@@ -11,8 +11,8 @@ class AnimatedSuccessGlow extends StatefulWidget {
   const AnimatedSuccessGlow({
     super.key,
     this.size = 96,
-    this.primaryColor = AppColors.successGreen,
-    this.secondaryColor = AppColors.successGreen,
+    this.primaryColor = AppColors.success,
+    this.secondaryColor = AppColors.success,
     this.icon = Icons.check_circle_outline,
   });
 

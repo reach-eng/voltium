@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/features/support/domain/entity.dart';
 import 'package:voltium_rider/features/support/data/repository_impl.dart';
 
@@ -47,8 +48,7 @@ class SupportTicketsNotifier extends Notifier<TicketState> {
   Future<void> fetchTickets() async {
     state = state.copyWith(isLoading: true);
     try {
-      final repository =
-          SupportRepositoryImpl(ref.read(appProvider).voltiumApiClient);
+      final repository = SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
       final response = await repository.fetchTickets();
       final data = response['tickets'] as List<dynamic>?;
       if (data != null) {

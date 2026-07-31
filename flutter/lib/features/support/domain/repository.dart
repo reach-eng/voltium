@@ -12,7 +12,7 @@ abstract class SupportRepository {
     String subject,
     String message, {
     String riderId = '',
-    String priority = 'NORMAL',
+    String priority = 'MEDIUM',
   });
 
   /// Fetches support chat history.

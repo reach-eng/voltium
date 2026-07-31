@@ -15,7 +15,7 @@ class ChipWidget extends StatelessWidget {
     required this.label,
     this.onTap,
     this.onDelete,
-    this.color = Colors.amber,
+    this.color = AppColors.warning,
     this.selected = false,
     this.icon,
   });
@@ -28,7 +28,7 @@ class ChipWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? color : color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: color),
         ),
         child: Row(
@@ -72,7 +72,7 @@ class FilterChipList extends StatelessWidget {
     required this.labels,
     this.selectedIndices = const [],
     this.onSelected,
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
   });
 
   @override
@@ -106,7 +106,7 @@ class ChoiceChipList<T> extends StatelessWidget {
     this.selectedOption,
     this.onSelected,
     this.labelBuilder,
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
   });
 
   @override
@@ -178,15 +178,15 @@ class LinearProgressBar extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: backgroundColor ?? colors.outlineVariant,
-        borderRadius: borderRadius ?? BorderRadius.circular(4),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.xs),
       ),
       child: FractionallySizedBox(
         alignment: Alignment.centerLeft,
         widthFactor: value.clamp(0, 1),
         child: Container(
           decoration: BoxDecoration(
-            color: progressColor ?? Colors.amber,
-            borderRadius: borderRadius ?? BorderRadius.circular(4),
+            color: progressColor ?? AppColors.warning,
+            borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.xs),
           ),
         ),
       ),
@@ -315,7 +315,8 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            borderRadius: widget.borderRadius ?? BorderRadius.circular(4),
+            borderRadius:
+                widget.borderRadius ?? BorderRadius.circular(AppRadius.xs),
             gradient: LinearGradient(
               begin: Alignment(_animation.value - 1, 0),
               end: Alignment(_animation.value + 1, 0),

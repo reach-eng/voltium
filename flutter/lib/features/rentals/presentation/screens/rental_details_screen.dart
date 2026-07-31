@@ -80,7 +80,7 @@ class RentalDetailsScreen extends ConsumerWidget {
               padding: Spacing.paddingLg,
               decoration: BoxDecoration(
                 gradient: AppGradients.primary,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadius.radiusModal),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),

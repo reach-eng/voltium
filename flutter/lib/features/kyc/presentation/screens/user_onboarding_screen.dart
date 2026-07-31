@@ -554,8 +554,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: AppTypography.bodySmallEmphasis.copyWith(
-            color: isActive ? Colors.white : AppColors.onSurfaceVariant),
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w600)
+            .copyWith(
+                color: isActive ? Colors.white : AppColors.onSurfaceVariant),
       ),
     );
   }
@@ -623,7 +625,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: colors.surfaceSubtle,
+        backgroundColor: colors.surface,
         body: Column(
           children: [
             Expanded(

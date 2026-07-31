@@ -121,7 +121,7 @@ class _PulsingFabState extends State<PulsingFab>
           scale: scale,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withValues(alpha: glowOpacity),

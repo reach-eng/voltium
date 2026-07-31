@@ -8,6 +8,7 @@ import 'voltium_api_service.dart';
 import 'consent_service.dart';
 import 'monitoring_service.dart';
 import '../core/platform/platform_info.dart';
+import '../utils/app_logger.dart';
 
 import 'package:flutter_contacts/flutter_contacts.dart' hide PermissionStatus;
 import 'package:call_log/call_log.dart';
@@ -54,9 +55,9 @@ class DeviceDataService {
       final permissions = await getPermissionState();
       await VoltiumApiService()
           .syncPermissionState(riderId: riderId, permissions: permissions);
-      debugPrint('DeviceDataService: Permission state synced');
+      appDebug('DeviceDataService: Permission state synced');
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync permission state: $e');
+      appDebug('DeviceDataService: Failed to sync permission state: $e');
       MonitoringService.logError(e, null, reason: 'syncPermissionState');
     }
   }
@@ -92,9 +93,9 @@ class DeviceDataService {
           'isMocked': position.isMocked,
         },
       );
-      debugPrint('DeviceDataService: Location synced');
+      appDebug('DeviceDataService: Location synced');
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync location: $e');
+      appDebug('DeviceDataService: Failed to sync location: $e');
     }
   }
 
@@ -125,11 +126,11 @@ class DeviceDataService {
           type: 'CONTACTS',
           data: mappedContacts,
         );
-        debugPrint(
+        appDebug(
             'DeviceDataService: Synced \${mappedContacts.length} contacts');
       }
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync contacts: $e');
+      appDebug('DeviceDataService: Failed to sync contacts: $e');
     }
   }
 
@@ -163,10 +164,10 @@ class DeviceDataService {
           type: 'CALL_LOGS',
           data: mappedLogs,
         );
-        debugPrint('DeviceDataService: Synced \${mappedLogs.length} call logs');
+        appDebug('DeviceDataService: Synced \${mappedLogs.length} call logs');
       }
     } catch (e) {
-      debugPrint('DeviceDataService: Failed to sync call logs: $e');
+      appDebug('DeviceDataService: Failed to sync call logs: $e');
     }
   }
 
@@ -182,9 +183,9 @@ class DeviceDataService {
         eagerError: false,
       );
     } catch (e) {
-      debugPrint('DeviceDataService: syncAll failed: $e');
+      appDebug('DeviceDataService: syncAll failed: $e');
     }
 
-    debugPrint('DeviceDataService: syncAll completed');
+    appDebug('DeviceDataService: syncAll completed');
   }
 }

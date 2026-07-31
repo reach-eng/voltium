@@ -446,8 +446,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 56),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.xl),
+                                borderRadius: BorderRadius.circular(
+                                    AppRadius.radiusModal),
                               ),
                               elevation: 8,
                               shadowColor:

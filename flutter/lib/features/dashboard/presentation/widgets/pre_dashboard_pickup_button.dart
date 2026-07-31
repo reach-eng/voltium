@@ -22,7 +22,7 @@ class PreDashboardPickupButton extends StatelessWidget {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           ),
           elevation: 8,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),

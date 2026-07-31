@@ -25,5 +25,6 @@ enum AuthState {
   topUpReceipt,
   referralDetails,
   legalPage,
-  myDocuments
+  myDocuments,
+  accountClosed,
 }

@@ -69,7 +69,8 @@ class _TapCardState extends State<TapCard> with SingleTickerProviderStateMixin {
             scale: _scale.value,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: widget.borderRadius ?? BorderRadius.circular(12),
+                borderRadius:
+                    widget.borderRadius ?? BorderRadius.circular(AppRadius.md),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black
@@ -116,7 +117,7 @@ class _HoverCardState extends State<HoverCard> {
       child: AnimatedContainer(
         duration: widget.duration,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: _isHovered ? 0.15 : 0.08),
@@ -154,7 +155,7 @@ class GlassCard extends StatelessWidget {
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
         color: Colors.white.withValues(alpha: opacity),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.2),
@@ -169,9 +170,9 @@ class GlassCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: padding ?? const EdgeInsets.all(16),
+          padding: padding ?? Spacing.paddingMd,
           child: child,
         ),
       ),
@@ -199,14 +200,14 @@ class GradientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: margin,
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? Spacing.paddingMd,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: gradientColors,
         ),
-        borderRadius: borderRadius ?? BorderRadius.circular(16),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: gradientColors.first.withValues(alpha: 0.3),

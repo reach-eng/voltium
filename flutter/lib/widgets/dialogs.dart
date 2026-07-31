@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 Future<bool> showConfirmDialog({
   required BuildContext context,
@@ -21,7 +22,7 @@ Future<bool> showConfirmDialog({
         TextButton(
           onPressed: () => Navigator.pop(context, true),
           style: isDestructive
-              ? TextButton.styleFrom(foregroundColor: Colors.red)
+              ? TextButton.styleFrom(foregroundColor: AppColors.error)
               : null,
           child: Text(confirmText),
         ),

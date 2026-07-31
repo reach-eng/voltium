@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../theme/app_theme.dart';
 
 class SwipeableCard extends StatefulWidget {
   final Widget child;
@@ -98,7 +99,7 @@ class _SwipeableCardState extends State<SwipeableCard>
 
   @override
   Widget build(BuildContext context) {
-    final deleteColor = widget.deleteColor ?? Colors.red;
+    final deleteColor = widget.deleteColor ?? AppColors.error;
     final archiveColor = widget.archiveColor ?? Colors.orange;
 
     return Stack(

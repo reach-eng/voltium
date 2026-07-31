@@ -84,19 +84,19 @@ class FocusDecorations {
   static InputDecoration withFocus(
     InputDecoration decoration, {
     Color focusColor = AppColors.primary,
-    Color errorColor = AppColors.errorRedAlt,
+    Color errorColor = AppColors.error,
     bool hasError = false,
   }) {
     return decoration.copyWith(
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         borderSide: BorderSide(
           color: hasError ? errorColor : focusColor,
           width: 2,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         borderSide: BorderSide(
           color: hasError ? errorColor : AppColors.outline,
         ),

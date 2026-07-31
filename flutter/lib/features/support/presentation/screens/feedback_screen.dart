@@ -78,14 +78,14 @@ class _TutorialDialogState extends State<TutorialDialog> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(AppRadius.xxl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: Column(
@@ -370,7 +370,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       padding: Spacing.paddingSm,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: Colors.white),
       ),
       child: TextFormField(
@@ -431,7 +431,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         disabledBackgroundColor: AppColors.borderMedium,
         minimumSize: const Size(double.infinity, 56),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl)),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal)),
         elevation: canSubmit ? 8 : 0,
         shadowColor: AppColors.primary.withValues(alpha: 0.4),
       ),
@@ -470,7 +470,7 @@ class RateAppPrompt {
             padding: Spacing.paddingXl,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.xxl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

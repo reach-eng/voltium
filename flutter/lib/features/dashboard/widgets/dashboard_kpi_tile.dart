@@ -21,10 +21,10 @@ class GlassKpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -50,7 +50,7 @@ class GlassKpiTile extends StatelessWidget {
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 8,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: Colors.white.withValues(alpha: 0.4),
               letterSpacing: 1.0,
             ),
@@ -101,7 +101,7 @@ class KpiGrid extends StatelessWidget {
           label: 'SYSTEM HEALTH',
           value: '${batteryPercent.toInt()}%',
           icon: Icons.battery_charging_full_rounded,
-          color: batteryPercent < 20 ? Colors.red : AppColors.success,
+          color: batteryPercent < 20 ? AppColors.error : AppColors.success,
         ),
         GlassKpiTile(
           label: 'VELOCITY',

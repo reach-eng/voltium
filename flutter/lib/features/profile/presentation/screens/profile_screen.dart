@@ -332,11 +332,11 @@ class _CompactRiderHeader extends StatelessWidget {
 
     return InkWell(
       onTap: () => AppNavigator.push(context, const ProfileDetailScreen()),
-      borderRadius: BorderRadius.circular(AppRadius.xl),
+      borderRadius: BorderRadius.circular(AppRadius.radiusModal),
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -367,7 +367,8 @@ class _CompactRiderHeader extends StatelessWidget {
               alignment: Alignment.center,
               child: avatarUrl != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.radiusModal),
                       child: CachedNetworkImage(
                         imageUrl: avatarUrl,
                         width: 56,

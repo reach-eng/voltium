@@ -33,6 +33,21 @@ class DocumentLocalCache {
     return null;
   }
 
+  static Future<void> clearAll() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys =
+          prefs.getKeys().where((k) => k.startsWith(_prefsPrefix)).toList();
+      for (final k in keys) {
+        await prefs.remove(k);
+      }
+      final dir = await _cacheDir();
+      if (dir.existsSync()) {
+        await dir.delete(recursive: true);
+      }
+    } catch (_) {}
+  }
+
   static Future<Directory> _cacheDir() async {
     final appDir = await getApplicationDocumentsDirectory();
     final dir = Directory('${appDir.path}/cached_documents');

@@ -45,6 +45,18 @@ class ImageSourceBottomSheet {
                     Navigator.pop(context, ImageSource.gallery);
                   },
                 ),
+                Divider(color: colors.divider, height: 16),
+                ListTile(
+                  leading: Icon(Icons.close, color: colors.onSurfaceMuted),
+                  title: Text(
+                    'Cancel',
+                    style: AppTypography.bodyLarge
+                        .copyWith(color: colors.onSurfaceMuted),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context, null);
+                  },
+                ),
               ],
             ),
           ),

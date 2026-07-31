@@ -137,13 +137,12 @@ class KYCProgressIndicator extends StatelessWidget {
               progress: progress,
               size: size,
               strokeWidth: 10,
-              progressColor:
-                  isComplete ? AppColors.successGreen : AppColors.primary,
+              progressColor: isComplete ? AppColors.success : AppColors.primary,
             ),
             if (isComplete)
               const Icon(
                 Icons.check,
-                color: AppColors.successGreen,
+                color: AppColors.success,
                 size: 40,
               )
             else
@@ -176,8 +175,7 @@ class KYCProgressIndicator extends StatelessWidget {
                   width: 24,
                   height: 24,
                   decoration: BoxDecoration(
-                    color:
-                        isCompleted ? AppColors.successGreen : colors.divider,
+                    color: isCompleted ? AppColors.success : colors.divider,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -249,7 +247,7 @@ class StepProgressIndicator extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: isCompleted || isCurrent
-                      ? (isCurrent ? AppColors.primary : AppColors.successGreen)
+                      ? (isCurrent ? AppColors.primary : AppColors.success)
                       : colors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
@@ -261,7 +259,8 @@ class StepProgressIndicator extends StatelessWidget {
           SizedBox(height: 12),
           Text(
             labels[currentStep.clamp(0, labels.length - 1)],
-            style: AppTypography.bodyMediumEmphasis,
+            style:
+                AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
           ),
         ],
       ],

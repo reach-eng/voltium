@@ -1576,7 +1576,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menu_workflowServices => 'Workflow & Services';
 
   @override
-  String get menu_controls => 'Controls';
+  String get menu_appSettings => 'App Settings';
 
   @override
   String get menu_language => 'Language';
@@ -1588,46 +1588,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menu_emergencySos => 'Emergency SOS';
 
   @override
-  String get controls_title => 'Controls';
+  String get settings_preferences => 'PREFERENCES';
 
   @override
-  String get controls_preferences => 'PREFERENCES';
+  String get settings_darkMode => 'Dark Mode';
 
   @override
-  String get controls_darkMode => 'Dark Mode';
+  String get settings_supportLegal => 'SUPPORT & LEGAL';
 
   @override
-  String get controls_supportLegal => 'SUPPORT & LEGAL';
+  String get settings_feedback => 'Feedback';
 
   @override
-  String get controls_feedback => 'Feedback';
+  String get settings_legal => 'Legal';
 
   @override
-  String get controls_legal => 'Legal';
+  String get settings_about => 'ABOUT';
 
   @override
-  String get controls_about => 'ABOUT';
+  String get settings_appVersion => 'App Version';
 
   @override
-  String get controls_appVersion => 'App Version';
+  String get settings_rateUs => 'Rate Us';
 
   @override
-  String get controls_rateUs => 'Rate Us';
+  String get settings_accountSection => 'ACCOUNT';
 
   @override
-  String get controls_accountSection => 'ACCOUNT';
+  String get settings_deleteConfirmTitle => 'Delete Account';
 
   @override
-  String get controls_deleteConfirmTitle => 'Delete Account';
-
-  @override
-  String get controls_deleteConfirmBody =>
+  String get settings_deleteConfirmBody =>
       'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?';
 
   @override
-  String get controls_delete => 'Delete';
+  String get settings_delete => 'Delete';
 
   @override
-  String get controls_deleteNotAvailable =>
+  String get settings_deleteNotAvailable =>
       'Account deletion is not yet available. Please contact support.';
+
+  @override
+  String get settings_notifications => 'Notifications';
+
+  @override
+  String get settings_changePhone => 'Change Phone Number';
+
+  @override
+  String get settings_comingSoon => 'Coming soon';
 }

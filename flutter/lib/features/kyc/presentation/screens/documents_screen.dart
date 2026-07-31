@@ -230,7 +230,7 @@ class MyDocumentsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -489,7 +489,7 @@ class MyDocumentsScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
       ),
       child: Row(

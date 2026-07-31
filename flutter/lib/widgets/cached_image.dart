@@ -62,7 +62,8 @@ class CachedImage extends StatelessWidget {
       width: width,
       height: height,
       color: colors.outlineVariant,
-      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+      child: const Icon(Icons.image_not_supported,
+          color: AppColors.onSurfaceVariant),
     );
   }
 }

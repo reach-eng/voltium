@@ -24,7 +24,7 @@ class EmptyStateIllustration extends StatelessWidget {
     final colors = AppColors.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: Spacing.paddingXl,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -115,7 +115,7 @@ class _EmptyStatePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = AppColors.surfaceAlt
+      ..color = AppColors.surface
       ..style = PaintingStyle.fill;
 
     switch (type) {

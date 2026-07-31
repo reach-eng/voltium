@@ -125,7 +125,8 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                           vertical: 32, horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.radiusModal),
                         boxShadow: AppShadows.glass,
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.5)),

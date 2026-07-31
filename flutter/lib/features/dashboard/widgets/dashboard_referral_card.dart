@@ -30,7 +30,7 @@ class ReferralCard extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
             boxShadow: AppShadows.glass,
           ),
           child: Column(

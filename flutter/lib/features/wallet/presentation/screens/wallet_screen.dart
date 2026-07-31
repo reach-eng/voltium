@@ -29,7 +29,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(appProvider).refreshTransactions();
+      final riderId = ref.read(riderProvider).riderId;
+      if (riderId != null) {
+        ref.read(walletProvider).refreshTransactions(riderId: riderId);
+      }
     });
   }
 
@@ -39,11 +42,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rider = ref.watch(appProvider.select((p) => p.rider));
-    final transactions = ref.watch(appProvider.select((p) => p.transactions));
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final transactions =
+        ref.watch(walletProvider.select((p) => p.transactions));
     final isRefreshing =
-        ref.watch(appProvider.select((p) => p.isRefreshingTransactions));
-    final dataState = ref.watch(appProvider.select((p) => p.dataState));
+        ref.watch(walletProvider.select((p) => p.isRefreshingTransactions));
+    final dataState = ref.watch(riderProvider.select((p) => p.dataState));
     final isLoading =
         rider == null && (dataState == DataState.initial || isRefreshing);
 
@@ -70,8 +74,14 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   child: RefreshIndicator(
                     color: AppColors.primary,
                     onRefresh: () async {
-                      await ref.read(appProvider).refresh();
-                      await ref.read(appProvider).refreshTransactions();
+                      final riderId = ref.read(riderProvider).riderId;
+                      await Future.wait<dynamic>([
+                        ref.read(riderProvider).refreshFromApi(),
+                        if (riderId != null)
+                          ref
+                              .read(walletProvider)
+                              .refreshTransactions(riderId: riderId),
+                      ]);
                     },
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),

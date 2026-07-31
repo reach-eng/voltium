@@ -32,7 +32,7 @@ class ImageCropService {
         AndroidUiSettings(
           toolbarTitle: 'Crop Photo',
           toolbarColor: AppColors.primary,
-          toolbarWidgetColor: AppColors.surfaceWhite,
+          toolbarWidgetColor: AppColors.surface,
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: false,
           hideBottomControls: false,
@@ -74,7 +74,7 @@ class ImageCropService {
         AndroidUiSettings(
           toolbarTitle: 'Crop Photo',
           toolbarColor: AppColors.primary,
-          toolbarWidgetColor: AppColors.surfaceWhite,
+          toolbarWidgetColor: AppColors.surface,
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: true,
           hideBottomControls: true,

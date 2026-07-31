@@ -36,7 +36,7 @@ class IllustratedEmptyState extends StatelessWidget {
               width: 96,
               height: 96,
               decoration: const BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 40, color: AppColors.primary),
@@ -52,7 +52,8 @@ class IllustratedEmptyState extends StatelessWidget {
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: AppTypography.inputHint
+              style: AppTypography.bodyMedium
+                  .copyWith(color: AppColors.onSurfaceMuted)
                   .copyWith(color: colors.onSurfaceMuted, height: 1.4),
             ),
             if (actionLabel != null && onAction != null) ...[

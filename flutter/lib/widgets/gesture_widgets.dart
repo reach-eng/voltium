@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class PinchZoom extends StatefulWidget {
   final Widget child;
@@ -138,7 +139,7 @@ class _LongPressDraggableWidgetState<T extends Object>
       feedback: widget.feedback ??
           Material(
             elevation: 8,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: widget.child,
           ),
       childWhenDragging: widget.childWhenDragging ??
@@ -180,9 +181,9 @@ class DragTargetWidget<T extends Object> extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             color: candidateData.isNotEmpty
-                ? Colors.blue.withValues(alpha: 0.1)
+                ? AppColors.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: const SizedBox.expand(),
         );

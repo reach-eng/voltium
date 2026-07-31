@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 
 class SkeletonWalletCard extends StatelessWidget {
   final bool compact;
@@ -14,7 +15,7 @@ class SkeletonWalletCard extends StatelessWidget {
       padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -41,8 +42,8 @@ class SkeletonWalletCard extends StatelessWidget {
       width: width.isFinite ? width : null,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.outlineVariant,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
     );
   }
@@ -54,10 +55,10 @@ class SkeletonPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -84,8 +85,8 @@ class SkeletonPlanCard extends StatelessWidget {
       width: width.isFinite ? width : null,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.outlineVariant,
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
     );
   }

@@ -129,14 +129,14 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
       children: [
         if (widget.showSearch)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: Spacing.paddingMd,
             child: TextFormField(
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: widget.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -158,18 +158,18 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
         Container(
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: colors.outlineVariant,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 headingRowColor: WidgetStateProperty.all(
-                  colors.surfaceAlt,
+                  colors.surface,
                 ),
                 headingTextStyle: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.bold,
@@ -215,7 +215,7 @@ class _DataTableWidgetState<T> extends State<DataTableWidget<T>> {
         ),
         if (_sortedData.isEmpty && widget.emptyWidget != null)
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: Spacing.paddingXl,
             child: widget.emptyWidget,
           ),
       ],
@@ -264,7 +264,7 @@ class _PaginatedDataTableWidgetState<T>
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: PaginatedDataTable(
         header: null,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class OTPTimer extends StatefulWidget {
@@ -16,7 +17,7 @@ class OTPTimer extends StatefulWidget {
     this.onResend,
     this.textStyle,
     this.resendText = 'Resend OTP',
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
   });
 
   @override
@@ -79,10 +80,14 @@ class _OTPTimerState extends State<OTPTimer> {
           child: Text(
             isActive ? widget.resendText : 'seconds',
             style: widget.textStyle?.copyWith(
-                  color: isActive ? widget.activeColor : Colors.grey,
+                  color: isActive
+                      ? widget.activeColor
+                      : AppColors.onSurfaceVariant,
                 ) ??
                 GoogleFonts.plusJakartaSans(
-                  color: isActive ? widget.activeColor : Colors.grey,
+                  color: isActive
+                      ? widget.activeColor
+                      : AppColors.onSurfaceVariant,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
           ),
@@ -105,7 +110,7 @@ class AnimatedOTPTimer extends StatefulWidget {
     this.onResend,
     this.textStyle,
     this.resendText = 'Resend OTP',
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
   });
 
   @override
@@ -166,7 +171,7 @@ class _AnimatedOTPTimerState extends State<AnimatedOTPTimer>
                 value: 1 - _controller.value,
                 strokeWidth: 3,
                 color: widget.activeColor,
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: AppColors.borderMedium,
               ),
             ),
             SizedBox(width: 8),
@@ -177,7 +182,7 @@ class _AnimatedOTPTimerState extends State<AnimatedOTPTimer>
               style: widget.textStyle ??
                   GoogleFonts.plusJakartaSans(
                     color: _remainingSeconds > 0
-                        ? Colors.grey
+                        ? AppColors.onSurfaceVariant
                         : widget.activeColor,
                     fontWeight: _remainingSeconds > 0
                         ? FontWeight.normal

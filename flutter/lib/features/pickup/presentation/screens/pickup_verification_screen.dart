@@ -52,8 +52,8 @@ class _PickupVerificationScreenState
 
     setState(() => _isLoading = true);
     try {
-      final provider = ref.read(appProvider);
-      final riderId = ref.watch(appProvider).riderId;
+      final provider = ref.read(riderProvider);
+      final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +105,7 @@ class _PickupVerificationScreenState
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: Spacing.paddingLg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

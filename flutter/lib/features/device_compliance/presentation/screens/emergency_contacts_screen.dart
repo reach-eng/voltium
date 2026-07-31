@@ -16,7 +16,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
     final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor: colors.surfaceAlt,
+      backgroundColor: colors.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -38,7 +38,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
       body: service.contacts.isEmpty
           ? _buildEmptyState(context)
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               itemCount: service.contacts.length,
               itemBuilder: (context, index) {
                 final contact = service.contacts[index];
@@ -183,14 +183,16 @@ class _ContactCard extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: contact.isPrimary
             ? Border.all(color: AppColors.primary, width: 2)
             : null,
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: contact.isPrimary ? AppColors.primary : Colors.grey,
+          backgroundColor: contact.isPrimary
+              ? AppColors.primary
+              : AppColors.onSurfaceVariant,
           child: Text(
             contact.name[0].toUpperCase(),
             style: GoogleFonts.plusJakartaSans(
@@ -218,7 +220,9 @@ class _ContactCard extends ConsumerWidget {
                 ),
                 child: Text(
                   'PRIMARY',
-                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
+                  style: AppTypography.labelSmall
+                      .copyWith(fontSize: 10)
+                      .copyWith(color: Colors.white),
                 ),
               ),
             ],
@@ -232,7 +236,7 @@ class _ContactCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.phone, color: Colors.green),
+              icon: const Icon(Icons.phone, color: AppColors.success),
               onPressed: onCall,
             ),
             PopupMenuButton(
@@ -252,11 +256,12 @@ class _ContactCard extends ConsumerWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      const Icon(Icons.delete, color: Colors.red, size: 20),
+                      const Icon(Icons.delete,
+                          color: AppColors.error, size: 20),
                       const SizedBox(width: 8),
                       Text('Delete',
-                          style:
-                              GoogleFonts.plusJakartaSans(color: Colors.red)),
+                          style: GoogleFonts.plusJakartaSans(
+                              color: AppColors.error)),
                     ],
                   ),
                 ),

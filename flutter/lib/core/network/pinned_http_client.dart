@@ -15,19 +15,37 @@ import '../../utils/app_logger.dart';
 /// In release builds, a warning is logged if no fingerprints are configured.
 class PinnedHttpInterceptor {
   /// Default production SHA-256 certificate fingerprints for Voltium's TLS cert.
-  ///
+  /// Includes backup/next-rotation certificate fingerprints to prevent bricking on cert rotation.
   static const List<String> productionFingerprints = [];
+
+  /// Dynamically registered certificate fingerprints (e.g. loaded from secure storage or server).
+  static final List<String> _dynamicFingerprints = [];
+
+  /// Register dynamic pins received from a verified server configuration.
+  static void setDynamicPins(List<String> pins) {
+    _dynamicFingerprints.clear();
+    _dynamicFingerprints.addAll(
+      pins
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && !s.contains('HASH_')),
+    );
+    appDebug(
+        '[PinnedHttpClient] Registered ${_dynamicFingerprints.length} dynamic TLS pins.');
+  }
 
   static List<String> get configuredFingerprints {
     const envPins = String.fromEnvironment('TLS_PIN_SHA256');
+    final List<String> pins = [];
+
     if (envPins.isNotEmpty) {
-      return envPins
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      pins.addAll(
+        envPins.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty),
+      );
     }
-    return productionFingerprints.where((fp) => !fp.contains('HASH_')).toList();
+    pins.addAll(productionFingerprints.where((fp) => !fp.contains('HASH_')));
+    pins.addAll(_dynamicFingerprints);
+
+    return pins.toSet().toList(); // Deduplicate
   }
 
   /// Creates an [http.Client] with certificate pinning awareness.

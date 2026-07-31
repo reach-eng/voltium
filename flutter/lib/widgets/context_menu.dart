@@ -138,12 +138,12 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
       },
       child: Material(
         elevation: 8,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         color: colors.card,
         child: Container(
           width: 240,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),
@@ -157,9 +157,9 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
             children: [
               if (widget.preview != null)
                 Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sm),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: widget.preview,
                   ),
                 ),
@@ -182,7 +182,7 @@ class _ContextMenuWidgetState extends State<_ContextMenuWidget>
         item.onTap?.call();
         widget.onDismiss();
       },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(

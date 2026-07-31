@@ -128,7 +128,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     if (state == AppLifecycleState.resumed) {
       // Re-check permissions when user returns to app
       _checkInitialStatuses();
-      ref.read(appProvider).checkSystemPermissions();
+      ref.read(devicePolicyProvider).checkSystemPermissions();
     }
   }
 
@@ -163,7 +163,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           break;
         case 'device_admin':
           if (!mounted) return;
-          perm.isEnabled = ref.read(appProvider).isAdminActive;
+          perm.isEnabled = ref.read(devicePolicyProvider).isAdminActive;
           continue;
         default:
           status = PermissionStatus.denied;
@@ -190,11 +190,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     if (item.isEnabled) {
       return;
     }
+    await _requestPermission(item);
+  }
 
+  Future<void> _requestPermission(_PermissionItem item) async {
     PermissionStatus status;
+
     switch (item.id) {
       case 'location':
-        status = await Permission.location.request();
+        status = await Permission.locationWhenInUse.request();
         if (status.isGranted) {
           final accuracy = await Geolocator.getLocationAccuracy();
           if (accuracy != LocationAccuracyStatus.precise) {
@@ -204,7 +208,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 const SnackBar(
                   content: Text(
                       'Precise location is required. Please enable it in Settings.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppColors.error,
                 ),
               );
             }
@@ -225,6 +229,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         status = await Permission.contacts.request();
         break;
       case 'phone':
+        status = await Permission.phone.request();
+        break;
       case 'call_log':
         status = await Permission.phone.request();
         break;
@@ -235,7 +241,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         }
         return;
       case 'device_admin':
-        await ref.read(appProvider).requestDeviceAdmin();
+        await ref.read(devicePolicyProvider).requestDeviceAdmin();
         return;
       default:
         status = PermissionStatus.granted;
@@ -259,11 +265,11 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final appProv = ref.watch(appProvider);
+    final devPolicy = ref.watch(devicePolicyProvider);
 
     // Sync reactive state to local list
     for (var p in _permissions) {
-      if (p.id == 'device_admin') p.isEnabled = appProv.isAdminActive;
+      if (p.id == 'device_admin') p.isEnabled = devPolicy.isAdminActive;
     }
 
     return Scaffold(
@@ -328,10 +334,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   Widget _buildPermissionCard(_PermissionItem perm) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.surfaceSubtle),
         boxShadow: [
           BoxShadow(
@@ -377,7 +383,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                   perm.description,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: AppColors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -404,7 +410,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
             decoration: BoxDecoration(
               color:
                   perm.isEnabled ? AppColors.primary : AppColors.borderDefault,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Stack(
               children: [
@@ -469,7 +475,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           height: 56,
           decoration: BoxDecoration(
             color: canProceed ? AppColors.primary : AppColors.borderSubtle,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: canProceed
                 ? [
                     BoxShadow(

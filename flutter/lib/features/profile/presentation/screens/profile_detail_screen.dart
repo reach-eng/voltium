@@ -141,7 +141,7 @@ class ProfileDetailScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -231,7 +231,7 @@ class ProfileDetailScreen extends ConsumerWidget {
               color: isVerified
                   ? AppColors.successLight
                   : AppColors.warningSurface,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               border: Border.all(
                 color: isVerified
                     ? AppColors.success.withValues(alpha: 0.2)
@@ -273,7 +273,7 @@ class ProfileDetailScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -420,7 +420,7 @@ class _EditProfileTile extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -433,7 +433,7 @@ class _EditProfileTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           key: const Key('editProfileLink'),
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

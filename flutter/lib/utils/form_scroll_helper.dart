@@ -48,7 +48,7 @@ class FormScrollHelper {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Please fix $fieldName'),
-        backgroundColor: AppColors.errorRedAlt,
+        backgroundColor: AppColors.error,
         duration: const Duration(seconds: 2),
       ),
     );

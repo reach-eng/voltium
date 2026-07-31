@@ -13,8 +13,8 @@ class NetworkStatusBanner extends StatefulWidget {
   const NetworkStatusBanner({
     super.key,
     required this.child,
-    this.onlineColor = AppColors.successGreen,
-    this.offlineColor = AppColors.errorRedAlt,
+    this.onlineColor = AppColors.success,
+    this.offlineColor = AppColors.error,
   });
 
   @override
@@ -89,7 +89,7 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.errorRedAlt,
+      color: AppColors.error,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(
@@ -113,7 +113,7 @@ class OnlineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.successGreen,
+      color: AppColors.success,
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
       child: Row(

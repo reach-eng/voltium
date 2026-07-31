@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voltium_rider/services/analytics_service.dart';
+import '../theme/app_theme.dart';
 
 /// A reusable error boundary widget that catches build-time errors
 /// in its child subtree and displays a friendly error screen.
@@ -112,7 +113,7 @@ class _ErrorFallback extends StatelessWidget {
             const Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red,
+              color: AppColors.error,
             ),
             const SizedBox(height: 16),
             Text(

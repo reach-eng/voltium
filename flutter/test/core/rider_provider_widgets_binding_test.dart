@@ -35,7 +35,8 @@ void main() {
       expect(state, isA<AppLifecycleState>());
     });
 
-    test('PollingManager.active / inactive flip state correctly (precondition)', () {
+    test('PollingManager.active / inactive flip state correctly (precondition)',
+        () {
       // Verify the PollingManager contract that R11 relies on.
       final m = PollingManager(onTick: () async {});
       m.start();

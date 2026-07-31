@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'shimmer_loading.dart';
+import '../theme/app_theme.dart';
 
 /// Collections of full-screen skeleton loaders that mirror the web app's layouts.
 /// This ensures 1:1 visual parity during data fetching.
@@ -283,7 +284,7 @@ class SupportSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.md),
       child: SingleChildScrollView(
         child: Column(
           children: [
@@ -343,7 +344,7 @@ class PickupHubSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: [
           // Search bar
@@ -438,7 +439,7 @@ class PlansSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
       physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: [
           // Header
@@ -468,7 +469,7 @@ class GuarantorSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
       physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -501,7 +502,7 @@ class KycSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SingleChildScrollView(
       physics: NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -552,7 +553,7 @@ class NotificationSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: List.generate(
           5,

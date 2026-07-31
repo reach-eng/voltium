@@ -1,16 +1,5 @@
-import 'dart:async';
-import 'package:universal_io/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/models/support_model.dart';
-import 'package:voltium_rider/models/transaction_model.dart';
-import 'package:voltium_rider/models/reward_model.dart';
-import 'package:voltium_rider/models/notification_model.dart';
-import 'package:voltium_rider/services/voltium_api_service.dart';
-import 'package:voltium_rider/services/performance_service.dart';
-import 'package:voltium_rider/services/fcm_service.dart';
-import 'package:voltium_rider/app/app_state.dart';
-export 'rider_provider.dart' show DataState;
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
@@ -18,281 +7,72 @@ import 'package:voltium_rider/features/dashboard/presentation/providers/engageme
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
-import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/features/profile/data/repository_impl.dart';
+import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
+import 'package:voltium_rider/features/support/data/repository_impl.dart';
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 
-import 'package:voltium_rider/features/profile/data/repository_impl.dart';
-import 'package:voltium_rider/features/support/data/repository_impl.dart';
-import 'package:voltium_rider/features/rentals/data/repository_impl.dart';
+RiderProvider _createDefaultRiderProvider() {
+  final client = ApiClient();
+  final vClient = VoltiumApiClient(client);
+  return RiderProvider(
+    riderRepository: RiderRepositoryImpl(client, vClient),
+    rentalRepository: RentalRepositoryImpl(vClient),
+    filesRepository: FilesRepository(client, vClient),
+  );
+}
 
-/// Composite provider that orchestrates all domain providers.
+WalletProvider _createDefaultWalletProvider() {
+  final client = ApiClient();
+  final vClient = VoltiumApiClient(client);
+  return WalletProvider(
+    walletRepository: WalletRepositoryImpl(client, vClient),
+    filesRepository: FilesRepository(client, vClient),
+  );
+}
+
+SupportProvider _createDefaultSupportProvider() {
+  final client = ApiClient();
+  final vClient = VoltiumApiClient(client);
+  return SupportProvider(repository: SupportRepositoryImpl(vClient));
+}
+
+/// Compatibility facade layer for AppProvider (PR-L / Ticket #65).
 ///
-/// Provides backward-compatible delegation so existing screens using
-/// `context.read<AppProvider>().rider` continue to work without changes.
-/// New screens should prefer the specific domain providers directly:
-/// `context.read<RiderProvider>()`, `context.read<WalletProvider>()`, etc.
+/// Unblocks `flutter analyze` and tests that transitively import [AppProvider].
+/// New code should prefer reading individual Riverpod providers or [RiderModel] directly.
 class AppProvider extends ChangeNotifier {
-  late final ApiClient apiClient;
-  late final VoltiumApiClient voltiumApiClient;
-  late final FilesRepository filesRepository;
+  final RiderModel? _rider;
+  final RiderProvider riderProvider;
+  final WalletProvider walletProvider;
+  final SupportProvider supportProvider;
+  final EngagementProvider engagementProvider;
+  final DevicePolicyProvider devicePolicyProvider;
+  final ConnectivityProvider connectivityProvider;
 
-  AppProvider({String? riderId, String? phone, ApiClient? injectedApiClient}) {
-    apiClient = injectedApiClient ?? ApiClient();
-    voltiumApiClient = VoltiumApiClient(apiClient);
-    filesRepository = FilesRepository(apiClient, voltiumApiClient);
-    final walletRepository = WalletRepositoryImpl(apiClient, voltiumApiClient);
-    final riderRepository = RiderRepositoryImpl(apiClient, voltiumApiClient);
-    final supportRepository = SupportRepositoryImpl(voltiumApiClient);
-    final rentalRepository = RentalRepositoryImpl(voltiumApiClient);
+  AppProvider({
+    RiderModel? rider,
+    RiderProvider? riderProvider,
+    WalletProvider? walletProvider,
+    SupportProvider? supportProvider,
+    EngagementProvider? engagementProvider,
+    DevicePolicyProvider? devicePolicyProvider,
+    ConnectivityProvider? connectivityProvider,
+  })  : _rider = rider,
+        riderProvider = riderProvider ?? _createDefaultRiderProvider(),
+        walletProvider = walletProvider ?? _createDefaultWalletProvider(),
+        supportProvider = supportProvider ?? _createDefaultSupportProvider(),
+        engagementProvider = engagementProvider ?? EngagementProvider(),
+        devicePolicyProvider = devicePolicyProvider ?? DevicePolicyProvider(),
+        connectivityProvider = connectivityProvider ?? ConnectivityProvider();
 
-    riderProvider = RiderProvider(
-      riderId: riderId,
-      phone: phone,
-      riderRepository: riderRepository,
-      rentalRepository: rentalRepository,
-      filesRepository: filesRepository,
-    );
-    walletProvider = WalletProvider(
-      walletRepository: walletRepository,
-      filesRepository: filesRepository,
-    );
-    supportProvider = SupportProvider(repository: supportRepository);
-    engagementProvider = EngagementProvider();
-    devicePolicyProvider = DevicePolicyProvider();
-    connectivityProvider = ConnectivityProvider();
-  }
+  bool get isReady => _rider != null;
+  bool get isOnboarded => _rider?.pickupDone ?? false;
+  bool get isPickupDone => _rider?.isPickupDone ?? false;
+  bool get isRegistrationDone => _rider?.registrationDone ?? false;
+  String? get lifecycleStatus => _rider?.lifecycleStatus;
 
-  late final RiderProvider riderProvider;
-  late final WalletProvider walletProvider;
-  late final SupportProvider supportProvider;
-  late final EngagementProvider engagementProvider;
-  late final DevicePolicyProvider devicePolicyProvider;
-  late final ConnectivityProvider connectivityProvider;
-  bool _initStarted = false;
-
-  // ── Backward-compatible delegating getters ────────────────────────────────
-
-  RiderModel? get rider => riderProvider.rider;
-  String? get riderId => riderProvider.riderId;
-  DataState get dataState => riderProvider.dataState;
-  String? get errorMessage => riderProvider.errorMessage;
-  bool get isRefreshing => riderProvider.isRefreshing;
-  bool get hasFetchedOnce => riderProvider.hasFetchedOnce;
-  bool get isPlanActive => riderProvider.isPlanActive;
-  bool get isKycDone => riderProvider.isKycDone;
-  bool get isActuallyActive => riderProvider.isActuallyActive;
-
-  List<TransactionModel> get transactions => walletProvider.transactions;
-  bool get isRefreshingTransactions => walletProvider.isRefreshingTransactions;
-  bool get isToppingUp => walletProvider.isToppingUp;
-  double get walletMinTopup => walletProvider.walletMinTopup;
-  bool get walletBalanceLow => walletProvider.walletBalanceLow;
-  double get currentBalance => walletProvider.currentBalance;
-
-  SupportConfig? get supportConfig => supportProvider.supportConfig;
-  List<FaqCategory> get faqCategories => supportProvider.faqCategories;
-  List<FaqItem> get faqs => supportProvider.faqs;
-  List<IssueModel> get tickets => supportProvider.tickets;
-  bool get isRefreshingTickets => supportProvider.isRefreshingTickets;
-
-  int get rewardPoints => engagementProvider.rewardPoints;
-  int get paymentStreak => engagementProvider.paymentStreak;
-  List<RewardItem> get rewards => engagementProvider.rewards;
-  Map<String, dynamic>? get referralData => engagementProvider.referralData;
-  List<AppNotification> get notifications => engagementProvider.notifications;
-
-  bool get isAdminActive => devicePolicyProvider.isAdminActive;
-  bool get lockedByAdmin => devicePolicyProvider.lockedByAdmin;
-
-  bool get forceUpdate => devicePolicyProvider.forceUpdate;
-  String? get mandatoryUpdateUrl => devicePolicyProvider.mandatoryUpdateUrl;
-  bool get hasPermissionViolation =>
-      devicePolicyProvider.hasPermissionViolation;
-  String? get violationPermissionId =>
-      devicePolicyProvider.violationPermissionId;
-
-  bool get isOnline => connectivityProvider.isOnline;
-  int get pendingSyncCount => connectivityProvider.pendingSyncCount;
-
-  // ── Initialization ────────────────────────────────────────────────────────
-
-  Future<void> init() async {
-    if (_initStarted) return;
-    _initStarted = true;
-
-    PerformanceService().startTrace('AppProvider_Init');
-
-    await riderProvider.init();
-    supportProvider.initSupportData();
-    engagementProvider.initEngagementData();
-    await devicePolicyProvider.checkSystemPermissions();
-
-    if (rider != null) {
-      // Re-identify the returning user for PostHog analytics
-      if (rider!.id != null) {
-        await PostHogService.identify(rider!.id!, properties: {
-          'phone': rider!.phone,
-        });
-      }
-
-      if (!rider!.pickupDone) {
-        riderProvider.startOnboardingPoll();
-      }
-    }
-    if (rider != null && Platform.isAndroid) {
-      devicePolicyProvider.startSecurityFlagsPoll(
-        riderId: riderProvider.riderId ?? rider!.id ?? '',
-      );
-      devicePolicyProvider.startIntegrityCheck();
-    }
-
-    await _refreshSupportingData();
-    PerformanceService().stopTrace('AppProvider_Init');
-  }
-
-  Future<void> _refreshSupportingData() async {
-    await engagementProvider.refreshRewards();
-    await engagementProvider.refreshReferrals();
-    await supportProvider.refreshFaqs();
-
-    try {
-      final settingsResponse = await VoltiumApiService().fetchSettings();
-      if (settingsResponse['success'] == true) {
-        final settings =
-            settingsResponse['data']?['settings'] as Map<String, dynamic>?;
-        if (settings != null) {
-          final minTopup =
-              (settings['walletMinTopup'] ?? settings['securityDeposit'] ?? 0.0)
-                  .toDouble();
-          walletProvider.setWalletSettings(minTopup);
-        }
-      }
-    } catch (e) {
-      debugPrint('AppProvider: Failed to fetch settings: $e');
-    }
-  }
-
-  AuthState routeAfterLogin(RiderModel r) => riderProvider.routeAfterLogin(r);
-  void setRiderId(String id, {String? phoneNumber}) =>
-      riderProvider.setRiderId(id, phoneNumber: phoneNumber);
-  void setRider(RiderModel r) => riderProvider.setRider(r);
-  void updateRider(RiderModel updated) => riderProvider.updateRider(updated);
-
-  Future<bool> submitVehicleReturn({
-    required List<File> photos,
-    String? reason,
-  }) =>
-      riderProvider.submitVehicleReturn(photos: photos, reason: reason);
-
-  Future<void> refresh() => riderProvider.refresh();
-  Future<void> refreshFromApi() async {
-    await riderProvider.refreshFromApi();
-    final rId = riderProvider.riderId ?? rider?.id;
-    if (rId != null) {
-      await walletProvider.refreshTransactions(riderId: rId);
-    }
-  }
-
-  Future<void> logout() async {
-    await PostHogService.reset();
-    await apiClient.storage.clearSession();
-    riderProvider.logout();
-    walletProvider.logout();
-    supportProvider.logout();
-    engagementProvider.logout();
-    devicePolicyProvider.logout();
-    connectivityProvider.logout();
-  }
-
-  void setWalletBalanceWarning(bool low, {double balance = 0.0}) =>
-      walletProvider.setWalletBalanceWarning(low, balance: balance);
-
-  Future<void> topUpWallet({
-    required double amount,
-    required String method,
-    String? upiRef,
-    File? image,
-    String? screenshotUrl,
-    String purpose = 'TOP_UP',
-  }) =>
-      walletProvider.topUpWallet(
-        amount: amount,
-        method: method,
-        upiRef: upiRef,
-        image: image,
-        screenshotUrl: screenshotUrl,
-        purpose: purpose,
-        riderId: riderProvider.riderId ?? rider?.id ?? '',
-      );
-
-  Future<void> deleteTransactionHistory() =>
-      walletProvider.deleteTransactionHistory(
-        riderId: riderProvider.riderId ?? rider?.id ?? '',
-      );
-
-  Future<void> refreshTransactions() => walletProvider.refreshTransactions(
-        riderId: riderProvider.riderId ?? rider?.id ?? '',
-      );
-
-  Future<void> createTicket({
-    required String category,
-    required String subject,
-    required String message,
-  }) =>
-      supportProvider.createTicket(
-        category: category,
-        subject: subject,
-        message: message,
-        riderId: riderProvider.riderId ?? rider?.id,
-      );
-
-  Future<void> refreshTickets() => supportProvider.refreshTickets(
-        riderId: riderProvider.riderId ?? rider?.id,
-      );
-
-  Future<void> refreshEngagementData() async =>
-      engagementProvider.initEngagementData();
-  void markNotificationAsRead(String id) =>
-      engagementProvider.markNotificationAsRead(id);
-  void markAllNotificationsRead() =>
-      engagementProvider.markAllNotificationsRead();
-
-  Future<void> checkSystemPermissions() =>
-      devicePolicyProvider.checkSystemPermissions();
-  void setForceUpdate(bool force, {String? url}) =>
-      devicePolicyProvider.setForceUpdate(force, url: url);
-  void setLockedByAdmin(bool locked) =>
-      devicePolicyProvider.setLockedByAdmin(locked);
-  Future<void> requestDeviceAdmin() =>
-      devicePolicyProvider.requestDeviceAdmin();
-  void startIntegrityCheck() => devicePolicyProvider.startIntegrityCheck();
-  void clearViolation() => devicePolicyProvider.clearViolation();
-
-  void setOnline(bool online) => connectivityProvider.setOnline(online);
-  void setPendingSyncCount(int count) =>
-      connectivityProvider.setPendingSyncCount(count);
-
-  Future<void> registerFcmToken() => riderProvider.registerFcmToken();
-
-  @override
-  void dispose() {
-    unawaited(FCMService.dispose());
-
-    riderProvider.removeListener(notifyListeners);
-    walletProvider.removeListener(notifyListeners);
-    supportProvider.removeListener(notifyListeners);
-    engagementProvider.removeListener(notifyListeners);
-    devicePolicyProvider.removeListener(notifyListeners);
-    connectivityProvider.removeListener(notifyListeners);
-
-    riderProvider.dispose();
-    walletProvider.dispose();
-    supportProvider.dispose();
-    engagementProvider.dispose();
-    devicePolicyProvider.dispose();
-    connectivityProvider.dispose();
-    super.dispose();
-  }
+  RiderModel? get rider => _rider;
 }

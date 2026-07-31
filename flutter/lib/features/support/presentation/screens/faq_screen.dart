@@ -331,7 +331,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
       padding: Spacing.paddingLg,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: Column(

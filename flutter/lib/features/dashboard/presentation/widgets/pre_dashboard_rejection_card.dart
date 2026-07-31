@@ -37,7 +37,7 @@ class PreDashboardKycRejectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.errorRose,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: AppColors.errorBorder, width: 1.5),
       ),
       child: Padding(

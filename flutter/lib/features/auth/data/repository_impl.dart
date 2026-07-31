@@ -24,6 +24,16 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<VerifyOtpResult> verifyOtp(String phone, String otp) async {
     final request = VerifyOtpRequest(phone: phone, otp: otp);
     final response = await _apiClient.postAuthVerifyOtp(request);
+
+    final token = response.token;
+    if (!PlatformInfo.isWeb && token != null && token.isNotEmpty) {
+      await SecureStorageService().setToken(token);
+      final refreshToken = response.refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await SecureStorageService().setRefreshToken(refreshToken);
+      }
+    }
+
     // Persist the FCM command secret (BLOCKER 1.1) so subsequent
     // SECURITY_COMMAND FCM messages (ADMIN_LOCK etc.) can be HMAC-verified.
     // Web is excluded because FCM is mobile-only.
@@ -34,8 +44,10 @@ class AuthRepositoryImpl implements AuthRepository {
     return VerifyOtpResult(
       riderId: response.riderId ?? '',
       token: response.token ?? '',
+      refreshToken: response.refreshToken ?? '',
       isNewRider: response.isNewRider ?? false,
       fcmCommandSecret: secret ?? '',
+      rawJson: response.toJson(),
     );
   }
 

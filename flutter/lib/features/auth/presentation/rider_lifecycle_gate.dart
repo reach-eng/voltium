@@ -43,7 +43,8 @@ class RiderLifecycleGate {
   static LifecycleTarget redirect(RiderModel rider) {
     // Account status overrides everything
     if (rider.accountStatus == AccountStatus.terminated ||
-        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 13)) {
+        rider.lifecycleStatus == 'TERMINATED' ||
+        (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 14)) {
       return LifecycleTarget.terminated;
     }
     if (rider.accountStatus == AccountStatus.suspended ||

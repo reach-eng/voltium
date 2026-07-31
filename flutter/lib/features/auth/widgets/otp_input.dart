@@ -99,14 +99,14 @@ class _OtpInputState extends State<OtpInput> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultDecoration = BoxDecoration(
-      color: isDark ? AppColors.slate800 : Colors.grey[100],
-      borderRadius: BorderRadius.circular(12),
+      color: isDark ? AppColors.slate800 : AppColors.iconBackground,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: Colors.transparent),
     );
     final focused = widget.focusedDecoration ??
         BoxDecoration(
           color: isDark ? AppColors.slate800 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: [
             BoxShadow(
@@ -118,9 +118,9 @@ class _OtpInputState extends State<OtpInput> {
         );
     final errorDecoration = widget.errorDecoration ??
         BoxDecoration(
-          color: isDark ? AppColors.slate800 : Colors.red[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red, width: 2),
+          color: isDark ? AppColors.slate800 : AppColors.errorLight,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.error, width: 2),
         );
 
     return Column(
@@ -177,7 +177,7 @@ class _OtpInputState extends State<OtpInput> {
           Text(
             _error!,
             style: GoogleFonts.plusJakartaSans(
-              color: Colors.red,
+              color: AppColors.error,
               fontSize: 12,
             ),
           ),

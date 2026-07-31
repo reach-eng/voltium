@@ -9,6 +9,7 @@ class DepositRecord {
   final int amountInPaise;
   final DepositStatus status;
   final String? rejectionReason;
+  final String? proofUrl;
   final DateTime createdAt;
   final DateTime? approvedAt;
 
@@ -17,6 +18,7 @@ class DepositRecord {
     required this.amountInPaise,
     required this.status,
     this.rejectionReason,
+    this.proofUrl,
     required this.createdAt,
     this.approvedAt,
   });

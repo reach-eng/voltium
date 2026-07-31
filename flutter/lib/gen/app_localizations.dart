@@ -3039,11 +3039,11 @@ abstract class AppLocalizations {
   /// **'Workflow & Services'**
   String get menu_workflowServices;
 
-  /// Controls menu link label
+  /// App Settings menu link label
   ///
   /// In en, this message translates to:
-  /// **'Controls'**
-  String get menu_controls;
+  /// **'App Settings'**
+  String get menu_appSettings;
 
   /// Language menu link label
   ///
@@ -3063,89 +3063,101 @@ abstract class AppLocalizations {
   /// **'Emergency SOS'**
   String get menu_emergencySos;
 
-  /// Controls screen AppBar title
-  ///
-  /// In en, this message translates to:
-  /// **'Controls'**
-  String get controls_title;
-
   /// Preferences section header
   ///
   /// In en, this message translates to:
   /// **'PREFERENCES'**
-  String get controls_preferences;
+  String get settings_preferences;
 
   /// Dark mode toggle label
   ///
   /// In en, this message translates to:
   /// **'Dark Mode'**
-  String get controls_darkMode;
+  String get settings_darkMode;
 
   /// Support section header
   ///
   /// In en, this message translates to:
   /// **'SUPPORT & LEGAL'**
-  String get controls_supportLegal;
+  String get settings_supportLegal;
 
   /// Feedback link label
   ///
   /// In en, this message translates to:
   /// **'Feedback'**
-  String get controls_feedback;
+  String get settings_feedback;
 
   /// Legal link label
   ///
   /// In en, this message translates to:
   /// **'Legal'**
-  String get controls_legal;
+  String get settings_legal;
 
   /// About section header
   ///
   /// In en, this message translates to:
   /// **'ABOUT'**
-  String get controls_about;
+  String get settings_about;
 
   /// App version label
   ///
   /// In en, this message translates to:
   /// **'App Version'**
-  String get controls_appVersion;
+  String get settings_appVersion;
 
   /// Rate us link label
   ///
   /// In en, this message translates to:
   /// **'Rate Us'**
-  String get controls_rateUs;
+  String get settings_rateUs;
 
-  /// Account section header in controls
+  /// Account section header in settings
   ///
   /// In en, this message translates to:
   /// **'ACCOUNT'**
-  String get controls_accountSection;
+  String get settings_accountSection;
 
   /// Delete account confirmation dialog title
   ///
   /// In en, this message translates to:
   /// **'Delete Account'**
-  String get controls_deleteConfirmTitle;
+  String get settings_deleteConfirmTitle;
 
   /// Delete account confirmation dialog body
   ///
   /// In en, this message translates to:
   /// **'This action is irreversible. All your data, including KYC documents, wallet balance, and rental history will be permanently deleted. Are you sure?'**
-  String get controls_deleteConfirmBody;
+  String get settings_deleteConfirmBody;
 
   /// Delete button label in confirmation dialog
   ///
   /// In en, this message translates to:
   /// **'Delete'**
-  String get controls_delete;
+  String get settings_delete;
 
   /// Snackbar message when delete is not available
   ///
   /// In en, this message translates to:
   /// **'Account deletion is not yet available. Please contact support.'**
-  String get controls_deleteNotAvailable;
+  String get settings_deleteNotAvailable;
+
+  /// Notifications toggle label
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settings_notifications;
+
+  /// Change phone number row in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Change Phone Number'**
+  String get settings_changePhone;
+
+  /// Generic coming-soon snackbar title
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get settings_comingSoon;
 }
 
 class _AppLocalizationsDelegate

@@ -1576,7 +1576,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get menu_workflowServices => 'वर्कफ़्लो और सेवाएं';
 
   @override
-  String get menu_controls => 'कंट्रोल्स';
+  String get menu_appSettings => 'ऐप सेटिंग्स';
 
   @override
   String get menu_language => 'भाषा';
@@ -1588,46 +1588,52 @@ class AppLocalizationsHi extends AppLocalizations {
   String get menu_emergencySos => 'आपातकालीन SOS';
 
   @override
-  String get controls_title => 'कंट्रोल्स';
+  String get settings_preferences => 'प्राथमिकताएं';
 
   @override
-  String get controls_preferences => 'प्राथमिकताएं';
+  String get settings_darkMode => 'डार्क मोड';
 
   @override
-  String get controls_darkMode => 'डार्क मोड';
+  String get settings_supportLegal => 'सहायता और कानूनी';
 
   @override
-  String get controls_supportLegal => 'सहायता और कानूनी';
+  String get settings_feedback => 'प्रतिक्रिया';
 
   @override
-  String get controls_feedback => 'प्रतिक्रिया';
+  String get settings_legal => 'कानूनी';
 
   @override
-  String get controls_legal => 'कानूनी';
+  String get settings_about => 'के बारे में';
 
   @override
-  String get controls_about => 'के बारे में';
+  String get settings_appVersion => 'ऐप संस्करण';
 
   @override
-  String get controls_appVersion => 'ऐप संस्करण';
+  String get settings_rateUs => 'हमें रेट करें';
 
   @override
-  String get controls_rateUs => 'हमें रेट करें';
+  String get settings_accountSection => 'खाता';
 
   @override
-  String get controls_accountSection => 'खाता';
+  String get settings_deleteConfirmTitle => 'खाता हटाएं';
 
   @override
-  String get controls_deleteConfirmTitle => 'खाता हटाएं';
-
-  @override
-  String get controls_deleteConfirmBody =>
+  String get settings_deleteConfirmBody =>
       'यह क्रिया अपरिवर्तनीय है। आपका सारा डेटा, जिसमें KYC दस्तावेज़, वॉलेट बैलेंस और किराया इतिहास शामिल है, स्थायी रूप से हटा दिया जाएगा। क्या आप निश्चित हैं?';
 
   @override
-  String get controls_delete => 'हटाएं';
+  String get settings_delete => 'हटाएं';
 
   @override
-  String get controls_deleteNotAvailable =>
+  String get settings_deleteNotAvailable =>
       'खाता हटाना अभी उपलब्ध नहीं है। कृपया सपोर्ट से संपर्क करें।';
+
+  @override
+  String get settings_notifications => 'सूचनाएं';
+
+  @override
+  String get settings_changePhone => 'फ़ोन नंबर बदलें';
+
+  @override
+  String get settings_comingSoon => 'जल्द आ रहा है';
 }

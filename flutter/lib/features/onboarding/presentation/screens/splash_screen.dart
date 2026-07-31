@@ -117,7 +117,8 @@ class _SplashScreenState extends State<SplashScreen>
                           width: 128,
                           height: 128,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
+                            borderRadius: BorderRadius.circular(
+                                AppRadius.radiusBottomSheet),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.primaryLight
@@ -128,7 +129,8 @@ class _SplashScreenState extends State<SplashScreen>
                             ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.xxl),
+                            borderRadius: BorderRadius.circular(
+                                AppRadius.radiusBottomSheet),
                             child: Image.asset(
                               'assets/logo.png',
                               width: 128,

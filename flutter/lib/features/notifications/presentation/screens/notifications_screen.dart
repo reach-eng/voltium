@@ -488,7 +488,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
             width: 80,
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),

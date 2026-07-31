@@ -48,7 +48,7 @@ class GuarantorDetailsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -448,7 +448,7 @@ class GuarantorIdentityVerificationCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -549,7 +549,7 @@ class GuarantorVideoProofCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -643,7 +643,7 @@ class GuarantorSignatureCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),

@@ -334,8 +334,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                   color: isSelected
                                       ? AppColors.primary
                                       : Colors.white,
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.xl),
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.radiusModal),
                                   border: Border.all(
                                     color: isSelected
                                         ? Colors.transparent
@@ -654,8 +654,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 18),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.xl),
+                                  borderRadius: BorderRadius.circular(
+                                      AppRadius.radiusModal),
                                 ),
                                 elevation: 0,
                               ),

@@ -50,7 +50,7 @@ class PersonalDetailsCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -354,7 +354,7 @@ class IdentityVerificationCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -566,7 +566,7 @@ class SelfieCard extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: colors.onSurface.withValues(alpha: 0.04),
@@ -615,7 +615,8 @@ class SelfieCard extends StatelessWidget {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: colors.card,
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.radiusModal),
                         ),
                         child: Icon(
                           Icons.photo_camera,
@@ -700,7 +701,7 @@ class SignatureCard extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
             boxShadow: [
               BoxShadow(
                 color: colors.onSurface.withValues(alpha: 0.04),

@@ -24,7 +24,7 @@ class _SupportChecklistScreenState
   void initState() {
     super.initState();
     final checklist =
-        ref.read(appProvider).supportConfig?.ticketChecklist ?? [];
+        ref.read(supportProvider).supportConfig?.ticketChecklist ?? [];
     _checkedItems = List<bool>.filled(checklist.length, false);
   }
 
@@ -32,7 +32,7 @@ class _SupportChecklistScreenState
 
   @override
   Widget build(BuildContext context) {
-    final provider = ref.watch(appProvider);
+    final provider = ref.watch(supportProvider);
     final checklist = provider.supportConfig?.ticketChecklist ?? [];
 
     return Scaffold(
@@ -51,14 +51,16 @@ class _SupportChecklistScreenState
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: Spacing.paddingLg,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'PLEASE VERIFY',
-                      style: AppTypography.bodySmallStrong.copyWith(
-                          color: AppColors.slate500, letterSpacing: 1.0),
+                      style: AppTypography.bodySmall
+                          .copyWith(fontWeight: FontWeight.w800)
+                          .copyWith(
+                              color: AppColors.slate500, letterSpacing: 1.0),
                     ),
                     SizedBox(height: 16),
                     Text(
@@ -91,7 +93,7 @@ class _SupportChecklistScreenState
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -112,7 +114,8 @@ class _SupportChecklistScreenState
           style: AppTypography.bodyMedium.copyWith(color: AppColors.slate800),
         ),
         activeColor: AppColors.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg)),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
@@ -121,7 +124,7 @@ class _SupportChecklistScreenState
 
   Widget _buildActionButtons() {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: Spacing.paddingLg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -139,7 +142,7 @@ class _SupportChecklistScreenState
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
               ),
               elevation: _allChecked ? 4 : 0,
               disabledBackgroundColor: AppColors.borderMedium,
@@ -153,8 +156,10 @@ class _SupportChecklistScreenState
           SizedBox(height: 12),
           Text(
             'Keep checking all items to proceed',
-            style: AppTypography.bodySmallEmphasis.copyWith(
-                color: _allChecked ? Colors.transparent : Colors.redAccent),
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w600)
+                .copyWith(
+                    color: _allChecked ? Colors.transparent : AppColors.error),
           ),
         ],
       ),

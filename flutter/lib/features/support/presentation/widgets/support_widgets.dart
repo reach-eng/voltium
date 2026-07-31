@@ -85,7 +85,7 @@ class RaiseTicketCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusBottomSheet),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.2),
@@ -344,7 +344,7 @@ class TicketListItem extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),

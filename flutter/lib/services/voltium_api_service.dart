@@ -30,31 +30,6 @@ class VoltiumApiService {
         _apiClient = VoltiumApiClient(client),
         _filesRepository = FilesRepository(client, VoltiumApiClient(client));
 
-  Future<Map<String, dynamic>> sendOtp({
-    required String phone,
-    String? referralCode,
-  }) async {
-    final response = await _apiClient.postAuthSendOtp(
-      gen.SendOtpRequest(
-        phone: phone,
-      ),
-    );
-    return response.toJson();
-  }
-
-  Future<Map<String, dynamic>> verifyOtp({
-    required String phone,
-    required String otp,
-  }) async {
-    final response = await _apiClient.postAuthVerifyOtp(
-      gen.VerifyOtpRequest(
-        phone: phone,
-        otp: otp,
-      ),
-    );
-    return response.toJson();
-  }
-
   Future<Map<String, dynamic>> verifyPhone({
     required String phone,
     required String otp,
@@ -136,11 +111,13 @@ class VoltiumApiService {
     required String hubId,
     required String planId,
     required double securityDeposit,
+    bool advanceRentPaid = false,
   }) async {
     return _apiClient.postRiderPlans({
       'hubId': hubId,
       'planId': planId,
       'securityDeposit': securityDeposit,
+      'advanceRentPaid': advanceRentPaid,
     });
   }
 

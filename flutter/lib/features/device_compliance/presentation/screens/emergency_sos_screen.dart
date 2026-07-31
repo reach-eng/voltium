@@ -21,7 +21,7 @@ class EmergencySOSScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider.select((p) => p.rider));
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
     final emergencyContact = rider?.emergencyContact;
 
     return Scaffold(
@@ -64,7 +64,7 @@ class EmergencySOSScreen extends ConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -99,7 +99,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 48,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 2,
                     ),
                   ),
@@ -120,7 +120,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                 icon: Icons.person,
                 title: 'My Emergency Contact',
                 number: emergencyContact.toString(),
-                color: AppColors.errorRed,
+                color: AppColors.error,
                 isFullWidth: true,
                 onTap: () => _callNumber(emergencyContact.toString()),
               ),
@@ -133,7 +133,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                     icon: Icons.local_police,
                     title: 'Police',
                     number: '100',
-                    color: Colors.blue,
+                    color: AppColors.primary,
                     onTap: () => _callNumber('100'),
                   ),
                 ),
@@ -143,7 +143,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                     icon: Icons.local_hospital,
                     title: 'Ambulance',
                     number: '108',
-                    color: Colors.red,
+                    color: AppColors.error,
                     onTap: () => _callNumber('108'),
                   ),
                 ),
@@ -175,10 +175,10 @@ class EmergencySOSScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),

@@ -370,7 +370,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             width: 80,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),

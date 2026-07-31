@@ -57,8 +57,8 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
           ),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md)),
         ),
       );
     }
@@ -121,7 +121,7 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen>
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadius.radiusModal),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),

@@ -75,7 +75,7 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
     final l10n = AppLocalizations.of(context)!;
 
     const vfBlue = AppColors.primary;
-    const vfBlueLight = AppColors.primaryLighter;
+    const vfBlueLight = AppColors.primaryLight;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -89,7 +89,7 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
               height: 48,
               decoration: BoxDecoration(
                 color: vfBlueLight.withValues(alpha: 0.35),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Stack(
                 children: [

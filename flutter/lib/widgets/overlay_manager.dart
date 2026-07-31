@@ -5,7 +5,8 @@ import 'locked_overlay.dart';
 import 'permission_guard.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -17,32 +18,35 @@ class OverlayManager extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final provider = ref.watch(appProvider);
+    final devPolicy = ref.watch(devicePolicyProvider);
+    final wallet = ref.watch(walletProvider);
 
     return Stack(
       children: [
         child,
-        if (provider.lockedByAdmin) _buildAdminLockOverlay(context, provider),
-        if (provider.forceUpdate && !provider.lockedByAdmin)
-          _buildForceUpdateOverlay(context, provider),
-        if (provider.hasPermissionViolation &&
-            !provider.lockedByAdmin &&
-            !provider.forceUpdate)
+        if (devPolicy.lockedByAdmin) _buildAdminLockOverlay(context, devPolicy),
+        if (devPolicy.forceUpdate && !devPolicy.lockedByAdmin)
+          _buildForceUpdateOverlay(context, devPolicy),
+        if (devPolicy.hasPermissionViolation &&
+            !devPolicy.lockedByAdmin &&
+            !devPolicy.forceUpdate)
           const PermissionGuard(),
-        if (provider.walletBalanceLow &&
-            !provider.lockedByAdmin &&
-            !provider.forceUpdate &&
-            !provider.hasPermissionViolation)
-          _buildBalanceBanner(context, provider),
+        if (wallet.walletBalanceLow &&
+            !devPolicy.lockedByAdmin &&
+            !devPolicy.forceUpdate &&
+            !devPolicy.hasPermissionViolation)
+          _buildBalanceBanner(context, wallet),
       ],
     );
   }
 
-  Widget _buildAdminLockOverlay(BuildContext context, AppProvider provider) {
+  Widget _buildAdminLockOverlay(
+      BuildContext context, DevicePolicyProvider provider) {
     return const LockedOverlay();
   }
 
-  Widget _buildForceUpdateOverlay(BuildContext context, AppProvider provider) {
+  Widget _buildForceUpdateOverlay(
+      BuildContext context, DevicePolicyProvider provider) {
     final colors = AppColors.of(context);
     return Container(
       color: Colors.black87,
@@ -51,25 +55,25 @@ class OverlayManager extends ConsumerWidget {
       child: Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 32),
-          padding: const EdgeInsets.all(24),
+          padding: Spacing.paddingLg,
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
                 Icons.system_update_rounded,
-                color: Colors.blue,
+                color: AppColors.primary,
                 size: 64,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'Update Required',
                 style: AppTypography.titleLarge,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 'A critical update is required to continue using the app. This version is no longer supported.',
                 textAlign: TextAlign.center,
@@ -83,11 +87,11 @@ class OverlayManager extends ConsumerWidget {
                   onPressed: () =>
                       _launchUpdateUrl(provider.mandatoryUpdateUrl),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   child: const Text('UPDATE NOW'),
@@ -100,7 +104,7 @@ class OverlayManager extends ConsumerWidget {
     );
   }
 
-  Widget _buildBalanceBanner(BuildContext context, AppProvider provider) {
+  Widget _buildBalanceBanner(BuildContext context, WalletProvider provider) {
     return Positioned(
       top: 0,
       left: 0,
@@ -109,11 +113,11 @@ class OverlayManager extends ConsumerWidget {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            margin: const EdgeInsets.all(12),
+            margin: const EdgeInsets.all(Spacing.sm),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.orange.shade800,
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.warningDark,
+              borderRadius: BorderRadius.circular(AppRadius.md),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.2),

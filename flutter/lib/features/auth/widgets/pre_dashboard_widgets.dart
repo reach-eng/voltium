@@ -203,7 +203,7 @@ class PreDashboardProfileCard extends StatelessWidget {
             padding: Spacing.paddingLg,
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -333,7 +333,7 @@ class PreDashboardProfileCard extends StatelessWidget {
               padding: Spacing.paddingLg,
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
+                borderRadius: BorderRadius.circular(AppRadius.radiusModal),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.02),
@@ -444,7 +444,7 @@ class RejectionCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.errorRose,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: AppColors.errorBorder, width: 1.5),
       ),
       child: Padding(
@@ -592,7 +592,7 @@ class PreDashboardCtaCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: gradientColors.first.withValues(alpha: 0.3),
@@ -672,7 +672,7 @@ class PickupButton extends StatelessWidget {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           ),
           elevation: 8,
           shadowColor: AppColors.primary.withValues(alpha: 0.4),
@@ -705,7 +705,7 @@ class NeedHelpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
+      borderRadius: BorderRadius.circular(AppRadius.radiusModal),
       child: Container(
         padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
@@ -714,7 +714,7 @@ class NeedHelpCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.3),

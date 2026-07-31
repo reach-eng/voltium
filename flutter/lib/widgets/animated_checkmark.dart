@@ -12,7 +12,7 @@ class AnimatedCheckmark extends StatefulWidget {
     super.key,
     this.isChecked = false,
     this.size = 48,
-    this.color = AppColors.successGreen,
+    this.color = AppColors.success,
     this.duration = const Duration(milliseconds: 500),
     this.onAnimationComplete,
   });

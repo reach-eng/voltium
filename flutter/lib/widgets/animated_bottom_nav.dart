@@ -246,7 +246,8 @@ class _NavButtonState extends State<_NavButton>
                             height: 32,
                             decoration: BoxDecoration(
                               color: activeColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppRadius.full),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.full),
                             ),
                           ),
                         ),

@@ -56,8 +56,8 @@ class Toast {
     messenger.hideCurrentSnackBar();
 
     final (Color bg, IconData icon) = switch (style) {
-      ToastStyle.success => (AppColors.successGreen, Icons.check_circle),
-      ToastStyle.error => (AppColors.errorRedAlt, Icons.error_outline),
+      ToastStyle.success => (AppColors.success, Icons.check_circle),
+      ToastStyle.error => (AppColors.error, Icons.error_outline),
       ToastStyle.info => (AppColors.primary, Icons.info_outline),
       ToastStyle.warning => (AppColors.warningDark, Icons.warning_amber),
     };
@@ -84,7 +84,8 @@ class Toast {
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md)),
       duration: duration,
     ));
   }

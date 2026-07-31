@@ -7,13 +7,13 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -31,7 +31,7 @@ const _kSupportPhone = '+91 1800-889-VOLT';
 // LegalPageScreen – Document viewer with signatures & PDF download
 // =============================================================================
 
-class LegalPageScreen extends StatefulWidget {
+class LegalPageScreen extends ConsumerStatefulWidget {
   /// Optional type filter. When null, shows every document.
   /// When set, shows only the matching section (terms-only = ['terms'], etc.).
   final LegalDocumentType? documentType;
@@ -39,14 +39,14 @@ class LegalPageScreen extends StatefulWidget {
   const LegalPageScreen({super.key, this.documentType});
 
   @override
-  State<LegalPageScreen> createState() => _LegalPageScreenState();
+  ConsumerState<LegalPageScreen> createState() => _LegalPageScreenState();
 }
 
 /// Filters which legal documents are shown on the page.
 /// `null` (or [all]) shows everything; a specific value shows only that doc.
 enum LegalDocumentType { all, terms, privacy, refund, guarantor }
 
-class _LegalPageScreenState extends State<LegalPageScreen>
+class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     with TickerProviderStateMixin {
   final Set<int> _expandedIndices = {};
   bool _isGeneratingPdf = false;
@@ -301,7 +301,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not generate PDF: $e'),
-            backgroundColor: AppColors.errorRed,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -314,7 +314,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
 
   @override
   Widget build(BuildContext context) {
-    final rider = context.watch<AppProvider>().rider;
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -328,7 +328,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 boxShadow: AppShadows.card,
               ),
               clipBehavior: Clip.antiAlias,
@@ -373,7 +373,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 Expanded(
                                   child: Text(
                                     section.title,
-                                    style: AppTypography.bodyMediumStrong
+                                    style: AppTypography.bodyMedium
+                                        .copyWith(fontWeight: FontWeight.w800)
                                         .copyWith(color: AppColors.slate800),
                                   ),
                                 ),
@@ -431,7 +432,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
                                   color: AppColors.surfaceBright,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
                                 ),
                                 child: Row(
                                   children: [
@@ -461,8 +463,10 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         children: [
                                           Text(
                                             'SIGNED BY',
-                                            style: AppTypography
-                                                .bodySmallTracked
+                                            style: AppTypography.bodySmall
+                                                .copyWith(
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: 1.2)
                                                 .copyWith(
                                                     color: AppColors.slate400,
                                                     letterSpacing: 1.2),
@@ -486,7 +490,10 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                       children: [
                                         Text(
                                           'DATE',
-                                          style: AppTypography.bodySmallTracked
+                                          style: AppTypography.bodySmall
+                                              .copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 1.2)
                                               .copyWith(
                                                   color: AppColors.slate400,
                                                   letterSpacing: 1.2),
@@ -516,7 +523,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
                                   border: Border.all(
                                     color: AppColors.borderMedium,
                                     style: BorderStyle.solid,
@@ -565,8 +573,8 @@ class _LegalPageScreenState extends State<LegalPageScreen>
                                         height: 48,
                                         margin: const EdgeInsets.only(left: 12),
                                         decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                              AppRadius.md),
                                           border: Border.all(
                                             color: AppColors.iconBackground,
                                           ),
@@ -663,18 +671,21 @@ class _LegalPageScreenState extends State<LegalPageScreen>
 
             // ── Need Help? card ──
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: Spacing.paddingMd,
               decoration: BoxDecoration(
                 color: AppColors.iconBackground,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'NEED HELP?',
-                    style: AppTypography.bodySmallTracked.copyWith(
-                        color: AppColors.slate500, letterSpacing: 1.2),
+                    style: AppTypography.bodySmall
+                        .copyWith(
+                            fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                        .copyWith(
+                            color: AppColors.slate500, letterSpacing: 1.2),
                   ),
                   SizedBox(height: 8),
                   RichText(
@@ -762,7 +773,7 @@ class _LegalPageScreenState extends State<LegalPageScreen>
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(9999),
+                borderRadius: BorderRadius.circular(AppRadius.full),
                 onTap: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);

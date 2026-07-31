@@ -335,19 +335,6 @@ class VoltiumApiClient {
     return RequestReadUrlResponse.fromJson(response);
   }
 
-  /// List notifications
-  Future<ListNotificationsResponse> getNotificationList() async {
-    final response = await _client.get('/api/notification/list');
-    return ListNotificationsResponse.fromJson(response);
-  }
-
-  /// Bulk update List
-  Future<Map<String, dynamic>> putNotificationList(
-      Map<String, dynamic> request) async {
-    final response = await _client.put('/api/notification/list', body: request);
-    return response;
-  }
-
   /// Fetch plan pricing
   Future<Map<String, dynamic>> getPricing(
       String hubId, String basePrice) async {

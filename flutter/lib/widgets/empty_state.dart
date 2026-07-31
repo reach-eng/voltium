@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Generic empty state — icon, title, optional subtitle, optional action button.
 class EmptyState extends StatelessWidget {
@@ -153,7 +154,7 @@ class RetryWidget extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: Spacing.paddingLg,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

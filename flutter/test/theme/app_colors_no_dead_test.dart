@@ -20,15 +20,13 @@ void main() {
 
       expect(themeFile.existsSync(), isTrue,
           reason: 'app_theme.dart not found at expected path');
-      expect(libDir.existsSync(), isTrue,
-          reason: 'lib/ directory not found');
+      expect(libDir.existsSync(), isTrue, reason: 'lib/ directory not found');
 
       final themeContent = themeFile.readAsStringSync();
 
       // Extract `static const Color (\w+) = Color(...)` declarations.
       final declaredNames = <String>[];
-      final declRe =
-          RegExp(r'static const Color (\w+) = Color\(');
+      final declRe = RegExp(r'static const Color (\w+) = Color\(');
       for (final m in declRe.allMatches(themeContent)) {
         declaredNames.add(m.group(1)!);
       }

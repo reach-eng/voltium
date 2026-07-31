@@ -63,7 +63,7 @@ class EarningEntry {
   static Color platformColor(GigPlatform p) {
     switch (p) {
       case GigPlatform.zomato:
-        return AppColors.errorRed;
+        return AppColors.error;
       case GigPlatform.swiggy:
         return AppColors.warning;
       case GigPlatform.zepto:

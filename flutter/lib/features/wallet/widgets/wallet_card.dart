@@ -37,7 +37,7 @@ class GradientWalletCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           gradient: gradient ?? _defaultGradient,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.4),
@@ -79,7 +79,7 @@ class GradientWalletCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: Spacing.paddingLg,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -98,19 +98,20 @@ class GradientWalletCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.bolt,
-                              color: Colors.amber,
+                              color: AppColors.warning,
                               size: 16,
                             ),
                             SizedBox(width: 4),
                             Text(
                               'EV Plus',
-                              style: AppTypography.bodySmallEmphasis
+                              style: AppTypography.bodySmall
+                                  .copyWith(fontWeight: FontWeight.w600)
                                   .copyWith(color: Colors.white),
                             ),
                           ],
@@ -133,7 +134,7 @@ class GradientWalletCard extends StatelessWidget {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: Spacing.paddingSm,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(10),
@@ -191,10 +192,10 @@ class MiniWalletCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: (color ?? AppColors.primary).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: (color ?? AppColors.primary).withValues(alpha: 0.2),
         ),
@@ -203,7 +204,7 @@ class MiniWalletCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: Spacing.paddingSm,
             decoration: BoxDecoration(
               color: color ?? AppColors.primary,
               borderRadius: BorderRadius.circular(10),
@@ -249,16 +250,16 @@ class WalletActionButton extends StatelessWidget {
     final colors = AppColors.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
                 color: (color ?? AppColors.primary).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Icon(
                 icon,

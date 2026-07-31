@@ -41,7 +41,7 @@ class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.surfaceBright,
+      backgroundColor: colors.surface,
       body: const Stack(
         children: [
           _DashboardStateWidget(),
@@ -56,10 +56,10 @@ class _DashboardStateWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rider = ref.watch(appProvider.select((p) => p.rider));
-    final dataState = ref.watch(appProvider.select((p) => p.dataState));
-    final isRefreshing = ref.watch(appProvider.select((p) => p.isRefreshing));
-    final errorMessage = ref.watch(appProvider.select((p) => p.errorMessage));
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final dataState = ref.watch(riderProvider.select((p) => p.dataState));
+    final isRefreshing = ref.watch(riderProvider.select((p) => p.isRefreshing));
+    final errorMessage = ref.watch(riderProvider.select((p) => p.errorMessage));
 
     final isCache = dataState == DataState.fromCache;
 
@@ -91,7 +91,7 @@ class _DashboardErrorWidget extends ConsumerWidget {
       message: errorMessage != null
           ? 'Unable to connect: $errorMessage'
           : 'Unable to connect to command center.',
-      onRetry: () => ref.read(appProvider).refresh(),
+      onRetry: () => ref.read(riderProvider).refresh(),
     );
   }
 }
@@ -112,7 +112,7 @@ class _DashboardEmptyWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => ref.read(appProvider).refresh(),
+              onPressed: () => ref.read(riderProvider).refresh(),
               icon: const Icon(Icons.refresh),
               label: const Text('Initialize System'),
             ),
@@ -127,9 +127,13 @@ class _DashboardContentWidget extends ConsumerWidget {
   final RiderModel rider;
   const _DashboardContentWidget({required this.rider});
 
-  Widget _buildNotificationBell(BuildContext context) {
+  Widget _buildNotificationBell(BuildContext context, WidgetRef ref) {
+    final notifications =
+        ref.watch(engagementProvider.select((p) => p.notifications));
+    final unreadCount = notifications.where((n) => !n.isRead).length;
     return NotificationBell(
-      hasUnread: true,
+      hasUnread: unreadCount > 0,
+      unreadCount: unreadCount,
       onTap: () {
         AppNavigator.push(context, const NotificationsScreen());
       },
@@ -140,19 +144,19 @@ class _DashboardContentWidget extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.amber.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.shade200),
+        color: AppColors.warningLight,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.warningBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cloud_off, size: 14, color: Colors.amber.shade700),
+          Icon(Icons.cloud_off, size: 14, color: AppColors.warningDark),
           SizedBox(width: 6),
           Text(
             'Showing cached data',
             style:
-                AppTypography.bodySmall.copyWith(color: Colors.amber.shade700),
+                AppTypography.bodySmall.copyWith(color: AppColors.warningDark),
           ),
         ],
       ),
@@ -163,14 +167,14 @@ class _DashboardContentWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final walletMinTopup =
-        ref.watch(appProvider.select((p) => p.walletMinTopup));
-    final dataState = ref.watch(appProvider.select((p) => p.dataState));
+        ref.watch(walletProvider.select((p) => p.walletMinTopup));
+    final dataState = ref.watch(riderProvider.select((p) => p.dataState));
     final isCache = dataState == DataState.fromCache;
 
     return RefreshIndicator(
       color: AppColors.primary,
       backgroundColor: colors.card,
-      onRefresh: () => ref.read(appProvider).refresh(),
+      onRefresh: () => ref.read(riderProvider).refresh(),
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -196,8 +200,11 @@ class _DashboardContentWidget extends ConsumerWidget {
                 children: [
                   Text(
                     '$greeting,',
-                    style: AppTypography.bodyMediumEmphasis.copyWith(
-                        color: AppColors.onSurfaceVariant, letterSpacing: 0.5),
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
+                        .copyWith(
+                            color: AppColors.onSurfaceVariant,
+                            letterSpacing: 0.5),
                   ),
                   Text(
                     displayName,
@@ -210,7 +217,7 @@ class _DashboardContentWidget extends ConsumerWidget {
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 20),
-                child: _buildNotificationBell(context),
+                child: _buildNotificationBell(context, ref),
               ),
             ],
           ),
@@ -300,7 +307,7 @@ class _DashboardContentWidget extends ConsumerWidget {
                               const SnackBar(
                                 content: Text(
                                     'Could not open the phone dialer. Please try again.'),
-                                backgroundColor: Colors.red,
+                                backgroundColor: AppColors.error,
                               ),
                             );
                           }

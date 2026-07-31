@@ -12,6 +12,7 @@ DepositRecord _$DepositRecordFromJson(Map<String, dynamic> json) =>
       amountInPaise: (json['amountInPaise'] as num).toInt(),
       status: $enumDecode(_$DepositStatusEnumMap, json['status']),
       rejectionReason: json['rejectionReason'] as String?,
+      proofUrl: json['proofUrl'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       approvedAt: json['approvedAt'] == null
           ? null
@@ -24,6 +25,7 @@ Map<String, dynamic> _$DepositRecordToJson(DepositRecord instance) =>
       'amountInPaise': instance.amountInPaise,
       'status': _$DepositStatusEnumMap[instance.status]!,
       'rejectionReason': instance.rejectionReason,
+      'proofUrl': instance.proofUrl,
       'createdAt': instance.createdAt.toIso8601String(),
       'approvedAt': instance.approvedAt?.toIso8601String(),
     };

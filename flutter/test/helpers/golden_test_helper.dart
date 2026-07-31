@@ -3,17 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/app_provider.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart';
 
 /// Wraps a widget in a MaterialApp and ProviderScope for golden testing.
 /// Enforces a strict text scale factor (1.0), consistent font family, and physical size configuration for deterministic rendering across CI.
-Widget wrapForGolden(Widget child, {List overrides = const []}) {
+Widget wrapForGolden(Widget child, {List<Override> overrides = const []}) {
   return ProviderScope(
-    overrides: [
-      appProvider.overrideWith((ref) => AppProvider()),
-      ...overrides,
-    ],
+    overrides: overrides,
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

@@ -37,7 +37,7 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final riderId = ref.read(appProvider).riderId ?? 'local';
+    final riderId = ref.read(riderProvider).riderId ?? 'local';
 
     return Scaffold(
       backgroundColor: AppColors.iconBackground,
@@ -246,10 +246,10 @@ class _Section extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -263,7 +263,8 @@ class _Section extends ConsumerWidget {
         children: [
           Text(
             title,
-            style: AppTypography.bodySmallTracked
+            style: AppTypography.bodySmall
+                .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
                 .copyWith(color: AppColors.slate600, letterSpacing: 0.8),
           ),
           const SizedBox(height: 12),

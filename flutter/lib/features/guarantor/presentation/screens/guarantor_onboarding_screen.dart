@@ -548,7 +548,7 @@ class _GuarantorOnboardingScreenState
       barrierDismissible: true,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         backgroundColor: Theme.of(ctx).colorScheme.surface,
         child: Padding(
@@ -661,8 +661,10 @@ class _GuarantorOnboardingScreenState
       alignment: Alignment.center,
       child: Text(
         '$step',
-        style: AppTypography.bodySmallEmphasis.copyWith(
-            color: isActive ? Colors.white : AppColors.onSurfaceVariant),
+        style: AppTypography.bodySmall
+            .copyWith(fontWeight: FontWeight.w600)
+            .copyWith(
+                color: isActive ? Colors.white : AppColors.onSurfaceVariant),
       ),
     );
   }
@@ -739,7 +741,7 @@ class _GuarantorOnboardingScreenState
         }
       },
       child: Scaffold(
-        backgroundColor: colors.surfaceSubtle,
+        backgroundColor: colors.surface,
         body: Column(
           children: [
             Expanded(
@@ -887,8 +889,9 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
               children: [
                 Text(
                   'Your guarantor takes on real financial liability',
-                  style: AppTypography.bodyCompactStrong
-                      .copyWith(color: AppColors.warningText),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                      .copyWith(color: AppColors.onSurface),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -898,7 +901,7 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
                   'Agreement in the Legal section for the full terms.',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: AppColors.warningText,
+                    color: AppColors.onSurface,
                     height: 1.4,
                   ),
                 ),

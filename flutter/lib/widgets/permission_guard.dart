@@ -59,12 +59,12 @@ class PermissionGuard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasViolation =
-        ref.watch(appProvider.select((p) => p.hasPermissionViolation));
+        ref.watch(devicePolicyProvider.select((p) => p.hasPermissionViolation));
     if (!hasViolation) return const SizedBox.shrink();
 
-    final permId =
-        ref.watch(appProvider.select((p) => p.violationPermissionId)) ??
-            'unknown';
+    final permId = ref.watch(
+            devicePolicyProvider.select((p) => p.violationPermissionId)) ??
+        'unknown';
     final permName = _permissionName(permId);
     final icon = _permissionIcon(permId);
 
@@ -87,7 +87,7 @@ class PermissionGuard extends ConsumerWidget {
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
+                padding: Spacing.paddingXl,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -95,10 +95,10 @@ class PermissionGuard extends ConsumerWidget {
                       width: 96,
                       height: 96,
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.15),
+                        color: AppColors.error.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: Colors.redAccent, size: 48),
+                      child: Icon(icon, color: AppColors.error, size: 48),
                     ),
                     SizedBox(height: 32),
                     Text(
@@ -124,15 +124,16 @@ class PermissionGuard extends ConsumerWidget {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3)),
+                            color: AppColors.error.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         permName.toUpperCase(),
-                        style: AppTypography.bodyMediumEmphasis.copyWith(
-                            color: Colors.redAccent, letterSpacing: 1),
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.error, letterSpacing: 1),
                       ),
                     ),
                     SizedBox(height: 40),
@@ -151,7 +152,7 @@ class PermissionGuard extends ConsumerWidget {
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 4,
                         ),
@@ -159,7 +160,8 @@ class PermissionGuard extends ConsumerWidget {
                     ),
                     SizedBox(height: 16),
                     TextButton(
-                      onPressed: () => ref.read(appProvider).clearViolation(),
+                      onPressed: () =>
+                          ref.read(devicePolicyProvider).clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
                         style: GoogleFonts.plusJakartaSans(

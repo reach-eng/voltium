@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class TimelineItem {
@@ -31,13 +32,14 @@ class TimelineWidget extends StatelessWidget {
   const TimelineWidget({
     super.key,
     required this.items,
-    this.lineColor = Colors.grey,
+    this.lineColor = AppColors.onSurfaceVariant,
     this.lineWidth = 2,
     this.showConnector = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -58,10 +60,10 @@ class TimelineWidget extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         color: item.isCompleted
-                            ? Colors.green
+                            ? AppColors.success
                             : item.isActive
-                                ? Colors.amber
-                                : Colors.grey.shade300,
+                                ? AppColors.warning
+                                : colors.outline,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -73,7 +75,7 @@ class TimelineWidget extends StatelessWidget {
                                     : Icons.circle_outlined),
                         color: item.isCompleted || item.isActive
                             ? Colors.white
-                            : Colors.grey,
+                            : colors.onSurfaceMuted,
                         size: 20,
                       ),
                     ),
@@ -81,7 +83,9 @@ class TimelineWidget extends StatelessWidget {
                       Expanded(
                         child: Container(
                           width: lineWidth,
-                          color: item.isCompleted ? Colors.green : lineColor,
+                          color: item.isCompleted
+                              ? AppColors.success
+                              : colors.divider,
                         ),
                       ),
                   ],
@@ -98,15 +102,15 @@ class TimelineWidget extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           color: item.isCompleted || item.isActive
-                              ? Colors.black
-                              : Colors.grey,
+                              ? colors.onSurface
+                              : colors.onSurfaceMuted,
                         ),
                       ),
                       if (item.subtitle != null)
                         Text(
                           item.subtitle!,
                           style: GoogleFonts.plusJakartaSans(
-                            color: Colors.grey.shade600,
+                            color: colors.onSurfaceVariant,
                             fontSize: 12,
                           ),
                         ),
@@ -114,7 +118,7 @@ class TimelineWidget extends StatelessWidget {
                         Text(
                           _formatTimestamp(item.timestamp!),
                           style: GoogleFonts.plusJakartaSans(
-                            color: Colors.grey.shade500,
+                            color: colors.onSurfaceMuted,
                             fontSize: 10,
                           ),
                         ),
@@ -143,7 +147,7 @@ class BadgeCounter extends StatelessWidget {
   const BadgeCounter({
     super.key,
     required this.count,
-    this.color = Colors.red,
+    this.color = AppColors.error,
     this.size = 20,
     this.child,
   });
@@ -159,7 +163,7 @@ class BadgeCounter extends StatelessWidget {
             right: -5,
             top: -5,
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: Spacing.paddingXs,
               constraints: BoxConstraints(
                 minWidth: size,
                 minHeight: size,
@@ -171,7 +175,9 @@ class BadgeCounter extends StatelessWidget {
               child: Center(
                 child: Text(
                   count > 99 ? '99+' : count.toString(),
-                  style: AppTypography.smallBadge.copyWith(color: Colors.white),
+                  style: AppTypography.labelSmall
+                      .copyWith(fontSize: 10)
+                      .copyWith(color: Colors.white),
                 ),
               ),
             ),
@@ -192,8 +198,8 @@ class RatingStars extends StatelessWidget {
     super.key,
     required this.rating,
     this.size = 24,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.allowHalfRating = true,
   });
 
@@ -232,8 +238,8 @@ class InteractiveRatingStars extends StatefulWidget {
     super.key,
     this.initialRating = 0,
     this.size = 40,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.onRatingChanged,
   });
 
@@ -282,7 +288,7 @@ class NotificationDot extends StatelessWidget {
 
   const NotificationDot({
     super.key,
-    this.color = Colors.red,
+    this.color = AppColors.error,
     this.size = 8,
   });
 
@@ -311,8 +317,8 @@ class StepIndicator extends StatelessWidget {
     required this.currentStep,
     required this.totalSteps,
     this.labels,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
   });
 
   @override

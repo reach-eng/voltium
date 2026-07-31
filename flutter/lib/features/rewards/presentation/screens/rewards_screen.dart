@@ -100,7 +100,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                       builder: (context, child) {
                         return Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.radiusModal),
                             boxShadow: [
                               BoxShadow(
                                 color: AppColors.accentPurple.withValues(
@@ -117,7 +118,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                 ),
                 // Glass Card
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  borderRadius: BorderRadius.circular(AppRadius.radiusModal),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                     child: Container(
@@ -131,7 +132,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.radiusModal),
                         border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
                             width: 1.5),

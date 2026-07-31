@@ -25,16 +25,16 @@ class LoadingButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDestructive ? Colors.red : AppColors.primary,
+          backgroundColor: isDestructive ? AppColors.error : AppColors.primary,
           foregroundColor: Colors.white,
           disabledBackgroundColor: isDestructive
-              ? Colors.red.withAlpha(128)
+              ? AppColors.error.withAlpha(128)
               : AppColors.primary.withAlpha(128),
           elevation: isLoading ? 0 : 5,
-          shadowColor: (isDestructive ? Colors.red : AppColors.primary)
+          shadowColor: (isDestructive ? AppColors.error : AppColors.primary)
               .withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.radiusModal),
           ),
         ),
         child: isLoading
@@ -130,7 +130,7 @@ class AsyncTextField extends StatelessWidget {
         errorText: errorText,
         suffixIcon: isLoading
             ? const Padding(
-                padding: EdgeInsets.all(12),
+                padding: EdgeInsets.all(Spacing.sm),
                 child: SizedBox(
                   width: 20,
                   height: 20,

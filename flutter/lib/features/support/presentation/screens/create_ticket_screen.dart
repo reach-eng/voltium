@@ -46,7 +46,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
             category: _selectedCategory,
             subject: _subjectController.text.trim(),
             message: _messageController.text.trim(),
-            riderId: ref.read(appProvider).riderId,
+            riderId: ref.read(riderProvider).riderId,
           );
       PostHogService.capture('ticket_created', properties: {
         'category': _selectedCategory,
@@ -59,7 +59,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Ticket created successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         // Show checklist after ticket creation
@@ -74,7 +74,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to create ticket: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -140,7 +140,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(color: AppColors.outlineVariant),
                   ),
                   child: DropdownButtonHideUnderline(
@@ -192,19 +192,19 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     filled: true,
                     fillColor: AppColors.iconBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: AppColors.primaryCyan, width: 2),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
                     ),
-                    contentPadding: const EdgeInsets.all(16),
+                    contentPadding: Spacing.paddingMd,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -239,19 +239,19 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     filled: true,
                     fillColor: AppColors.iconBackground,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                          color: AppColors.primaryCyan, width: 2),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary, width: 2),
                     ),
-                    contentPadding: const EdgeInsets.all(16),
+                    contentPadding: Spacing.paddingMd,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -275,7 +275,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       elevation: 0,
                     ),

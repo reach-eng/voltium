@@ -22,10 +22,10 @@ class EarningsChart extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSoft,
+            color: AppColors.shadowSoftColor,
             blurRadius: 48,
             offset: Offset(0, 24),
           ),
@@ -37,7 +37,7 @@ class EarningsChart extends StatelessWidget {
         children: [
           Text(
             'DAILY BREAKDOWN',
-            style: AppTypography.microOverline
+            style: AppTypography.overline
                 .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
@@ -121,7 +121,9 @@ class _BarChartPainter extends CustomPainter {
       if (amounts[i] > 0) {
         valuePaint.text = TextSpan(
           text: '\u20B9${amounts[i].toStringAsFixed(0)}',
-          style: AppTypography.microBadge.copyWith(color: AppColors.slate800),
+          style: AppTypography.labelSmall
+              .copyWith(fontSize: 9)
+              .copyWith(color: AppColors.slate800),
         );
         valuePaint.layout();
         valuePaint.paint(
@@ -132,7 +134,9 @@ class _BarChartPainter extends CustomPainter {
 
       labelPaint.text = TextSpan(
         text: dayLabels.length > i ? dayLabels[i] : '',
-        style: AppTypography.smallBadge.copyWith(color: AppColors.slate500),
+        style: AppTypography.labelSmall
+            .copyWith(fontSize: 10)
+            .copyWith(color: AppColors.slate500),
       );
       labelPaint.layout();
       labelPaint.paint(

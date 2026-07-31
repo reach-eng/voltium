@@ -24,8 +24,8 @@ class Breadcrumbs extends StatelessWidget {
   const Breadcrumbs({
     super.key,
     required this.items,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.fontSize = 14,
     this.separator = '/',
   });
@@ -85,8 +85,8 @@ class AnimatedTabBar extends StatefulWidget {
     required this.tabs,
     this.initialIndex = 0,
     this.onTabChanged,
-    this.activeColor = Colors.amber,
-    this.inactiveColor = Colors.grey,
+    this.activeColor = AppColors.warning,
+    this.inactiveColor = AppColors.onSurfaceVariant,
     this.showIndicator = true,
   });
 
@@ -130,7 +130,7 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
     return Container(
       decoration: BoxDecoration(
         color: colors.outlineVariant,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: TabBar(
         controller: _tabController,
@@ -139,7 +139,7 @@ class _AnimatedTabBarState extends State<AnimatedTabBar>
         indicator: widget.showIndicator
             ? BoxDecoration(
                 color: widget.activeColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               )
             : null,
         labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
@@ -161,7 +161,7 @@ class CustomDrawer extends StatefulWidget {
     required this.header,
     required this.items,
     this.backgroundColor = Colors.white,
-    this.activeColor = Colors.amber,
+    this.activeColor = AppColors.warning,
     this.width = 280,
   });
 
@@ -264,10 +264,10 @@ class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: Spacing.paddingXs,
       decoration: BoxDecoration(
         color: colors.outlineVariant,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -285,8 +285,8 @@ class _SegmentedControlState<T> extends State<SegmentedControl<T>> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.amber : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected ? AppColors.warning : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: widget.segmentBuilder != null
                     ? widget.segmentBuilder!(segment, isSelected)

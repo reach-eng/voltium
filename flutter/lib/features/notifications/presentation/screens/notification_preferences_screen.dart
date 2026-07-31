@@ -286,7 +286,7 @@ class _NotificationPreferencesScreenState
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: const [
           BoxShadow(
             color: AppColors.shadowSoftColor,

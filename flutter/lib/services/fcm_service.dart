@@ -12,6 +12,7 @@ import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'secure_storage_service.dart';
 import '../core/platform/platform_info.dart';
 import 'package:voltium_rider/services/device_data_service.dart';
+import 'package:voltium_rider/services/voltium_api_service.dart';
 
 class FCMService {
   static const _channel =
@@ -238,6 +239,29 @@ class FCMService {
         handleOverlayTrigger(message);
       }
     });
+
+    // Register FCM token with backend
+    try {
+      final token = await messaging.getToken();
+      if (token != null) {
+        _syncTokenToBackend(token);
+      }
+      messaging.onTokenRefresh.listen((newToken) {
+        _syncTokenToBackend(newToken);
+      });
+    } catch (e) {
+      developer.log('FCM: Token retrieval failed: $e');
+    }
+  }
+
+  static Future<void> _syncTokenToBackend(String token) async {
+    try {
+      await VoltiumApiService()
+          .post('/api/rider/fcm-token', body: {'token': token});
+      developer.log('FCM: Token synced to backend successfully');
+    } catch (e) {
+      developer.log('FCM: Failed to sync token to backend: $e');
+    }
   }
 
   static Future<void> dispose() async {

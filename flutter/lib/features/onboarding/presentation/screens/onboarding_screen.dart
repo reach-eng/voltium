@@ -103,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: Spacing.paddingLg,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -117,8 +117,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? AppColors.primary
-                              : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(4),
+                              : AppColors.borderMedium,
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                       ),
                     ),
@@ -169,7 +169,7 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: Spacing.paddingXl,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -190,7 +190,7 @@ class OnboardingPage extends StatelessWidget {
             description,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
-              color: AppColors.textMuted,
+              color: AppColors.onSurfaceMuted,
             ),
             textAlign: TextAlign.center,
           ),

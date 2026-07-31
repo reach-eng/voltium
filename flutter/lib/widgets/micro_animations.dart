@@ -274,11 +274,11 @@ class _SuccessAnimationState extends State<SuccessAnimation>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: AppColors.successGreen,
+              color: AppColors.success,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.successGreen.withValues(alpha: 0.3),
+                  color: AppColors.success.withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 5,
                 ),

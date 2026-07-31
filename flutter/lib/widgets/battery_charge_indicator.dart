@@ -62,9 +62,9 @@ class _BatteryChargeIndicatorState extends State<BatteryChargeIndicator>
   }
 
   Color _chargeColor(double level) {
-    if (level < 0.25) return Colors.red;
-    if (level < 0.5) return Colors.orange;
-    if (level < 0.75) return Colors.amber;
+    if (level < 0.25) return AppColors.error;
+    if (level < 0.5) return AppColors.warningDark;
+    if (level < 0.75) return AppColors.warning;
     return AppColors.success;
   }
 

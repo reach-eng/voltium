@@ -4,6 +4,7 @@ class AppConstants {
   static const double lowBalanceThresholdRatio = 0.3;
 
   static const double depositRefundThreshold = 2000.0;
+  static const double defaultRentalPrice = 2000.0;
 
   static const int defaultPaginationLimit = 20;
 
@@ -18,7 +19,8 @@ class AppConstants {
   static bool get isTestMode =>
       !kReleaseMode &&
       (isTestModeOverride ||
-          const String.fromEnvironment('TEST_MODE') == 'true');
+          (!kReleaseMode &&
+              const String.fromEnvironment('TEST_MODE') == 'true'));
 
   // ── Plan durations ───────────────────────────────────────────────────
   /// Maps a plan name (uppercase) to its duration in days.

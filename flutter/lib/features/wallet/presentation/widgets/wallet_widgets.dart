@@ -375,7 +375,7 @@ class WalletBalanceCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         boxShadow: AppShadows.glass,
         border: Border.all(color: colors.outlineVariant, width: 1),
       ),
@@ -710,7 +710,7 @@ class TransactionHistorySection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: colors.outlineVariant, width: 1),
         boxShadow: AppShadows.glass,
       ),

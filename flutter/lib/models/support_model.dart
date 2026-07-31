@@ -113,8 +113,8 @@ class IssueModel {
           'No Subject',
       message:
           json['message'] as String? ?? json['description'] as String? ?? '',
-      category: json['category'] as String,
-      status: json['status'] as String,
+      category: json['category'] as String? ?? 'GENERAL',
+      status: json['status'] as String? ?? 'OPEN',
       createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
     );
   }

@@ -13,6 +13,7 @@ class ConfettiCelebration extends StatefulWidget {
     super.key,
     this.isPlaying = false,
     this.particleCount = 50,
+    // Intentionally uses Material defaults for multi-color decorative confetti.
     this.colors = const [
       Colors.red,
       Colors.green,
@@ -189,10 +190,10 @@ class _CelebrationOverlayState extends State<CelebrationOverlay>
           );
         },
         child: Container(
-          padding: const EdgeInsets.all(32),
+          padding: Spacing.paddingXl,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.2),

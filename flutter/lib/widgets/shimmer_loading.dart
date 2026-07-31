@@ -20,7 +20,7 @@ class ShimmerLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Blue-tinted shimmer for brand identity in light mode
-    final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLighter;
+    final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLight;
     final highlightColor =
         isDark ? AppColors.slate700 : AppColors.primarySurface;
     return Shimmer.fromColors(
@@ -120,13 +120,14 @@ class ShimmerTransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Row(
           children: [
@@ -149,9 +150,9 @@ class ShimmerTransactionCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ShimmerLoading(width: 60, height: 16),
+                ShimmerLoading(width: 70, height: 16),
                 SizedBox(height: 8),
-                ShimmerLoading(width: 50, height: 10),
+                ShimmerLoading(width: 50, height: 12),
               ],
             ),
           ],
@@ -167,7 +168,7 @@ class ShimmerWalletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: ShimmerLoading(
         width: double.infinity,
         height: 180,
@@ -182,13 +183,14 @@ class ShimmerVehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,16 +203,11 @@ class ShimmerVehicleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ShimmerLoading(width: 100, height: 18),
-                      SizedBox(height: 6),
-                      ShimmerLoading(width: 60, height: 12),
+                      ShimmerLoading(width: 140, height: 18),
+                      SizedBox(height: 8),
+                      ShimmerLoading(width: 100, height: 14),
                     ],
                   ),
-                ),
-                ShimmerLoading(
-                  width: 32,
-                  height: 32,
-                  shape: ShimmerShape.circle,
                 ),
               ],
             ),
@@ -229,7 +226,7 @@ class ShimmerProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       child: Column(
         children: [
           const Row(
@@ -314,11 +311,12 @@ class ShimmerDashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
