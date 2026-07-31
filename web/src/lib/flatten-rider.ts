@@ -97,7 +97,7 @@ export function flattenRider(rider: RiderWithRelations) {
     // --- Wallet fields (converted from paise → rupees) ---
     walletBalance: paiseToRupees(wallet?.balanceInPaise ?? 0),
     balance: paiseToRupees(wallet?.balanceInPaise ?? 0),
-    securityDeposit: paiseToRupees(wallet?.securityDeposit ?? 0),
+    securityDeposit: paiseToRupees(wallet?.securityDepositInPaise ?? 0),
     depositStatus: wallet?.depositStatus || 'PENDING',
     paymentStreak: wallet?.paymentStreak ?? 0,
 

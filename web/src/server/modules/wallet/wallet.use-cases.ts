@@ -17,15 +17,10 @@ import { walletLedgerService } from './wallet-ledger.service';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
+import { randomUUID } from 'crypto';
 import { logger } from '@/lib/logger';
 import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
 import type { WalletBalance } from './wallet.types';
-
-// Server-derived idempotency key (5-minute bucket, no client change required)
-function deriveIdempotencyKey(riderId: string, purpose: string, amountInPaise: number): string {
-  const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
-  return `topup:${riderId}:${purpose}:${amountInPaise}:${bucket}`;
-}
 
 const TEST_PHONES = ['9876543210', '9999999999', '8888888888', '7788888801'];
 
@@ -87,8 +82,14 @@ export const walletUseCases = {
     const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
     const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : purpose || 'TOP_UP';
 
-    const serverKey = deriveIdempotencyKey(riderDbId, finalPurpose, amountPaise);
-    const idempotencyKey = metadata?.idempotencyKey || serverKey;
+    let idempotencyKey = metadata?.idempotencyKey;
+    if (!idempotencyKey) {
+      idempotencyKey = `topup:${riderDbId}:${randomUUID()}`;
+      logger.warn('[WalletUseCases] Client did not provide idempotencyKey, generated server UUID fallback', {
+        riderId: riderDbId,
+        idempotencyKey,
+      });
+    }
 
     const existingTxn = await walletRepository.findTransactionByKey(idempotencyKey);
     if (existingTxn) {

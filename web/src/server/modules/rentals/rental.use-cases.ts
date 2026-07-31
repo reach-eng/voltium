@@ -112,8 +112,8 @@ export const rentalUseCases = {
           shiftId,
           leaseDate,
           startTime,
-          basePrice: dynamicPrice.basePrice,
-          finalPrice: dynamicPrice.finalPrice,
+          basePriceInPaise: dynamicPrice.basePrice,
+          finalPriceInPaise: dynamicPrice.finalPrice,
           status: 'BOOKED',
         },
         include: {

@@ -376,7 +376,7 @@ model Wallet {
   version                Int            @default(1)
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
-  rider                  Rider          @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  rider                  Rider          @relation(fields: [riderId], references: [id], onDelete: Restrict)
   ledgerEntries          WalletLedger[]
 
   @@index([riderId])
@@ -397,9 +397,9 @@ model WalletLedger {
   note           String?
   actorId        String?
   createdAt      DateTime        @default(now())
-  rider          Rider           @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  rider          Rider           @relation(fields: [riderId], references: [id], onDelete: Restrict)
   txn            Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  wallet         Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet         Wallet          @relation(fields: [walletId], references: [id], onDelete: Restrict)
 
   @@index([walletId])
   @@index([riderId])
@@ -430,7 +430,7 @@ model DepositRecord {
   forfeitReason         String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
-  rider                 Rider         @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  rider                 Rider         @relation(fields: [riderId], references: [id], onDelete: Restrict)
   transaction           Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
   @@index([status])
@@ -488,7 +488,7 @@ model Transaction {
   reversedTxnId   String?
   createdAt       DateTime               @default(now())
   depositRecord   DepositRecord?
-  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Cascade)
+  rider           Rider                  @relation(fields: [riderId], references: [id], onDelete: Restrict)
   breakdowns      TransactionBreakdown[]
   ledgerEntries   WalletLedger[]
 

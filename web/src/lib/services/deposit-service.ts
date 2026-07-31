@@ -363,7 +363,7 @@ async function _getAndValidate(tx: any, riderId: string, action: DepositTransiti
 async function _requireWallet(tx: any, riderId: string) {
   const wallet = await tx.wallet.findUnique({
     where: { riderId },
-    select: { id: true, balanceInPaise: true, securityDeposit: true },
+    select: { id: true, balanceInPaise: true, securityDepositInPaise: true },
   });
   if (!wallet) {
     throw new DepositStateError(`Wallet not found for rider ${riderId}`);

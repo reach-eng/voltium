@@ -4,12 +4,40 @@ import { hashPassword } from '@/lib/password';
 // Helper: Convert rupees to paise
 const paise = (rupees: number) => Math.round(rupees * 100);
 
+// Refuse to run in production — seed is for local/staging only.
+// The default admin password is a public string; running this in prod
+// would write a hash of that public string to the Admin.password column.
+if (process.env.APP_ENV === 'production') {
+  console.error(
+    'Refusing to run seed.ts in production (APP_ENV=production). ' +
+      'Seeding is for local/staging only.'
+  );
+  process.exit(1);
+}
+
+// Admin seed password is read from env. Generate a random one in local dev
+// if not set, so the seed is reproducible but the default value is not
+// committed in source.
+const seedAdminPassword =
+  process.env.SEED_ADMIN_PASSWORD ||
+  (process.env.NODE_ENV === 'development'
+    ? `dev-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`
+    : null);
+
+if (!seedAdminPassword || seedAdminPassword.length < 16) {
+  console.error(
+    'SEED_ADMIN_PASSWORD env var is required and must be at least 16 characters. ' +
+      'Set SEED_ADMIN_PASSWORD=<at-least-16-chars> before running seed.'
+  );
+  process.exit(1);
+}
+
 async function main() {
   console.log('Seeding database...');
 
   // ==================== ADMIN ACCOUNTS ====================
   // Hash passwords properly (PBKDF2-SHA256)
-  const hashedAdminPw = await hashPassword('admin123');
+  const hashedAdminPw = await hashPassword(seedAdminPassword);
 
   const superAdmin = await db.admin.upsert({
     where: { email: 'superadmin@voltium.in' },
@@ -1260,10 +1288,14 @@ async function main() {
   console.log('Created FAQs');
 
   console.log('\n✅ Database seeded successfully!');
-  console.log('\n📋 Login Credentials:');
-  console.log('  Super Admin: superadmin@voltium.in / admin123');
-  console.log('  Admin: admin@voltium.in / admin123');
-  console.log('  Admin: ops@voltium.in / admin123');
+  if (process.env.NODE_ENV === 'development' && !process.env.SEED_ADMIN_PASSWORD) {
+    console.log('\n📋 Generated admin credentials (development only — not committed):');
+    console.log(`  Super Admin: superadmin@voltium.in / ${seedAdminPassword}`);
+    console.log(`  Admin: admin@voltium.in / ${seedAdminPassword}`);
+    console.log(`  Admin: ops@voltium.in / ${seedAdminPassword}`);
+  } else {
+    console.log('\n📋 Admin credentials: see SEED_ADMIN_PASSWORD env var.');
+  }
 }
 
 main()

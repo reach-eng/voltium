@@ -40,7 +40,7 @@ export const rentRemindersJob = {
       select: {
         id: true,
         riderId: true,
-        finalPrice: true,
+        finalPriceInPaise: true,
         rider: {
           include: {
             wallet: true,
@@ -53,7 +53,7 @@ export const rentRemindersJob = {
 
     for (const lease of activeLeases) {
       const rider = lease.rider;
-      const rentAmount = lease.finalPrice;
+      const rentAmount = lease.finalPriceInPaise;
       const balance = rider.wallet?.balanceInPaise ?? 0;
 
       if (balance >= rentAmount) {
@@ -67,7 +67,7 @@ export const rentRemindersJob = {
               data: {
                 riderId: rider.id,
                 type: 'DEBIT',
-                amount: rentAmount,
+                amountInPaise: rentAmount,
                 purpose: 'RENT_PAYMENT',
                 status: 'APPROVED',
                 approvedAt: clock.now(),

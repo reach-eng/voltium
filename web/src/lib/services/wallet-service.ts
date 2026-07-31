@@ -91,7 +91,7 @@ export async function creditWallet(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'CREDIT' as WalletEntryType,
       category,
       amountInPaise,
@@ -180,7 +180,7 @@ export async function debitWallet(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'DEBIT' as WalletEntryType,
       category,
       amountInPaise,
@@ -227,7 +227,7 @@ export async function creditSecurityDeposit(
   await tx.wallet.update({
     where: { id: walletId },
     data: {
-      securityDeposit: { increment: amountInPaise },
+      securityDepositInPaise: { increment: amountInPaise },
       depositStatus: 'APPROVED',
       version: { increment: 1 },
     },
@@ -237,7 +237,7 @@ export async function creditSecurityDeposit(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'CREDIT',
       category: 'SECURITY_DEPOSIT',
       amountInPaise,
@@ -276,7 +276,7 @@ export async function debitSecurityDeposit(
   await tx.wallet.update({
     where: { id: walletId },
     data: {
-      securityDeposit: { decrement: amountInPaise },
+      securityDepositInPaise: { decrement: amountInPaise },
       depositStatus: newDepositStatus,
       version: { increment: 1 },
     },
@@ -286,7 +286,7 @@ export async function debitSecurityDeposit(
     data: {
       walletId,
       riderId,
-      txnId: txnId ?? null,
+      transactionId: txnId ?? null,
       entryType: 'DEBIT',
       category,
       amountInPaise,
@@ -322,7 +322,7 @@ export async function reverseWalletEntry(
     data: {
       riderId,
       type: originalType === 'CREDIT' ? 'DEBIT' : 'CREDIT',
-      amount: originalAmount,
+      amountInPaise: originalAmount,
       purpose: 'REVERSAL',
       status: 'APPROVED',
       reversedTxnId: originalTxnId,

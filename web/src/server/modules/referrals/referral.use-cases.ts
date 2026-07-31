@@ -72,7 +72,7 @@ export const referralUseCases = {
       const txn = await tx.transaction.create({
         data: {
           riderId: referrer.id,
-          amount: bonusPaise,
+          amountInPaise: bonusPaise,
           type: 'CREDIT',
           purpose: 'REWARD',
           status: 'APPROVED',

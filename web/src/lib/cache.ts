@@ -9,6 +9,14 @@ interface CacheEntry<T> {
   createdAt: number;
 }
 
+/**
+ * In-Memory LRU Cache with Promise Deduplication.
+ *
+ * @warn Single-process scope only. In multi-pod PM2 or clustered environments,
+ * cache invalidations do NOT propagate across processes. Only use for idempotent,
+ * short-lived, or read-mostly static data (e.g. system configs, app settings).
+ * Do NOT use for mutable user state or balance accounting.
+ */
 class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
   private maxSize = 100;

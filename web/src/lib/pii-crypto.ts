@@ -29,9 +29,9 @@ function loadKeyVersions(): void {
       throw new Error('PII_ENCRYPTION_KEY_V1 is required. Set ALLOW_DEV_PII_KEY=true for dev-only fallback.');
     }
     console.warn(
-      '[pii-crypto] ⚠️  ALLOW_DEV_PII_KEY=true. Using hardcoded dev key. THIS MUST NOT BE USED IN PRODUCTION.'
+      '[pii-crypto] ⚠️  ALLOW_DEV_PII_KEY=true. Generating process-unique dev key. THIS MUST NOT BE USED IN PRODUCTION.'
     );
-    KEY_VERSIONS.set(1, Buffer.from('dev-pii-encryption-key-32-bytes-'.substring(0, 32)));
+    KEY_VERSIONS.set(1, crypto.randomBytes(32));
     return;
   }
 
