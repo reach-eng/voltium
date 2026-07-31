@@ -82,7 +82,7 @@ export interface RiderDetailDialogProps {
   isEditing: boolean;
   setIsEditing: (editing: boolean) => void;
   editForm: RiderEditForm;
-  setEditForm: (form: RiderEditForm) => void;
+  setEditForm: (form: RiderEditForm | Partial<RiderEditForm>) => void;
   saving: boolean;
   onClose: () => void;
 
@@ -158,7 +158,20 @@ export function RiderDetailDialog({
 }: RiderDetailDialogProps) {
   function startEditing() {
     if (!rider) return;
-    setEditForm({ ...rider });
+    // Coerce Rider -> RiderEditForm (only the form fields matter)
+    setEditForm({
+      id: rider.id,
+      fullName: rider.fullName,
+      email: rider.email ?? '',
+      phone: rider.phone,
+      fatherName: (rider as any).fatherName ?? '',
+      motherName: (rider as any).motherName ?? '',
+      dob: (rider as any).dob ?? '',
+      intent: (rider as any).intent ?? '',
+      emergencyContact: (rider as any).emergencyContact ?? '',
+      currentAddress: (rider as any).currentAddress ?? '',
+      lifecycleStatus: (rider as any).lifecycleStatus ?? '',
+    });
     setIsEditing(true);
   }
 
