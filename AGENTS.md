@@ -12,6 +12,11 @@ This file contains context for AI assistants working on this codebase.
 | `npm run test:unit` | Unit tests only               |
 | `npm run test:integration` | Integration tests (needs dev server) |
 | `npm run test:api`  | API route tests (needs dev server)   |
+| `npm run test:coverage:integration` | Integration test coverage via V8/c8 |
+| `npm run test:coverage:merge` | Merge unit + integration coverage (85% gate) |
+| `npm run test:coverage:combined` | Run full combined coverage pipeline |
+| `bash scripts/flutter-coverage.sh` | Flutter coverage with 85% threshold gate |
+| `flutter build apk --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning |
 | `npm run lint`      | ESLint                        |
 | `npm run db:deploy` | Apply database migrations     |
 

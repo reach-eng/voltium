@@ -46,6 +46,7 @@ module.exports = {
       env: {
         ...commonEnv,
         PORT: process.env.PORT || '8081',
+        DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE || '8',
       },
       autorestart: true,
       max_restarts: 10,
@@ -69,7 +70,10 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
       watch: false,
-      env: commonEnv,
+      env: {
+        ...commonEnv,
+        DATABASE_POOL_SIZE: process.env.WORKER_DATABASE_POOL_SIZE || '5',
+      },
       autorestart: true,
       max_restarts: 10,
       min_uptime: '60s',          // Bumped from 10s

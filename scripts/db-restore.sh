@@ -63,6 +63,29 @@ if [ ! -f "$BACKUP_FILE" ]; then
   exit 1
 fi
 
+# Detect encrypted backup and decrypt to a temp file
+DECRYPTED_FILE=""
+if [[ "$BACKUP_FILE" == *.sql.enc ]]; then
+  echo "Detected encrypted backup (.sql.enc). Decrypting..."
+  if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
+    # Try loading from .env.local
+    if [ -f "$PROJECT_DIR/.env.local" ]; then
+      BACKUP_ENCRYPTION_KEY=$(grep -E '^BACKUP_ENCRYPTION_KEY=' "$PROJECT_DIR/.env.local" | cut -d= -f2- | tr -d '"' | tr -d "'" || true)
+    fi
+  fi
+  if [ -z "${BACKUP_ENCRYPTION_KEY:-}" ]; then
+    echo "❌ BACKUP_ENCRYPTION_KEY not set. Cannot decrypt backup."
+    exit 1
+  fi
+  DECRYPTED_FILE="${TMPDIR:-/tmp}/voltium-decrypt-$(date +%Y%m%d-%H%M%S).sql"
+  openssl enc -d -aes-256-cbc -pbkdf2 -salt -iter 100000 \
+    -pass "env:BACKUP_ENCRYPTION_KEY" \
+    -in "$BACKUP_FILE" \
+    -out "$DECRYPTED_FILE"
+  BACKUP_FILE="$DECRYPTED_FILE"
+  echo "Decrypted to temporary file."
+fi
+
 if [ -n "$ENV_FILE" ]; then
   ENV_PATH="$PROJECT_DIR/.env.$ENV_FILE"
   if [ ! -f "$ENV_PATH" ]; then
@@ -148,4 +171,10 @@ if command -v npx &>/dev/null && [ -f "$PROJECT_DIR/web/package.json" ]; then
   cd "$PROJECT_DIR/web"
   npx prisma migrate deploy
   echo "Migrations applied."
+fi
+
+# Cleanup decrypted temp file
+if [ -n "$DECRYPTED_FILE" ] && [ -f "$DECRYPTED_FILE" ]; then
+  rm -f "$DECRYPTED_FILE"
+  echo "Cleaned up decrypted temporary file."
 fi
