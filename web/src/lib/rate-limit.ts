@@ -21,9 +21,26 @@ interface RateLimitEntry {
 
 const memoryStore = new Map<string, RateLimitEntry>();
 
+// R10 polish #14 (Security 6.7) — cap the in-memory rate-limit store so a
+// flood of unique identifiers can't grow it without bound. When we exceed the
+// cap we evict the oldest entry (Map preserves insertion order). The DB
+// limiter is unaffected — it has its own row-level lifecycle.
+const MAX_MEMORY_STORE_SIZE = 50_000;
+
+function evictIfFull(): void {
+  while (memoryStore.size > MAX_MEMORY_STORE_SIZE) {
+    const oldestKey = memoryStore.keys().next().value;
+    if (oldestKey === undefined) break;
+    memoryStore.delete(oldestKey);
+  }
+}
+
 function shouldUseDatabaseLimiter(): boolean {
   return (
-    process.env.NODE_ENV === 'production' || process.env.RATE_LIMIT_STORE_PROVIDER === 'postgres'
+    process.env.APP_ENV === 'production' ||
+    process.env.APP_ENV === 'staging' ||
+    process.env.RATE_LIMIT_STORE_PROVIDER === 'postgres' ||
+    process.env.RATE_LIMIT_STORE_PROVIDER === 'db'
   );
 }
 
@@ -107,6 +124,7 @@ export async function checkRateLimit(
   if (!entry) {
     const resetAt = now + config.windowMs;
     memoryStore.set(key, { count: 1, resetAt });
+    evictIfFull();
     return { allowed: true, remaining: config.maxRequests - 1, resetAt };
   }
   if (entry.count >= config.maxRequests)
@@ -122,7 +140,7 @@ export async function clearRateLimitStore(): Promise<void> {
 
 export const AUTH_RATE_LIMIT: RateLimitConfig = {
   windowMs: 15 * 60 * 1000,
-  maxRequests: process.env.NODE_ENV === 'development' ? 1000 : 5,
+  maxRequests: process.env.APP_ENV === 'development' ? 1000 : 5,
   failClosed: true,
 };
 
