@@ -1,4 +1,4 @@
-# Voltium — Detailed Remediation Plan
+﻿# Voltium â€” Detailed Remediation Plan
 
 **Date:** 2026-07-31
 **Source-of-truth:** `docs/PROJECT_OVERVIEW_2026-07-30.md` + `docs/FOLLOWUP_TICKETS.md` + `docs/UNIFIED_PLAN_2026-07-30.md` + `docs/BACKLOG_FINDINGS.md`
@@ -9,24 +9,24 @@
 
 ## How to use this plan
 
-This document is the **single source of truth for what to work on next** in the Voltium project. It's organized as 12 tracks (R0–R12) sorted by risk and ease, with per-PR checkboxes so the next agent can pick up where the last one left off.
+This document is the **single source of truth for what to work on next** in the Voltium project. It's organized as 12 tracks (R0â€“R12) sorted by risk and ease, with per-PR checkboxes so the next agent can pick up where the last one left off.
 
 **Reading order:**
-1. **TL;DR** (below) — 30-second summary of all 12 tracks
-2. **§Status of already-done items** — what's shipped, what's staged, what's blocked
-3. **§Detailed tracks R0–R12** — the fix spec for each track
-4. **§Tracking section (end of doc)** — per-PR checkboxes for the next agent to tick off
-5. **§Calendar** — week-by-week ordering
+1. **TL;DR** (below) â€” 30-second summary of all 12 tracks
+2. **Â§Status of already-done items** â€” what's shipped, what's staged, what's blocked
+3. **Â§Detailed tracks R0â€“R12** â€” the fix spec for each track
+4. **Â§Tracking section (end of doc)** â€” per-PR checkboxes for the next agent to tick off
+5. **Â§Calendar** â€” week-by-week ordering
 
 **Convention:** every checkbox `- [ ]` becomes `- [x]` when shipped. The tracking section at the bottom of the doc is the **single place to check progress**.
 
 **When you start a track:**
-1. Read the "Re-verify note" — confirm the finding is still real (don't trust the audit doc; always re-grep)
-2. Read the "Acceptance criteria" — these are the test gates
+1. Read the "Re-verify note" â€” confirm the finding is still real (don't trust the audit doc; always re-grep)
+2. Read the "Acceptance criteria" â€” these are the test gates
 3. Ship the per-PR list in the order given
 4. After each PR: typecheck + test, then commit + tick the box
 
-**When you finish a track:** move its entry from "Status: NOT STARTED" to "Status: ✅ SHIPPED" and add a "Shipped" line with the commit refs.
+**When you finish a track:** move its entry from "Status: NOT STARTED" to "Status: âœ… SHIPPED" and add a "Shipped" line with the commit refs.
 
 ---
 
@@ -34,19 +34,19 @@ This document is the **single source of truth for what to work on next** in the 
 
 | Track | Items | Effort | Risk | Status |
 |---|---|---|---|---|
-| **R0 — Doc-only close-outs** (4 tickets already shipped) | 4 | 30 min | None | NOT STARTED |
-| **R1 — Staging soaks** (already deployed, just wait) | 5 | 1 week | Low | IN PROGRESS |
-| **R2 — Design system** (typography + colors) | 2 tickets | 2-3 d | Medium (visual) | NOT STARTED |
-| **R3 — Admin web screen splits** (Ticket #21) | 6 files | 2-3 wks | High | NOT STARTED |
-| **R4 — Flutter router refactor** (PR-T) | 1 | 1-2 wks | High | NOT STARTED |
-| **R5 — Server module size cap** (no files > 10 KB) | 0 | 0 | — | ALREADY SHIPPED |
-| **R6 — DB Admin migration follow-up** (#9 drop legacy column) | 1 | 0.5 d | Low (1-wk soak complete) | BLOCKED on R1 |
-| **R7 — Polling/Focus wiring** (KNOWN_ISSUES.md items 25-26) | 2 | 0.5 d | None | ALREADY DONE — doc close-out |
-| **R8 — Phantom OpenAPI paths** | 1 ticket | 1 d | Low | NOT STARTED |
-| **R9 — Data-deletion Admin UI** (Ticket #59 v2) | 1 | 1 d | Low | NOT STARTED |
-| **R10 — Trivial/cosmetic batch** (120 items, 6 PRs) | 6 PRs | 12-15 hr | Low | NOT STARTED |
-| **R11 — PollingManager widget lifecycle gaps** (sub-issue from #3) | ~10 | 1 d | Low | NOT STARTED |
-| **R12 — Dependabot / vuln SLA** (per SECURITY.md §12) | ongoing | 1-2 hr | Low | NOT STARTED |
+| **R0 â€” Doc-only close-outs** (4 tickets already shipped) | 4 | 30 min | None | NOT STARTED |
+| **R1 â€” Staging soaks** (already deployed, just wait) | 5 | 1 week | Low | IN PROGRESS |
+| **R2 â€” Design system** (typography + colors) | 2 tickets | 2-3 d | Medium (visual) | NOT STARTED |
+| **R3 â€” Admin web screen splits** (Ticket #21) | 6 files | 2-3 wks | High | NOT STARTED |
+| **R4 â€” Flutter router refactor** (PR-T) | 1 | 1-2 wks | High | NOT STARTED |
+| **R5 â€” Server module size cap** (no files > 10 KB) | 0 | 0 | â€” | ALREADY SHIPPED |
+| **R6 â€” DB Admin migration follow-up** (#9 drop legacy column) | 1 | 0.5 d | Low (1-wk soak complete) | BLOCKED on R1 |
+| **R7 â€” Polling/Focus wiring** (KNOWN_ISSUES.md items 25-26) | 2 | 0.5 d | None | ALREADY DONE â€” doc close-out |
+| **R8 â€” Phantom OpenAPI paths** | 1 ticket | 1 d | Low | NOT STARTED |
+| **R9 â€” Data-deletion Admin UI** (Ticket #59 v2) | 1 | 1 d | Low | NOT STARTED |
+| **R10 â€” Trivial/cosmetic batch** (120 items, 6 PRs) | 6 PRs | 12-15 hr | Low | NOT STARTED |
+| **R11 â€” PollingManager widget lifecycle gaps** (sub-issue from #3) | ~10 | 1 d | Low | NOT STARTED |
+| **R12 â€” Dependabot / vuln SLA** (per SECURITY.md Â§12) | ongoing | 1-2 hr | Low | NOT STARTED |
 
 **Total: 12 tracks, ~7-10 weeks focused work + 1 week parallel soak.**
 
@@ -56,21 +56,21 @@ The bulk of the work (admin screen splits + router refactor) is mechanical. The 
 
 ## Status of already-done items (read this first)
 
-Before starting any track, check this list — the audit-and-verify process caught 6 already-shipped items that were never marked as such:
+Before starting any track, check this list â€” the audit-and-verify process caught 6 already-shipped items that were never marked as such:
 
 | # | Item | Evidence (2026-07-31 00:46 IST) | Reference |
 |---|---|---|---|
-| 1 | **R5** Server module size cap | Largest file is 9 KB. 0 files > 10 KB. | §R5 |
-| 2 | **R7** PollingManager wired | `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` has `_onboardingPoller` + `_postPickupPoller` PollingManager instances | §R7 |
-| 3 | **R7** FocusObserver wired | `flutter/lib/main.dart:58` — `final FocusObserver focusObserver = FocusObserver(...)` | §R7 |
+| 1 | **R5** Server module size cap | Largest file is 9 KB. 0 files > 10 KB. | Â§R5 |
+| 2 | **R7** PollingManager wired | `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` has `_onboardingPoller` + `_postPickupPoller` PollingManager instances | Â§R7 |
+| 3 | **R7** FocusObserver wired | `flutter/lib/main.dart:58` â€” `final FocusObserver focusObserver = FocusObserver(...)` | Â§R7 |
 | 4 | **Ticket #58** rental/return mass-assignment | `web/src/app/api/rider/rental/return/route.ts:23` has `.strict()` Zod allowlist | Audit re-verify Pass 4 |
-| 5 | **Ticket #33** server module splits (≥15 KB) | 0 files > 15 KB. Largest = 9 KB. | §R5 |
+| 5 | **Ticket #33** server module splits (â‰¥15 KB) | 0 files > 15 KB. Largest = 9 KB. | Â§R5 |
 | 6 | **PR-K.1 + PR-K.2 + PR-J + PR-D.1** migrations | Migrations 20260730xxxx exist + idempotent + tested | R1 (soaks in progress) |
 | 7 | **PR-C** rental/return (was cancelled) | `.strict()` Zod at `route.ts:12-23` (Pass 4 audit-correction) | Audit re-verify Pass 4 |
-| 8 | **R0.1** Ticket #58 close-out | `FOLLOWUP_TICKETS.md` #58 marked SHIPPED with audit-correction note (in this commit) | §R0.1 |
-| 9 | **R0.2** Ticket #39 STAGED | `FOLLOWUP_TICKETS.md` #39 marked STAGED with config-already-shipped note (in this commit) | §R0.2 |
-| 10 | **R0.2** Ticket #42 STAGED | `FOLLOWUP_TICKETS.md` #42 marked STAGED | §R0.2 |
-| 11 | **R0.3** KNOWN_ISSUES #25 + #26 | `FOLLOWUP_TICKETS.md` / `KNOWN_ISSUES.md` doc fix (this commit) | §R0.3 |
+| 8 | **R0.1** Ticket #58 close-out | `FOLLOWUP_TICKETS.md` #58 marked SHIPPED with audit-correction note (in this commit) | Â§R0.1 |
+| 9 | **R0.2** Ticket #39 STAGED | `FOLLOWUP_TICKETS.md` #39 marked STAGED with config-already-shipped note (in this commit) | Â§R0.2 |
+| 10 | **R0.2** Ticket #42 STAGED | `FOLLOWUP_TICKETS.md` #42 marked STAGED | Â§R0.2 |
+| 11 | **R0.3** KNOWN_ISSUES #25 + #26 | `FOLLOWUP_TICKETS.md` / `KNOWN_ISSUES.md` doc fix (this commit) | Â§R0.3 |
 
 **Net audit-correction count this plan: 4 tickets** (#58, #39, #42, #33) + 2 KNOWN_ISSUES items (#25, #26) = 6 closed as already-done.
 
@@ -90,44 +90,44 @@ Each track has:
 
 ---
 
-## R0 — Doc-only close-outs (4 tickets, 30 min)
+## R0 â€” Doc-only close-outs (4 tickets, 30 min)
 
 The audit-and-verify process caught 4 tickets that are **already shipped** in the working tree but never had their ticket statuses updated. This is pure documentation work.
 
-### R0.1 — Ticket #58 (rental/return mass-assignment) → SHIPPED
+### R0.1 â€” Ticket #58 (rental/return mass-assignment) â†’ SHIPPED
 
-**Source:** `docs/AUDIT_API_DEEP.md` §1.5 (P0)
+**Source:** `docs/AUDIT_API_DEEP.md` Â§1.5 (P0)
 
 **Re-verify (2026-07-31 00:46 IST):** `web/src/app/api/rider/rental/return/route.ts:23` has `.strict()` Zod allowlist. Already shipped.
 
 **Fix:**
 1. Edit `docs/FOLLOWUP_TICKETS.md` line ~97 (Ticket #58):
-   - Change "Status" from "OPEN" to "✅ **SHIPPED**"
+   - Change "Status" from "OPEN" to "âœ… **SHIPPED**"
    - Add audit-correction close-out note: "Pass 4 re-grep: `route.ts:23` has `.strict()` Zod. Already in production."
 2. Edit `docs/BACKLOG_FINDINGS.md` row #58: status from `OPEN` to `SHIPPED`.
-3. Edit `docs/EXECUTION_PLAN_2026-07-30.md` §2: confirm PR-C is CANCELLED + add a note that the cancellation was verified by re-grep (already there).
+3. Edit `docs/EXECUTION_PLAN_2026-07-30.md` Â§2: confirm PR-C is CANCELLED + add a note that the cancellation was verified by re-grep (already there).
 
 **Effort:** 10 min. **Risk:** None.
 
-### R0.2 — Ticket #39 + #42 (PM2 cluster mode) → STAGED, needs human flip
+### R0.2 â€” Ticket #39 + #42 (PM2 cluster mode) â†’ STAGED, needs human flip
 
 **Source:** `docs/INFRASTRUCTURE_PLAN.md` PR-6 (P0)
 
 **Re-verify (2026-07-31 00:46 IST):** `ecosystem.config.js` has `instances: 'max', exec_mode: 'cluster', kill_timeout: 30000, listen_timeout: 60000, min_uptime: '60s', kill_signal: 'SIGINT'`. Config is in place.
 
 **Fix:**
-1. Edit `docs/FOLLOWUP_TICKETS.md` Ticket #39 + #42: add `🟡 STAGED` status + note "config in `ecosystem.config.js`; needs human to flip in prod after 24-48h staging soak."
+1. Edit `docs/FOLLOWUP_TICKETS.md` Ticket #39 + #42: add `ðŸŸ¡ STAGED` status + note "config in `ecosystem.config.js`; needs human to flip in prod after 24-48h staging soak."
 2. Add a new section to `docs/RUNBOOK.md` (under "Deploy") documenting the PM2 cluster mode flip procedure: `pm2 reload ecosystem.config.js` after staging soak completes.
 
 **Effort:** 10 min. **Risk:** None.
 
-### R0.3 — KNOWN_ISSUES.md items #25 + #26 (PollingManager + FocusObserver wiring) → ALREADY DONE
+### R0.3 â€” KNOWN_ISSUES.md items #25 + #26 (PollingManager + FocusObserver wiring) â†’ ALREADY DONE
 
 **Source:** `docs/KNOWN_ISSUES.md` lines 25-26
 
 **Re-verify (2026-07-31 00:46 IST):**
-- `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` — `PollingManager` IS wired with `_onboardingPoller` + `_postPickupPoller`.
-- `flutter/lib/main.dart:58` — `final FocusObserver focusObserver = FocusObserver(...)` IS wired.
+- `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` â€” `PollingManager` IS wired with `_onboardingPoller` + `_postPickupPoller`.
+- `flutter/lib/main.dart:58` â€” `final FocusObserver focusObserver = FocusObserver(...)` IS wired.
 
 **Fix:**
 1. Edit `docs/KNOWN_ISSUES.md`:
@@ -136,7 +136,7 @@ The audit-and-verify process caught 4 tickets that are **already shipped** in th
 
 **Effort:** 5 min. **Risk:** None.
 
-### R0.4 — Ticket #15 + #18 + #24 — confirm SHIPPED + close-out notes
+### R0.4 â€” Ticket #15 + #18 + #24 â€” confirm SHIPPED + close-out notes
 
 **Source:** `docs/BACKLOG_FINDINGS.md` rows
 
@@ -148,17 +148,17 @@ The audit-and-verify process caught 4 tickets that are **already shipped** in th
 
 ---
 
-## R1 — Staging soaks (5 migrations, 1 week parallel)
+## R1 â€” Staging soaks (5 migrations, 1 week parallel)
 
 These migrations have **already shipped to staging**. The plan is to wait, monitor, then ship to prod.
 
 | Migration | File | Soak started | Soak ends | Risk |
 |---|---|---|---|---|
-| `convert_json_columns` | `web/prisma/migrations/20260730131814_convert_json_columns/` | 2026-07-30 | 2026-08-06 | Low — additive column type change |
-| `add_rider_fk_columns` | `web/prisma/migrations/20260730140000_add_rider_fk_columns/` | 2026-07-30 | 2026-08-06 | Medium — adds nullable FK cols |
-| `add_rider_lifecycle_stage` | `web/prisma/migrations/20260730150000_add_rider_lifecycle_stage/` | 2026-07-30 | 2026-08-06 | Low — adds enum + column |
-| `add_admin_has_permissions` | `web/prisma/migrations/20260730180000_add_admin_has_permissions/` | 2026-07-30 22:01 | 2026-08-06 | Low — additive table + backfill |
-| `alter_admin_permissions_type` | `web/prisma/migrations/20260730000000_alter_admin_permissions_type/` | 2026-07-30 | 2026-08-06 | Medium — column type change |
+| `convert_json_columns` | `web/prisma/migrations/20260730131814_convert_json_columns/` | 2026-07-30 | 2026-08-06 | Low â€” additive column type change |
+| `add_rider_fk_columns` | `web/prisma/migrations/20260730140000_add_rider_fk_columns/` | 2026-07-30 | 2026-08-06 | Medium â€” adds nullable FK cols |
+| `add_rider_lifecycle_stage` | `web/prisma/migrations/20260730150000_add_rider_lifecycle_stage/` | 2026-07-30 | 2026-08-06 | Low â€” adds enum + column |
+| `add_admin_has_permissions` | `web/prisma/migrations/20260730180000_add_admin_has_permissions/` | 2026-07-30 22:01 | 2026-08-06 | Low â€” additive table + backfill |
+| `alter_admin_permissions_type` | `web/prisma/migrations/20260730000000_alter_admin_permissions_type/` | 2026-07-30 | 2026-08-06 | Medium â€” column type change |
 
 **Fix (no code, just ops):**
 1. **Daily check** at 09:00 IST: query the staging DB for any data drift in the changed columns (`rider.lifecycleStage`, `admin.permissions` array semantics, etc.).
@@ -168,22 +168,22 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
    - PR-K.3: drop legacy `lifecycleStatus` enum
    - PR-D.2: drop legacy `permissions: String` column on Admin (now lives in `AdminHasPermission` relation only)
 
-**Effort:** 5 min/day monitoring. **Risk:** Low. **Soak gating:** Yes — no production deploy until 2026-08-06.
+**Effort:** 5 min/day monitoring. **Risk:** Low. **Soak gating:** Yes â€” no production deploy until 2026-08-06.
 
 ---
 
-## R2 — Design system (typography + colors) — 2-3 days
+## R2 â€” Design system (typography + colors) â€” 2-3 days
 
-### R2.1 — Ticket #4: Typography aliases → canonical 15 tiers (1-2 d)
+### R2.1 â€” Ticket #4: Typography aliases â†’ canonical 15 tiers (1-2 d)
 
-**Source:** `docs/AUDIT_DESIGN_SYSTEM.md` §6.1 + `docs/FOLLOWUP_TICKETS.md` #4
+**Source:** `docs/AUDIT_DESIGN_SYSTEM.md` Â§6.1 + `docs/FOLLOWUP_TICKETS.md` #4
 
 **Re-verify (2026-07-31 00:46 IST):**
 - `flutter/lib/theme/app_typography.dart` has 26 named styles (was 41 before this session's partial work)
 - 14 emphasis/strong/compact aliases already removed: `bodyMediumEmphasis`, `bodyMediumStrong`, `bodySmallEmphasis`, `bodySmallStrong`, `bodySmallTracked`, `bodyCompact`, `bodyCompactEmphasis`, `bodyCompactStrong`, `bodyLargeEmphasis`, `buttonMedium`, `microLabel`, `microBadge`, `smallBadge`, `microOverline`
 - 12 still present: `button`, `buttonSmall`, `input`, `inputHint`, `otpDigit`, `priceDisplay`, `priceLarge`, `navLabel`, `defaultText`, `codeMedium`, `codeLarge`, `overline` (overline is the canonical 15th tier; 11 are genuinely different)
 
-**The remaining 11 are NOT aliases — they're specialized (button, input, otpDigit, codeMedium, codeLarge are domain-specific).** So the work is:
+**The remaining 11 are NOT aliases â€” they're specialized (button, input, otpDigit, codeMedium, codeLarge are domain-specific).** So the work is:
 - **Audit each of the 11 remaining** to confirm they map to a real use case (not "I just made this up")
 - **Migrate callers** of any alias that turns out to be a duplicate
 - **Update `docs/design-system.md`** to enumerate the final canonical list (15 tiers + 5 specialized mono)
@@ -191,17 +191,17 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 **Fix spec:**
 
 **Per-alias audit (in order):**
-1. `button` (font_size 14, w600, brand blue) — check if this is `labelLarge` + color override. If yes, migrate callers to `labelLarge.copyWith(color: AppColors.actionPrimary)`.
-2. `buttonSmall` (12, w600) — likely `labelSmall` + color. Migrate.
-3. `input` (14, w400) — `bodyMedium` with possibly different font weight. Migrate.
-4. `inputHint` (14, w400 muted) — `bodyMedium.copyWith(color: AppColors.onSurfaceMuted)`. Migrate.
-5. `otpDigit` (32, w800) — `displayMedium` with letter-spacing 0.0 (vs -0.8 default). **KEEP as specialized** — displayMedium is 32px w800 with -0.8 tracking; OTP digits need 0.0 tracking for cleaner look.
-6. `priceDisplay` (40, w800) — `displayLarge` with possibly different color. **KEEP** if it differs.
-7. `priceLarge` (40, w800 volt accent) — same as `priceDisplay`? Migrate to `priceDisplay`.
-8. `navLabel` (12, w500) — `labelMedium` (12, w600) + 1 weight drop. Migrate.
-9. `defaultText` (14, w500) — same as `bodyMedium`. **DELETE the alias.**
-10. `codeMedium` (14, w500 JetBrains Mono) — **KEEP** (genuine mono tier; design-system.md §6.2)
-11. `codeLarge` (18, w500 JetBrains Mono) — **KEEP** (genuine mono tier)
+1. `button` (font_size 14, w600, brand blue) â€” check if this is `labelLarge` + color override. If yes, migrate callers to `labelLarge.copyWith(color: AppColors.actionPrimary)`.
+2. `buttonSmall` (12, w600) â€” likely `labelSmall` + color. Migrate.
+3. `input` (14, w400) â€” `bodyMedium` with possibly different font weight. Migrate.
+4. `inputHint` (14, w400 muted) â€” `bodyMedium.copyWith(color: AppColors.onSurfaceMuted)`. Migrate.
+5. `otpDigit` (32, w800) â€” `displayMedium` with letter-spacing 0.0 (vs -0.8 default). **KEEP as specialized** â€” displayMedium is 32px w800 with -0.8 tracking; OTP digits need 0.0 tracking for cleaner look.
+6. `priceDisplay` (40, w800) â€” `displayLarge` with possibly different color. **KEEP** if it differs.
+7. `priceLarge` (40, w800 volt accent) â€” same as `priceDisplay`? Migrate to `priceDisplay`.
+8. `navLabel` (12, w500) â€” `labelMedium` (12, w600) + 1 weight drop. Migrate.
+9. `defaultText` (14, w500) â€” same as `bodyMedium`. **DELETE the alias.**
+10. `codeMedium` (14, w500 JetBrains Mono) â€” **KEEP** (genuine mono tier; design-system.md Â§6.2)
+11. `codeLarge` (18, w500 JetBrains Mono) â€” **KEEP** (genuine mono tier)
 
 **Per-call-site migration (mechanical):**
 - For each alias being removed, grep `flutter/lib/` for `AppTypography.<alias>` and replace with the canonical version.
@@ -219,7 +219,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - **PR-R2.1d:** `navLabel` migration (~8 files, 20 min)
 - **PR-R2.1e:** `priceLarge` migration if duplicate of `priceDisplay` (~5 files, 10 min)
 - **PR-R2.1f:** Update `docs/design-system.md` to list the final canonical tiers + the 5 specialized kept styles
-- **PR-R2.1g:** Final cleanup — remove deprecated getters from `app_typography.dart`
+- **PR-R2.1g:** Final cleanup â€” remove deprecated getters from `app_typography.dart`
 
 **Acceptance criteria:**
 - [ ] `app_typography.dart` has 15 + 2 mono + 4 specialized (button/input/otpDigit/priceDisplay) = ~21 named styles
@@ -231,7 +231,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 **Risk:** Medium (visual). **Mitigation:** per-group PRs; golden tests; manual device review.
 
-### R2.2 — Ticket #5: 60+ raw color hues → 12 semantic tokens (2-3 d)
+### R2.2 â€” Ticket #5: 60+ raw color hues â†’ 12 semantic tokens (2-3 d)
 
 **Source:** `docs/AUDIT_DESIGN_SYSTEM.md` + `docs/FOLLOWUP_TICKETS.md` #5
 
@@ -241,21 +241,21 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - 80 files in `flutter/lib/` use the variant color names
 
 **Remaining work:** ~115 raw hues to consolidate. Group by category:
-- **Group 1 (Surface variants):** `surfaceAlt`, `surfaceContainer`, `surfaceWhite` — collapse to single `surface` + alpha modifier (10-15 call sites)
-- **Group 2 (Border variants):** `borderLight`, `borderMedium` — keep both (genuinely different) but ensure all are semantic (not raw)
-- **Group 3 (Text variants):** `onSurfaceAlt`, `onSurfaceSubtle` — collapse to `onSurface` + opacity (10-15 call sites)
-- **Group 4 (Slate scale):** 10-step slate scale (50-900) — keep but rename to `slate50`...`slate900` for consistency
-- **Group 5 (Brand variants):** `primaryLight`, `primaryLighter`, `primaryDark`, `primaryGradientEnd` — keep `primaryLight` + `primaryDark`, migrate others
-- **Group 6 (Status variants):** `successLight/Dark/Text`, `warningLight/Dark/Text`, `errorLight/Dark`, `infoLight` — keep light/dark, remove text variants
-- **Group 7 (Misc):** 30+ other named colors — most are state-specific (e.g. `kycStatusSubmitted`, `kycStatusApproved`) — document or consolidate
+- **Group 1 (Surface variants):** `surfaceAlt`, `surfaceContainer`, `surfaceWhite` â€” collapse to single `surface` + alpha modifier (10-15 call sites)
+- **Group 2 (Border variants):** `borderLight`, `borderMedium` â€” keep both (genuinely different) but ensure all are semantic (not raw)
+- **Group 3 (Text variants):** `onSurfaceAlt`, `onSurfaceSubtle` â€” collapse to `onSurface` + opacity (10-15 call sites)
+- **Group 4 (Slate scale):** 10-step slate scale (50-900) â€” keep but rename to `slate50`...`slate900` for consistency
+- **Group 5 (Brand variants):** `primaryLight`, `primaryLighter`, `primaryDark`, `primaryGradientEnd` â€” keep `primaryLight` + `primaryDark`, migrate others
+- **Group 6 (Status variants):** `successLight/Dark/Text`, `warningLight/Dark/Text`, `errorLight/Dark`, `infoLight` â€” keep light/dark, remove text variants
+- **Group 7 (Misc):** 30+ other named colors â€” most are state-specific (e.g. `kycStatusSubmitted`, `kycStatusApproved`) â€” document or consolidate
 
 **Per-PR scope:**
 - **PR-R2.2a:** Surface variants (10-15 files, 30 min)
 - **PR-R2.2b:** Text variants (10-15 files, 30 min)
-- **PR-R2.2c:** Brand variants — `primaryLighter` + `primaryGradientEnd` removal (10 files, 20 min)
+- **PR-R2.2c:** Brand variants â€” `primaryLighter` + `primaryGradientEnd` removal (10 files, 20 min)
 - **PR-R2.2d:** Status text variants (10-15 files, 30 min)
-- **PR-R2.2e:** Slate scale rename to consistent naming (30+ files, 1 hr — mostly mechanical find/replace)
-- **PR-R2.2f:** Group 7 misc — case-by-case (1-2 hr)
+- **PR-R2.2e:** Slate scale rename to consistent naming (30+ files, 1 hr â€” mostly mechanical find/replace)
+- **PR-R2.2f:** Group 7 misc â€” case-by-case (1-2 hr)
 - **PR-R2.2g:** Final cleanup + design-system.md update
 
 **Acceptance criteria:**
@@ -272,7 +272,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 ---
 
-## R3 — Admin web screen splits (Ticket #21) — 2-3 weeks
+## R3 â€” Admin web screen splits (Ticket #21) â€” 2-3 weeks
 
 **Source:** `docs/AUDIT_FINDINGS_ADMINPANEL.md` + `docs/FOLLOWUP_TICKETS.md` #21
 
@@ -296,7 +296,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 **Total: 13 admin screens > 15 KB. The audit's "30+ remaining" is correct.**
 
-**Update (2026-07-31, end of session):** All 13 screens in the 10-20 KB range have been split (R3.7a through R3.7o — 15 PRs total, including the 2 already shipped at session start). 14 screens in the 20+ KB range remain OPEN. See §Tracking below for per-PR status.
+**Update (2026-07-31, end of session):** All 13 screens in the 10-20 KB range have been split (R3.7a through R3.7o â€” 15 PRs total, including the 2 already shipped at session start). 14 screens in the 20+ KB range remain OPEN. See Â§Tracking below for per-PR status.
 
 **Strategy:** 1 PR per screen. Each PR:
 1. Reads the file end-to-end to identify natural split lines
@@ -307,7 +307,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 **Per-screen split plan (in priority order):**
 
-### R3.1 — `RiderManagement.tsx` (44 KB) — 2 days
+### R3.1 â€” `RiderManagement.tsx` (44 KB) â€” 2 days
 
 **Sub-files to extract:**
 - `RiderListTable.tsx` (the data table)
@@ -320,7 +320,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 **PR scope:** 1 large PR or 2 medium PRs (list + filters first, then detail + bulk).
 
-### R3.2 — `DeviceTrackingView.tsx` (38 KB) — 1.5 days
+### R3.2 â€” `DeviceTrackingView.tsx` (38 KB) â€” 1.5 days
 
 **Sub-files:**
 - `DeviceMap.tsx`
@@ -328,7 +328,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - `DeviceFilters.tsx`
 - `index.tsx`
 
-### R3.3 — `TeamLeaderManagement.tsx` (35 KB) — 1.5 days
+### R3.3 â€” `TeamLeaderManagement.tsx` (35 KB) â€” 1.5 days
 
 **Sub-files:**
 - `TeamLeaderList.tsx`
@@ -336,7 +336,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - `TeamLeaderMetrics.tsx`
 - `index.tsx`
 
-### R3.4 — `DashboardOverview.tsx` (34 KB) — 1.5 days
+### R3.4 â€” `DashboardOverview.tsx` (34 KB) â€” 1.5 days
 
 **Sub-files:**
 - `MetricCards.tsx`
@@ -344,7 +344,7 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - `ChartsSection.tsx`
 - `index.tsx`
 
-### R3.5 — `RentalManagement.tsx` (32 KB) — 1 day
+### R3.5 â€” `RentalManagement.tsx` (32 KB) â€” 1 day
 
 **Sub-files:**
 - `RentalList.tsx`
@@ -352,14 +352,14 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 - `RentalDetail.tsx`
 - `index.tsx`
 
-### R3.6 — `OfferManagement.tsx` (31 KB) — 1 day
+### R3.6 â€” `OfferManagement.tsx` (31 KB) â€” 1 day
 
 **Sub-files:**
 - `OfferList.tsx`
 - `OfferForm.tsx` (create/edit dialog)
 - `index.tsx`
 
-### R3.7 — 7 smaller screens (15-24 KB) — 3-4 days total
+### R3.7 â€” 7 smaller screens (15-24 KB) â€” 3-4 days total
 
 **Strategy:** batch into 2-3 PRs by category:
 - **PR-R3.7a:** SettingsManagement + KycManagement (45 KB total, 1.5 d)
@@ -379,16 +379,16 @@ These migrations have **already shipped to staging**. The plan is to wait, monit
 
 ---
 
-## R4 — Flutter router state-machine refactor (PR-T) — 1-2 weeks
+## R4 â€” Flutter router state-machine refactor (PR-T) â€” 1-2 weeks
 
-**Source:** `docs/AUDIT_FINDINGS_RIDERAPP.md` §1.1 + `docs/UNIFIED_PLAN_2026-07-30.md` PR-T
+**Source:** `docs/AUDIT_FINDINGS_RIDERAPP.md` Â§1.1 + `docs/UNIFIED_PLAN_2026-07-30.md` PR-T
 
 **Re-verify (2026-07-31 00:46 IST):**
 - `flutter/lib/app/main.dart` + `lib/core/navigation/` directory exists
 - `FocusObserver` is wired but the app uses a custom `AppShell` with `setState`-based tab switching, not go_router
 - 15 feature modules + complex auth flow + polling logic
 
-**Why this matters:** the current state-machine is implicit — `setState(() => _currentTab = ...)` in `AppShell`. Adding a new screen requires:
+**Why this matters:** the current state-machine is implicit â€” `setState(() => _currentTab = ...)` in `AppShell`. Adding a new screen requires:
 1. Adding to `AppShell.onTap`
 2. Adding to a `ScreenRegistry` enum
 3. Updating the auth-state machine
@@ -398,7 +398,7 @@ This is error-prone and the source of "stuck on splash" / "stuck on pre-dashboar
 
 **Fix spec (1-2 weeks):**
 
-### R4.1 — Define explicit state machine (1-2 d)
+### R4.1 â€” Define explicit state machine (1-2 d)
 
 **New file:** `flutter/lib/core/navigation/app_state.dart`
 
@@ -423,14 +423,14 @@ class AccountClosed extends AppState { const AccountClosed(); }
 ```
 
 **Transitions** (forbidden jumps throw `AppStateError`):
-- `Splash → LegalGate | AuthFlow | PreDashboard | ActiveDashboard`
-- `AuthFlow → Onboarding | PreDashboard | ActiveDashboard | AccountClosed`
-- `Onboarding → PreDashboard | ActiveDashboard`
-- `PreDashboard → ActiveDashboard | Onboarding` (back-button)
-- `ActiveDashboard → AccountClosed | Onboarding` (back-button)
+- `Splash â†’ LegalGate | AuthFlow | PreDashboard | ActiveDashboard`
+- `AuthFlow â†’ Onboarding | PreDashboard | ActiveDashboard | AccountClosed`
+- `Onboarding â†’ PreDashboard | ActiveDashboard`
+- `PreDashboard â†’ ActiveDashboard | Onboarding` (back-button)
+- `ActiveDashboard â†’ AccountClosed | Onboarding` (back-button)
 - `AccountClosed` is terminal
 
-### R4.2 — Implement router on top of `go_router` (2-3 d)
+### R4.2 â€” Implement router on top of `go_router` (2-3 d)
 
 **Add dependency:** `go_router: ^14.0.0` to `pubspec.yaml`
 
@@ -439,15 +439,15 @@ class AccountClosed extends AppState { const AccountClosed(); }
 Routes:
 - `/splash`
 - `/legal`
-- `/auth/phone` → `/auth/otp`
-- `/onboarding/kyc` → `/onboarding/guarantor` → `/onboarding/deposit` → `/onboarding/plan`
+- `/auth/phone` â†’ `/auth/otp`
+- `/onboarding/kyc` â†’ `/onboarding/guarantor` â†’ `/onboarding/deposit` â†’ `/onboarding/plan`
 - `/pre-dashboard`
 - `/dashboard`
 - `/dashboard/account-closed`
 
-**State machine is the source of truth** — `MaterialApp.router` watches a `StateNotifier<AppState>` and rebuilds the route stack.
+**State machine is the source of truth** â€” `MaterialApp.router` watches a `StateNotifier<AppState>` and rebuilds the route stack.
 
-### R4.3 — Migrate `AppShell` to use the state machine (2-3 d)
+### R4.3 â€” Migrate `AppShell` to use the state machine (2-3 d)
 
 **Refactor:** `flutter/lib/app/main.dart` + `AppShell`
 
@@ -456,13 +456,13 @@ Routes:
 - Bottom nav bar uses `GoRouter.goNamed()` to switch tabs
 - The `FocusObserver` is replaced by go_router's `redirect` hook
 
-### R4.4 — Migrate auth flow to use the state machine (1-2 d)
+### R4.4 â€” Migrate auth flow to use the state machine (1-2 d)
 
 - `AuthRepositoryImpl.verifyOtp` returns the new `AppState` (Onboarding or PreDashboard or ActiveDashboard)
 - The `rider_provider` exposes the current state via a `StateProvider<AppState>`
 - All places that check `lifecycleStatus` to decide which screen to show now just check the state
 
-### R4.5 — Migrate polling lifecycle (1 d)
+### R4.5 â€” Migrate polling lifecycle (1 d)
 
 - `PollingManager` instances are now scoped to specific states
 - `_onboardingPoller` only runs in `Onboarding` state
@@ -470,10 +470,10 @@ Routes:
 - `activeDashboardPoller` only runs in `ActiveDashboard` state
 - Polling automatically pauses when the state transitions away
 
-### R4.6 — Test + manual smoke (1 d)
+### R4.6 â€” Test + manual smoke (1 d)
 
 - All 33+ e2e tests must pass (they currently navigate via `find.byType` + tap, which still works with go_router)
-- Manual smoke test on a real device for the full auth → onboarding → pre-dashboard → active-dashboard flow
+- Manual smoke test on a real device for the full auth â†’ onboarding â†’ pre-dashboard â†’ active-dashboard flow
 - Add 5-10 unit tests for the state machine transitions (forbidden jumps throw)
 
 **Acceptance criteria:**
@@ -491,7 +491,7 @@ Routes:
 
 ---
 
-## R5 — Server module size cap — ALREADY SHIPPED (0 min)
+## R5 â€” Server module size cap â€” ALREADY SHIPPED (0 min)
 
 **Source:** `docs/UNIFIED_PLAN_2026-07-30.md` PR-C.4
 
@@ -506,29 +506,29 @@ Routes:
 
 ---
 
-## R6 — DB Admin migration follow-up (#9 drop legacy column) — 0.5 d
+## R6 â€” DB Admin migration follow-up (#9 drop legacy column) â€” 0.5 d
 
 **Source:** `docs/FOLLOWUP_TICKETS.md` Ticket #9
 
 **Re-verify (2026-07-31 00:46 IST):**
-- `web/prisma/schema.prisma:18` — `Admin.permissions: String[] @default([])` (still present, used during soak as fallback)
+- `web/prisma/schema.prisma:18` â€” `Admin.permissions: String[] @default([])` (still present, used during soak as fallback)
 - Migration `20260730180000_add_admin_has_permissions` adds `AdminHasPermission` relation + backfill
-- `web/src/server/modules/admin/admin.use-cases.ts` — must read/write the new relation OR the legacy `permissions` column
+- `web/src/server/modules/admin/admin.use-cases.ts` â€” must read/write the new relation OR the legacy `permissions` column
 
 **Fix (post-soak, after 2026-08-06):**
 
-### R6.1 — Verify all readers/writers use the new relation (1 hr)
+### R6.1 â€” Verify all readers/writers use the new relation (1 hr)
 
 - Grep `web/src/lib/permissions.ts` and `web/src/server/modules/admin/admin.use-cases.ts` for `permissions` access
 - Ensure the admin use-cases READ from `hasPermissions` (the new relation) and WRITE to it
 - Legacy `permissions: String[]` should only be read for fallback during the soak
 
-### R6.2 — Update admin use-cases to write to the relation (2 hr)
+### R6.2 â€” Update admin use-cases to write to the relation (2 hr)
 
-- `admin.use-cases.ts#create` + `update` — set the `permissions` via `hasPermissions` instead of the legacy column
+- `admin.use-cases.ts#create` + `update` â€” set the `permissions` via `hasPermissions` instead of the legacy column
 - Update tests in `tests/unit/admin-permissions-migration.test.ts` to assert the new write path
 
-### R6.3 — Migration to drop the legacy column (1 hr)
+### R6.3 â€” Migration to drop the legacy column (1 hr)
 
 ```sql
 -- web/prisma/migrations/20260806120000_drop_admin_permissions_legacy/migration.sql
@@ -545,12 +545,12 @@ BEGIN
 END $$;
 ```
 
-### R6.4 — Update Prisma schema (10 min)
+### R6.4 â€” Update Prisma schema (10 min)
 
 - Remove `permissions String[] @default([])` from `Admin`
 - `npx prisma generate` + `npx tsc --noEmit`
 
-### R6.5 — Tests (1 hr)
+### R6.5 â€” Tests (1 hr)
 
 - All existing admin tests must pass
 - Add a regression test: `tests/unit/admin-no-legacy-permissions-column.test.ts`
@@ -562,17 +562,17 @@ END $$;
 - [ ] `npx tsc --noEmit` clean
 - [ ] `npm run test:unit` clean
 
-**Total R6:** 0.5 d. **Risk:** Low (1-wk soak complete). **Soak gating:** Yes — must wait for R1.
+**Total R6:** 0.5 d. **Risk:** Low (1-wk soak complete). **Soak gating:** Yes â€” must wait for R1.
 
 ---
 
-## R7 — Polling/Focus wiring — ALREADY DONE (0 min)
+## R7 â€” Polling/Focus wiring â€” ALREADY DONE (0 min)
 
 See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 ---
 
-## R8 — Phantom OpenAPI paths (Ticket #61) — 1 d
+## R8 â€” Phantom OpenAPI paths (Ticket #61) â€” 1 d
 
 **Source:** `docs/KNOWN_ISSUES.md` line 28
 
@@ -582,7 +582,7 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 **Fix:**
 
-### R8.1 — Implement `POST /api/admin/deposits` (3 hr)
+### R8.1 â€” Implement `POST /api/admin/deposits` (3 hr)
 
 - New file: `web/src/app/api/admin/deposits/route.ts`
 - POST handler: creates a `DepositRecord` (admin-initiated deposit, e.g. for offline payment or correction)
@@ -590,7 +590,7 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 - Permission: `deposits:create`
 - Tests: 5-8 unit tests for the new use-case
 
-### R8.2 — Implement `POST /api/admin/transactions` (3 hr)
+### R8.2 â€” Implement `POST /api/admin/transactions` (3 hr)
 
 - New file: `web/src/app/api/admin/transactions/route.ts`
 - POST handler: creates an `AdminTransaction` (admin-initiated transaction, e.g. for manual adjustment)
@@ -598,11 +598,11 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 - Permission: `transactions:create`
 - Tests: 5-8 unit tests
 
-### R8.3 — Update openapi.ts + openapi.json (15 min)
+### R8.3 â€” Update openapi.ts + openapi.json (15 min)
 
 - These are already in openapi.ts. After route.ts is created, the openapi.ts entry's "implemented" status flips automatically. Just regenerate openapi.json.
 
-### R8.4 — Remove "Phantom OpenAPI paths" from KNOWN_ISSUES.md (5 min)
+### R8.4 â€” Remove "Phantom OpenAPI paths" from KNOWN_ISSUES.md (5 min)
 
 - Once the routes exist, the line is no longer true.
 
@@ -610,7 +610,7 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 ---
 
-## R9 — Data-deletion Admin UI (Ticket #59 v2) — 1 d
+## R9 â€” Data-deletion Admin UI (Ticket #59 v2) â€” 1 d
 
 **Source:** `docs/FOLLOWUP_TICKETS.md` Ticket #59 + `docs/KNOWN_ISSUES.md` line 28
 
@@ -621,20 +621,20 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 **Fix:**
 
-### R9.1 — Add data-deletion section to RiderManagement page (1 d)
+### R9.1 â€” Add data-deletion section to RiderManagement page (1 d)
 
 - New file: `web/src/components/admin/screens/rider-management/DataDeletionSection.tsx` (split sub-component, per R3 convention)
 - 3 buttons: "Request Data Deletion", "Approve Deletion" (super_admin only), "Restore from Deletion"
 - Each button shows a confirmation modal with the rider's name + a 7-day grace period notice
 - Uses `RiderManagement`'s existing state for the selected rider
 
-### R9.2 — Add API client methods to admin-api.ts (30 min)
+### R9.2 â€” Add API client methods to admin-api.ts (30 min)
 
-- `adminApi.requestDataDeletion(riderId, reason)` → POST `/api/admin/riders/[id]/data-deletion`
-- `adminApi.approveDataDeletion(riderId)` → POST `/api/admin/riders/[id]/data-deletion/approve`
-- `adminApi.restoreDataDeletion(riderId)` → POST `/api/admin/riders/[id]/data-deletion/restore`
+- `adminApi.requestDataDeletion(riderId, reason)` â†’ POST `/api/admin/riders/[id]/data-deletion`
+- `adminApi.approveDataDeletion(riderId)` â†’ POST `/api/admin/riders/[id]/data-deletion/approve`
+- `adminApi.restoreDataDeletion(riderId)` â†’ POST `/api/admin/riders/[id]/data-deletion/restore`
 
-### R9.3 — Tests (1 hr)
+### R9.3 â€” Tests (1 hr)
 
 - Unit tests for the new admin-api methods
 - E2E test: `flutter/integration_test/e2e_individual/34_data_deletion_admin_test.dart` (if not already present)
@@ -643,40 +643,40 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 ---
 
-## R10 — Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
+## R10 â€” Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
 
-**Source:** `docs/BACKLOG_FINDINGS.md` §7
+**Source:** `docs/BACKLOG_FINDINGS.md` Â§7
 
 **Re-verify (2026-07-31 00:46 IST):** The 120 items are spread across DB, Design System, Admin Web, Infra, Security plans. Most are small text/log/script/doc fixes.
 
 **Strategy:** 1 PR per source plan. ~5-10 items per PR.
 
-### R10.1 — DB plan polish (1 PR, 1 hr)
+### R10.1 â€” DB plan polish (1 PR, 1 hr)
 
 - Sample items: misc comment updates, type clarifications, missing index notes
 - Lowest-risk group
 
-### R10.2 — Design System plan polish (1 PR, 2 hr)
+### R10.2 â€” Design System plan polish (1 PR, 2 hr)
 
 - Sample items: minor spacing tokens, focus ring color, animation duration tweaks
-- Visual risk — golden test required
+- Visual risk â€” golden test required
 
-### R10.3 — Admin Web plan polish (1 PR, 2 hr)
+### R10.3 â€” Admin Web plan polish (1 PR, 2 hr)
 
 - Sample items: toast message consistency, empty-state copy, button label standardization
-- Low risk — text/copy changes
+- Low risk â€” text/copy changes
 
-### R10.4 — Infra plan polish (1 PR, 3 hr)
+### R10.4 â€” Infra plan polish (1 PR, 3 hr)
 
 - Sample items: log message tweaks, health check format, deploy script improvements
 - Low risk
 
-### R10.5 — Security plan polish (1 PR, 3 hr)
+### R10.5 â€” Security plan polish (1 PR, 3 hr)
 
 - Sample items: env var validation, PII redaction edge cases, CSP header tweaks
-- Medium risk — security-sensitive
+- Medium risk â€” security-sensitive
 
-### R10.6 — Docs/cleanup polish (1 PR, 1 hr)
+### R10.6 â€” Docs/cleanup polish (1 PR, 1 hr)
 
 - Sample items: README updates, dead link cleanup, comment typos
 - No risk
@@ -685,52 +685,52 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 ---
 
-## R11 — PollingManager widget lifecycle gaps — 1 d
+## R11 â€” PollingManager widget lifecycle gaps â€” 1 d
 
 **Source:** Derived from R7 audit. The PollingManager utility is wired into `RiderProvider`, but there are still gaps:
 1. `_locationSyncTimer = Timer.periodic(...)` is created in `_startDeviceDataSync()` but may not be cancelled on app background
 2. The `_onboardingPoller` and `_postPickupPoller` are constructed in the provider constructor but may not respect `WidgetsBindingObserver` lifecycle events
 
 **Re-verify (2026-07-31 00:46 IST):**
-- `flutter/lib/core/state/rider_provider.dart:92` — `Timer? _locationSyncTimer;` declared
-- `flutter/lib/core/state/rider_provider.dart:305` — `_locationSyncTimer = Timer.periodic(...)` set
+- `flutter/lib/core/state/rider_provider.dart:92` â€” `Timer? _locationSyncTimer;` declared
+- `flutter/lib/core/state/rider_provider.dart:305` â€” `_locationSyncTimer = Timer.periodic(...)` set
 - No `WidgetsBindingObserver` mixin on the provider
 
 **Fix:**
 
-### R11.1 — Make `RiderProvider` a `WidgetsBindingObserver` (1 hr)
+### R11.1 â€” Make `RiderProvider` a `WidgetsBindingObserver` (1 hr)
 
 - Add `with WidgetsBindingObserver` to the class
 - Override `didChangeAppLifecycleState(paused)` to cancel all timers
 - Override `didChangeAppLifecycleState(resumed)` to restart polling if state warrants
 
-### R11.2 — Wire `WidgetsBinding.instance.addObserver(this)` in the provider (15 min)
+### R11.2 â€” Wire `WidgetsBinding.instance.addObserver(this)` in the provider (15 min)
 
 - Add to constructor + `removeObserver` in `dispose()`
 
-### R11.3 — Cancel `_locationSyncTimer` on dispose (15 min)
+### R11.3 â€” Cancel `_locationSyncTimer` on dispose (15 min)
 
 - Add `_locationSyncTimer?.cancel()` in `dispose()`
 
-### R11.4 — Tests (2 hr)
+### R11.4 â€” Tests (2 hr)
 
-- Unit test: `tests/unit/rider_provider_lifecycle_test.dart` — mock `WidgetsBinding`, assert timers are cancelled on pause
+- Unit test: `tests/unit/rider_provider_lifecycle_test.dart` â€” mock `WidgetsBinding`, assert timers are cancelled on pause
 - E2E test: background the app, verify polling stops (manual)
 
 **Total R11:** 4 hr (0.5 d). **Risk:** Low.
 
 ---
 
-## R12 — Dependabot / vulnerability SLA — ongoing (1-2 hr setup)
+## R12 â€” Dependabot / vulnerability SLA â€” ongoing (1-2 hr setup)
 
-**Source:** `SECURITY.md` §12: "Critical vulnerabilities are patched within 24 hours; high-severity within 7 days."
+**Source:** `SECURITY.md` Â§12: "Critical vulnerabilities are patched within 24 hours; high-severity within 7 days."
 
 **Re-verify (2026-07-31 00:46 IST):**
-- `.github/dependabot.yml` not found in my exploration — need to check
+- `.github/dependabot.yml` not found in my exploration â€” need to check
 
 **Fix:**
 
-### R12.1 — Verify Dependabot config exists (5 min)
+### R12.1 â€” Verify Dependabot config exists (5 min)
 
 - Check `.github/dependabot.yml`
 - If missing, create it with:
@@ -738,13 +738,13 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
   - Auto-merge for `patch` updates (after CI passes)
   - Grouped updates for `flutter` packages
 
-### R12.2 — Add npm audit CI step (1 hr)
+### R12.2 â€” Add npm audit CI step (1 hr)
 
 - New workflow: `.github/workflows/dependency-audit.yml`
 - Runs `npm audit --audit-level=high` on every PR
 - Fails the build if a high/critical vuln is introduced
 
-### R12.3 — Add Flutter pub outdated check (30 min)
+### R12.3 â€” Add Flutter pub outdated check (30 min)
 
 - New workflow: `.github/workflows/flutter-pub-outdated.yml`
 - Weekly Sunday run
@@ -758,49 +758,49 @@ See R0.3. The wiring is in place. KNOWN_ISSUES.md just needs the doc fix.
 
 ```
 Week 1 (2026-07-31 to 2026-08-06):
-├── Mon:     R0 (4 doc-only close-outs) — 30 min
-│            R12 (Dependabot setup) — 1.5 hr
-│   ═══════════════════════════════════════════════════════
-│            Total: 2 hours
-│
-├── Mon-Tue: R11 (PollingManager lifecycle) — 0.5 d
-│            R8 (Phantom OpenAPI paths) — 1 d
-│
-├── Tue-Thu: R9 (Data-deletion Admin UI) — 1 d
-│            R2.1 (Typography aliases, 6 PRs) — 1.5 d
-│
-├── Wed-Fri: R2.2 (Color hues, 7 PRs) — 2.5 d
-│
-├── Fri:     R10 (Trivial batch, 6 PRs) — 12-15 hr
-│
-└── All-week: R1 (5 staging soaks running in parallel)
+â”œâ”€â”€ Mon:     R0 (4 doc-only close-outs) â€” 30 min
+â”‚            R12 (Dependabot setup) â€” 1.5 hr
+â”‚   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+â”‚            Total: 2 hours
+â”‚
+â”œâ”€â”€ Mon-Tue: R11 (PollingManager lifecycle) â€” 0.5 d
+â”‚            R8 (Phantom OpenAPI paths) â€” 1 d
+â”‚
+â”œâ”€â”€ Tue-Thu: R9 (Data-deletion Admin UI) â€” 1 d
+â”‚            R2.1 (Typography aliases, 6 PRs) â€” 1.5 d
+â”‚
+â”œâ”€â”€ Wed-Fri: R2.2 (Color hues, 7 PRs) â€” 2.5 d
+â”‚
+â”œâ”€â”€ Fri:     R10 (Trivial batch, 6 PRs) â€” 12-15 hr
+â”‚
+â””â”€â”€ All-week: R1 (5 staging soaks running in parallel)
 
 Week 2 (2026-08-07 to 2026-08-13):
-├── Mon:     R6 (Admin.permissions drop) — 0.5 d  [post-soak]
-│
-├── Mon-Fri: R3 (Admin web screen splits) — start
-│   ═══════════════════════════════════════════════════════
-│            R3.1 (RiderManagement 44KB) — 2 d
-│            R3.2 (DeviceTrackingView 38KB) — 1.5 d
-│            R3.3 (TeamLeaderManagement 35KB) — 1.5 d
-│
-└── Fri:     R3.4 (DashboardOverview 34KB) — 1.5 d
+â”œâ”€â”€ Mon:     R6 (Admin.permissions drop) â€” 0.5 d  [post-soak]
+â”‚
+â”œâ”€â”€ Mon-Fri: R3 (Admin web screen splits) â€” start
+â”‚   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+â”‚            R3.1 (RiderManagement 44KB) â€” 2 d
+â”‚            R3.2 (DeviceTrackingView 38KB) â€” 1.5 d
+â”‚            R3.3 (TeamLeaderManagement 35KB) â€” 1.5 d
+â”‚
+â””â”€â”€ Fri:     R3.4 (DashboardOverview 34KB) â€” 1.5 d
 
 Week 3 (2026-08-14 to 2026-08-20):
-├── Mon-Wed: R3.5 (RentalManagement 32KB) + R3.6 (OfferManagement 31KB) — 2 d
-├── Thu-Fri: R3.7 (7 smaller screens in 3 PRs) — 3-4 d
-└── Fri:     R3 wrap-up
+â”œâ”€â”€ Mon-Wed: R3.5 (RentalManagement 32KB) + R3.6 (OfferManagement 31KB) â€” 2 d
+â”œâ”€â”€ Thu-Fri: R3.7 (7 smaller screens in 3 PRs) â€” 3-4 d
+â””â”€â”€ Fri:     R3 wrap-up
 
 Week 4 (2026-08-21 to 2026-08-27):
-├── Mon-Fri: R4 (Flutter router refactor) — 1-2 wks
-│   ═══════════════════════════════════════════════════════
-│            R4.1 State machine — 1-2 d
-│            R4.2 go_router setup — 2-3 d
-│            R4.3 AppShell migration — 2-3 d
-│            R4.4 Auth flow migration — 1-2 d
-│            R4.5 Polling lifecycle — 1 d
-│            R4.6 Tests + manual smoke — 1 d
-└── Fri:     Final review + handoff doc
+â”œâ”€â”€ Mon-Fri: R4 (Flutter router refactor) â€” 1-2 wks
+â”‚   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+â”‚            R4.1 State machine â€” 1-2 d
+â”‚            R4.2 go_router setup â€” 2-3 d
+â”‚            R4.3 AppShell migration â€” 2-3 d
+â”‚            R4.4 Auth flow migration â€” 1-2 d
+â”‚            R4.5 Polling lifecycle â€” 1 d
+â”‚            R4.6 Tests + manual smoke â€” 1 d
+â””â”€â”€ Fri:     Final review + handoff doc
 ```
 
 **Total: 4 weeks focused + 1 week parallel staging soak.**
@@ -840,18 +840,18 @@ For PR-R3.* and PR-R4.* (large refactors):
 
 ## Acceptance criteria (whole plan)
 
-- [ ] All tickets in §18 "Active work" of `PROJECT_OVERVIEW_2026-07-30.md` marked SHIPPED
+- [ ] All tickets in Â§18 "Active work" of `PROJECT_OVERVIEW_2026-07-30.md` marked SHIPPED
 - [ ] 6 staging soaks shipped to production (R1)
-- [ ] Ticket #4 (typography) SHIPPED — `app_typography.dart` has ~21 styles
-- [ ] Ticket #5 (colors) SHIPPED — `app_theme.dart` has ~20 tokens, no raw hex outside
-- [ ] Ticket #21 (admin screens) SHIPPED — 0 files > 15 KB
-- [ ] PR-T (router) SHIPPED — go_router is the only navigation
-- [ ] Ticket #9 (Admin.permissions) SHIPPED — legacy column dropped
-- [ ] Ticket #33 (server modules) SHIPPED — already done
-- [ ] Ticket #58 (rental/return) SHIPPED — already done (doc close-out)
-- [ ] KNOWN_ISSUES.md items #25 + #26 SHIPPED — PollingManager + FocusObserver (already done)
-- [ ] KNOWN_ISSUES.md item #28 SHIPPED — phantom paths implemented
-- [ ] Ticket #59 v2 SHIPPED — data-deletion Admin UI
+- [ ] Ticket #4 (typography) SHIPPED â€” `app_typography.dart` has ~21 styles
+- [ ] Ticket #5 (colors) SHIPPED â€” `app_theme.dart` has ~20 tokens, no raw hex outside
+- [ ] Ticket #21 (admin screens) SHIPPED â€” 0 files > 15 KB
+- [ ] PR-T (router) SHIPPED â€” go_router is the only navigation
+- [ ] Ticket #9 (Admin.permissions) SHIPPED â€” legacy column dropped
+- [ ] Ticket #33 (server modules) SHIPPED â€” already done
+- [ ] Ticket #58 (rental/return) SHIPPED â€” already done (doc close-out)
+- [ ] KNOWN_ISSUES.md items #25 + #26 SHIPPED â€” PollingManager + FocusObserver (already done)
+- [ ] KNOWN_ISSUES.md item #28 SHIPPED â€” phantom paths implemented
+- [ ] Ticket #59 v2 SHIPPED â€” data-deletion Admin UI
 - [ ] 120 trivial items shipped in 6 PRs
 - [ ] 33+ e2e tests + 1837+ backend unit tests pass
 - [ ] `flutter analyze` clean, `tsc --noEmit` clean
@@ -882,10 +882,10 @@ For PR-R3.* and PR-R4.* (large refactors):
 
 ## Out of scope (deliberately)
 
-- **Rider lifecycleStage drop phase (PR-K.3)** — included in R1, not duplicated
-- **Rider legacy column drop (PR-J)** — included in R1
-- **v2 deferred work** (Argon2id tuning, key rotation API, Grafana dashboards, admin 2FA) — see `PROJECT_OVERVIEW_2026-07-30.md` §19.3
-- **New features** (e.g. v2 Admin UI for restore) — separate plan
+- **Rider lifecycleStage drop phase (PR-K.3)** â€” included in R1, not duplicated
+- **Rider legacy column drop (PR-J)** â€” included in R1
+- **v2 deferred work** (Argon2id tuning, key rotation API, Grafana dashboards, admin 2FA) â€” see `PROJECT_OVERVIEW_2026-07-30.md` Â§19.3
+- **New features** (e.g. v2 Admin UI for restore) â€” separate plan
 - **CI infrastructure improvements** (already done in 2026-07-29)
 
 ---
@@ -896,35 +896,35 @@ After 14 refactoring phases and 4 audit passes, the Voltium codebase is in a cle
 
 ---
 
-## Tracking section — per-PR checkboxes (next agent picks up here)
+## Tracking section â€” per-PR checkboxes (next agent picks up here)
 
 This is the **single place to check progress**. Tick `- [x]` when each PR ships. Add a "Shipped" line with the commit ref.
 
-### R0 — Doc-only close-outs (30 min, no code)
+### R0 â€” Doc-only close-outs (30 min, no code)
 
-- [x] **R0.1** Ticket #58 (rental/return mass-assignment) → SHIPPED via audit-correction (in this commit)
-- [x] **R0.2a** Ticket #39 (PM2 timeouts) → STAGED, RUNBOOK procedure added (in this commit)
-- [x] **R0.2b** Ticket #42 (PM2 cluster) → STAGED (in this commit)
-- [x] **R0.3a** KNOWN_ISSUES.md #25 (PollingManager) → moved to Recently Remediated (in this commit)
-- [x] **R0.3b** KNOWN_ISSUES.md #26 (FocusObserver) → moved to Recently Remediated (in this commit)
+- [x] **R0.1** Ticket #58 (rental/return mass-assignment) â†’ SHIPPED via audit-correction (in this commit)
+- [x] **R0.2a** Ticket #39 (PM2 timeouts) â†’ STAGED, RUNBOOK procedure added (in this commit)
+- [x] **R0.2b** Ticket #42 (PM2 cluster) â†’ STAGED (in this commit)
+- [x] **R0.3a** KNOWN_ISSUES.md #25 (PollingManager) â†’ moved to Recently Remediated (in this commit)
+- [x] **R0.3b** KNOWN_ISSUES.md #26 (FocusObserver) â†’ moved to Recently Remediated (in this commit)
 - [ ] **R0.4** Add commit refs to #15, #18, #24 tickets in `FOLLOWUP_TICKETS.md` notes (5 min)
 
-### R1 — Staging soaks (1 week, in progress, 2026-07-30 → 2026-08-06)
+### R1 â€” Staging soaks (1 week, in progress, 2026-07-30 â†’ 2026-08-06)
 
 - [x] **R1.0** Migration `20260730131814_convert_json_columns` shipped to staging
 - [x] **R1.1** Migration `20260730140000_add_rider_fk_columns` shipped to staging
 - [x] **R1.2** Migration `20260730150000_add_rider_lifecycle_stage` shipped to staging
 - [x] **R1.3** Migration `20260730180000_add_admin_has_permissions` shipped to staging
 - [x] **R1.4** Migration `20260730000000_alter_admin_permissions_type` shipped to staging
-- [ ] **R1.5** Daily monitoring (2026-07-31 to 2026-08-06) — 5 min/day
+- [ ] **R1.5** Daily monitoring (2026-07-31 to 2026-08-06) â€” 5 min/day
 - [ ] **R1.6** Day-3 re-grep + integration test sweep (2026-08-02)
 - [ ] **R1.7** Drop phase: PR-J (drop legacy Rider string columns)
 - [ ] **R1.8** Drop phase: PR-K.3 (drop legacy `lifecycleStatus` enum)
 - [ ] **R1.9** Drop phase: PR-D.2 (drop legacy `Admin.permissions` column)
 
-### R2 — Design system polish (2-3 days, 12 PRs)
+### R2 â€” Design system polish (2-3 days, 12 PRs)
 
-#### R2.1 Typography (#4) — 6 PRs, 1-2 days
+#### R2.1 Typography (#4) â€” 6 PRs, 1-2 days
 
 - [ ] **R2.1a** `defaultText` removal (5 files, 5 min)
 - [ ] **R2.1b** `button`/`buttonSmall` migration (~15 files, 30 min)
@@ -932,9 +932,9 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 - [ ] **R2.1d** `navLabel` migration (~8 files, 20 min)
 - [ ] **R2.1e** `priceLarge` removal if duplicate of `priceDisplay` (~5 files, 10 min)
 - [ ] **R2.1f** Update `docs/design-system.md` to list final canonical + specialized
-- [ ] **R2.1g** Final cleanup — remove deprecated getters from `app_typography.dart`
+- [ ] **R2.1g** Final cleanup â€” remove deprecated getters from `app_typography.dart`
 
-#### R2.2 Colors (#5) — 7 PRs, 2-3 days
+#### R2.2 Colors (#5) â€” 7 PRs, 2-3 days
 
 - [ ] **R2.2a** Surface variants (`surfaceAlt`/`surfaceContainer`/`surfaceWhite` removal, 10-15 files, 30 min)
 - [ ] **R2.2b** Text variants (`onSurfaceAlt`/`onSurfaceSubtle` removal, 10-15 files, 30 min)
@@ -944,70 +944,82 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 - [ ] **R2.2f** Group 7 misc (case-by-case, 1-2 hr)
 - [ ] **R2.2g** Final cleanup + design-system.md update
 
-### R3 — Admin web screen splits (Ticket #21, 2-3 weeks, 13 PRs)
+### R3 â€” Admin web screen splits (Ticket #21, 2-3 weeks, 13 PRs)
 
-#### R3.1 RiderManagement.tsx (44 KB) — 2 days
+#### R3.1 RiderManagement.tsx (44 KB) â€” 2 days
 
 - [ ] **R3.1a** `RiderListTable.tsx` + `RiderFilters.tsx` extraction
 - [ ] **R3.1b** `RiderDetailDialog.tsx` + `RiderBulkActions.tsx` extraction
 - [ ] **R3.1c** Smoke test + re-exports + parent reduction
 
-#### R3.2 DeviceTrackingView.tsx (38 KB) — 1.5 days
+#### R3.2 DeviceTrackingView.tsx (38 KB) â€” 1.5 days
 
 - [ ] **R3.2** Split into `DeviceMap.tsx` + `ViolationList.tsx` + `DeviceFilters.tsx`
 
-#### R3.3 TeamLeaderManagement.tsx (35 KB) — 1.5 days
+#### R3.3 TeamLeaderManagement.tsx (35 KB) â€” 1.5 days
 
 - [ ] **R3.3** Split into `TeamLeaderList.tsx` + `TeamLeaderRiderAssignment.tsx` + `TeamLeaderMetrics.tsx`
 
-#### R3.4 DashboardOverview.tsx (34 KB) — 1.5 days
+#### R3.4 DashboardOverview.tsx (34 KB) â€” 1.5 days
 
 - [ ] **R3.4** Split into `MetricCards.tsx` + `RecentActivity.tsx` + `ChartsSection.tsx`
 
-#### R3.5 RentalManagement.tsx (32 KB) — 1 day
+#### R3.5 RentalManagement.tsx (32 KB) â€” 1 day
 
 - [ ] **R3.5** Split into `RentalList.tsx` + `RentalFilters.tsx` + `RentalDetail.tsx`
 
-#### R3.6 OfferManagement.tsx (31 KB) — 1 day
+#### R3.6 OfferManagement.tsx (31 KB) â€” 1 day
 
 - [ ] **R3.6** Split into `OfferList.tsx` + `OfferForm.tsx`
 
-#### R3.7 15 screens in 10-20 KB range — all DONE (2026-07-31)
+#### R3.7 15 screens in 10-20 KB range â€” all DONE (2026-07-31)
 
-- [x] **R3.7a** PaymentGatewayManagement (15.8 KB) — DONE (commit `df940bb`)
-- [x] **R3.7b** IncidentManagementScreen (16.3 KB) — DONE (commit `2cdea57`)
-- [x] **R3.7c** AnalyticsDashboard (16.6 KB) — DONE (commit `41c0572`)
-- [x] **R3.7d** SettingsManagement (16.7 KB) — DONE (commit `04b28b3`)
-- [x] **R3.7e** VehicleManagement (17.1 KB) — DONE (commit `d164855`)
-- [x] **R3.7f** NotificationManagement (17.3 KB) — DONE (commit `5637e26`)
-- [x] **R3.7g** ShiftManagement (17.4 KB) — DONE (commit `c16f045`)
-- [x] **R3.7h** EarningsManagement (11.1 KB) — DONE (commit `949f4f5`)
-- [x] **R3.7i** ServerHealthScreen (11.9 KB) — DONE (commit `eabb949`)
-- [x] **R3.7j** WalletDepositManagement (10.2 KB) — DONE (commit `92588df`)
-- [x] **R3.7k** SystemSettingsScreen (13.6 KB) — DONE (commit `7753be3`)
-- [x] **R3.7l** RewardManagement (14.6 KB) — DONE (commit `00b89e0`)
-- [x] **R3.7m** KycManagement (14.9 KB) — DONE (commit `74d3c71`)
-- [x] **R3.7n** FaqManagement (18 KB) — DONE (commit `01d228a`)
-- [x] **R3.7o** ReferralManagement (18.1 KB) — DONE (commit `7c1efeb`)
+- [x] **R3.7a** PaymentGatewayManagement (15.8 KB) â€” DONE (commit `df940bb`)
+- [x] **R3.7b** IncidentManagementScreen (16.3 KB) â€” DONE (commit `2cdea57`)
+- [x] **R3.7c** AnalyticsDashboard (16.6 KB) â€” DONE (commit `41c0572`)
+- [x] **R3.7d** SettingsManagement (16.7 KB) â€” DONE (commit `04b28b3`)
+- [x] **R3.7e** VehicleManagement (17.1 KB) â€” DONE (commit `d164855`)
+- [x] **R3.7f** NotificationManagement (17.3 KB) â€” DONE (commit `5637e26`)
+- [x] **R3.7g** ShiftManagement (17.4 KB) â€” DONE (commit `c16f045`)
+- [x] **R3.7h** EarningsManagement (11.1 KB) â€” DONE (commit `949f4f5`)
+- [x] **R3.7i** ServerHealthScreen (11.9 KB) â€” DONE (commit `eabb949`)
+- [x] **R3.7j** WalletDepositManagement (10.2 KB) â€” DONE (commit `92588df`)
+- [x] **R3.7k** SystemSettingsScreen (13.6 KB) â€” DONE (commit `7753be3`)
+- [x] **R3.7l** RewardManagement (14.6 KB) â€” DONE (commit `00b89e0`)
+- [x] **R3.7m** KycManagement (14.9 KB) â€” DONE (commit `74d3c71`)
+- [x] **R3.7n** FaqManagement (18 KB) â€” DONE (commit `01d228a`)
+- [x] **R3.7o** ReferralManagement (18.1 KB) â€” DONE (commit `7c1efeb`)
 
 **Result: 15/15 splits done, all 1863 tests passing, tsc + eslint clean.** 14 screens in 20+ KB range still open (R3.1-R3.6 above).
 
-### R4 — Flutter router refactor (PR-T, 1-2 weeks, 6 PRs)
+**Session 2 update (2026-07-31, end of session):** 7 more R3 splits done on the 20+ KB screens:
 
-- [x] **R4.1** Define explicit `AppState` sealed class in `flutter/lib/core/navigation/app_state.dart` — DONE (commit `38e6028`)
-- [x] **R4.2** Add `go_router: ^14.0.0` dependency — DONE (commit `2dc1533`)
+- [x] **R3.7p** TicketManagement (18.8 KB, hook extraction) — DONE (commit `129b4f7`)
+- [x] **R3.7q** AdminUserManagement (19.6 KB, full split) — DONE (commit `0e0aab2`)
+- [x] **R3.7r** FleetMapScreen (20 KB, full split) — DONE (commit `4973e5f`)
+- [x] **R3.7s** BackgroundJobsScreen (20.7 KB, full split) — DONE (commit `898b73d`)
+- [x] **R3.7t** TransactionManagement (20.7 KB, hook extraction) — DONE (commit `54bf947`)
+- [x] **R3.7u** RiderScoringScreen (25.7 KB, full split) — DONE (commit `dac2da0`)
+- [x] **R3.7v** HubManagement (27.6 KB, hook extraction) — DONE (commit `63586d5`)
+
+**22 R3 splits total this session, all 1863 tests passing, tsc + eslint clean.** 7 screens in 25+ KB range still open: BulkMessaging 25.7, OfferManagement 30.9, RentalManagement 31.6, DashboardOverview 33.8, TeamLeaderManagement 35, DeviceTracking 38.4, RiderManagement 43.8.
+
+### R4 â€” Flutter router refactor (PR-T, 1-2 weeks, 6 PRs)
+
+- [x] **R4.1** Define explicit `AppState` sealed class in `flutter/lib/core/navigation/app_state.dart` â€” DONE (commit `38e6028`)
+- [x] **R4.2** Add `go_router: ^14.0.0` dependency â€” DONE (commit `2dc1533`)
 - [ ] **R4.3** Migrate `AppShell` to use go_router (remove `setState` tab switching)
 - [ ] **R4.4** Migrate auth flow to use the state machine
 - [ ] **R4.5** Scope `PollingManager` instances to specific states
 - [ ] **R4.6** E2E tests pass + 5-10 new state machine unit tests + manual smoke
 
-### R5 — Server module size cap (0 min, ✅ DONE)
+### R5 â€” Server module size cap (0 min, âœ… DONE)
 
-- [x] **R5.1** No files > 10 KB — verified 2026-07-31 00:46 IST
-- [x] **R5.2** No files > 15 KB — verified 2026-07-31 00:46 IST
+- [x] **R5.1** No files > 10 KB â€” verified 2026-07-31 00:46 IST
+- [x] **R5.2** No files > 15 KB â€” verified 2026-07-31 00:46 IST
 - [ ] **R5.3** Close-out: mark `FOLLOWUP_TICKETS.md` #33 SHIPPED with audit-correction note (5 min)
 
-### R6 — Admin.permissions drop phase (#9, 0.5 d, BLOCKED on R1)
+### R6 â€” Admin.permissions drop phase (#9, 0.5 d, BLOCKED on R1)
 
 - [ ] **R6.1** Verify all readers/writers use the new `hasPermissions` relation (1 hr)
 - [ ] **R6.2** Update admin use-cases to write to the relation (2 hr)
@@ -1015,24 +1027,24 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 - [ ] **R6.4** Remove `permissions: String[]` from Prisma schema (10 min)
 - [ ] **R6.5** Regression test `tests/unit/admin-no-legacy-permissions-column.test.ts` (1 hr)
 
-### R7 — Polling/Focus wiring (0 min, ✅ DONE)
+### R7 â€” Polling/Focus wiring (0 min, âœ… DONE)
 
-- [x] **R7.1** PollingManager wired into `RiderProvider` (lines 47, 54, 90, 91) — verified
-- [x] **R7.2** FocusObserver wired into `main.dart:58` — verified
+- [x] **R7.1** PollingManager wired into `RiderProvider` (lines 47, 54, 90, 91) â€” verified
+- [x] **R7.2** FocusObserver wired into `main.dart:58` â€” verified
 - [x] **R7.3** KNOWN_ISSUES.md update (in this commit)
 
-### R8 — Phantom OpenAPI paths (Ticket #61, 1 d, 3 PRs)
+### R8 â€” Phantom OpenAPI paths (Ticket #61, 1 d, 3 PRs)
 
 - [ ] **R8.1** Implement `POST /api/admin/deposits` + `admin-deposits.use-cases.ts` (3 hr)
 - [ ] **R8.2** Implement `POST /api/admin/transactions` + `admin-transactions.use-cases.ts` (3 hr)
 - [ ] **R8.3** Regenerate `openapi.json` + remove line 28 from KNOWN_ISSUES.md (15 min)
 
-### R9 — Data-deletion Admin UI (Ticket #59 v2, 1 d, 2 PRs)
+### R9 â€” Data-deletion Admin UI (Ticket #59 v2, 1 d, 2 PRs)
 
 - [ ] **R9.1** Add `DataDeletionSection.tsx` to `RiderManagement` page (1 d)
 - [ ] **R9.2** Add admin-api.ts methods for the 3 endpoints + E2E test (1 hr)
 
-### R10 — Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
+### R10 â€” Trivial/cosmetic batch (120 items, 6 PRs, 12-15 hr)
 
 - [ ] **R10.1** DB plan polish (1 PR, 1 hr)
 - [ ] **R10.2** Design System plan polish (1 PR, 2 hr)
@@ -1041,14 +1053,14 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 - [ ] **R10.5** Security plan polish (1 PR, 3 hr)
 - [ ] **R10.6** Docs/cleanup polish (1 PR, 1 hr)
 
-### R11 — PollingManager widget lifecycle (0.5 d, 1 PR)
+### R11 â€” PollingManager widget lifecycle (0.5 d, 1 PR)
 
 - [ ] **R11.1** Make `RiderProvider` a `WidgetsBindingObserver` (1 hr)
 - [ ] **R11.2** Wire `WidgetsBinding.instance.addObserver(this)` in constructor (15 min)
 - [ ] **R11.3** Cancel `_locationSyncTimer` on dispose (15 min)
-- [ ] **R11.4** Tests (2 hr) — `tests/unit/rider_provider_lifecycle_test.dart`
+- [ ] **R11.4** Tests (2 hr) â€” `tests/unit/rider_provider_lifecycle_test.dart`
 
-### R12 — Dependabot / vulnerability SLA (1-2 hr setup + ongoing, 2 PRs)
+### R12 â€” Dependabot / vulnerability SLA (1-2 hr setup + ongoing, 2 PRs)
 
 - [ ] **R12.1** Verify/create `.github/dependabot.yml` (5 min)
 - [ ] **R12.2** Add `.github/workflows/dependency-audit.yml` (1 hr)
@@ -1060,48 +1072,49 @@ This is the **single place to check progress**. Tick `- [x]` when each PR ships.
 
 **What was re-grepped before this plan was written:**
 
-- ✅ `flutter/lib/theme/app_typography.dart` — 26 named styles (was 41; 15 emphasis aliases removed)
-- ✅ `flutter/lib/theme/app_theme.dart` — 129 raw hex (was 143; 14 removed)
-- ✅ `web/src/components/admin/screens/*.tsx` — 6 files > 30 KB (RiderManagement 44 KB, DeviceTrackingView 38 KB, etc.)
-- ✅ `web/src/server/modules/**/*.use-cases.ts` — 0 files > 10 KB
-- ✅ `web/src/app/api/rider/rental/return/route.ts:23` — has `.strict()` Zod
-- ✅ `web/prisma/schema.prisma` — `Admin.permissions: String[]` (was `String`, now array) + `hasPermissions` relation
-- ✅ `web/prisma/migrations/20260730*` — 5 migrations exist
-- ✅ `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` — PollingManager wired
-- ✅ `flutter/lib/main.dart:58` — FocusObserver wired
-- ✅ `flutter/lib/core/polling/polling_manager.dart` — utility class exists
+- âœ… `flutter/lib/theme/app_typography.dart` â€” 26 named styles (was 41; 15 emphasis aliases removed)
+- âœ… `flutter/lib/theme/app_theme.dart` â€” 129 raw hex (was 143; 14 removed)
+- âœ… `web/src/components/admin/screens/*.tsx` â€” 6 files > 30 KB (RiderManagement 44 KB, DeviceTrackingView 38 KB, etc.)
+- âœ… `web/src/server/modules/**/*.use-cases.ts` â€” 0 files > 10 KB
+- âœ… `web/src/app/api/rider/rental/return/route.ts:23` â€” has `.strict()` Zod
+- âœ… `web/prisma/schema.prisma` â€” `Admin.permissions: String[]` (was `String`, now array) + `hasPermissions` relation
+- âœ… `web/prisma/migrations/20260730*` â€” 5 migrations exist
+- âœ… `flutter/lib/core/state/rider_provider.dart:47, 54, 90, 91` â€” PollingManager wired
+- âœ… `flutter/lib/main.dart:58` â€” FocusObserver wired
+- âœ… `flutter/lib/core/polling/polling_manager.dart` â€” utility class exists
 
 **What was caught by this re-grep (audit-correction):**
 - 4 tickets already shipped in code but never marked (#58, #33, #39, #42)
 - 2 KNOWN_ISSUES items (#25, #26) already wired but not updated
 
 **What was NOT re-grepped (and may need re-verify before starting):**
-- R3.1–R3.7: each individual file's line count (was done at 30 KB threshold; per-file line count after splits may differ)
+- R3.1â€“R3.7: each individual file's line count (was done at 30 KB threshold; per-file line count after splits may differ)
 - R4: full auth flow walkthrough (recommend manual smoke before any go_router commit)
 - R8: complete admin deposit/transaction use-case design (recommend design doc first)
-- R10: every trivial item in the 120-list (recommend opening the BACKLOG_FINDINGS §7 before each PR)
+- R10: every trivial item in the 120-list (recommend opening the BACKLOG_FINDINGS Â§7 before each PR)
 
 ---
 
 ## Final per-day ordering for the next agent (small tracks only)
 
 Day 1 (Monday, 2026-08-04): **R0.4** (5 min) + **R8.1** (3 hr) + **R8.2** (3 hr) + **R8.3** (15 min) = ~6.5 hr
-Day 2 (Tuesday): **R11.1**–**R11.4** (4 hr) + **R9.1** (4 hr) = 1 day
-Day 3 (Wednesday): **R9.2** (1 hr) + **R12.1**–**R12.3** (1.5 hr) + **R5.3** (5 min) + **R2.1a** (5 min) + **R2.2a** (30 min) = ~3.5 hr
-Day 4 (Thursday): **R2.1b**–**R2.1d** (1.5 hr) + **R2.2b**–**R2.2d** (2 hr) = 3.5 hr
-Day 5 (Friday): **R2.1e**–**R2.1g** (1 hr) + **R2.2e**–**R2.2f** (2.5 hr) = 3.5 hr
-Day 6 (Monday, 2026-08-11): **R10.1**–**R10.6** (12-15 hr) = 1.5 days
-Day 8 (Wednesday): **R3.1a**–**R3.1c** (RiderManagement 44 KB) = 2 days
+Day 2 (Tuesday): **R11.1**â€“**R11.4** (4 hr) + **R9.1** (4 hr) = 1 day
+Day 3 (Wednesday): **R9.2** (1 hr) + **R12.1**â€“**R12.3** (1.5 hr) + **R5.3** (5 min) + **R2.1a** (5 min) + **R2.2a** (30 min) = ~3.5 hr
+Day 4 (Thursday): **R2.1b**â€“**R2.1d** (1.5 hr) + **R2.2b**â€“**R2.2d** (2 hr) = 3.5 hr
+Day 5 (Friday): **R2.1e**â€“**R2.1g** (1 hr) + **R2.2e**â€“**R2.2f** (2.5 hr) = 3.5 hr
+Day 6 (Monday, 2026-08-11): **R10.1**â€“**R10.6** (12-15 hr) = 1.5 days
+Day 8 (Wednesday): **R3.1a**â€“**R3.1c** (RiderManagement 44 KB) = 2 days
 Day 10: **R3.2** (DeviceTrackingView 38 KB) = 1.5 days
 Day 12: **R3.3** (TeamLeaderManagement 35 KB) + **R3.4** (DashboardOverview 34 KB) = 3 days
 Day 15: **R3.5** + **R3.6** = 2 days
-Day 17: **R3.7a**–**R3.7c** = 3-4 days
-Day 21: **R4.1**–**R4.6** (Flutter router refactor) = 1-2 wks
+Day 17: **R3.7a**â€“**R3.7c** = 3-4 days
+Day 21: **R4.1**â€“**R4.6** (Flutter router refactor) = 1-2 wks
 Day 35: end of R4 (if 2 wks)
 
 **Concurrent (soak-gated):**
-- R1 (soak monitoring): 2026-07-30 → 2026-08-06 (1 week)
+- R1 (soak monitoring): 2026-07-30 â†’ 2026-08-06 (1 week)
 - R6 (drop phase): starts 2026-08-06 after soak completes = 0.5 d
 
 **Total: ~35 working days = 7 weeks focused** (1 week parallel soak). Matches the executive summary.
+
 
