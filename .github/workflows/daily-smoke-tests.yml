@@ -11,6 +11,12 @@ on:
         required: true
         default: 'http://localhost:8081'
 
+# R10 polish #15 (Infra 4.17) — concurrency group so we don't run multiple
+# smoke tests on rapid pushes to the same branch.
+concurrency:
+  group: daily-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -27,15 +33,30 @@ jobs:
     permissions:
       contents: read
 
+    # R10 polish #15 (Infra 4.6) — `sudo systemctl` is typically blocked or
+    # mocked on GitHub-hosted runners. Use the `services:` block (the same
+    # pattern as `nightly-load.yml`) so postgres is a managed sidecar.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: voltium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - name: Start PostgreSQL Service
+      - name: Wait for PostgreSQL
         run: |
-          sudo systemctl start postgresql.service
-          until pg_isready; do sleep 1; done
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
-          sudo -u postgres psql -c "CREATE DATABASE voltium_test;"
+          until pg_isready -h localhost -p 5432; do sleep 1; done
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
