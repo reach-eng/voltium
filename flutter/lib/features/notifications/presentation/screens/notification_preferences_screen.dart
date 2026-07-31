@@ -152,7 +152,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.currency_rupee,
                             iconColor: AppColors.success,
-                            iconBg: AppColors.successSurfaceLight,
+                            iconBg: AppColors.successLight,
                             title: 'Payments',
                             subtitle: 'Top-ups, rent deductions, refunds',
                             value: _paymentsEnabled,

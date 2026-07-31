@@ -116,7 +116,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('languageOption'),
                 icon: Icons.language,
                 iconColor: AppColors.success,
-                iconBgColor: AppColors.successSurfaceAlt,
+                iconBgColor: AppColors.successLight,
                 title: l10n.menu_language,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -190,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('termsTile'),
                 icon: Icons.description_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.successSurface,
+                iconBgColor: AppColors.successLight,
                 title: l10n.settings_termsOfService,
                 onTap: () => AppNavigator.push(
                     context,
@@ -205,7 +205,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('privacyTile'),
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.successSurface,
+                iconBgColor: AppColors.successLight,
                 title: l10n.settings_privacyPolicy,
                 onTap: () => AppNavigator.push(
                     context,
@@ -499,7 +499,7 @@ class _RiderIdentityCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: verified
-                  ? AppColors.successSurface
+                  ? AppColors.successLight
                   : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(

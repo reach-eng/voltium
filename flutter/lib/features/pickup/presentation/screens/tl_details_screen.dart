@@ -77,7 +77,8 @@ class TlDetailsScreen extends ConsumerWidget {
           SizedBox(width: 16),
           Text(
             'Team Leader',
-            style: AppTypography.titleMediumLarge
+            style: AppTypography.titleLarge
+                .copyWith(fontSize: 21)
                 .copyWith(color: AppColors.onSurface),
           ),
         ],
@@ -110,7 +111,8 @@ class TlDetailsScreen extends ConsumerWidget {
           SizedBox(height: 4),
           Text(
             'Assigned Team Leader',
-            style: AppTypography.bodyCompact
+            style: AppTypography.bodyMedium
+                .copyWith(fontSize: 13)
                 .copyWith(color: AppColors.onSurfaceVariant),
           ),
         ],
@@ -147,11 +149,10 @@ class TlDetailsScreen extends ConsumerWidget {
             child: Container(
               padding: Spacing.paddingSm,
               decoration: BoxDecoration(
-                color: AppColors.successSurface,
+                color: AppColors.successLight,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(Icons.call,
-                  color: AppColors.success, size: 18),
+              child: const Icon(Icons.call, color: AppColors.success, size: 18),
             ),
           ),
         ],

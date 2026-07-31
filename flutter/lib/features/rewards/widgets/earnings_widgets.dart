@@ -60,13 +60,15 @@ class WeekSelector extends StatelessWidget {
             children: [
               Text(
                 'WEEKLY EARNINGS',
-                style: AppTypography.microBadge
+                style: AppTypography.labelSmall
+                    .copyWith(fontSize: 9)
                     .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
               ),
               SizedBox(height: 2),
               Text(
                 _getWeekRange(),
-                style: AppTypography.bodyMediumEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(color: AppColors.slate800),
               ),
             ],
@@ -112,7 +114,7 @@ class TotalCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryGradientEnd],
+          colors: [AppColors.primary, AppColors.primaryLight],
         ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: const [
@@ -132,7 +134,7 @@ class TotalCard extends StatelessWidget {
             children: [
               Text(
                 'THIS WEEK',
-                style: AppTypography.microOverline.copyWith(
+                style: AppTypography.overline.copyWith(
                   color: AppColors.white70,
                   letterSpacing: 1.5,
                 ),
@@ -147,14 +149,14 @@ class TotalCard extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.trending_up,
-                      color: AppColors.successBright,
+                      color: AppColors.success,
                       size: 14,
                     ),
                     SizedBox(width: 4),
                     Text(
                       '+12%',
-                      style: AppTypography.microLabel
-                          .copyWith(color: AppColors.successBright),
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.success),
                     ),
                   ],
                 ),
@@ -196,10 +198,12 @@ class TotalCard extends StatelessWidget {
                     children: [
                       Text(
                         'TRIPS',
-                        style: AppTypography.microBadge.copyWith(
-                          color: AppColors.white70,
-                          letterSpacing: 0.8,
-                        ),
+                        style: AppTypography.labelSmall
+                            .copyWith(fontSize: 9)
+                            .copyWith(
+                              color: AppColors.white70,
+                              letterSpacing: 0.8,
+                            ),
                       ),
                       SizedBox(height: 4),
                       Text(
@@ -224,10 +228,12 @@ class TotalCard extends StatelessWidget {
                     children: [
                       Text(
                         'HOURS',
-                        style: AppTypography.microBadge.copyWith(
-                          color: AppColors.white70,
-                          letterSpacing: 0.8,
-                        ),
+                        style: AppTypography.labelSmall
+                            .copyWith(fontSize: 9)
+                            .copyWith(
+                              color: AppColors.white70,
+                              letterSpacing: 0.8,
+                            ),
                       ),
                       SizedBox(height: 4),
                       Text(
@@ -304,13 +310,14 @@ class DayCard extends StatelessWidget {
                 children: [
                   Text(
                     DateHelpers.dayName(date),
-                    style: AppTypography.microOverline.copyWith(
+                    style: AppTypography.overline.copyWith(
                         color: AppColors.slate500, letterSpacing: 1.5),
                   ),
                   SizedBox(height: 2),
                   Text(
                     DateHelpers.formatFullDate(date),
-                    style: AppTypography.bodyMediumEmphasis
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.slate800),
                   ),
                 ],
@@ -331,9 +338,11 @@ class DayCard extends StatelessWidget {
                         ),
                         child: Text(
                           EarningEntry.platformLabel(p),
-                          style: AppTypography.microBadge.copyWith(
-                            color: EarningEntry.platformColor(p),
-                          ),
+                          style: AppTypography.labelSmall
+                              .copyWith(fontSize: 9)
+                              .copyWith(
+                                color: EarningEntry.platformColor(p),
+                              ),
                         ),
                       ),
                     ),
@@ -371,7 +380,7 @@ class DayCard extends StatelessWidget {
                       SizedBox(width: 4),
                       Text(
                         'Add',
-                        style: AppTypography.microLabel
+                        style: AppTypography.labelSmall
                             .copyWith(color: AppColors.primary),
                       ),
                     ],
@@ -396,13 +405,14 @@ class DayCard extends StatelessWidget {
             children: [
               Text(
                 DateHelpers.dayName(date),
-                style: AppTypography.microOverline
+                style: AppTypography.overline
                     .copyWith(color: AppColors.slate400, letterSpacing: 1.5),
               ),
               SizedBox(height: 2),
               Text(
                 DateHelpers.formatFullDate(date),
-                style: AppTypography.bodyMediumEmphasis
+                style: AppTypography.bodyMedium
+                    .copyWith(fontWeight: FontWeight.w600)
                     .copyWith(color: AppColors.slate400),
               ),
             ],
@@ -422,7 +432,7 @@ class DayCard extends StatelessWidget {
                   SizedBox(width: 4),
                   Text(
                     'Add Entry',
-                    style: AppTypography.microLabel
+                    style: AppTypography.labelSmall
                         .copyWith(color: AppColors.slate500),
                   ),
                 ],
@@ -488,7 +498,7 @@ class SummaryCard extends StatelessWidget {
         children: [
           Text(
             'WEEKLY SUMMARY',
-            style: AppTypography.microOverline
+            style: AppTypography.overline
                 .copyWith(color: Colors.white, letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
@@ -554,15 +564,17 @@ class SummaryCard extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.microBadge.copyWith(
-            color: Colors.white.withAlpha(179),
-            letterSpacing: 0.8,
-          ),
+          style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+                color: Colors.white.withAlpha(179),
+                letterSpacing: 0.8,
+              ),
         ),
         SizedBox(height: 4),
         Text(
           value,
-          style: AppTypography.bodyMediumEmphasis.copyWith(color: Colors.white),
+          style: AppTypography.bodyMedium
+              .copyWith(fontWeight: FontWeight.w600)
+              .copyWith(color: Colors.white),
           overflow: TextOverflow.ellipsis,
         ),
       ],

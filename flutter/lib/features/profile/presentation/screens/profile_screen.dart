@@ -96,7 +96,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.contact_page_outlined,
                       activeIcon: Icons.contact_page,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.successSurfaceAlt,
+                      iconBgColor: AppColors.successLight,
                       title: l10n.menu_myDocuments,
                       onTap: () =>
                           AppNavigator.push(context, const MyDocumentsScreen()),
@@ -162,7 +162,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.tune_outlined,
                       activeIcon: Icons.tune,
                       iconColor: AppColors.successDark,
-                      iconBgColor: AppColors.successSurface,
+                      iconBgColor: AppColors.successLight,
                       title: l10n.menu_appSettings,
                       onTap: () =>
                           AppNavigator.push(context, const SettingsScreen()),
@@ -176,7 +176,7 @@ class ProfileScreen extends ConsumerWidget {
                       key: const Key('languageLink'),
                       icon: Icons.language,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.successSurfaceAlt,
+                      iconBgColor: AppColors.successLight,
                       title: l10n.menu_language,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

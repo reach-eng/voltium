@@ -130,7 +130,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: colors.surfaceSubtle,
+      backgroundColor: colors.surface,
       body: Consumer(
         builder: (context, ref, _) {
           final notifications = ref.read(engagementProvider).notifications;
@@ -143,15 +143,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               SafeArea(
                 child: Column(
                   children: [
-                    _buildHeader(context, ref.read(engagementProvider), unreadCount),
+                    _buildHeader(
+                        context, ref.read(engagementProvider), unreadCount),
                     _buildTabBar(),
                     Expanded(
                       child: filtered.isEmpty
                           ? _buildEmptyState()
                           : RefreshIndicator(
                               color: AppColors.primary,
-                              onRefresh: () async =>
-                                  ref.read(engagementProvider).initEngagementData(),
+                              onRefresh: () async => ref
+                                  .read(engagementProvider)
+                                  .initEngagementData(),
                               child: ListView.builder(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -173,8 +175,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                               const EdgeInsets.only(right: 20),
                                           decoration: BoxDecoration(
                                             color: AppColors.error,
-                                            borderRadius:
-                                                BorderRadius.circular(AppRadius.lg),
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.lg),
                                           ),
                                           child: const Icon(
                                             Icons.delete_outline,
@@ -325,7 +327,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ),
           Row(
             children: [
-              if (ref.read(engagementProvider).notifications.any((n) => n.isRead))
+              if (ref
+                  .read(engagementProvider)
+                  .notifications
+                  .any((n) => n.isRead))
                 InkWell(
                   onTap: () => _clearReadNotifications(provider),
                   child: Container(
@@ -347,7 +352,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     ),
                   ),
                 ),
-              if (ref.read(engagementProvider).notifications.any((n) => n.isRead))
+              if (ref
+                  .read(engagementProvider)
+                  .notifications
+                  .any((n) => n.isRead))
                 const SizedBox(width: 8),
               if (unreadCount > 0)
                 InkWell(
@@ -509,8 +517,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     );
   }
 
-  Widget _buildNotificationCard(
-      BuildContext context, AppNotification notif, EngagementProvider provider) {
+  Widget _buildNotificationCard(BuildContext context, AppNotification notif,
+      EngagementProvider provider) {
     final colors = AppColors.of(context);
     final categoryInfo = _getCategoryInfo(context, notif);
 
@@ -639,7 +647,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.currency_rupee,
         color: AppColors.success,
-        bgColor: AppColors.successSurfaceLight,
+        bgColor: AppColors.successLight,
         label: 'Payment'
       );
     }

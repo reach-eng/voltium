@@ -318,11 +318,11 @@ class PreDashboardProfileCard extends StatelessWidget {
   Widget _buildNormalProfile() {
     final String badgeText = kycVerified ? 'KYC VERIFIED' : 'PENDING KYC';
     final Color badgeBg =
-        kycVerified ? AppColors.successSurfaceLight : AppColors.warningSurface;
+        kycVerified ? AppColors.successLight : AppColors.warningSurface;
     final Color badgeTextColor =
         kycVerified ? AppColors.success : AppColors.warning;
     final Color badgeBorder =
-        kycVerified ? AppColors.successOutline : AppColors.warningBorder;
+        kycVerified ? AppColors.successLight : AppColors.warningBorder;
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,

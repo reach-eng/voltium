@@ -54,7 +54,7 @@ class SupportProvider extends ChangeNotifier {
         articleCount: 8,
         icon: Icons.credit_card_outlined,
         iconColor: AppColors.success,
-        iconBgColor: AppColors.successSurface,
+        iconBgColor: AppColors.successLight,
       ),
       const FaqCategory(
         id: 'vehicle',

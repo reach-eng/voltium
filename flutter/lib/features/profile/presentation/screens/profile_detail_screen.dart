@@ -229,7 +229,7 @@ class ProfileDetailScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isVerified
-                  ? AppColors.successSurfaceAlt
+                  ? AppColors.successLight
                   : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(

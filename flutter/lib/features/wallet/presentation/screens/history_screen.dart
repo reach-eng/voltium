@@ -423,7 +423,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     height: 40,
                     decoration: BoxDecoration(
                       color: isCredit
-                          ? AppColors.successSurfaceLight
+                          ? AppColors.successLight
                           : AppColors.errorSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
@@ -572,7 +572,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }
     if (type == 'DISCOUNT') {
       color = AppColors.successDark;
-      bg = AppColors.successSurfaceLight;
+      bg = AppColors.successLight;
       prefix = '-';
     }
     if (type == 'PENALTY') {

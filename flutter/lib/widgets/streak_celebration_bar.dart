@@ -161,7 +161,7 @@ class _StreakCelebrationBarState extends State<StreakCelebrationBar>
                   spreadRadius: pulse * 4.0,
                 ),
                 BoxShadow(
-                  color: AppColors.successBright.withValues(
+                  color: AppColors.success.withValues(
                     alpha: pulse * 0.4,
                   ),
                   blurRadius: 16.0 + pulse * 10.0,

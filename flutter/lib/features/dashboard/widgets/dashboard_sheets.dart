@@ -61,8 +61,9 @@ void showTLDetailsSheet(BuildContext context, RiderModel rider) {
             SizedBox(height: 4),
             Text(
               'Assigned Team Leader',
-              style:
-                  AppTypography.bodyCompact.copyWith(color: AppColors.slate500),
+              style: AppTypography.bodyMedium
+                  .copyWith(fontSize: 13)
+                  .copyWith(color: AppColors.slate500),
             ),
             SizedBox(height: 24),
             Container(
@@ -240,7 +241,8 @@ void showChangeTLReasonSheet(BuildContext context) {
                   if (reason.length < 5) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Please provide a detailed reason (at least 5 characters)'),
+                        content: Text(
+                            'Please provide a detailed reason (at least 5 characters)'),
                         backgroundColor: AppColors.error,
                       ),
                     );
@@ -253,13 +255,14 @@ void showChangeTLReasonSheet(BuildContext context) {
                         .createTicket(
                           category: 'GENERAL',
                           subject: 'Request to change Team Leader',
-                          message: 'Rider request to change Team Leader. Reason: $reason',
+                          message:
+                              'Rider request to change Team Leader. Reason: $reason',
                         );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content:
-                              Text('Your TL change request has been submitted for approval'),
+                          content: Text(
+                              'Your TL change request has been submitted for approval'),
                           backgroundColor: AppColors.success,
                         ),
                       );
@@ -268,7 +271,8 @@ void showChangeTLReasonSheet(BuildContext context) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to submit request: ${e.toString()}'),
+                          content:
+                              Text('Failed to submit request: ${e.toString()}'),
                           backgroundColor: AppColors.error,
                         ),
                       );
@@ -372,7 +376,7 @@ void showSubscriptionSheet(
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.successSurface,
+                          color: AppColors.successLight,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
@@ -393,7 +397,8 @@ void showSubscriptionSheet(
                       ),
                       Text(
                         '${rider.activeRentalPlanPrice.toInt()} / week',
-                        style: AppTypography.bodyMediumEmphasis
+                        style: AppTypography.bodyMedium
+                            .copyWith(fontWeight: FontWeight.w600)
                             .copyWith(color: AppColors.slate500),
                       ),
                     ],
@@ -605,8 +610,8 @@ Future<void> startVehicleReturnWorkflow(
             const SizedBox(height: 8),
             Text(
               'Please do not close the app.',
-              style:
-                  GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.onSurfaceVariant),
+              style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12, color: AppColors.onSurfaceVariant),
             ),
           ],
         ),
@@ -699,7 +704,8 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
   );
 }
 
-Future<void> _updateIntent(BuildContext context, RiderModel rider, String newIntent) async {
+Future<void> _updateIntent(
+    BuildContext context, RiderModel rider, String newIntent) async {
   final provider = ProviderScope.containerOf(context).read(riderProvider);
   try {
     await ApiClient().put('/api/rider/profile', body: {'intent': newIntent});

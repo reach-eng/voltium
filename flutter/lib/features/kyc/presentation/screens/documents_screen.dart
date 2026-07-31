@@ -251,7 +251,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                     height: 40,
                     width: 40,
                     decoration: const BoxDecoration(
-                      color: AppColors.successSurfaceAlt,
+                      color: AppColors.successLight,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -287,7 +287,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.successSurfaceAlt,
+                  color: AppColors.successLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(

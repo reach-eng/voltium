@@ -87,12 +87,6 @@ class AppColors {
   static const Color borderDefault = Color(0xFFD1D5DB); // gray-300
   static const Color borderMedium = Color(0xFFCBD5E1); // slate-300
 
-  // Success extended
-  static const Color successBright = Color(0xFF4ADE80); // green-400
-  static const Color successSurface = Color(0xFFDCFCE7); // green-100
-  static const Color successSurfaceLight = Color(0xFFF0FDF4); // green-50
-  static const Color successSurfaceAlt = Color(0xFFECFDF5); // green-50 alt
-
   // Error extended
   static const Color errorSurface = Color(0xFFFEF2F2); // red-50
   static const Color errorBorder = Color(0xFFFECACA); // red-200

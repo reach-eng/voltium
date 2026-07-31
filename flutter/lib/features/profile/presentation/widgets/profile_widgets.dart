@@ -314,7 +314,7 @@ class ProfileGuarantorCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: isApproved
-                      ? AppColors.successSurfaceAlt
+                      ? AppColors.successLight
                       : AppColors.warningSurface,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(
@@ -494,7 +494,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('myDocumentsLink'),
             icon: Icons.contact_page_outlined,
             iconColor: AppColors.success, // emerald-500
-            iconBgColor: AppColors.successSurfaceAlt, // emerald-50
+            iconBgColor: AppColors.successLight, // emerald-50
             title: 'My Documents',
             onTap: onMyDocumentsTap,
           ),
@@ -566,7 +566,7 @@ class ProfileQuickLinks extends StatelessWidget {
             key: const Key('legalLink'),
             icon: Icons.gavel_outlined,
             iconColor: AppColors.successDark, // teal-700
-            iconBgColor: AppColors.successSurface, // teal-50
+            iconBgColor: AppColors.successLight, // teal-50
             title: 'Legal',
             onTap: onLegalTap,
           ),

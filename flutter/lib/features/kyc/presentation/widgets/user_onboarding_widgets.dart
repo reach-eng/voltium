@@ -650,7 +650,7 @@ class SelfieCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.successSurface,
+                        color: AppColors.successLight,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(

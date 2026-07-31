@@ -139,14 +139,14 @@ class ApprovalMatrixWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: step.isDone
-            ? AppColors.successSurfaceLight
+            ? AppColors.successLight
             : step.isRejected
                 ? AppColors.errorSurface
                 : AppColors.surfaceBright,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: step.isDone
-              ? AppColors.successSurface
+              ? AppColors.successLight
               : step.isRejected
                   ? AppColors.errorBorder
                   : Colors.transparent,
@@ -184,13 +184,15 @@ class ApprovalMatrixWidget extends StatelessWidget {
               children: [
                 Text(
                   step.label,
-                  style: AppTypography.bodyCompactStrong.copyWith(
-                    color: step.isDone
-                        ? AppColors.successText
-                        : step.isRejected
-                            ? AppColors.dangerText
-                            : colors.onSurface,
-                  ),
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                      .copyWith(
+                        color: step.isDone
+                            ? AppColors.onSurface
+                            : step.isRejected
+                                ? AppColors.dangerText
+                                : colors.onSurface,
+                      ),
                 ),
                 if (step.subtitle != null) ...[
                   SizedBox(height: 2),
@@ -214,7 +216,7 @@ class ApprovalMatrixWidget extends StatelessWidget {
                 : step.isRejected
                     ? 'REJECTED'
                     : 'PENDING',
-            style: AppTypography.microBadge.copyWith(
+            style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
                 letterSpacing: 0.8,
                 color: step.isDone
                     ? AppColors.success

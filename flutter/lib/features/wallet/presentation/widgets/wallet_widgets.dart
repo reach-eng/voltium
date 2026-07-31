@@ -68,7 +68,7 @@ class TransactionListTile extends StatelessWidget {
         statusBgColor = AppColors.primarySurface;
       } else if (isCredit) {
         statusTextColor = AppColors.success;
-        statusBgColor = AppColors.successSurface;
+        statusBgColor = AppColors.successLight;
       } else {
         statusTextColor = AppColors.primary;
         statusBgColor = AppColors.primarySurface;
@@ -578,7 +578,7 @@ class WalletActionButtons extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: const BoxDecoration(
-                          color: AppColors.successSurface,
+                          color: AppColors.successLight,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

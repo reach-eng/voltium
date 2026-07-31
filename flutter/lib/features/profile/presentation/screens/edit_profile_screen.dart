@@ -161,7 +161,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _isSendingGOtp = true);
     try {
       final client = ApiClient();
-      final res = await VoltiumApiClient(client).postAuthSendOtp(SendOtpRequest(phone: phone));
+      final res = await VoltiumApiClient(client)
+          .postAuthSendOtp(SendOtpRequest(phone: phone));
       final result = res.toJson();
       if (mounted) {
         setState(() {
@@ -445,7 +446,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 56),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppRadius.xl),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.xl),
                               ),
                               elevation: 8,
                               shadowColor:
@@ -628,7 +630,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             'Guarantor Phone',
-            style: AppTypography.bodyMediumStrong
+            style: AppTypography.bodyMedium
+                .copyWith(fontWeight: FontWeight.w800)
                 .copyWith(color: AppColors.slate500),
           ),
         ),
@@ -661,7 +664,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       _gOtpController.clear();
                     });
                   },
-                  style: AppTypography.bodyLargeEmphasis
+                  style: AppTypography.bodyLarge
+                      .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(color: AppColors.slate800),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
@@ -743,7 +747,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     controller: _gOtpController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    style: AppTypography.bodyLargeEmphasis
+                    style: AppTypography.bodyLarge
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.slate800, letterSpacing: 8),
                     decoration: const InputDecoration(
                       prefixIcon: Icon(
@@ -767,7 +772,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onPressed: _isVerifyingGOtp ? null : _verifyGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    disabledBackgroundColor: AppColors.successBorderLight,
+                    disabledBackgroundColor: AppColors.successLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -801,7 +806,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.successSurface,
+              color: AppColors.successLight,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
@@ -812,8 +817,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 SizedBox(width: 6),
                 Text(
                   'Phone verified',
-                  style: AppTypography.microLabel
-                      .copyWith(color: AppColors.successText),
+                  style: AppTypography.labelSmall
+                      .copyWith(color: AppColors.onSurface),
                 ),
               ],
             ),

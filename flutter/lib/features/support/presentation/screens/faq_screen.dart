@@ -38,7 +38,10 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   Widget build(BuildContext context) {
     final faqItems = ref.watch(supportProvider.select((p) => p.faqs));
 
-    final categories = <String>['All', ...faqItems.map((f) => f.category).toSet()];
+    final categories = <String>[
+      'All',
+      ...faqItems.map((f) => f.category).toSet()
+    ];
 
     final filteredFaqs = faqItems.where((f) {
       final matchesSearch =
@@ -292,7 +295,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 setState(() => _expandedId = isExpanded ? null : faq.id),
             title: Text(
               faq.question,
-              style: AppTypography.bodyMediumEmphasis
+              style: AppTypography.bodyMedium
+                  .copyWith(fontWeight: FontWeight.w600)
                   .copyWith(color: AppColors.slate800),
             ),
             trailing: AnimatedRotation(
@@ -353,7 +357,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                 children: [
                   Text(
                     'Still need help?',
-                    style: AppTypography.bodyMediumEmphasis
+                    style: AppTypography.bodyMedium
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.slate800),
                   ),
                   Text(
@@ -374,7 +379,7 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                   child: _buildContactButton(
                     Icons.phone_outlined,
                     'Call Support',
-                    AppColors.successSurfaceAlt,
+                    AppColors.successLight,
                     AppColors.successDark,
                   ),
                 ),
@@ -406,8 +411,8 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(AppRadius.lg)),
+      decoration: BoxDecoration(
+          color: bg, borderRadius: BorderRadius.circular(AppRadius.lg)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
