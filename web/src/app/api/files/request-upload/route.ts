@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
     if (!rl.allowed) {
       return errors.tooManyRequests(
         `Upload rate limit exceeded. Try again in ${Math.ceil((rl.resetAt - Date.now()) / 1000)}s.`,
+        { rateLimit: { limit: UPLOAD_RATE_LIMIT.maxRequests, remaining: rl.remaining, resetAt: rl.resetAt } },
       );
     }
 
