@@ -2,7 +2,28 @@ import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { paiseToRupees, rupeesToPaise } from '@/lib/flatten-rider';
 import { createAuditLog } from '@/lib/audit-log';
+import { invalidateCache } from '@/lib/cache';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
+
+/**
+ * Calculates strict duration in days for a given plan type.
+ * Business Rule: DAILY = 1, WEEKLY = 7, MONTHLY = 30.
+ * Defaults to 7 for unrecognized plan types.
+ */
+export function getDurationForPlanType(planType?: string | null): number {
+  if (!planType) return 7;
+  const upper = planType.toUpperCase();
+  switch (upper) {
+    case 'DAILY':
+      return 1;
+    case 'WEEKLY':
+      return 7;
+    case 'MONTHLY':
+      return 30;
+    default:
+      return 7;
+  }
+}
 
 export const planUseCases = {
   async list(page: number, limit: number) {
@@ -100,6 +121,8 @@ export const planUseCases = {
         isActive: true,
       },
     });
+    invalidateCache('rental_plans*');
+    invalidateCache('rider_plans*');
     createAuditLog({
       actorId,
       action: 'plan.create',
@@ -111,26 +134,30 @@ export const planUseCases = {
   },
 
   async update(id: string, data: Record<string, unknown>, actorId: string) {
-    if (data.price != null) data.price = rupeesToPaise(Number(data.price));
-    if (data.securityDeposit != null) data.securityDeposit = rupeesToPaise(Number(data.securityDeposit));
-    if (data.type != null) {
-      data.durationDays = data.type === 'DAILY' ? 1 : data.type === 'WEEKLY' ? 7 : 30;
-    } else if (data.durationDays != null) {
-      data.durationDays = Number(data.durationDays);
+    const updateData = { ...data };
+    delete updateData.durationDays;
+    if (updateData.price != null) updateData.price = rupeesToPaise(Number(updateData.price));
+    if (updateData.securityDeposit != null) updateData.securityDeposit = rupeesToPaise(Number(updateData.securityDeposit));
+    if (updateData.type != null) {
+      updateData.durationDays = getDurationForPlanType(String(updateData.type));
     }
-    const plan = await db.rentalPlan.update({ where: { id }, data });
+    const plan = await db.rentalPlan.update({ where: { id }, data: updateData });
+    invalidateCache('rental_plans*');
+    invalidateCache('rider_plans*');
     createAuditLog({
       actorId,
       action: 'plan.update',
       entity: 'plan',
       entityId: id,
-      details: data,
+      details: updateData,
     }).catch(() => {});
     return { ...plan, price: paiseToRupees(plan.price) };
   },
 
   async delete(id: string, actorId: string) {
     await db.rentalPlan.delete({ where: { id } });
+    invalidateCache('rental_plans*');
+    invalidateCache('rider_plans*');
     createAuditLog({ actorId, action: 'plan.delete', entity: 'plan', entityId: id }).catch(
       () => {}
     );

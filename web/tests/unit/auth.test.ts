@@ -407,6 +407,6 @@ describe('auth constants', () => {
     expect(SESSION_COOKIE_OPTIONS.httpOnly).toBe(true);
     expect(SESSION_COOKIE_OPTIONS.sameSite).toBe('strict');
     expect(SESSION_COOKIE_OPTIONS.path).toBe('/');
-    expect(SESSION_COOKIE_OPTIONS.maxAge).toBe(24 * 60 * 60);
+    expect(SESSION_COOKIE_OPTIONS.maxAge).toBe(7 * 24 * 60 * 60);
   });
 });

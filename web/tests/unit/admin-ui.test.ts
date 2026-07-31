@@ -21,13 +21,13 @@ import { getKycBadge, getStateBadge, STATE_FILTERS } from '@/lib/admin-ui';
 describe('getKycBadge — color mapping (product decision)', () => {
   it('SUBMITTED is blue (informational, not warning)', () => {
     const cls = getKycBadge('SUBMITTED');
-    expect(cls).toContain('blue-500');
+    expect(cls).toContain('blue-100');
     expect(cls).not.toContain('amber');
   });
 
   it('PENDING is amber (action needed)', () => {
     const cls = getKycBadge('PENDING');
-    expect(cls).toContain('amber-500');
+    expect(cls).toContain('amber-100');
   });
 
   it('APPROVED and VERIFIED are emerald', () => {

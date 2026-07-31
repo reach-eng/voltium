@@ -20,11 +20,17 @@ export type { Rider, KycStatus, RiderLifecycleStage };
 const KYC_COLOR_MAP: Record<string, string> = {
   APPROVED: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   VERIFIED: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  ACTIVE: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+  POST_ACTIVE: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   REJECTED: 'bg-rose-100 text-rose-800 border-rose-300',
   SUSPENDED: 'bg-rose-100 text-rose-800 border-rose-300',
+  CLOSED: 'bg-rose-100 text-rose-800 border-rose-300',
   PENDING: 'bg-amber-100 text-amber-800 border-amber-300',
+  PRE_ACTIVE: 'bg-amber-100 text-amber-800 border-amber-300',
   SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
+  KYC_SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
   INFO_REQUIRED: 'bg-orange-100 text-orange-800 border-orange-300',
+  ONBOARDING: 'bg-slate-100 text-slate-600 border-slate-300',
 };
 
 const FALLBACK_COLOR = 'bg-slate-100 text-slate-600 border-slate-300';
@@ -56,6 +62,7 @@ export const getStateBadge = getKycBadge;
 export const STATE_FILTERS: string[] = [
   'ALL',
   'NEW',
+  'KYC_SUBMITTED',
   'ONBOARDING',
   'ACTIVE',
   'RETURN_PENDING',

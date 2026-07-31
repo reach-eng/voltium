@@ -158,3 +158,17 @@ export async function getRetentionStats(): Promise<Record<string, unknown>> {
     return { error: 'Failed to compute stats' };
   }
 }
+
+/**
+ * Safely parses audit log details JSON field.
+ */
+export function parseAuditLogDetails<T = Record<string, unknown>>(
+  details: string | null | undefined
+): T | null {
+  if (!details) return null;
+  try {
+    return JSON.parse(details) as T;
+  } catch {
+    return null;
+  }
+}
