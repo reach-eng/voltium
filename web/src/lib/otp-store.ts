@@ -138,12 +138,11 @@ export async function verifyOtp(
   code: string
 ): Promise<{ valid: boolean; error?: string }> {
   const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
-  console.log('[DEBUG OTP]', { isDev, env: process.env.ENABLE_TEST_OTP, code });
-  if (isDev && code === '111111') return { valid: true };
 
   if (shouldUseDatabaseStore()) {
     const entry = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
     if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
+    if (isDev && code === '111111') return { valid: true };
     if (entry.verified) return { valid: false, error: 'OTP already used.' };
     if (Date.now() > entry.expiresAt.getTime()) return { valid: false, error: 'OTP expired.' };
     if (entry.attempts >= MAX_ATTEMPTS) {
@@ -172,6 +171,7 @@ export async function verifyOtp(
 
   const entry = memoryStore.get(phone) || null;
   if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
+  if (isDev && code === '111111') return { valid: true };
   if (entry.verified) return { valid: false, error: 'OTP already used.' };
   if (Date.now() > entry.expiresAt) return { valid: false, error: 'OTP expired.' };
 
