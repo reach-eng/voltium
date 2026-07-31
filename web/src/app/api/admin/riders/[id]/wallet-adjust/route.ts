@@ -52,7 +52,7 @@ export async function POST(
         data: {
           riderId: riderDbId,
           type,
-          amount: amountInPaise,
+          amountInPaise,
           purpose: 'ADMIN_ADJUSTMENT',
           status: 'APPROVED',
           method: 'MANUAL',
