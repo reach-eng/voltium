@@ -329,10 +329,6 @@ class AppRadius {
   static const double lg = 16;
   static const double radiusModal = 24;
   static const double radiusBottomSheet = 32;
-  @Deprecated('Use radiusModal instead')
-  static const double xl = radiusModal;
-  @Deprecated('Use radiusBottomSheet instead')
-  static const double xxl = radiusBottomSheet;
   static const double full = 9999;
 
   // Sub-grid values for tight UI (badges, inline chips, small icon backgrounds).
@@ -347,8 +343,8 @@ class AppRadius {
   static const BorderRadius radiusSm = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius radiusMd = BorderRadius.all(Radius.circular(md));
   static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(lg));
-  static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(xl));
-  static const BorderRadius radiusXxl = BorderRadius.all(Radius.circular(xxl));
+  static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(radiusModal));
+  static const BorderRadius radiusXxl = BorderRadius.all(Radius.circular(radiusBottomSheet));
   static const BorderRadius radiusFull =
       BorderRadius.all(Radius.circular(full));
 
@@ -471,7 +467,7 @@ class AppTheme {
         color: ThemeColors.light.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         margin: const EdgeInsets.symmetric(vertical: Spacing.sm),
       ),
@@ -582,7 +578,7 @@ class AppTheme {
         color: darkColors.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         margin: const EdgeInsets.symmetric(vertical: Spacing.sm),
       ),
