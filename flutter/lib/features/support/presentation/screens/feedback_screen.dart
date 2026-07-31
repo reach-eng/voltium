@@ -129,8 +129,12 @@ class _TutorialDialogState extends State<TutorialDialog> {
                         onPressed: () => setState(() => _currentIndex--),
                         child: Text(
                           'PREVIOUS',
-                          style: AppTypography.bodySmallTracked.copyWith(
-                              color: AppColors.slate400, letterSpacing: 1),
+                          style: AppTypography.bodySmall
+                              .copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2)
+                              .copyWith(
+                                  color: AppColors.slate400, letterSpacing: 1),
                         ),
                       )
                     else
@@ -152,8 +156,11 @@ class _TutorialDialogState extends State<TutorialDialog> {
                         _currentIndex < widget.tips.length - 1
                             ? 'NEXT'
                             : 'GOT IT',
-                        style: AppTypography.bodySmallTracked.copyWith(
-                            color: AppColors.primary, letterSpacing: 1),
+                        style: AppTypography.bodySmall
+                            .copyWith(
+                                fontWeight: FontWeight.w800, letterSpacing: 1.2)
+                            .copyWith(
+                                color: AppColors.primary, letterSpacing: 1),
                       ),
                     ),
                   ],
@@ -348,9 +355,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
               duration: const Duration(milliseconds: 200),
               child: Icon(
                 isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: isSelected
-                    ? AppColors.amberIcon
-                    : AppColors.borderMedium,
+                color: isSelected ? AppColors.warning : AppColors.borderMedium,
                 size: 48,
               ),
             ),
@@ -411,7 +416,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   setState(() => _isSubmitting = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to submit feedback: ${e.toString()}'),
+                      content:
+                          Text('Failed to submit feedback: ${e.toString()}'),
                       backgroundColor: AppColors.error,
                     ),
                   );
@@ -424,7 +430,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         foregroundColor: Colors.white,
         disabledBackgroundColor: AppColors.borderMedium,
         minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl)),
         elevation: canSubmit ? 8 : 0,
         shadowColor: AppColors.primary.withValues(alpha: 0.4),
       ),
@@ -470,7 +477,7 @@ class RateAppPrompt {
               children: [
                 const Icon(
                   Icons.star_rounded,
-                  color: AppColors.amberIcon,
+                  color: AppColors.warning,
                   size: 64,
                 ),
                 SizedBox(height: 24),

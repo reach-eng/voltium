@@ -125,12 +125,12 @@ class SettingsScreen extends ConsumerWidget {
                       currentLocale == 'hi'
                           ? l10n.settings_hindi
                           : l10n.settings_english,
-                      style: AppTypography.bodyMediumEmphasis
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: colors.onSurfaceMuted),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.chevron_right,
-                        color: colors.outline, size: 20),
+                    Icon(Icons.chevron_right, color: colors.outline, size: 20),
                   ],
                 ),
                 onTap: () => _showLanguageDialog(context, ref),
@@ -149,8 +149,8 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: AppColors.info,
                 iconBgColor: AppColors.primarySurface,
                 title: l10n.settings_changePhone,
-                onTap: () => AppNavigator.push(
-                    context, const EditProfileScreen()),
+                onTap: () =>
+                    AppNavigator.push(context, const EditProfileScreen()),
               ),
             ),
             const SizedBox(height: 8),
@@ -159,8 +159,8 @@ class SettingsScreen extends ConsumerWidget {
               child: QuickLinkItem(
                 key: const Key('changePasswordTile'),
                 icon: Icons.lock_outline,
-                iconColor: AppColors.amberIcon,
-                iconBgColor: AppColors.amberIconSurface,
+                iconColor: AppColors.warning,
+                iconBgColor: AppColors.warningLight,
                 title: l10n.settings_changePassword,
                 onTap: () => _showComingSoonSnack(context, l10n),
               ),
@@ -228,7 +228,8 @@ class SettingsScreen extends ConsumerWidget {
                 title: l10n.settings_appVersion,
                 trailing: Text(
                   'v2.1.0',
-                  style: AppTypography.bodyMediumEmphasis
+                  style: AppTypography.bodyMedium
+                      .copyWith(fontWeight: FontWeight.w600)
                       .copyWith(color: colors.onSurfaceMuted),
                 ),
               ),
@@ -239,8 +240,8 @@ class SettingsScreen extends ConsumerWidget {
               child: QuickLinkItem(
                 key: const Key('rateUsTile'),
                 icon: Icons.star_outline,
-                iconColor: AppColors.amberIcon,
-                iconBgColor: AppColors.amberIconSurface,
+                iconColor: AppColors.warning,
+                iconBgColor: AppColors.warningLight,
                 title: l10n.settings_rateUs,
                 onTap: () async {
                   final url = Uri.parse(
@@ -400,7 +401,8 @@ class _SectionLabel extends StatelessWidget {
     final colors = AppColors.of(context);
     return Text(
       label,
-      style: AppTypography.bodySmallTracked
+      style: AppTypography.bodySmall
+          .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
           .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
     );
   }
@@ -486,7 +488,8 @@ class _RiderIdentityCard extends StatelessWidget {
                 if (phone.isNotEmpty)
                   Text(
                     phone,
-                    style: AppTypography.bodySmallEmphasis
+                    style: AppTypography.bodySmall
+                        .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: colors.onSurfaceMuted),
                   ),
               ],
@@ -508,9 +511,7 @@ class _RiderIdentityCard extends StatelessWidget {
             child: Text(
               'KYC · $kyc',
               style: AppTypography.labelMedium.copyWith(
-                color: verified
-                    ? AppColors.successDark
-                    : AppColors.warningDark,
+                color: verified ? AppColors.successDark : AppColors.warningDark,
               ),
             ),
           ),
@@ -583,8 +584,8 @@ class _NotificationsTileState extends State<_NotificationsTile> {
         onChanged: _loaded ? _setEnabled : null,
         activeTrackColor: AppColors.primary,
       ),
-      onTap: () => AppNavigator.push(
-          context, const NotificationPreferencesScreen()),
+      onTap: () =>
+          AppNavigator.push(context, const NotificationPreferencesScreen()),
     );
   }
 }

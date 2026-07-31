@@ -121,9 +121,6 @@ class AppColors {
   // Color(0xFF...) for icon tiles, status chips, and small background swatches
   // where a fully-themed ThemeColors extension is overkill. Pair `xxxIcon`
   // (foreground, ~600 weight) with `xxxIconSurface` (background, ~50/100).
-  static const Color amberIcon = Color(0xFFEAB308); // yellow-500
-  static const Color amberIconSurface = Color(0xFFFEF9C3); // yellow-100
-
   static const Color purpleIcon = Color(0xFF7E22CE); // purple-700
   static const Color purpleIconSurface = Color(0xFFF3E8FF); // purple-100
   static const Color purpleLightSurface = Color(0xFFFAF5FF); // purple-50
