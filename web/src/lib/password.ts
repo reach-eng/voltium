@@ -68,40 +68,56 @@ export async function verifyPassword(
 /**
  * Legacy PBKDF2-SHA256 verification (600k iterations, 16-byte salt).
  * Used only during the migration window — all new hashes use Argon2id.
+ *
+ * SECURITY (R10 polish #3):
+ *   §2.3 — NaN guard: `parseInt` can return NaN for malformed input; we
+ *          treat any non-finite iteration count as invalid.
+ *   §2.4 — try/catch around the WebCrypto deriveBits call so a runtime
+ *          error (e.g. unsupported algorithm) doesn't bubble up as 500.
+ *   §2.5 — MAX_ITERATIONS lowered from 10M to 1M. 10M allowed an attacker
+ *          who controlled the iteration count in a forged hash header to
+ *          spin the server for ~30s per verify. 1M is still 5x the
+ *          legitimate 200k default; anything higher is rejected.
  */
 async function verifyPbkdf2(password: string, hashedPassword: string): Promise<boolean> {
-  const MAX_ITERATIONS = 10_000_000;
+  const MAX_ITERATIONS = 1_000_000;
 
   const parts = hashedPassword.split('$');
   if (parts.length !== 5) return false;
 
-  const iterations = Math.min(parseInt(parts[2], 10), MAX_ITERATIONS);
+  const rawIterations = parseInt(parts[2], 10);
+  if (!Number.isFinite(rawIterations) || rawIterations < 1) return false;
+  const iterations = Math.min(rawIterations, MAX_ITERATIONS);
   const salt = fromBase64(parts[3]);
   const expectedHash = fromBase64(parts[4]);
 
   const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
+  try {
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
 
-  const hashBuf = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt.buffer as ArrayBuffer, iterations, hash: 'SHA-256' },
-    keyMaterial,
-    expectedHash.length * 8
-  );
+    const hashBuf = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: salt.buffer as ArrayBuffer, iterations, hash: 'SHA-256' },
+      keyMaterial,
+      expectedHash.length * 8
+    );
 
-  // Constant-time comparison
-  const computed = new Uint8Array(hashBuf);
-  if (computed.length !== expectedHash.length) return false;
-  let diff = 0;
-  for (let i = 0; i < computed.length; i++) {
-    diff |= computed[i] ^ expectedHash[i];
+    // Constant-time comparison
+    const computed = new Uint8Array(hashBuf);
+    if (computed.length !== expectedHash.length) return false;
+    let diff = 0;
+    for (let i = 0; i < computed.length; i++) {
+      diff |= computed[i] ^ expectedHash[i];
+    }
+    return diff === 0;
+  } catch {
+    return false;
   }
-  return diff === 0;
 }
 
 function fromBase64(str: string): Uint8Array {
