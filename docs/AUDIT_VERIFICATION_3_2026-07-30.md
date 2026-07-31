@@ -357,4 +357,4 @@ The 26 still-true Top 10 findings, cross-referenced with `FOLLOWUP_TICKETS.md`:
   - [`docs/FOLLOWUP_TICKETS.md`](./FOLLOWUP_TICKETS.md) — 63 tickets, current state
   - [`docs/BACKLOG_FINDINGS.md`](./BACKLOG_FINDINGS.md) — current dashboard (updated by this pass)
   - [`docs/RELEASE_READINESS_2026-07-29.md`](./RELEASE_READINESS_2026-07-29.md) — release readiness
-  - [`SCOPE.md`](../SCOPE.md) — phase history + audit plan entries
+  - [`SCOPE.md`](./SCOPE.md) — phase history + audit plan entries

@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Scope:** `web/src/server/workers/**` — 12 job files + index + outbox + queues, plus the supporting `lib/job-queue.ts` and `lib/idempotency.ts`.
 
-> **Status (2026-07-30):** 3 of 13 top P0s FIXED (JobQueue.enqueue + JobTypes shipped in PR-P1.4), 2 PARTIALLY FIXED, 5 STILL TRUE (highest-leverage: OutboxService.emit no transaction — data integrity risk). See [`AUDIT_VERIFICATION_3_2026-07-30.md`](./AUDIT_VERIFICATION_3_2026-07-30.md) §9.
+> **Status (2026-07-30, Pass 4):** 3 of 13 top P0s FIXED (JobQueue.enqueue + JobTypes shipped in PR-P1.4), 2 PARTIALLY FIXED, 5 STILL TRACKED (highest-leverage: OutboxService.emit transaction wrapping). See [`AUDIT_VERIFICATION_4_2026-07-30.md`](./AUDIT_VERIFICATION_4_2026-07-30.md) §5.
 **Method:** File-by-file read. Every finding has file:line evidence and a concrete fix.
 
 This is the fifth in the audit series. It is focused entirely on the background worker subsystem — the 12 job processors, the orchestrator (`index.ts`), the outbox/queue layer, and the supporting libraries.
