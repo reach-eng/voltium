@@ -14,7 +14,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import { errors } from '@/lib/api-response';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
@@ -27,7 +26,7 @@ function authorize(req: NextRequest): boolean {
 
 export async function GET(req: NextRequest) {
   if (!authorize(req)) {
-    return errors.unauthorized();
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const start = Date.now();
@@ -122,6 +121,5 @@ export async function GET(req: NextRequest) {
   }
 
   result.latencyMs = Date.now() - start;
-  // Non-standard response shape — left as-is (internal debug diagnostic payload)
   return NextResponse.json(result);
 }

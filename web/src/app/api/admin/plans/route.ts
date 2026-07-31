@@ -12,7 +12,7 @@ import { hasPermission, type Permission } from '@/lib/auth';
 import { planUseCases } from '@/server/modules/plans/plan.use-cases';
 
 const PERM_MAP: Record<string, Permission> = {
-  view: 'plans_view',
+  view: 'analytics_view',
   create: 'plans_manage',
   update: 'plans_manage',
   delete: 'plans_manage',
@@ -22,7 +22,7 @@ function checkPlansPermission(
   session: any,
   action: 'view' | 'create' | 'update' | 'delete'
 ): boolean {
-  return hasPermission(session, PERM_MAP[action]);
+  return hasPermission(session.adminRole || '', PERM_MAP[action]);
 }
 
 export async function GET(req: NextRequest) {

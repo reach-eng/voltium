@@ -53,7 +53,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'guarantor_approve')) return adminForbidden();
+  if (!hasPermission(session.adminRole || '', 'kyc_approve')) return adminForbidden();
 
   const body = await request.json();
   const riderId = body.riderId || body.riderDbId;

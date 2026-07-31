@@ -5,7 +5,6 @@ import { getSession } from '@/lib/get-session';
 import { createAuditLog } from '@/lib/audit-log';
 import { authUseCases } from '@/server/modules/auth/auth.use-cases';
 import { withApiHandler } from '@/lib/api-handler';
-import { isProductionEnv } from '@/lib/env';
 
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await getSession(request);
@@ -25,7 +24,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   // Clear the session cookie
   response.cookies.set(SESSION_COOKIE_NAME, '', {
     httpOnly: true,
-    secure: isProductionEnv(),
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict' as const,
     path: '/',
     maxAge: 0, // Expire immediately

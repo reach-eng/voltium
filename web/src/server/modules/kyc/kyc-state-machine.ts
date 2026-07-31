@@ -25,12 +25,7 @@ const VALID_TRANSITIONS: TransitionMap = {
   EXPIRED: [],
 };
 
-import { DomainError } from '@/lib/domain-error';
-
-export class KycStateError extends DomainError {
-  readonly httpStatus = 409;
-  readonly errorCode = 'KYC_STATE_CONFLICT';
-
+export class KycStateError extends Error {
   constructor(
     message: string,
     public readonly currentStatus: KycStatus,

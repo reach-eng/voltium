@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { success, errors } from '@/lib/api-response';
 import { join, resolve } from 'path';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { getAdminSession, getSession } from '@/lib/get-session';
@@ -172,21 +171,24 @@ export async function PUT(
       // Validate upload token
       const token = request.nextUrl.searchParams.get('token');
       if (!token) {
-        return errors.unauthorized('Missing upload token');
+        return NextResponse.json({ error: 'Missing upload token' }, { status: 401 });
       }
 
       if (!fileUseCases._verifyUploadToken(fileRecordId, token)) {
-        return errors.forbidden('Invalid or expired upload token');
+        return NextResponse.json({ error: 'Invalid or expired upload token' }, { status: 403 });
       }
 
       // Look up the FileRecord
       const record = await fileRepository.getFileRecordById(fileRecordId);
       if (!record) {
-        return errors.notFound('File record not found');
+        return NextResponse.json({ error: 'File record not found' }, { status: 404 });
       }
 
       if (record.status !== 'PENDING_UPLOAD') {
-        return errors.conflict(`File is already ${record.status.toLowerCase()}. Cannot re-upload.`);
+        return NextResponse.json(
+          { error: `File is already ${record.status.toLowerCase()}. Cannot re-upload.` },
+          { status: 409 }
+        );
       }
 
       // Read the file body
@@ -195,12 +197,14 @@ export async function PUT(
 
       // Validate magic bytes to prevent content-type sniffing/spoofing
       if (!validateMagicBytes(buffer, record.mimeType)) {
-        return errors.badRequest('File content does not match the allowed mime type');
+        return NextResponse.json(
+          { error: 'File content does not match the allowed mime type' },
+          { status: 400 }
+        );
       }
 
       // Re-validate file size against declared limit
       if (actualSize > record.sizeBytes) {
-        // Non-standard response shape — left as-is (413 has no standard helper)
         return NextResponse.json({ error: 'Uploaded file exceeds declared size' }, { status: 413 });
       }
 
@@ -221,7 +225,7 @@ export async function PUT(
         logger.warn('[LocalUploadCatchAll] Path traversal attempt blocked', {
           storageKey: record.storageKey,
         });
-        return errors.forbidden('Invalid storage path');
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
       }
 
       // Additional: reject storageKey containing traversal markers
@@ -231,12 +235,12 @@ export async function PUT(
         normalizedKey.includes('~') ||
         normalizedKey.startsWith('/')
       ) {
-        return errors.forbidden('Invalid storage path');
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
       }
 
       const dir = resolve(join(baseDir, record.storageKey.split('/').slice(0, -1).join('/')));
       if (!dir.startsWith(resolvedBase)) {
-        return errors.forbidden('Invalid storage path');
+        return NextResponse.json({ error: 'Invalid storage path' }, { status: 403 });
       }
 
       await mkdir(dir, { recursive: true });
@@ -251,7 +255,6 @@ export async function PUT(
         sizeBytes: actualSize,
       });
 
-      // Non-standard response shape — left as-is (upload status contract)
       return NextResponse.json({
         status: 'uploaded',
         fileRecordId,
@@ -262,6 +265,6 @@ export async function PUT(
     return new NextResponse('Bad Request', { status: 400 });
   } catch (err) {
     logger.error('[LocalUploadCatchAll] Upload failed', err);
-    return errors.internal('Upload failed');
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

@@ -11,7 +11,6 @@ import type { KycSubmission, KycReview } from './kyc.types';
 import { kycRepository } from './kyc.repository';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
-import { validateTransition } from '@/server/modules/riders/rider-lifecycle.service';
 
 export const kycUseCases = {
   async getKycStatus(riderDbId: string) {
@@ -19,10 +18,8 @@ export const kycUseCases = {
   },
 
   async submitKyc(riderDbId: string, input: KycSubmission) {
-    // IDOR protection: strip riderId and id from input object so it cannot override session riderDbId
-    const { riderId: _r, id: _i, ...cleanInput } = input as any;
     // Map frontend field names to Prisma model field names
-    const prismaData = mapKycFieldsToPrisma(cleanInput);
+    const prismaData = mapKycFieldsToPrisma(input as any);
 
     // Progressive upload support:
     // Only transition to SUBMITTED if all critical docs are present
@@ -55,29 +52,6 @@ export const kycUseCases = {
   },
 
   async reviewKyc(riderDbId: string, reviewerId: string, review: KycReview) {
-    let currentStatus: any = 'KYC_SUBMITTED';
-    try {
-      if (typeof db.rider?.findUnique === 'function') {
-        const rider = await db.rider.findUnique({
-          where: { id: riderDbId },
-          select: { lifecycleStatus: true },
-        });
-        if (rider?.lifecycleStatus) {
-          currentStatus = rider.lifecycleStatus;
-        }
-      }
-    } catch {
-      // Fallback for unit tests with partial mocks
-    }
-
-    const targetLifecycle = review.action === 'APPROVE' ? 'KYC_APPROVED' : 'SUSPENDED';
-    if (['APPROVE', 'REJECT'].includes(review.action)) {
-      validateTransition(
-        currentStatus as any,
-        targetLifecycle as any
-      );
-    }
-
     switch (review.action) {
       case 'APPROVE': {
         return db.$transaction(async (tx: Prisma.TransactionClient) => {

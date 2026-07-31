@@ -171,6 +171,7 @@ export function useHubs() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered, lastAction, bulkLoading]);
 
   const toggleActive = async (hub: Hub) => {

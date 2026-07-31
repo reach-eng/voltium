@@ -1,7 +1,6 @@
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
-import { NotFoundError, ValidationError } from "@/lib/api-error";
 
 // ── Helper ─────────────────────────────────────────────────────────────────
 
@@ -66,8 +65,8 @@ export const shiftUseCases = {
       where: { id: hubId },
       select: { id: true, name: true, isActive: true },
     });
-    if (!hub) throw new NotFoundError('Hub not found');
-    if (!hub.isActive) throw new ValidationError('Hub is currently inactive');
+    if (!hub) throw new Error('Hub not found');
+    if (!hub.isActive) throw new Error('Hub is currently inactive');
     const shifts = await db.shift.findMany({
       where: { isActive: true },
       orderBy: [{ startTime: 'asc' }],
@@ -176,7 +175,7 @@ export const shiftUseCases = {
   async deleteShift(id: string, actorId: string) {
     const leaseCount = await db.rentalLease.count({ where: { shiftId: id } });
     if (leaseCount > 0) {
-      throw new ValidationError(
+      throw new Error(
         `Cannot delete shift: ${leaseCount} lease(s) are using it. Remove them first.`
       );
     }

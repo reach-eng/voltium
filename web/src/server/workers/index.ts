@@ -9,11 +9,10 @@
  *   npx tsx src/server/workers/index.ts
  */
 
-import { JobQueue } from '@/lib/job-queue';
+import { JobQueue, JobTypes } from '@/lib/job-queue';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { JOB_TYPES } from './queues';
-import { validateSettingsConsistency } from '@/lib/settings-registry';
 import { OutboxEventTypes } from './outbox';
 import { sendSms } from '@/lib/sms-provider';
 
@@ -204,10 +203,6 @@ export async function startWorkers(injectedClock: typeof clock = clock): Promise
 
   running = true;
   globalAbortController = new AbortController();
-
-  // Pre-flight: validate settings consistency (non-blocking)
-  await validateSettingsConsistency();
-
   logger.info('[Workers] Starting all workers', {
     workerCount: WORKERS.length,
     scheduledTaskCount: SCHEDULED_TASKS.length,

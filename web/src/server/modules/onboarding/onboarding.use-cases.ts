@@ -3,15 +3,11 @@
  *
  * Orchestrates the multi-step rider onboarding flow: profile, KYC, guarantor,
  * deposit, plan selection, and pickup.
- * 
- * External Callers:
- * - src/app/api/auth/verify-otp/route.ts
  */
 
 import { db } from '@/lib/db';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { OnboardingProgress, OnboardingStep } from './onboarding.types';
-import { NotFoundError } from "@/lib/api-error";
 
 export const onboardingUseCases = {
   async getProgress(riderDbId: string): Promise<OnboardingProgress> {
@@ -24,7 +20,7 @@ export const onboardingUseCases = {
       },
     });
 
-    if (!rider) throw new NotFoundError('Rider not found');
+    if (!rider) throw new Error('Rider not found');
 
     const lifecycleRank: Record<string, number> = {
       NEW: 0,

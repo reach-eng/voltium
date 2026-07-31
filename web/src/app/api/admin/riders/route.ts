@@ -172,7 +172,7 @@ export async function PUT(req: NextRequest) {
     const raw = await req.json();
     const parsed = updateRiderSchema.safeParse(raw);
     if (!parsed.success) {
-      return errors.validation(
+      return errors.badRequest(
         parsed.error.issues.map((e) => `${e.path.map(String).join('.')}: ${(e instanceof Error ? e.message : String(e))}`).join('; ')
       );
     }

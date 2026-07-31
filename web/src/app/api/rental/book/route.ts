@@ -9,7 +9,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireRiderSession } from '@/lib/rider-auth';
-import { bookRental } from '@/server/modules/rentals/use-cases/book-rental.use-case';
+import { rentalUseCases } from '@/server/modules/rentals/rental.use-cases';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return errors.validation('startTime must be in HH:mm format');
     }
 
-    const result = await bookRental(riderDbId, {
+    const result = await rentalUseCases.bookRental(riderDbId, {
       vehicleId,
       shiftId,
       leaseDate,

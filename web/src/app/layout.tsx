@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: SITE_TITLE,
   description: META_DESCRIPTION,
   keywords: [
-    'Voltium',
-    'Voltium Electric Mobility',
+    'Ryd',
+    'Ryd Electric Mobility',
     'Electric Vehicle',
     'Fleet Management',
     'Scooter Rental',

@@ -3,16 +3,14 @@ import { success, errors, error } from '@/lib/api-response';
 import { createSessionToken, ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
-import { isProductionEnv, isDevelopmentEnv } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
   // Hard-disable in production — this endpoint must never work outside development
-  if (isProductionEnv()) {
+  if (process.env.APP_ENV === 'production') {
     return errors.forbidden('Auto-login is disabled in production');
   }
   const isDev =
-    isDevelopmentEnv() &&
-    process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
+    process.env.NODE_ENV === 'development' || process.env.ENABLE_DEV_ADMIN_LOGIN === 'true';
   if (!isDev) {
     return errors.notFound('Not found');
   }
@@ -38,7 +36,14 @@ export async function POST(request: NextRequest) {
       return error('Database or authentication service unavailable', 'SERVICE_UNAVAILABLE', 503);
     }
 
-    let permissions: string[] = admin.permissions || [];
+    let permissions: string[] = [];
+    try {
+      if (admin.permissions) {
+        permissions = JSON.parse(admin.permissions as string);
+      }
+    } catch (e) {
+      logger.error('Failed to parse admin permissions', { adminId: admin.id, error: e });
+    }
 
     const sessionToken = await createSessionToken({
       riderId: admin.id,

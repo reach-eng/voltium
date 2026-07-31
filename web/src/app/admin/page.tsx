@@ -1,21 +1,22 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-const AdminLayout = dynamic(() => import('@/components/admin/AdminLayout'), {
-  loading: () => (
-    <div className="flex items-center justify-center min-h-dvh">
-      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-    </div>
-  ),
-});
+export default function AdminRedirect() {
+  const router = useRouter();
 
-export default function AdminPage() {
+  useEffect(() => {
+    // Redirect /admin to /?view=admin so the AdminLayout is shown immediately.
+    router.replace('/?view=admin');
+  }, [router]);
+
   return (
-    <ErrorBoundary>
-      <AdminLayout />
-    </ErrorBoundary>
+    <div className="flex min-h-dvh items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-2">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-sm text-muted-foreground font-medium">Entering Admin Panel...</p>
+      </div>
+    </div>
   );
 }

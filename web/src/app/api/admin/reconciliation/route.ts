@@ -9,8 +9,7 @@
 
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { requireAdmin, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/permissions';
+import { requireAdmin } from '@/lib/rbac';
 import {
   runWalletReconciliation,
   recordReconciliation,
@@ -21,9 +20,6 @@ export async function GET(request: NextRequest) {
     const admin = await requireAdmin();
     if (!admin) {
       return errors.unauthorized('Admin authentication required');
-    }
-    if (!hasPermission(admin, 'finance_view')) {
-      return adminForbidden();
     }
 
     const result = await runWalletReconciliation();

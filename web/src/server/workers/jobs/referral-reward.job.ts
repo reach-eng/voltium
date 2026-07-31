@@ -52,7 +52,7 @@ export const referralRewardJob = {
           data: {
             riderId: referrer.id,
             type: 'CREDIT',
-            amountInPaise: REWARD_AMOUNT_PAISE,
+            amount: REWARD_AMOUNT_PAISE,
             purpose: 'REWARD',
             status: 'APPROVED',
             description: `Referral reward for rider ${referredRiderId}`,

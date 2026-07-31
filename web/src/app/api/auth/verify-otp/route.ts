@@ -11,19 +11,18 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
 import { API_VERSION } from '@/lib/api-version';
-import { isDevelopmentEnv } from '@/lib/env';
 
 const OTP_VERIFY_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: isDevelopmentEnv() ? 100 : 5,
+  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 5,
 };
 
 const OTP_VERIFY_IP_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: isDevelopmentEnv() ? 200 : 15,
+  maxRequests: process.env.NODE_ENV === 'development' ? 200 : 15,
 };
 
-const TEST_PHONES = (process.env.TEST_PHONES ?? '9876543210,9999999999,8888888888').split(',').filter(Boolean);
+const TEST_PHONES = ['9876543210', '9999999999', '8888888888'];
 
 function getCorrelationId(request: NextRequest): string {
   return request.headers.get('x-correlation-id') || 'unknown';
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
     const result = await authUseCases.verifyOtp(validation.data as any);
 
     if (
-      isDevelopmentEnv() &&
+      process.env.NODE_ENV === 'development' &&
       process.env.ENABLE_DEV_TOOLS === 'true' &&
       process.env.TEST_MODE === 'true' &&
       TEST_PHONES.includes(result.phone)
@@ -128,10 +127,10 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : String(err);
     logger.error('[POST /api/auth/verify-otp] error', { error: redactPii(errorMessage) });
     const response = errors.internal(
-      'Invalid or expired OTP. Please try again.',
+      'Verification failed. Please check your connection or try again.',
       { correlationId: redactPii(correlationId) }
     );
     response.headers.set('Api-Version', API_VERSION);

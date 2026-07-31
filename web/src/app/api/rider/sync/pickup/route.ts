@@ -10,8 +10,7 @@ import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { flattenRider } from '@/lib/flatten-rider';
 import { requireRiderSession } from '@/lib/rider-auth';
-import { syncPickup } from '@/server/modules/rentals/use-cases/sync-pickup.use-case';
-import { isProductionEnv } from '@/lib/env';
+import { rentalUseCases } from '@/server/modules/rentals/rental.use-cases';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,34 +30,20 @@ export async function POST(request: NextRequest) {
       pickupPhotoLeft,
       pickupPhotoRight,
       pickupPhotoWithVehicle,
-      startOdometer,
-      odometer,
-      startBatteryPct,
-      batteryPct,
     } = body;
 
     if (!vehicleId) return errors.badRequest('Vehicle ID/Number is required');
 
-    const frontPhoto = pickupPhotoFront || pickupPhoto;
-    if (isProductionEnv() && !frontPhoto) {
-      return errors.badRequest('At least one vehicle condition photo (Front) is required for pickup');
-    }
-
-    const parsedOdometer = typeof startOdometer === 'number' ? startOdometer : typeof odometer === 'number' ? odometer : undefined;
-    const parsedBattery = typeof startBatteryPct === 'number' ? startBatteryPct : typeof batteryPct === 'number' ? batteryPct : undefined;
-
-    const result = await syncPickup(riderDbId, {
+    const result = await rentalUseCases.syncPickup(riderDbId, {
       vehicleId,
       hubId,
       teamLeader,
       emergencyContact,
-      pickupPhotoFront: frontPhoto,
+      pickupPhotoFront: pickupPhotoFront || pickupPhoto,
       pickupPhotoBack,
       pickupPhotoLeft,
       pickupPhotoRight,
       pickupPhotoWithVehicle,
-      startOdometer: parsedOdometer,
-      startBatteryPct: parsedBattery,
     });
 
     logger.info('Vehicle pickup completed', { riderId: riderDbId, vehicleId });

@@ -1,12 +1,5 @@
 /**
  * Device Compliance module — Use cases
- * 
- * External Callers:
- * - src/app/api/device/data/route.ts
- * - src/app/api/device/permissions/route.ts
- * - src/app/api/rider/device/permissions/route.ts
- * - src/app/api/rider/device/route.ts
- * - src/app/api/rider/sync/device-data/route.ts
  */
 
 import { db } from '@/server/shared/db/prisma';
@@ -40,7 +33,7 @@ export const deviceComplianceUseCases = {
         isLocationMandatory: true,
         isAppsControlRestricted: true,
         isAdminLocked: true,
-        lockPasswordHash: true,
+        lockPassword: true,
         deviceAdminGranted: true,
         displayOverlayGranted: true,
         lastDeviceViolationAt: true,
@@ -65,7 +58,7 @@ export const deviceComplianceUseCases = {
       isLocationMandatory: rider.isLocationMandatory,
       isAppsControlRestricted: rider.isAppsControlRestricted,
       isAdminLocked: rider.isAdminLocked,
-      lockPasswordHash: null,
+      lockPassword: null,
       deviceAdminGranted: rider.deviceAdminGranted,
       displayOverlayGranted: rider.displayOverlayGranted,
       lastDeviceViolationAt: rider.lastDeviceViolationAt,

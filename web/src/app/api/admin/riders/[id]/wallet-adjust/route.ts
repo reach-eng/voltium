@@ -26,7 +26,7 @@ export async function POST(
   
   const session = await getAdminSession();
   if (!session) return errors.unauthorized();
-  if (!hasPermission(session, 'transactions_approve')) {
+  if (!hasPermission(session, 'riders_update')) {
     return errors.forbidden('Insufficient permissions');
   }
 
@@ -52,7 +52,7 @@ export async function POST(
         data: {
           riderId: riderDbId,
           type,
-          amountInPaise,
+          amount: amountInPaise,
           purpose: 'ADMIN_ADJUSTMENT',
           status: 'APPROVED',
           method: 'MANUAL',
@@ -97,14 +97,14 @@ export async function POST(
       return { walletBalance: wallet?.balanceInPaise ? wallet.balanceInPaise / 100 : 0 };
     });
 
-    await createAuditLog({
-      actorId: session.adminId || session.riderDbId || 'system',
+    createAuditLog({
+      actorId: session.adminId!,
       actorType: 'ADMIN',
       action: 'wallet_adjustment',
       entity: 'wallet',
       entityId: riderDbId,
       details: JSON.stringify({ amount, type, reason }),
-    }).catch((e) => logger.error('[AuditLog] Failed in wallet-adjust:', e));
+    }).catch(() => {});
 
     return success(result);
   } catch (error: any) {

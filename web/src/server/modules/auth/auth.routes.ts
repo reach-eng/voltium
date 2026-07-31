@@ -9,7 +9,6 @@ import { sendOtpSchema, verifyOtpSchema } from './auth.schemas';
 import { authUseCases } from './auth.use-cases';
 import { success, errors } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
-import { isProductionEnv } from '@/lib/env';
 
 export async function POST_sendOtp(request: NextRequest) {
   const body = await request.json();
@@ -39,7 +38,7 @@ export async function POST_verifyOtp(request: NextRequest) {
   // Set session cookie
   response.cookies.set('voltium-session', result.token, {
     httpOnly: true,
-    secure: isProductionEnv(),
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,

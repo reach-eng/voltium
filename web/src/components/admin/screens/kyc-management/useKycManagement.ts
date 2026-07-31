@@ -244,6 +244,7 @@ export function useKycManagement() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds, bulkLoading, lastAction, confirmAction]);
 
   return {

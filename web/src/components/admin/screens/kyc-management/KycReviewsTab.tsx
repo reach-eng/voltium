@@ -20,18 +20,21 @@ import { ExportButton } from '../../export-button';
 import { logger } from '@/lib/logger';
 import { KycReviewModal } from './KycReviewModal';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
-import { getKycBadge } from '@/lib/admin-ui';
-import type { Rider } from '@/lib/types/admin';
 
-/** Subset of Rider fields used in the KYC review tab. */
-export type KycRider = Pick<
-  Rider,
-  'id' | 'riderId' | 'phone' | 'fullName' | 'kycStatus' | 'state' | 'accountStatus' |
-  'guarantorName' | 'guarantorStatus' | 'createdAt' | 'submissionDate' |
-  'sharedGuarantorWith' | 'aadhaarFront' | 'aadhaarBack' | 'panCard' |
-  'signature' | 'profilePhoto' | 'accountNumber' | 'bankName' | 'ifscCode' |
-  'riderPhoto' | 'aadhaarNumber' | 'panNumber'
->;
+// We just copy the KycRider and helpers since they're needed here too
+export interface KycRider {
+  id: string;
+  riderId: string;
+  phone: string;
+  fullName: string | null;
+  kycStatus: string;
+  guarantorName: string | null;
+  guarantorStatus: string;
+  createdAt: string;
+  submissionDate: string | null;
+  sharedGuarantorWith: string[];
+  [key: string]: any;
+}
 
 export const kycDocuments = [
   { key: 'aadhaarFront' as const, label: 'Aadhaar Front' },
@@ -45,6 +48,18 @@ function getCompletion(rider: KycRider): number {
   const total = kycDocuments.length;
   const completed = kycDocuments.filter((doc) => rider[doc.key]).length;
   return Math.round((completed / total) * 100);
+}
+
+function getKycBadge(status: string) {
+  const styles: Record<string, string> = {
+    APPROVED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+    VERIFIED: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+    PENDING: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
+    SUBMITTED: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
+    REJECTED: 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400',
+    INFO_REQUIRED: 'border-orange-500/20 text-orange-600 bg-orange-500/5 dark:text-orange-400',
+  };
+  return styles[status] || 'border-border text-muted-foreground bg-muted/30';
 }
 
 export function KycReviewsTab() {

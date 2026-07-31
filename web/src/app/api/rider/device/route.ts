@@ -9,8 +9,6 @@ const reportViolationSchema = z.object({
   permissionId: z.string().min(1),
 });
 
-import { redactPii } from '@/lib/pii-redact';
-
 export async function GET(request: NextRequest) {
   try {
     const auth = await requireRiderSession(request);
@@ -22,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     return success(deviceState);
   } catch (err) {
-    logger.error('[GET /api/rider/device]', redactPii(err));
+    logger.error('[GET /api/rider/device]', err);
     return errors.internal('Failed to fetch device security flags');
   }
 }
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     return success({ permissionId, reportedAt: new Date().toISOString() }, 'Violation reported');
   } catch (err) {
-    logger.error('[POST /api/rider/device]', redactPii(err));
+    logger.error('[POST /api/rider/device]', err);
     return errors.internal('Failed to report device violation');
   }
 }

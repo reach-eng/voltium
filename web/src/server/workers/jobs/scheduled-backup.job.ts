@@ -11,9 +11,12 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
-import { backupRepository } from '@/server/modules/data-management/backup/backup.repository';
-import { scheduleService } from '@/server/modules/data-management/schedule/schedule.service';
-import { getFreeDiskBytes } from '@/server/modules/data-management/storage/storage.service';
+import { backupRepository } from '@/server/modules/data-management/backup.repository';
+import {
+  backupService,
+  calculateNextRun,
+  getFreeDiskBytes,
+} from '@/server/modules/data-management/backup.service';
 import { createAuditLog } from '@/lib/audit-log';
 import { fcmService } from '@/lib/fcm';
 
@@ -87,7 +90,7 @@ export const scheduledBackupJob = {
       });
 
       try {
-        const result = await scheduleService.runScheduledBackup({
+        const result = await backupService.runScheduledBackup({
           id: schedule.id,
           frequency: schedule.frequency,
           includeDatabase: schedule.includeDatabase,
@@ -103,7 +106,7 @@ export const scheduledBackupJob = {
         });
 
         // Calculate next run time
-        const nextRunAt = scheduleService.calculateNextRun(schedule);
+        const nextRunAt = calculateNextRun(schedule);
         await backupRepository.markScheduleSuccess(
           schedule.id,
           clock.now(),

@@ -14,11 +14,8 @@
  */
 
 import { db } from '@/lib/db';
-import { isProductionEnv, isDevelopmentEnv } from '@/lib/env';
 import type { GuarantorSubmission, GuarantorReview } from './guarantor.types';
 import { guarantorRepository } from './guarantor.repository';
-import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
-import { ValidationError } from "@/lib/api-error";
 
 const TEST_PHONES = ['9876543210', '9999999999', '8888888888', '7788888801'];
 
@@ -31,12 +28,12 @@ export const guarantorUseCases = {
     if (input.phone) {
       const cleaned = input.phone.replace(/\D/g, '');
       if (cleaned.length < 10) {
-        throw new ValidationError('Invalid phone format');
+        throw new Error('Invalid phone format');
       }
     }
 
-    if (isProductionEnv() && (!input.aadhaarFront || !input.aadhaarBack)) {
-      throw new ValidationError('Aadhaar front and back documents are required');
+    if (process.env.NODE_ENV === 'production' && (!input.aadhaarFront || !input.aadhaarBack)) {
+      throw new Error('Aadhaar front and back documents are required');
     }
 
     const current = await guarantorRepository.findByRiderId(riderDbId);
@@ -49,14 +46,8 @@ export const guarantorUseCases = {
 
   async reviewGuarantor(riderDbId: string, reviewerId: string, review: GuarantorReview) {
     switch (review.action) {
-      case 'APPROVE': {
-        const result = await guarantorRepository.approveGuarantor(riderDbId, reviewerId);
-        const rider = await db.rider.findUnique({ where: { id: riderDbId }, select: { lifecycleStatus: true } });
-        if (rider && rider.lifecycleStatus === 'GUARANTOR_SUBMITTED') {
-          await transitionRiderStatus(riderDbId, 'GUARANTOR_APPROVED');
-        }
-        return result;
-      }
+      case 'APPROVE':
+        return guarantorRepository.approveGuarantor(riderDbId, reviewerId);
       case 'REJECT':
         return guarantorRepository.rejectGuarantor(
           riderDbId,
@@ -78,7 +69,7 @@ export const guarantorUseCases = {
 
   async autoVerifyIfTestMode(riderDbId: string) {
     if (
-      !isDevelopmentEnv() ||
+      process.env.NODE_ENV !== 'development' ||
       process.env.ENABLE_DEV_TOOLS !== 'true' ||
       process.env.TEST_MODE !== 'true'
     )

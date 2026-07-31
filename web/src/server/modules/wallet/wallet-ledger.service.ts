@@ -22,13 +22,11 @@ import {
   creditSecurityDeposit,
   debitSecurityDeposit,
   reverseWalletEntry,
-} from '@/server/modules/wallet/wallet.mutations';
-import {
   verifyLedgerIntegrity,
   backfillOpeningBalance,
-} from '@/server/modules/wallet/wallet.queries';
-import { WalletServiceError } from '@/server/modules/wallet/wallet.errors';
-import type { LedgerCategory } from '@/server/modules/wallet/wallet.mutations';
+  WalletServiceError,
+} from '@/lib/services/wallet-service';
+import type { LedgerCategory } from '@/lib/services/wallet-service';
 
 export { WalletServiceError };
 
@@ -47,7 +45,6 @@ export const walletLedgerService = {
       riderId: string;
       amountInPaise: number;
       category: LedgerCategory;
-      transactionId?: string;
       txnId?: string;
       idempotencyKey?: string;
       actorId?: string;
@@ -63,7 +60,7 @@ export const walletLedgerService = {
         walletId: wallet.id,
         amountInPaise: params.amountInPaise,
         category: params.category,
-        transactionId: params.transactionId ?? params.txnId,
+        txnId: params.txnId,
         idempotencyKey: params.idempotencyKey,
         actorId: params.actorId,
         note: params.note,
@@ -88,7 +85,6 @@ export const walletLedgerService = {
       riderId: string;
       amountInPaise: number;
       category: LedgerCategory;
-      transactionId?: string;
       txnId?: string;
       idempotencyKey?: string;
       actorId?: string;
@@ -105,7 +101,7 @@ export const walletLedgerService = {
         walletId: wallet.id,
         amountInPaise: params.amountInPaise,
         category: params.category,
-        transactionId: params.transactionId ?? params.txnId,
+        txnId: params.txnId,
         idempotencyKey: params.idempotencyKey,
         actorId: params.actorId,
         note: params.note,
@@ -121,7 +117,6 @@ export const walletLedgerService = {
     params: {
       riderId: string;
       amountInPaise: number;
-      transactionId?: string;
       txnId?: string;
       actorId?: string;
       note?: string;
@@ -135,7 +130,7 @@ export const walletLedgerService = {
         riderId: params.riderId,
         walletId: wallet.id,
         amountInPaise: params.amountInPaise,
-        transactionId: params.transactionId ?? params.txnId,
+        txnId: params.txnId,
         actorId: params.actorId,
         note: params.note,
       });

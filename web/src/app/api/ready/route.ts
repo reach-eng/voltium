@@ -27,17 +27,14 @@ export async function GET() {
     const uploadsRoot = process.env.LOCAL_STORAGE_ROOT || join(process.cwd(), 'data', 'uploads');
     if (!checkWritable(uploadsRoot)) {
       logger.error('Readiness probe failed: Upload volume not writable');
-      // Non-standard response shape — left as-is (readiness probe contract)
       return NextResponse.json({ status: 'unready', reason: 'storage' }, { status: 503 });
     }
 
     // Since we're using in-memory caches and background workers, DB and storage are the primary dependencies.
     
-    // Non-standard response shape — left as-is (readiness probe contract)
     return NextResponse.json({ status: 'ready' }, { status: 200 });
   } catch (error) {
     logger.error('Readiness probe failed', { error });
-    // Non-standard response shape — left as-is (readiness probe contract)
     return NextResponse.json({ status: 'unready', reason: 'database' }, { status: 503 });
   }
 }

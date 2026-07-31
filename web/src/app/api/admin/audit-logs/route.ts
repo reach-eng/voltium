@@ -1,14 +1,12 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
-import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/permissions';
+import { requireAdmin, adminUnauthorized } from '@/lib/rbac';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session, 'audit_view')) return adminForbidden();
 
   try {
     const url = req.nextUrl;

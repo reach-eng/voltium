@@ -27,23 +27,23 @@ const fieldsToSign = [
   'photoSpeedometer',
 ];
 
-export async function signRiderUrls(rider: any, externalCache?: Map<string, string>) {
+export async function signRiderUrls(rider: any) {
   if (!rider) return rider;
 
   try {
     const storage = await getStorageProvider();
-    return signRiderUrlsWithProvider(rider, storage, externalCache);
+    return signRiderUrlsWithProvider(rider, storage);
   } catch (err) {
     logger.warn('[signRiderUrls] Storage provider initialization failed, skipping signing:', err);
     return rider;
   }
 }
 
-export async function signRiderUrlsWithProvider(rider: any, storage: any, externalCache?: Map<string, string>) {
+export async function signRiderUrlsWithProvider(rider: any, storage: any) {
   if (!rider || !storage) return rider;
 
   const signedRider = { ...rider };
-  const signedCache = externalCache ?? new Map<string, string>();
+  const signedCache = new Map<string, string>();
 
   const signingPromises = fieldsToSign.map(async (field) => {
     const url = signedRider[field];

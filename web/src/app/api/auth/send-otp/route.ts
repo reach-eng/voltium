@@ -37,14 +37,14 @@ export async function POST(request: NextRequest) {
 
     const result = await authUseCases.sendOtp(validation.data, { ip: clientIp, correlationId });
 
-    const responseData: Record<string, unknown> = {};
-    if (process.env.ENABLE_TEST_OTP === 'true' && result.otp) {
-      responseData.otp = result.otp;
-    }
-
     const response = success(
-      responseData,
-      'OTP requested successfully and is being delivered',
+      {
+        exists: result.exists,
+        otp: result.otp,
+      },
+      result.exists
+        ? 'Welcome back! Please enter the OTP to login.'
+        : 'OTP requested successfully and is being delivered',
       200,
       undefined,
       { correlationId }

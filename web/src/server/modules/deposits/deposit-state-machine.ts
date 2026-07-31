@@ -37,12 +37,7 @@ const VALID_TRANSITIONS: TransitionMap = {
   PARTIALLY_REFUNDED: [],
 };
 
-import { DomainError } from '@/lib/domain-error';
-
-export class DepositStateMachineError extends DomainError {
-  readonly httpStatus = 409;
-  readonly errorCode = 'DEPOSIT_STATE_CONFLICT';
-
+export class DepositStateMachineError extends Error {
   constructor(
     message: string,
     public readonly currentStatus: DepositStatus,

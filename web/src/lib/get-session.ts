@@ -6,15 +6,10 @@ import {
   ADMIN_SESSION_COOKIE_NAME,
 } from './auth';
 import { logger } from './logger';
-import { isDevelopmentEnv } from './env';
 
 async function getCookie(name: string): Promise<string | undefined> {
-  try {
-    const cookieStore = await cookies();
-    return cookieStore.get(name)?.value;
-  } catch {
-    return undefined;
-  }
+  const cookieStore = await cookies();
+  return cookieStore.get(name)?.value;
 }
 
 /**
@@ -69,7 +64,7 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
   }
 
   const session = await verifySessionToken(token);
-  if (!session || session.role?.toLowerCase() !== 'admin') {
+  if (!session || session.role !== 'admin') {
     logger.debug('[AdminSession] Invalid or non-admin session');
     return null;
   }
@@ -80,17 +75,12 @@ export async function getAdminSession(request?: Request): Promise<SessionPayload
  * Get the authenticated rider's database ID.
  *
  * Priority:
- * 1. `x-rider-id` header (set by middleware from verified cookie — dev only, and only
- *    when ENABLE_RIDER_IMPERSONATION=true)
+ * 1. `x-rider-id` header (set by middleware from verified cookie — dev only)
  * 2. Direct cookie read (fallback when called outside middleware context)
  */
 export async function getRiderId(request?: Request): Promise<string | null> {
-  // Only trust headers in development, behind explicit flag, never in production
-  if (
-    isDevelopmentEnv() &&
-    process.env.ENABLE_RIDER_IMPERSONATION === 'true' &&
-    request
-  ) {
+  // Only trust headers in development (set by middleware from verified cookie)
+  if (process.env.NODE_ENV !== 'production' && request) {
     const headerId = request.headers.get('x-rider-id');
     if (headerId) return headerId;
   }
@@ -104,11 +94,7 @@ export async function getRiderId(request?: Request): Promise<string | null> {
  * Get the authenticated rider's phone number.
  */
 export async function getRiderPhone(request?: Request): Promise<string | null> {
-  if (
-    isDevelopmentEnv() &&
-    process.env.ENABLE_RIDER_IMPERSONATION === 'true' &&
-    request
-  ) {
+  if (process.env.NODE_ENV !== 'production' && request) {
     const headerPhone = request.headers.get('x-rider-phone');
     if (headerPhone) return headerPhone;
   }
@@ -121,22 +107,11 @@ export async function getRiderPhone(request?: Request): Promise<string | null> {
  * Get the authenticated admin's database ID.
  */
 export async function getAdminId(request?: Request): Promise<string | null> {
-  if (
-    isDevelopmentEnv() &&
-    process.env.ENABLE_RIDER_IMPERSONATION === 'true' &&
-    request
-  ) {
-    try {
-      const url = new URL(request.url, 'http://localhost');
-      if (url.pathname.startsWith('/api/admin/impersonate')) {
-        const headerId = request.headers.get('x-admin-id');
-        if (headerId) return headerId;
-      }
-    } catch {
-      // Invalid URL string — ignore header fallback
-    }
+  if (process.env.NODE_ENV !== 'production' && request) {
+    const headerId = request.headers.get('x-admin-id');
+    if (headerId) return headerId;
   }
 
   const session = await getAdminSession();
-  return session?.adminId ?? null;
+  return session?.adminId ?? session?.riderDbId ?? null;
 }

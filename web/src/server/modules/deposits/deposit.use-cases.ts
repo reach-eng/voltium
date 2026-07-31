@@ -12,7 +12,6 @@ import { depositLedgerService } from './deposit-ledger.service';
 import { logger } from '@/lib/logger';
 import { paiseToRupees } from '@/lib/flatten-rider';
 import type { DepositReview } from './deposit.types';
-import { ValidationError } from "@/lib/api-error";
 
 export const depositUseCases = {
   async getDepositStatus(riderDbId: string) {
@@ -22,7 +21,7 @@ export const depositUseCases = {
   async submitDeposit(riderDbId: string, amount: number, proofUrl: string) {
     const MIN_DEPOSIT_PAISE = 50000;
     if (amount < MIN_DEPOSIT_PAISE) {
-      throw new ValidationError(`Minimum deposit amount is ₹${MIN_DEPOSIT_PAISE / 100}`);
+      throw new Error(`Minimum deposit amount is ₹${MIN_DEPOSIT_PAISE / 100}`);
     }
     return depositRepository.submitDeposit(riderDbId, amount, proofUrl);
   },
@@ -33,6 +32,13 @@ export const depositUseCases = {
         await depositLedgerService.approve({
           riderId: riderDbId,
           adminId: reviewerId,
+        });
+        await db.rider.updateMany({
+          where: {
+            id: riderDbId,
+            lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] },
+          },
+          data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
         });
         break;
       }
@@ -51,9 +57,9 @@ export const depositUseCases = {
 
   async requestRefund(riderDbId: string, adminId: string, refundAmountInPaise?: number) {
     const deposit = await depositRepository.findByRiderId(riderDbId);
-    if (!deposit) throw new ValidationError('No deposit record found');
+    if (!deposit) throw new Error('No deposit record found');
     if (deposit.status !== 'APPROVED') {
-      throw new ValidationError(`Cannot refund deposit in status ${deposit.status}`);
+      throw new Error(`Cannot refund deposit in status ${deposit.status}`);
     }
 
     await depositLedgerService.refund({
@@ -72,9 +78,9 @@ export const depositUseCases = {
 
   async forfeitDeposit(riderDbId: string, adminId: string, reason: string) {
     const deposit = await depositRepository.findByRiderId(riderDbId);
-    if (!deposit) throw new ValidationError('No deposit record found');
+    if (!deposit) throw new Error('No deposit record found');
     if (deposit.status !== 'APPROVED') {
-      throw new ValidationError(`Cannot forfeit deposit in status ${deposit.status}`);
+      throw new Error(`Cannot forfeit deposit in status ${deposit.status}`);
     }
 
     await depositLedgerService.forfeit({ riderId: riderDbId, adminId, reason });

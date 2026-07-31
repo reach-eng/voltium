@@ -32,7 +32,7 @@ export async function PUT(req: NextRequest) {
 
     const results = await settingUseCases.update(
       validation.data,
-      session.adminId || session.riderDbId || 'system'
+      req.headers.get('x-admin-id') || 'system'
     );
     return success(results, 'Settings updated');
   } catch (error) {

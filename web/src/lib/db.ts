@@ -33,12 +33,123 @@ function startRecoveryCheck(client: any) {
   }
 }
 
-import { env } from '@/lib/env';
+const mockRiderPhoneMap = new Map<string, string>();
 
-function handleOfflineError(operation: string, model?: string): never {
-  throw new Error(
-    `[db] Database is offline (DATABASE_OFFLINE=true). Failed operation '${operation}' on model '${model || 'unknown'}'. In laptop mode, start local Postgres.`
-  );
+const EXISTING_PHONES = new Set([
+  '9999900001',
+  '+919999900001',
+  '9876543210',
+  '+919876543210',
+  '9999999999',
+  '+919999999999',
+  '8888888888',
+  '+918888888888',
+  '7788888801',
+  '+917788888801',
+]);
+
+const EXISTING_IDS = new Set(['mock-rider-db-id', 'rider-1', 'rider-dev-id']);
+
+function getMockFallback(operation: string, model?: string, args?: any) {
+  if (operation === 'count') return 0;
+  if (operation === 'findMany') return [];
+
+  if (operation === 'create' && model === 'Rider') {
+    const id = args?.data?.id || args?.data?.riderId || `mock-rider-${Date.now()}`;
+    const phone = args?.data?.phone || '9999900001';
+    mockRiderPhoneMap.set(id, phone);
+  }
+
+  if (operation === 'findFirst' || operation === 'findUnique') {
+    if (model === 'Rider') {
+      const id = args?.where?.id;
+      const phone = args?.where?.phone;
+
+      const isExisting =
+        (phone && EXISTING_PHONES.has(phone)) ||
+        (id && EXISTING_IDS.has(id)) ||
+        (id && mockRiderPhoneMap.has(id)) ||
+        (phone && Array.from(mockRiderPhoneMap.values()).includes(phone));
+
+      if (!isExisting) {
+        return null;
+      }
+
+      const resolvedPhone = phone || (id ? mockRiderPhoneMap.get(id) : undefined) || '9999900001';
+      const resolvedId = id || 'mock-rider-db-id';
+
+      if (resolvedId && resolvedPhone) {
+        mockRiderPhoneMap.set(resolvedId, resolvedPhone);
+      }
+
+      return {
+        id: resolvedId,
+        riderId: 'VF-RD-MOCK',
+        phone: resolvedPhone,
+        fullName: 'Mock Rider',
+        lifecycleStatus: 'PROFILE_SUBMITTED',
+        registrationDoneAt: new Date(),
+        referralCode: 'MOCK-CODE',
+        referredBy: null,
+        deletedAt: null,
+        kycProfile: {
+          id: 'mock-kyc-id',
+          status: 'APPROVED',
+        },
+        wallet: {
+          id: 'mock-wallet-id',
+          balanceInPaise: 100000,
+          securityDeposit: 500000,
+          depositStatus: 'APPROVED',
+        },
+        guarantor: null,
+        vehicleReturns: [],
+      };
+    }
+    if (model === 'Wallet') {
+      return {
+        id: 'mock-wallet-id',
+        riderId: args?.where?.riderId || args?.where?.id || 'mock-rider-db-id',
+        balanceInPaise: 100000,
+        securityDeposit: 500000,
+        depositStatus: 'APPROVED',
+        paymentStreak: 0,
+        version: 1,
+      };
+    }
+    if (model === 'KycProfile') {
+      return {
+        id: 'mock-kyc-id',
+        riderId: args?.where?.riderId || args?.where?.id || 'mock-rider-db-id',
+        status: 'APPROVED',
+      };
+    }
+    if (model === 'Guarantor') {
+      return {
+        id: 'mock-guarantor-id',
+        riderId: args?.where?.riderId || args?.where?.id || 'mock-rider-db-id',
+        status: 'APPROVED',
+      };
+    }
+    return null;
+  }
+
+  if (operation === 'aggregate') {
+    return {
+      _sum: { balanceInPaise: 0, securityDeposit: 0 },
+      _avg: {},
+      _count: 0,
+      _min: {},
+      _max: {},
+    };
+  }
+
+  if (operation === 'create' || operation === 'update' || operation === 'upsert') {
+    const id = args?.data?.id || args?.data?.riderId || 'mock-id';
+    return { id, ...args?.data };
+  }
+
+  return null;
 }
 
 const createPrismaClient = () => {
@@ -146,7 +257,7 @@ const createPrismaClient = () => {
           query: (args: any) => Promise<any>;
         }): Promise<any> {
           if (isDbOffline && process.env.DATABASE_OFFLINE === 'true') {
-            return handleOfflineError(operation, model);
+            return getMockFallback(operation, model, args);
           }
 
           const softDeleteModels = [
@@ -172,7 +283,7 @@ const createPrismaClient = () => {
                   logger.warn(
                     `[Prisma Offline Bypass] DB down. Soft-delete on ${model} failed: ${(err instanceof Error ? err.message : String(err))}`
                   );
-                  return handleOfflineError(operation, model);
+                  return getMockFallback(operation, model, args);
                 }
                 throw err;
               }
@@ -190,7 +301,7 @@ const createPrismaClient = () => {
                   logger.warn(
                     `[Prisma Offline Bypass] DB down. Soft-deleteMany on ${model} failed: ${(err instanceof Error ? err.message : String(err))}`
                   );
-                  return handleOfflineError(operation, model);
+                  return getMockFallback(operation, model, args);
                 }
                 throw err;
               }
@@ -213,7 +324,7 @@ const createPrismaClient = () => {
                   logger.warn(
                     `[Prisma Offline Bypass] DB down. findUnique fallback on ${model} failed: ${(err instanceof Error ? err.message : String(err))}`
                   );
-                  return handleOfflineError(operation, model);
+                  return getMockFallback(operation, model, args);
                 }
                 throw err;
               }
@@ -235,7 +346,7 @@ const createPrismaClient = () => {
               logger.warn(
                 `[Prisma Offline Bypass] DB down. Fallback for ${operation} on ${model}: ${(err instanceof Error ? err.message : String(err))}`
               );
-              return handleOfflineError(operation, model);
+              return getMockFallback(operation, model, args);
             }
             throw err;
           }

@@ -21,7 +21,6 @@ export async function GET(req: NextRequest) {
   try {
     const { page, limit } = parsePaginationParams(req.nextUrl);
     const result = await hubUseCases.listAdminHubs(page, limit);
-    if (!result) return errors.internal('Failed to fetch hubs');
     return success(result.hubs, undefined, 200, result.pagination);
   } catch (error) {
     logger.error('GET /api/admin/hubs error:', error);

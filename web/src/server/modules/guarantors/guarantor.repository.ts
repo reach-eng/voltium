@@ -84,16 +84,10 @@ export const guarantorRepository = {
     validateGuarantorTransition(currentStatus, 'APPROVED');
 
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.guarantor.updateMany({
-        where: { riderId: riderDbId, status: currentStatus },
+      const guarantor = await tx.guarantor.update({
+        where: { riderId: riderDbId },
         data: { status: 'APPROVED' },
       });
-
-      if (updated.count === 0) {
-        throw new GuarantorStateError(`Guarantor state changed concurrently from ${currentStatus}`, currentStatus, 'APPROVED');
-      }
-
-      const guarantor = await tx.guarantor.findUnique({ where: { riderId: riderDbId } });
       await tx.rider.updateMany({
         where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_SUBMITTED'] } },
         data: { lifecycleStatus: 'GUARANTOR_APPROVED' },
@@ -112,16 +106,10 @@ export const guarantorRepository = {
     validateGuarantorTransition(currentStatus, 'REJECTED');
 
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.guarantor.updateMany({
-        where: { riderId: riderDbId, status: currentStatus },
+      const guarantor = await tx.guarantor.update({
+        where: { riderId: riderDbId },
         data: { status: 'REJECTED' },
       });
-
-      if (updated.count === 0) {
-        throw new GuarantorStateError(`Guarantor state changed concurrently from ${currentStatus}`, currentStatus, 'REJECTED');
-      }
-
-      const guarantor = await tx.guarantor.findUnique({ where: { riderId: riderDbId } });
       await tx.rider.updateMany({
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
@@ -139,19 +127,13 @@ export const guarantorRepository = {
     const currentStatus: GuarantorStatus = (existing?.status as GuarantorStatus) || 'DRAFT';
     validateGuarantorTransition(currentStatus, 'INFO_REQUIRED');
 
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.guarantor.updateMany({
-        where: { riderId: riderDbId, status: currentStatus },
-        data: { status: 'INFO_REQUIRED' },
-      });
-
-      if (updated.count === 0) {
-        throw new GuarantorStateError(`Guarantor state changed concurrently from ${currentStatus}`, currentStatus, 'INFO_REQUIRED');
-      }
-
-      const guarantor = await tx.guarantor.findUnique({ where: { riderId: riderDbId } });
-      return decryptGuarantorData(guarantor);
+    const guarantor = await db.guarantor.update({
+      where: { riderId: riderDbId },
+      data: {
+        status: 'INFO_REQUIRED',
+      },
     });
+    return decryptGuarantorData(guarantor);
   },
 
   async autoVerifyTestGuarantor(riderDbId: string) {
@@ -171,18 +153,10 @@ export const guarantorRepository = {
     const currentStatus: GuarantorStatus = (existing?.status as GuarantorStatus) || 'DRAFT';
     validateGuarantorTransition(currentStatus, 'REPLACED');
 
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.guarantor.updateMany({
-        where: { riderId: riderDbId, status: currentStatus },
-        data: { status: 'REPLACED' },
-      });
-
-      if (updated.count === 0) {
-        throw new GuarantorStateError(`Guarantor state changed concurrently from ${currentStatus}`, currentStatus, 'REPLACED');
-      }
-
-      const guarantor = await tx.guarantor.findUnique({ where: { riderId: riderDbId } });
-      return decryptGuarantorData(guarantor);
+    const guarantor = await db.guarantor.update({
+      where: { riderId: riderDbId },
+      data: { status: 'REPLACED' },
     });
+    return decryptGuarantorData(guarantor);
   },
 };

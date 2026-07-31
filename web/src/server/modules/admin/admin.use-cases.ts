@@ -6,7 +6,6 @@ import {
 import { AUDIT_ACTIONS } from './admin.types';
 import { logAdminAction } from './admin.policy';
 import { logger } from '@/lib/logger';
-import { NotFoundError, ConflictError, ValidationError, AuthError } from "@/lib/api-error";
 
 const loginAttempts = new Map<string, number>();
 
@@ -30,14 +29,14 @@ export const adminUseCases = {
 
   async getAdmin(id: string) {
     const admin = await adminRepository.findById(id);
-    if (!admin) throw new NotFoundError('Admin not found');
+    if (!admin) throw new Error('Admin not found');
     return admin;
   },
 
   async createAdmin(params: CreateAdminParams, actorId: string) {
     const existing = await adminRepository.findByEmail(params.email);
     if (existing) {
-      throw new ConflictError('An admin with this email already exists');
+      throw new Error('An admin with this email already exists');
     }
 
     const admin = await adminRepository.create(params);
@@ -56,16 +55,7 @@ export const adminUseCases = {
   async updateAdmin(id: string, params: UpdateAdminParams, actorId: string) {
     const existing = await adminRepository.findById(id);
     if (!existing) {
-      throw new NotFoundError('Admin not found');
-    }
-
-    if (actorId === id) {
-      if (params.role && params.role !== existing.role) {
-        throw new ValidationError('Cannot change your own admin role');
-      }
-      if (params.isActive === false) {
-        throw new ValidationError('Cannot deactivate your own admin account');
-      }
+      throw new Error('Admin not found');
     }
 
     const admin = await adminRepository.update(id, params);
@@ -82,12 +72,9 @@ export const adminUseCases = {
   },
 
   async deleteAdmin(id: string, actorId: string) {
-    if (actorId === id) {
-      throw new ValidationError('Cannot delete your own admin account');
-    }
     const existing = await adminRepository.findById(id);
     if (!existing) {
-      throw new NotFoundError('Admin not found');
+      throw new Error('Admin not found');
     }
 
     await adminRepository.delete(id);
@@ -115,17 +102,17 @@ export const adminUseCases = {
   async login(email: string, password: string, ip: string) {
     const rateKey = `login:${email}:${ip}`;
     const attempts = loginAttempts.get(rateKey) || 0;
-    if (attempts >= 5) throw new ValidationError('Too many login attempts. Try again later.');
+    if (attempts >= 5) throw new Error('Too many login attempts. Try again later.');
 
     const admin = await adminRepository.findByEmail(email);
-    if (!admin || !admin.isActive) throw new AuthError('Invalid credentials');
+    if (!admin || !admin.isActive) throw new Error('Invalid credentials');
 
     const { verifyPassword, hashPassword } = await import('@/lib/password');
     const result = await verifyPassword(password, admin.password);
     if (!result.valid) {
       loginAttempts.set(rateKey, attempts + 1);
       setTimeout(() => loginAttempts.delete(rateKey), 15 * 60 * 1000);
-      throw new AuthError('Invalid credentials');
+      throw new Error('Invalid credentials');
     }
 
     // Migrate to Argon2id if needed (legacy PBKDF2 → Argon2id)
@@ -141,11 +128,11 @@ export const adminUseCases = {
 
   async autoLogin(email: string, password: string) {
     const admin = await adminRepository.findByEmail(email);
-    if (!admin || !admin.isActive) throw new AuthError('Invalid credentials');
+    if (!admin || !admin.isActive) throw new Error('Invalid credentials');
 
     const { verifyPassword, hashPassword } = await import('@/lib/password');
     const result = await verifyPassword(password, admin.password);
-    if (!result.valid) throw new AuthError('Invalid credentials');
+    if (!result.valid) throw new Error('Invalid credentials');
 
     // Migrate to Argon2id if needed
     if (result.needsRehash) {
@@ -161,16 +148,19 @@ export const adminUseCases = {
     try {
       const admin = await adminRepository.findById(adminId);
       if (admin) {
-        const relationPerms = (admin as any).hasPermissions?.map((p: any) => p.permission);
-        const legacyPerms = admin.permissions || [];
-        const perms: string[] = relationPerms && relationPerms.length > 0 ? relationPerms : legacyPerms;
+        let perms: string[] = [];
+        try {
+          perms = JSON.parse(admin.permissions || '[]');
+        } catch {
+          perms = [];
+        }
         return { ...admin, permissions: perms, adminPermissions: perms };
       }
     } catch (err) {
       logger.error('[getMe] Database query failed:', err);
     }
 
-    throw new NotFoundError('Admin not found');
+    throw new Error('Admin not found');
   },
 
   async logout(adminId: string) {

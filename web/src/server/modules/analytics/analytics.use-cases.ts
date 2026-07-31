@@ -2,9 +2,6 @@
  * Analytics module — Use cases
  *
  * Aggregates and returns analytics data for admin dashboards.
- * 
- * External Callers:
- * - src/app/api/admin/analytics/route.ts
  */
 
 import { db } from '@/lib/db';

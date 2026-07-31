@@ -6,11 +6,10 @@ import { requireRiderSession } from '@/lib/rider-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { withApiHandler } from '@/lib/api-handler';
-import { isDevelopmentEnv } from '@/lib/env';
 
 const CHAT_RATE_LIMIT = {
   windowMs: 60 * 1000,
-  maxRequests: isDevelopmentEnv() ? 100 : 10,
+  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 10,
 };
 
 const EMERGENCY_KEYWORDS = [

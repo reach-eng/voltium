@@ -1,4 +1,4 @@
-import { errors } from '@/lib/api-response';
+import { NextResponse } from 'next/server';
 
 /**
  * Deprecated legacy upload endpoint.
@@ -12,5 +12,8 @@ import { errors } from '@/lib/api-response';
  * This route is intentionally disabled to prevent anonymous key-based writes.
  */
 export async function PUT() {
-  return errors.gone('Deprecated upload endpoint disabled. Use /api/files/request-upload.');
+  return NextResponse.json(
+    { error: 'Deprecated upload endpoint disabled. Use /api/files/request-upload.' },
+    { status: 410 }
+  );
 }

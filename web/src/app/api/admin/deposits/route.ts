@@ -5,7 +5,7 @@ import { hasPermission } from '@/lib/auth';
 import { parseDDMMYYYY } from '@/lib/date-utils';
 import { logAdminAction } from '@/server/modules/admin/admin.policy';
 import { depositUseCases } from '@/server/modules/deposits/deposit.use-cases';
-import { DepositStateError } from '@/server/modules/deposits/deposit.service';
+import { DepositStateError } from '@/lib/services/deposit-service';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -58,6 +58,13 @@ export async function PUT(req: NextRequest) {
     switch (action) {
       case 'APPROVE':
         await depositUseCases.reviewDeposit(riderId, adminId, { action: 'APPROVE' });
+        await logAdminAction({
+          actorId: adminId,
+          action: 'deposit.approve',
+          entity: 'depositRecord',
+          entityId: riderId,
+          details: { action },
+        }).catch(() => {});
         return success({ riderId, status: 'APPROVED' }, 'Deposit approved');
 
       case 'REJECT':
@@ -66,19 +73,40 @@ export async function PUT(req: NextRequest) {
           action: 'REJECT',
           rejectionReason: reason,
         });
+        await logAdminAction({
+          actorId: adminId,
+          action: 'deposit.reject',
+          entity: 'depositRecord',
+          entityId: riderId,
+          details: { action, reason },
+        }).catch(() => {});
         return success({ riderId, status: 'REJECTED' }, 'Deposit rejected');
 
       case 'REFUND':
         await depositUseCases.requestRefund(
           riderId,
           adminId,
-          typeof refundAmount === 'number' ? Math.round(refundAmount * 100) : undefined
+          refundAmount ? Math.round(refundAmount * 100) : undefined
         );
+        await logAdminAction({
+          actorId: adminId,
+          action: 'deposit.refund',
+          entity: 'depositRecord',
+          entityId: riderId,
+          details: { action, refundAmount },
+        }).catch(() => {});
         return success({ riderId, status: 'REFUNDED' }, 'Deposit refunded');
 
       case 'FORFEIT':
         if (!reason) return errors.badRequest('reason is required for FORFEIT');
         await depositUseCases.forfeitDeposit(riderId, adminId, reason);
+        await logAdminAction({
+          actorId: adminId,
+          action: 'deposit.forfeit',
+          entity: 'depositRecord',
+          entityId: riderId,
+          details: { action, reason },
+        }).catch(() => {});
         return success({ riderId, status: 'FORFEITED' }, 'Deposit forfeited');
 
       default:

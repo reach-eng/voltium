@@ -8,7 +8,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, type RateLimitConfig, API_RATE_LIMIT } from './rate-limit';
 import { logger } from './logger';
-import { env } from './env';
 
 export interface RateLimitInfo {
   limit: number;
@@ -72,27 +71,23 @@ const TRUSTED_PROXIES = new Set(
 );
 
 export function rateLimitIdentifierFromRequest(request: Request): string {
-  // Only trust proxy headers when explicitly enabled (e.g. behind Cloudflare Tunnel).
-  // Without this flag, clients can spoof cf-connecting-ip/x-forwarded-for to bypass rate limits.
-  if (env.TRUST_PROXY_HEADERS) {
-    const cf = request.headers.get('cf-connecting-ip');
-    if (cf) return `ip:${cf.trim()}`;
-
-    const forwarded = request.headers.get('x-forwarded-for');
-    if (forwarded) {
-      const ips = forwarded.split(',').map(ip => ip.trim());
-
-      // Parse X-Forwarded-For from right (closest proxy) to left (original client).
-      // The real client IP is the first non-trusted IP encountered.
-      let clientIp = ips[ips.length - 1];
-      for (let i = ips.length - 1; i >= 0; i--) {
-        if (!TRUSTED_PROXIES.has(ips[i])) {
-          clientIp = ips[i];
-          break;
-        }
+  const cf = request.headers.get('cf-connecting-ip');
+  if (cf) return `ip:${cf.trim()}`;
+  
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) {
+    const ips = forwarded.split(',').map(ip => ip.trim());
+    
+    // Parse X-Forwarded-For from right (closest proxy) to left (original client).
+    // The real client IP is the first non-trusted IP encountered.
+    let clientIp = ips[ips.length - 1];
+    for (let i = ips.length - 1; i >= 0; i--) {
+      if (!TRUSTED_PROXIES.has(ips[i])) {
+        clientIp = ips[i];
+        break;
       }
-      return `ip:${clientIp || '127.0.0.1'}`;
     }
+    return `ip:${clientIp || '127.0.0.1'}`;
   }
 
   // Fallback to Next.js specific ip property if available

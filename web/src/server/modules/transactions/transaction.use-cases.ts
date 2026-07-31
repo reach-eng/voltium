@@ -12,7 +12,6 @@ import { transactionRepository } from './transaction.repository';
 import { transactionService } from './transaction.service';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import type { TransactionFilter, TransactionApproval } from './transaction.types';
-import { NotFoundError } from "@/lib/api-error";
 
 export const transactionUseCases = {
   async list(filters: TransactionFilter) {
@@ -73,7 +72,7 @@ export const transactionUseCases = {
       where: { id: txn.riderId },
       select: { id: true, lifecycleStatus: true },
     });
-    if (!rider) throw new NotFoundError('Rider not found');
+    if (!rider) throw new Error('Rider not found');
 
     const lifecycleRank: Record<string, number> = {
       NEW: 0,
@@ -95,56 +94,39 @@ export const transactionUseCases = {
     const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
     const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : txn.purpose;
 
-    let result: any;
-    await db.$transaction(async (tx: any) => {
-      if (finalPurpose === 'SECURITY_DEPOSIT') {
-        // Delegate deposit approval to the deposit module
-        const { depositUseCases } = await import('@/server/modules/deposits/deposit.use-cases');
-        await depositUseCases.reviewDeposit(txn.riderId, adminId, {
-          action: 'APPROVE',
-        });
-
-        // Optional bonus wallet credit
-        if (input.walletCreditAmount && input.walletCreditAmount > 0) {
-          await walletLedgerService.credit(
-            {
-              riderId: txn.riderId,
-              amountInPaise: Math.round(input.walletCreditAmount * 100),
-              category: 'ADMIN_ADJUSTMENT',
-              txnId: transactionId,
-              actorId: adminId,
-              note: 'Bonus credit on deposit approval',
-            },
-            tx
-          );
-        }
-      } else if (txn.type === 'CREDIT') {
-        // General wallet top-up via ledger service (idempotent)
-        const idempotencyKey = `approve:${transactionId}`;
-        await walletLedgerService.credit(
-          {
-            riderId: txn.riderId,
-            amountInPaise: txn.amount,
-            category: finalPurpose === 'TOP_UP' ? 'TOP_UP' : 'ADMIN_ADJUSTMENT',
-            txnId: transactionId,
-            idempotencyKey,
-            actorId: adminId,
-            note: `Top-up approved: ${finalPurpose}`,
-          },
-          tx
-        );
-      }
-
-      result = await tx.transaction.update({
-        where: { id: transactionId },
-        data: {
-          status: 'APPROVED',
-          approvedAt: new Date(),
-          approvedBy: adminId,
-        },
+    if (finalPurpose === 'SECURITY_DEPOSIT') {
+      // Delegate deposit approval to the deposit module
+      const { depositUseCases } = await import('@/server/modules/deposits/deposit.use-cases');
+      await depositUseCases.reviewDeposit(txn.riderId, adminId, {
+        action: 'APPROVE',
       });
-    });
 
+      // Optional bonus wallet credit
+      if (input.walletCreditAmount && input.walletCreditAmount > 0) {
+        await walletLedgerService.credit({
+          riderId: txn.riderId,
+          amountInPaise: Math.round(input.walletCreditAmount * 100),
+          category: 'ADMIN_ADJUSTMENT',
+          txnId: transactionId,
+          actorId: adminId,
+          note: 'Bonus credit on deposit approval',
+        });
+      }
+    } else if (txn.type === 'CREDIT') {
+      // General wallet top-up via ledger service (idempotent)
+      const idempotencyKey = `approve:${transactionId}`;
+      await walletLedgerService.credit({
+        riderId: txn.riderId,
+        amountInPaise: txn.amount,
+        category: finalPurpose === 'TOP_UP' ? 'TOP_UP' : 'ADMIN_ADJUSTMENT',
+        txnId: transactionId,
+        idempotencyKey,
+        actorId: adminId,
+        note: `Top-up approved: ${finalPurpose}`,
+      });
+    }
+
+    const result = await transactionRepository.updateStatus(transactionId, 'APPROVED', adminId);
     await transactionService.logAction({
       actorId: adminId,
       action: 'transaction.approve',
@@ -173,30 +155,18 @@ export const transactionUseCases = {
       where: { riderId: txn.riderId },
       select: { id: true },
     });
-    if (!wallet) throw new NotFoundError('Wallet not found for this rider');
+    if (!wallet) throw new Error('Wallet not found for this rider');
 
-    await db.$transaction(async (tx: any) => {
-      await walletLedgerService.reverse(
-        {
-          riderId: txn.riderId,
-          originalTxnId: transactionId,
-          originalAmount: txn.amount,
-          originalType: txn.type as 'CREDIT' | 'DEBIT',
-          actorId: adminId,
-          reason,
-        },
-        tx
-      );
-
-      await tx.transaction.update({
-        where: { id: transactionId },
-        data: {
-          status: 'REVERSED',
-          updatedAt: new Date(),
-        },
-      });
+    const result = await walletLedgerService.reverse({
+      riderId: txn.riderId,
+      originalTxnId: transactionId,
+      originalAmount: txn.amount,
+      originalType: txn.type as 'CREDIT' | 'DEBIT',
+      actorId: adminId,
+      reason,
     });
 
+    await transactionRepository.updateStatus(transactionId, 'REVERSED', adminId);
     await transactionService.logAction({
       actorId: adminId,
       action: 'transaction.reverse',

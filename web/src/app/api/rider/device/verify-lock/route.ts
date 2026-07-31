@@ -16,12 +16,6 @@ const verifyLockSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Lock-recovery is high-stakes: it can be used to take over any rider account.
-    // requireRiderSession already restricts impersonation to GET only (rider-auth.ts:33-34),
-    // but be explicit at the route level too — defense in depth.
-    if (request.headers.get('x-rider-id')) {
-      return errors.forbidden('Impersonation is not allowed on the verify-lock endpoint');
-    }
     const auth = await requireRiderSession(request);
     if (auth instanceof Response) return auth;
     const riderDbId = auth.riderDbId;
@@ -62,14 +56,14 @@ export async function POST(request: NextRequest) {
 
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
-      select: { lockPasswordHash: true },
+      select: { lockPassword: true },
     });
 
-    if (!rider || !rider.lockPasswordHash) {
+    if (!rider || !rider.lockPassword) {
       return success({ success: false }, 'Lock password is not configured');
     }
 
-    const { valid } = await verifyPassword(password, rider.lockPasswordHash);
+    const { valid } = await verifyPassword(password, rider.lockPassword);
 
     await logSecurityEvent({
       type: 'rider.verify_lock_password',

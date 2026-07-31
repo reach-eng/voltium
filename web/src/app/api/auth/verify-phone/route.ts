@@ -1,22 +1,21 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { validateBody, sendOtpSchema, phoneSchema } from '@/lib/validators';
+import { validateBody, sendOtpSchema } from '@/lib/validators';
 import { verifyOtp } from '@/lib/otp-store';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { rateLimitIdentifierFromRequest } from '@/lib/rate-limit-middleware';
 import { redactPii } from '@/lib/pii-redact';
 import { z } from 'zod';
-import { isDevelopmentEnv } from '@/lib/env';
 
 const verifyPhoneSchema = z.object({
-  phone: phoneSchema,
+  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
   otp: z.string().length(6, 'OTP must be 6 digits'),
 });
 
 const VERIFY_PHONE_RATE_LIMIT = {
   windowMs: 10 * 60 * 1000,
-  maxRequests: isDevelopmentEnv() ? 100 : 10,
+  maxRequests: process.env.NODE_ENV === 'development' ? 100 : 10,
 };
 
 // POST /api/auth/verify-phone — Verify OTP without creating a rider or setting a session

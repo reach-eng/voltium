@@ -5,20 +5,13 @@
  * Uses the outbox pattern so alerts are reliable even during transient failures.
  *
  * Channels:
- *   - webhook (Slack/Discord generic) — optional, configured via ALERT_WEBHOOK_URL
- *   - log (always-on, local file via logger)
+ *   - webhook (Slack/Discord generic)
+ *   - log (always-on, local file)
  *
  * Configure via env vars:
- *   ALERT_WEBHOOK_URL=https://hooks.slack.com/...   (optional; if unset, log-only)
- *   ALERT_WEBHOOK_CHANNEL=slack|discord|generic     (default: generic)
- *   ALERT_MIN_LEVEL=error|warn|info                 (default: error)
- *
- * Operational note (2026-07-29):
- *   The `log` channel is always on. The webhook channel is opt-in. In
- *   production, the alerter logs a warning at startup if ALERT_WEBHOOK_URL
- *   is unset (see `assertAlerterConfigured`). The team has agreed to use
- *   Slack as the default channel — see docs/RUNBOOK.md §"Alerting" for
- *   the webhook URL configuration.
+ *   ALERT_WEBHOOK_URL=https://hooks.slack.com/...
+ *   ALERT_WEBHOOK_CHANNEL=slack|discord|generic (default: generic)
+ *   ALERT_MIN_LEVEL=error|warn|info (default: error)
  */
 
 import { logger } from '@/lib/logger';
@@ -184,36 +177,4 @@ export function alertOnError(
     source: context.source || 'backend',
     details: context.details,
   });
-}
-
-/**
- * Startup-time sanity check for the alerting channel.
- *
- * Logs a warning (and returns false) if the alerter is not properly
- * configured for the current environment. Production deployments MUST
- * have a webhook configured; staging may run log-only.
- *
- * Call this from `instrumentation.ts` at startup. Returns true if the
- * alerter is fully configured, false otherwise.
- */
-export function assertAlerterConfigured(): boolean {
-  const env = process.env.NODE_ENV;
-  const hasWebhook = Boolean(webhookUrl);
-
-  if (hasWebhook) {
-    logger.info('[Alerter] Webhook configured', { channel: webhookChannel });
-    return true;
-  }
-
-  if (env === 'production') {
-    logger.error(
-      '[Alerter] PRODUCTION WARNING: no ALERT_WEBHOOK_URL set. ' +
-        'Alerts will only be written to logs. Configure a Slack/Discord webhook ' +
-        'in your deployment environment. See docs/RUNBOOK.md §"Alerting".'
-    );
-    return false;
-  }
-
-  logger.warn('[Alerter] No ALERT_WEBHOOK_URL set; running log-only', { env });
-  return false;
 }

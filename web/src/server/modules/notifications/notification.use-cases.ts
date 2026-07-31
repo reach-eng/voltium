@@ -9,8 +9,6 @@ import { notificationRepository } from './notification.repository';
 import { notificationService } from '@/lib/notification-service';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
-import { getOrSetResponse, invalidateCache } from '@/lib/cache';
-import { ForbiddenError, NotFoundError } from "@/lib/api-error";
 
 export const notificationUseCases = {
   async listNotifications(riderDbId: string, limit?: number) {
@@ -18,54 +16,32 @@ export const notificationUseCases = {
   },
 
   async sendToRider(riderDbId: string, title: string, message: string, type?: string) {
-    const res = await notificationRepository.sendToRider(riderDbId, title, message, type);
-    invalidateCache(`notif_count:${riderDbId}`);
-    return res;
+    return notificationRepository.sendToRider(riderDbId, title, message, type);
   },
 
   async sendToAll(title: string, message: string, type?: string) {
-    const res = await notificationRepository.sendToAll(title, message, type);
-    invalidateCache('notif_count:*');
-    return res;
+    return notificationRepository.sendToAll(title, message, type);
   },
 
   async markRead(notificationId: string, riderDbId?: string) {
-    let targetRiderId = riderDbId;
     if (riderDbId) {
       const notification = await db.notification.findUnique({
         where: { id: notificationId },
         select: { riderId: true },
       });
       if (!notification || notification.riderId !== riderDbId) {
-        throw new ForbiddenError('NOTIFICATION_ACCESS_DENIED');
+        throw new Error('NOTIFICATION_ACCESS_DENIED');
       }
-      targetRiderId = notification.riderId;
-    } else {
-      const notification = await db.notification.findUnique({
-        where: { id: notificationId },
-        select: { riderId: true },
-      });
-      targetRiderId = notification?.riderId;
     }
-    const result = await notificationRepository.markRead(notificationId);
-    if (targetRiderId) {
-      invalidateCache(`notif_count:${targetRiderId}`);
-    }
-    return result;
+    return notificationRepository.markRead(notificationId);
   },
 
   async markAllRead(riderDbId: string) {
-    const result = await notificationRepository.markAllRead(riderDbId);
-    invalidateCache(`notif_count:${riderDbId}`);
-    return result;
+    return notificationRepository.markAllRead(riderDbId);
   },
 
   async getUnreadCount(riderDbId: string) {
-    return getOrSetResponse(
-      `notif_count:${riderDbId}`,
-      () => notificationRepository.getUnreadCount(riderDbId),
-      10
-    );
+    return notificationRepository.getUnreadCount(riderDbId);
   },
 
   /**
@@ -134,7 +110,7 @@ export const notificationUseCases = {
     actorId: string
   ) {
     const rider = await db.rider.findUnique({ where: { id: riderId } });
-    if (!rider) throw new NotFoundError('Rider not found');
+    if (!rider) throw new Error('Rider not found');
 
     const notification = await db.notification.create({
       data: {

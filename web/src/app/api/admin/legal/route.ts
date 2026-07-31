@@ -32,7 +32,7 @@ export async function PUT(req: NextRequest) {
 
     const doc = await legalUseCases.upsert(
       validation.data,
-      session.adminId || session.riderDbId || 'system'
+      req.headers.get('x-admin-id') || 'system'
     );
     return success(doc);
   } catch (error) {

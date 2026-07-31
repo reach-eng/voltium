@@ -73,38 +73,6 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   const lease = await rentalRepository.findLeaseById(leaseId);
   if (!lease) return errors.notFound('Rental lease not found');
 
-  // Enforce Hub Manager hub scoping
-  const sessionHubId = (session as any).hubId;
-  if (session.adminRole === 'HUB_MANAGER' && sessionHubId && lease.vehicle?.hubId && lease.vehicle.hubId !== sessionHubId) {
-    return adminForbidden('Hub managers cannot perform inspections on vehicles outside their assigned hub');
-  }
-
-  const {
-    endOdometer,
-    damageFee,
-    damageFeeInPaise,
-    waiveDamageFee,
-    waiverReason,
-    inspectionNotes,
-  } = body;
-
-  const parsedDamageFee = typeof damageFeeInPaise === 'number' ? damageFeeInPaise : typeof damageFee === 'number' ? Math.round(damageFee * 100) : undefined;
-  const parsedOdometer = typeof endOdometer === 'number' ? endOdometer : undefined;
-
-  // Require transactions_approve for financial adjustments or fee waivers
-  if ((parsedDamageFee && parsedDamageFee > 0) || waiveDamageFee) {
-    if (!hasPermission(session.adminRole || '', 'transactions_approve')) {
-      return adminForbidden('Financial transaction authorization (transactions_approve) required for damage fee adjustments or waivers');
-    }
-  }
-
-  const result = await rentalRepository.executeLeaseAction(lease, action, {
-    adminId: session.adminId,
-    endOdometer: parsedOdometer,
-    damageFeeInPaise: parsedDamageFee,
-    waiveDamageFee: !!waiveDamageFee,
-    waiverReason,
-    inspectionNotes,
-  });
+  const result = await rentalRepository.executeLeaseAction(lease, action);
   return success(result, `Rental action ${action} completed`);
 });

@@ -6,7 +6,7 @@
  */
 
 import { db } from '@/lib/db';
-import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
+import { TransactionType, TransactionPurpose, TransactionStatus } from '@prisma/client';
 
 export const walletRepository = {
   async findByRiderId(riderDbId: string) {
@@ -45,7 +45,7 @@ export const walletRepository = {
   async createTransaction(data: {
     riderId: string;
     type: TransactionType;
-    amountInPaise: number;
+    amount: number;
     purpose: TransactionPurpose;
     method?: string;
     status?: TransactionStatus;
@@ -58,7 +58,7 @@ export const walletRepository = {
       data: {
         riderId: data.riderId,
         type: data.type,
-        amountInPaise: data.amountInPaise,
+        amount: data.amount,
         purpose: data.purpose,
         method: data.method || null,
         status: data.status || TransactionStatus.PENDING,
@@ -78,9 +78,8 @@ export const walletRepository = {
     return db.transaction.findUnique({ where: { idempotencyKey } });
   },
 
-  async updateTransactionStatus(txnId: string, status: TransactionStatus, approvedBy?: string, tx?: Prisma.TransactionClient) {
-    const client = tx || db;
-    return client.transaction.update({
+  async updateTransactionStatus(txnId: string, status: TransactionStatus, approvedBy?: string) {
+    return db.transaction.update({
       where: { id: txnId },
       data: {
         status,

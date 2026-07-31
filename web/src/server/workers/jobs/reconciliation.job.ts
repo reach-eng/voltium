@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
-import { backfillOpeningBalance } from '@/server/modules/wallet/wallet.queries';
+import { backfillOpeningBalance } from '@/lib/services/wallet-service';
 import { OutboxService, OutboxEventTypes } from '../outbox';
 
 interface ReconciliationResult {

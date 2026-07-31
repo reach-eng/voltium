@@ -41,12 +41,3 @@ export async function GET_state(request: NextRequest) {
   if (!state) return errors.notFound('Rider state not found');
   return success(state);
 }
-
-export async function GET_dashboard(request: NextRequest) {
-  const session = await requireRiderSession(request);
-  if ('status' in session) return session;
-
-  const dashboard = await riderUseCases.getDashboard(session.riderDbId);
-  if (!dashboard) return errors.notFound('Dashboard data not found');
-  return success(dashboard);
-}

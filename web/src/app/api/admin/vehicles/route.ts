@@ -17,7 +17,7 @@ function checkVehiclePermission(
     update: 'vehicles_update',
     delete: 'vehicles_delete',
   };
-  return hasPermission(session, permMap[action] as any);
+  return hasPermission(session.adminRole || '', permMap[action] as any);
 }
 
 export async function GET(req: NextRequest) {

@@ -1,8 +1,7 @@
 import { db } from '@/lib/db';
-import { calculateRiderScore } from '@/server/modules/scores/score-calculator';
+import { calculateRiderScore } from '@/lib/score-calculator';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
-import { NotFoundError } from "@/lib/api-error";
 
 export const scoreUseCases = {
   async list(params: {
@@ -76,7 +75,7 @@ export const scoreUseCases = {
 
   async recalculate(riderId: string, actorId: string) {
     const rider = await db.rider.findUnique({ where: { id: riderId } });
-    if (!rider) throw new NotFoundError('Rider not found');
+    if (!rider) throw new Error('Rider not found');
 
     const score = await calculateRiderScore(riderId);
     createAuditLog({

@@ -1,5 +1,4 @@
 import { db } from '@/lib/db';
-import { NotFoundError, ValidationError } from "@/lib/api-error";
 
 export const pricingUseCases = {
   async calculate(hubId: string, basePriceRupees: number) {
@@ -23,8 +22,8 @@ export const pricingUseCases = {
       where: { id: hubId },
       select: { id: true, name: true, isActive: true },
     });
-    if (!hub) throw new NotFoundError('Hub not found');
-    if (!hub.isActive) throw new ValidationError('Hub is currently inactive');
+    if (!hub) throw new Error('Hub not found');
+    if (!hub.isActive) throw new Error('Hub is currently inactive');
     const totalVehicles = await db.vehicle.count({ where: { hubId } });
     const availableVehicles = await db.vehicle.count({ where: { hubId, status: 'AVAILABLE' } });
     return { hub: { id: hub.id, name: hub.name }, totalVehicles, availableVehicles };

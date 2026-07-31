@@ -24,9 +24,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const url = req.nextUrl;
-    const rawQ = url.searchParams.get('q')?.trim();
-    if (!rawQ || rawQ.length < 2) return success({ query: rawQ, results: {} }, 'Search query too short');
-    const q = rawQ.replace(/[%_]/g, '\\$&');
+    const q = url.searchParams.get('q')?.trim();
+    if (!q || q.length < 2) return success({ query: q, results: {} }, 'Search query too short');
 
     const entities = url.searchParams.get('entities')?.split(',').map((s) => s.trim()) || [
       'riders',
@@ -110,8 +109,9 @@ export async function GET(req: NextRequest) {
         },
         select: {
           id: true,
+          txnId: true,
           type: true,
-          amountInPaise: true,
+          amount: true,
           status: true,
           purpose: true,
           createdAt: true,

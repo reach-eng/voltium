@@ -4,16 +4,10 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { scoreUseCases } from '@/server/modules/scores/score.use-cases';
 
-import { checkRateLimit } from '@/lib/rate-limit';
-
 export async function POST(req: NextRequest) {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session, 'riders_manage')) return adminForbidden();
-
-  const adminId = session.adminId || session.riderDbId || 'system';
-  const rl = await checkRateLimit(`recalculate-scores:${adminId}`, { windowMs: 60 * 1000, maxRequests: 5 });
-  if (!rl.allowed) return errors.tooManyRequests('Too many score recalculation requests');
+  if (!hasPermission(session.adminRole || '', 'riders_manage')) return adminForbidden();
 
   try {
     const result = await scoreUseCases.recalculateAll(session.adminId || '');

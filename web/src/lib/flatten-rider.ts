@@ -23,8 +23,6 @@ type RiderWithRelations = Prisma.RiderGetPayload<{
     wallet: true;
     guarantor: true;
     vehicleReturns: true;
-    vehicle: true;
-    depositRecord: true;
   };
 }>;
 
@@ -36,29 +34,28 @@ type RiderPartial = Prisma.RiderGetPayload<{
   };
 }>;
 
-export const LIFECYCLE_RANK: Record<string, number> = {
-  NEW: 0,
-  PHONE_VERIFIED: 1,
-  PROFILE_SUBMITTED: 2,
-  GUARANTOR_SUBMITTED: 3,
-  GUARANTOR_APPROVED: 3,
-  PLAN_SELECTED: 4,
-  DEPOSIT_PENDING: 5,
-  DEPOSIT_APPROVED: 6,
-  KYC_SUBMITTED: 7,
-  KYC_APPROVED: 8,
-  PICKUP_SCHEDULED: 9,
-  ACTIVE: 10,
-  SUSPENDED: 11,
-  RETURN_PENDING: 12,
-  CLOSED: 13,
-};
-
 export function flattenRider(rider: RiderWithRelations) {
   const { kycProfile, wallet, guarantor, ...rest } = rider;
 
   const lifecycleStatus = rider.lifecycleStatus || 'NEW';
-  const rank = LIFECYCLE_RANK[lifecycleStatus] ?? 0;
+  const lifecycleRank: Record<string, number> = {
+    NEW: 0,
+    PHONE_VERIFIED: 1,
+    PROFILE_SUBMITTED: 2,
+    GUARANTOR_SUBMITTED: 3,
+    GUARANTOR_APPROVED: 3,
+    PLAN_SELECTED: 4,
+    DEPOSIT_PENDING: 5,
+    DEPOSIT_APPROVED: 6,
+    KYC_SUBMITTED: 7,
+    KYC_APPROVED: 8,
+    PICKUP_SCHEDULED: 9,
+    ACTIVE: 10,
+    SUSPENDED: 11,
+    RETURN_PENDING: 12,
+    CLOSED: 13,
+  };
+  const rank = lifecycleRank[lifecycleStatus] ?? 0;
   const registrationDone = rank >= 3;
   const kycDone = rank >= 8 || kycProfile?.status === 'APPROVED';
   const depositDone = rank >= 6;
@@ -81,8 +78,8 @@ export function flattenRider(rider: RiderWithRelations) {
 
     // --- KYC Profile fields ---
     kycStatus: kycProfile?.status || 'PENDING',
-    kycRejectionReason: (kycProfile as Record<string, any>)?.rejectionReason ?? null,
-    kycEditableFields: (kycProfile as Record<string, any>)?.editableFields ?? null,
+    kycRejectionReason: (kycProfile as any)?.rejectionReason ?? null,
+    kycEditableFields: (kycProfile as any)?.editableFields ?? null,
     profilePhoto: kycProfile?.profilePhoto ?? null,
     riderPhoto: kycProfile?.riderPhoto ?? null,
     signature: kycProfile?.signature ?? null,
@@ -100,7 +97,7 @@ export function flattenRider(rider: RiderWithRelations) {
     // --- Wallet fields (converted from paise → rupees) ---
     walletBalance: paiseToRupees(wallet?.balanceInPaise ?? 0),
     balance: paiseToRupees(wallet?.balanceInPaise ?? 0),
-    securityDeposit: paiseToRupees(wallet?.securityDepositInPaise ?? 0),
+    securityDeposit: paiseToRupees(wallet?.securityDeposit ?? 0),
     depositStatus: wallet?.depositStatus || 'PENDING',
     paymentStreak: wallet?.paymentStreak ?? 0,
 
@@ -126,7 +123,7 @@ export function flattenRider(rider: RiderWithRelations) {
     assignedVehicle: rider.assignedVehicle ?? null,
     activeVehicle: rider.assignedVehicle ?? null,
     vehicleId: rider.vehicleId ?? null,
-    vehicleModel: rider.vehicle?.model ?? null,
+    vehicleModel: (rider as any).vehicle?.model ?? null,
     deliveryId: rider.deliveryId ?? null,
     intent: rider.intent ?? null,
     emergencyContact: rider.emergencyContact ?? null,

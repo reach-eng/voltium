@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
-import { requireAdmin, adminForbidden } from '@/lib/rbac';
-import { hasPermission } from '@/lib/permissions';
+import { requireAdmin } from '@/lib/rbac';
 import { db } from '@/lib/db';
 import { runWalletReconciliation, recordReconciliation } from '@/server/workers/jobs/wallet-reconciliation.job';
 import { rentRemindersJob } from '@/server/workers/jobs/rent-reminders.job';
@@ -139,9 +138,6 @@ export async function POST(req: NextRequest) {
     const admin = await requireAdmin();
     if (!admin) {
       return errors.unauthorized('Admin authentication required');
-    }
-    if (!hasPermission(admin, 'jobs_run')) {
-      return adminForbidden();
     }
 
     const body = await req.json();

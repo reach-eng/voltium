@@ -55,8 +55,8 @@ export async function PUT(req: NextRequest) {
       return errors.internal('Failed to update feature flag');
     }
 
-    const actorId = session.adminId || session.riderDbId || 'system';
-    await createAuditLog({
+    const actorId = req.headers.get('x-admin-id') || 'system';
+    createAuditLog({
       actorId,
       action: 'feature_flag.update',
       entity: 'feature_flags',

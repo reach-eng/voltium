@@ -1,14 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { validateBody, createEarningSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
-import { requireRiderSession } from '@/lib/rider-auth';
+import { getRiderId } from '@/lib/get-session';
 import { riderUseCases } from '@/server/modules/riders/rider.use-cases';
 
 export async function GET(req: NextRequest) {
-  const auth = await requireRiderSession(req);
-  if (auth instanceof NextResponse) return auth;
-  const riderId = auth.riderDbId;
+  const riderId = await getRiderId(req);
+  if (!riderId) return errors.unauthorized();
 
   try {
     const url = req.nextUrl;
@@ -50,9 +49,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireRiderSession(req);
-  if (auth instanceof NextResponse) return auth;
-  const riderId = auth.riderDbId;
+  const riderId = await getRiderId(req);
+  if (!riderId) return errors.unauthorized();
 
   try {
     const body = await req.json();

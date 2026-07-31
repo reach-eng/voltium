@@ -18,7 +18,6 @@ import { logger } from '@/lib/logger';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { env } from '@/lib/env';
 import type { SendOtpInput, VerifyOtpInput, VerifyOtpResult } from './auth.types';
-import { ValidationError, NotFoundError, ServerError } from "@/lib/api-error";
 
 export const authUseCases = {
   async sendOtp(input: SendOtpInput, options?: { ip?: string; correlationId?: string }) {
@@ -50,7 +49,7 @@ export const authUseCases = {
 
     // Send via SMS/Push
     const flags = await getFeatureFlags();
-    const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
+    const message = `Your Ryd verification code is: ${otp}. Do not share this code with anyone.`;
 
     await OutboxService.emit(OutboxEventTypes.SMS_SEND, {
       phone,
@@ -61,38 +60,29 @@ export const authUseCases = {
     logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
 
     return {
-      // 'exists' removed — prevents user enumeration via phone probing
-      otp: env.APP_ENV !== 'production' ? otp : undefined,
+      exists: !!existingRider,
+      otp: process.env.NODE_ENV !== 'production' ? otp : undefined,
     };
   },
 
   async verifyOtp(input: VerifyOtpInput): Promise<VerifyOtpResult> {
-    try {
-      return await this._verifyOtpInternal(input);
-    } catch (err) {
-      console.error('[AuthUseCases] Error verifying OTP:', err);
-      throw err;
-    }
-  },
-
-  async _verifyOtpInternal(input: VerifyOtpInput): Promise<VerifyOtpResult> {
     const { phone: inputPhone, otp, idToken, referralCode: incomingReferralCode } = input;
     let phone = inputPhone || '';
 
     // Firebase token verification
     if (idToken) {
       if (!firebaseAuth) {
-        throw new ValidationError('Firebase configuration missing on server');
+        throw new Error('Firebase configuration missing on server');
       }
       const decodedToken = await firebaseAuth.verifyIdToken(idToken);
       const firebasePhone = decodedToken.phone_number;
-      if (!firebasePhone) throw new NotFoundError('Phone number not found in token');
+      if (!firebasePhone) throw new Error('Phone number not found in token');
       phone = firebasePhone.replace(/\D/g, '').slice(-10);
     } else {
       // Legacy OTP verification
-      if (!phone || !otp) throw new ValidationError('Phone and OTP are required');
+      if (!phone || !otp) throw new Error('Phone and OTP are required');
       const otpResult = await verifyOtpStore(phone, otp);
-      if (!otpResult.valid) throw new ValidationError(otpResult.error || 'Invalid OTP');
+      if (!otpResult.valid) throw new Error(otpResult.error || 'Invalid OTP');
     }
 
     // Find or create rider (concurrency-safe)
@@ -109,7 +99,7 @@ export const authUseCases = {
           data: {
             phone,
             riderId,
-            name: '',
+            fullName: '',
             lifecycleStatus: 'NEW',
             referralCode,
             referredBy: incomingReferralCode || null,
@@ -125,7 +115,7 @@ export const authUseCases = {
       }
     }
 
-    if (!rider) throw new ServerError('Failed to find or create rider');
+    if (!rider) throw new Error('Failed to find or create rider');
 
     // For new riders, create Wallet record and handle referral rewards
     if (isNewRider) {
@@ -134,19 +124,19 @@ export const authUseCases = {
           riderId: rider.id,
           balanceInPaise: 0,
           securityDeposit: 0,
-          depositStatus: 'NOT_SUBMITTED',
+          depositStatus: 'PENDING',
           paymentStreak: 0,
           version: 1,
         },
       });
 
-      // Award referral rewards (block self-referral)
+      // Award referral rewards
       if (incomingReferralCode) {
         try {
           const referrer = await db.rider.findUnique({
             where: { referralCode: incomingReferralCode },
           });
-          if (referrer && referrer.id !== rider.id) {
+          if (referrer) {
             await db.reward.create({
               data: {
                 riderId: referrer.id,
@@ -154,11 +144,9 @@ export const authUseCases = {
                 points: 500,
               },
             });
-          } else if (referrer && referrer.id === rider.id) {
-            logger.warn('[AuthUseCases] Self-referral blocked', { riderId: rider.id });
           }
         } catch (rewardErr) {
-          logger.error('[AuthUseCases] failed to award referral points', { error: rewardErr });
+          logger.error('[AuthUseCases] Failed to award referral points', { error: rewardErr });
         }
       }
     }
@@ -174,7 +162,7 @@ export const authUseCases = {
       },
     });
 
-    if (!riderWithRelations) throw new ServerError('Failed to fetch rider data');
+    if (!riderWithRelations) throw new Error('Failed to fetch rider data');
 
     const riderData = flattenRider(riderWithRelations);
 

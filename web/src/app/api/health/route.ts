@@ -123,17 +123,8 @@ function checkDisk(): {
   return { status: 'healthy', ...disk };
 }
 
-import { getAdminSession } from '@/lib/get-session';
-
 export async function GET(request: NextRequest) {
   const detailed = request.nextUrl.searchParams.get('detailed') === 'true';
-
-  if (detailed) {
-    const session = await getAdminSession(request);
-    if (!session) {
-      return NextResponse.json({ success: false, error: 'Unauthorized to view detailed health metrics' }, { status: 401 });
-    }
-  }
 
   const database = await checkDatabase();
   const disk = checkDisk();
@@ -188,6 +179,5 @@ export async function GET(request: NextRequest) {
     };
   }
 
-  // Non-standard response shape — left as-is (health diagnostic contract)
   return NextResponse.json(body, { status: statusCode });
 }

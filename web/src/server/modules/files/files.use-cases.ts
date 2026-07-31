@@ -5,7 +5,6 @@ import { fileService } from './files.service';
 import { env } from '@/lib/env';
 import type { SignedUrlRequest, SignedUrlResponse } from './files.types';
 import { FILE_UPLOAD_RULES, FileOwnerType } from './files.types';
-import { ValidationError, NotFoundError, ForbiddenError } from "@/lib/api-error";
 
 export const fileUseCases = {
   /** Token TTL: 15 minutes (in seconds) */
@@ -15,7 +14,7 @@ export const fileUseCases = {
    *  Token format: `<expiry_epoch_ms>.<hmac>` */
   _generateUploadToken(fileRecordId: string): string {
     const secret = env.JWT_SECRET;
-    if (!secret) throw new ValidationError('JWT_SECRET is required for file upload signing');
+    if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
     const expiresAt = Date.now() + this.UPLOAD_TOKEN_TTL_SECONDS * 1000;
     const payload = `${fileRecordId}:${expiresAt}`;
     const hmac = createHmac('sha256', secret).update(payload).digest('hex');
@@ -31,7 +30,7 @@ export const fileUseCases = {
       if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
       
       const secret = env.JWT_SECRET;
-      if (!secret) throw new ValidationError('JWT_SECRET is required for file upload signing');
+      if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
       
       const payload = `${fileRecordId}:${expiresAt}`;
       const expected = createHmac('sha256', secret).update(payload).digest('hex');
@@ -58,7 +57,7 @@ export const fileUseCases = {
       FILE_UPLOAD_RULES
     );
     if (!validation.valid) {
-      throw new ValidationError(validation.error);
+      throw new Error(validation.error);
     }
 
     const ownerId = actor.riderDbId || actor.adminId || 'unknown';
@@ -101,7 +100,7 @@ export const fileUseCases = {
   ): Promise<{ status: string }> {
     const record = await fileRepository.getFileRecordById(fileRecordId);
     if (!record) {
-      throw new NotFoundError(`FileRecord ${fileRecordId} not found`);
+      throw new Error(`FileRecord ${fileRecordId} not found`);
     }
     if (record.status !== 'PENDING_UPLOAD') {
       return { status: record.status.toLowerCase() };
@@ -109,7 +108,7 @@ export const fileUseCases = {
 
     const uploaded = await fileService.verifyFileUploaded(record.storageKey);
     if (!uploaded) {
-      throw new NotFoundError('File not found in storage. Upload the file first.');
+      throw new Error('File not found in storage. Upload the file first.');
     }
 
     await fileService.markUploaded(fileRecordId, sizeBytes, checksum);
@@ -123,11 +122,11 @@ export const fileUseCases = {
   ): Promise<{ readUrl: string; expiresIn: number }> {
     const record = await fileRepository.getFileRecordById(fileRecordId);
     if (!record) {
-      throw new NotFoundError('File not found');
+      throw new Error('File not found');
     }
 
     if (!filePolicy.canViewFile(actor, record)) {
-      throw new ForbiddenError('You do not have permission to view this file');
+      throw new Error('You do not have permission to view this file');
     }
 
     if (actor.role === 'admin' && actor.adminId) {

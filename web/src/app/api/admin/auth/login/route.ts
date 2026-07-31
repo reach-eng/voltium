@@ -37,7 +37,14 @@ export async function POST(request: NextRequest) {
 
     const admin = await adminUseCases.login(email, password, clientIp);
 
-    let permissions: string[] = admin.permissions || [];
+    let permissions: string[] = [];
+    try {
+      if (admin.permissions) {
+        permissions = JSON.parse(admin.permissions);
+      }
+    } catch (e) {
+      logger.error('Failed to parse admin permissions', { adminId: admin.id, error: e });
+    }
 
     const sessionToken = await createSessionToken({
       riderId: admin.id,

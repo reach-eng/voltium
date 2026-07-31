@@ -3,7 +3,12 @@ import { ApiError, ERROR_CODES } from './api-error';
 import { errors } from './api-response';
 import { logger } from './logger';
 import { redactPii } from './pii-redact';
-import { DomainError } from './domain-error';
+
+type DomainError = Error & { code?: string };
+
+function asDomainError(err: unknown): DomainError {
+  return err instanceof Error ? err : new Error(String(err));
+}
 
 export function withApiHandler(
   handler: (request: NextRequest, ...args: any[]) => Promise<NextResponse>
@@ -12,52 +17,47 @@ export function withApiHandler(
     try {
       return await handler(request, ...args);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      const stack = err instanceof Error ? err.stack : undefined;
-
+      const domainErr = asDomainError(err);
       logger.error('[ApiHandler] Unhandled route error', redactPii({
         path: request.nextUrl.pathname,
-        message,
-        stack,
+        message: domainErr.message,
+        stack: domainErr.stack,
       }));
 
-      // ApiError — use the error code to pick the right HTTP status
       if (err instanceof ApiError) {
         const code = err.code;
-        if (code === ERROR_CODES.UNAUTHORIZED) return errors.unauthorized(message);
-        if (code === ERROR_CODES.FORBIDDEN) return errors.forbidden(message);
-        if (code === ERROR_CODES.NOT_FOUND) return errors.notFound(message);
-        if (code === ERROR_CODES.VALIDATION_ERROR) return errors.validation(message);
-        if (code === ERROR_CODES.CONFLICT) return errors.conflict(message);
-        if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests(message);
-        if (code === ERROR_CODES.GONE) return errors.gone(message);
-        return errors.badRequest(message);
+        if (code === ERROR_CODES.UNAUTHORIZED) return errors.unauthorized((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.FORBIDDEN) return errors.forbidden((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.NOT_FOUND) return errors.notFound((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.VALIDATION_ERROR) return errors.validation((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.CONFLICT) return errors.conflict((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.RATE_LIMITED) return errors.tooManyRequests((err instanceof Error ? err.message : String(err)));
+        if (code === ERROR_CODES.GONE) return errors.gone((err instanceof Error ? err.message : String(err)));
+        return errors.badRequest((err instanceof Error ? err.message : String(err)));
       }
 
-      // Domain-specific exceptions via DomainError base class
-      if (err instanceof DomainError) {
-        if (err.httpStatus === 404) return errors.notFound(message);
-        if (err.httpStatus === 409) return errors.conflict(message);
-        if (err.httpStatus === 403) return errors.forbidden(message);
-        if (err.httpStatus === 401) return errors.unauthorized(message);
-        if (err.httpStatus === 422) return errors.validation(message);
-        return errors.badRequest(message);
+      // Handle domain-specific exceptions by naming convention
+      if (domainErr.name === 'RentalBookError') {
+        const code = domainErr.code;
+        if (code === 'NOT_FOUND') return errors.notFound(domainErr.message);
+        if (code === 'CONFLICT') return errors.conflict(domainErr.message);
+        return errors.badRequest(domainErr.message);
       }
 
-      // Prisma "record not found" — typed error, not a string match.
-      // The Prisma client uses error code 'P2025' for `findUnique` / `findFirst`
-      // misses. We treat it as 404 at the route boundary instead of leaking
-      // a 500.
       if (
-        typeof err === 'object' &&
-        err !== null &&
-        'code' in err &&
-        (err as { code: unknown }).code === 'P2025'
+        domainErr.name === 'KycStateError' ||
+        domainErr.name === 'GuarantorStateError' ||
+        domainErr.name === 'DepositStateMachineError' ||
+        domainErr.name === 'RentalStateError'
       ) {
-        return errors.notFound(message || 'Resource not found');
+        return errors.conflict(domainErr.message);
       }
 
-      return errors.internal(message || 'Internal Server Error');
+      if (domainErr.message.includes('not found') || domainErr.message.includes('Not found')) {
+        return errors.notFound(domainErr.message);
+      }
+
+      return errors.internal(domainErr.message || 'Internal Server Error');
     }
   };
 }

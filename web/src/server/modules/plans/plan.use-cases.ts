@@ -3,16 +3,6 @@ import { Prisma } from '@prisma/client';
 import { paiseToRupees, rupeesToPaise } from '@/lib/flatten-rider';
 import { createAuditLog } from '@/lib/audit-log';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
-import { getOrSetResponse, invalidateCache } from '@/lib/cache';
-import { NotFoundError, ValidationError } from "@/lib/api-error";
-
-export function getDurationForPlanType(type: string): number {
-  const t = type.toUpperCase();
-  if (t === 'DAILY') return 1;
-  if (t === 'WEEKLY') return 7;
-  if (t === 'MONTHLY') return 30;
-  return 7;
-}
 
 export const planUseCases = {
   async list(page: number, limit: number) {
@@ -35,64 +25,52 @@ export const planUseCases = {
   },
 
   async listActivePlans() {
-    return getOrSetResponse('rental_plans', async () => {
-      const plans = await db.rentalPlan.findMany({
-        where: { isActive: true },
-        orderBy: { price: 'asc' },
-      });
-      return plans.map((p: { price: number; [key: string]: unknown }) => ({
-        ...p,
-        price: paiseToRupees(p.price),
-      }));
-    }, 3600);
+    const plans = await db.rentalPlan.findMany({
+      where: { isActive: true },
+      orderBy: { price: 'asc' },
+    });
+    return plans.map((p: { price: number; [key: string]: unknown }) => ({
+      ...p,
+      price: paiseToRupees(p.price),
+    }));
   },
 
-  async subscribeToPlan(riderDbId: string, planId: string, advanceRentPaid = false) {
+  async subscribeToPlan(riderDbId: string, planId: string) {
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       include: { wallet: true },
     });
-    if (!rider) throw new NotFoundError('Rider not found');
+    if (!rider) throw new Error('Rider not found');
     const plan = await db.rentalPlan.findUnique({ where: { id: planId } });
-    if (!plan) throw new NotFoundError('Plan not found');
-    if (!plan.isActive) throw new ValidationError('Plan is not active');
+    if (!plan) throw new Error('Plan not found');
+    if (!plan.isActive) throw new Error('Plan is not active');
     
     // According to rider-lifecycle, the user goes GUARANTOR_APPROVED -> PLAN_SELECTED -> DEPOSIT_PENDING -> DEPOSIT_APPROVED.
+    // So if they are in GUARANTOR_APPROVED or GUARANTOR_SUBMITTED, they can select a plan.
     if (
       !['GUARANTOR_SUBMITTED', 'GUARANTOR_APPROVED', 'PLAN_SELECTED', 'DEPOSIT_PENDING', 'DEPOSIT_APPROVED', 'KYC_SUBMITTED', 'KYC_APPROVED', 'PICKUP_SCHEDULED', 'ACTIVE'].includes(
         rider.lifecycleStatus
       )
     )
-      throw new ValidationError('INVALID_STATE_FOR_PLAN_SELECTION');
+      throw new Error('INVALID_STATE_FOR_PLAN_SELECTION');
 
     const now = new Date();
     const endDate = new Date(now);
     endDate.setDate(endDate.getDate() + plan.durationDays);
 
-    const priceInPaise = plan.price;
-    const currentBalance = rider.wallet?.balanceInPaise ?? 0;
-
-    if (currentBalance < priceInPaise) {
-      throw new ValidationError('INSUFFICIENT_BALANCE');
-    }
-
-    await walletLedgerService.debit({
-      riderId: riderDbId,
-      amountInPaise: priceInPaise,
-      category: 'RENT_PAYMENT',
+    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+      await tx.rider.update({
+        where: { id: riderDbId },
+        data: {
+          lifecycleStatus: 'PLAN_SELECTED',
+          currentPlan: plan.name,
+          currentPlanPrice: plan.price,
+          planStartDate: now,
+          planEndDate: endDate,
+          planDoneAt: new Date(),
+        },
+      });
     });
-
-    await db.rider.update({
-      where: { id: riderDbId },
-      data: {
-        lifecycleStatus: 'PLAN_SELECTED',
-        currentPlan: plan.name,
-        currentPlanPrice: plan.price,
-        planStartDate: now,
-        planEndDate: endDate,
-      },
-    });
-
     return {
       planId: plan.id,
       planName: plan.name,
@@ -107,7 +85,7 @@ export const planUseCases = {
     data: { name: string; type: string; price: number; durationDays?: number; description?: string; securityDeposit?: number; isSecurityRefundable?: boolean; refundableAfterDays?: number | null; additionalInfo?: string | null },
     actorId: string
   ) {
-    const computedDuration = getDurationForPlanType(data.type);
+    const computedDuration = data.type === 'DAILY' ? 1 : data.type === 'WEEKLY' ? 7 : 30;
     const plan = await db.rentalPlan.create({
       data: {
         name: data.name,
@@ -122,8 +100,6 @@ export const planUseCases = {
         isActive: true,
       },
     });
-    invalidateCache('rental_plans*');
-    invalidateCache('rider_plans*');
     createAuditLog({
       actorId,
       action: 'plan.create',
@@ -137,16 +113,12 @@ export const planUseCases = {
   async update(id: string, data: Record<string, unknown>, actorId: string) {
     if (data.price != null) data.price = rupeesToPaise(Number(data.price));
     if (data.securityDeposit != null) data.securityDeposit = rupeesToPaise(Number(data.securityDeposit));
-    
-    // Strictly prevent manual durationDays mutation outside plan type
-    delete data.durationDays;
     if (data.type != null) {
-      data.durationDays = getDurationForPlanType(String(data.type));
+      data.durationDays = data.type === 'DAILY' ? 1 : data.type === 'WEEKLY' ? 7 : 30;
+    } else if (data.durationDays != null) {
+      data.durationDays = Number(data.durationDays);
     }
-
     const plan = await db.rentalPlan.update({ where: { id }, data });
-    invalidateCache('rental_plans*');
-    invalidateCache('rider_plans*');
     createAuditLog({
       actorId,
       action: 'plan.update',
@@ -159,8 +131,6 @@ export const planUseCases = {
 
   async delete(id: string, actorId: string) {
     await db.rentalPlan.delete({ where: { id } });
-    invalidateCache('rental_plans*');
-    invalidateCache('rider_plans*');
     createAuditLog({ actorId, action: 'plan.delete', entity: 'plan', entityId: id }).catch(
       () => {}
     );

@@ -3,7 +3,7 @@ import { success, errors } from '@/lib/api-response';
 import { validateBody, ticketBulkActionSchema } from '@/lib/validators';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
-import { adminSupportUseCases } from '@/server/modules/support/admin-support.use-cases';
+import { supportUseCases } from '@/server/modules/support/support.use-cases';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { ids, action, value } = validation.data;
-    const result = await adminSupportUseCases.bulkUpdateTickets(
+    const result = await supportUseCases.bulkUpdateTickets(
       ids,
       action,
       value,

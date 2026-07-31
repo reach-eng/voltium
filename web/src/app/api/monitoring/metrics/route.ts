@@ -1,10 +1,5 @@
-/**
- * Admin dashboard JSON metrics endpoint.
- * For the Prometheus text format scraper, see /api/metrics
- */
 import { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { errors } from '@/lib/api-response';
 import { getMetrics, getSlowQueries } from '@/lib/apm';
 import { getAdminSession } from '@/lib/get-session';
 import { logger } from '@/lib/logger';
@@ -18,7 +13,10 @@ export async function GET(request: NextRequest) {
   const session = isCron ? null : await getAdminSession();
 
   if (!isCron && !session) {
-    return errors.unauthorized('Authentication required');
+    return NextResponse.json(
+      { success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } },
+      { status: 401 }
+    );
   }
 
   try {
@@ -26,7 +24,6 @@ export async function GET(request: NextRequest) {
     const slowQueries = getSlowQueries();
     const systemMetrics = await monitoringUseCases.getSystemMetrics();
 
-    // Non-standard response shape — left as-is (nested monitoring/metrics payload)
     return NextResponse.json({
       success: true,
       data: {
@@ -57,6 +54,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     logger.error('[Metrics] Failed to collect metrics', err);
-    return errors.internal('Failed to collect metrics');
+    return NextResponse.json(
+      {
+        success: false,
+        error: { code: 'SERVER_ERROR', message: 'Failed to collect metrics' },
+      },
+      { status: 500 }
+    );
   }
 }

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { success, errors } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
-import { adminSupportUseCases } from '@/server/modules/support/admin-support.use-cases';
+import { supportUseCases } from '@/server/modules/support/support.use-cases';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin();
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const { id } = await params;
-    const ticket = await adminSupportUseCases.getAdminTicket(id);
+    const ticket = await supportUseCases.getAdminTicket(id);
 
     if (!ticket) return errors.notFound('Ticket not found');
 

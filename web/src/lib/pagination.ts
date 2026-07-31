@@ -1,5 +1,5 @@
 /**
- * Voltium Shared Pagination Helper
+ * Ryd Shared Pagination Helper
  * Standardizes pagination across all list endpoints.
  */
 
