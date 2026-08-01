@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { getAllFeatureFlags, updateFeatureFlag } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
+import { invalidateCache } from '@/lib/cache';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -12,8 +13,11 @@ export async function GET(req: NextRequest) {
   if (!hasPermission(session.adminRole || '', 'settings_manage')) return adminForbidden();
 
   try {
+    // Feature flags are static for long stretches — 60s browser cache + Vary by
+    // Authorization keeps each admin's view isolated. The PUT handler below
+    // invalidates the cache on any write so admins see their own changes.
     const flags = await getAllFeatureFlags();
-    return success(flags, 'Feature flags retrieved');
+    return withCacheHeaders(success(flags, 'Feature flags retrieved'), 60);
   } catch (error) {
     logger.error('[FEATURE_FLAGS_GET]', error);
     return errors.internal('Failed to fetch feature flags');
@@ -54,6 +58,10 @@ export async function PUT(req: NextRequest) {
     if (!updated) {
       return errors.internal('Failed to update feature flag');
     }
+
+    // Clear any feature-flag cache so the next GET reflects the new value
+    // immediately instead of waiting up to 60s for the browser cache to expire.
+    invalidateCache('admin:feature-flags:*');
 
     const actorId = req.headers.get('x-admin-id') || 'system';
     createAuditLog({

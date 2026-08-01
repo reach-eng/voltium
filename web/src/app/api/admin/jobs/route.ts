@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { requireAdmin } from '@/lib/rbac';
 import { db } from '@/lib/db';
 import { runWalletReconciliation, recordReconciliation } from '@/server/workers/jobs/wallet-reconciliation.job';
@@ -124,10 +124,13 @@ export async function GET(req: NextRequest) {
       },
     ];
 
-    return success({
-      jobs,
-      reconHistory,
-    });
+    return withCacheHeaders(
+      success({
+        jobs,
+        reconHistory,
+      }),
+      5
+    );
   } catch (err: unknown) {
     return errors.internal(`Failed to load jobs list: ${(err instanceof Error ? err.message : String(err))}`);
   }

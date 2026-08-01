@@ -1,6 +1,7 @@
 import { GuarantorStatus, Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { guarantorRepository } from '@/server/modules/guarantors/guarantor.repository';
@@ -30,24 +31,44 @@ export const GET = withApiHandler(async (request: NextRequest) => {
       { rider: { riderId: { contains: search, mode: 'insensitive' } } },
     ];
   }
-  const [records, total] = await Promise.all([
-    guarantorRepository.findMany({
-      where,
-      include: {
-        rider: {
-          select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
-        },
-      },
-      orderBy: { updatedAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    guarantorRepository.count({ where }),
-  ]);
-  return success({
-    records,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  });
+
+  // Guarantor review queue — 5s route cache with per-admin + per-filter key.
+  // POST handler below invalidates the admin:guarantors:* namespace.
+  const cacheKey = [
+    'admin:guarantors',
+    session.adminId ?? 'anon',
+    status ?? '',
+    search ?? '',
+    page,
+    limit,
+  ].join(':');
+
+  const result = await getOrSetResponse(
+    cacheKey,
+    async () => {
+      const [records, total] = await Promise.all([
+        guarantorRepository.findMany({
+          where,
+          include: {
+            rider: {
+              select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
+            },
+          },
+          orderBy: { updatedAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        guarantorRepository.count({ where }),
+      ]);
+      return {
+        records,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    },
+    5
+  );
+
+  return withCacheHeaders(success(result), 5);
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {
@@ -65,5 +86,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     rejectionReason: body.rejectionReason || body.reason,
     infoRequest: body.infoRequest || body.message,
   });
+  // Approve / reject changes the queue — clear cached lists.
+  invalidateCache('admin:guarantors:*');
   return success(result, `Guarantor ${String(action).toLowerCase()} processed`);
 });

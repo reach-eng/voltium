@@ -1,6 +1,7 @@
 import { KycStatus, Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { kycRepository } from '@/server/modules/kyc/kyc.repository';
@@ -32,25 +33,45 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     };
   }
 
-  const [records, total] = await Promise.all([
-    kycRepository.findMany({
-      where,
-      include: {
-        rider: {
-          select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
-        },
-      },
-      orderBy: { updatedAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    kycRepository.count({ where }),
-  ]);
+  // KYC review queue refreshes every 5s on the page; cache the filtered list at
+  // the route level so different admins with different filters don't poison
+  // each other's caches, and the search query is part of the key. Approve /
+  // reject handlers below invalidate the admin:* namespace.
+  const cacheKey = [
+    'admin:kyc',
+    session.adminId ?? 'anon',
+    status ?? '',
+    search ?? '',
+    page,
+    limit,
+  ].join(':');
 
-  return success({
-    records,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  });
+  const result = await getOrSetResponse(
+    cacheKey,
+    async () => {
+      const [records, total] = await Promise.all([
+        kycRepository.findMany({
+          where,
+          include: {
+            rider: {
+              select: { id: true, riderId: true, fullName: true, phone: true, lifecycleStatus: true },
+            },
+          },
+          orderBy: { updatedAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        kycRepository.count({ where }),
+      ]);
+      return {
+        records,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    },
+    5
+  );
+
+  return withCacheHeaders(success(result), 5);
 });
 
 export const POST = withApiHandler(async (request: NextRequest) => {
@@ -70,6 +91,10 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     infoRequest: body.infoRequest || body.message,
     editableFields: body.editableFields,
   });
+
+  // Approve / reject changes the KYC queue — clear cached lists so the next GET
+  // reflects the new status instead of waiting up to 5s for the TTL to expire.
+  invalidateCache('admin:kyc:*');
 
   return success(result, `KYC ${String(action).toLowerCase()} processed`);
 });
