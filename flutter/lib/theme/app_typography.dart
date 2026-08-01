@@ -33,11 +33,13 @@ class AppTypography {
 
   /// Primary font family name for Voltium design system.
   static const String fontFamily = 'Plus Jakarta Sans';
+  static const String monoFontFamily = 'JetBrains Mono';
 
   // ── 1. Display / Hero ──────────────────────────────────────────────────
 
   /// Display Large: 40px, w800, -1.0 tracking. Splash screen & hero headers.
-  static final TextStyle displayLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle displayLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 40,
     fontWeight: FontWeight.w800,
     letterSpacing: -1.0,
@@ -45,7 +47,8 @@ class AppTypography {
   );
 
   /// Display Medium: 32px, w800, -0.8 tracking. Wallet balance, hero metrics.
-  static final TextStyle displayMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle displayMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 32,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.8,
@@ -55,7 +58,8 @@ class AppTypography {
   // ── 2. Headings ────────────────────────────────────────────────────────
 
   /// H1: 28px, w800, -0.5 tracking. Screen main headers.
-  static final TextStyle headingLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.5,
@@ -63,7 +67,8 @@ class AppTypography {
   );
 
   /// H2: 24px, w800, -0.4 tracking. Section titles & greetings.
-  static final TextStyle headingMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.4,
@@ -71,7 +76,8 @@ class AppTypography {
   );
 
   /// H3: 20px, w800, -0.3 tracking. Sub-sections & card titles.
-  static final TextStyle headingSmall = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingSmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.3,
@@ -81,7 +87,8 @@ class AppTypography {
   // ── 3. Titles ──────────────────────────────────────────────────────────
 
   /// Title Large: 18px, w700, -0.2 tracking. Dialog titles, list headers.
-  static final TextStyle titleLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle titleLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
@@ -89,7 +96,8 @@ class AppTypography {
   );
 
   /// Title Medium: 16px, w700, -0.1 tracking. ListTile titles, card labels.
-  static final TextStyle titleMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle titleMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.1,
@@ -97,7 +105,8 @@ class AppTypography {
   );
 
   /// Title Small: 14px, w700. Compact list titles, dense headers.
-  static final TextStyle titleSmall = GoogleFonts.plusJakartaSans(
+  static const TextStyle titleSmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w700,
     height: 1.4,
@@ -106,21 +115,24 @@ class AppTypography {
   // ── 4. Body ────────────────────────────────────────────────────────────
 
   /// Body Large: 16px, w500. Prominent reading text.
-  static final TextStyle bodyLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodyLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// Body Medium: 14px, w500. Default body text throughout app.
-  static final TextStyle bodyMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodyMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.5,
   );
 
   /// Body Small: 12px, w500. Secondary text, captions, timestamps.
-  static final TextStyle bodySmall = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodySmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.5,
@@ -129,21 +141,24 @@ class AppTypography {
   // ── 5. Labels ──────────────────────────────────────────────────────────
 
   /// Label Large: 14px, w600. Tabs, chips, interactive elements.
-  static final TextStyle labelLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle labelLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 1.4,
   );
 
   /// Label Medium: 12px, w600. Status tags, badge text.
-  static final TextStyle labelMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle labelMedium = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.4,
   );
 
   /// Label Small: 11px, w600. Micro badges, fine print.
-  static final TextStyle labelSmall = GoogleFonts.plusJakartaSans(
+  static const TextStyle labelSmall = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 11,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -152,7 +167,8 @@ class AppTypography {
   // ── 6. Specialized Controls & Utility ──────────────────────────────────
 
   /// Uppercase Overline: 10px, w800, +1.0 tracking. Category overlines.
-  static final TextStyle overline = GoogleFonts.plusJakartaSans(
+  static const TextStyle overline = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 10,
     fontWeight: FontWeight.w800,
     letterSpacing: 1.0,
@@ -160,13 +176,15 @@ class AppTypography {
   );
 
   /// OTP Digit: 24px, w700. OTP input cells.
-  static final TextStyle otpDigit = GoogleFonts.plusJakartaSans(
+  static const TextStyle otpDigit = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w700,
   );
 
   /// Price Display: 22px, w800. Standalone prices.
-  static final TextStyle priceDisplay = GoogleFonts.plusJakartaSans(
+  static const TextStyle priceDisplay = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w800,
   );
@@ -174,7 +192,8 @@ class AppTypography {
   // ── 7. Monospace / Code ────────────────────────────────────────────────
 
   /// Code Medium: 14px, w500, JetBrains Mono. OTP digits, verification codes, wallet refs.
-  static final TextStyle codeMedium = GoogleFonts.jetBrainsMono(
+  static const TextStyle codeMedium = TextStyle(
+    fontFamily: monoFontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0,
@@ -182,7 +201,8 @@ class AppTypography {
   );
 
   /// Code Large: 16px, w600, JetBrains Mono. Prominent codes (6-digit OTP input).
-  static final TextStyle codeLarge = GoogleFonts.jetBrainsMono(
+  static const TextStyle codeLarge = TextStyle(
+    fontFamily: monoFontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.5,

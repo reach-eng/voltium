@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "Voltium Design System Tokens",
+  "version": "1.0.0",
+  "tokens": {
+    "colors": {
+      "primitive": {
+        "blue500": "#0053C1",
+        "slate900": "#0F172A",
+        "slate500": "#64748B",
+        "emerald500": "#10B981",
+        "amber500": "#F59E0B",
+        "rose500": "#EF4444"
+      },
+      "semantic": {
+        "light": {
+          "actionPrimary": "#0053C1",
+          "statusInfo": "#3B82F6",
+          "statusNeutral": "#64748B",
+          "statusSuccess": "#10B981",
+          "statusWarning": "#F59E0B",
+          "statusError": "#EF4444"
+        },
+        "dark": {
+          "actionPrimary": "#0053C1",
+          "statusInfo": "#60A5FA",
+          "statusNeutral": "#94A3B8",
+          "statusSuccess": "#34D399",
+          "statusWarning": "#FBBF24",
+          "statusError": "#F87171"
+        }
+      }
+    },
+    "spacing": {
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32
+    },
+    "radii": {
+      "sm": 4,
+      "md": 8,
+      "lg": 12,
+      "full": 9999
+    },
+    "shadows": {
+      "sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
+      "md": "0 4px 6px rgba(0, 0, 0, 0.1)",
+      "lg": "0 10px 15px rgba(0, 0, 0, 0.1)"
+    },
+    "typography": {
+      "displayLarge": { "fontSize": 40, "fontWeight": 800, "letterSpacing": -1.0 },
+      "headingLarge": { "fontSize": 28, "fontWeight": 800, "letterSpacing": -0.5 },
+      "titleLarge": { "fontSize": 18, "fontWeight": 700, "letterSpacing": -0.2 },
+      "bodyLarge": { "fontSize": 16, "fontWeight": 500, "letterSpacing": 0 },
+      "labelLarge": { "fontSize": 14, "fontWeight": 600, "letterSpacing": 0 },
+      "overline": { "fontSize": 10, "fontWeight": 800, "letterSpacing": 1.0 }
+    }
+  }
+}

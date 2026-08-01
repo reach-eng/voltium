@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:voltium_rider/services/emergency_contacts_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/app/router.dart';
@@ -16,13 +20,35 @@ void main() {
     });
 
     Widget createTestWidget() {
-      final mockAppProvider = AppProvider();
+      final appInstance = AppProvider();
+      final localeProvider = LocaleProvider();
+      final themeProvider = ThemeProvider();
+      final emergencyContactsServiceInstance = EmergencyContactsService();
+
       return ProviderScope(
         overrides: [
-          appProvider.overrideWith((ref) => mockAppProvider),
+          appProvider.overrideWith((ref) => appInstance),
+          riderProvider.overrideWith((ref) => appInstance.riderProvider),
+          walletProvider.overrideWith((ref) => appInstance.walletProvider),
+          supportProvider.overrideWith((ref) => appInstance.supportProvider),
+          engagementProvider
+              .overrideWith((ref) => appInstance.engagementProvider),
+          devicePolicyProvider
+              .overrideWith((ref) => appInstance.devicePolicyProvider),
+          connectivityProvider
+              .overrideWith((ref) => appInstance.connectivityProvider),
+          localeProviderRef.overrideWith((ref) => localeProvider),
+          themeProviderRef.overrideWith((ref) => themeProvider),
+          notificationProvider.overrideWith((ref) => NotificationProvider()),
+          emergencyContactsService
+              .overrideWith((ref) => emergencyContactsServiceInstance),
         ],
-        child: ChangeNotifierProvider<AppProvider>.value(
-          value: mockAppProvider,
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<LocaleProvider>.value(value: localeProvider),
+            ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
+            ChangeNotifierProvider<AppProvider>.value(value: appInstance),
+          ],
           child: const MaterialApp(
             home: AppRouter(),
           ),

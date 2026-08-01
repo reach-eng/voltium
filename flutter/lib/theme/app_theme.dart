@@ -34,6 +34,12 @@ class AppColors {
   static const Color success = Color(0xFF10B981); // emerald-500
   static const Color successLight = Color(0xFFD1FAE5); // emerald-100
   static const Color successDark = Color(0xFF059669);
+  static const Color successTint = Color(0xFFA7F3D0);
+  static const Color successBorderLight = Color(0xFF6EE7B7);
+  static const Color successOutline = Color(0xFFBBF7D0);
+  static const Color royalBlue = Color(0xFF1B60DA);
+  static const Color royalBlueTint = Color(0xFFDEE9FF);
+  static const Color royalBlueStrong = Color(0xFF2176FF);
 
   static const Color warning = Color(0xFFF59E0B); // amber-500
   static const Color warningLight = Color(0xFFFEF3C7);
@@ -115,6 +121,24 @@ class AppColors {
   // Color(0xFF...) for icon tiles, status chips, and small background swatches
   // where a fully-themed ThemeColors extension is overkill. Pair `xxxIcon`
   // (foreground, ~600 weight) with `xxxIconSurface` (background, ~50/100).
+
+  // Feather palette icons & surfaces
+  static const Color amberIcon = Color(0xFFEAB308);
+  static const Color amberIconSurface = Color(0xFFFEF9C3);
+  static const Color purpleIcon = Color(0xFF7E22CE);
+  static const Color purpleIconSurface = Color(0xFFF3E8FF);
+  static const Color purpleIconVivid = Color(0xFF6D28D9);
+  static const Color purpleLightSurface = Color(0xFFFAF5FF);
+  static const Color tealIcon = Color(0xFF0F766E);
+  static const Color tealIconSurface = Color(0xFFCCFBF1);
+  static const Color dangerText = Color(0xFF991B1B);
+  static const Color orangeAccent = Color(0xFFEA580C);
+  static const Color orangeAccentDark = Color(0xFFC2410C);
+  static const Color orangeAccentSurface = Color(0xFFFFF7ED);
+  static const Color orangeAccentBorder = Color(0xFFFED7AA);
+  static const Color orangeAccentLight = Color(0xFFFFE082);
+  static const Color skySpark = Color(0xFF38BDF8);
+  static const Color skySparkSurface = Color(0xFFE0F2FE);
 
   // Danger-zone colors — used for delete-account/kyc-rejected labels.
   static const Color errorShadowColor = Color(0x40BA1A1A); // 25% red-700
@@ -330,6 +354,8 @@ class AppRadius {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
   static const double radiusModal = 24;
   static const double radiusBottomSheet = 32;
   static const double full = 9999;
