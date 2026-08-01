@@ -7,20 +7,20 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ExportButton } from '../../export-button';
 import { STATE_FILTERS, KYC_FILTERS, type Rider } from './types';
 
-interface RiderFiltersBarProps {
+export interface RiderFiltersBarProps {
   search: string;
-  searching: boolean;
+  searching?: boolean;
   stateFilter: string;
   kycFilter: string;
-  riders: Rider[];
+  riders?: Rider[];
   onSearchChange: (v: string) => void;
   onStateFilterChange: (v: string) => void;
   onKycFilterChange: (v: string) => void;
-  onAddRider: () => void;
-  exportProgress: number | null;
-  onExportStart: () => void;
-  onExportProgress: (p: number) => void;
-  onExportComplete: () => void;
+  onAddRider?: () => void;
+  exportProgress?: number | null;
+  onExportStart?: () => void;
+  onExportProgress?: (p: number) => void;
+  onExportComplete?: () => void;
 }
 
 /**
@@ -29,15 +29,15 @@ interface RiderFiltersBarProps {
  */
 export function RiderFiltersBar({
   search,
-  searching,
+  searching = false,
   stateFilter,
   kycFilter,
-  riders,
+  riders = [],
   onSearchChange,
   onStateFilterChange,
   onKycFilterChange,
   onAddRider,
-  exportProgress,
+  exportProgress = null,
   onExportStart,
   onExportProgress,
   onExportComplete,
@@ -60,14 +60,16 @@ export function RiderFiltersBar({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="default"
-            className="rounded-xl h-11 px-5"
-            onClick={onAddRider}
-          >
-            <UserPlus className="w-5 h-5 mr-2" /> Add Rider
-          </Button>
+          {onAddRider && (
+            <Button
+              variant="default"
+              size="default"
+              className="rounded-xl h-11 px-5"
+              onClick={onAddRider}
+            >
+              <UserPlus className="w-5 h-5 mr-2" /> Add Rider
+            </Button>
+          )}
           {exportProgress !== null && (
             <div className="flex items-center gap-2 px-3 py-1 bg-primary/5 border border-primary/20 rounded-lg">
               <Loader2 className="w-3 h-3 animate-spin text-primary" />

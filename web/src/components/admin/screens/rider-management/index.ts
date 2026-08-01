@@ -5,7 +5,7 @@
 export { DetailGroup } from './DetailGroup';
 export { MediaPreview } from './MediaPreview';
 export { RiderBulkActionsBar } from './RiderBulkActionsBar';
-export { RiderFiltersBar } from './RiderFiltersBar';
+export { RiderFiltersBar, type RiderFiltersBarProps } from './RiderFiltersBar';
 export {
   RiderBulkDeleteDialog,
   RiderClearGuarantorDialog,
@@ -17,7 +17,7 @@ export {
 export { AddRiderDialog } from './AddRiderDialog';
 export { RiderDetailDialog } from './RiderDetailDialog';
 export { RiderTable } from './RiderTable';
-export { useRiders } from './useRiders';
+export { useRiders, type RidersHook } from './useRiders';
 export {
   getKycBadge,
   getStateBadge,

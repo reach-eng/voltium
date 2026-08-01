@@ -437,10 +437,13 @@ export function useRiders() {
     // filters
     search,
     setSearch,
+    onSearchChange: setSearch,
     stateFilter,
     setStateFilter,
+    onStateFilterChange: setStateFilter,
     kycFilter,
     setKycFilter,
+    onKycFilterChange: setKycFilter,
     page,
     setPage,
     totalPages,
