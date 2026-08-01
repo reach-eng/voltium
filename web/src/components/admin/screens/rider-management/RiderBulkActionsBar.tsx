@@ -6,17 +6,17 @@ import { Loader2 } from 'lucide-react';
 import { downloadSelectedRiderCsv } from './exportSelectedRiders';
 import type { Rider } from './types';
 
-interface RiderBulkActionsBarProps {
-  selectedCount: number;
-  bulkLoading: boolean;
-  canUndo: boolean;
-  allRiders: Rider[];
+export interface RiderBulkActionsBarProps {
+  selectedCount?: number;
+  bulkLoading?: boolean;
+  canUndo?: boolean;
+  allRiders?: Rider[];
   selectedIds: Set<string>;
-  onApprove: () => void;
-  onSuspend: () => void;
-  onDelete: () => void;
-  onUndo: () => void;
-  onClear: () => void;
+  onApprove?: () => void;
+  onSuspend?: () => void;
+  onDelete?: () => void;
+  onUndo?: () => void;
+  onClear?: () => void;
 }
 
 /**
@@ -26,9 +26,9 @@ interface RiderBulkActionsBarProps {
  */
 export function RiderBulkActionsBar({
   selectedCount,
-  bulkLoading,
-  canUndo,
-  allRiders,
+  bulkLoading = false,
+  canUndo = false,
+  allRiders = [],
   selectedIds,
   onApprove,
   onSuspend,
@@ -36,12 +36,13 @@ export function RiderBulkActionsBar({
   onUndo,
   onClear,
 }: RiderBulkActionsBarProps) {
-  if (selectedCount === 0) return null;
+  const count = selectedCount ?? selectedIds.size;
+  if (count === 0) return null;
 
   return (
     <div className="flex items-center gap-1 p-1 bg-primary/5 rounded-xl border border-primary/20 animate-in fade-in slide-in-from-right-2">
       <span className="text-xs px-2 font-medium text-primary">
-        {selectedCount} selected
+        {count} selected
       </span>
       <Button
         variant="ghost"

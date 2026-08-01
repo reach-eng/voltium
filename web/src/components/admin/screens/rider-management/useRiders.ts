@@ -45,6 +45,11 @@ export function useRiders() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [lastAction, setLastAction] = useState<LastBulkAction | null>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newRider, setNewRider] = useState({ phone: '', fullName: '' });
+  const [addingRider, setAddingRider] = useState(false);
+  const [showAdjustWallet, setShowAdjustWallet] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -429,7 +434,39 @@ export function useRiders() {
     setSelectedIds(new Set());
   }, []);
 
+  const handleAddRider = useCallback(async () => {
+    if (newRider.phone.length < 10) return;
+    setAddingRider(true);
+    try {
+      const res = await fetch('/api/admin/riders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRider),
+      });
+      if (res.ok) {
+        setShowAddDialog(false);
+        setNewRider({ phone: '', fullName: '' });
+        fetchRiders();
+      }
+    } catch (err) {
+      console.error('Failed to add rider', err);
+    } finally {
+      setAddingRider(false);
+    }
+  }, [newRider, fetchRiders]);
+
   return {
+    // modal states
+    showAddDialog,
+    setShowAddDialog,
+    newRider,
+    setNewRider,
+    addingRider,
+    handleAddRider,
+    showAdjustWallet,
+    setShowAdjustWallet,
+    bulkDeleteOpen,
+    setBulkDeleteOpen,
     // data
     riders,
     loading,
@@ -446,6 +483,7 @@ export function useRiders() {
     onKycFilterChange: setKycFilter,
     page,
     setPage,
+    onPageChange: setPage,
     totalPages,
     total,
     sortKey,
@@ -453,8 +491,11 @@ export function useRiders() {
     onSort,
     // selection
     selectedIds,
+    setSelectedIds,
     toggleSelectAll,
+    onToggleAll: toggleSelectAll,
     toggleSelectOne,
+    onToggleOne: toggleSelectOne,
     clearSelection,
     bulkLoading,
     handleBulkAction,
@@ -465,6 +506,7 @@ export function useRiders() {
     // detail
     selectedRider,
     setSelectedRider,
+    onViewDetails: setSelectedRider,
     isEditing,
     setIsEditing,
     editForm,
@@ -475,9 +517,11 @@ export function useRiders() {
     handleDeleteRider,
     confirmDelete,
     setConfirmDelete,
+    onDelete: setConfirmDelete,
     handleTlAction,
     // KYC
     selectedKycDocs,
+    setSelectedKycDocs,
     toggleKycDoc,
     confirmKycAction,
     setConfirmKycAction,

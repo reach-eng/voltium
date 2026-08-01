@@ -136,21 +136,24 @@ export function RiderKycActionDialog({
   );
 }
 
-interface RiderDeleteDocDialogProps {
+export interface RiderDeleteDocDialogProps {
+  open?: boolean;
   docKey: string | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
 
 export function RiderDeleteDocDialog({
+  open,
   docKey,
   onOpenChange,
   onConfirm,
 }: RiderDeleteDocDialogProps) {
+  const isOpen = open ?? !!docKey;
   return (
     <AlertDialog
-      open={!!docKey}
-      onOpenChange={(open) => onOpenChange(open)}
+      open={isOpen}
+      onOpenChange={(v) => onOpenChange(v)}
     >
       <AlertDialogContent className="rounded-2xl">
         <AlertDialogHeader>
@@ -174,7 +177,7 @@ export function RiderDeleteDocDialog({
   );
 }
 
-interface RiderClearGuarantorDialogProps {
+export interface RiderClearGuarantorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -209,9 +212,10 @@ export function RiderClearGuarantorDialog({
   );
 }
 
-interface RiderBulkDeleteDialogProps {
+export interface RiderBulkDeleteDialogProps {
   open: boolean;
   count: number;
+  loading?: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 }
@@ -248,28 +252,38 @@ export function RiderBulkDeleteDialog({
   );
 }
 
-interface RiderUndoToastProps {
-  visible: boolean;
-  count: number;
-  action: string;
-  busy: boolean;
-  onUndo: () => void;
-  onDismiss: () => void;
+export interface RiderUndoToastProps {
+  visible?: boolean;
+  show?: boolean;
+  count?: number;
+  action?: string;
+  busy?: boolean;
+  lastAction?: { ids: string[]; action: string } | null;
+  onUndo?: () => void;
+  onDismiss?: () => void;
+  onClose?: () => void;
 }
 
 export function RiderUndoToast({
   visible,
+  show,
   count,
   action,
-  busy,
+  lastAction,
   onUndo,
   onDismiss,
+  onClose,
 }: RiderUndoToastProps) {
-  if (!visible) return null;
+  const isVisible = visible ?? show ?? (!!lastAction && lastAction.ids.length > 0);
+  const itemCount = count ?? lastAction?.ids.length ?? 0;
+  const actionText = action ?? lastAction?.action ?? '';
+  const handleClose = onClose ?? onDismiss ?? (() => {});
+
+  if (!isVisible) return null;
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-foreground text-background rounded-xl shadow-lg animate-in slide-in-from-bottom-2">
       <span className="text-sm">
-        {count} rider(s) updated to {action}
+        {itemCount} rider(s) updated to {actionText}
       </span>
       <Button size="sm" variant="secondary" onClick={onUndo} className="h-7 text-xs">
         <Undo2 className="w-3 h-3 mr-1" /> Undo
@@ -277,7 +291,7 @@ export function RiderUndoToast({
       <Button
         size="sm"
         variant="ghost"
-        onClick={onDismiss}
+        onClick={handleClose}
         className="h-7 w-7 p-0 text-background/60 hover:text-background"
       >
         <X className="w-3 h-3" />
