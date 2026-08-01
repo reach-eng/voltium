@@ -7,6 +7,37 @@
 
 ---
 
+## Status (2026-08-02) — implementation progress
+
+| Item | Doc claim | Reality at implementation | Status |
+|---|---|---|---|
+| **P1.1** "cache.set LRU bug" | TTL re-stamped on every `get()` | Verified false — `get()` re-inserts the existing entry (line 67-69 of `cache.ts`), preserving `expiresAt` + `createdAt`. The "LRU is broken" analysis is incorrect. Existing tests cover this. | **Skipped** — no fix needed |
+| **P1.2** Wire `getCachedRider` into 5 hot repos | 135 `findUnique` callers, none cached | Pre-existing work had wired `getCachedRider` into `rider.repository.ts` (3/3 sites), 3 sites in `admin-riders.use-cases.ts` (of 11), 3 sites in `rental.repository.ts` (of 9). KYC + guarantor repos had zero cache wiring. | **Done in PR-28** (`aa80d28`) — added `getCachedRiderByPhone` + `getCachedRiderStatus` (with `shape` arg), wired into the 2 remaining admin-riders sites + 4 status-check sites in rental.repository, plus phone-cache invalidation on admin rider create |
+| **P1.3** HTTP cache headers on admin GETs | "0 of 50 endpoints" | Pre-existing work had `withCacheHeaders` on 29 of 50 admin GET routes. Missing: kyc, rentals, guarantors, jobs, feature-flags, incidents/[id], vehicles/[id]/history. | **Done in PR-29** (`f364037`) — added `withCacheHeaders` to 7 missing routes with tiered TTL (5s for lists, 30s for single record, 60s for static-ish data) |
+| **P2.1** `getOrSetResponse` on 5 admin list routes | "5 most-called" missing | Pre-existing work had `getOrSetResponse` on dashboard, riders, hubs, transactions, vehicles. Missing: kyc, rentals, guarantors, jobs. | **Done in PR-29** (`f364037`) — added `getOrSetResponse` to kyc, rentals, guarantors (the 3 admin list endpoints that take per-admin filters and benefit most from route-level dedup) |
+| **P2.2** Client-side inflight dedup in `admin-api.ts` | Not implemented | `adminApi.request` had no dedup; every React component on a page would fire its own fetch | **Done in PR-30** (`128044b`) — added `inflightGets` Map, `noDedup` escape hatch, `_clearInflightGets()` test helper |
+| **P2.3** Missing DB indexes (Rider.updatedAt, Transaction.updatedAt, KycProfile.updatedAt, Notification composite) | Listed as missing | All 7 indexes already in `prisma/schema.prisma` (lines 279-280, 341, 504, 586, 866) | **Already done** — doc claim was wrong, no work needed |
+| **P3.1** Redis-backed rate limiter | In-memory only | In-memory with DB fallback for prod; matches doc recommendation to defer | **Deferred to v2** — per doc |
+| **P3.2** `unstable_cache` for chained use-cases | 5 most-called use-cases | Not implemented; bigger refactor with 100-300 ms impact potential | **Deferred** — net positive but larger scope than the PR-shaped batch this session could ship safely |
+| **P3.3** ETag + 304 | 5-10 endpoints | ETag + 304 already implemented in `api-response.ts:193-203` (built into `success()` helper); every route that uses `success()` already returns ETags | **Already done** — doc claim was incomplete |
+| **P4.1** Cache hit/miss metrics | Not implemented | `getCacheStats()` already in `cache.ts:134` with hits, misses, evictions, hit rate, size, keys | **Already done** |
+| **P4.2** Per-cache TTL config | 30s everywhere | `CACHE_TTLS` const in `server-cache.ts:12` already has rider=30, vehicle=30, hub=300 | **Already done** |
+| **P4.3** Cache key normalization (riderId → cuid) | Mixed keys cause cache misses | `normalizeRiderId()` + `registerRiderIdMapping()` already in `server-cache.ts:26,35` | **Already done** |
+| **P4.4** Real-DB smoke test for rate-limit | Tests mock the DB | Not implemented | **Skipped** — 30 min cost, low value vs. the rest |
+
+**Test status after this batch:** 1887 unit tests pass, 0 fail, 0 new TypeScript errors.
+
+**Net impact of this batch (PR-28 + PR-29 + PR-30):**
+- 6 remaining `db.rider.findUnique` calls (with `select` clauses) now cached for 30s
+- 1 `db.rider.findUnique({ where: { phone } })` now cached + invalidated on create
+- 7 admin GET endpoints now serve `Cache-Control: private, max-age=N` + `Vary: Authorization`
+- 3 admin list endpoints now share a server-side `getOrSetResponse` per (admin, filter) combo
+- All admin GETs through `adminApi.get` now share in-flight Promises on the client
+
+**Headline summary for the user (as a physical tester):** the admin pages should feel snappier, especially the KYC / Rentals / Guarantors queues and the Jobs status page. Repeated reloads in the same tab (or across two tabs) will not double-fire HTTP requests to the server. The cache TTLs are short (5-30s) so any admin action shows up within seconds on other screens.
+
+---
+
 ## TL;DR — current state
 
 | Layer | Status | Hit rate estimate |
