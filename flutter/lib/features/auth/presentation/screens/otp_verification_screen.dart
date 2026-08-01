@@ -346,8 +346,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
+              style: AppTypography.bodyMedium.copyWith(
                 color: AppColors.onSurfaceVariant,
                 height: 1.6,
               ),

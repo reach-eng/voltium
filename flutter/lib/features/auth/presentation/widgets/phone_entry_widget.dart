@@ -198,8 +198,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                         filled: true,
                         fillColor: Colors.transparent,
                         hintText: '00000 00000',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
+                        hintStyle: AppTypography.bodyLarge.copyWith(
                           color: AppColors.onSurfaceDisabled,
                           letterSpacing: 1.5,
                           fontWeight: FontWeight.w400,

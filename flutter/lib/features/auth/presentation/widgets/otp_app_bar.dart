@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/app_typography.dart';
 import 'dart:ui' as ui;
 
 /// Custom top bar for [OtpVerificationScreen]:
@@ -55,8 +56,7 @@ class OtpAppBar extends StatelessWidget {
           ),
           Text(
             'Voltium',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
+            style: AppTypography.titleMedium.copyWith(
               fontWeight: FontWeight.w800,
               color: AppColors.onSurface,
               letterSpacing: 1.5,

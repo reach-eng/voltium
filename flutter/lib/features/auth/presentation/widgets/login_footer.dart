@@ -52,8 +52,7 @@ class LoginFooter extends StatelessWidget {
               child: RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                  style: AppTypography.bodySmall.copyWith(
                     color: AppColors.onSurfaceVariant,
                     height: 1.6,
                   ),

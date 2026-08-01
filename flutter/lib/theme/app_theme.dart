@@ -29,6 +29,7 @@ class AppColors {
   static const Color primary = Color(0xFF0053C1);
   static const Color primaryLight = Color(0xFF2F6DDE);
   static const Color primaryDark = Color(0xFF003E92);
+  static const Color voltAccent = Color(0xFF00E5FF); // Electric Cyan highlight
 
   // Status & Semantic Colors
   static const Color success = Color(0xFF10B981); // emerald-500

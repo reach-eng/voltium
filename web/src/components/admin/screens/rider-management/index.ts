@@ -14,6 +14,9 @@ export {
   RiderKycActionDialog,
   RiderUndoToast,
 } from './RiderManagementDialogs';
+export { AddRiderDialog } from './AddRiderDialog';
+export { RiderDetailDialog } from './RiderDetailDialog';
+export { RiderTable } from './RiderTable';
 export { useRiders } from './useRiders';
 export {
   getKycBadge,

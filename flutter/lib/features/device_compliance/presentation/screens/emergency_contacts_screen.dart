@@ -29,7 +29,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
         ),
         title: Text(
           'Emergency Contacts',
-          style: GoogleFonts.plusJakartaSans(
+          style: AppTypography.titleMedium.copyWith(
             color: colors.onSurface,
             fontWeight: FontWeight.bold,
           ),

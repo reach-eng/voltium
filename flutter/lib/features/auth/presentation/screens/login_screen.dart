@@ -311,8 +311,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               const SizedBox(height: 8),
               Text(
                 'Enter the registered phone number to login or enter a new number to create another account.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
+                style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.onSurfaceVariant,
                   height: 1.6,
                 ),
