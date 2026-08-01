@@ -8,6 +8,12 @@ export interface FetchOptions extends RequestInit {
   quiet?: boolean;
   /** AbortSignal for cancellation */
   signal?: AbortSignal;
+  /**
+   * Bypass the in-flight request dedup. Useful for "force refresh" UI affordances
+   * where the user explicitly wants a fresh fetch even if another caller is
+   * already in flight for the same URL.
+   */
+  noDedup?: boolean;
 }
 
 export interface ApiErrorResult {
@@ -22,6 +28,7 @@ export interface ApiErrorResult {
  * - Consistent error handling
  * - JSON parsing safety
  * - Quiet mode for non-critical requests
+ * - In-flight dedup for GET requests (P2.2 — see docs/CACHE_RECOMMENDATIONS_2026-08-01.md)
  *
  * @example
  * ```ts
@@ -31,12 +38,65 @@ export interface ApiErrorResult {
  * const result = await api.put('/api/admin/items', { id: '...', status: 'APPROVED' });
  * ```
  */
+
+// ---------------------------------------------------------------------------
+// In-flight request dedup (GET only)
+//
+// When two components on the same page call `adminApi.get('/api/admin/riders')`
+// before the first response lands, they both await the same Promise instead of
+// firing two HTTP requests. This is the client-side counterpart of the
+// server-side `getOrSetResponse` / `cachedPrismaQuery` layers — the server
+// already does its own dedup, but skipping the round trip entirely is cheaper
+// for parallel UI panels.
+//
+// Key: `GET <url>`. Body-bearing methods are never deduped; mutating twice is
+// a bug we want to surface, not hide.
+// ---------------------------------------------------------------------------
+const inflightGets = new Map<string, Promise<unknown>>();
+
+function inflightKey(url: string): string {
+  return `GET ${url}`;
+}
+
+/**
+ * Test-only: drop all in-flight dedup entries. Call this between tests so a
+ * test's in-flight promise doesn't leak into the next test.
+ */
+export function _clearInflightGets(): void {
+  inflightGets.clear();
+}
+
 async function request<T = any>(
   url: string,
   options: FetchOptions = {}
 ): Promise<{ data?: T; pagination?: { totalPages: number; total: number; page: number; limit: number }; error?: string; success: boolean }> {
-  const { quiet, ...fetchOptions } = options;
+  const { quiet, noDedup, ...fetchOptions } = options;
+  const method = (fetchOptions.method ?? 'GET').toUpperCase();
 
+  // In-flight dedup: only for GET. Only dedupe if no caller requested a
+  // bypass and the body is empty (GETs have no body anyway, but a custom
+  // caller could be weird).
+  if (method === 'GET' && !noDedup && !fetchOptions.body) {
+    const key = inflightKey(url);
+    const pending = inflightGets.get(key);
+    if (pending) {
+      return pending as ReturnType<typeof request<T>>;
+    }
+    const p = runRequest<T>(url, fetchOptions, quiet).finally(() => {
+      inflightGets.delete(key);
+    });
+    inflightGets.set(key, p);
+    return p;
+  }
+
+  return runRequest<T>(url, fetchOptions, quiet);
+}
+
+async function runRequest<T>(
+  url: string,
+  fetchOptions: FetchOptions,
+  quiet?: boolean
+): Promise<{ data?: T; pagination?: { totalPages: number; total: number; page: number; limit: number }; error?: string; success: boolean }> {
   try {
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json', ...(fetchOptions.headers as Record<string, string>) },
