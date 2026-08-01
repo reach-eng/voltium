@@ -1,10 +1,7 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,61 +21,26 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Search,
   Edit,
-  IndianRupee,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldX,
   Phone,
   Mail,
-  Building,
-  MapPin,
-  CalendarDays,
   Lock,
-  Zap,
-  History,
-  AlertTriangle,
-  User,
-  UserPlus,
-  Wallet,
   Unlock,
-  MoreVertical,
   Loader2,
-  Undo2,
-  CheckCircle2,
-  Ban,
-  Camera,
-  Smartphone,
-  X,
-  Users,
-  Bike,
-  Calendar,
-  Clock,
-  Trash2,
+  User,
+  ShieldCheck,
 } from 'lucide-react';
-import DeviceTrackingView from '../DeviceTrackingView';
-import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { Rider, RiderEditForm } from '@/lib/types/admin';
-import {
-  STATE_FILTERS,
-  getKycBadge,
-  DetailGroup,
-  MediaPreview,
-  PERMISSIONS,
-} from './helpers';
+import { getKycBadge } from './helpers';
 import {
   RiderProfileTab,
   RiderKycDocsTab,
   RiderGuarantorTab,
   RiderTLAssignmentTab,
+  RiderInspectionTab,
+  RiderJourneyTab,
+  RiderMoneyTab,
+  RiderPermissionsTab,
 } from './detail';
 
 /* ── Props ── */
@@ -349,279 +311,27 @@ export function RiderDetailDialog({
                 />
 
                 {/* ── Pickup Inspection Tab ── */}
-                <TabsContent
-                  value="inspection"
-                  className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                >
-                  <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10">
-                    <div className="flex items-center justify-between mb-8">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
-                        <Camera className="w-5 h-5" /> Vehicle Pickup Photos
-                      </h4>
-                      <div className="text-[10px] font-bold uppercase text-rose-500/60 tracking-tighter">
-                        Required for Post-Active State
-                      </div>
-                    </div>
-                    {!rider.pickupPhotoFront &&
-                    !rider.pickupPhotoBack &&
-                    !rider.pickupPhotoLeft &&
-                    !rider.pickupPhotoRight &&
-                    !rider.pickupPhotoWithVehicle ? (
-                      <div className="flex flex-col items-center justify-center p-12 border border-dashed rounded-3xl bg-background/50 text-center opacity-40">
-                        <Camera className="w-10 h-10 text-rose-500 mb-4" />
-                        <p className="text-sm font-black uppercase">No Pickup Photos</p>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          Vehicle handover photos have not been uploaded yet.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 gap-6">
-                        <MediaPreview src={rider.pickupPhotoFront} label="Front View" />
-                        <MediaPreview src={rider.pickupPhotoBack} label="Rear View" />
-                        <MediaPreview src={rider.pickupPhotoLeft} label="Left Side" />
-                        <MediaPreview src={rider.pickupPhotoRight} label="Right Side" />
-                        <MediaPreview
-                          src={rider.pickupPhotoWithVehicle}
-                          label="With Vehicle"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
+                <RiderInspectionTab rider={rider} />
 
                 {/* ── Lifecycle Tab ── */}
-                <TabsContent
-                  value="journey"
-                  className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                >
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="space-y-6">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-primary">
-                        Sign-Up Steps
-                      </h4>
-                      <div className="space-y-3">
-                        {([
-                          {
-                            label: 'Registration',
-                            key: 'registrationDone' as const,
-                            dateKey: 'registrationDoneAt' as const,
-                          },
-                          { label: 'Deposit', key: 'depositDone' as const, dateKey: 'depositDoneAt' as const },
-                          { label: 'KYC', key: 'kycDone' as const, dateKey: 'kycDoneAt' as const },
-                          { label: 'Plan', key: 'planDone' as const, dateKey: 'planDoneAt' as const },
-                          { label: 'Pickup', key: 'pickupDone' as const, dateKey: 'pickedUpAt' as const },
-                        ] as const).map((step) => (
-                          <div
-                            key={step.key}
-                            className="flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-muted/50 group transition-all hover:bg-muted/30"
-                          >
-                            <div className="space-y-0.5">
-                              <span className="text-xs font-black uppercase tracking-tight block">
-                                {step.label}
-                              </span>
-                              <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-widest">
-                                System Flag
-                              </span>
-                              {rider[step.key] && rider[step.dateKey] && (
-                                <span className="text-[9px] text-muted-foreground/50 block mt-0.5">
-                                  {formatDateDDMMYYYY(rider[step.dateKey])}
-                                </span>
-                              )}
-                            </div>
-                            {isEditing ? (
-                              <button
-                                onClick={() =>
-                                  setEditForm({ ...editForm, [step.key]: !editForm[step.key] })
-                                }
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${editForm[step.key] ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'}`}
-                              >
-                                {editForm[step.key] ? (
-                                  <CheckCircle2 className="w-3 h-3" />
-                                ) : (
-                                  <Clock className="w-3 h-3" />
-                                )}
-                                {editForm[step.key] ? 'Done' : 'Pending'}
-                              </button>
-                            ) : rider[step.key] ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10 w-fit gap-1 text-[10px]">
-                                <CheckCircle2 className="w-3 h-3" /> Done
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-amber-500 border-amber-500/20 w-fit gap-1 text-[10px]"
-                              >
-                                <Clock className="w-3 h-3" /> Pending
-                              </Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-6">
-                      <h4 className="text-sm font-black uppercase tracking-widest text-primary">
-                        Account Controls
-                      </h4>
-                      <div className="p-8 rounded-3xl bg-primary/5 border border-primary/10 space-y-8">
-                        <DetailGroup
-                          label="Lifecycle Status"
-                          value={
-                            isEditing ? editForm.lifecycleStatus : rider.lifecycleStatus
-                          }
-                          isEditing={isEditing}
-                          field="lifecycleStatus"
-                          type="select"
-                          options={['NEW', 'KYC_SUBMITTED', 'ACTIVE', 'SUSPENDED', 'CLOSED']}
-                          onEdit={(v) => setEditForm({ ...editForm, lifecycleStatus: v })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                <RiderJourneyTab
+                  rider={rider}
+                  isEditing={isEditing}
+                  editForm={editForm}
+                  setEditForm={setEditForm}
+                />
 
                 {/* ── Finance Tab ── */}
-                <TabsContent
-                  value="money"
-                  className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                >
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="p-10 rounded-[2.5rem] bg-emerald-500/5 border border-emerald-500/10 shadow-sm transition-all hover:shadow-lg hover:shadow-emerald-500/5">
-                      <div className="flex items-center gap-3 mb-4 text-emerald-600">
-                        <Wallet className="w-6 h-6" />
-                        <Label className="text-xs font-black uppercase tracking-widest">
-                          Current Wallet Balance
-                        </Label>
-                      </div>
-                      <div className="flex items-center text-4xl font-black tracking-tighter justify-between">
-                        <div>
-                          <span className="text-emerald-500 opacity-50 mr-2">₹</span>
-                          <span>
-                            {(rider.walletBalance || 0).toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-xl border-emerald-500/20 text-emerald-600 hover:bg-emerald-50"
-                          onClick={() => setShowAdjustWallet(true)}
-                        >
-                          Adjust Balance
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-10 rounded-[2.5rem] bg-blue-500/5 border border-blue-500/10 shadow-sm transition-all hover:shadow-lg hover:shadow-blue-500/5">
-                      <div className="flex items-center gap-3 mb-4 text-blue-600">
-                        <ShieldCheck className="w-6 h-6" />
-                        <Label className="text-xs font-black uppercase tracking-widest">
-                          Security Deposit Held
-                        </Label>
-                      </div>
-                      <div className="flex items-center text-4xl font-black tracking-tighter">
-                        <span className="text-blue-500 opacity-50 mr-2">₹</span>
-                        {isEditing ? (
-                          <Input
-                            type="number"
-                            value={editForm.securityDeposit || 0}
-                            onChange={(e) =>
-                              setEditForm({
-                                ...editForm,
-                                securityDeposit: Number(e.target.value),
-                              })
-                            }
-                            className="bg-transparent border-none text-4xl font-black h-auto p-0 focus-visible:ring-0 w-full"
-                          />
-                        ) : (
-                          <span>
-                            {(rider.securityDeposit || 0).toLocaleString('en-IN')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 rounded-3xl bg-muted/20 border flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-background flex items-center justify-center border shadow-sm">
-                        <Calendar className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/50">
-                          Deposit Payment Status
-                        </p>
-                        {isEditing ? (
-                          <Select
-                            value={editForm.depositStatus || 'PENDING'}
-                            onValueChange={(v) => setEditForm({ ...editForm, depositStatus: v })}
-                          >
-                            <SelectTrigger className="bg-transparent border-none h-auto p-0 font-black text-lg focus:outline-none">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PENDING">PENDING</SelectItem>
-                              <SelectItem value="PAID">PAID</SelectItem>
-                              <SelectItem value="REFUNDED">REFUNDED</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge(rider.depositStatus)}`}
-                          >
-                            {rider.depositStatus}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black uppercase text-muted-foreground/50 mb-1">
-                        Payment Streak
-                      </p>
-                      <div className="text-2xl font-black flex items-center justify-end gap-2 text-emerald-600">
-                        <Zap className="w-5 h-5 fill-emerald-600" />
-                        {rider.paymentStreak || 0}
-                      </div>
-                    </div>
-                  </div>
-                </TabsContent>
+                <RiderMoneyTab
+                  rider={rider}
+                  isEditing={isEditing}
+                  editForm={editForm}
+                  setEditForm={setEditForm}
+                  setShowAdjustWallet={setShowAdjustWallet}
+                />
 
                 {/* ── Device Tab ── */}
-                <TabsContent
-                  value="device"
-                  className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                >
-                  {/* Permission Matrix */}
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-                      <Smartphone className="w-4 h-4" /> Phone Permissions
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {PERMISSIONS.map((perm) => (
-                        <div
-                          key={perm.key}
-                          className="flex flex-col gap-1.5 p-3 rounded-xl border bg-muted/5"
-                        >
-                          <span className="text-[10px] font-bold uppercase text-muted-foreground/60">
-                            {perm.label}
-                          </span>
-                          <div className="flex items-center justify-between">
-                            {rider[perm.key] ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10 w-fit gap-1 text-[10px]">
-                                <CheckCircle2 className="w-3 h-3" /> Granted
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-rose-400 border-rose-400/20 w-fit gap-1 text-[10px]"
-                              >
-                                <ShieldAlert className="w-3 h-3" /> Required
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <DeviceTrackingView riderId={rider.id} />
-                </TabsContent>
+                <RiderPermissionsTab rider={rider} />
 
                 {/* ── Ops Tab ── */}
                 <RiderTLAssignmentTab
