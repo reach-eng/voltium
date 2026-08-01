@@ -13,6 +13,7 @@ import { validateRentalTransition, RentalStateError } from './rental-state-machi
 import type { RentalStatus } from './rental.types';
 import { validateTransition as validateRiderTransition } from '@/server/modules/riders/rider-lifecycle.service';
 import { Prisma } from '@prisma/client';
+import { getCachedRider, getCachedRiderStatus, invalidateRiderCache, invalidateVehicleCache, CACHE_TTLS } from '@/lib/server-cache';
 
 export const rentalRepository = {
   async findPlans() {
@@ -24,25 +25,33 @@ export const rentalRepository = {
   },
 
   async findActiveRental(riderDbId: string) {
-    return db.rider.findUnique({
-      where: { id: riderDbId },
-      select: {
-        id: true,
-        lifecycleStatus: true,
-        currentPlan: true,
-        assignedVehicle: true,
-        pickupHub: true,
-        planStartDate: true,
-        planEndDate: true,
-      },
-    });
+    return getCachedRiderStatus(
+      riderDbId,
+      () =>
+        db.rider.findUnique({
+          where: { id: riderDbId },
+          select: {
+            id: true,
+            lifecycleStatus: true,
+            currentPlan: true,
+            assignedVehicle: true,
+            pickupHub: true,
+            planStartDate: true,
+            planEndDate: true,
+          },
+        }),
+      CACHE_TTLS.rider,
+      'wide'
+    );
   },
 
   async selectPlan(riderDbId: string, planId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      select: { lifecycleStatus: true },
-    });
+    const rider = await getCachedRiderStatus(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        select: { lifecycleStatus: true },
+      })
+    );
 
     const currentStatus: RentalStatus =
       (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
@@ -64,14 +73,17 @@ export const rentalRepository = {
       );
     }
 
-    return db.rider.findUnique({ where: { id: riderDbId } });
+    invalidateRiderCache(riderDbId);
+    return getCachedRider(riderDbId, () => db.rider.findUnique({ where: { id: riderDbId } }));
   },
 
   async startRental(riderDbId: string, vehicleId: string, hubId: string, teamLeader: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      select: { lifecycleStatus: true },
-    });
+    const rider = await getCachedRiderStatus(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        select: { lifecycleStatus: true },
+      })
+    );
 
     const currentStatus: RentalStatus =
       (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
@@ -96,14 +108,18 @@ export const rentalRepository = {
       );
     }
 
-    return db.rider.findUnique({ where: { id: riderDbId } });
+    invalidateRiderCache(riderDbId);
+    invalidateVehicleCache(vehicleId);
+    return getCachedRider(riderDbId, () => db.rider.findUnique({ where: { id: riderDbId } }));
   },
 
   async endRental(riderDbId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      select: { lifecycleStatus: true },
-    });
+    const rider = await getCachedRiderStatus(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        select: { lifecycleStatus: true },
+      })
+    );
 
     const currentStatus: RentalStatus =
       (rider?.lifecycleStatus as any as RentalStatus) || 'NO_RENTAL';
@@ -124,7 +140,8 @@ export const rentalRepository = {
       );
     }
 
-    return db.rider.findUnique({ where: { id: riderDbId } });
+    invalidateRiderCache(riderDbId);
+    return getCachedRider(riderDbId, () => db.rider.findUnique({ where: { id: riderDbId } }));
   },
 
   async findManyLeases(args: any) {
@@ -143,7 +160,7 @@ export const rentalRepository = {
   },
 
   async executeLeaseAction(lease: any, action: string) {
-    return db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       const currentStatus = lease.rider.lifecycleStatus;
 
       if (action === 'START' || action === 'PICKUP_COMPLETE') {
@@ -205,5 +222,11 @@ export const rentalRepository = {
       }
       throw new Error(`Unsupported rental action: ${action}`);
     });
+
+    // Invalidate rider + vehicle entity caches after any rental action that
+    // touches either entity (all actions above except MARK_OVERDUE do).
+    invalidateRiderCache(lease.riderId);
+    invalidateVehicleCache(lease.vehicleId);
+    return result;
   },
 };

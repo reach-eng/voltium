@@ -19,6 +19,7 @@ import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
+import { getCachedRider, getCachedRiderByPhone, invalidateRiderCache, invalidateRiderPhoneCache } from '@/lib/server-cache';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -118,11 +119,17 @@ export const adminRiderUseCases = {
 
     const where: Record<string, any> = {};
     if (search) {
-      where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
-        { riderId: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search } },
-      ];
+      const trimmed = search.trim();
+      const isPhoneLike = /^\+?[0-9]{5,15}$/.test(trimmed);
+      if (isPhoneLike) {
+        where.phone = { startsWith: trimmed };
+      } else {
+        where.OR = [
+          { fullName: { contains: trimmed, mode: 'insensitive' } },
+          { riderId: { contains: trimmed, mode: 'insensitive' } },
+          { phone: { contains: trimmed } },
+        ];
+      }
     }
     if (state && state !== 'ALL') where.lifecycleStatus = state;
     if (kycStatus) {
@@ -169,28 +176,8 @@ export const adminRiderUseCases = {
           vehicleId: true,
           intent: true,
           referralCode: true,
-          fatherName: true,
-          motherName: true,
-          dob: true,
-          currentAddress: true,
           createdAt: true,
           updatedAt: true,
-          pickupPhotoFront: true,
-          pickupPhotoBack: true,
-          pickupPhotoLeft: true,
-          pickupPhotoRight: true,
-          pickupPhotoWithVehicle: true,
-          deliveryId: true,
-          locationGranted: true,
-          batteryGranted: true,
-          contactsGranted: true,
-          callLogsGranted: true,
-          micGranted: true,
-          cameraGranted: true,
-          phoneGranted: true,
-          emergencyContact: true,
-          preferredShift: true,
-          referredBy: true,
           kycProfile: {
             select: {
               id: true,
@@ -295,8 +282,9 @@ export const adminRiderUseCases = {
 
     const { getStorageProvider } = await import('@/lib/storage');
     const storage = await getStorageProvider();
+    const urlCache = new Map<string, string>();
     const signed = await Promise.all(
-      flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage))
+      flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage, urlCache))
     );
 
     return {
@@ -315,7 +303,9 @@ export const adminRiderUseCases = {
   async create(input: { phone: string; fullName?: string }) {
     const { phone, fullName } = input;
 
-    const existing = await db.rider.findUnique({ where: { phone } });
+    const existing = await getCachedRiderByPhone(phone, () =>
+      db.rider.findUnique({ where: { phone } })
+    );
     if (existing) throw new Error('Phone already exists');
 
     const riderId = `VF-RD-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -349,6 +339,11 @@ export const adminRiderUseCases = {
       });
     });
 
+    // The phone-existence check above may have cached "not found" for this
+    // phone; clear it so the next create attempt with the same phone sees
+    // the freshly-inserted rider and fails the unique constraint cleanly.
+    invalidateRiderPhoneCache(phone);
+
     return sharedFlattenRider(rider as any);
   },
 
@@ -364,7 +359,7 @@ export const adminRiderUseCases = {
   ) {
     const { actorId, actorRole } = context;
 
-    const existing = await db.rider.findUnique({ where: { id } });
+    const existing = await getCachedRider(id, () => db.rider.findUnique({ where: { id } }));
     if (!existing) throw new Error('Rider not found');
 
     const riderData: any = {};
@@ -500,6 +495,8 @@ export const adminRiderUseCases = {
       });
     });
 
+    invalidateRiderCache(id);
+
     // Audit log for KYC actions
     if (kycData.status && ['APPROVED', 'REJECTED', 'INFO_REQUIRED'].includes(kycData.status)) {
       createAuditLog({
@@ -525,10 +522,12 @@ export const adminRiderUseCases = {
    * Get a rider by ID with wallet for admin actions.
    */
   async getRiderWithWallet(id: string) {
-    return db.rider.findUnique({
-      where: { id },
-      include: { wallet: true },
-    });
+    return getCachedRider(id, () =>
+      db.rider.findUnique({
+        where: { id },
+        include: { wallet: true },
+      })
+    );
   },
 
   /**
@@ -561,6 +560,8 @@ export const adminRiderUseCases = {
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
+    invalidateRiderCache(riderId);
+
     await createAuditLog({
       actorId,
       action: 'rider.assign_plan',
@@ -580,7 +581,7 @@ export const adminRiderUseCases = {
     actorId: string,
     actorRole: string
   ) {
-    const rider = await db.rider.findUnique({ where: { id: riderId } });
+    const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
     if (!rider) throw new Error('Rider not found');
 
     let assignedTl = data.teamLeader || rider.teamLeader;
@@ -607,6 +608,8 @@ export const adminRiderUseCases = {
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
 
+    invalidateRiderCache(riderId);
+
     await createAuditLog({
       actorId,
       action: 'rider.complete_pickup',
@@ -621,15 +624,19 @@ export const adminRiderUseCases = {
    * End rental for a rider — resets rental state.
    */
   async endRental(riderId: string, actorId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderId },
-      select: { assignedVehicle: true },
-    });
+    const rider = await getCachedRider(riderId, () =>
+      db.rider.findUnique({
+        where: { id: riderId },
+        select: { assignedVehicle: true },
+      })
+    );
     const result = await db.rider.update({
       where: { id: riderId },
       data: { assignedVehicle: null, pickedUpAt: null },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },
     });
+
+    invalidateRiderCache(riderId);
 
     await createAuditLog({
       actorId,
@@ -689,6 +696,7 @@ export const adminRiderUseCases = {
       updateData.lockPassword = await hashPassword(updateData.lockPassword);
     }
     await db.rider.update({ where: { id: riderId }, data: updateData });
+    invalidateRiderCache(riderId);
     await createAuditLog({
       action: 'system.config_change',
       entityId: riderId,
@@ -710,6 +718,7 @@ export const adminRiderUseCases = {
       db.wallet.deleteMany({ where: { riderId: id } }),
       db.rider.delete({ where: { id } }),
     ]);
+    invalidateRiderCache(id);
   },
 
   async listFleet(filters: {
