@@ -27,12 +27,27 @@ const memoryStore = new Map<string, RateLimitEntry>();
 // cap we evict the oldest entry (Map preserves insertion order). The DB
 // limiter is unaffected — it has its own row-level lifecycle.
 const MAX_MEMORY_STORE_SIZE = 50_000;
+const EVICTION_BATCH_SIZE = 500;
 
 function evictIfFull(): void {
   if (memoryStore.size >= MAX_MEMORY_STORE_SIZE) {
-    const oldestKey = memoryStore.keys().next().value;
-    if (oldestKey !== undefined) {
-      memoryStore.delete(oldestKey);
+    const now = Date.now();
+    let evicted = 0;
+    // First pass: purge expired entries
+    for (const [key, entry] of memoryStore) {
+      if (entry.resetAt <= now) {
+        memoryStore.delete(key);
+        evicted++;
+        if (evicted >= EVICTION_BATCH_SIZE) return;
+      }
+    }
+    // Second pass: evict oldest entries if still over 90% capacity
+    if (memoryStore.size >= MAX_MEMORY_STORE_SIZE * 0.9) {
+      for (const [key] of memoryStore) {
+        memoryStore.delete(key);
+        evicted++;
+        if (evicted >= EVICTION_BATCH_SIZE) break;
+      }
     }
   }
 }

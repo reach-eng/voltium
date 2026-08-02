@@ -107,22 +107,39 @@ export function invalidateRiderCache(riderId: string): void {
   invalidateCache(`rider:id:${key}`);
   invalidateCache(`rider:status:${key}`);
   invalidateCache(`rider:profile:${key}`);
+  revalidateEntityTag(`rider:${key}`);
 }
 
 export function invalidateRiderPhoneCache(phone: string): void {
   invalidateCache(`rider:phone:${phone}`);
+  revalidateEntityTag(`rider:phone:${phone}`);
 }
 
 export function invalidateVehicleCache(vehicleId: string): void {
   invalidateCache(`vehicle:id:${vehicleId}`);
+  revalidateEntityTag(`vehicle:${vehicleId}`);
 }
 
 export function invalidateHubCache(hubId: string): void {
   invalidateCache(`hub:id:${hubId}`);
+  revalidateEntityTag(`hub:${hubId}`);
 }
 
 export function invalidateAllEntityCaches(): void {
   invalidateCache('rider:*');
   invalidateCache('vehicle:*');
   invalidateCache('hub:*');
+}
+
+/**
+ * Safely trigger Next.js revalidateTag when called within a Next.js server context.
+ */
+export function revalidateEntityTag(tag: string): void {
+  try {
+    // Dynamic import pattern prevents breaking standalone non-Next test runners
+    const { revalidateTag } = require('next/cache');
+    revalidateTag(tag);
+  } catch (_e) {
+    // Expected in standalone unit test environments where Next context is omitted
+  }
 }
