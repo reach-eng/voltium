@@ -19,8 +19,8 @@ Widget buildTestApp(
     {Function(String, String?)? onNext, bool isSignUp = false}) {
   return ProviderScope(
     overrides: [
-      localeProviderRef.overrideWith((ref) => LocaleProvider()),
-      themeProviderRef.overrideWith((ref) => ThemeProvider()),
+      localeProviderRef.overrideWith(() => LocaleNotifier()),
+      themeProviderRef.overrideWith(() => ThemeNotifier()),
     ],
     child: MaterialApp(
       home: LoginScreen(onNext: onNext, isSignUp: isSignUp),

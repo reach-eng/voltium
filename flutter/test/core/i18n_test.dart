@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_io/io.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/gen/app_localizations_en.dart';
 import 'package:voltium_rider/gen/app_localizations_hi.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
+import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 void main() {
   group('i18n Localization Unit Tests', () {
@@ -80,18 +82,21 @@ void main() {
       expect(hiLoc.wallet_streakOf(3), equals('3 / 5 दिन'));
     });
 
-    test('LocaleProvider updates supported locales correctly', () {
-      final provider = LocaleProvider();
-      expect(provider.locale.languageCode, equals('en'));
-      expect(provider.isHindi, isFalse);
+    test('LocaleNotifier updates supported locales correctly', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(localeProviderRef.notifier);
 
-      provider.setHindi();
-      expect(provider.locale.languageCode, equals('hi'));
-      expect(provider.isHindi, isTrue);
+      expect(container.read(localeProviderRef).locale.languageCode, equals('en'));
+      expect(container.read(localeProviderRef).isHindi, isFalse);
 
-      provider.setEnglish();
-      expect(provider.locale.languageCode, equals('en'));
-      expect(provider.isHindi, isFalse);
+      await notifier.setHindi();
+      expect(container.read(localeProviderRef).locale.languageCode, equals('hi'));
+      expect(container.read(localeProviderRef).isHindi, isTrue);
+
+      await notifier.setEnglish();
+      expect(container.read(localeProviderRef).locale.languageCode, equals('en'));
+      expect(container.read(localeProviderRef).isHindi, isFalse);
     });
   });
 
@@ -102,7 +107,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           locale: const Locale('hi'),
-          supportedLocales: LocaleProvider.supportedLocales,
+          supportedLocales: LocaleNotifier.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Builder(
             builder: (context) {
