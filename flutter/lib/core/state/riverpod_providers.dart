@@ -25,7 +25,16 @@ import 'package:voltium_rider/core/state/app_provider.dart';
 
 import 'package:universal_io/io.dart';
 
-/// Riverpod provider for [AppProvider].
+/// Riverpod provider for [AppProvider] (R4.3b).
+///
+/// `AppProvider` is still a `ChangeNotifier` shim (kept that way
+/// so the legacy `ChangeNotifierProvider<AppProvider>` registration
+/// in `main.dart` continues to compile). The new
+/// `appStateViewProvider` (in `app_state_provider.dart`) is the
+/// preferred modern source of truth — it derives from the
+/// `appStateProvider` state machine and avoids the
+/// `ChangeNotifier` boilerplate. R4.3c will fully retire the
+/// `AppProvider` shim and remove this provider.
 final appProvider = ChangeNotifierProvider<AppProvider>((ref) {
   throw UnimplementedError('AppProvider must be overridden in ProviderScope');
 });
