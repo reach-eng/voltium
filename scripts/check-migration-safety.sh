@@ -12,7 +12,13 @@ set -eo pipefail
 
 echo "=== Prisma Migration Safety Review Check ==="
 
-MIGRATION_DIR="web/prisma/migrations"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/common-env.sh" ]; then
+  # shellcheck source=common-env.sh
+  source "$SCRIPT_DIR/common-env.sh"
+else
+  MIGRATION_DIR="web/prisma/migrations"
+fi
 
 if [ ! -d "$MIGRATION_DIR" ]; then
   echo "[OK] No migration directory found to scan."

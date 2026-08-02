@@ -16,7 +16,7 @@ This file contains context for AI assistants working on this codebase.
 | `npm run test:coverage:merge` | Merge unit + integration coverage (85% gate) |
 | `npm run test:coverage:combined` | Run full combined coverage pipeline |
 | `bash scripts/flutter-coverage.sh` | Flutter coverage with 85% threshold gate |
-| `flutter build apk --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning |
+| `flutter build apk --release --obfuscate --split-debug-info=build/symbols/ --dart-define=TLS_PIN_SHA256="<hash1>,<hash2>"` | Flutter release build with TLS Certificate Pinning & Obfuscation |
 | `npm run lint`      | ESLint                        |
 | `npm run db:deploy` | Apply database migrations     |
 

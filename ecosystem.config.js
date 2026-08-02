@@ -46,7 +46,7 @@ module.exports = {
       env: {
         ...commonEnv,
         PORT: process.env.PORT || '8081',
-        DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE || '8',
+        DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE || '4',
       },
       autorestart: true,
       max_restarts: 10,
