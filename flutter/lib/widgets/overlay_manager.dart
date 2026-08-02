@@ -35,7 +35,7 @@ class OverlayManager extends ConsumerWidget {
             !devPolicy.lockedByAdmin &&
             !devPolicy.forceUpdate &&
             !devPolicy.hasPermissionViolation)
-          _buildBalanceBanner(context, wallet),
+          _buildBalanceBanner(context, ref, wallet),
       ],
     );
   }
@@ -104,7 +104,8 @@ class OverlayManager extends ConsumerWidget {
     );
   }
 
-  Widget _buildBalanceBanner(BuildContext context, WalletProvider provider) {
+  Widget _buildBalanceBanner(
+      BuildContext context, WidgetRef ref, WalletState provider) {
     return Positioned(
       top: 0,
       left: 0,
@@ -152,7 +153,9 @@ class OverlayManager extends ConsumerWidget {
                   ),
                 ),
                 TextButton(
-                  onPressed: () => provider.setWalletBalanceWarning(false),
+                  onPressed: () => ref
+                      .read(walletProvider.notifier)
+                      .setWalletBalanceWarning(false),
                   child: Text(
                     'DISMISS',
                     style: GoogleFonts.plusJakartaSans(color: Colors.white),

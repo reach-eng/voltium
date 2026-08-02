@@ -84,7 +84,7 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
               onImageSelected: (img) => setState(() => _proofImage = img),
               onSubmit: (img, method, upiRef) async {
                 setState(() => _proofImage = img);
-                final wProvider = ref.read(walletProvider);
+                final wProvider = ref.read(walletProvider.notifier);
 
                 try {
                   await wProvider.topUpWallet(

@@ -5,8 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/theme/theme_provider.dart';
-import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';

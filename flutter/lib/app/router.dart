@@ -122,8 +122,8 @@ class _AppRouterState extends ConsumerState<AppRouter>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(riderProvider).init();
-        ref.read(supportProvider).initSupportData();
-        ref.read(engagementProvider).initEngagementData();
+        ref.read(supportProvider.notifier).initSupportData();
+        ref.read(engagementProvider.notifier).initEngagementData();
         ref.read(devicePolicyProvider).checkSystemPermissions();
       }
     });
@@ -139,7 +139,6 @@ class _AppRouterState extends ConsumerState<AppRouter>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
     final rProvider = ref.read(riderProvider);
-    final wProvider = ref.read(walletProvider);
 
     switch (state) {
       case AppLifecycleState.resumed:
@@ -150,9 +149,9 @@ class _AppRouterState extends ConsumerState<AppRouter>
         // on resume.
         rProvider.refreshFromApi();
         if (rProvider.riderId != null) {
-          wProvider.refreshTransactions(
-            riderId: rProvider.riderId!,
-          );
+          ref.read(walletProvider.notifier).refreshTransactions(
+                riderId: rProvider.riderId!,
+              );
         }
         break;
       case AppLifecycleState.inactive:

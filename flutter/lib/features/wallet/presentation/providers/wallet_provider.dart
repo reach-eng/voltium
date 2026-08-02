@@ -1,9 +1,30 @@
-import 'package:universal_io/io.dart';
+// R4.3c-4 — Riverpod v3 `WalletProvider` (Notifier + immutable state).
+//
+// Same surface as the previous `ChangeNotifier`:
+//   - `transactions`, `isRefreshingTransactions`, `lastError`,
+//     `isToppingUp`, `walletMinTopup`, `walletBalanceLow`,
+//     `currentBalance`
+//   - `topUpWallet`, `deleteTransactionHistory`,
+//     `refreshTransactions`, `setWalletBalanceWarning`,
+//     `setWalletSettings`, `logout`
+//
+// The notifier pulls its dependencies (`WalletRepository`,
+// `FilesRepository`) from Riverpod providers defined at the
+// bottom of this file. `main.dart` registers the actual
+// implementations via `ProviderScope.overrides`; tests can
+// inject fakes the same way.
+
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:universal_io/io.dart';
+
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
 import 'package:voltium_rider/models/transaction_model.dart';
+
 import '../../../../utils/app_logger.dart';
 
 TransactionStatus _parseTransactionStatus(String status) {
@@ -25,50 +46,66 @@ TransactionStatus _parseTransactionStatus(String status) {
   }
 }
 
-class WalletProvider extends ChangeNotifier {
-  final WalletRepository _walletRepository;
-  final FilesRepository _filesRepository;
+/// State for the wallet feature.
+@immutable
+class WalletState {
+  final List<TransactionModel> transactions;
+  final bool isRefreshingTransactions;
+  final String? lastError;
+  final bool isToppingUp;
+  final double walletMinTopup;
+  final bool walletBalanceLow;
+  final double currentBalance;
 
-  WalletProvider({
-    required WalletRepository walletRepository,
-    required FilesRepository filesRepository,
-  })  : _walletRepository = walletRepository,
-        _filesRepository = filesRepository;
+  const WalletState({
+    this.transactions = const [],
+    this.isRefreshingTransactions = false,
+    this.lastError,
+    this.isToppingUp = false,
+    this.walletMinTopup = 0.0,
+    this.walletBalanceLow = false,
+    this.currentBalance = 0.0,
+  });
 
-  List<TransactionModel> _transactions = [];
-  List<TransactionModel> get transactions => _transactions;
+  WalletState copyWith({
+    List<TransactionModel>? transactions,
+    bool? isRefreshingTransactions,
+    String? lastError,
+    bool? isToppingUp,
+    double? walletMinTopup,
+    bool? walletBalanceLow,
+    double? currentBalance,
+    bool clearLastError = false,
+  }) =>
+      WalletState(
+        transactions: transactions ?? this.transactions,
+        isRefreshingTransactions:
+            isRefreshingTransactions ?? this.isRefreshingTransactions,
+        lastError: clearLastError ? null : (lastError ?? this.lastError),
+        isToppingUp: isToppingUp ?? this.isToppingUp,
+        walletMinTopup: walletMinTopup ?? this.walletMinTopup,
+        walletBalanceLow: walletBalanceLow ?? this.walletBalanceLow,
+        currentBalance: currentBalance ?? this.currentBalance,
+      );
+}
 
-  /// Single-flight guard: returns the in-flight refresh Future so
-  /// concurrent callers share the same work instead of being silently
-  /// dropped (F-024).
+/// Riverpod v3 Notifier. Dependencies are looked up from
+/// Riverpod providers so the notifier is test-friendly.
+class WalletNotifier extends Notifier<WalletState> {
   Future<void>? _refreshInFlight;
 
-  bool get isRefreshingTransactions => _refreshInFlight != null;
+  @override
+  WalletState build() => const WalletState();
 
-  String? _lastError;
-  String? get lastError => _lastError;
-
-  bool _isToppingUp = false;
-  bool get isToppingUp => _isToppingUp;
-
-  double _walletMinTopup = 0.0;
-  double get walletMinTopup => _walletMinTopup;
-
-  bool _walletBalanceLow = false;
-  bool get walletBalanceLow => _walletBalanceLow;
-
-  double _currentBalance = 0.0;
-  double get currentBalance => _currentBalance;
+  WalletRepository get _repo => ref.read(walletRepositoryProvider);
+  FilesRepository get _files => ref.read(filesRepositoryProvider);
 
   void setWalletBalanceWarning(bool low, {double balance = 0.0}) {
-    _walletBalanceLow = low;
-    _currentBalance = balance;
-    notifyListeners();
+    state = state.copyWith(walletBalanceLow: low, currentBalance: balance);
   }
 
   void setWalletSettings(double minTopup) {
-    _walletMinTopup = minTopup;
-    notifyListeners();
+    state = state.copyWith(walletMinTopup: minTopup);
   }
 
   Future<void> topUpWallet({
@@ -80,36 +117,33 @@ class WalletProvider extends ChangeNotifier {
     String purpose = 'TOP_UP',
     required String riderId,
   }) async {
-    _isToppingUp = true;
-    notifyListeners();
-
+    state = state.copyWith(isToppingUp: true);
     try {
+      var uploadedUrl = screenshotUrl;
       if (image != null) {
-        screenshotUrl = await _filesRepository.uploadFile(image, 'TOPUP_PROOF');
+        uploadedUrl = await _files.uploadFile(image, 'TOPUP_PROOF');
       }
       final req = entity.TopupRequest(
         riderId: riderId,
         amount: amount,
         method: method,
         upiRef: upiRef,
-        proofUrl: screenshotUrl,
+        proofUrl: uploadedUrl,
         purpose: purpose,
       );
-      await _walletRepository.submitTopup(req);
+      await _repo.submitTopup(req);
       await refreshTransactions(riderId: riderId);
     } catch (e) {
       rethrow;
     } finally {
-      _isToppingUp = false;
-      notifyListeners();
+      state = state.copyWith(isToppingUp: false);
     }
   }
 
   Future<void> deleteTransactionHistory({required String riderId}) async {
     try {
-      await _walletRepository.deleteTransactionHistory(riderId);
-      _transactions = [];
-      notifyListeners();
+      await _repo.deleteTransactionHistory(riderId);
+      state = state.copyWith(transactions: const []);
     } catch (e) {
       rethrow;
     }
@@ -121,21 +155,21 @@ class WalletProvider extends ChangeNotifier {
     final pending = _refreshInFlight;
     if (pending != null) return pending;
 
+    state = state.copyWith(isRefreshingTransactions: true);
     final future = _doRefreshTransactions(riderId: riderId);
     _refreshInFlight = future;
-    notifyListeners();
     try {
       await future;
     } finally {
       _refreshInFlight = null;
-      notifyListeners();
+      state = state.copyWith(isRefreshingTransactions: false);
     }
   }
 
   Future<void> _doRefreshTransactions({required String riderId}) async {
     try {
-      final txs = await _walletRepository.getTransactionHistory(riderId);
-      _transactions = txs
+      final txs = await _repo.getTransactionHistory(riderId);
+      final sorted = txs
           .map(
             (t) => TransactionModel(
               id: t.id,
@@ -156,22 +190,38 @@ class WalletProvider extends ChangeNotifier {
           if (b.createdAt == null) return -1;
           return b.createdAt!.compareTo(a.createdAt!);
         });
-      _lastError = null;
-      notifyListeners();
+      state = state.copyWith(transactions: sorted, clearLastError: true);
     } catch (e) {
-      _lastError = 'Couldn\'t load your transactions. Pull to retry.';
-      appDebug('WalletProvider: refresh failed: $e');
-      notifyListeners();
+      state = state.copyWith(
+        lastError: 'Couldn\'t load your transactions. Pull to retry.',
+      );
+      appDebug('WalletNotifier: refresh failed: $e');
     }
   }
 
   void logout() {
-    _transactions = [];
+    state = const WalletState();
     _refreshInFlight = null;
-    _isToppingUp = false;
-    _walletBalanceLow = false;
-    _currentBalance = 0.0;
-    _lastError = null;
-    notifyListeners();
   }
 }
+
+/// Backwards-compat type alias used by `AppProvider` and call sites
+/// that still reference the old class name.
+typedef WalletProvider = WalletNotifier;
+
+/// Riverpod v3 provider for the wallet feature.
+final walletProvider = NotifierProvider<WalletNotifier, WalletState>(
+  WalletNotifier.new,
+);
+
+// ── Repository providers (overridden in main.dart with real impls) ──
+
+final filesRepositoryProvider = Provider<FilesRepository>((ref) {
+  throw UnimplementedError(
+      'filesRepositoryProvider must be overridden in ProviderScope');
+});
+
+final walletRepositoryProvider = Provider<WalletRepository>((ref) {
+  throw UnimplementedError(
+      'walletRepositoryProvider must be overridden in ProviderScope');
+});

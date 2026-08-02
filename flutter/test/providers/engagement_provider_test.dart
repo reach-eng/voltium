@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
@@ -7,50 +8,63 @@ void main() {
   setUpAll(() {
     AppConstants.isTestModeOverride = true;
   });
-  test('EngagementProvider initializes with debug dummy data', () {
-    final provider = EngagementProvider();
-    provider.initEngagementData();
 
-    // Since tests run in kDebugMode == true by default, dummy data should be loaded
-    expect(provider.rewardPoints, 1250);
-    expect(provider.paymentStreak, 3);
-    expect(provider.notifications.length, 3);
+  // R4.3c-4: EngagementProvider is now a Riverpod v3 Notifier.
+  late ProviderContainer container;
+  late EngagementNotifier notifier;
+
+  setUp(() {
+    container = ProviderContainer();
+    notifier = container.read(engagementProvider.notifier);
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  EngagementState readState() => container.read(engagementProvider);
+
+  test('EngagementProvider initializes with debug dummy data', () {
+    notifier.initEngagementData();
+
+    final state = readState();
+    expect(state.rewardPoints, 1250);
+    expect(state.paymentStreak, 3);
+    expect(state.notifications.length, 3);
   });
 
   test('markNotificationAsRead works', () {
-    final provider = EngagementProvider();
-    provider.initEngagementData();
+    notifier.initEngagementData();
 
-    final unread = provider.notifications.firstWhere((n) => n.id == '1');
+    final unread = readState().notifications.firstWhere((n) => n.id == '1');
     expect(unread.isRead, isFalse);
 
-    provider.markNotificationAsRead('1');
-    final after = provider.notifications.firstWhere((n) => n.id == '1');
+    notifier.markNotificationAsRead('1');
+    final after = readState().notifications.firstWhere((n) => n.id == '1');
     expect(after.isRead, isTrue);
   });
 
   test('markAllNotificationsRead works', () {
-    final provider = EngagementProvider();
-    provider.initEngagementData();
+    notifier.initEngagementData();
 
-    provider.markAllNotificationsRead();
-    for (final n in provider.notifications) {
+    notifier.markAllNotificationsRead();
+    for (final n in readState().notifications) {
       expect(n.isRead, isTrue);
     }
   });
 
   test('logout clears all data', () {
-    final provider = EngagementProvider();
-    provider.initEngagementData();
+    notifier.initEngagementData();
 
-    expect(provider.rewardPoints, 1250);
-    provider.logout();
+    expect(readState().rewardPoints, 1250);
+    notifier.logout();
 
-    expect(provider.rewardPoints, 0);
-    expect(provider.paymentStreak, 0);
-    expect(provider.rewards, isEmpty);
-    expect(provider.referralData, isNull);
-    expect(provider.notifications, isEmpty);
+    final state = readState();
+    expect(state.rewardPoints, 0);
+    expect(state.paymentStreak, 0);
+    expect(state.rewards, isEmpty);
+    expect(state.referralData, isNull);
+    expect(state.notifications, isEmpty);
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {

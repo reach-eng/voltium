@@ -31,7 +31,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final riderId = ref.read(riderProvider).riderId;
       if (riderId != null) {
-        ref.read(walletProvider).refreshTransactions(riderId: riderId);
+        ref.read(walletProvider.notifier).refreshTransactions(riderId: riderId);
       }
     });
   }
@@ -79,7 +79,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         ref.read(riderProvider).refreshFromApi(),
                         if (riderId != null)
                           ref
-                              .read(walletProvider)
+                              .read(walletProvider.notifier)
                               .refreshTransactions(riderId: riderId),
                       ]);
                     },

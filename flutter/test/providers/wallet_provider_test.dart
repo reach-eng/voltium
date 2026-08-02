@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
 import 'package:voltium_rider/features/wallet/domain/repository.dart';
 import 'package:voltium_rider/features/wallet/domain/entity.dart' as entity;
@@ -64,70 +65,75 @@ class MockFilesRepository implements FilesRepository {
 }
 
 void main() {
+  // R4.3c-4: WalletProvider is now a Riverpod v3 Notifier. Tests
+  // use a ProviderContainer with repository overrides.
+  late ProviderContainer container;
+  late MockWalletRepository mockRepo;
+  late MockFilesRepository mockFiles;
+  late WalletNotifier notifier;
+
+  setUp(() {
+    mockRepo = MockWalletRepository();
+    mockFiles = MockFilesRepository();
+    container = ProviderContainer(
+      overrides: [
+        walletRepositoryProvider.overrideWithValue(mockRepo),
+        filesRepositoryProvider.overrideWithValue(mockFiles),
+      ],
+    );
+    notifier = container.read(walletProvider.notifier);
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  WalletState readState() => container.read(walletProvider);
+
   test('WalletProvider initializes correctly', () {
-    final provider = WalletProvider(
-        walletRepository: MockWalletRepository(),
-        filesRepository: MockFilesRepository());
-    expect(provider.transactions, isEmpty);
-    expect(provider.walletMinTopup, 0.0);
-    expect(provider.currentBalance, 0.0);
+    expect(readState().transactions, isEmpty);
+    expect(readState().walletMinTopup, 0.0);
+    expect(readState().currentBalance, 0.0);
   });
 
   test('setWalletSettings sets min topup', () {
-    final provider = WalletProvider(
-        walletRepository: MockWalletRepository(),
-        filesRepository: MockFilesRepository());
-    provider.setWalletSettings(500.0);
-    expect(provider.walletMinTopup, 500.0);
+    notifier.setWalletSettings(500.0);
+    expect(readState().walletMinTopup, 500.0);
   });
 
   test('setWalletBalanceWarning changes balance state', () {
-    final provider = WalletProvider(
-        walletRepository: MockWalletRepository(),
-        filesRepository: MockFilesRepository());
-    provider.setWalletBalanceWarning(true, balance: 10.0);
-    expect(provider.walletBalanceLow, isTrue);
-    expect(provider.currentBalance, 10.0);
+    notifier.setWalletBalanceWarning(true, balance: 10.0);
+    expect(readState().walletBalanceLow, isTrue);
+    expect(readState().currentBalance, 10.0);
   });
 
   test('refreshTransactions loads history', () async {
-    final provider = WalletProvider(
-        walletRepository: MockWalletRepository(),
-        filesRepository: MockFilesRepository());
-    await provider.refreshTransactions(riderId: '1');
-    expect(provider.transactions.length, 1);
-    expect(provider.transactions.first.id, '1');
-    expect(provider.transactions.first.amount, 100.0);
+    await notifier.refreshTransactions(riderId: '1');
+    final state = readState();
+    expect(state.transactions.length, 1);
+    expect(state.transactions.first.id, '1');
+    expect(state.transactions.first.amount, 100.0);
   });
 
   test('deleteTransactionHistory removes history', () async {
-    final mockRepo = MockWalletRepository();
-    final provider = WalletProvider(
-        walletRepository: mockRepo, filesRepository: MockFilesRepository());
+    await notifier.refreshTransactions(riderId: '1');
+    expect(readState().transactions.length, 1);
 
-    await provider.refreshTransactions(riderId: '1');
-    expect(provider.transactions.length, 1);
-
-    await provider.deleteTransactionHistory(riderId: '1');
+    await notifier.deleteTransactionHistory(riderId: '1');
     expect(mockRepo.deleteCalled, isTrue);
-    expect(provider.transactions, isEmpty);
+    expect(readState().transactions, isEmpty);
   });
 
   test('topUpWallet sets isToppingUp and uploads image', () async {
-    final mockFiles = MockFilesRepository();
-    final mockRepo = MockWalletRepository();
-    final provider =
-        WalletProvider(walletRepository: mockRepo, filesRepository: mockFiles);
-
     // Using a fake file path
     final fakeFile = File('dummy.jpg');
 
-    await provider.topUpWallet(
+    await notifier.topUpWallet(
         amount: 500, method: 'UPI', riderId: '1', image: fakeFile);
 
     expect(mockFiles.uploadCalled, isTrue);
     expect(mockRepo.submitCalled, isTrue);
-    expect(provider.isToppingUp, isFalse); // Should reset after completion
+    expect(readState().isToppingUp, isFalse); // Should reset after completion
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {

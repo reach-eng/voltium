@@ -262,7 +262,7 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
       final message =
           'Diagnostic Resolution:\n${_result!.resolution}\n\nDiagnostic Steps:\n$pathText';
 
-      final provider = ref.read(supportProvider);
+      final provider = ref.read(supportProvider.notifier);
       await provider.createTicket(
         category: 'TROUBLESHOOTER',
         subject: subject.length < 5 ? '$subject (Diagnostic)' : subject,

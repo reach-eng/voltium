@@ -251,7 +251,7 @@ void showChangeTLReasonSheet(BuildContext context) {
                   Navigator.pop(context);
                   try {
                     await ProviderScope.containerOf(context)
-                        .read(supportProvider)
+                        .read(supportProvider.notifier)
                         .createTicket(
                           category: 'GENERAL',
                           subject: 'Request to change Team Leader',

@@ -42,7 +42,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await ref.read(supportProvider).createTicket(
+      await ref.read(supportProvider.notifier).createTicket(
             category: _selectedCategory,
             subject: _subjectController.text.trim(),
             message: _messageController.text.trim(),

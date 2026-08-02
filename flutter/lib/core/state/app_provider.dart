@@ -14,6 +14,7 @@
 //   - `ref.read(riderProvider)` etc. for individual feature providers
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
@@ -40,19 +41,35 @@ RiderProvider _createDefaultRiderProvider() {
   );
 }
 
+/// R4.3c-4: WalletProvider is now a Riverpod v3 Notifier. The
+/// AppProvider shim holds a [ProviderContainer] that the notifier
+/// can read repositories from. We construct the real repositories
+/// here and register them as Riverpod providers, then return the
+/// notifier instance.
 WalletProvider _createDefaultWalletProvider() {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return WalletProvider(
-    walletRepository: WalletRepositoryImpl(client, vClient),
-    filesRepository: FilesRepository(client, vClient),
+  final container = ProviderContainer(
+    overrides: [
+      walletRepositoryProvider
+          .overrideWithValue(WalletRepositoryImpl(client, vClient)),
+      filesRepositoryProvider
+          .overrideWithValue(FilesRepository(client, vClient)),
+    ],
   );
+  return container.read(walletProvider.notifier);
 }
 
 SupportProvider _createDefaultSupportProvider() {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return SupportProvider(repository: SupportRepositoryImpl(vClient));
+  final container = ProviderContainer(
+    overrides: [
+      supportRepositoryProvider
+          .overrideWithValue(SupportRepositoryImpl(vClient)),
+    ],
+  );
+  return container.read(supportProvider.notifier);
 }
 
 /// Compatibility facade layer for AppProvider (PR-L / Ticket #65).

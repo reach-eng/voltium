@@ -15,9 +15,6 @@ import 'core/localization/locale_provider.dart';
 import 'core/state/app_provider.dart';
 import 'theme/theme_provider.dart';
 import 'core/state/rider_provider.dart';
-import 'features/wallet/presentation/providers/wallet_provider.dart';
-import 'features/support/presentation/providers/support_provider.dart';
-import 'features/dashboard/presentation/providers/engagement_provider.dart';
 import 'features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'core/network/connectivity_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
@@ -221,10 +218,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
           overrides: [
             appProvider.overrideWith((ref) => appInstance),
             riderProvider.overrideWith((ref) => appInstance.riderProvider),
-            walletProvider.overrideWith((ref) => appInstance.walletProvider),
-            supportProvider.overrideWith((ref) => appInstance.supportProvider),
+            walletProvider.overrideWith(() => appInstance.walletProvider),
+            supportProvider.overrideWith(() => appInstance.supportProvider),
             engagementProvider
-                .overrideWith((ref) => appInstance.engagementProvider),
+                .overrideWith(() => appInstance.engagementProvider),
             devicePolicyProvider
                 .overrideWith((ref) => appInstance.devicePolicyProvider),
             connectivityProviderRef
@@ -241,18 +238,11 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
               // Notifiers, not ChangeNotifiers. They are registered via
               // ProviderScope.overrides above and accessed via ref.watch /
               // ref.read with the corresponding NotifierProvider.
+              // R4.3c-4: WalletProvider, SupportProvider, EngagementProvider
+              // are also now Riverpod v3 Notifiers, no longer ChangeNotifiers.
               ChangeNotifierProvider<AppProvider>.value(value: appInstance),
               ChangeNotifierProvider<RiderProvider>.value(
                 value: appInstance.riderProvider,
-              ),
-              ChangeNotifierProvider<WalletProvider>.value(
-                value: appInstance.walletProvider,
-              ),
-              ChangeNotifierProvider<SupportProvider>.value(
-                value: appInstance.supportProvider,
-              ),
-              ChangeNotifierProvider<EngagementProvider>.value(
-                value: appInstance.engagementProvider,
               ),
               ChangeNotifierProvider<DevicePolicyProvider>.value(
                 value: appInstance.devicePolicyProvider,
@@ -382,8 +372,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     Future.microtask(() {
       if (mounted) {
         try {
-          final support = context.read<SupportProvider>();
-          support.initSupportData();
+          // R4.3c-4: SupportProvider is now a Riverpod v3 Notifier. Reach
+          // for it via the container rather than the legacy
+          // `context.read<SupportProvider>()`.
+          ProviderScope.containerOf(context)
+              .read(supportProvider.notifier)
+              .initSupportData();
         } catch (_) {}
       }
     });
@@ -401,14 +395,19 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _refreshTabOnFocus(int index) {
     switch (index) {
       case 1:
-        final wallet = context.read<WalletProvider>();
+        // R4.3c-4: WalletProvider is now a Riverpod v3 Notifier. Use the
+        // container-based access path.
         final riderId = context.read<RiderProvider>().riderId;
         if (riderId != null) {
-          wallet.refreshTransactions(riderId: riderId);
+          ProviderScope.containerOf(context)
+              .read(walletProvider.notifier)
+              .refreshTransactions(riderId: riderId);
         }
         break;
       case 2:
-        context.read<SupportProvider>().refreshTickets();
+        ProviderScope.containerOf(context)
+            .read(supportProvider.notifier)
+            .refreshTickets();
         break;
     }
   }

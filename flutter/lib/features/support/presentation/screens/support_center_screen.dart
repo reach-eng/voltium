@@ -54,7 +54,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(supportTicketsProvider.notifier).fetchTickets();
-                await ref.read(supportProvider).refreshTickets();
+                await ref.read(supportProvider.notifier).refreshTickets();
               },
               child: CustomScrollView(
                 slivers: [

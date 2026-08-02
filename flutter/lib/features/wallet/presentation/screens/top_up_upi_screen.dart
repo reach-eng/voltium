@@ -100,7 +100,7 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
       final riderId = ref.read(riderProvider).riderId;
       if (riderId == null) throw Exception('Not logged in');
 
-      await ref.read(walletProvider).topUpWallet(
+      await ref.read(walletProvider.notifier).topUpWallet(
             riderId: riderId,
             amount: widget.amount.toDouble(),
             method: 'UPI',

@@ -48,7 +48,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     Future.microtask(() {
       final riderId = ref.read(riderProvider).riderId;
       if (riderId != null) {
-        ref.read(walletProvider).refreshTransactions(riderId: riderId);
+        ref.read(walletProvider.notifier).refreshTransactions(riderId: riderId);
       }
     });
   }
@@ -62,7 +62,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   Future<void> _fetchTransactions() async {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId != null) {
-      await ref.read(walletProvider).refreshTransactions(riderId: riderId);
+      await ref
+          .read(walletProvider.notifier)
+          .refreshTransactions(riderId: riderId);
     }
   }
 

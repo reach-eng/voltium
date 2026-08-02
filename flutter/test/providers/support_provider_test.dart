@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
 import 'package:voltium_rider/features/support/domain/repository.dart';
-import 'package:voltium_rider/models/support_model.dart';
 
 class MockSupportRepository implements SupportRepository {
   bool fetchFaqsCalled = false;
@@ -62,39 +62,53 @@ class MockSupportRepository implements SupportRepository {
 }
 
 void main() {
+  // R4.3c-4: SupportProvider is now a Riverpod v3 Notifier. Tests
+  // use a ProviderContainer with a repository override.
+  late ProviderContainer container;
+  late MockSupportRepository mockRepo;
+  late SupportNotifier notifier;
+
+  setUp(() {
+    mockRepo = MockSupportRepository();
+    container = ProviderContainer(
+      overrides: [
+        supportRepositoryProvider.overrideWithValue(mockRepo),
+      ],
+    );
+    notifier = container.read(supportProvider.notifier);
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  SupportState readState() => container.read(supportProvider);
+
   test('SupportProvider initializes with dummy data in debug mode', () {
-    final provider = SupportProvider(repository: MockSupportRepository());
-    provider.initSupportData();
-    // In kDebugMode, it loads dummy config and categories immediately
-    expect(provider.supportConfig, isNotNull);
-    expect(provider.faqCategories, isNotEmpty);
+    notifier.initSupportData();
+    // Wait for the microtask-scheduled faq/ticket refresh.
+    return Future<void>.delayed(Duration.zero).then((_) {
+      expect(readState().supportConfig, isNotNull);
+      expect(readState().faqCategories, isNotEmpty);
+    });
   });
 
   test('refreshFaqs loads faqs from repository', () async {
-    final mockRepo = MockSupportRepository();
-    final provider = SupportProvider(repository: mockRepo);
-
-    await provider.refreshFaqs();
+    await notifier.refreshFaqs();
     expect(mockRepo.fetchFaqsCalled, isTrue);
-    expect(provider.faqs.length, 1);
-    expect(provider.faqs.first.id, '1');
+    expect(readState().faqs.length, 1);
+    expect(readState().faqs.first.id, '1');
   });
 
   test('refreshTickets loads tickets from repository', () async {
-    final mockRepo = MockSupportRepository();
-    final provider = SupportProvider(repository: mockRepo);
-
-    await provider.refreshTickets();
+    await notifier.refreshTickets();
     expect(mockRepo.fetchTicketsCalled, isTrue);
-    expect(provider.tickets.length, 1);
-    expect(provider.tickets.first.id, 'T1');
+    expect(readState().tickets.length, 1);
+    expect(readState().tickets.first.id, 'T1');
   });
 
   test('createTicket creates ticket and refreshes', () async {
-    final mockRepo = MockSupportRepository();
-    final provider = SupportProvider(repository: mockRepo);
-
-    await provider.createTicket(
+    await notifier.createTicket(
         category: 'VEHICLE', subject: 'Flat Tire', message: 'Help');
 
     expect(mockRepo.createTicketCalled, isTrue);
@@ -102,14 +116,13 @@ void main() {
   });
 
   test('logout clears state', () {
-    final provider = SupportProvider(repository: MockSupportRepository());
-    provider.initSupportData();
-    provider.logout();
+    notifier.initSupportData();
+    notifier.logout();
 
-    expect(provider.supportConfig, isNull);
-    expect(provider.faqCategories, isEmpty);
-    expect(provider.faqs, isEmpty);
-    expect(provider.tickets, isEmpty);
+    expect(readState().supportConfig, isNull);
+    expect(readState().faqCategories, isEmpty);
+    expect(readState().faqs, isEmpty);
+    expect(readState().tickets, isEmpty);
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {

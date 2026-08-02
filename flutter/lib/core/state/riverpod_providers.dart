@@ -1,18 +1,16 @@
-library;
+// library directive omitted — using Dart 3 default library.
+// (R4.3c-4: the `library;` directive was hiding the new exports.)
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:voltium_rider/core/state/rider_provider.dart';
-import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart';
-import 'package:voltium_rider/features/support/presentation/providers/support_provider.dart';
-import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
-import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
+import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/auth/domain/repository.dart';
 import 'package:voltium_rider/features/auth/data/repository_impl.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -24,6 +22,31 @@ import 'package:voltium_rider/core/state/app_provider.dart';
 // ── Domain providers ──────────────────────────────────────────────────────
 
 import 'package:universal_io/io.dart';
+
+// Note: The exports below make the migrated feature providers
+// visible to anyone who imports `riverpod_providers.dart`. The
+// imports above are still required for the file's own scope
+// (the `final xxxRef = xxx` aliases below reference the symbols
+// defined in those files).
+
+// R4.3c-4: Re-export the migrated feature providers so call sites
+// that import `riverpod_providers.dart` keep working with the same
+// symbol names.
+export 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
+    show walletProvider, filesRepositoryProvider, walletRepositoryProvider;
+export 'package:voltium_rider/features/support/presentation/providers/support_provider.dart'
+    show supportProvider, supportRepositoryProvider;
+export 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart'
+    show engagementProvider, engagementApiProvider;
+export 'package:voltium_rider/core/network/connectivity_provider.dart'
+    show connectivityProvider;
+export 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart'
+    show notificationProvider;
+export 'package:voltium_rider/services/emergency_contacts_service.dart'
+    show emergencyContactsServiceProvider;
+export 'package:voltium_rider/core/localization/locale_provider.dart'
+    show localeProvider;
+export 'package:voltium_rider/theme/theme_provider.dart' show themeProvider;
 
 /// Riverpod provider for [AppProvider] (R4.3b).
 ///
@@ -54,23 +77,10 @@ final riderProvider = ChangeNotifierProvider<RiderProvider>((ref) {
   throw UnimplementedError('RiderProvider must be overridden in ProviderScope');
 });
 
-/// Riverpod provider for [WalletProvider].
-final walletProvider = ChangeNotifierProvider<WalletProvider>((ref) {
-  throw UnimplementedError(
-      'WalletProvider must be overridden in ProviderScope');
-});
-
-/// Riverpod provider for [SupportProvider].
-final supportProvider = ChangeNotifierProvider<SupportProvider>((ref) {
-  throw UnimplementedError(
-      'SupportProvider must be overridden in ProviderScope');
-});
-
-/// Riverpod provider for [EngagementProvider].
-final engagementProvider = ChangeNotifierProvider<EngagementProvider>((ref) {
-  throw UnimplementedError(
-      'EngagementProvider must be overridden in ProviderScope');
-});
+// R4.3c-4: Wallet/Support/Engagement providers are now defined in
+// their own files as Riverpod v3 NotifierProviders. They are
+// re-exported here so call sites that import
+// `riverpod_providers.dart` keep working with the same names.
 
 /// Riverpod provider for [DevicePolicyProvider].
 final devicePolicyProvider =

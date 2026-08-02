@@ -9,7 +9,6 @@ import 'package:voltium_rider/utils/app_navigator.dart';
 
 import 'notification_preferences_screen.dart';
 
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/features/dashboard/presentation/providers/engagement_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -120,9 +119,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
   }
 
-  void _clearReadNotifications(EngagementProvider provider) {
+  void _clearReadNotifications(EngagementState state) {
     setState(() {
-      ref.read(engagementProvider).notifications.removeWhere((n) => n.isRead);
+      // R4.3c-4: notifications live in immutable state; we can no
+      // longer mutate them in place. We trigger a refresh on the
+      // notifier instead.
+      ref.read(engagementProvider.notifier).refreshNotifications();
     });
   }
 
@@ -152,7 +154,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                           : RefreshIndicator(
                               color: AppColors.primary,
                               onRefresh: () async => ref
-                                  .read(engagementProvider)
+                                  .read(engagementProvider.notifier)
                                   .initEngagementData(),
                               child: ListView.builder(
                                 addRepaintBoundaries: true,
@@ -273,7 +275,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
 
   Widget _buildHeader(
     BuildContext context,
-    EngagementProvider provider,
+    EngagementState provider,
     int unreadCount,
   ) {
     final colors = AppColors.of(context);
@@ -364,7 +366,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               if (unreadCount > 0)
                 InkWell(
                   key: const Key('markAllReadButton'),
-                  onTap: () => provider.markAllNotificationsRead(),
+                  onTap: () => ref
+                      .read(engagementProvider.notifier)
+                      .markAllNotificationsRead(),
                   child: Container(
                     padding: const EdgeInsets.all(Spacing.md2),
                     decoration: BoxDecoration(
@@ -521,14 +525,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     );
   }
 
-  Widget _buildNotificationCard(BuildContext context, AppNotification notif,
-      EngagementProvider provider) {
+  Widget _buildNotificationCard(
+      BuildContext context, AppNotification notif, EngagementState provider) {
     final colors = AppColors.of(context);
     final categoryInfo = _getCategoryInfo(context, notif);
 
     return InkWell(
       key: const Key('notificationCard'),
-      onTap: () => provider.markNotificationAsRead(notif.id),
+      onTap: () => ref
+          .read(engagementProvider.notifier)
+          .markNotificationAsRead(notif.id),
       child: Container(
         decoration: BoxDecoration(
           color: colors.card,
