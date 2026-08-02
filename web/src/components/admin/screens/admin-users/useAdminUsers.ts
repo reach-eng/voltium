@@ -1,30 +1,20 @@
-'use client';
-
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getPermissionsForRole } from '@/lib/permissions';
-import {
-  ADMIN_PAGE_SIZE,
-  EMPTY_ADMIN_FORM,
-  type Admin,
-  type AdminForm,
-} from './types';
+import type { Admin, AdminForm } from './types';
 
-/**
- * R3 split (AdminUserManagement) — admin users data hook.
- *
- * Owns the admin list, the search/pagination state, the add/edit
- * form, and the four network handlers (save, toggle active,
- * change role, edit prefill). The local `filtered` array is the
- * client-side name/email search; the server returns already
- * paginated rows.
- */
 export function useAdminUsers() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<AdminForm>({ ...EMPTY_ADMIN_FORM });
+  const [form, setForm] = useState<AdminForm>({
+    name: '',
+    email: '',
+    password: '',
+    role: 'OPERATIONS_ADMIN',
+    permissions: [],
+  });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
@@ -35,7 +25,7 @@ export function useAdminUsers() {
       setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: String(ADMIN_PAGE_SIZE),
+        limit: '20',
         search: debouncedSearch,
       });
 
@@ -76,7 +66,13 @@ export function useAdminUsers() {
       if (res.ok) {
         setDialogOpen(false);
         setEditingId(null);
-        setForm({ ...EMPTY_ADMIN_FORM });
+        setForm({
+          name: '',
+          email: '',
+          password: '',
+          role: 'OPERATIONS_ADMIN',
+          permissions: [],
+        });
         fetchAdmins();
       }
     } catch {
@@ -84,33 +80,23 @@ export function useAdminUsers() {
     }
   };
 
-  const openAddDialog = () => {
-    setEditingId(null);
-    setForm({ ...EMPTY_ADMIN_FORM });
-    setDialogOpen(true);
-  };
-
   const handleEdit = (admin: Admin) => {
-    let perms: string[] = admin.permissions || [];
-    if (perms.length === 0) {
+    let perms: string[] = [];
+    try {
+      perms = JSON.parse(admin.permissions || '[]');
+    } catch {
       perms = getPermissionsForRole(admin.role);
     }
 
     setForm({
       name: admin.name,
       email: admin.email,
-      password: '', // Don't show password
+      password: '',
       role: admin.role,
       permissions: perms,
     });
     setEditingId(admin.id);
     setDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingId(null);
-    setForm({ ...EMPTY_ADMIN_FORM });
   };
 
   const handleRoleChange = (role: string) => {
@@ -145,42 +131,26 @@ export function useAdminUsers() {
     fetchAdmins();
   };
 
-  const filtered = search
-    ? admins.filter(
-        (a) =>
-          a.name.toLowerCase().includes(search.toLowerCase()) ||
-          a.email.toLowerCase().includes(search.toLowerCase())
-      )
-    : admins;
-
   return {
-    // data
     admins,
-    filtered,
     loading,
-    pagination,
-    // filters
+    dialogOpen,
+    setDialogOpen,
+    editingId,
+    setEditingId,
+    form,
+    setForm,
     search,
     setSearch,
     page,
     setPage,
-    // form
-    dialogOpen,
-    setDialogOpen,
-    editingId,
-    form,
-    setForm,
-    openAddDialog,
-    closeDialog,
-    handleEdit,
+    pagination,
+    fetchAdmins,
     saveAdmin,
+    handleEdit,
     handleRoleChange,
     togglePermission,
     toggleActive,
     changeRole,
-    // revalidation
-    fetchAdmins,
   };
 }
-
-export type AdminUsersHook = ReturnType<typeof useAdminUsers>;

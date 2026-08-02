@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -10,44 +11,96 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Shield, UserCog } from 'lucide-react';
+import {
+  Plus,
+  ShieldAlert,
+  Shield,
+  UserCog,
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
-import { ADMIN_PAGE_SIZE, ADMIN_ROLE_COLORS, ADMIN_ROLE_FALLBACK, type Admin } from './types';
+import type { Admin } from './types';
 
-interface AdminsTableProps {
+const roleColors: Record<string, string> = {
+  SUPER_ADMIN: 'border-red-500/20 text-red-600 bg-red-500/5 dark:text-red-400',
+  ADMIN: 'border-primary/20 text-primary bg-primary/5',
+  MANAGER: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  FLEET_MANAGER: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
+  TEAM_LEADER: 'border-cyan-500/20 text-cyan-600 bg-cyan-500/5 dark:text-cyan-400',
+};
+
+interface AdminUserTableProps {
   loading: boolean;
   admins: Admin[];
   search: string;
+  setSearch: (s: string) => void;
   page: number;
-  totalPages: number;
-  total: number;
-  onPageChange: (page: number) => void;
+  setPage: (p: number | ((prev: number) => number)) => void;
+  pagination: { total: number; totalPages: number };
+  onAddClick: () => void;
   onEdit: (admin: Admin) => void;
   onToggleActive: (admin: Admin) => void;
 }
 
-/**
- * R3 split (AdminUserManagement) — admins table + pagination.
- *
- * Seven columns: Name (with role icon), Email, Role (colored badge),
- * Status (active/inactive badge), Last Login, Created, Actions
- * (edit + activate/deactivate). Loading state shows a centred
- * spinner; empty state shows a filter-aware message. Pagination
- * only renders when there are multiple pages.
- */
-export function AdminsTable({
+export function AdminUserTable({
   loading,
   admins,
   search,
+  setSearch,
   page,
-  totalPages,
-  total,
-  onPageChange,
+  setPage,
+  pagination,
+  onAddClick,
   onEdit,
   onToggleActive,
-}: AdminsTableProps) {
+}: AdminUserTableProps) {
   return (
-    <>
+    <div className="space-y-6">
+      <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+        <ShieldAlert className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
+        <div>
+          <p className="font-semibold text-red-600 dark:text-red-400 text-sm">Super Admin Only</p>
+          <p className="text-xs text-red-500 dark:text-red-400/80 mt-0.5">
+            This section is restricted to Super Admins only. Role changes and admin creation require
+            SUPER_ADMIN privileges.
+          </p>
+        </div>
+      </div>
+
+      {/* Search + Add */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base shadow-sm"
+          />
+          {search && (
+            <button
+              onClick={() => {
+                setSearch('');
+                setPage(1);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button onClick={onAddClick} className="rounded-xl h-11 px-5">
+          <Plus className="h-5 w-5 mr-1.5" /> Add New Admin
+        </Button>
+      </div>
+
+      {/* Admins Table */}
       <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -92,7 +145,7 @@ export function AdminsTable({
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={`text-[10px] font-bold ${ADMIN_ROLE_COLORS[a.role] || ADMIN_ROLE_FALLBACK}`}
+                      className={`text-[10px] font-bold ${roleColors[a.role] || 'border-slate-500/20 text-slate-600 bg-slate-500/5'}`}
                     >
                       {a.role}
                     </Badge>
@@ -142,38 +195,37 @@ export function AdminsTable({
         </Table>
       </div>
 
-      {!loading && totalPages > 1 && (
+      {/* Pagination */}
+      {!loading && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between bg-card px-4 py-3 rounded-xl border border-border/50 shadow-sm">
           <div className="text-sm text-muted-foreground hidden sm:block">
-            Showing <span className="font-medium">{(page - 1) * ADMIN_PAGE_SIZE + 1}</span> to{' '}
-            <span className="font-medium">{Math.min(page * ADMIN_PAGE_SIZE, total)}</span> of{' '}
-            <span className="font-medium">{total}</span> Admins
+            Page {page} of {pagination.totalPages} ({pagination.total} total admins)
           </div>
           <div className="flex items-center gap-2 mx-auto sm:mx-0">
             <Button
               variant="outline"
-              size="icon"
-              onClick={() => onPageChange(Math.max(1, page - 1))}
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="h-10 w-10 rounded-lg"
+              className="h-9 gap-1"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" /> Previous
             </Button>
-            <div className="text-sm font-medium px-2">
-              Page {page} of {totalPages}
-            </div>
+            <span className="text-sm font-medium px-2">
+              {page} / {pagination.totalPages}
+            </span>
             <Button
               variant="outline"
-              size="icon"
-              onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              className="h-10 w-10 rounded-lg"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              disabled={page === pagination.totalPages}
+              className="h-9 gap-1"
             >
-              <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { Eye, Trash2, ShieldAlert, Bike } from 'lucide-react';
 import { getKycBadge } from './helpers';
 import { formatDateTimeDDMMYYYY, formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { Rider } from '@/lib/types/admin';
+import React, { useRef, useState, useEffect } from 'react';
 
 interface RiderRowProps {
   rider: Rider;
@@ -15,7 +16,7 @@ interface RiderRowProps {
   onDelete: () => void;
 }
 
-export function RiderRow({
+export const RiderRow = React.memo(function RiderRow({
   rider,
   isSelected,
   onToggleSelect,
@@ -36,8 +37,30 @@ export function RiderRow({
         ? 'text-orange-500'
         : 'text-foreground';
 
+  // Defer rendering of action buttons until the row enters the viewport.
+  // All layout cells render immediately; only the interactive action cell is deferred.
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setActionsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <TableRow
+      ref={rowRef}
       className={`hover:bg-muted/30 transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}
     >
       <TableCell>
@@ -89,27 +112,31 @@ export function RiderRow({
         ₹{(rider.walletBalance || 0).toLocaleString('en-IN')}
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 rounded-lg bg-blue-500/5 hover:bg-blue-500/10"
-            onClick={onViewDetails}
-            title="View Details"
-          >
-            <Eye className="w-4 h-4 text-blue-600" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-            onClick={onDelete}
-            title="Remove Rider"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        </div>
+        {actionsVisible ? (
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 rounded-lg bg-blue-500/5 hover:bg-blue-500/10"
+              onClick={onViewDetails}
+              title="View Details"
+            >
+              <Eye className="w-4 h-4 text-blue-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+              onClick={onDelete}
+              title="Remove Rider"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="w-[72px] h-8" aria-hidden />
+        )}
       </TableCell>
     </TableRow>
   );
-}
+});

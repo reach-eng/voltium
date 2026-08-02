@@ -39,6 +39,8 @@ export function KycDetailSheet({
                 <img
                   src={selectedRider.profilePhoto}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               ) : (

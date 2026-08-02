@@ -31,9 +31,54 @@ function ScreenLoader() {
   );
 }
 
-// Dynamic helper with consistent loader
+// Screen import functions for speculative prefetching
+export const screenImportMap: Record<string, () => Promise<any>> = {
+  overview: () => import('./screens/DashboardOverview'),
+  riders: () => import('./screens/RiderManagement'),
+  kyc: () => import('./screens/KycManagement'),
+  rentals: () => import('./screens/RentalManagement'),
+  vehicles: () => import('./screens/VehicleManagement'),
+  hubs: () => import('./screens/HubManagement'),
+  'wallet-deposits': () => import('./screens/WalletDepositManagement'),
+  earnings: () => import('./screens/EarningsManagement'),
+  transactions: () => import('./screens/TransactionManagement'),
+  tickets: () => import('./screens/TicketManagement'),
+  incidents: () => import('./screens/IncidentManagementScreen'),
+  'team-leaders': () => import('./screens/TeamLeaderManagement'),
+  operations: () => import('./screens/OperationsBoard'),
+  'fleet-map': () => import('./screens/FleetMapScreen'),
+  shifts: () => import('./screens/ShiftManagement'),
+  'rider-scoring': () => import('./screens/RiderScoringScreen'),
+  offers: () => import('./screens/OfferManagement'),
+  faq: () => import('./screens/FaqManagement'),
+  legal: () => import('./screens/LegalManagement'),
+  'device-tracking': () => import('./screens/DeviceTrackingView'),
+  'workflow-coverage': () => import('./screens/WorkflowCoverageScreen'),
+  notifications: () => import('./screens/NotificationManagement'),
+  rewards: () => import('./screens/RewardManagement'),
+  analytics: () => import('./screens/analytics/AnalyticsDashboard'),
+  'admin-users': () => import('./screens/AdminUserManagement'),
+  'business-settings': () => import('./screens/SettingsManagement'),
+  settings: () => import('./screens/SystemSettingsScreen'),
+  'server-health': () => import('./screens/ServerHealthScreen'),
+  'data-management': () => import('./screens/data-management'),
+  'background-jobs': () => import('./screens/BackgroundJobsScreen'),
+};
+
+const prefetchedSet = new Set<string>();
+
+export function prefetchAdminScreen(sectionId: string) {
+  if (prefetchedSet.has(sectionId)) return;
+  const loader = screenImportMap[sectionId];
+  if (loader) {
+    prefetchedSet.add(sectionId);
+    loader().catch(() => prefetchedSet.delete(sectionId));
+  }
+}
+
+// Dynamic helper with consistent loader (CSR-only for admin screens)
 const loadAdminScreen = (path: string) =>
-  dynamic(() => import(`./screens/${path}`), { loading: ScreenLoader });
+  dynamic(() => import(`./screens/${path}`), { loading: ScreenLoader, ssr: false });
 
 // Dynamically loaded admin screens (split chunks for better performance)
 const sectionMap: Record<string, React.ComponentType> = {
@@ -44,7 +89,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   vehicles: loadAdminScreen('VehicleManagement'),
   hubs: loadAdminScreen('HubManagement'),
   'wallet-deposits': loadAdminScreen('WalletDepositManagement'),
-  'earnings': loadAdminScreen('EarningsManagement'),
+  earnings: loadAdminScreen('EarningsManagement'),
   transactions: loadAdminScreen('TransactionManagement'),
   tickets: loadAdminScreen('TicketManagement'),
   incidents: loadAdminScreen('IncidentManagementScreen'),
@@ -60,7 +105,7 @@ const sectionMap: Record<string, React.ComponentType> = {
   'workflow-coverage': loadAdminScreen('WorkflowCoverageScreen'),
   notifications: loadAdminScreen('NotificationManagement'),
   rewards: loadAdminScreen('RewardManagement'),
-  analytics: loadAdminScreen('AnalyticsDashboard'),
+  analytics: loadAdminScreen('analytics/AnalyticsDashboard'),
   'admin-users': loadAdminScreen('AdminUserManagement'),
   'business-settings': loadAdminScreen('SettingsManagement'),
   settings: loadAdminScreen('SystemSettingsScreen'),
@@ -176,12 +221,19 @@ export default function AdminLayout() {
   }, [activeSection]);
 
   useEffect(() => {
-    fetch('/api/admin/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.success && data?.data?.role) {
+    // Initiate auth check and dashboard stats prefetch in parallel
+    const authPromise = fetch('/api/admin/auth/me', { credentials: 'include' }).then((res) =>
+      res.ok ? res.json() : null
+    );
+    const statsPromise = fetch('/api/admin/dashboard', { credentials: 'include' }).then((res) =>
+      res.ok ? res.json() : null
+    );
+
+    Promise.all([authPromise, statsPromise])
+      .then(([authData]) => {
+        if (authData?.success && authData?.data?.role) {
           setIsAuthorized(true);
-          setSession(data.data);
+          setSession(authData.data);
         } else {
           setIsAuthorized(false);
         }

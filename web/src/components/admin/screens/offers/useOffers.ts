@@ -1,51 +1,46 @@
-'use client';
-
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import {
-  EMPTY_COUPON_FORM,
-  EMPTY_OFFER_FORM,
-  type Coupon,
-  type CouponForm,
-  type DeleteTarget,
-  type Offer,
-  type OfferForm,
-  type OfferStatusFilter,
-} from './types';
+import { toast } from 'sonner';
+import type { Offer, Coupon, OfferForm, CouponForm } from './types';
 
-/**
- * R3 split (OfferManagement) — data hook.
- *
- * Owns the offers + coupons lists, the offer form + coupon
- * form state, the dialog visibility, the search/filter state,
- * and the network handlers (fetch, save offer, save coupon,
- * delete, toggle active). The local `filteredCoupons` array
- * applies the debounced search on the client.
- */
 export function useOffers() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Offer dialog
+  // Offer dialog state
   const [offerDialog, setOfferDialog] = useState(false);
-  const [editOffer, setEditOffer] = useState<Offer | null>(null);
-  const [offerForm, setOfferForm] = useState<OfferForm>({ ...EMPTY_OFFER_FORM });
+  const [editOffer, setEditOffer] = useState<Partial<Offer> | null>(null);
+  const [offerForm, setOfferForm] = useState<OfferForm>({
+    title: '',
+    description: '',
+    validFrom: '',
+    validUntil: '',
+    isSponsored: false,
+  });
 
-  // Coupon dialog
+  // Coupon dialog state
   const [couponDialog, setCouponDialog] = useState(false);
-  const [editCoupon, setEditCoupon] = useState<Coupon | null>(null);
-  const [couponForm, setCouponForm] = useState<CouponForm>({ ...EMPTY_COUPON_FORM });
+  const [editCoupon, setEditCoupon] = useState<Partial<Coupon> | null>(null);
+  const [couponForm, setCouponForm] = useState<CouponForm>({
+    code: '',
+    description: '',
+    discountType: 'PERCENTAGE',
+    discountValue: '',
+    minAmount: '',
+    maxUses: '',
+    validFrom: '',
+    validUntil: '',
+  });
 
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
-  const [offerFilter, setOfferFilter] = useState<OfferStatusFilter>('ALL');
+  const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: string } | null>(null);
+  const [offerFilter, setOfferFilter] = useState('ALL');
   const [couponSearch, setCouponSearch] = useState('');
   const [debouncedCouponSearch, setDebouncedCouponSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Debounce coupon search → 500ms before filtering
+  // Debounce coupon search
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedCouponSearch(couponSearch);
@@ -61,7 +56,6 @@ export function useOffers() {
         fetch('/api/admin/coupons'),
       ]);
       if (oRes.status === 403 || cRes.status === 403) {
-        // Silently handle — admin lacks offers_manage permission
         return;
       }
       if (!oRes.ok) {
@@ -74,10 +68,10 @@ export function useOffers() {
       }
       const oJson = await oRes.json();
       const cJson = await cRes.json();
-      if (oJson.success) setOffers(oJson.data);
-      if (cJson.success) setCoupons(cJson.data);
-    } catch {
-      /* empty */
+      if (oJson.success) setOffers(oJson.data || []);
+      if (cJson.success) setCoupons(cJson.data || []);
+    } catch (err) {
+      logger.error('Error fetching offers data', { error: err });
     } finally {
       setLoading(false);
     }
@@ -100,7 +94,13 @@ export function useOffers() {
       });
     } else {
       setEditOffer(null);
-      setOfferForm({ ...EMPTY_OFFER_FORM });
+      setOfferForm({
+        title: '',
+        description: '',
+        validFrom: '',
+        validUntil: '',
+        isSponsored: false,
+      });
     }
     setOfferDialog(true);
   };
@@ -128,6 +128,37 @@ export function useOffers() {
       toast.error('Network error. Please try again.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const deleteOffer = (id: string) => {
+    setDeleteTarget({ type: 'offer', id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const endpoint = deleteTarget.type === 'offer' ? 'offers' : 'coupons';
+      const res = await fetch(`/api/admin/${endpoint}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deleteTarget.id }),
+      });
+
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(json?.error?.message || `Failed to delete ${deleteTarget.type}`);
+        return;
+      }
+
+      toast.success(`${deleteTarget.type === 'offer' ? 'Offer' : 'Coupon'} deleted`);
+      setDeleteTarget(null);
+      fetchData();
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -166,7 +197,16 @@ export function useOffers() {
       });
     } else {
       setEditCoupon(null);
-      setCouponForm({ ...EMPTY_COUPON_FORM });
+      setCouponForm({
+        code: '',
+        description: '',
+        discountType: 'PERCENTAGE',
+        discountValue: '',
+        minAmount: '',
+        maxUses: '',
+        validFrom: '',
+        validUntil: '',
+      });
     }
     setCouponDialog(true);
   };
@@ -203,6 +243,10 @@ export function useOffers() {
     }
   };
 
+  const deleteCoupon = (id: string) => {
+    setDeleteTarget({ type: 'coupon', id });
+  };
+
   const toggleCouponActive = async (coupon: Coupon) => {
     try {
       const res = await fetch('/api/admin/coupons', {
@@ -222,89 +266,38 @@ export function useOffers() {
     }
   };
 
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      setIsDeleting(true);
-      const endpoint = deleteTarget.type === 'offer' ? 'offers' : 'coupons';
-      const res = await fetch(`/api/admin/${endpoint}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: deleteTarget.id }),
-      });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        toast.error(json?.error?.message || `Failed to delete ${deleteTarget.type}`);
-        return;
-      }
-
-      toast.success(`${deleteTarget.type === 'offer' ? 'Offer' : 'Coupon'} deleted`);
-      setDeleteTarget(null);
-      fetchData();
-    } catch {
-      toast.error('Network error. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Derived: filtered coupons (client-side)
-  const filteredCoupons = coupons.filter(
-    (c) =>
-      !debouncedCouponSearch ||
-      c.code.toLocaleLowerCase('en').includes(debouncedCouponSearch.toLocaleLowerCase('en')) ||
-      (c.description || '')
-        .toLocaleLowerCase('en')
-        .includes(debouncedCouponSearch.toLocaleLowerCase('en'))
-  );
-
-  // Derived: filtered offers (client-side)
-  const filteredOffers = offers.filter(
-    (o) => offerFilter === 'ALL' || (offerFilter === 'ACTIVE' ? o.isActive : !o.isActive)
-  );
-
   return {
-    // data
     offers,
     coupons,
-    filteredOffers,
-    filteredCoupons,
     loading,
-    // offer form
     offerDialog,
     setOfferDialog,
     editOffer,
     offerForm,
     setOfferForm,
-    openOfferDialog,
-    saveOffer,
-    toggleOfferActive,
-    // coupon form
     couponDialog,
     setCouponDialog,
     editCoupon,
     couponForm,
     setCouponForm,
-    openCouponDialog,
-    saveCoupon,
-    toggleCouponActive,
-    // delete
     deleteTarget,
     setDeleteTarget,
-    confirmDelete,
-    // filters
     offerFilter,
     setOfferFilter,
     couponSearch,
     setCouponSearch,
     debouncedCouponSearch,
-    // saving state
     isSaving,
     isDeleting,
-    // revalidation
     fetchData,
+    openOfferDialog,
+    saveOffer,
+    deleteOffer,
+    confirmDelete,
+    toggleOfferActive,
+    openCouponDialog,
+    saveCoupon,
+    deleteCoupon,
+    toggleCouponActive,
   };
 }
-
-export type OffersHook = ReturnType<typeof useOffers>;

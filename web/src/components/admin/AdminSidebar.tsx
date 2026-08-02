@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import { getVisibleNavItems, ROLE_LABELS, ROLE_COLORS } from '@/lib/role-config';
 import { LOGO_PATH } from '@/lib/branding';
+import { prefetchAdminScreen } from './AdminLayout';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Activity,
@@ -185,6 +186,7 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
                 key={item.id}
                 data-nav-id={item.id}
                 onClick={() => setActiveSection(item.id)}
+                onMouseEnter={() => prefetchAdminScreen(item.id)}
                 className="relative cursor-pointer"
                 whileTap={{ scale: 0.98 }}
               >

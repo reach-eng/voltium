@@ -57,6 +57,8 @@ export function MediaPreview({
           <img
             src={src}
             alt={label}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (
