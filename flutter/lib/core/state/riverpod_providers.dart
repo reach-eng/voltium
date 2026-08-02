@@ -2,7 +2,6 @@
 // (R4.3c-4: the `library;` directive was hiding the new exports.)
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
@@ -44,17 +43,8 @@ export 'package:voltium_rider/features/device_compliance/presentation/providers/
 export 'package:voltium_rider/core/state/rider_provider.dart'
     show riderProvider, DataState;
 
-/// Riverpod provider for [AppProvider] (R4.3b).
-///
-/// `AppProvider` is still a `ChangeNotifier` shim (kept that way
-/// so the legacy `ChangeNotifierProvider<AppProvider>` registration
-/// in `main.dart` continues to compile). The new
-/// `appStateViewProvider` (in `app_state_provider.dart`) is the
-/// preferred modern source of truth — it derives from the
-/// `appStateProvider` state machine and avoids the
-/// `ChangeNotifier` boilerplate. R4.3c will fully retire the
-/// `AppProvider` shim and remove this provider.
-final appProvider = ChangeNotifierProvider<AppProvider>((ref) {
+/// Riverpod provider for [AppProvider] (PR-53).
+final appProvider = Provider<AppProvider>((ref) {
   throw UnimplementedError('AppProvider must be overridden in ProviderScope');
 });
 

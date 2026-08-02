@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -70,14 +71,14 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Warm the image cache during splash so dashboard assets render instantly.
-    // Called here (not initState) because precacheImage needs a valid
-    // BuildContext with an ImageCache from the widget tree.
-    precacheImage(const AssetImage('assets/logo.png'), context);
-    precacheImage(
-      const AssetImage('assets/images/vehicle_placeholder.png'),
-      context,
-    ).catchError((_) {}); // placeholder may not exist on all flavours
+    if (!AppConstants.isTestMode) {
+      precacheImage(const AssetImage('assets/logo.png'), context)
+          .catchError((_) {});
+      precacheImage(
+        const AssetImage('assets/images/vehicle_placeholder.png'),
+        context,
+      ).catchError((_) {});
+    }
   }
 
   Future<void> _startSequence() async {

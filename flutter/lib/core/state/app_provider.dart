@@ -13,7 +13,6 @@
 //   - `ref.watch(appStateViewProvider)` for derived view fields
 //   - `ref.read(riderProvider)` etc. for individual feature providers
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
@@ -82,17 +81,11 @@ SupportProvider _createDefaultSupportProvider() {
   return container.read(supportProvider.notifier);
 }
 
-/// Compatibility facade layer for AppProvider (PR-L / Ticket #65).
+/// Compatibility facade layer for AppProvider (PR-53).
 ///
-/// Unblocks `flutter analyze` and tests that transitively import [AppProvider].
-/// New code should prefer reading individual Riverpod providers or [RiderModel] directly.
-///
-/// R4.3b: still a `ChangeNotifier` so the legacy
-/// `ChangeNotifierProvider<AppProvider>` registration in `main.dart`
-/// continues to compile while we migrate call sites one at a time.
-/// The new `appStateViewProvider` (in `app_state_provider.dart`) is
-/// the preferred modern source of truth — see that file for details.
-class AppProvider extends ChangeNotifier {
+/// Plain container class holding feature provider instances and rider model.
+/// No longer extends [ChangeNotifier].
+class AppProvider {
   final RiderModel? _rider;
   final RiderProvider riderProvider;
   final WalletProvider walletProvider;

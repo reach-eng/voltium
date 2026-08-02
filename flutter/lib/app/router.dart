@@ -120,11 +120,14 @@ class _AppRouterState extends ConsumerState<AppRouter>
     _currentState = _startupState;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (!mounted) return;
+      try {
         ref.read(riderProvider.notifier).init();
         ref.read(supportProvider.notifier).initSupportData();
         ref.read(engagementProvider.notifier).initEngagementData();
         ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
+      } catch (_) {
+        // Ignored if element tree is deactivated during test frame rebuilds
       }
     });
   }

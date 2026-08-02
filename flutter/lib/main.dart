@@ -8,7 +8,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart';
 
 import 'gen/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
@@ -230,34 +229,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
             emergencyContactsService
                 .overrideWith(() => emergencyContactsServiceInstance),
           ],
-          child: MultiProvider(
-            providers: [
-              // R4.3c-1: LocaleProvider and ThemeProvider are now Riverpod
-              // Notifiers, not ChangeNotifiers. They are registered via
-              // ProviderScope.overrides above and accessed via ref.watch /
-              // ref.read with the corresponding NotifierProvider.
-              // R4.3c-4: WalletProvider, SupportProvider, EngagementProvider
-              // are also now Riverpod v3 Notifiers, no longer ChangeNotifiers.
-              ChangeNotifierProvider<AppProvider>.value(value: appInstance),
-              // R4.3c-6: RiderProvider is now a Riverpod v3 Notifier, not a
-              // ChangeNotifier. It is registered via the
-              // ProviderScope.overrides above and consumed via
-              // ref.watch / ref.read with `riderProvider`.
-              // R4.3c-5: DevicePolicyProvider is now a Riverpod v3 Notifier,
-              // not a ChangeNotifier. It is registered via the
-              // ProviderScope.overrides above and consumed via
-              // ref.watch / ref.read with `devicePolicyProvider`.
-              // R4.3c-3: ConnectivityProvider is now a Riverpod v3 Notifier,
-              // not a ChangeNotifier. It is registered via the
-              // ProviderScope.overrides above and consumed via
-              // ref.watch / ref.read with `connectivityProvider`.
-              // R4.3c-2: NotificationProvider is now a Riverpod v3 Notifier,
-              // not a ChangeNotifier. It is registered via the
-              // ProviderScope.overrides above and consumed via
-              // ref.watch / ref.read with `notificationProvider`.
-            ],
-            child: const VoltiumApp(),
-          ),
+          child: const VoltiumApp(),
         ),
       );
     },
