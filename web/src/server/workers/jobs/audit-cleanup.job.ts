@@ -23,6 +23,9 @@ export const auditCleanupJob = {
 
     try {
       const count = await deleteExpiredLogs();
+      if (count > 0 && process.env.NODE_ENV === 'production') {
+        await db.$executeRawUnsafe('VACUUM ANALYZE "AuditLog";').catch(() => {});
+      }
 
       await completeIdempotency(idempotencyKey, { expiredLogsDeleted: count }).catch(() => {});
 

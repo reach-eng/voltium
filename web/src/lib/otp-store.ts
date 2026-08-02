@@ -18,12 +18,23 @@ interface OtpEntry {
 
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
-const RESEND_COOLDOWN_MS = 30 * 1000;
+const RESEND_COOLDOWN_MS = 60 * 1000; // 60s cooldown to reduce SMS gateway costs
 const RESEND_WINDOW_MS = 10 * 60 * 1000;
-const MAX_RESENDS = 5;
+const MAX_RESENDS = 3; // max 3 requests per 10-minute window
 
+const MAX_STORE_SIZE = 1000;
 const memoryStore = new Map<string, OtpEntry>();
 const resendStore = new Map<string, { count: number; lastSentAt: number }>();
+
+function setBoundedMap<K, V>(map: Map<K, V>, key: K, value: V): void {
+  if (map.has(key)) {
+    map.delete(key);
+  } else if (map.size >= MAX_STORE_SIZE) {
+    const firstKey = map.keys().next().value;
+    if (firstKey !== undefined) map.delete(firstKey);
+  }
+  map.set(key, value);
+}
 
 function shouldUseDatabaseStore(): boolean {
   return process.env.NODE_ENV === 'production' || process.env.OTP_STORE_PROVIDER === 'postgres';
@@ -118,12 +129,12 @@ export async function generateOtp(phone: string): Promise<string> {
   }
 
   const existing = resendStore.get(phone);
-  resendStore.set(phone, { count: (existing?.count ?? 0) + 1, lastSentAt: Date.now() });
+  setBoundedMap(resendStore, phone, { count: (existing?.count ?? 0) + 1, lastSentAt: Date.now() });
   for (const [key, val] of resendStore) {
     if (Date.now() - val.lastSentAt > RESEND_WINDOW_MS) resendStore.delete(key);
   }
 
-  memoryStore.set(phone, {
+  setBoundedMap(memoryStore, phone, {
     code,
     expiresAt: Date.now() + OTP_EXPIRY_MS,
     attempts: 0,

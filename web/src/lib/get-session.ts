@@ -16,63 +16,93 @@ async function getCookie(name: string): Promise<string | undefined> {
   }
 }
 
+const REQUEST_SESSION_CACHE = new WeakMap<Request, Promise<SessionPayload | null>>();
+
 /**
  * Get the current session from the `voltium-session` cookie or Authorization header.
  *
  * Returns `null` if no session exists or the token is invalid/expired.
+ * Request-scoped memoization prevents duplicate JWT verification calls in the same request.
  */
 export async function getSession(request?: Request): Promise<SessionPayload | null> {
-  let token: string | undefined;
+  if (request && REQUEST_SESSION_CACHE.has(request)) {
+    return REQUEST_SESSION_CACHE.get(request)!;
+  }
 
-  // 1. Try to get token from Authorization header (common for mobile/API)
-  if (request) {
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
+  const promise = (async () => {
+    let token: string | undefined;
+
+    // 1. Try to get token from Authorization header (common for mobile/API)
+    if (request) {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
     }
+
+    // 2. Fallback to session cookie (common for web)
+    if (!token) {
+      token = await getCookie(SESSION_COOKIE_NAME);
+    }
+
+    if (!token) return null;
+    return await verifySessionToken(token);
+  })();
+
+  if (request) {
+    REQUEST_SESSION_CACHE.set(request, promise);
   }
 
-  // 2. Fallback to session cookie (common for web)
-  if (!token) {
-    token = await getCookie(SESSION_COOKIE_NAME);
-  }
-
-  if (!token) return null;
-  return await verifySessionToken(token);
+  return promise;
 }
+
+const REQUEST_ADMIN_SESSION_CACHE = new WeakMap<Request, Promise<SessionPayload | null>>();
 
 /**
  * Get the admin session from cookie or Authorization header.
  *
  * Returns `null` if no session exists, the token is invalid/expired,
  * or the session does not have the 'admin' role.
+ * Request-scoped memoization prevents duplicate JWT verification calls in the same request.
  */
 export async function getAdminSession(request?: Request): Promise<SessionPayload | null> {
-  let token: string | undefined;
+  if (request && REQUEST_ADMIN_SESSION_CACHE.has(request)) {
+    return REQUEST_ADMIN_SESSION_CACHE.get(request)!;
+  }
 
-  // 1. Try Authorization header (common for API clients)
-  if (request) {
-    const authHeader = request.headers.get('Authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      token = authHeader.substring(7);
+  const promise = (async () => {
+    let token: string | undefined;
+
+    // 1. Try Authorization header (common for API clients)
+    if (request) {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
     }
+
+    // 2. Fallback to cookie
+    if (!token) {
+      token = await getCookie(ADMIN_SESSION_COOKIE_NAME);
+    }
+
+    if (!token) {
+      return null;
+    }
+
+    const session = await verifySessionToken(token);
+    if (!session || session.role !== 'admin') {
+      logger.debug('[AdminSession] Invalid or non-admin session');
+      return null;
+    }
+    return session;
+  })();
+
+  if (request) {
+    REQUEST_ADMIN_SESSION_CACHE.set(request, promise);
   }
 
-  // 2. Fallback to cookie
-  if (!token) {
-    token = await getCookie(ADMIN_SESSION_COOKIE_NAME);
-  }
-
-  if (!token) {
-    return null;
-  }
-
-  const session = await verifySessionToken(token);
-  if (!session || session.role !== 'admin') {
-    logger.debug('[AdminSession] Invalid or non-admin session');
-    return null;
-  }
-  return session;
+  return promise;
 }
 
 /**

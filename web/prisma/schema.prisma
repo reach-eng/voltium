@@ -276,6 +276,8 @@ model Rider {
   @@index([referredBy])
   @@index([teamLeader])
   @@index([phone, lifecycleStatus])
+  @@index([updatedAt])
+  @@index([lifecycleStatus, updatedAt])
   @@map("riders")
 }
 
@@ -336,6 +338,7 @@ model KycProfile {
   @@index([status])
   @@index([riderId])
   @@index([status, riderId])
+  @@index([updatedAt])
   @@map("kyc_profiles")
 }
 
@@ -579,6 +582,8 @@ model Notification {
   @@index([type])
   @@index([priority])
   @@index([riderId, isRead])
+  @@index([riderId, createdAt])
+  @@index([riderId, isRead, createdAt])
   @@map("notifications")
 }
 

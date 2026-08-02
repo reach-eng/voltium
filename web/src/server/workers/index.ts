@@ -236,8 +236,9 @@ async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clo
   logger.info(`[Worker] Starting loop for ${jobType}`, { concurrency });
 
   while (running) {
+    let processedCount = 0;
     try {
-      await JobQueue.processJobs(
+      processedCount = await JobQueue.processJobs(
         jobType,
         async (job) => {
           logger.info(`[Worker] Processing job`, {
@@ -258,7 +259,8 @@ async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clo
       logger.error(`[Worker] Error in ${jobType} loop`, err);
     }
 
-    await sleep(5000);
+    // Adaptive idle backoff: sleep 1s when active, 15s when idle to save DB query overhead
+    await sleep(processedCount > 0 ? 1000 : 15000);
   }
 }
 

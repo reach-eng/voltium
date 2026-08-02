@@ -30,7 +30,7 @@ export const JobQueue = {
     type: string,
     processor: (job: QueueJob) => Promise<void>,
     concurrency = 5
-  ): Promise<void> {
+  ): Promise<number> {
     const now = clock.now();
 
     // Claim eligible pending jobs using the readyAt column (Phase 3.4).
@@ -65,7 +65,7 @@ export const JobQueue = {
       RETURNING id, "eventType", payload, status, attempts, "maxAttempts", "createdAt", "readyAt"
     `;
 
-    if (pending.length === 0) return;
+    if (pending.length === 0) return 0;
 
     for (const event of pending) {
       try {
@@ -124,6 +124,7 @@ export const JobQueue = {
         });
       }
     }
+    return pending.length;
   },
 
   /**

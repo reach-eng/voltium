@@ -30,6 +30,13 @@ function scrubProperties(properties?: Record<string, any>): Record<string, any> 
 export const posthog = {
   capture(event: string, properties?: Record<string, any>, distinctId: string = 'anonymous') {
     if (!posthogClient) return;
+
+    // High-frequency non-critical events are sampled at 10% to preserve SaaS tier budget
+    const NON_CRITICAL_EVENTS = ['splash_viewed', 'page_viewed', 'tab_switched', 'button_clicked', 'screen_viewed'];
+    if (NON_CRITICAL_EVENTS.includes(event) && Math.random() > 0.1) {
+      return;
+    }
+
     // Free tier safety valve: drop events when the monthly cap is hit.
     // See src/lib/posthog-rate-limiter.ts for details.
     if (!getPostHogRateLimiter().tryConsume()) {

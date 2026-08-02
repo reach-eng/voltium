@@ -15,12 +15,15 @@ const NONCE_TTL_MS = 5 * 60 * 1000; // 5 minutes (matches client staleness windo
 // Periodic cleanup of expired nonces every 5 minutes
 if (typeof globalThis !== 'undefined' && !('_fcmNonceCleanup' in globalThis)) {
   (globalThis as any)._fcmNonceCleanup = true;
-  setInterval(() => {
+  const timer = setInterval(() => {
     const now = Date.now();
     for (const [key, ts] of _sentNonces) {
       if (now - ts > NONCE_TTL_MS) _sentNonces.delete(key);
     }
   }, 5 * 60 * 1000);
+  if (timer && typeof timer.unref === 'function') {
+    timer.unref();
+  }
 }
 
 function trackNonce(nonce: string, action: string): boolean {
@@ -44,7 +47,7 @@ export const fcmService = {
    * Send a data-only message to a specific device
    * Data messages are preferred for background processing on the device.
    */
-  async sendDataMessage(token: string, data: Record<string, string>) {
+  async sendDataMessage(token: string, data: Record<string, string>, priority: 'high' | 'normal' = 'normal') {
     if (!firebaseAdmin) {
       logger.error('[FCM] Firebase Admin not initialized');
       return { success: false, error: 'Firebase Admin not initialized' };
@@ -55,7 +58,8 @@ export const fcmService = {
         token,
         data,
         android: {
-          priority: 'high' as const,
+          priority,
+          collapseKey: data.type || 'voltium_update',
         },
       };
 
@@ -63,8 +67,53 @@ export const fcmService = {
       logger.info('[FCM] Message sent successfully', { response, data });
       return { success: true, messageId: response };
     } catch (error: unknown) {
-      logger.error('[FCM] Error sending message:', { error, token });
-      return { success: false, error: (error instanceof Error ? error.message : String(error)) || 'Failed to send FCM message' };
+      const errMsg = error instanceof Error ? error.message : String(error);
+      const isStaleToken =
+        errMsg.includes('registration-token-not-registered') ||
+        errMsg.includes('invalid-registration-token') ||
+        errMsg.includes('Requested entity was not found');
+      if (isStaleToken) {
+        logger.warn('[FCM] Stale or invalid device token detected:', { token: token.slice(-6) });
+      } else {
+        logger.error('[FCM] Error sending message:', { error: errMsg, token: token.slice(-6) });
+      }
+      return { success: false, isStaleToken, error: errMsg || 'Failed to send FCM message' };
+    }
+  },
+
+  /**
+   * Send a data message to multiple device tokens in a single HTTP batch request (up to 500 tokens).
+   */
+  async sendMulticast(tokens: string[], data: Record<string, string>, priority: 'high' | 'normal' = 'normal') {
+    if (!firebaseAdmin) {
+      logger.error('[FCM] Firebase Admin not initialized');
+      return { success: false, failureCount: tokens.length };
+    }
+    if (tokens.length === 0) return { success: true, successCount: 0, failureCount: 0 };
+
+    try {
+      const message = {
+        tokens,
+        data,
+        android: {
+          priority,
+          collapseKey: data.type || 'voltium_update',
+        },
+      };
+
+      const response = await getMessaging(firebaseAdmin).sendEachForMulticast(message);
+      logger.info('[FCM] Multicast message sent', {
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+      });
+      return {
+        success: true,
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+      };
+    } catch (error: unknown) {
+      logger.error('[FCM] Error sending multicast message:', error);
+      return { success: false, error: (error instanceof Error ? error.message : String(error)) };
     }
   },
 

@@ -138,7 +138,7 @@ export const OutboxService = {
   /**
    * Cleanup COMPLETED events older than the retention period.
    */
-  async cleanupCompleted(retentionDays = 7): Promise<number> {
+  async cleanupCompleted(retentionDays = 1): Promise<number> {
     const cutoff = new Date(clock.now().getTime() - retentionDays * 24 * 60 * 60 * 1000);
     const result = await db.outboxEvent.deleteMany({
       where: {

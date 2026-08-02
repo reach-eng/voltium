@@ -91,11 +91,20 @@ export function calculateDynamicPrice(
   };
 }
 
+const HUB_AVAILABILITY_CACHE = new Map<string, { data: HubAvailability; expiresAt: number }>();
+const HUB_CACHE_TTL_MS = 60 * 1000; // 60s cache
+
 /**
  * Fetch hub availability for dynamic pricing.
  * Uses Prisma directly instead of self-referencing HTTP call.
+ * Results are cached in memory for 60 seconds to eliminate redundant count queries.
  */
 export async function getHubAvailability(hubId: string): Promise<HubAvailability> {
+  const cached = HUB_AVAILABILITY_CACHE.get(hubId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
   const [hub, totalVehicles, availableVehicles] = await Promise.all([
     db.hub.findUnique({ where: { id: hubId }, select: { name: true } }),
     db.vehicle.count({ where: { hubId } }),
@@ -108,11 +117,18 @@ export async function getHubAvailability(hubId: string): Promise<HubAvailability
 
   const availabilityRatio = totalVehicles > 0 ? availableVehicles / totalVehicles : 0;
 
-  return {
+  const result: HubAvailability = {
     hubId,
     hubName: hub.name,
     totalVehicles,
     availableVehicles,
     availabilityRatio,
   };
+
+  HUB_AVAILABILITY_CACHE.set(hubId, {
+    data: result,
+    expiresAt: Date.now() + HUB_CACHE_TTL_MS,
+  });
+
+  return result;
 }

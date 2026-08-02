@@ -30,7 +30,7 @@ const defaultFlags: FeatureFlags = {
 let cachedFlags: FeatureFlags | null = null;
 let cacheExpiry = 0;
 let pendingPromise: Promise<FeatureFlags> | null = null;
-const CACHE_TTL_MS = 30000;
+const CACHE_TTL_MS = 300_000; // 5 minutes (invalidates instantly on updateFeatureFlag)
 
 async function loadDbFlags(): Promise<Partial<FeatureFlags>> {
   try {
