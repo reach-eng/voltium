@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createOfferSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden, parsePaginationParams } from '@/lib/rbac';
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   try {
     const { page, limit } = parsePaginationParams(req.nextUrl);
     const result = await offerUseCases.listAdmin(page, limit);
-    return success(result.offers, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.offers, undefined, 200, result.pagination), 60);
   } catch (error) {
     logger.error('GET /api/admin/offers error:', error);
     return errors.internal('Failed to fetch offers');

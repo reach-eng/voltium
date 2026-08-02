@@ -7,12 +7,13 @@
  */
 
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { validateBody } from '@/lib/validators';
 import { parseDDMMYYYY } from '@/lib/date-utils';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { approveTransactionSchema } from '@/server/modules/transactions/transaction.schemas';
 import {
   transactionUseCases,
@@ -46,7 +47,9 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
-    const result = await transactionUseCases.list({
+    const cacheKey = [
+      'admin:transactions',
+      session.adminId ?? session.riderDbId ?? 'anon',
       status,
       type,
       search,
@@ -54,9 +57,23 @@ export async function GET(req: NextRequest) {
       endDate,
       page,
       limit,
-    });
+    ].join(':');
 
-    return success(result.transactions, undefined, 200, result.pagination);
+    const result = await getOrSetResponse(cacheKey, () =>
+      transactionUseCases.list({
+        status,
+        type,
+        search,
+        startDate,
+        endDate,
+        page,
+        limit,
+      }),
+      5
+    );
+
+    if (!result) return errors.internal('Failed to fetch transactions');
+    return withCacheHeaders(success(result.transactions, undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('Transactions list error:', error);
     return errors.internal('Failed to fetch transactions');
@@ -86,6 +103,7 @@ export async function PUT(req: NextRequest) {
       adminId,
     });
 
+    invalidateCache('admin:*');
     return success(result, `Transaction ${action.toLowerCase()}d`);
   } catch (error) {
     if (error instanceof TransactionError) {

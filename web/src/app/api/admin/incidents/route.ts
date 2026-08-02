@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, createIncidentSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Math.max(1, parseInt(url.searchParams.get('limit') || '20')), 100);
 
     const result = await incidentUseCases.list({ status, type, severity, search, page, limit });
-    return success(result.incidents, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.incidents, undefined, 200, result.pagination), 5);
   } catch (error) {
     logger.error('GET /api/admin/incidents error:', error);
     return errors.internal('Failed to fetch incidents');

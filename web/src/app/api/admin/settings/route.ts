@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, updateSettingsSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
+import { invalidateCache } from '@/lib/cache';
 import { settingUseCases } from '@/server/modules/settings/setting.use-cases';
 
 export async function GET() {
@@ -13,7 +14,7 @@ export async function GET() {
 
   try {
     const result = await settingUseCases.getAll();
-    return success(result);
+    return withCacheHeaders(success(result), 60);
   } catch (error) {
     logger.error('GET /api/admin/settings error:', error);
     return errors.internal('Failed to fetch settings');
@@ -34,6 +35,7 @@ export async function PUT(req: NextRequest) {
       validation.data,
       req.headers.get('x-admin-id') || 'system'
     );
+    invalidateCache('admin:*');
     return success(results, 'Settings updated');
   } catch (error) {
     logger.error('PUT /api/admin/settings error:', error);

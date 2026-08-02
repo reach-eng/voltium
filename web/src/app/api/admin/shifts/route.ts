@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     const search = req.nextUrl.searchParams.get('search') || '';
     const activeOnly = req.nextUrl.searchParams.get('active') === 'true';
     const shifts = await shiftUseCases.listShifts(search, activeOnly);
-    return success(shifts);
+    return withCacheHeaders(success(shifts), 60);
   } catch (error) {
     logger.error('GET /api/admin/shifts error:', error);
     return errors.internal('Failed to fetch shifts');

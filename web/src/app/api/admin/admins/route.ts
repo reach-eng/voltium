@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hashPassword } from '@/lib/password';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       page,
       limit,
     });
-    return success(result.admins, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.admins, undefined, 200, result.pagination), 10);
   } catch (error) {
     logger.error('GET /api/admin/admins error:', error);
     return errors.internal('Failed to fetch admins');

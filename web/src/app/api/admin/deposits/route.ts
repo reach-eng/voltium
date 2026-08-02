@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { parseDDMMYYYY } from '@/lib/date-utils';
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
       limit,
     });
 
-    return success(result.records, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.records, undefined, 200, result.pagination), 5);
   } catch (err) {
     return errors.internal('Failed to fetch deposit records');
   }

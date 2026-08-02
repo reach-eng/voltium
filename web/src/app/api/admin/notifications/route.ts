@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, sendNotificationSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || undefined;
 
     const result = await notificationUseCases.listAllAdmin({ page, limit, search, type, status });
-    return success({ notifications: result.notifications, pagination: result.pagination });
+    return withCacheHeaders(success({ notifications: result.notifications, pagination: result.pagination }), 5);
   } catch (error) {
     logger.error('GET /api/admin/notifications error:', error);
     return errors.internal('Failed to fetch notifications');

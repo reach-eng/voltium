@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, updateLegalSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -13,7 +13,7 @@ export async function GET() {
 
   try {
     const documents = await legalUseCases.list();
-    return success(documents);
+    return withCacheHeaders(success(documents), 300);
   } catch (error) {
     logger.error('GET /api/admin/legal error:', error);
     return errors.internal('Failed to fetch legal documents');

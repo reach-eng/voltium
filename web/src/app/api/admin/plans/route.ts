@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import {
   validateBody,
   createPlanSchema,
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   try {
     const { page, limit } = parsePaginationParams(req.nextUrl);
     const result = await planUseCases.list(page, limit);
-    return success(result.plans, undefined, 200, result.pagination);
+    return withCacheHeaders(success(result.plans, undefined, 200, result.pagination), 300);
   } catch (error) {
     logger.error('Plans list error:', error);
     return errors.internal('Failed to fetch plans');

@@ -10,11 +10,12 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import { parseDDMMYYYY } from '@/lib/date-utils';
+import { getOrSetResponse, invalidateCache } from '@/lib/cache';
 import { adminRiderUseCases } from '@/server/modules/riders/admin-riders.use-cases';
 
 /**
@@ -113,24 +114,44 @@ export async function GET(req: NextRequest) {
     const endDate = endDateRaw
       ? parseDDMMYYYY(endDateRaw)?.toISOString() || endDateRaw
       : '';
+    const cursor = url.searchParams.get('cursor') || '';
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '20'));
     const sortBy = url.searchParams.get('sortBy') || 'createdAt';
     const sortDir = url.searchParams.get('sortDir') || 'desc';
 
-    const result = await adminRiderUseCases.list({
+    const cacheKey = [
+      'admin:riders',
+      session.adminId ?? session.riderDbId ?? 'anon',
       search,
       state,
       kycStatus,
       startDate,
       endDate,
+      cursor,
       page,
       limit,
       sortBy,
       sortDir,
-    });
+    ].join(':');
 
-    return success(result);
+    const result = await getOrSetResponse(cacheKey, () =>
+      adminRiderUseCases.list({
+        search,
+        state,
+        kycStatus,
+        startDate,
+        endDate,
+        cursor: cursor || undefined,
+        page,
+        limit,
+        sortBy,
+        sortDir,
+      }),
+      5
+    );
+
+    return withCacheHeaders(success(result), 5);
   } catch (error) {
     logger.error('Riders list error:', error);
     return errors.internal('Failed to fetch riders');
@@ -150,6 +171,7 @@ export async function POST(req: NextRequest) {
     const { phone, fullName } = body;
 
     const result = await adminRiderUseCases.create({ phone, fullName });
+    invalidateCache('admin:*');
     return success(result);
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('already exists')) {
@@ -185,6 +207,7 @@ export async function PUT(req: NextRequest) {
       actorRole: session.adminRole || '',
     });
 
+    invalidateCache('admin:*');
     return success(result);
   } catch (error) {
     if (error instanceof Error && (error instanceof Error ? error.message : String(error)).includes('not found')) {
@@ -208,6 +231,7 @@ export async function DELETE(req: NextRequest) {
     if (!id) return errors.badRequest('ID required');
 
     await adminRiderUseCases.delete(id);
+    invalidateCache('admin:*');
     return success(null, 'Rider deleted');
   } catch (error) {
     logger.error('Delete rider error:', error);

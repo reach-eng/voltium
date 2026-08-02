@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { validateBody, recalculateScoreSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       page,
       limit,
     });
-    return success({ scores: result.scores, pagination: result.pagination }, undefined, 200);
+    return withCacheHeaders(success({ scores: result.scores, pagination: result.pagination }, undefined, 200), 10);
   } catch (error) {
     logger.error('GET /api/admin/scores error:', error);
     return errors.internal('Failed to fetch rider scores');

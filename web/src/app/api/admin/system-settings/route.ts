@@ -3,7 +3,7 @@ import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { withApiHandler } from '@/lib/api-handler';
-import { success, errors } from '@/lib/api-response';
+import { success, errors, withCacheHeaders } from '@/lib/api-response';
 
 /**
  * Admin System Settings API
@@ -68,7 +68,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
     SESSION_SECRET_CONFIGURED: process.env.SESSION_SECRET ? 'true' : 'false',
   };
 
-  return success({ editable, readOnly });
+  return withCacheHeaders(success({ editable, readOnly }), 60);
 });
 
 export const PUT = withApiHandler(async (request: NextRequest) => {
