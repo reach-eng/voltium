@@ -3,13 +3,17 @@ import { success, errors } from '@/lib/api-response';
 import { requireRiderSession } from '@/lib/rider-auth';
 import { deviceComplianceUseCases } from '@/server/modules/device-compliance/device-compliance.use-cases';
 import { logger } from '@/lib/logger';
+import { isDeviceSeedAllowed } from '@/lib/device-policy';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     let riderDbId = '';
-    if (process.env.TEST_MODE === 'true' || process.env.NODE_ENV === 'development') {
+    if (isDeviceSeedAllowed()) {
+      // Dev / test bypass — body-supplied riderId is allowed in dev mode or
+      // when running under the E2E test harness. Production and staging
+      // (per device-policy.ts) always require a real session.
       const body = await request.clone().json();
       riderDbId = body.riderId || 'test-rider-001';
     } else {
