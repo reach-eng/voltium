@@ -276,7 +276,7 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () async {
                   final confirmed = await showLogoutConfirmation(context);
                   if (confirmed == true && context.mounted) {
-                    ref.read(riderProvider).logout();
+                    ref.read(riderProvider.notifier).logout();
                     if (context.mounted) {
                       Navigator.pushAndRemoveUntil(
                         context,

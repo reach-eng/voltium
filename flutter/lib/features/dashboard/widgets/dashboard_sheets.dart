@@ -624,7 +624,7 @@ Future<void> startVehicleReturnWorkflow(
     );
 
     final success = await ProviderScope.containerOf(context)
-        .read(riderProvider)
+        .read(riderProvider.notifier)
         .submitVehicleReturn(
           photos: photos,
           reason: 'Rental Term Completed',
@@ -711,7 +711,8 @@ void showIntentDialog(BuildContext context, RiderModel rider) {
 
 Future<void> _updateIntent(
     BuildContext context, RiderModel rider, String newIntent) async {
-  final provider = ProviderScope.containerOf(context).read(riderProvider);
+  final provider =
+      ProviderScope.containerOf(context).read(riderProvider.notifier);
   try {
     await ApiClient().put('/api/rider/profile', body: {'intent': newIntent});
     final updated = rider.copyWith(intent: newIntent);

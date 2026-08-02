@@ -52,7 +52,7 @@ class _PickupVerificationScreenState
 
     setState(() => _isLoading = true);
     try {
-      final provider = ref.read(riderProvider);
+      final provider = ref.read(riderProvider.notifier);
       final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {

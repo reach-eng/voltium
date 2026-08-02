@@ -173,7 +173,7 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                                 _selectedIntent == IntentType.delivery
                                     ? 'deliver'
                                     : 'personal';
-                            final provider = ref.read(riderProvider);
+                            final provider = ref.read(riderProvider.notifier);
                             final riderId = ref.watch(riderProvider).riderId ??
                                 ref.watch(riderProvider).rider?.id;
                             final messenger = ScaffoldMessenger.of(context);

@@ -66,11 +66,13 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
           PreDashboardHeader(onLogoutConfirmed: _onLogoutConfirmed),
           if (isPollingTimedOut)
             PreDashboardPollingBanner(
-              onRefresh: () => ref.read(riderProvider).refreshFromApi(),
+              onRefresh: () =>
+                  ref.read(riderProvider.notifier).refreshFromApi(),
             ),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: () => ref.read(riderProvider).refreshFromApi(),
+              onRefresh: () =>
+                  ref.read(riderProvider.notifier).refreshFromApi(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -105,7 +107,7 @@ class _PreDashboardScreenState extends ConsumerState<PreDashboardScreen> {
   }
 
   void _onLogoutConfirmed() {
-    ref.read(riderProvider).logout();
+    ref.read(riderProvider.notifier).logout();
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,

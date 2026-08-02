@@ -505,7 +505,7 @@ class _GuarantorOnboardingScreenState
   Future<void> _handleSubmit() async {
     final state = ref.read(guarantorOnboardingNotifierProvider);
     final isTestMode = AppConstants.isTestMode;
-    final provider = ref.read(riderProvider);
+    final provider = ref.read(riderProvider.notifier);
     final rider = ref.watch(riderProvider).rider;
 
     if (!isTestMode) {

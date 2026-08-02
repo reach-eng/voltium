@@ -1,10 +1,38 @@
-import 'dart:developer';
+// R4.3c-6 — Riverpod v3 `RiderProvider` (Notifier + state).
+//
+// The previous `RiderProvider extends ChangeNotifier with
+// WidgetsBindingObserver` was the central state holder for the
+// rider model, polling manager lifecycle, FCM token registration,
+// and device-data sync. All of that is preserved — the notifier
+// holds the same `PollingManager` instances, the same `Timer` for
+// the location sync, and the same `WidgetsBindingObserver` mixin
+// for lifecycle handling. State mutations now go through an
+// immutable `RiderState` value object instead of `notifyListeners()`.
+//
+// Same external surface:
+//   - state accessors: `rider`, `riderId`, `phone`, `dataState`,
+//     `errorMessage`, `isRefreshing`, `isPollingTimedOut`,
+//     `hasFetchedOnce`, `isPlanActive`, `isKycDone`,
+//     `isActuallyActive`
+//   - lifecycle: `init`, `refreshFromApi`, `updateCredentials`,
+//     `logout`, `submitVehicleReturn`, `registerFcmToken`
+//   - polling: `startOnboardingPoll`, `stopPolling`,
+//     `startPostPickupPoll`, `setPollingActive`,
+//     `setPollingInactive`
+//   - rider updates: `setRiderId`, `setRider`, `updateRider`,
+//     `refresh`, `routeAfterLogin`
+
 import 'dart:async';
-import 'package:universal_io/io.dart';
-import 'package:flutter/material.dart';
+import 'dart:developer' show log;
+import 'dart:io' show File;
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
+    show filesRepositoryProvider;
 import 'package:voltium_rider/core/polling/polling_manager.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -27,22 +55,75 @@ enum DataState {
   error,
 }
 
-class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
-  final RiderRepository _riderRepository;
-  final RentalRepository _rentalRepository;
-  final FilesRepository _filesRepository;
+/// Immutable rider state.
+@immutable
+class RiderState {
+  final RiderModel? rider;
+  final String? riderId;
+  final String? phone;
+  final DataState dataState;
+  final String? errorMessage;
+  final bool isRefreshing;
+  final bool isPollingTimedOut;
+  final bool hasFetchedOnce;
 
-  RiderProvider({
+  const RiderState({
+    this.rider,
+    this.riderId,
+    this.phone,
+    this.dataState = DataState.initial,
+    this.errorMessage,
+    this.isRefreshing = false,
+    this.isPollingTimedOut = false,
+    this.hasFetchedOnce = false,
+  });
+
+  bool get isPlanActive => rider?.rentalStatus == 'ACTIVE';
+  bool get isKycDone => rider?.kycStatus == KycStatus.approved;
+  bool get isActuallyActive =>
+      rider?.accountStatus == AccountStatus.active ||
+      (rider?.lifecycleStatus.isNotEmpty == true &&
+          lifecycleRank(rider!) >= 11);
+
+  RiderState copyWith({
+    RiderModel? rider,
     String? riderId,
     String? phone,
-    required RiderRepository riderRepository,
-    required RentalRepository rentalRepository,
-    required FilesRepository filesRepository,
-  })  : _riderId = riderId,
-        _phone = phone,
-        _riderRepository = riderRepository,
-        _rentalRepository = rentalRepository,
-        _filesRepository = filesRepository {
+    DataState? dataState,
+    String? errorMessage,
+    bool? isRefreshing,
+    bool? isPollingTimedOut,
+    bool? hasFetchedOnce,
+    bool clearErrorMessage = false,
+    bool clearRider = false,
+  }) =>
+      RiderState(
+        rider: clearRider ? null : (rider ?? this.rider),
+        riderId: riderId ?? this.riderId,
+        phone: phone ?? this.phone,
+        dataState: dataState ?? this.dataState,
+        errorMessage:
+            clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+        isRefreshing: isRefreshing ?? this.isRefreshing,
+        isPollingTimedOut: isPollingTimedOut ?? this.isPollingTimedOut,
+        hasFetchedOnce: hasFetchedOnce ?? this.hasFetchedOnce,
+      );
+}
+
+class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
+  RiderRepository get _riderRepository => ref.read(riderRepositoryProvider);
+  RentalRepository get _rentalRepository => ref.read(rentalRepositoryProvider);
+  FilesRepository get _filesRepository => ref.read(filesRepositoryProvider);
+
+  // ── Polling + timers (same shape as the old ChangeNotifier) ──
+  int _onboardingPollCount = 0;
+  late final PollingManager _onboardingPoller;
+  late final PollingManager _postPickupPoller;
+  Timer? _locationSyncTimer;
+  bool _hasSyncedDeviceDataOnce = false;
+
+  @override
+  RiderState build() {
     _onboardingPoller = PollingManager(
       onTick: _onOnboardingTick,
       strategy: const PollingStrategy(
@@ -57,160 +138,142 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
         inactive: Duration(seconds: 120),
       ),
     );
-    // R11.2 — register as a WidgetsBindingObserver so the provider can self-pause
-    // polling and cancel the device-data sync timer when the app is backgrounded.
+
+    // R11.2 — register as a WidgetsBindingObserver so the provider
+    // can self-pause polling and cancel the device-data sync timer
+    // when the app is backgrounded.
     WidgetsBinding.instance.addObserver(this);
+
+    ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(this);
+      _onboardingPoller.stop();
+      _postPickupPoller.stop();
+      _stopDeviceDataSync();
+    });
+    return const RiderState();
   }
 
-  RiderModel? _rider;
-  RiderModel? get rider => _rider;
+  // ── Public API (mirrors the old `RiderProvider` class) ──
 
-  String? _riderId;
-  String? get riderId => _riderId;
-
-  String? _phone;
-  String? get phone => _phone;
-
-  DataState _dataState = DataState.initial;
-  DataState get dataState => _dataState;
-
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
-
-  bool _isRefreshing = false;
-  bool get isRefreshing => _isRefreshing;
-
-  /// In-flight refresh so concurrent callers await the same outcome (F-024).
-  Future<void>? _refreshInFlight;
-
-  bool _hasFetchedOnce = false;
-  bool get hasFetchedOnce => _hasFetchedOnce;
-
-  int _onboardingPollCount = 0;
-  bool _isPollingTimedOut = false;
-  bool get isPollingTimedOut => _isPollingTimedOut;
-  late final PollingManager _onboardingPoller;
-  late final PollingManager _postPickupPoller;
-  Timer? _locationSyncTimer;
-  bool _hasSyncedDeviceDataOnce = false;
-
-  bool get isPlanActive => _rider?.rentalStatus == 'ACTIVE';
-  bool get isKycDone => _rider?.kycStatus == KycStatus.approved;
-  bool get isActuallyActive =>
-      _rider?.accountStatus == AccountStatus.active ||
-      (_rider?.lifecycleStatus.isNotEmpty == true &&
-          lifecycleRank(_rider!) >= 11);
+  RiderModel? get rider => state.rider;
+  String? get riderId => state.riderId;
+  String? get phone => state.phone;
+  DataState get dataState => state.dataState;
+  String? get errorMessage => state.errorMessage;
+  bool get isRefreshing => state.isRefreshing;
+  bool get isPollingTimedOut => state.isPollingTimedOut;
+  bool get hasFetchedOnce => state.hasFetchedOnce;
+  bool get isPlanActive => state.isPlanActive;
+  bool get isKycDone => state.isKycDone;
+  bool get isActuallyActive => state.isActuallyActive;
 
   Future<void> init() async {
-    PerformanceService().startTrace('RiderProvider_Init');
+    PerformanceService().startTrace('RiderNotifier_Init');
 
-    // Attempt cache read
+    // Attempt cache read.
     final cached = CacheService().getCachedRider();
     if (cached != null) {
-      _rider = RiderModel.fromCacheMap(cached);
-      _riderId =
-          _rider?.riderId.isNotEmpty == true ? _rider?.riderId : _rider?.id;
-      _phone = _rider?.phone;
-      _dataState = DataState.fromCache;
-      notifyListeners();
+      final rider = RiderModel.fromCacheMap(cached);
+      state = state.copyWith(
+        rider: rider,
+        riderId: rider.riderId.isNotEmpty ? rider.riderId : rider.id,
+        phone: rider.phone,
+        dataState: DataState.fromCache,
+      );
     }
 
-    // Trigger fresh load in background
-    refreshFromApi();
-    PerformanceService().stopTrace('RiderProvider_Init');
+    // Trigger fresh load in background.
+    await refreshFromApi();
+    PerformanceService().stopTrace('RiderNotifier_Init');
   }
 
+  Future<void>? _refreshInFlight;
+
   Future<void> refreshFromApi() async {
-    // Coalesce concurrent callers onto the in-flight refresh so they see
-    // the same outcome instead of being silently dropped (F-024).
     final pending = _refreshInFlight;
     if (pending != null) return pending;
+    state = state.copyWith(clearErrorMessage: true);
 
     final future = _doRefreshFromApi();
     _refreshInFlight = future;
-    _errorMessage = null;
-    notifyListeners();
     try {
       await future;
     } finally {
       _refreshInFlight = null;
-      notifyListeners();
     }
   }
 
   Future<void> _doRefreshFromApi() async {
-    _isRefreshing = true;
+    state = state.copyWith(isRefreshing: true);
+    PerformanceService().startTrace('RiderNotifier_RefreshAPI');
 
-    PerformanceService().startTrace('RiderProvider_RefreshAPI');
-
-    if (_riderId == null && _phone == null) {
-      _isRefreshing = false;
-      PerformanceService().stopTrace('RiderProvider_RefreshAPI');
+    if (state.riderId == null && state.phone == null) {
+      state = state.copyWith(isRefreshing: false);
+      PerformanceService().stopTrace('RiderNotifier_RefreshAPI');
       return;
     }
 
     try {
       final response = await _riderRepository.getRiderProfile();
+      if (!ref.mounted) return;
       final payload = response['data'] ?? response['rider'] ?? response;
       if (payload != null && (payload as Map).isNotEmpty) {
-        _rider = RiderModel.fromJson(payload as Map<String, dynamic>);
-        _riderId =
-            _rider?.riderId.isNotEmpty == true ? _rider?.riderId : _rider?.id;
-        await CacheService().cacheRider(_rider!.toCacheMap());
-        _dataState = DataState.fresh;
-        _errorMessage = null;
+        final rider = RiderModel.fromJson(payload as Map<String, dynamic>);
+        await CacheService().cacheRider(rider.toCacheMap());
+        state = state.copyWith(
+          rider: rider,
+          riderId: rider.riderId.isNotEmpty ? rider.riderId : rider.id,
+          dataState: DataState.fresh,
+          clearErrorMessage: true,
+        );
 
-        if (_rider!.accountStatus == AccountStatus.active ||
-            (_rider!.lifecycleStatus.isNotEmpty &&
-                lifecycleRank(_rider!) >= 11)) {
+        if (rider.accountStatus == AccountStatus.active ||
+            (rider.lifecycleStatus.isNotEmpty && lifecycleRank(rider) >= 11)) {
           unawaited(Future(_startDeviceDataSync));
         }
-        if (_rider!.id != null) {
-          unawaited(DeviceDataService().syncPermissionState(_rider!.id!));
+        if (rider.id != null) {
+          unawaited(DeviceDataService().syncPermissionState(rider.id!));
         }
-        _hasFetchedOnce = true;
+        state = state.copyWith(hasFetchedOnce: true);
         unawaited(Future(_syncDeviceDataOnce));
       } else {
-        _errorMessage = 'Failed to fetch profile';
-        _dataState = _rider != null ? DataState.fromCache : DataState.error;
+        state = state.copyWith(
+          errorMessage: 'Failed to fetch profile',
+          dataState:
+              state.rider != null ? DataState.fromCache : DataState.error,
+        );
       }
     } catch (e) {
       log('Error refreshing rider profile: $e');
-      _errorMessage = 'Couldn\'t refresh your profile. Pull to retry.';
-      _dataState = _rider != null ? DataState.fromCache : DataState.error;
+      state = state.copyWith(
+        errorMessage: 'Couldn\'t refresh your profile. Pull to retry.',
+        dataState: state.rider != null ? DataState.fromCache : DataState.error,
+      );
     } finally {
-      _isRefreshing = false;
-      PerformanceService().stopTrace('RiderProvider_RefreshAPI');
+      state = state.copyWith(isRefreshing: false);
+      PerformanceService().stopTrace('RiderNotifier_RefreshAPI');
     }
   }
 
   void updateCredentials({String? riderId, String? phone}) {
-    if (riderId != null) _riderId = riderId;
-    if (phone != null) _phone = phone;
+    if (riderId != null) state = state.copyWith(riderId: riderId);
+    if (phone != null) state = state.copyWith(phone: phone);
   }
 
   void logout() {
-    _rider = null;
-    _riderId = null;
-    _phone = null;
-    _dataState = DataState.initial;
-    _errorMessage = null;
-    _isRefreshing = false;
+    state = const RiderState();
     _refreshInFlight = null;
-    _hasFetchedOnce = false;
-    _isPollingTimedOut = false;
     _stopDeviceDataSync();
     _hasSyncedDeviceDataOnce = false;
     stopPolling();
     DocumentLocalCache.clearAll();
-    notifyListeners();
   }
 
   Future<bool> submitVehicleReturn({
     required List<File> photos,
     String? reason,
   }) async {
-    final rId = _rider?.id ?? _riderId;
+    final rId = state.rider?.id ?? state.riderId;
     if (rId == null) return false;
     try {
       final List<String> photoUrls = [];
@@ -231,7 +294,7 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> registerFcmToken() async {
-    final rId = _riderId ?? _rider?.id;
+    final rId = state.riderId ?? state.rider?.id;
     if (rId == null) return;
     final token = await FCMService.getToken();
     if (token == null) return;
@@ -245,7 +308,7 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
   void startOnboardingPoll() {
     if (_onboardingPoller.isRunning) return;
     _onboardingPollCount = 0;
-    _isPollingTimedOut = false;
+    state = state.copyWith(isPollingTimedOut: false);
     _onboardingPoller.start();
   }
 
@@ -254,7 +317,6 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
     _postPickupPoller.stop();
   }
 
-  /// Start post-pickup polling at a slower rate (60s) until lifecycle is CLOSED.
   void startPostPickupPoll() {
     if (_postPickupPoller.isRunning) return;
     _postPickupPoller.start();
@@ -272,9 +334,10 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> _onOnboardingTick() async {
     const maxPolls = 240;
-    if (_rider == null) return;
+    final rider = state.rider;
+    if (rider == null) return;
 
-    if (_rider!.pickupDone) {
+    if (rider.pickupDone) {
       _onboardingPoller.stop();
       startPostPickupPoll();
       return;
@@ -283,9 +346,8 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
     _onboardingPollCount++;
     if (_onboardingPollCount > maxPolls) {
       _onboardingPoller.stop();
-      _isPollingTimedOut = true;
-      notifyListeners();
-      log('RiderProvider: Polling timeout reached.');
+      state = state.copyWith(isPollingTimedOut: true);
+      log('RiderNotifier: Polling timeout reached.');
       return;
     }
 
@@ -293,7 +355,8 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _onPostPickupTick() async {
-    if (_rider != null && _rider!.lifecycleStatus == 'CLOSED') {
+    final rider = state.rider;
+    if (rider != null && rider.lifecycleStatus == 'CLOSED') {
       _postPickupPoller.stop();
       return;
     }
@@ -303,7 +366,7 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _startDeviceDataSync() {
     _locationSyncTimer?.cancel();
     _locationSyncTimer = Timer.periodic(const Duration(seconds: 60), (_) {
-      DeviceDataService().syncLocation(_riderId ?? _rider?.id ?? '');
+      DeviceDataService().syncLocation(state.riderId ?? state.rider?.id ?? '');
     });
   }
 
@@ -313,35 +376,35 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _syncDeviceDataOnce() {
+    if (!ref.mounted) return;
     if (_hasSyncedDeviceDataOnce) return;
     _hasSyncedDeviceDataOnce = true;
-    final rId = _riderId ?? _rider?.id;
+    final rId = state.riderId ?? state.rider?.id;
     if (rId == null) return;
     DeviceDataService().syncAll(rId);
   }
 
   void setRiderId(String id, {String? phoneNumber}) {
-    _riderId = id;
-    if (phoneNumber != null) {
-      _phone = phoneNumber;
-    }
-    notifyListeners();
+    state = state.copyWith(
+      riderId: id,
+      phone: phoneNumber ?? state.phone,
+    );
   }
 
   void setRider(RiderModel r) {
-    _rider = r;
-    _riderId = (r.id != null && r.id!.isNotEmpty) ? r.id : r.riderId;
-    _phone = r.phone;
-    _dataState = DataState.fresh;
-    _hasFetchedOnce = true;
-    _errorMessage = null;
-    notifyListeners();
+    state = state.copyWith(
+      rider: r,
+      riderId: (r.id != null && r.id!.isNotEmpty) ? r.id : r.riderId,
+      phone: r.phone,
+      dataState: DataState.fresh,
+      hasFetchedOnce: true,
+      clearErrorMessage: true,
+    );
     unawaited(refreshFromApi());
   }
 
   void updateRider(RiderModel updated) {
-    _rider = updated;
-    notifyListeners();
+    state = state.copyWith(rider: updated);
   }
 
   Future<void> refresh() async {
@@ -368,49 +431,50 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  @override
-  void dispose() {
-    // R11.2 — unregister as a WidgetsBindingObserver before tearing down state.
-    WidgetsBinding.instance.removeObserver(this);
-    stopPolling();
-    _stopDeviceDataSync();
-    super.dispose();
-  }
+  // ── WidgetsBindingObserver ──
 
-  /// R11 — react to app lifecycle changes from inside the provider so we don't
-  /// depend on the router being mounted. Paused/inactive/hidden → stop timers
-  /// and pause pollers; resumed → reactivate pollers (only those that should
-  /// be running for the current lifecycle stage) and trigger a fresh refresh.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final rider = this.state.rider;
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
-        // Stop the location/device-data sync timer while the app is not in
-        // the foreground — there's no point firing it from the background,
-        // and the OS may eventually kill the process anyway.
         _stopDeviceDataSync();
-        // Switch pollers into their inactive cadence. The router previously
-        // did this, but having the provider own its own lifecycle means
-        // polling correctly pauses even if the router is rebuilt.
         _onboardingPoller.inactive();
         _postPickupPoller.inactive();
         break;
       case AppLifecycleState.resumed:
-        // Bring pollers back to their active cadence. They will only emit
-        // ticks if they were started (startOnboardingPoll / startPostPickupPoll),
-        // so this is a no-op for pollers that aren't running.
         _onboardingPoller.active();
         _postPickupPoller.active();
-        // Restart device-data sync if the rider is in a state that warrants it.
-        if (_rider != null &&
-            (_rider!.accountStatus == AccountStatus.active ||
-                lifecycleRank(_rider!) >= 11)) {
+        if (rider != null &&
+            (rider.accountStatus == AccountStatus.active ||
+                lifecycleRank(rider) >= 11)) {
           _startDeviceDataSync();
         }
         break;
     }
   }
 }
+
+/// Backwards-compat type alias used by `AppProvider` shim and any
+/// test/call site that still references the old class name.
+typedef RiderProvider = RiderNotifier;
+
+/// Riverpod v3 provider for the rider feature.
+final riderProvider = NotifierProvider<RiderNotifier, RiderState>(
+  RiderNotifier.new,
+);
+
+// ── Repository providers (overridden in main.dart) ──
+
+final riderRepositoryProvider = Provider<RiderRepository>((ref) {
+  throw UnimplementedError(
+      'riderRepositoryProvider must be overridden in ProviderScope');
+});
+
+final rentalRepositoryProvider = Provider<RentalRepository>((ref) {
+  throw UnimplementedError(
+      'rentalRepositoryProvider must be overridden in ProviderScope');
+});

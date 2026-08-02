@@ -121,7 +121,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ref.read(riderProvider).init();
+        ref.read(riderProvider.notifier).init();
         ref.read(supportProvider.notifier).initSupportData();
         ref.read(engagementProvider.notifier).initEngagementData();
         ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
@@ -138,19 +138,20 @@ class _AppRouterState extends ConsumerState<AppRouter>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
-    final rProvider = ref.read(riderProvider);
+    final rState = ref.read(riderProvider);
+    final rNotif = ref.read(riderProvider.notifier);
 
     switch (state) {
       case AppLifecycleState.resumed:
         _checkPermissionsOnResume();
         // R11 — polling lifecycle (active/inactive cadence + location-sync
-        // timer) is now owned by `RiderProvider` itself. The router only
+        // timer) is now owned by `RiderNotifier` itself. The router only
         // triggers a manual refresh + wallet refresh + permission re-check
         // on resume.
-        rProvider.refreshFromApi();
-        if (rProvider.riderId != null) {
+        rNotif.refreshFromApi();
+        if (rState.riderId != null) {
           ref.read(walletProvider.notifier).refreshTransactions(
-                riderId: rProvider.riderId!,
+                riderId: rState.riderId!,
               );
         }
         break;

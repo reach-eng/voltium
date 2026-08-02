@@ -141,7 +141,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         final rider = RiderModel.fromJson(result.rawJson);
         await CacheService().cacheRider(rider.toCacheMap());
         if (!mounted) return;
-        ProviderScope.containerOf(context).read(riderProvider).setRider(rider);
+        ProviderScope.containerOf(context)
+            .read(riderProvider.notifier)
+            .setRider(rider);
         if (rider.riderId.isNotEmpty) {
           unawaited(PostHogService.identify(rider.riderId, properties: {
             'lifecycle_status': rider.lifecycleStatus,

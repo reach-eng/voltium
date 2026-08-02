@@ -559,7 +559,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl: signatureUrl,
       );
       await KycRepository.clearFormCache(riderId: riderId);
-      await ref.read(riderProvider).refresh();
+      await ref.read(riderProvider.notifier).refresh();
       PostHogService.capture('kyc_submitted', properties: {
         'has_aadhaar': (state.aadhaarFrontUploaded && state.aadhaarBackUploaded)
             .toString(),

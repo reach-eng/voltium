@@ -14,7 +14,6 @@ import 'gen/app_localizations.dart';
 import 'core/localization/locale_provider.dart';
 import 'core/state/app_provider.dart';
 import 'theme/theme_provider.dart';
-import 'core/state/rider_provider.dart';
 import 'core/network/connectivity_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'core/state/riverpod_providers.dart';
@@ -216,7 +215,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
         ProviderScope(
           overrides: [
             appProvider.overrideWith((ref) => appInstance),
-            riderProvider.overrideWith((ref) => appInstance.riderProvider),
+            riderProvider.overrideWith(() => appInstance.riderProvider),
             walletProvider.overrideWith(() => appInstance.walletProvider),
             supportProvider.overrideWith(() => appInstance.supportProvider),
             engagementProvider
@@ -240,9 +239,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
               // R4.3c-4: WalletProvider, SupportProvider, EngagementProvider
               // are also now Riverpod v3 Notifiers, no longer ChangeNotifiers.
               ChangeNotifierProvider<AppProvider>.value(value: appInstance),
-              ChangeNotifierProvider<RiderProvider>.value(
-                value: appInstance.riderProvider,
-              ),
+              // R4.3c-6: RiderProvider is now a Riverpod v3 Notifier, not a
+              // ChangeNotifier. It is registered via the
+              // ProviderScope.overrides above and consumed via
+              // ref.watch / ref.read with `riderProvider`.
               // R4.3c-5: DevicePolicyProvider is now a Riverpod v3 Notifier,
               // not a ChangeNotifier. It is registered via the
               // ProviderScope.overrides above and consumed via
@@ -395,9 +395,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void _refreshTabOnFocus(int index) {
     switch (index) {
       case 1:
-        // R4.3c-4: WalletProvider is now a Riverpod v3 Notifier. Use the
+        // R4.3c-6: RiderProvider is now a Riverpod v3 Notifier. Use the
         // container-based access path.
-        final riderId = context.read<RiderProvider>().riderId;
+        final riderId =
+            ProviderScope.containerOf(context).read(riderProvider).riderId;
         if (riderId != null) {
           ProviderScope.containerOf(context)
               .read(walletProvider.notifier)

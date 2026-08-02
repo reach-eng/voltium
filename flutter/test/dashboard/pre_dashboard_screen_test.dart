@@ -33,11 +33,10 @@ void main() {
     return ProviderScope(
       overrides: [
         appProvider.overrideWith((ref) => AppProvider()),
-        riderProvider.overrideWith((ref) => RiderProvider(
-            riderRepository: mockRiderRepo,
-            rentalRepository: mockRentalRepo,
-            filesRepository: mockFilesRepo)
-          ..setRider(rider)),
+        riderRepositoryProvider.overrideWithValue(mockRiderRepo),
+        rentalRepositoryProvider.overrideWithValue(mockRentalRepo),
+        filesRepositoryProvider.overrideWithValue(mockFilesRepo),
+        riderProvider.overrideWith(() => _TestRiderNotifier(rider)),
       ],
       child: MaterialApp(
         home: PreDashboardScreen(onStepNavigation: onNav),
@@ -71,13 +70,17 @@ void main() {
         phone: '9999999999',
         lifecycleStatus: 'GUARANTOR_SUBMITTED',
         name: 'John Doe',
+        registrationDone: true,
+        kycDone: true,
+        kycStatus: KycStatus.approved,
+        depositDone: true,
       );
 
       await tester.pumpWidget(createScreenWithRider(rider, (state) {}));
       await tester.pump(const Duration(seconds: 1));
       await tester.pump();
 
-      expect(find.text('BOOK VEHICLE'), findsOneWidget);
+      expect(find.text('PICKUP YOUR VEHICLE'), findsOneWidget);
     });
 
     testWidgets('Shows Wallet TopUp for PLAN_SELECTED (Rank 4)',
@@ -99,4 +102,20 @@ void main() {
       expect(find.text('Top Up Wallet'), findsOneWidget);
     });
   });
+}
+
+class _TestRiderNotifier extends RiderNotifier {
+  final RiderModel _initialRider;
+  _TestRiderNotifier(this._initialRider);
+
+  @override
+  RiderState build() {
+    return RiderState(
+      rider: _initialRider,
+      riderId: _initialRider.riderId.isNotEmpty
+          ? _initialRider.riderId
+          : _initialRider.id,
+      phone: _initialRider.phone,
+    );
+  }
 }

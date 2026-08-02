@@ -21,7 +21,6 @@ import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 import 'package:voltium_rider/gen/app_localizations.dart';
 
 /// Menu screen (formerly "Profile" tab).
@@ -54,7 +53,7 @@ class ProfileScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              await ref.read(riderProvider).refreshFromApi();
+              await ref.read(riderProvider.notifier).refreshFromApi();
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),

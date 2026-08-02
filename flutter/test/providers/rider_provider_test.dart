@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
+import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
+    show filesRepositoryProvider;
 import 'package:voltium_rider/features/profile/domain/repository.dart';
 import 'package:voltium_rider/features/rentals/domain/repository.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
@@ -126,67 +129,74 @@ void main() {
     filesRepo = MockFilesRepository();
   });
 
-  test('RiderProvider initializes from API', () async {
-    final provider = RiderProvider(
-      riderId: '1',
-      riderRepository: riderRepo,
-      rentalRepository: rentalRepo,
-      filesRepository: filesRepo,
+  ProviderContainer createContainer() {
+    return ProviderContainer(
+      overrides: [
+        riderRepositoryProvider.overrideWithValue(riderRepo),
+        rentalRepositoryProvider.overrideWithValue(rentalRepo),
+        filesRepositoryProvider.overrideWithValue(filesRepo),
+      ],
     );
+  }
 
-    await provider.init();
+  test('RiderProvider initializes from API', () async {
+    final container = createContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(riderProvider.notifier);
+    notifier.updateCredentials(riderId: '1', phone: '1234567890');
+    await notifier.init();
 
     expect(riderRepo.getRiderProfileCalled, isTrue);
-    expect(provider.rider, isNotNull);
-    expect(provider.rider!.id, '1');
-    expect(provider.isKycDone, isTrue);
-    expect(provider.isPlanActive, isTrue);
-    expect(provider.isActuallyActive, isTrue);
+    final state = container.read(riderProvider);
+    expect(state.rider, isNotNull);
+    expect(state.rider!.id, '1');
+    expect(state.isKycDone, isTrue);
+    expect(state.isPlanActive, isTrue);
+    expect(state.isActuallyActive, isTrue);
   });
 
   test('updateCredentials changes stored values', () {
-    final provider = RiderProvider(
-      riderRepository: riderRepo,
-      rentalRepository: rentalRepo,
-      filesRepository: filesRepo,
-    );
+    final container = createContainer();
+    addTearDown(container.dispose);
 
-    provider.updateCredentials(riderId: '2', phone: '987');
-    expect(provider.riderId, '2');
-    expect(provider.phone, '987');
+    final notifier = container.read(riderProvider.notifier);
+    notifier.updateCredentials(riderId: '2', phone: '987');
+    final state = container.read(riderProvider);
+    expect(state.riderId, '2');
+    expect(state.phone, '987');
   });
 
   test('logout clears all states', () async {
-    final provider = RiderProvider(
-      riderId: '1',
-      riderRepository: riderRepo,
-      rentalRepository: rentalRepo,
-      filesRepository: filesRepo,
-    );
+    final container = createContainer();
+    addTearDown(container.dispose);
 
-    await provider.init();
-    expect(provider.rider, isNotNull);
+    final notifier = container.read(riderProvider.notifier);
+    notifier.updateCredentials(riderId: '1', phone: '1234567890');
+    await notifier.init();
 
-    provider.logout();
+    var state = container.read(riderProvider);
+    expect(state.rider, isNotNull);
 
-    expect(provider.rider, isNull);
-    expect(provider.riderId, isNull);
-    expect(provider.phone, isNull);
-    expect(provider.hasFetchedOnce, isFalse);
-    expect(provider.dataState, DataState.initial);
+    notifier.logout();
+
+    state = container.read(riderProvider);
+    expect(state.rider, isNull);
+    expect(state.riderId, isNull);
+    expect(state.phone, isNull);
+    expect(state.hasFetchedOnce, isFalse);
+    expect(state.dataState, DataState.initial);
   });
 
   test('submitVehicleReturn works', () async {
-    final provider = RiderProvider(
-      riderId: '1',
-      riderRepository: riderRepo,
-      rentalRepository: rentalRepo,
-      filesRepository: filesRepo,
-    );
+    final container = createContainer();
+    addTearDown(container.dispose);
 
-    await provider.init();
+    final notifier = container.read(riderProvider.notifier);
+    notifier.updateCredentials(riderId: '1', phone: '1234567890');
+    await notifier.init();
     final success =
-        await provider.submitVehicleReturn(photos: [File('dummy.jpg')]);
+        await notifier.submitVehicleReturn(photos: [File('dummy.jpg')]);
 
     expect(success, isTrue);
     expect(rentalRepo.submitReturnCalled, isTrue);

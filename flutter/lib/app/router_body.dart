@@ -489,7 +489,7 @@ Widget _buildAccountClosedScreen(_AppRouterState state) {
             onPressed: () async {
               try {
                 ProviderScope.containerOf(state.context)
-                    .read(riderProvider)
+                    .read(riderProvider.notifier)
                     .logout();
               } catch (_) {
                 // Even if logout fails, force the user back to login

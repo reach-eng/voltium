@@ -9,7 +9,6 @@ import 'top_up_flow.dart';
 import 'package:voltium_rider/features/wallet/presentation/widgets/wallet_widgets.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
@@ -76,7 +75,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     onRefresh: () async {
                       final riderId = ref.read(riderProvider).riderId;
                       await Future.wait<dynamic>([
-                        ref.read(riderProvider).refreshFromApi(),
+                        ref.read(riderProvider.notifier).refreshFromApi(),
                         if (riderId != null)
                           ref
                               .read(walletProvider.notifier)

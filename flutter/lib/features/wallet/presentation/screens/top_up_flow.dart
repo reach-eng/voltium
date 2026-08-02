@@ -94,7 +94,7 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                     upiRef: upiRef,
                     image: _proofImage,
                   );
-                  await ref.read(riderProvider).refreshFromApi();
+                  await ref.read(riderProvider.notifier).refreshFromApi();
                   final securityDeposit = ref
                       .read(riderProvider)
                       .rider

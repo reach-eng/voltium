@@ -14,7 +14,6 @@ import 'package:voltium_rider/features/support/presentation/providers/ticket_pro
 import 'package:voltium_rider/features/support/presentation/screens/ticket_detail_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 
 class SupportCenterScreen extends ConsumerStatefulWidget {
   const SupportCenterScreen({super.key});

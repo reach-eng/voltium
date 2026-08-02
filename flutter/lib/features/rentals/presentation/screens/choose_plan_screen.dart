@@ -93,7 +93,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      final provider = ref.read(riderProvider);
+      final provider = ref.read(riderProvider.notifier);
       final riderId = ref.watch(riderProvider).riderId;
       if (riderId == null) {
         if (mounted) {

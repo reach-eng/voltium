@@ -242,7 +242,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    final provider = ref.read(riderProvider);
+    final provider = ref.read(riderProvider.notifier);
     final rider = ref.watch(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 

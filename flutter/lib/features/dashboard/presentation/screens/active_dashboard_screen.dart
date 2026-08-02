@@ -22,7 +22,6 @@ import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.d
 import 'package:voltium_rider/widgets/ui_animations.dart';
 import 'package:voltium_rider/widgets/card_parallax_tilt.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/state/rider_provider.dart' show DataState;
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Active Dashboard screen for the Voltium Rider App.
@@ -91,7 +90,7 @@ class _DashboardErrorWidget extends ConsumerWidget {
       message: errorMessage != null
           ? 'Unable to connect: $errorMessage'
           : 'Unable to connect to command center.',
-      onRetry: () => ref.read(riderProvider).refresh(),
+      onRetry: () => ref.read(riderProvider.notifier).refresh(),
     );
   }
 }
@@ -112,7 +111,7 @@ class _DashboardEmptyWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
-              onPressed: () => ref.read(riderProvider).refresh(),
+              onPressed: () => ref.read(riderProvider.notifier).refresh(),
               icon: const Icon(Icons.refresh),
               label: const Text('Initialize System'),
             ),
@@ -174,7 +173,7 @@ class _DashboardContentWidget extends ConsumerWidget {
     return RefreshIndicator(
       color: AppColors.primary,
       backgroundColor: colors.card,
-      onRefresh: () => ref.read(riderProvider).refresh(),
+      onRefresh: () => ref.read(riderProvider.notifier).refresh(),
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [

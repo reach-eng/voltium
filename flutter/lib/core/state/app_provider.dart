@@ -31,14 +31,24 @@ import 'package:voltium_rider/features/support/data/repository_impl.dart';
 import 'package:voltium_rider/features/wallet/data/repository_impl.dart';
 import 'package:voltium_rider/core/state/app_state_provider.dart';
 
+/// R4.3c-6: RiderProvider is now a Riverpod v3 Notifier. The
+/// AppProvider shim holds a [ProviderContainer] that the notifier
+/// can read repositories from. We construct the real repositories
+/// here and register them as Riverpod providers, then return the
+/// notifier instance.
 RiderProvider _createDefaultRiderProvider() {
   final client = ApiClient();
   final vClient = VoltiumApiClient(client);
-  return RiderProvider(
-    riderRepository: RiderRepositoryImpl(client, vClient),
-    rentalRepository: RentalRepositoryImpl(vClient),
-    filesRepository: FilesRepository(client, vClient),
+  final container = ProviderContainer(
+    overrides: [
+      riderRepositoryProvider
+          .overrideWithValue(RiderRepositoryImpl(client, vClient)),
+      rentalRepositoryProvider.overrideWithValue(RentalRepositoryImpl(vClient)),
+      filesRepositoryProvider
+          .overrideWithValue(FilesRepository(client, vClient)),
+    ],
   );
+  return container.read(riderProvider.notifier);
 }
 
 /// R4.3c-4: WalletProvider is now a Riverpod v3 Notifier. The
