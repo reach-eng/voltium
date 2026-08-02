@@ -3,6 +3,11 @@ import { ApiError, ERROR_CODES } from './api-error';
 import { errors } from './api-response';
 import { logger } from './logger';
 import { redactPii } from './pii-redact';
+import { RentalBookError } from '@/server/modules/rentals/use-cases/errors';
+import { RentalStateError } from '@/server/modules/rentals/rental-state-machine';
+import { KycStateError } from '@/server/modules/kyc/kyc-state-machine';
+import { GuarantorStateError } from '@/server/modules/guarantors/guarantor-state-machine';
+import { DepositStateMachineError } from '@/server/modules/deposits/deposit-state-machine';
 
 type DomainError = Error & { code?: string };
 
@@ -41,19 +46,23 @@ export function withApiHandler(
         return errors.notFound(domainErr.message);
       }
 
-      // Handle domain-specific exceptions by naming convention
-      if (domainErr.name === 'RentalBookError') {
-        const code = domainErr.code;
+      // Domain-specific exceptions. We use `instanceof` against the actual
+      // error classes — the previous `.name === 'X'` check silently failed
+      // under any minifier that mangled class names (esbuild `--minify-identifiers`,
+      // production Next.js builds). The classes themselves still work; we just
+      // can't rely on the string label matching the minified identifier.
+      if (err instanceof RentalBookError) {
+        const code = (err as DomainError).code;
         if (code === 'NOT_FOUND') return errors.notFound(domainErr.message);
         if (code === 'CONFLICT') return errors.conflict(domainErr.message);
         return errors.badRequest(domainErr.message);
       }
 
       if (
-        domainErr.name === 'KycStateError' ||
-        domainErr.name === 'GuarantorStateError' ||
-        domainErr.name === 'DepositStateMachineError' ||
-        domainErr.name === 'RentalStateError'
+        err instanceof KycStateError ||
+        err instanceof GuarantorStateError ||
+        err instanceof DepositStateMachineError ||
+        err instanceof RentalStateError
       ) {
         return errors.conflict(domainErr.message);
       }
