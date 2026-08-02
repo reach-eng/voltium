@@ -42,6 +42,8 @@
 20. `eb07b57` - `audit(teamleaders-fleetmap): create Team Leaders, Operations & Fleet Map audit report`
 21. `c5b1e62` - `audit(rider-scoring): create Rider Scoring, Messaging & Offers audit report`
 22. `b36bb10` - `audit(rewards-analytics-faqs): create Rewards, Analytics, FAQs & Admin Access audit report`
+23. `6210751` - `docs(R4.3): document R4.3 completion & close followup tickets`
+24. `a9438cf` - `feat(R4.4): refactor auth flow to return explicit sealed AppState`
 
 #### Created Domain Audit & Recommendation Artifacts:
 - `docs/AUDIT_FINDINGS_RIDERS_KYC.md` — Riders & KYC domain audit
@@ -53,7 +55,7 @@
 - `docs/PERF_RECOMMENDATIONS_2026-08-01.md` — Flutter & Web performance audit recommendations
 
 #### Follow-up Tasks (Post-R4 Riverpod Migration):
-- **R4.4**: Refactor auth flow return type to return explicit `AppState` enum values instead of `void`/`bool` for unambiguous state transitions.
+- **R4.4** (DONE - `a9438cf`): Refactor auth flow return type (`RiderLifecycleGate.redirectAppState`, `VerifyOtpResult.nextState`, `VerifyOtpResult.determineAppState`) to return explicit sealed `AppState` subclasses for unambiguous state transitions.
 - **R4.5**: Scope polling lifecycle timers strictly to active screen lifecycles (`ref.onDispose` / `ref.listen`).
 - **R4.6**: Add formal state-machine transition matrix tests for edge-case auth and lifecycle navigation flows.
 
