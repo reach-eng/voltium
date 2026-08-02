@@ -25,6 +25,193 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import '../../../../utils/app_logger.dart';
 
+/// State for GuarantorOnboardingScreen managed via Riverpod Notifier.
+class GuarantorOnboardingState {
+  final int currentStep;
+  final bool isUploading;
+  final String uploadProgressText;
+
+  final bool isSendingOtp;
+  final bool isVerifyingOtp;
+  final bool isOtpSent;
+  final bool isPhoneVerified;
+  final String verifiedGuarantorPhone;
+
+  final bool aadhaarFrontUploaded;
+  final String? aadhaarFrontPath;
+  final bool aadhaarBackUploaded;
+  final String? aadhaarBackPath;
+  final bool panUploaded;
+  final String? panPath;
+  final bool videoUploaded;
+  final String? videoPath;
+  final bool signatureUploaded;
+  final String? signaturePath;
+  final bool photoUploaded;
+  final String? photoPath;
+
+  const GuarantorOnboardingState({
+    this.currentStep = 1,
+    this.isUploading = false,
+    this.uploadProgressText = '',
+    this.isSendingOtp = false,
+    this.isVerifyingOtp = false,
+    this.isOtpSent = false,
+    this.isPhoneVerified = false,
+    this.verifiedGuarantorPhone = '',
+    this.aadhaarFrontUploaded = false,
+    this.aadhaarFrontPath,
+    this.aadhaarBackUploaded = false,
+    this.aadhaarBackPath,
+    this.panUploaded = false,
+    this.panPath,
+    this.videoUploaded = false,
+    this.videoPath,
+    this.signatureUploaded = false,
+    this.signaturePath,
+    this.photoUploaded = false,
+    this.photoPath,
+  });
+
+  GuarantorOnboardingState copyWith({
+    int? currentStep,
+    bool? isUploading,
+    String? uploadProgressText,
+    bool? isSendingOtp,
+    bool? isVerifyingOtp,
+    bool? isOtpSent,
+    bool? isPhoneVerified,
+    String? verifiedGuarantorPhone,
+    bool? aadhaarFrontUploaded,
+    String? aadhaarFrontPath,
+    bool? aadhaarBackUploaded,
+    String? aadhaarBackPath,
+    bool? panUploaded,
+    String? panPath,
+    bool? videoUploaded,
+    String? videoPath,
+    bool? signatureUploaded,
+    String? signaturePath,
+    bool? photoUploaded,
+    String? photoPath,
+  }) {
+    return GuarantorOnboardingState(
+      currentStep: currentStep ?? this.currentStep,
+      isUploading: isUploading ?? this.isUploading,
+      uploadProgressText: uploadProgressText ?? this.uploadProgressText,
+      isSendingOtp: isSendingOtp ?? this.isSendingOtp,
+      isVerifyingOtp: isVerifyingOtp ?? this.isVerifyingOtp,
+      isOtpSent: isOtpSent ?? this.isOtpSent,
+      isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      verifiedGuarantorPhone:
+          verifiedGuarantorPhone ?? this.verifiedGuarantorPhone,
+      aadhaarFrontUploaded: aadhaarFrontUploaded ?? this.aadhaarFrontUploaded,
+      aadhaarFrontPath: aadhaarFrontPath ?? this.aadhaarFrontPath,
+      aadhaarBackUploaded: aadhaarBackUploaded ?? this.aadhaarBackUploaded,
+      aadhaarBackPath: aadhaarBackPath ?? this.aadhaarBackPath,
+      panUploaded: panUploaded ?? this.panUploaded,
+      panPath: panPath ?? this.panPath,
+      videoUploaded: videoUploaded ?? this.videoUploaded,
+      videoPath: videoPath ?? this.videoPath,
+      signatureUploaded: signatureUploaded ?? this.signatureUploaded,
+      signaturePath: signaturePath ?? this.signaturePath,
+      photoUploaded: photoUploaded ?? this.photoUploaded,
+      photoPath: photoPath ?? this.photoPath,
+    );
+  }
+}
+
+class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
+  @override
+  GuarantorOnboardingState build() => const GuarantorOnboardingState();
+
+  void setStep(int step) => state = state.copyWith(currentStep: step);
+  void nextStep() => state = state.copyWith(currentStep: state.currentStep + 1);
+  void prevStep() =>
+      state = state.copyWith(currentStep: (state.currentStep - 1).clamp(1, 3));
+
+  void setUploading(bool isUploading, [String progressText = '']) {
+    state = state.copyWith(
+        isUploading: isUploading, uploadProgressText: progressText);
+  }
+
+  void setSendingOtp(bool isSending) =>
+      state = state.copyWith(isSendingOtp: isSending);
+  void setOtpSent(bool isSent) =>
+      state = state.copyWith(isSendingOtp: false, isOtpSent: isSent);
+  void setVerifyingOtp(bool isVerifying) =>
+      state = state.copyWith(isVerifyingOtp: isVerifying);
+  void setPhoneVerified(bool verified, [String phone = '']) {
+    state = state.copyWith(
+      isVerifyingOtp: false,
+      isPhoneVerified: verified,
+      verifiedGuarantorPhone: phone,
+    );
+  }
+
+  void resetPhoneVerification() {
+    if (state.isPhoneVerified) {
+      state = state.copyWith(isPhoneVerified: false, isOtpSent: false);
+    }
+  }
+
+  void updateDocument(String type, String path) {
+    switch (type) {
+      case 'aadhaar_front':
+        state =
+            state.copyWith(aadhaarFrontUploaded: true, aadhaarFrontPath: path);
+        break;
+      case 'aadhaar_back':
+        state =
+            state.copyWith(aadhaarBackUploaded: true, aadhaarBackPath: path);
+        break;
+      case 'pan':
+        state = state.copyWith(panUploaded: true, panPath: path);
+        break;
+      case 'video':
+        state = state.copyWith(videoUploaded: true, videoPath: path);
+        break;
+      case 'signature':
+        state = state.copyWith(signatureUploaded: true, signaturePath: path);
+        break;
+      case 'photo':
+        state = state.copyWith(photoUploaded: true, photoPath: path);
+        break;
+    }
+  }
+
+  void populateFromCache(Map<String, dynamic> cacheData) {
+    final afPath = cacheData['aadhaarFrontPath'] as String?;
+    final abPath = cacheData['aadhaarBackPath'] as String?;
+    final panP = cacheData['panPath'] as String?;
+    final vidP = cacheData['videoPath'] as String?;
+    final sigP = cacheData['signaturePath'] as String?;
+    final photoP = cacheData['photoPath'] as String?;
+
+    state = state.copyWith(
+      isPhoneVerified: cacheData['isPhoneVerified'] ?? false,
+      verifiedGuarantorPhone: cacheData['verifiedPhone'] ?? '',
+      aadhaarFrontPath: afPath,
+      aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
+      aadhaarBackPath: abPath,
+      aadhaarBackUploaded: abPath != null && abPath.isNotEmpty,
+      panPath: panP,
+      panUploaded: panP != null && panP.isNotEmpty,
+      videoPath: vidP,
+      videoUploaded: vidP != null && vidP.isNotEmpty,
+      signaturePath: sigP,
+      signatureUploaded: sigP != null && sigP.isNotEmpty,
+      photoPath: photoP,
+      photoUploaded: photoP != null && photoP.isNotEmpty,
+    );
+  }
+}
+
+final guarantorOnboardingNotifierProvider =
+    NotifierProvider<GuarantorOnboardingNotifier, GuarantorOnboardingState>(
+  GuarantorOnboardingNotifier.new,
+);
+
 class GuarantorOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
@@ -46,36 +233,14 @@ class _GuarantorOnboardingScreenState
   final _motherNameController = TextEditingController();
   final _addressController = TextEditingController();
 
-  bool _isUploading = false;
-  String _uploadProgressText = '';
-  int _currentStep = 1;
-
-  bool _isSendingOtp = false;
-  bool _isVerifyingOtp = false;
-  bool _isOtpSent = false;
-  bool _isPhoneVerified = false;
-  String _verifiedGuarantorPhone = '';
   final List<TextEditingController> _otpControllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
 
-  bool _aadhaarFrontUploaded = false;
-  bool _aadhaarBackUploaded = false;
-  bool _panUploaded = false;
-  bool _videoUploaded = false;
-  bool _signatureUploaded = false;
-  bool _photoUploaded = false;
-
-  String? _aadhaarFrontPath;
-  String? _aadhaarBackPath;
-  String? _panPath;
-  String? _videoPath;
-  String? _signaturePath;
-  String? _photoPath;
-
   void _saveCache() {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
+    final state = ref.read(guarantorOnboardingNotifierProvider);
     final cacheData = {
       'name': _nameController.text,
       'dob': _dobController.text,
@@ -83,14 +248,14 @@ class _GuarantorOnboardingScreenState
       'fatherName': _fatherNameController.text,
       'motherName': _motherNameController.text,
       'address': _addressController.text,
-      'isPhoneVerified': _isPhoneVerified,
-      'verifiedPhone': _verifiedGuarantorPhone,
-      'aadhaarFrontPath': _aadhaarFrontPath,
-      'aadhaarBackPath': _aadhaarBackPath,
-      'panPath': _panPath,
-      'videoPath': _videoPath,
-      'signaturePath': _signaturePath,
-      'photoPath': _photoPath,
+      'isPhoneVerified': state.isPhoneVerified,
+      'verifiedPhone': state.verifiedGuarantorPhone,
+      'aadhaarFrontPath': state.aadhaarFrontPath,
+      'aadhaarBackPath': state.aadhaarBackPath,
+      'panPath': state.panPath,
+      'videoPath': state.videoPath,
+      'signaturePath': state.signaturePath,
+      'photoPath': state.photoPath,
     };
     GuarantorCache.saveFormCache(riderId, cacheData);
   }
@@ -108,29 +273,10 @@ class _GuarantorOnboardingScreenState
         _fatherNameController.text = cacheData['fatherName'] ?? '';
         _motherNameController.text = cacheData['motherName'] ?? '';
         _addressController.text = cacheData['address'] ?? '';
-        _isPhoneVerified = cacheData['isPhoneVerified'] ?? false;
-        _verifiedGuarantorPhone = cacheData['verifiedPhone'] ?? '';
 
-        _aadhaarFrontPath = cacheData['aadhaarFrontPath'];
-        _aadhaarFrontUploaded =
-            _aadhaarFrontPath != null && _aadhaarFrontPath!.isNotEmpty;
-
-        _aadhaarBackPath = cacheData['aadhaarBackPath'];
-        _aadhaarBackUploaded =
-            _aadhaarBackPath != null && _aadhaarBackPath!.isNotEmpty;
-
-        _panPath = cacheData['panPath'];
-        _panUploaded = _panPath != null && _panPath!.isNotEmpty;
-
-        _videoPath = cacheData['videoPath'];
-        _videoUploaded = _videoPath != null && _videoPath!.isNotEmpty;
-
-        _signaturePath = cacheData['signaturePath'];
-        _signatureUploaded =
-            _signaturePath != null && _signaturePath!.isNotEmpty;
-
-        _photoPath = cacheData['photoPath'];
-        _photoUploaded = _photoPath != null && _photoPath!.isNotEmpty;
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .populateFromCache(cacheData);
       } catch (e) {
         appDebug('Error loading guarantor onboarding cache: $e');
       }
@@ -144,20 +290,19 @@ class _GuarantorOnboardingScreenState
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (AppConstants.isTestMode) {
-        setState(() {
-          if (_nameController.text.isEmpty)
-            _nameController.text = 'Test Guarantor';
-          if (_dobController.text.isEmpty) _dobController.text = '01-01-1980';
-          if (_phoneController.text.isEmpty)
-            _phoneController.text = '9999999999';
-          if (_fatherNameController.text.isEmpty)
-            _fatherNameController.text = 'Guarantor Father';
-          if (_motherNameController.text.isEmpty)
-            _motherNameController.text = 'Guarantor Mother';
-          if (_addressController.text.isEmpty)
-            _addressController.text = '456 Guarantor St';
-          _isPhoneVerified = true;
-        });
+        if (_nameController.text.isEmpty)
+          _nameController.text = 'Test Guarantor';
+        if (_dobController.text.isEmpty) _dobController.text = '01-01-1980';
+        if (_phoneController.text.isEmpty) _phoneController.text = '9999999999';
+        if (_fatherNameController.text.isEmpty)
+          _fatherNameController.text = 'Guarantor Father';
+        if (_motherNameController.text.isEmpty)
+          _motherNameController.text = 'Guarantor Mother';
+        if (_addressController.text.isEmpty)
+          _addressController.text = '456 Guarantor St';
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .setPhoneVerified(true, _phoneController.text);
       }
     });
 
@@ -169,15 +314,15 @@ class _GuarantorOnboardingScreenState
 
     _phoneController.addListener(() {
       final inputPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+      final state = ref.read(guarantorOnboardingNotifierProvider);
       final cleanVerified =
-          _verifiedGuarantorPhone.replaceAll(RegExp(r'\D'), '');
+          state.verifiedGuarantorPhone.replaceAll(RegExp(r'\D'), '');
 
-      setState(() {
-        if (_isPhoneVerified && inputPhone != cleanVerified) {
-          _isPhoneVerified = false;
-          _isOtpSent = false;
-        }
-      });
+      if (state.isPhoneVerified && inputPhone != cleanVerified) {
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .resetPhoneVerification();
+      }
       _saveCache();
     });
   }
@@ -222,26 +367,9 @@ class _GuarantorOnboardingScreenState
         quality: 80,
       );
       if (compressedFile != null && mounted) {
-        setState(() {
-          switch (type) {
-            case 'aadhaar_front':
-              _aadhaarFrontUploaded = true;
-              _aadhaarFrontPath = compressedFile.path;
-              break;
-            case 'aadhaar_back':
-              _aadhaarBackUploaded = true;
-              _aadhaarBackPath = compressedFile.path;
-              break;
-            case 'pan':
-              _panUploaded = true;
-              _panPath = compressedFile.path;
-              break;
-            case 'photo':
-              _photoUploaded = true;
-              _photoPath = compressedFile.path;
-              break;
-          }
-        });
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .updateDocument(type, compressedFile.path);
         _saveCache();
       }
     } catch (e) {
@@ -262,10 +390,9 @@ class _GuarantorOnboardingScreenState
           _showError('Video exceeds maximum size limit of 50MB');
           return;
         }
-        setState(() {
-          _videoUploaded = true;
-          _videoPath = video.path;
-        });
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .updateDocument('video', video.path);
         _saveCache();
       }
     } catch (e) {
@@ -278,10 +405,9 @@ class _GuarantorOnboardingScreenState
       MaterialPageRoute(builder: (_) => const SignaturePadScreen()),
     );
     if (result != null && mounted) {
-      setState(() {
-        _signatureUploaded = true;
-        _signaturePath = result;
-      });
+      ref
+          .read(guarantorOnboardingNotifierProvider.notifier)
+          .updateDocument('signature', result);
       _saveCache();
     }
   }
@@ -299,17 +425,14 @@ class _GuarantorOnboardingScreenState
       return;
     }
 
-    setState(() => _isSendingOtp = true);
+    ref.read(guarantorOnboardingNotifierProvider.notifier).setSendingOtp(true);
     try {
       final client = ApiClient();
       final response = await VoltiumApiClient(client)
           .postAuthSendOtp(SendOtpRequest(phone: phone));
       final result = response.toJson();
       if (mounted) {
-        setState(() {
-          _isSendingOtp = false;
-          _isOtpSent = true;
-        });
+        ref.read(guarantorOnboardingNotifierProvider.notifier).setOtpSent(true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('OTP sent to guarantor phone'),
@@ -322,12 +445,13 @@ class _GuarantorOnboardingScreenState
           for (int i = 0; i < 6; i++) {
             _otpControllers[i].text = devOtp[i];
           }
-          setState(() {});
         }
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isSendingOtp = false);
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .setSendingOtp(false);
         _showError(
           e.toString().contains('ApiException')
               ? 'Failed to send OTP. Please try again.'
@@ -345,15 +469,15 @@ class _GuarantorOnboardingScreenState
     }
 
     final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-    setState(() => _isVerifyingOtp = true);
+    ref
+        .read(guarantorOnboardingNotifierProvider.notifier)
+        .setVerifyingOtp(true);
     try {
       await VoltiumApiService().verifyPhone(phone: phone, otp: otp);
       if (mounted) {
-        setState(() {
-          _isVerifyingOtp = false;
-          _isPhoneVerified = true;
-          _verifiedGuarantorPhone = phone;
-        });
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .setPhoneVerified(true, phone);
         _saveCache();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -364,7 +488,9 @@ class _GuarantorOnboardingScreenState
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isVerifyingOtp = false);
+        ref
+            .read(guarantorOnboardingNotifierProvider.notifier)
+            .setVerifyingOtp(false);
         _showError('Invalid OTP. Please try again.');
       }
     }
@@ -377,6 +503,7 @@ class _GuarantorOnboardingScreenState
   }
 
   Future<void> _handleSubmit() async {
+    final state = ref.read(guarantorOnboardingNotifierProvider);
     final isTestMode = AppConstants.isTestMode;
     final provider = ref.read(riderProvider);
     final rider = ref.watch(riderProvider).rider;
@@ -386,16 +513,16 @@ class _GuarantorOnboardingScreenState
         name: _nameController.text,
         dob: _dobController.text,
         phone: _phoneController.text,
-        isPhoneVerified: _isPhoneVerified,
+        isPhoneVerified: state.isPhoneVerified,
         fatherName: _fatherNameController.text,
         motherName: _motherNameController.text,
         address: _addressController.text,
-        aadhaarFrontUploaded: _aadhaarFrontUploaded,
-        aadhaarBackUploaded: _aadhaarBackUploaded,
-        panUploaded: _panUploaded,
-        photoUploaded: _photoUploaded,
-        videoUploaded: _videoUploaded,
-        signatureUploaded: _signatureUploaded,
+        aadhaarFrontUploaded: state.aadhaarFrontUploaded,
+        aadhaarBackUploaded: state.aadhaarBackUploaded,
+        panUploaded: state.panUploaded,
+        photoUploaded: state.photoUploaded,
+        videoUploaded: state.videoUploaded,
+        signatureUploaded: state.signatureUploaded,
         riderPhone: rider?.phone,
       );
 
@@ -415,7 +542,7 @@ class _GuarantorOnboardingScreenState
       return;
     }
     final riderId = rider.id ?? rider.riderId;
-    setState(() => _isUploading = true);
+    ref.read(guarantorOnboardingNotifierProvider.notifier).setUploading(true);
     try {
       String aadhaarFrontUrl = '',
           aadhaarBackUrl = '',
@@ -435,35 +562,33 @@ class _GuarantorOnboardingScreenState
         final client = ApiClient();
         final filesRepo = FilesRepository(client, VoltiumApiClient(client));
         final Map<String, dynamic> tasks = {};
-        if (_aadhaarFrontPath != null)
-          tasks['Aadhaar Front'] = () =>
-              filesRepo.uploadFile(File(_aadhaarFrontPath!), 'kyc_document');
-        if (_aadhaarBackPath != null)
-          tasks['Aadhaar Back'] = () =>
-              filesRepo.uploadFile(File(_aadhaarBackPath!), 'kyc_document');
-        if (_panPath != null)
+        if (state.aadhaarFrontPath != null)
+          tasks['Aadhaar Front'] = () => filesRepo.uploadFile(
+              File(state.aadhaarFrontPath!), 'kyc_document');
+        if (state.aadhaarBackPath != null)
+          tasks['Aadhaar Back'] = () => filesRepo.uploadFile(
+              File(state.aadhaarBackPath!), 'kyc_document');
+        if (state.panPath != null)
           tasks['PAN'] =
-              () => filesRepo.uploadFile(File(_panPath!), 'kyc_document');
-        if (_videoPath != null)
-          tasks['Video'] =
-              () => filesRepo.uploadFile(File(_videoPath!), 'kyc_document');
-        if (_signaturePath != null)
-          tasks['Signature'] =
-              () => filesRepo.uploadFile(File(_signaturePath!), 'kyc_document');
-        if (_photoPath != null)
-          tasks['Photo'] =
-              () => filesRepo.uploadFile(File(_photoPath!), 'profile_photo');
+              () => filesRepo.uploadFile(File(state.panPath!), 'kyc_document');
+        if (state.videoPath != null)
+          tasks['Video'] = () =>
+              filesRepo.uploadFile(File(state.videoPath!), 'kyc_document');
+        if (state.signaturePath != null)
+          tasks['Signature'] = () =>
+              filesRepo.uploadFile(File(state.signaturePath!), 'kyc_document');
+        if (state.photoPath != null)
+          tasks['Photo'] = () =>
+              filesRepo.uploadFile(File(state.photoPath!), 'profile_photo');
 
         int completed = 0;
         final results = <String, String>{};
 
         for (final entry in tasks.entries) {
-          if (mounted) {
-            setState(() {
-              _uploadProgressText =
-                  'Uploading ${completed + 1} of ${tasks.length}...';
-            });
-          }
+          ref.read(guarantorOnboardingNotifierProvider.notifier).setUploading(
+                true,
+                'Uploading ${completed + 1} of ${tasks.length}...',
+              );
           results[entry.key] = await entry.value();
           completed++;
         }
@@ -476,21 +601,24 @@ class _GuarantorOnboardingScreenState
         photoUrl = results['Photo'] ?? '';
 
         // Cache guarantor documents locally.
-        if (_aadhaarFrontPath != null)
-          DocumentLocalCache.save('guarantorAadhaarFront', _aadhaarFrontPath!);
-        if (_aadhaarBackPath != null)
-          DocumentLocalCache.save('guarantorAadhaarBack', _aadhaarBackPath!);
-        if (_panPath != null)
-          DocumentLocalCache.save('guarantorPan', _panPath!);
-        if (_videoPath != null)
-          DocumentLocalCache.save('guarantorVideo', _videoPath!);
-        if (_signaturePath != null)
-          DocumentLocalCache.save('guarantorSignature', _signaturePath!);
+        if (state.aadhaarFrontPath != null)
+          DocumentLocalCache.save(
+              'guarantorAadhaarFront', state.aadhaarFrontPath!);
+        if (state.aadhaarBackPath != null)
+          DocumentLocalCache.save(
+              'guarantorAadhaarBack', state.aadhaarBackPath!);
+        if (state.panPath != null)
+          DocumentLocalCache.save('guarantorPan', state.panPath!);
+        if (state.videoPath != null)
+          DocumentLocalCache.save('guarantorVideo', state.videoPath!);
+        if (state.signaturePath != null)
+          DocumentLocalCache.save('guarantorSignature', state.signaturePath!);
       }
 
-      if (mounted) {
-        setState(() => _uploadProgressText = 'Saving profile...');
-      }
+      ref
+          .read(guarantorOnboardingNotifierProvider.notifier)
+          .setUploading(true, 'Saving profile...');
+
       await VoltiumApiClient(ApiClient()).putRiderProfile(
         UpdateProfileRequest(
           guarantorName: _nameController.text,
@@ -529,7 +657,9 @@ class _GuarantorOnboardingScreenState
         _showError(userMessage);
       }
     } finally {
-      if (mounted) setState(() => _isUploading = false);
+      ref
+          .read(guarantorOnboardingNotifierProvider.notifier)
+          .setUploading(false);
     }
   }
 
@@ -633,23 +763,26 @@ class _GuarantorOnboardingScreenState
   }
 
   Widget _buildStepIndicator() {
+    final currentStep = ref.watch(
+      guarantorOnboardingNotifierProvider.select((s) => s.currentStep),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildDot(1),
+          _buildDot(1, currentStep),
           _buildLine(),
-          _buildDot(2),
+          _buildDot(2, currentStep),
           _buildLine(),
-          _buildDot(3),
+          _buildDot(3, currentStep),
         ],
       ),
     );
   }
 
-  Widget _buildDot(int step) {
-    final isActive = _currentStep >= step;
+  Widget _buildDot(int step, int currentStep) {
+    final isActive = currentStep >= step;
     return Container(
       width: 24,
       height: 24,
@@ -678,10 +811,10 @@ class _GuarantorOnboardingScreenState
   }
 
   void _onBottomButtonPressed() {
-    if (_currentStep < 3) {
-      setState(() {
-        _currentStep++;
-      });
+    final currentStep =
+        ref.read(guarantorOnboardingNotifierProvider).currentStep;
+    if (currentStep < 3) {
+      ref.read(guarantorOnboardingNotifierProvider.notifier).nextStep();
     } else {
       _handleSubmit();
     }
@@ -689,22 +822,23 @@ class _GuarantorOnboardingScreenState
 
   bool get _canProceedCurrentStep {
     if (AppConstants.isTestMode) return true;
-    switch (_currentStep) {
+    final state = ref.read(guarantorOnboardingNotifierProvider);
+    switch (state.currentStep) {
       case 1:
         return _nameController.text.isNotEmpty &&
             _dobController.text.isNotEmpty &&
             _phoneController.text.isNotEmpty &&
-            _isPhoneVerified &&
+            state.isPhoneVerified &&
             _fatherNameController.text.isNotEmpty &&
             _motherNameController.text.isNotEmpty &&
             _addressController.text.isNotEmpty;
       case 2:
-        return _aadhaarFrontUploaded &&
-            _aadhaarBackUploaded &&
-            _panUploaded &&
-            _photoUploaded;
+        return state.aadhaarFrontUploaded &&
+            state.aadhaarBackUploaded &&
+            state.panUploaded &&
+            state.photoUploaded;
       case 3:
-        return _videoUploaded && _signatureUploaded;
+        return state.videoUploaded && state.signatureUploaded;
       default:
         return false;
     }
@@ -718,24 +852,22 @@ class _GuarantorOnboardingScreenState
       lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
     );
     if (date != null && mounted) {
-      setState(
-        () => _dobController.text =
-            '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',
-      );
+      _dobController.text =
+          '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final state = ref.watch(guarantorOnboardingNotifierProvider);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (_currentStep > 1) {
-          setState(() {
-            _currentStep--;
-          });
+        if (state.currentStep > 1) {
+          ref.read(guarantorOnboardingNotifierProvider.notifier).prevStep();
         } else {
           widget.onBack?.call();
         }
@@ -752,10 +884,11 @@ class _GuarantorOnboardingScreenState
                       title: 'Guarantor Details',
                       subtitle: 'Add a guarantor for additional security',
                       onBack: () {
-                        if (_currentStep > 1) {
-                          setState(() {
-                            _currentStep--;
-                          });
+                        if (state.currentStep > 1) {
+                          ref
+                              .read(
+                                  guarantorOnboardingNotifierProvider.notifier)
+                              .prevStep();
                         } else {
                           widget.onBack?.call();
                         }
@@ -768,7 +901,7 @@ class _GuarantorOnboardingScreenState
                         child: Column(
                           children: [
                             _buildStepIndicator(),
-                            if (_currentStep == 1) ...[
+                            if (state.currentStep == 1) ...[
                               _GuarantorLiabilityBanner(),
                               const SizedBox(height: 24),
                               GuarantorDetailsCard(
@@ -778,10 +911,10 @@ class _GuarantorOnboardingScreenState
                                 fatherNameController: _fatherNameController,
                                 motherNameController: _motherNameController,
                                 addressController: _addressController,
-                                isPhoneVerified: _isPhoneVerified,
-                                isSendingOtp: _isSendingOtp,
-                                isOtpSent: _isOtpSent,
-                                isVerifyingOtp: _isVerifyingOtp,
+                                isPhoneVerified: state.isPhoneVerified,
+                                isSendingOtp: state.isSendingOtp,
+                                isOtpSent: state.isOtpSent,
+                                isVerifyingOtp: state.isVerifyingOtp,
                                 onSendOtp: _sendOtp,
                                 onVerifyOtp: _verifyOtp,
                                 onSelectDob: _selectDob,
@@ -796,17 +929,17 @@ class _GuarantorOnboardingScreenState
                                       FocusScope.of(context)
                                           .requestFocus(_otpFocusNodes[i - 1]);
                                     }
-                                    setState(() {});
                                   },
                                 ),
                               ),
                             ],
-                            if (_currentStep == 2) ...[
+                            if (state.currentStep == 2) ...[
                               GuarantorIdentityVerificationCard(
-                                aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                                aadhaarBackUploaded: _aadhaarBackUploaded,
-                                panUploaded: _panUploaded,
-                                photoUploaded: _photoUploaded,
+                                aadhaarFrontUploaded:
+                                    state.aadhaarFrontUploaded,
+                                aadhaarBackUploaded: state.aadhaarBackUploaded,
+                                panUploaded: state.panUploaded,
+                                photoUploaded: state.photoUploaded,
                                 onPickAadhaarFront: () =>
                                     _showDocumentSourceDialog('aadhaar_front'),
                                 onPickAadhaarBack: () =>
@@ -817,15 +950,15 @@ class _GuarantorOnboardingScreenState
                                     _showDocumentSourceDialog('photo'),
                               ),
                             ],
-                            if (_currentStep == 3) ...[
+                            if (state.currentStep == 3) ...[
                               GuarantorVideoProofCard(
-                                videoUploaded: _videoUploaded,
-                                videoPath: _videoPath,
+                                videoUploaded: state.videoUploaded,
+                                videoPath: state.videoPath,
                                 onTap: _pickVideo,
                               ),
                               const SizedBox(height: 24),
                               GuarantorSignatureCard(
-                                signatureUploaded: _signatureUploaded,
+                                signatureUploaded: state.signatureUploaded,
                                 onTap: _openSignaturePad,
                               ),
                             ],
@@ -840,11 +973,11 @@ class _GuarantorOnboardingScreenState
             ),
             GuarantorOnboardingBottomButton(
               canProceed: _canProceedCurrentStep,
-              isUploading: _isUploading,
-              uploadProgressText: _uploadProgressText,
-              buttonText: _currentStep < 3 ? 'NEXT STEP' : 'FINISH SETUP',
+              isUploading: state.isUploading,
+              uploadProgressText: state.uploadProgressText,
+              buttonText: state.currentStep < 3 ? 'NEXT STEP' : 'FINISH SETUP',
               onSubmit: _onBottomButtonPressed,
-              onSkip: _currentStep == 1 ? _handleSkip : null,
+              onSkip: state.currentStep == 1 ? _handleSkip : null,
             ),
           ],
         ),

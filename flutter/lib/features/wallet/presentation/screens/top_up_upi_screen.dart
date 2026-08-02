@@ -75,7 +75,13 @@ class _TopUpUpiScreenState extends ConsumerState<TopUpUpiScreen>
     if (source == null) return;
 
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+      requestFullMetadata: false,
+    );
     if (pickedFile != null && mounted) {
       setState(() => _imageFile = File(pickedFile.path));
     }

@@ -260,20 +260,15 @@ class RiderProvider extends ChangeNotifier with WidgetsBindingObserver {
     _postPickupPoller.start();
   }
 
-  // R11 — `setPollingActive()` / `setPollingInactive()` are now owned by
-  // `didChangeAppLifecycleState` in this class. They are kept commented out
-  // here for one release in case any external caller still pokes them, but
-  // the router no longer calls them. Remove after the next minor release.
-  //
-  // void setPollingActive() {
-  //   _onboardingPoller.active();
-  //   _postPickupPoller.active();
-  // }
-  //
-  // void setPollingInactive() {
-  //   _onboardingPoller.inactive();
-  //   _postPickupPoller.inactive();
-  // }
+  void setPollingActive() {
+    _onboardingPoller.active();
+    _postPickupPoller.active();
+  }
+
+  void setPollingInactive() {
+    _onboardingPoller.inactive();
+    _postPickupPoller.inactive();
+  }
 
   Future<void> _onOnboardingTick() async {
     const maxPolls = 240;

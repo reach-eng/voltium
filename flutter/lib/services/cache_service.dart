@@ -154,6 +154,29 @@ class CacheService {
   }
 
   // ════════════════════════════════════════════════════════════════════════
+  //  Generic SWR API response cache (Phase 2)
+  // ════════════════════════════════════════════════════════════════════════
+
+  Future<void> cacheApiResponse(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    final key = 'swr_api_$endpoint';
+    await _prefs?.setString(key, jsonEncode(data));
+  }
+
+  Map<String, dynamic>? getCachedApiResponse(String endpoint) {
+    final key = 'swr_api_$endpoint';
+    final raw = _prefs?.getString(key);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
   //  General purpose
   // ════════════════════════════════════════════════════════════════════════
 

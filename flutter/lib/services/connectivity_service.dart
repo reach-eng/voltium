@@ -8,7 +8,7 @@ class ConnectivityService {
 
   final Connectivity _connectivity = Connectivity();
   final StreamController<bool> _connectionController =
-      StreamController<bool>.broadcast();
+      StreamController<bool>.broadcast(sync: false);
   StreamSubscription<List<ConnectivityResult>>? _subscription;
 
   Stream<bool> get onConnectivityChanged => _connectionController.stream;
@@ -23,14 +23,19 @@ class ConnectivityService {
         _connectivity.onConnectivityChanged.listen(_updateConnectionStatus);
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> results) {
-    final wasConnected = _isConnected;
-    _isConnected =
-        results.isNotEmpty && !results.contains(ConnectivityResult.none);
+  Timer? _debounceTimer;
 
-    if (wasConnected != _isConnected) {
-      _connectionController.add(_isConnected);
-    }
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+      final wasConnected = _isConnected;
+      _isConnected =
+          results.isNotEmpty && !results.contains(ConnectivityResult.none);
+
+      if (wasConnected != _isConnected) {
+        _connectionController.add(_isConnected);
+      }
+    });
   }
 
   Future<bool> checkConnection() async {

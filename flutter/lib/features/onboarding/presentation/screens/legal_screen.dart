@@ -284,98 +284,99 @@ class _LegalScreenState extends State<LegalScreen>
     Key? headerKey,
   }) {
     final isExpanded = _expandedId == id;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.card,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row
-            InkWell(
-              key: headerKey,
-              onTap: () {
-                setState(() => _expandedId = isExpanded ? null : id);
-              },
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.bodyLarge
-                          .copyWith(fontWeight: FontWeight.w600)
-                          .copyWith(color: AppColors.onSurfaceMuted),
-                    ),
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.5 : 0.0,
-                      duration: const Duration(milliseconds: 250),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 20,
-                        color: AppColors.onSurfaceVariant,
+    return RepaintBoundary(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.card,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              InkWell(
+                key: headerKey,
+                onTap: () {
+                  setState(() => _expandedId = isExpanded ? null : id);
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.bodyLarge
+                            .copyWith(fontWeight: FontWeight.w600)
+                            .copyWith(color: AppColors.onSurfaceMuted),
                       ),
-                    ),
-                  ],
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          size: 20,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // Expandable content
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              child: isExpanded
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Divider
-                        Container(
-                          height: 1,
-                          color: AppColors.divider,
-                          margin: const EdgeInsets.symmetric(horizontal: 20),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 280),
-                            child: SingleChildScrollView(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: content
-                                    .split('\n\n')
-                                    .map(
-                                      (para) => Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12),
-                                        child: Text(
-                                          para,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 13,
-                                            color: AppColors.onSurfaceVariant,
-                                            height: 1.7,
+              // Expandable content
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: isExpanded
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Divider
+                          Container(
+                            height: 1,
+                            color: AppColors.divider,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 280),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: content
+                                      .split('\n\n')
+                                      .map(
+                                        (para) => Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 12),
+                                          child: Text(
+                                            para,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              color: AppColors.onSurfaceVariant,
+                                              height: 1.7,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
+                                      )
+                                      .toList(),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         ),
       ),
     );

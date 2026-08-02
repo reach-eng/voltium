@@ -74,17 +74,19 @@ class _BatteryChargeIndicatorState extends State<BatteryChargeIndicator>
     return AnimatedBuilder(
       animation: _waveCtrl,
       builder: (context, child) {
-        return CustomPaint(
-          size: Size(widget.width, widget.height),
-          painter: _BatteryPainter(
-            chargeLevel: widget.chargeLevel.clamp(0.0, 1.0),
-            isCharging: widget.isCharging,
-            chargeColor: _chargeColor(widget.chargeLevel),
-            outlineColor: colors.outlineVariant,
-            wavePhase: _waveCtrl.value * math.pi * 2,
-            pulseGlow: widget.isCharging
-                ? 0.5 + 0.5 * math.sin(_waveCtrl.value * math.pi * 2 * 2.5)
-                : 0.0,
+        return RepaintBoundary(
+          child: CustomPaint(
+            size: Size(widget.width, widget.height),
+            painter: _BatteryPainter(
+              chargeLevel: widget.chargeLevel.clamp(0.0, 1.0),
+              isCharging: widget.isCharging,
+              chargeColor: _chargeColor(widget.chargeLevel),
+              outlineColor: colors.outlineVariant,
+              wavePhase: _waveCtrl.value * math.pi * 2,
+              pulseGlow: widget.isCharging
+                  ? 0.5 + 0.5 * math.sin(_waveCtrl.value * math.pi * 2 * 2.5)
+                  : 0.0,
+            ),
           ),
         );
       },

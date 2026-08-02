@@ -1,10 +1,10 @@
-// PollingManager (Phase 3.1)
+// PollingManager (Phase 3.1 + P3.3 Lifecycle Scope)
 //
 // Lifecycle-aware polling helper. Replaces the hard-coded Timer
 // pattern that lived in RiderProvider and gives one shared utility
 // for any screen that needs background data refresh.
 //
-// Behavior matrix (Phase 3.1):
+// Behavior matrix:
 //   foreground + active screen        -> pollInterval (default 30s)
 //   foreground + inactive screen      -> 2 * pollInterval (default 60s)
 //   background (paused)              -> polling is suspended
@@ -13,11 +13,11 @@
 //   connectivity = none              -> polling is suspended
 //   connectivity = restored         -> fires one immediate refresh
 //
-// The manager has no opinion about WHAT to fetch — that's a
-// callback. It only owns the timer, the lifecycle subscription, and
-// the pause/resume state.
+// The manager automatically binds to [WidgetsBindingObserver] when started,
+// pausing timers on app pause/backgrounding to conserve battery & network.
 
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 
 /// State of the app from a polling perspective.
 enum PollingAppState { active, inactive, paused }
@@ -33,7 +33,7 @@ class PollingStrategy {
   });
 }
 
-class PollingManager {
+class PollingManager with WidgetsBindingObserver {
   PollingManager({
     required this.onTick,
     PollingStrategy strategy = const PollingStrategy(),
@@ -55,17 +55,33 @@ class PollingManager {
   void start() {
     if (_running) return;
     _running = true;
-    // Phase 3.1: do NOT fire an immediate tick on start. The first tick
-    // fires after one active interval. Callers that need an immediate
-    // refresh should call `onTick()` directly (or trigger via a
-    // focus-based refresh, Phase 3.2).
+    WidgetsBinding.instance.addObserver(this);
     _scheduleNext(immediate: false);
   }
 
   void stop() {
     _running = false;
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _timer = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_running) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        resume(immediate: true);
+        break;
+      case AppLifecycleState.inactive:
+        inactive();
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        pause();
+        break;
+    }
   }
 
   /// Called when the host screen is hidden (route change, app
@@ -116,6 +132,8 @@ class PollingManager {
 
   void _scheduleNext({required bool immediate}) {
     _timer?.cancel();
+    if (_state == PollingAppState.paused) return;
+
     if (!immediate) {
       final delay = _state == PollingAppState.inactive
           ? _strategy.inactive
@@ -129,14 +147,13 @@ class PollingManager {
 
   void _fire() {
     if (!_running) return;
+    if (_state == PollingAppState.paused) return;
     if (!connectivity) {
       _scheduleNext(immediate: false);
       return;
     }
     _ticks++;
     // We don't await — the manager is fire-and-forget by design.
-    // Errors are swallowed at the call site (or surfaced via the
-    // ticker's own error handling).
     unawaited(onTick().catchError((_) {}));
     _scheduleNext(immediate: false);
   }

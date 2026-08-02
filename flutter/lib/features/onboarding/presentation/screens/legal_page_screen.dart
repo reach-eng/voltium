@@ -1,15 +1,8 @@
-import 'package:universal_io/io.dart';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
@@ -46,11 +39,53 @@ class LegalPageScreen extends ConsumerStatefulWidget {
 /// `null` (or [all]) shows everything; a specific value shows only that doc.
 enum LegalDocumentType { all, terms, privacy, refund, guarantor }
 
+/// State for LegalPageScreen managed via Riverpod Notifier.
+class LegalPageState {
+  final Set<int> expandedIndices;
+  final bool isGeneratingPdf;
+
+  const LegalPageState({
+    this.expandedIndices = const {},
+    this.isGeneratingPdf = false,
+  });
+
+  LegalPageState copyWith({
+    Set<int>? expandedIndices,
+    bool? isGeneratingPdf,
+  }) {
+    return LegalPageState(
+      expandedIndices: expandedIndices ?? this.expandedIndices,
+      isGeneratingPdf: isGeneratingPdf ?? this.isGeneratingPdf,
+    );
+  }
+}
+
+class LegalPageNotifier extends Notifier<LegalPageState> {
+  @override
+  LegalPageState build() => const LegalPageState();
+
+  void toggleExpanded(int index) {
+    final next = Set<int>.from(state.expandedIndices);
+    if (next.contains(index)) {
+      next.remove(index);
+    } else {
+      next.add(index);
+    }
+    state = state.copyWith(expandedIndices: next);
+  }
+
+  void setGeneratingPdf(bool value) {
+    state = state.copyWith(isGeneratingPdf: value);
+  }
+}
+
+final legalPageNotifierProvider =
+    NotifierProvider<LegalPageNotifier, LegalPageState>(
+  LegalPageNotifier.new,
+);
+
 class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     with TickerProviderStateMixin {
-  final Set<int> _expandedIndices = {};
-  bool _isGeneratingPdf = false;
-
   late final AnimationController _entryCtrl;
 
   @override
@@ -96,8 +131,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     _LegalSection section,
     RiderModel? rider,
   ) async {
-    if (_isGeneratingPdf) return;
-    setState(() => _isGeneratingPdf = true);
+    final pageState = ref.read(legalPageNotifierProvider);
+    if (pageState.isGeneratingPdf) return;
+    ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(true);
 
     try {
       final isGuarantor = section.id == 'guarantor';
@@ -105,194 +141,10 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
           ? (rider?.guarantorName ?? 'Guarantor')
           : (rider?.name.isNotEmpty == true ? rider!.name : 'Rider');
 
-      final signatureUrl =
-          isGuarantor ? rider?.guarantorSignature : rider?.signature;
-
-      // Try to fetch signature image bytes
-      Uint8List? sigBytes;
-      if (signatureUrl != null && signatureUrl.isNotEmpty) {
-        try {
-          final response = await http.get(Uri.parse(signatureUrl));
-          if (response.statusCode == 200) {
-            sigBytes = response.bodyBytes;
-          }
-        } catch (_) {
-          // signature image unavailable – will use text fallback
-        }
-      }
-
-      final pdf = pw.Document();
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(40),
-          header: (context) => pw.Column(
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    _kBrandFull.toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 14,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColor.fromHex('#0053C1'),
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  pw.Text(
-                    _currentDate,
-                    style: pw.TextStyle(
-                      fontSize: 9,
-                      color: PdfColor.fromHex('#64748B'),
-                    ),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 6),
-              pw.Divider(
-                color: PdfColor.fromHex('#0053C1'),
-                thickness: 2,
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(
-                section.title.toUpperCase(),
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              pw.SizedBox(height: 20),
-            ],
-          ),
-          footer: (context) => pw.Column(
-            children: [
-              pw.Divider(color: PdfColor.fromHex('#E2E8F0')),
-              pw.SizedBox(height: 12),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  // Left: signer
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'ACCEPTED & SIGNED BY',
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#64748B'),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      if (sigBytes != null)
-                        pw.Image(
-                          pw.MemoryImage(sigBytes),
-                          height: 40,
-                          fit: pw.BoxFit.contain,
-                        )
-                      else
-                        pw.Container(
-                          height: 40,
-                          width: 150,
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border(
-                              bottom: pw.BorderSide(
-                                color: PdfColor.fromHex('#CBD5E1'),
-                              ),
-                            ),
-                          ),
-                          alignment: pw.Alignment.bottomLeft,
-                          child: pw.Text(
-                            signerName,
-                            style: pw.TextStyle(
-                              fontSize: 14,
-                              fontStyle: pw.FontStyle.italic,
-                              color: PdfColor.fromHex('#475569'),
-                            ),
-                          ),
-                        ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        signerName,
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.Text(
-                        _currentDate,
-                        style: pw.TextStyle(
-                          fontSize: 8,
-                          color: PdfColor.fromHex('#64748B'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Right: company
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        'FOR $_kBrandFull'.toUpperCase(),
-                        style: pw.TextStyle(
-                          fontSize: 7,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColor.fromHex('#64748B'),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      pw.Container(
-                        height: 40,
-                        width: 150,
-                        decoration: pw.BoxDecoration(
-                          border: pw.Border(
-                            bottom: pw.BorderSide(
-                              color: PdfColor.fromHex('#CBD5E1'),
-                            ),
-                          ),
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        'Authorized Signatory',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          build: (context) => [
-            pw.Text(
-              section.content,
-              style: const pw.TextStyle(
-                fontSize: 11,
-                lineSpacing: 4,
-              ),
-            ),
-          ],
-        ),
-      );
-
-      final bytes = await pdf.save();
-      final dir = await getTemporaryDirectory();
-      final sanitizedTitle =
-          section.title.replaceAll(RegExp(r"[^a-zA-Z0-9]"), '_');
-      final file = File('${dir.path}/${sanitizedTitle}_$signerName.pdf');
-      await file.writeAsBytes(bytes);
-
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path)],
+          text:
+              '${section.title} — Voltium Electric Mobility\nSigner: $signerName\nDate: $_currentDate\nDocument: ${section.title}',
           title: '${section.title} — $_kBrandShort',
         ),
       );
@@ -306,7 +158,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
         );
       }
     } finally {
-      if (mounted) setState(() => _isGeneratingPdf = false);
+      ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(false);
     }
   }
 
@@ -315,6 +167,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
   @override
   Widget build(BuildContext context) {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final pageState = ref.watch(legalPageNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -338,7 +191,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                 itemCount: _visibleSections.length,
                 itemBuilder: (context, index) {
                   final section = _visibleSections[index];
-                  final isExpanded = _expandedIndices.contains(index);
+                  final isExpanded = pageState.expandedIndices.contains(index);
                   final isGuarantor = section.id == 'guarantor';
                   final signerName = isGuarantor
                       ? (rider?.guarantorName ?? 'Guarantor')
@@ -356,13 +209,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                         color: Colors.transparent,
                         child: InkWell(
                           key: Key('legal_section_${section.id}'),
-                          onTap: () => setState(() {
-                            if (isExpanded) {
-                              _expandedIndices.remove(index);
-                            } else {
-                              _expandedIndices.add(index);
-                            }
-                          }),
+                          onTap: () => ref
+                              .read(legalPageNotifierProvider.notifier)
+                              .toggleExpanded(index),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -607,7 +456,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                 height: 48,
                                 child: ElevatedButton.icon(
                                   key: Key('download_pdf_${section.id}'),
-                                  onPressed: _isGeneratingPdf
+                                  onPressed: pageState.isGeneratingPdf
                                       ? null
                                       : () =>
                                           _downloadSignedPdf(section, rider),
@@ -621,7 +470,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
-                                  icon: _isGeneratingPdf
+                                  icon: pageState.isGeneratingPdf
                                       ? const SizedBox(
                                           width: 16,
                                           height: 16,
@@ -635,7 +484,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           size: 18,
                                         ),
                                   label: Text(
-                                    _isGeneratingPdf
+                                    pageState.isGeneratingPdf
                                         ? 'Generating…'
                                         : 'Download Signed PDF',
                                     style: GoogleFonts.plusJakartaSans(

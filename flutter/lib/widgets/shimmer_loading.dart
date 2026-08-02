@@ -23,17 +23,20 @@ class ShimmerLoading extends StatelessWidget {
     final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLight;
     final highlightColor =
         isDark ? AppColors.slate700 : AppColors.primarySurface;
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: AppColors.of(context).card,
-          borderRadius: shape == ShimmerShape.circle
-              ? BorderRadius.circular(height / 2)
-              : BorderRadius.circular(borderRadius),
+    return TickerMode(
+      enabled: TickerMode.of(context),
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: AppColors.of(context).card,
+            borderRadius: shape == ShimmerShape.circle
+                ? BorderRadius.circular(height / 2)
+                : BorderRadius.circular(borderRadius),
+          ),
         ),
       ),
     );
@@ -377,6 +380,8 @@ class ShimmerList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      addAutomaticKeepAlives: false,
+      addRepaintBoundaries: false,
       itemCount: itemCount,
       itemBuilder: (context, index) => item ?? const SizedBox.shrink(),
     );

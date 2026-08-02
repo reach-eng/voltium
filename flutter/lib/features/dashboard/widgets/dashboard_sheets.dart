@@ -555,8 +555,13 @@ Future<void> startVehicleReturnWorkflow(
                   key: const Key('captureReturnPhotoButton'),
                   onPressed: () async {
                     try {
-                      final photo =
-                          await picker.pickImage(source: ImageSource.camera);
+                      final photo = await picker.pickImage(
+                        source: ImageSource.camera,
+                        maxWidth: 1600,
+                        maxHeight: 1600,
+                        imageQuality: 85,
+                        requestFullMetadata: false,
+                      );
                       if (context.mounted) Navigator.pop(context, photo);
                     } catch (e) {
                       if (context.mounted) Navigator.pop(context);

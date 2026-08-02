@@ -57,7 +57,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
           children: [
             Center(
               child: InteractiveViewer(
-                child: Image.network(url, fit: BoxFit.contain),
+                child: Image.network(url, fit: BoxFit.contain, cacheWidth: 800),
               ),
             ),
             Positioned(

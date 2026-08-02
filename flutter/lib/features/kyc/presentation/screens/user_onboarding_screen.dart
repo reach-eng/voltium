@@ -21,6 +21,135 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import '../../../../utils/app_logger.dart';
 
+/// State for UserOnboardingScreen managed via Riverpod Notifier.
+class UserOnboardingState {
+  final int currentStep;
+  final bool isUploading;
+  final String uploadProgressText;
+
+  final bool aadhaarFrontUploaded;
+  final String? aadhaarFrontPath;
+  final bool aadhaarBackUploaded;
+  final String? aadhaarBackPath;
+  final bool panUploaded;
+  final String? panPath;
+  final bool selfieUploaded;
+  final String? selfiePath;
+  final bool signatureUploaded;
+  final String? signaturePath;
+
+  const UserOnboardingState({
+    this.currentStep = 1,
+    this.isUploading = false,
+    this.uploadProgressText = '',
+    this.aadhaarFrontUploaded = false,
+    this.aadhaarFrontPath,
+    this.aadhaarBackUploaded = false,
+    this.aadhaarBackPath,
+    this.panUploaded = false,
+    this.panPath,
+    this.selfieUploaded = false,
+    this.selfiePath,
+    this.signatureUploaded = false,
+    this.signaturePath,
+  });
+
+  UserOnboardingState copyWith({
+    int? currentStep,
+    bool? isUploading,
+    String? uploadProgressText,
+    bool? aadhaarFrontUploaded,
+    String? aadhaarFrontPath,
+    bool? aadhaarBackUploaded,
+    String? aadhaarBackPath,
+    bool? panUploaded,
+    String? panPath,
+    bool? selfieUploaded,
+    String? selfiePath,
+    bool? signatureUploaded,
+    String? signaturePath,
+  }) {
+    return UserOnboardingState(
+      currentStep: currentStep ?? this.currentStep,
+      isUploading: isUploading ?? this.isUploading,
+      uploadProgressText: uploadProgressText ?? this.uploadProgressText,
+      aadhaarFrontUploaded: aadhaarFrontUploaded ?? this.aadhaarFrontUploaded,
+      aadhaarFrontPath: aadhaarFrontPath ?? this.aadhaarFrontPath,
+      aadhaarBackUploaded: aadhaarBackUploaded ?? this.aadhaarBackUploaded,
+      aadhaarBackPath: aadhaarBackPath ?? this.aadhaarBackPath,
+      panUploaded: panUploaded ?? this.panUploaded,
+      panPath: panPath ?? this.panPath,
+      selfieUploaded: selfieUploaded ?? this.selfieUploaded,
+      selfiePath: selfiePath ?? this.selfiePath,
+      signatureUploaded: signatureUploaded ?? this.signatureUploaded,
+      signaturePath: signaturePath ?? this.signaturePath,
+    );
+  }
+}
+
+class UserOnboardingNotifier extends Notifier<UserOnboardingState> {
+  @override
+  UserOnboardingState build() => const UserOnboardingState();
+
+  void setStep(int step) => state = state.copyWith(currentStep: step);
+  void nextStep() => state = state.copyWith(currentStep: state.currentStep + 1);
+  void prevStep() =>
+      state = state.copyWith(currentStep: (state.currentStep - 1).clamp(1, 3));
+
+  void setUploading(bool isUploading, [String progressText = '']) {
+    state = state.copyWith(
+        isUploading: isUploading, uploadProgressText: progressText);
+  }
+
+  void updateDocument(String type, String path) {
+    switch (type) {
+      case 'aadhaar_front':
+        state =
+            state.copyWith(aadhaarFrontUploaded: true, aadhaarFrontPath: path);
+        break;
+      case 'aadhaar_back':
+        state =
+            state.copyWith(aadhaarBackUploaded: true, aadhaarBackPath: path);
+        break;
+      case 'pan':
+        state = state.copyWith(panUploaded: true, panPath: path);
+        break;
+      case 'selfie':
+        state = state.copyWith(selfieUploaded: true, selfiePath: path);
+        break;
+      case 'signature':
+        state = state.copyWith(signatureUploaded: true, signaturePath: path);
+        break;
+    }
+  }
+
+  void populateFromCache(Map<String, dynamic> cacheData) {
+    final afPath = cacheData['aadhaarFrontPath'] as String?;
+    final abPath = cacheData['aadhaarBackPath'] as String?;
+    final panP = cacheData['panPath'] as String?;
+    final selfieP = cacheData['selfiePath'] as String?;
+    final sigP = cacheData['signaturePath'] as String?;
+
+    state = state.copyWith(
+      aadhaarFrontPath: afPath,
+      aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
+      aadhaarBackPath: abPath,
+      aadhaarBackUploaded: abPath != null && abPath.isNotEmpty,
+      panPath: panP,
+      panUploaded: panP != null && panP.isNotEmpty,
+      selfiePath: selfieP,
+      selfieUploaded: selfieP != null && selfieP.isNotEmpty,
+      signaturePath: sigP,
+      signatureUploaded: sigP != null && sigP.isNotEmpty,
+    );
+  }
+}
+
+final userOnboardingNotifierProvider =
+    NotifierProvider<UserOnboardingNotifier, UserOnboardingState>(
+  UserOnboardingNotifier.new,
+);
+
 class UserOnboardingScreen extends ConsumerStatefulWidget {
   final VoidCallback? onNext;
   final VoidCallback? onBack;
@@ -45,25 +174,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   final _bankAccountController = TextEditingController();
   final _bankIfscController = TextEditingController();
 
-  bool _isUploading = false;
-  String _uploadProgressText = '';
-  int _currentStep = 1;
-
-  bool _aadhaarFrontUploaded = false;
-  bool _aadhaarBackUploaded = false;
-  bool _panUploaded = false;
-  bool _selfieUploaded = false;
-  bool _signatureUploaded = false;
-
-  String? _aadhaarFrontPath;
-  String? _aadhaarBackPath;
-  String? _panPath;
-  String? _selfiePath;
-  String? _signaturePath;
-
   void _saveCache() {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
+    final state = ref.read(userOnboardingNotifierProvider);
     final cacheData = {
       'name': _nameController.text,
       'email': _emailController.text,
@@ -74,11 +188,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       'bankName': _bankNameController.text,
       'bankAccount': _bankAccountController.text,
       'bankIfsc': _bankIfscController.text,
-      'aadhaarFrontPath': _aadhaarFrontPath,
-      'aadhaarBackPath': _aadhaarBackPath,
-      'panPath': _panPath,
-      'selfiePath': _selfiePath,
-      'signaturePath': _signaturePath,
+      'aadhaarFrontPath': state.aadhaarFrontPath,
+      'aadhaarBackPath': state.aadhaarBackPath,
+      'panPath': state.panPath,
+      'selfiePath': state.selfiePath,
+      'signaturePath': state.signaturePath,
     };
     KycRepository.saveFormCache(riderId: riderId, data: cacheData);
   }
@@ -88,35 +202,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     if (riderId == null) return;
     KycRepository.loadFormCache(riderId: riderId).then((cacheData) {
       if (cacheData == null) return;
-      setState(() {
-        _nameController.text = cacheData['name'] ?? '';
-        _emailController.text = cacheData['email'] ?? '';
-        _addressController.text = cacheData['address'] ?? '';
-        _dobController.text = cacheData['dob'] ?? '';
-        _fatherNameController.text = cacheData['fatherName'] ?? '';
-        _motherNameController.text = cacheData['motherName'] ?? '';
-        _bankNameController.text = cacheData['bankName'] ?? '';
-        _bankAccountController.text = cacheData['bankAccount'] ?? '';
-        _bankIfscController.text = cacheData['bankIfsc'] ?? '';
+      _nameController.text = cacheData['name'] ?? '';
+      _emailController.text = cacheData['email'] ?? '';
+      _addressController.text = cacheData['address'] ?? '';
+      _dobController.text = cacheData['dob'] ?? '';
+      _fatherNameController.text = cacheData['fatherName'] ?? '';
+      _motherNameController.text = cacheData['motherName'] ?? '';
+      _bankNameController.text = cacheData['bankName'] ?? '';
+      _bankAccountController.text = cacheData['bankAccount'] ?? '';
+      _bankIfscController.text = cacheData['bankIfsc'] ?? '';
 
-        _aadhaarFrontPath = cacheData['aadhaarFrontPath'];
-        _aadhaarFrontUploaded =
-            _aadhaarFrontPath != null && _aadhaarFrontPath!.isNotEmpty;
-
-        _aadhaarBackPath = cacheData['aadhaarBackPath'];
-        _aadhaarBackUploaded =
-            _aadhaarBackPath != null && _aadhaarBackPath!.isNotEmpty;
-
-        _panPath = cacheData['panPath'];
-        _panUploaded = _panPath != null && _panPath!.isNotEmpty;
-
-        _selfiePath = cacheData['selfiePath'];
-        _selfieUploaded = _selfiePath != null && _selfiePath!.isNotEmpty;
-
-        _signaturePath = cacheData['signaturePath'];
-        _signatureUploaded =
-            _signaturePath != null && _signaturePath!.isNotEmpty;
-      });
+      ref
+          .read(userOnboardingNotifierProvider.notifier)
+          .populateFromCache(cacheData);
     });
   }
 
@@ -137,36 +235,30 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (AppConstants.isTestMode) {
-        setState(() {
-          if (_dobController.text.isEmpty) _dobController.text = '01-01-2000';
-          if (_nameController.text.isEmpty) _nameController.text = 'Test Rider';
-          if (_emailController.text.isEmpty)
-            _emailController.text = 'test@example.com';
-          if (_fatherNameController.text.isEmpty)
-            _fatherNameController.text = 'Father Name';
-          if (_motherNameController.text.isEmpty)
-            _motherNameController.text = 'Mother Name';
-          if (_addressController.text.isEmpty)
-            _addressController.text = '123 Test Street';
-          if (_bankNameController.text.isEmpty)
-            _bankNameController.text = 'Test Bank';
-          if (_bankAccountController.text.isEmpty)
-            _bankAccountController.text = '1234567890';
-          if (_bankIfscController.text.isEmpty)
-            _bankIfscController.text = 'TEST0001234';
-        });
+        if (_dobController.text.isEmpty) _dobController.text = '01-01-2000';
+        if (_nameController.text.isEmpty) _nameController.text = 'Test Rider';
+        if (_emailController.text.isEmpty)
+          _emailController.text = 'test@example.com';
+        if (_fatherNameController.text.isEmpty)
+          _fatherNameController.text = 'Father Name';
+        if (_motherNameController.text.isEmpty)
+          _motherNameController.text = 'Mother Name';
+        if (_addressController.text.isEmpty)
+          _addressController.text = '123 Test Street';
+        if (_bankNameController.text.isEmpty)
+          _bankNameController.text = 'Test Bank';
+        if (_bankAccountController.text.isEmpty)
+          _bankAccountController.text = '1234567890';
+        if (_bankIfscController.text.isEmpty)
+          _bankIfscController.text = 'TEST0001234';
       }
       final rider = ref.read(riderProvider).rider;
       if (rider != null) {
         if (_nameController.text.isEmpty) {
-          setState(() {
-            _nameController.text = rider.name;
-          });
+          _nameController.text = rider.name;
         }
         if (_emailController.text.isEmpty) {
-          setState(() {
-            _emailController.text = rider.email ?? '';
-          });
+          _emailController.text = rider.email ?? '';
         }
       }
     });
@@ -197,9 +289,6 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   Future<void> _selectDob() async {
-    // Default to 25 years ago — most riders are young adults. The
-    // user can scroll back or forward. Also widen the firstDate to
-    // 1940 so older users (born 1950–1970) don't have to scroll far.
     final now = DateTime.now();
     final defaultInitial =
         DateTime(now.year - 25, now.month, now.day).isAfter(now)
@@ -212,10 +301,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       lastDate: now,
     );
     if (date != null && mounted) {
-      setState(
-        () => _dobController.text =
-            '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}',
-      );
+      _dobController.text =
+          '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
     }
   }
 
@@ -230,26 +317,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       );
 
       if (compressedFile != null && mounted) {
-        setState(() {
-          switch (type) {
-            case 'aadhaar_front':
-              _aadhaarFrontUploaded = true;
-              _aadhaarFrontPath = compressedFile.path;
-              break;
-            case 'aadhaar_back':
-              _aadhaarBackUploaded = true;
-              _aadhaarBackPath = compressedFile.path;
-              break;
-            case 'pan':
-              _panUploaded = true;
-              _panPath = compressedFile.path;
-              break;
-            case 'selfie':
-              _selfieUploaded = true;
-              _selfiePath = compressedFile.path;
-              break;
-          }
-        });
+        ref
+            .read(userOnboardingNotifierProvider.notifier)
+            .updateDocument(type, compressedFile.path);
         _saveCache();
       }
     } catch (e) {
@@ -296,15 +366,15 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       MaterialPageRoute(builder: (_) => const SignaturePadScreen()),
     );
     if (result != null && mounted) {
-      setState(() {
-        _signatureUploaded = true;
-        _signaturePath = result;
-      });
+      ref
+          .read(userOnboardingNotifierProvider.notifier)
+          .updateDocument('signature', result);
       _saveCache();
     }
   }
 
   bool get _isFormComplete {
+    final state = ref.read(userOnboardingNotifierProvider);
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     return _nameController.text.trim().isNotEmpty &&
         _dobController.text.trim().isNotEmpty &&
@@ -312,11 +382,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         _fatherNameController.text.trim().isNotEmpty &&
         _motherNameController.text.trim().isNotEmpty &&
         _addressController.text.trim().isNotEmpty &&
-        _aadhaarFrontUploaded &&
-        _aadhaarBackUploaded &&
-        _panUploaded &&
-        _selfieUploaded &&
-        _signatureUploaded &&
+        state.aadhaarFrontUploaded &&
+        state.aadhaarBackUploaded &&
+        state.panUploaded &&
+        state.selfieUploaded &&
+        state.signatureUploaded &&
         _bankNameController.text.trim().isNotEmpty &&
         _bankAccountController.text.trim().length >= 6 &&
         _bankIfscController.text.trim().length >= 8;
@@ -364,6 +434,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   Future<void> _handleNext() async {
+    final state = ref.read(userOnboardingNotifierProvider);
     final isTestMode = AppConstants.isTestMode;
     if (!isTestMode && !_isFormComplete) {
       final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -377,26 +448,25 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       if (_motherNameController.text.trim().isEmpty)
         missing.add('Mother\'s Name');
       if (_addressController.text.trim().isEmpty) missing.add('Address');
-      if (!_aadhaarFrontUploaded) missing.add('Aadhaar Front');
-      if (!_aadhaarBackUploaded) missing.add('Aadhaar Back');
-      if (!_panUploaded) missing.add('PAN');
-      if (!_selfieUploaded) missing.add('Selfie');
-      if (!_signatureUploaded) missing.add('Signature');
+      if (!state.aadhaarFrontUploaded) missing.add('Aadhaar Front');
+      if (!state.aadhaarBackUploaded) missing.add('Aadhaar Back');
+      if (!state.panUploaded) missing.add('PAN');
+      if (!state.selfieUploaded) missing.add('Selfie');
+      if (!state.signatureUploaded) missing.add('Signature');
       if (_bankNameController.text.trim().isEmpty ||
           _bankAccountController.text.trim().length < 6 ||
           _bankIfscController.text.trim().length < 8)
         missing.add('Bank Details');
 
-      _showError('Missing: ${missing.join(', ')}');
+      _showError('Please complete: ${missing.join(', ')}');
       return;
     }
 
-    final rider = ref.watch(riderProvider).rider;
-    if (rider == null) {
-      _showError('Session lost. Please log in again.');
+    final riderId = ref.read(riderProvider).riderId;
+    if (riderId == null) {
+      _showError('Session invalid. Please login again.');
       return;
     }
-    final riderId = rider.id ?? rider.riderId;
 
     final client = ApiClient();
     final voltiumClient = VoltiumApiClient(client);
@@ -405,7 +475,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       FilesRepository(client, voltiumClient),
     );
 
-    setState(() => _isUploading = true);
+    ref.read(userOnboardingNotifierProvider.notifier).setUploading(true);
 
     try {
       String aadhaarFrontUrl = '';
@@ -422,32 +492,30 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl = 'mock_url_signature.png';
       } else {
         final Map<String, dynamic> tasks = {};
-        if (_aadhaarFrontPath != null)
+        if (state.aadhaarFrontPath != null)
           tasks['Aadhaar Front'] = () => _kycRepository!
-              .uploadDocument(File(_aadhaarFrontPath!), 'kyc_document');
-        if (_aadhaarBackPath != null)
+              .uploadDocument(File(state.aadhaarFrontPath!), 'kyc_document');
+        if (state.aadhaarBackPath != null)
           tasks['Aadhaar Back'] = () => _kycRepository!
-              .uploadDocument(File(_aadhaarBackPath!), 'kyc_document');
-        if (_panPath != null)
-          tasks['PAN'] = () =>
-              _kycRepository!.uploadDocument(File(_panPath!), 'kyc_document');
-        if (_selfiePath != null)
+              .uploadDocument(File(state.aadhaarBackPath!), 'kyc_document');
+        if (state.panPath != null)
+          tasks['PAN'] = () => _kycRepository!
+              .uploadDocument(File(state.panPath!), 'kyc_document');
+        if (state.selfiePath != null)
           tasks['Selfie'] = () => _kycRepository!
-              .uploadDocument(File(_selfiePath!), 'profile_photo');
-        if (_signaturePath != null)
+              .uploadDocument(File(state.selfiePath!), 'profile_photo');
+        if (state.signaturePath != null)
           tasks['Signature'] = () => _kycRepository!
-              .uploadDocument(File(_signaturePath!), 'kyc_document');
+              .uploadDocument(File(state.signaturePath!), 'kyc_document');
 
         int completed = 0;
         final results = <String, String>{};
 
         for (final entry in tasks.entries) {
-          if (mounted) {
-            setState(() {
-              _uploadProgressText =
-                  'Uploading ${completed + 1} of ${tasks.length}...';
-            });
-          }
+          ref.read(userOnboardingNotifierProvider.notifier).setUploading(
+                true,
+                'Uploading ${completed + 1} of ${tasks.length}...',
+              );
           results[entry.key] = await entry.value();
           completed++;
         }
@@ -459,18 +527,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl = results['Signature'] ?? '';
 
         // Cache documents locally so they can be viewed offline.
-        if (_aadhaarFrontPath != null)
-          DocumentLocalCache.save('aadhaarFront', _aadhaarFrontPath!);
-        if (_aadhaarBackPath != null)
-          DocumentLocalCache.save('aadhaarBack', _aadhaarBackPath!);
-        if (_panPath != null) DocumentLocalCache.save('panCard', _panPath!);
-        if (_signaturePath != null)
-          DocumentLocalCache.save('signature', _signaturePath!);
+        if (state.aadhaarFrontPath != null)
+          DocumentLocalCache.save('aadhaarFront', state.aadhaarFrontPath!);
+        if (state.aadhaarBackPath != null)
+          DocumentLocalCache.save('aadhaarBack', state.aadhaarBackPath!);
+        if (state.panPath != null)
+          DocumentLocalCache.save('panCard', state.panPath!);
+        if (state.signaturePath != null)
+          DocumentLocalCache.save('signature', state.signaturePath!);
       }
 
-      if (mounted) {
-        setState(() => _uploadProgressText = 'Saving profile...');
-      }
+      ref
+          .read(userOnboardingNotifierProvider.notifier)
+          .setUploading(true, 'Saving profile...');
 
       await _kycRepository!.updateProfile(
         riderId: riderId,
@@ -492,11 +561,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       await KycRepository.clearFormCache(riderId: riderId);
       await ref.read(riderProvider).refresh();
       PostHogService.capture('kyc_submitted', properties: {
-        'has_aadhaar':
-            (_aadhaarFrontUploaded && _aadhaarBackUploaded).toString(),
-        'has_pan': _panUploaded.toString(),
-        'has_selfie': _selfieUploaded.toString(),
-        'has_signature': _signatureUploaded.toString(),
+        'has_aadhaar': (state.aadhaarFrontUploaded && state.aadhaarBackUploaded)
+            .toString(),
+        'has_pan': state.panUploaded.toString(),
+        'has_selfie': state.selfieUploaded.toString(),
+        'has_signature': state.signatureUploaded.toString(),
       });
 
       if (mounted) {
@@ -521,28 +590,31 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         _showError(userMessage);
       }
     } finally {
-      if (mounted) setState(() => _isUploading = false);
+      ref.read(userOnboardingNotifierProvider.notifier).setUploading(false);
     }
   }
 
   Widget _buildStepIndicator() {
+    final currentStep = ref.watch(
+      userOnboardingNotifierProvider.select((s) => s.currentStep),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 20, top: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildDot(1),
+          _buildDot(1, currentStep),
           _buildLine(),
-          _buildDot(2),
+          _buildDot(2, currentStep),
           _buildLine(),
-          _buildDot(3),
+          _buildDot(3, currentStep),
         ],
       ),
     );
   }
 
-  Widget _buildDot(int step) {
-    final isActive = _currentStep >= step;
+  Widget _buildDot(int step, int currentStep) {
+    final isActive = currentStep >= step;
     return Container(
       width: 24,
       height: 24,
@@ -571,10 +643,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   void _onBottomButtonPressed() {
-    if (_currentStep < 3) {
-      setState(() {
-        _currentStep++;
-      });
+    final currentStep = ref.read(userOnboardingNotifierProvider).currentStep;
+    if (currentStep < 3) {
+      ref.read(userOnboardingNotifierProvider.notifier).nextStep();
     } else {
       _handleNext();
     }
@@ -582,18 +653,19 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   bool get _canProceedCurrentStep {
     if (AppConstants.isTestMode) return true;
-    switch (_currentStep) {
+    final state = ref.read(userOnboardingNotifierProvider);
+    switch (state.currentStep) {
       case 1:
         return _nameController.text.isNotEmpty &&
             _dobController.text.isNotEmpty &&
             _addressController.text.isNotEmpty;
       case 2:
-        return _aadhaarFrontUploaded &&
-            _aadhaarBackUploaded &&
-            _panUploaded &&
+        return state.aadhaarFrontUploaded &&
+            state.aadhaarBackUploaded &&
+            state.panUploaded &&
             _bankAccountController.text.isNotEmpty;
       case 3:
-        return _selfieUploaded && _signatureUploaded;
+        return state.selfieUploaded && state.signatureUploaded;
       default:
         return false;
     }
@@ -612,14 +684,14 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final onboardingState = ref.watch(userOnboardingNotifierProvider);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (_currentStep > 1) {
-          setState(() {
-            _currentStep--;
-          });
+        if (onboardingState.currentStep > 1) {
+          ref.read(userOnboardingNotifierProvider.notifier).prevStep();
         } else {
           widget.onBack?.call();
         }
@@ -636,10 +708,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                       title: 'Rider Profile',
                       subtitle: 'Complete your details to finish onboarding',
                       onBack: () {
-                        if (_currentStep > 1) {
-                          setState(() {
-                            _currentStep--;
-                          });
+                        if (onboardingState.currentStep > 1) {
+                          ref
+                              .read(userOnboardingNotifierProvider.notifier)
+                              .prevStep();
                         } else {
                           widget.onBack?.call();
                         }
@@ -652,7 +724,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                         child: Column(
                           children: [
                             _buildStepIndicator(),
-                            if (_currentStep == 1)
+                            if (onboardingState.currentStep == 1)
                               PersonalDetailsCard(
                                 nameController: _nameController,
                                 nameEnabled: _isFieldEditable('fullName'),
@@ -673,18 +745,22 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                                     ref.read(riderProvider).rider?.phone ?? '',
                                 onSelectDob: _selectDob,
                               ),
-                            if (_currentStep == 2)
+                            if (onboardingState.currentStep == 2)
                               IdentityVerificationCard(
-                                aadhaarFrontUploaded: _aadhaarFrontUploaded,
-                                aadhaarFrontPath: _aadhaarFrontPath,
+                                aadhaarFrontUploaded:
+                                    onboardingState.aadhaarFrontUploaded,
+                                aadhaarFrontPath:
+                                    onboardingState.aadhaarFrontPath,
                                 aadhaarFrontEnabled:
                                     _isFieldEditable('aadhaarFront'),
-                                aadhaarBackUploaded: _aadhaarBackUploaded,
-                                aadhaarBackPath: _aadhaarBackPath,
+                                aadhaarBackUploaded:
+                                    onboardingState.aadhaarBackUploaded,
+                                aadhaarBackPath:
+                                    onboardingState.aadhaarBackPath,
                                 aadhaarBackEnabled:
                                     _isFieldEditable('aadhaarBack'),
-                                panUploaded: _panUploaded,
-                                panPath: _panPath,
+                                panUploaded: onboardingState.panUploaded,
+                                panPath: onboardingState.panPath,
                                 panEnabled: _isFieldEditable('panCard'),
                                 bankDetailsDone:
                                     _bankAccountController.text.isNotEmpty,
@@ -701,17 +777,18 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                                 onShowBankDialog: () =>
                                     _showBankDetailsDialog(),
                               ),
-                            if (_currentStep == 3) ...[
+                            if (onboardingState.currentStep == 3) ...[
                               SelfieCard(
-                                selfieUploaded: _selfieUploaded,
-                                selfiePath: _selfiePath,
+                                selfieUploaded: onboardingState.selfieUploaded,
+                                selfiePath: onboardingState.selfiePath,
                                 enabled: _isFieldEditable('profilePhoto'),
                                 onTap: () =>
                                     _showDocumentSourceDialog('selfie'),
                               ),
                               const SizedBox(height: 24),
                               SignatureCard(
-                                signatureUploaded: _signatureUploaded,
+                                signatureUploaded:
+                                    onboardingState.signatureUploaded,
                                 enabled: _isFieldEditable('signature'),
                                 onTap: _openSignaturePad,
                               ),
@@ -727,8 +804,8 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
             ),
             UserOnboardingBottomButton(
               canProceed: _canProceedCurrentStep,
-              isUploading: _isUploading,
-              uploadProgressText: _uploadProgressText,
+              isUploading: onboardingState.isUploading,
+              uploadProgressText: onboardingState.uploadProgressText,
               onNext: _onBottomButtonPressed,
             ),
           ],

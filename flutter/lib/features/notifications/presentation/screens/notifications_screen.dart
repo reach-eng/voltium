@@ -155,6 +155,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                   .read(engagementProvider)
                                   .initEngagementData(),
                               child: ListView.builder(
+                                addRepaintBoundaries: true,
+                                addAutomaticKeepAlives: false,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
                                   vertical: 12,
@@ -231,10 +233,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                             ),
                                           );
                                         },
-                                        child: _buildNotificationCard(
-                                          context,
-                                          filtered[index],
-                                          ref.read(engagementProvider),
+                                        child: RepaintBoundary(
+                                          child: _buildNotificationCard(
+                                            context,
+                                            filtered[index],
+                                            ref.read(engagementProvider),
+                                          ),
                                         ),
                                       ),
                                     ),

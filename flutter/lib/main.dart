@@ -71,14 +71,20 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
   }
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize date formatting for DD-MM-YYYY (Indian locale).
-  // Required by DateUtils.formatDateDDMMYYYY().
-  await initializeDateFormatting('en_IN', null);
-  Intl.defaultLocale = 'en_IN';
+  // Cap image memory cache at 50 MB and 100 items to prevent OOM on lower-end devices
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 100;
 
-  // Initialize Error Monitoring
-  await MonitoringService.initialize();
-  await PostHogService.initialize();
+  // Pre-bundle Google Fonts from asset package to eliminate startup network requests and layout shift
+  GoogleFonts.config.allowRuntimeFetching = false;
+
+  // Parallelize independent startup initializations to cut app cold-boot latency
+  await Future.wait([
+    initializeDateFormatting('en_IN', null),
+    MonitoringService.initialize(),
+    PostHogService.initialize(),
+  ]);
+  Intl.defaultLocale = 'en_IN';
   // ── Global Error Handler ───────────────────────────────────────────────────
   FlutterError.onError = (details) {
     appDebug('[FlutterError] ${details.exception}');
@@ -316,8 +322,50 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prewarmAssets();
+      _deferSecondaryInitializations();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+  }
+
+  void _prewarmAssets() {
+    try {
+      precacheImage(const AssetImage('assets/images/logo.png'), context)
+          .catchError((_) {});
+      precacheImage(const AssetImage('assets/images/scooter_hero.png'), context)
+          .catchError((_) {});
+    } catch (_) {}
+  }
+
+  void _deferSecondaryInitializations() {
+    Future.microtask(() {
+      if (mounted) {
+        try {
+          final support = context.read<SupportProvider>();
+          support.initSupportData();
+        } catch (_) {}
+      }
+    });
+  }
 
   /// Each screen is wrapped in ErrorBoundary so a crash in one tab
   /// doesn't take down the entire shell.

@@ -31,8 +31,8 @@ class EmergencySOSScreen extends ConsumerWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: Text('Emergency SOS',
-            style: AppTypography.titleMedium
-                .copyWith(fontWeight: FontWeight.bold, color: AppColors.slate800)),
+            style: AppTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.bold, color: AppColors.slate800)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),

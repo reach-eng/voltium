@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../services/secure_storage_service.dart';
 import '../../services/offline_storage_service.dart';
+import '../../services/cache_service.dart';
 import '../../services/monitoring_service.dart';
 import '../platform/platform_info.dart';
 import 'pinned_http_client.dart';
@@ -87,12 +88,14 @@ class ApiClient {
     if (PlatformInfo.isWeb) {
       return {
         'Content-Type': 'application/json',
+        'Connection': 'keep-alive',
         'x-correlation-id': _newCorrelationId(),
       };
     }
     final token = await _storage.getSessionToken();
     return {
       'Content-Type': 'application/json',
+      'Connection': 'keep-alive',
       if (token != null) 'Authorization': 'Bearer $token',
       'x-correlation-id': _newCorrelationId(),
     };
@@ -194,6 +197,28 @@ class ApiClient {
     }
   }
 
+  /// Top-level-equivalent static function required by [compute] — must not
+  /// be a closure or instance method.
+  static dynamic _decodeJsonOnIsolate(String body) {
+    if (body.isEmpty) return null;
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Decodes [body] on a background isolate when the payload exceeds 50 KB,
+  /// preventing frame drops on large list responses (transactions, riders).
+  /// Small payloads are decoded inline to avoid isolate-spawn overhead.
+  static Future<dynamic> _safeJsonDecodeAsync(String body) async {
+    if (body.isEmpty) return null;
+    if (body.length > 51200) {
+      return compute(_decodeJsonOnIsolate, body);
+    }
+    return _safeJsonDecode(body);
+  }
+
   /// Executes a request with full retry reliability:
   /// - Single-flight token refresh on 401
   /// - Transient retry: timeouts / 5xx / network errors get exponential
@@ -285,6 +310,31 @@ class ApiClient {
       await _maybeQueueOffline('GET', path, null);
       rethrow;
     }
+  }
+
+  /// GET request with Stale-While-Revalidate (SWR) (Phase 2)
+  /// Returns cached local response instantly if available, while fetching fresh data in background.
+  Future<Map<String, dynamic>> getWithSWR(
+    String path, {
+    Map<String, String>? queryParams,
+    Future<void>? cancelSignal,
+  }) async {
+    final cacheService = CacheService();
+    final cached = cacheService.getCachedApiResponse(path);
+
+    if (cached != null) {
+      unawaited(
+        get(path, queryParams: queryParams, cancelSignal: cancelSignal)
+            .then((fresh) => cacheService.cacheApiResponse(path, fresh))
+            .catchError((_) {}),
+      );
+      return cached;
+    }
+
+    final fresh =
+        await get(path, queryParams: queryParams, cancelSignal: cancelSignal);
+    await cacheService.cacheApiResponse(path, fresh);
+    return fresh;
   }
 
   /// POST request
@@ -445,9 +495,11 @@ class ApiClient {
     });
   }
 
-  /// Handle API response, standardize errors
-  Map<String, dynamic> _handleResponse(http.Response response) {
-    final decoded = _safeJsonDecode(response.body);
+  /// Handle API response, standardize errors.
+  /// Large payloads (>50 KB) are JSON-decoded on a background isolate via
+  /// [_safeJsonDecodeAsync] to keep the UI thread free during heavy parsing.
+  Future<Map<String, dynamic>> _handleResponse(http.Response response) async {
+    final decoded = await _safeJsonDecodeAsync(response.body);
     final body = decoded is Map<String, dynamic>
         ? decoded
         : (decoded == null ? <String, dynamic>{} : {'data': decoded});

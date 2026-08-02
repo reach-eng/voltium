@@ -361,6 +361,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
       source: source,
       imageQuality: 85,
       maxWidth: 1600,
+      maxHeight: 1600,
+      requestFullMetadata: false,
     );
     if (picked == null || !mounted) return;
 

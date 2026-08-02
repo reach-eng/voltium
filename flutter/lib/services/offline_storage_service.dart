@@ -24,6 +24,21 @@ class OfflineStorageService {
       onUpgrade: _onUpgrade,
     );
     _initialized = true;
+    await purgeExpired();
+  }
+
+  Future<void> purgeExpired() async {
+    if (_db == null) return;
+    try {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await _db!.delete(
+        'cached_data',
+        where: 'expires_at IS NOT NULL AND expires_at < ?',
+        whereArgs: [now],
+      );
+    } catch (e) {
+      MonitoringService.logError(e, null, reason: 'purgeExpired');
+    }
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -69,11 +84,14 @@ class OfflineStorageService {
     ''');
   }
 
+  final Map<String, Map<String, dynamic>> _memCache = {};
+
   Future<void> cacheData(
     String key,
     Map<String, dynamic> data, {
     Duration? ttl,
   }) async {
+    _memCache[key] = data;
     if (_db == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     final expiresAt = ttl != null ? now + ttl.inMilliseconds : null;
@@ -90,6 +108,9 @@ class OfflineStorageService {
   }
 
   Future<Map<String, dynamic>?> getCachedData(String key) async {
+    if (_memCache.containsKey(key)) {
+      return _memCache[key];
+    }
     if (_db == null) return null;
     final now = DateTime.now().millisecondsSinceEpoch;
     final results = await _db!.query(
@@ -98,7 +119,10 @@ class OfflineStorageService {
       whereArgs: [key, now],
     );
     if (results.isEmpty) return null;
-    return jsonDecode(results.first['value'] as String) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(results.first['value'] as String) as Map<String, dynamic>;
+    _memCache[key] = decoded;
+    return decoded;
   }
 
   Future<void> cacheTransactions(

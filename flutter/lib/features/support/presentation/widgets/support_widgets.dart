@@ -38,9 +38,10 @@ Future<void> pickSupportPhoto(
     if (source == null) return;
     final XFile? photo = await picker.pickImage(
       source: source,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 80,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+      requestFullMetadata: false,
     );
     if (photo != null) {
       onPhotoPicked(File(photo.path));

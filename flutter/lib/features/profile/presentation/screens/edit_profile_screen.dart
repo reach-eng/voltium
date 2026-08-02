@@ -54,7 +54,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final source = await ImageSourceBottomSheet.show(context: context);
       if (source == null) return;
       final picker = ImagePicker();
-      final image = await picker.pickImage(source: source);
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+        requestFullMetadata: false,
+      );
       if (image != null && mounted) {
         setState(() => _profileImage = image);
       }

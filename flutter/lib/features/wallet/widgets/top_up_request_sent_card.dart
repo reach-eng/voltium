@@ -132,6 +132,8 @@ class TopUpRequestSentCard extends StatelessWidget {
                         imgUrl,
                         width: 50,
                         height: 50,
+                        cacheWidth: 150,
+                        cacheHeight: 150,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.image,

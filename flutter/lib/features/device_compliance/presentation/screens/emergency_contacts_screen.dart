@@ -38,6 +38,9 @@ class EmergencyContactsScreen extends ConsumerWidget {
       body: service.contacts.isEmpty
           ? _buildEmptyState(context)
           : ListView.builder(
+              addRepaintBoundaries: true,
+              addAutomaticKeepAlives: true,
+              itemExtent: 88.0,
               padding: Spacing.paddingMd,
               itemCount: service.contacts.length,
               itemBuilder: (context, index) {

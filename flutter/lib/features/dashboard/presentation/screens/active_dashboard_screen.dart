@@ -234,85 +234,98 @@ class _DashboardContentWidget extends ConsumerWidget {
                   if (rider.returnPending || rider.intent == 'RETURN')
                     FadeSlideEntrance(
                       index: 0,
-                      child: ScooterSubmissionBanner(
-                        submissionDate: rider.submissionDate?.toIso8601String(),
-                        pickupHub: rider.pickupHub,
+                      child: RepaintBoundary(
+                        child: ScooterSubmissionBanner(
+                          submissionDate:
+                              rider.submissionDate?.toIso8601String(),
+                          pickupHub: rider.pickupHub,
+                        ),
                       ),
                     ),
                   FadeSlideEntrance(
                     index: 1,
-                    child: DashboardProfileCard(
-                      rider: rider,
-                      onTap: () => AppNavigator.push(
-                        context,
-                        const RentalDetailsScreen(),
+                    child: RepaintBoundary(
+                      child: DashboardProfileCard(
+                        rider: rider,
+                        onTap: () => AppNavigator.push(
+                          context,
+                          const RentalDetailsScreen(),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 2,
-                    child: PlanCard(
-                      currentPlan: rider.currentPlan,
-                      planEndDate: rider.planEndDate,
+                    child: RepaintBoundary(
+                      child: PlanCard(
+                        currentPlan: rider.currentPlan,
+                        planEndDate: rider.planEndDate,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 3,
-                    child: CardParallaxTilt(
-                      child: WalletCard(
-                        walletBalance: rider.walletBalance,
-                        requiredPayment: rider.activeRentalPlanPrice > 0
-                            ? rider.activeRentalPlanPrice
-                            : walletMinTopup,
-                        paymentStreak: rider.paymentStreak,
-                        currentPlan: rider.currentPlan,
-                        planEndDate: rider.planEndDate,
-                        onTopUp: () {
-                          AppNavigator.push(context, const TopUpFlow());
-                        },
+                    child: RepaintBoundary(
+                      child: CardParallaxTilt(
+                        child: WalletCard(
+                          walletBalance: rider.walletBalance,
+                          requiredPayment: rider.activeRentalPlanPrice > 0
+                              ? rider.activeRentalPlanPrice
+                              : walletMinTopup,
+                          paymentStreak: rider.paymentStreak,
+                          currentPlan: rider.currentPlan,
+                          planEndDate: rider.planEndDate,
+                          onTopUp: () {
+                            AppNavigator.push(context, const TopUpFlow());
+                          },
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 4,
-                    child: ReferralCard(
-                      referralCode: rider.referralCode ?? '',
+                    child: RepaintBoundary(
+                      child: ReferralCard(
+                        referralCode: rider.referralCode ?? '',
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   FadeSlideEntrance(
                     index: 5,
-                    child: TeamLeaderCard(
-                      teamLeaderName: rider.teamLeader,
-                      onViewDetails: () => showTLDetailsSheet(context, rider),
-                      onCall: () async {
-                        final phone = (rider.emergencyContact == null ||
-                                rider.emergencyContact!.isEmpty)
-                            ? '+91 98765 12345'
-                            : rider.emergencyContact!;
-                        final sanitized =
-                            phone.replaceAll(RegExp(r'[^\d+]'), '');
-                        final uri = Uri.parse('tel:$sanitized');
+                    child: RepaintBoundary(
+                      child: TeamLeaderCard(
+                        teamLeaderName: rider.teamLeader,
+                        onViewDetails: () => showTLDetailsSheet(context, rider),
+                        onCall: () async {
+                          final phone = (rider.emergencyContact == null ||
+                                  rider.emergencyContact!.isEmpty)
+                              ? '+91 98765 12345'
+                              : rider.emergencyContact!;
+                          final sanitized =
+                              phone.replaceAll(RegExp(r'[^\d+]'), '');
+                          final uri = Uri.parse('tel:$sanitized');
 
-                        try {
-                          if (!await launchUrl(uri)) {
-                            throw Exception('Could not launch dialer');
+                          try {
+                            if (!await launchUrl(uri)) {
+                              throw Exception('Could not launch dialer');
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Could not open the phone dialer. Please try again.'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
                           }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Could not open the phone dialer. Please try again.'),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
-                          }
-                        }
-                      },
+                        },
+                      ),
                     ),
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 80),

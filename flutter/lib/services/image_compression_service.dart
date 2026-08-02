@@ -1,7 +1,5 @@
 import 'package:universal_io/io.dart';
-import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image/image.dart' as img;
 import '../utils/app_logger.dart';
 
 class ImageCompressionService {
@@ -24,66 +22,15 @@ class ImageCompressionService {
         maxWidth: maxWidth.toDouble(),
         maxHeight: maxHeight.toDouble(),
         imageQuality: quality,
+        requestFullMetadata: false,
       );
 
       if (picked == null) return null;
-
-      final file = File(picked.path);
-      final compressed = await _compressImage(file, quality: quality);
-
-      return compressed;
+      return File(picked.path);
     } catch (e) {
       appDebug('Error picking image: $e');
       return null;
     }
-  }
-
-  Future<File> _compressImage(File file, {int quality = 80}) async {
-    final bytes = await file.readAsBytes();
-    final originalSize = bytes.length;
-
-    if (originalSize <= 500 * 1024) {
-      return file;
-    }
-
-    try {
-      final compressedBytes = await compute(_compressImageIsolate, {
-        'bytes': bytes,
-        'quality': quality,
-      });
-
-      if (compressedBytes == null) return file;
-
-      final compressedFile = await _writeToTempFile(compressedBytes, file.path);
-      return compressedFile;
-    } catch (e) {
-      appDebug('Error compressing image: $e');
-      return file;
-    }
-  }
-
-  static Uint8List? _compressImageIsolate(Map<String, dynamic> params) {
-    final Uint8List bytes = params['bytes'];
-    final int quality = params['quality'];
-
-    final image = img.decodeImage(bytes);
-    if (image == null) return null;
-
-    img.Image resized = image;
-    if (image.width > 1024 || image.height > 1024) {
-      resized = img.copyResize(image, width: 1024);
-    }
-
-    return Uint8List.fromList(img.encodeJpg(resized, quality: quality));
-  }
-
-  Future<File> _writeToTempFile(Uint8List bytes, String originalPath) async {
-    final tempDir = Directory.systemTemp;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final newPath = '${tempDir.path}/$fileName';
-    final newFile = File(newPath);
-    await newFile.writeAsBytes(bytes);
-    return newFile;
   }
 
   Future<List<File>> pickMultipleAndCompress({
@@ -97,18 +44,10 @@ class ImageCompressionService {
         maxWidth: maxWidth.toDouble(),
         maxHeight: maxHeight.toDouble(),
         imageQuality: quality,
+        requestFullMetadata: false,
       );
 
-      final limited = picked.take(maxImages).toList();
-      final compressed = <File>[];
-
-      for (final pick in limited) {
-        final file = File(pick.path);
-        final comp = await _compressImage(file, quality: quality);
-        compressed.add(comp);
-      }
-
-      return compressed;
+      return picked.take(maxImages).map((p) => File(p.path)).toList();
     } catch (e) {
       appDebug('Error picking multiple images: $e');
       return [];

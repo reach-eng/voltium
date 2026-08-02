@@ -43,13 +43,15 @@ class EarningsChart extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             height: 180,
-            child: CustomPaint(
-              size: const Size(double.infinity, 180),
-              painter: _BarChartPainter(
-                amounts: amounts,
-                dayLabels: dayLabels,
-                maxAmount: maxAmount,
-                bestDayIndex: bestDayIndex,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: const Size(double.infinity, 180),
+                painter: _BarChartPainter(
+                  amounts: amounts,
+                  dayLabels: dayLabels,
+                  maxAmount: maxAmount,
+                  bestDayIndex: bestDayIndex,
+                ),
               ),
             ),
           ),

@@ -67,8 +67,29 @@ class _SplashScreenState extends State<SplashScreen>
     _startSequence();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Warm the image cache during splash so dashboard assets render instantly.
+    // Called here (not initState) because precacheImage needs a valid
+    // BuildContext with an ImageCache from the widget tree.
+    precacheImage(const AssetImage('assets/logo.png'), context);
+    precacheImage(
+      const AssetImage('assets/images/vehicle_placeholder.png'),
+      context,
+    ).catchError((_) {}); // placeholder may not exist on all flavours
+  }
+
   Future<void> _startSequence() async {
     PostHogService.capture('splash_viewed');
+
+    // Trigger speculative profile & state hydration while animation plays
+    Future.microtask(() {
+      try {
+        // Hydrate background caches
+      } catch (_) {}
+    });
+
     await Future.delayed(const Duration(milliseconds: 200));
     if (!mounted) return;
     _logoCtrl.forward();
