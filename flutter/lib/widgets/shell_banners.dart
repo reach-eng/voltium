@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../utils/lifecycle_rank.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/core/network/connectivity_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 

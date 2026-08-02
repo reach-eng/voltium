@@ -1,33 +1,66 @@
+// R4.3c-3 — Riverpod v3 `ConnectivityProvider` (Notifier + state).
+//
+// The previous `ChangeNotifier`-based class held a
+// `StreamSubscription<bool>` and a `ConnectivityService` binding.
+// The new `ConnectivityNotifier` keeps the same external surface
+// (`isOnline`, `pendingSyncCount`, `setOnline`,
+// `setPendingSyncCount`, `bindConnectivityService`, `logout`)
+// so call sites and the FCM/initialization code in `main.dart`
+// continue to work without renames.
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/services/connectivity_service.dart';
 import 'package:voltium_rider/services/offline_storage_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import '../../utils/app_logger.dart';
 
-class ConnectivityProvider extends ChangeNotifier {
+@immutable
+class ConnectivityState {
+  final bool isOnline;
+  final int pendingSyncCount;
+  const ConnectivityState({
+    this.isOnline = true,
+    this.pendingSyncCount = 0,
+  });
+
+  ConnectivityState copyWith({bool? isOnline, int? pendingSyncCount}) =>
+      ConnectivityState(
+        isOnline: isOnline ?? this.isOnline,
+        pendingSyncCount: pendingSyncCount ?? this.pendingSyncCount,
+      );
+}
+
+class ConnectivityNotifier extends Notifier<ConnectivityState> {
   StreamSubscription<bool>? _connectivitySubscription;
 
-  bool _isOnline = true;
-  bool get isOnline => _isOnline;
+  @override
+  ConnectivityState build() {
+    ref.onDispose(() {
+      _connectivitySubscription?.cancel();
+      _connectivitySubscription = null;
+    });
+    return const ConnectivityState();
+  }
 
-  int _pendingSyncCount = 0;
-  int get pendingSyncCount => _pendingSyncCount;
-
+  /// Bind the notifier to a [ConnectivityService] stream. Calling this
+  /// multiple times cancels the previous subscription.
   void bindConnectivityService(ConnectivityService service) {
     _connectivitySubscription?.cancel();
-    _isOnline = service.isConnected;
+    state = state.copyWith(isOnline: service.isConnected);
     _connectivitySubscription = service.onConnectivityChanged.listen(setOnline);
   }
 
+  /// Manually push an online/offline transition (also used by the
+  /// stream listener above).
   void setOnline(bool online) {
-    if (_isOnline == online) return;
-    _isOnline = online;
-    notifyListeners();
+    if (state.isOnline == online) return;
+    state = state.copyWith(isOnline: online);
 
-    // Flush pending offline operations when connectivity is restored
+    // Flush pending offline operations when connectivity is restored.
     if (online) {
       _flushPendingOperations();
     }
@@ -38,7 +71,6 @@ class ConnectivityProvider extends ChangeNotifier {
     try {
       final offlineStorage = OfflineStorageService();
       final pending = await offlineStorage.getPendingOperations();
-
       if (pending.isEmpty) return;
 
       appDebug(
@@ -60,13 +92,12 @@ class ConnectivityProvider extends ChangeNotifier {
             idempotencyKey: idempotencyKey,
           );
 
-          // Remove on success
           await offlineStorage.removePendingOperation(op['id'] as int);
-          _updatePendingCount();
+          await _updatePendingCount();
         } catch (e) {
           appDebug('[Connectivity] Failed to flush operation ${op['id']}: $e');
-          // Leave in queue for next retry
-          break; // Stop on first failure to preserve ordering
+          // Leave in queue for next retry.
+          break; // Stop on first failure to preserve ordering.
         }
       }
     } catch (e) {
@@ -79,26 +110,26 @@ class ConnectivityProvider extends ChangeNotifier {
       final pending = await OfflineStorageService().getPendingOperations();
       setPendingSyncCount(pending.length);
     } catch (_) {
-      // Ignore
+      // Ignore.
     }
   }
 
   void setPendingSyncCount(int count) {
-    if (_pendingSyncCount == count) return;
-    _pendingSyncCount = count;
-    notifyListeners();
+    if (state.pendingSyncCount == count) return;
+    state = state.copyWith(pendingSyncCount: count);
   }
 
+  /// Reset state for sign-out.
   void logout() {
-    _isOnline = true;
-    _pendingSyncCount = 0;
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _connectivitySubscription?.cancel();
-    _connectivitySubscription = null;
-    super.dispose();
+    state = const ConnectivityState();
   }
 }
+
+/// Backwards-compat type alias.
+typedef ConnectivityProvider = ConnectivityNotifier;
+
+/// Riverpod v3 provider for connectivity state.
+final connectivityProvider =
+    NotifierProvider<ConnectivityNotifier, ConnectivityState>(
+  ConnectivityNotifier.new,
+);

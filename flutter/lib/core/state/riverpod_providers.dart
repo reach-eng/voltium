@@ -79,12 +79,14 @@ final devicePolicyProvider =
       'DevicePolicyProvider must be overridden in ProviderScope');
 });
 
-/// Riverpod provider for [ConnectivityProvider].
-final connectivityProvider =
-    ChangeNotifierProvider<ConnectivityProvider>((ref) {
-  throw UnimplementedError(
-      'ConnectivityProvider must be overridden in ProviderScope');
-});
+/// Riverpod provider for [ConnectivityProvider] (R4.3c-3).
+///
+/// Now backed by [ConnectivityNotifier] (Riverpod v3) — see
+/// `lib/core/network/connectivity_provider.dart` for the
+/// canonical definition. Re-exported under the legacy
+/// `connectivityProvider` name so call sites importing
+/// `riverpod_providers.dart` keep working.
+final connectivityProviderRef = connectivityProvider;
 
 /// Riverpod provider for [NotificationProvider] (R4.3c-2).
 ///

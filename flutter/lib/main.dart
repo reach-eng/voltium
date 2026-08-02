@@ -197,9 +197,14 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       }
       AnalyticsService().track(AnalyticsEvent.appOpened);
 
-      // ── Connect connectivity stream to AppProvider ──────────────────────
-      appInstance.connectivityProvider
-          .bindConnectivityService(ConnectivityService());
+      // ── Connect connectivity stream to the Riverpod notifier ─────────
+      // R4.3c-3: ConnectivityProvider is no longer a ChangeNotifier; we
+      // instantiate the Notifier directly and bind it to the
+      // ConnectivityService stream.
+      final connectivityNotifierInstance = ConnectivityNotifier();
+      connectivityNotifierInstance.bindConnectivityService(
+        ConnectivityService(),
+      );
 
       // R4.3c-2: EmergencyContactsService is now a Riverpod Notifier.
       // We instantiate it here so we can override the default NotifierProvider
@@ -222,8 +227,8 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
                 .overrideWith((ref) => appInstance.engagementProvider),
             devicePolicyProvider
                 .overrideWith((ref) => appInstance.devicePolicyProvider),
-            connectivityProvider
-                .overrideWith((ref) => appInstance.connectivityProvider),
+            connectivityProviderRef
+                .overrideWith(() => connectivityNotifierInstance),
             localeProviderRef.overrideWith(() => localeProviderInstance),
             themeProviderRef.overrideWith(() => themeProviderInstance),
             notificationProvider.overrideWith(() => NotificationNotifier()),
@@ -252,9 +257,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
               ChangeNotifierProvider<DevicePolicyProvider>.value(
                 value: appInstance.devicePolicyProvider,
               ),
-              ChangeNotifierProvider<ConnectivityProvider>.value(
-                value: appInstance.connectivityProvider,
-              ),
+              // R4.3c-3: ConnectivityProvider is now a Riverpod v3 Notifier,
+              // not a ChangeNotifier. It is registered via the
+              // ProviderScope.overrides above and consumed via
+              // ref.watch / ref.read with `connectivityProvider`.
               // R4.3c-2: NotificationProvider is now a Riverpod v3 Notifier,
               // not a ChangeNotifier. It is registered via the
               // ProviderScope.overrides above and consumed via
