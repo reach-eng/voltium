@@ -15,6 +15,48 @@
 
 > **Note (2026-07-30):** This doc is the consolidated backlog across all 8 sources above. The original 5 tickets (Phase 3-6 follow-ups) are preserved as Tickets #1-#5. New tickets from the 5 audit plans are added as #6-#53. Tickets #61-#63 are the cross-cutting backend tickets. Tickets #64-#65 are NEW from Pass 3 verification. The audit-plan "What's NOT in this plan" sections that have NOT been turned into tickets are listed in the "Trivial/cosmetic items" section at the end.
 
+> **Update (2026-08-02):** **R4 (Riverpod v3 Migration)** is fully completed. All 10 legacy `ChangeNotifier` state providers (`appStateProvider`, `ThemeProvider`, `LocaleProvider`, `NotificationProvider`, `EmergencyContactsService`, `ConnectivityProvider`, `WalletProvider`, `SupportProvider`, `EngagementProvider`, `DevicePolicyProvider`, and `RiderProvider`) have been successfully migrated to Riverpod v3 `NotifierProvider` / `Notifier`. The `AppProvider` god-object `ChangeNotifier` shim has been retired. 5 comprehensive domain audits + performance recommendation docs were created.
+
+### 🚀 Session Accomplishments (2026-08-01 – 2026-08-02: R4 Riverpod v3 Migration & Full-Stack Audit)
+
+#### Shipped Commits:
+1. `86ece89` - `refactor(flutter): migrate appStateProvider to Riverpod v3 Notifier (R4.3a)`
+2. `0463f69` - `test(flutter): add appStateProvider unit tests`
+3. `0493f47` - `refactor(flutter): convert NotificationProvider + EmergencyContactsService to Riverpod Notifier (R4.3c-2)`
+4. `44c782d` - `refactor(flutter): convert ConnectivityProvider to Riverpod Notifier (R4.3c-3)`
+5. `3b47b3d` - `refactor(flutter): convert Wallet + Support + Engagement to Riverpod Notifier (R4.3c-4)`
+6. `b835c25` - `refactor(flutter): convert DevicePolicyProvider to Riverpod Notifier (R4.3c-5)`
+7. `550e8a4` - `refactor(flutter): convert ThemeProvider + LocaleProvider to Riverpod Notifier (R4.3c-1)`
+8. `c6dfbd3` - `refactor(flutter): convert AppStateViewProvider to Riverpod Notifier (R4.3b)`
+9. `fbbcfc3` - `fix(flutter): resolve lint warnings in RiderNotifier`
+10. `fdcb70f` - `feat(flutter): implement device data sync in RiderNotifier`
+11. `cd7ee07` - `fix(flutter): restore syncDeviceData export in RiderNotifier`
+12. `cbcdbc3` - `test(flutter): add RiderNotifier lifecycle & state unit tests`
+13. `e8cfa70` - `fix(flutter): resolve null-safety and list type issues in RiderNotifier`
+14. `a18ee87` - `test(flutter): verify 16/16 tests pass for RiderNotifier`
+15. `5d02805` - `feat(flutter): migrate RiderProvider to Riverpod v3 NotifierProvider (PR-52 / R4.3c-6)`
+16. `3a3b8db` - `refactor(flutter): retire AppProvider ChangeNotifier shim (PR-53)`
+17. `456ff86` - `audit(riders-kyc): create Riders & KYC comprehensive audit report`
+18. `ded5bfb` - `audit(rentals-vehicles-hubs): create Rentals, Vehicles & Hubs audit report`
+19. `2a3b04c` - `audit(finance-support): create Financial Transactions, Support & Incident Management audit report`
+20. `eb07b57` - `audit(teamleaders-fleetmap): create Team Leaders, Operations & Fleet Map audit report`
+21. `c5b1e62` - `audit(rider-scoring): create Rider Scoring, Messaging & Offers audit report`
+22. `b36bb10` - `audit(rewards-analytics-faqs): create Rewards, Analytics, FAQs & Admin Access audit report`
+
+#### Created Domain Audit & Recommendation Artifacts:
+- `docs/AUDIT_FINDINGS_RIDERS_KYC.md` — Riders & KYC domain audit
+- `docs/AUDIT_FINDINGS_RENTALS_VEHICLES_HUBS.md` — Rentals, Vehicles & Hubs audit
+- `docs/AUDIT_FINDINGS_FINANCE_SUPPORT.md` — Financial Transactions, Support & Incidents audit
+- `docs/AUDIT_FINDINGS_TEAMLEADERS_FLEETMAP.md` — Team Leaders, Operations & Fleet Map audit
+- `docs/AUDIT_FINDINGS_RIDER_SCORING_MESSAGING_OFFERS.md` — Rider Scoring, Messaging & Offers audit
+- `docs/AUDIT_FINDINGS_REWARDS_ANALYTICS_FAQS.md` — Rewards, Analytics, FAQs & Admin Access audit
+- `docs/PERF_RECOMMENDATIONS_2026-08-01.md` — Flutter & Web performance audit recommendations
+
+#### Follow-up Tasks (Post-R4 Riverpod Migration):
+- **R4.4**: Refactor auth flow return type to return explicit `AppState` enum values instead of `void`/`bool` for unambiguous state transitions.
+- **R4.5**: Scope polling lifecycle timers strictly to active screen lifecycles (`ref.onDispose` / `ref.listen`).
+- **R4.6**: Add formal state-machine transition matrix tests for edge-case auth and lifecycle navigation flows.
+
 These are the items identified during the Phase 0–7 remediation, the 6 audit reviews, and the 2026-07-30 Pass 3 verification that didn't make the release runway. Each ticket below is copy-paste ready for `gh issue create`.
 
 ---
