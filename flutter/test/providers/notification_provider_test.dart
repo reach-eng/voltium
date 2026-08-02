@@ -1,22 +1,33 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:voltium_rider/models/notification_model.dart';
 
 void main() {
-  late NotificationProvider provider;
+  // R4.3c-2: NotificationProvider is now a Riverpod v3 Notifier.
+  // Tests use a ProviderContainer to drive the notifier and read
+  // its state.
+  late ProviderContainer container;
+  late NotificationNotifier provider;
+
+  NotificationState readState() => container.read(notificationProvider);
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    provider = NotificationProvider();
-    // Wait for the constructor's async _loadNotifications to finish.
-    // Since it's microtask scheduled, we can just pump the event loop.
-    await Future.delayed(Duration.zero);
+    container = ProviderContainer();
+    provider = container.read(notificationProvider.notifier);
+    // Wait for the microtask-scheduled hydration to finish.
+    await Future<void>.delayed(Duration.zero);
+  });
+
+  tearDown(() {
+    container.dispose();
   });
 
   test('Starts with empty list', () {
-    expect(provider.notifications, isEmpty);
-    expect(provider.unreadCount, 0);
+    expect(readState().notifications, isEmpty);
+    expect(readState().unreadCount, 0);
   });
 
   test('addNotification adds to top and updates unread count', () async {
@@ -30,9 +41,9 @@ void main() {
 
     await provider.addNotification(notification);
 
-    expect(provider.notifications.length, 1);
-    expect(provider.notifications.first.id, '1');
-    expect(provider.unreadCount, 1);
+    expect(readState().notifications.length, 1);
+    expect(readState().notifications.first.id, '1');
+    expect(readState().unreadCount, 1);
   });
 
   test('markAsRead marks correct notification', () async {
@@ -52,15 +63,19 @@ void main() {
     );
 
     await provider.addNotifications([notification1, notification2]);
-    expect(provider.unreadCount, 2);
+    expect(readState().unreadCount, 2);
 
     await provider.markAsRead('1');
 
-    expect(provider.unreadCount, 1);
+    expect(readState().unreadCount, 1);
     expect(
-        provider.notifications.firstWhere((n) => n.id == '1').isRead, isTrue);
+      readState().notifications.firstWhere((n) => n.id == '1').isRead,
+      isTrue,
+    );
     expect(
-        provider.notifications.firstWhere((n) => n.id == '2').isRead, isFalse);
+      readState().notifications.firstWhere((n) => n.id == '2').isRead,
+      isFalse,
+    );
   });
 
   test('markAllAsRead marks all notifications', () async {
@@ -78,10 +93,10 @@ void main() {
           type: AppNotificationType.info,
           createdAt: DateTime.now()),
     ]);
-    expect(provider.unreadCount, 2);
+    expect(readState().unreadCount, 2);
 
     await provider.markAllAsRead();
-    expect(provider.unreadCount, 0);
+    expect(readState().unreadCount, 0);
   });
 
   test('deleteNotification removes it completely', () async {
@@ -93,10 +108,10 @@ void main() {
           type: AppNotificationType.info,
           createdAt: DateTime.now()),
     );
-    expect(provider.notifications.length, 1);
+    expect(readState().notifications.length, 1);
 
     await provider.deleteNotification('1');
-    expect(provider.notifications, isEmpty);
+    expect(readState().notifications, isEmpty);
   });
 
   test('clearAll removes all notifications', () async {
@@ -114,10 +129,10 @@ void main() {
           type: AppNotificationType.info,
           createdAt: DateTime.now()),
     ]);
-    expect(provider.notifications.length, 2);
+    expect(readState().notifications.length, 2);
 
     await provider.clearAll();
-    expect(provider.notifications, isEmpty);
+    expect(readState().notifications, isEmpty);
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {

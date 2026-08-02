@@ -235,8 +235,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguageDialog(
-      BuildContext context, LocaleState localeState) {
+  void _showLanguageDialog(BuildContext context, LocaleState localeState) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,

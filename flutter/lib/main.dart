@@ -201,7 +201,12 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       appInstance.connectivityProvider
           .bindConnectivityService(ConnectivityService());
 
-      final emergencyContactsServiceInstance = EmergencyContactsService();
+      // R4.3c-2: EmergencyContactsService is now a Riverpod Notifier.
+      // We instantiate it here so we can override the default NotifierProvider
+      // factory in ProviderScope (allowing it to be shared with the same
+      // `EmergencyContactsService` instance used by the legacy
+      // ChangeNotifierProvider entries that have not yet been migrated).
+      final emergencyContactsServiceInstance = EmergencyContactsNotifier();
 
       runApp(
         // ProviderScope is the root of Riverpod's dependency injection.
@@ -221,9 +226,9 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
                 .overrideWith((ref) => appInstance.connectivityProvider),
             localeProviderRef.overrideWith(() => localeProviderInstance),
             themeProviderRef.overrideWith(() => themeProviderInstance),
-            notificationProvider.overrideWith((ref) => NotificationProvider()),
+            notificationProvider.overrideWith(() => NotificationNotifier()),
             emergencyContactsService
-                .overrideWith((ref) => emergencyContactsServiceInstance),
+                .overrideWith(() => emergencyContactsServiceInstance),
           ],
           child: MultiProvider(
             providers: [
@@ -250,7 +255,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
               ChangeNotifierProvider<ConnectivityProvider>.value(
                 value: appInstance.connectivityProvider,
               ),
-              ChangeNotifierProvider(create: (_) => NotificationProvider()),
+              // R4.3c-2: NotificationProvider is now a Riverpod v3 Notifier,
+              // not a ChangeNotifier. It is registered via the
+              // ProviderScope.overrides above and consumed via
+              // ref.watch / ref.read with `notificationProvider`.
             ],
             child: const VoltiumApp(),
           ),

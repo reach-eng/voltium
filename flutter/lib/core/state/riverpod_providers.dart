@@ -86,12 +86,15 @@ final connectivityProvider =
       'ConnectivityProvider must be overridden in ProviderScope');
 });
 
-/// Riverpod provider for [NotificationProvider].
-final notificationProvider =
-    ChangeNotifierProvider<NotificationProvider>((ref) {
-  throw UnimplementedError(
-      'NotificationProvider must be overridden in ProviderScope');
-});
+/// Riverpod provider for [NotificationProvider] (R4.3c-2).
+///
+/// Now backed by [NotificationNotifier] (Riverpod v3) — see
+/// `lib/features/notifications/presentation/providers/notification_provider.dart`
+/// for the canonical definition. The local name
+/// `notificationProvider` (defined in that file) is re-exported
+/// here so call sites that import `riverpod_providers.dart` keep
+/// working.
+final notificationProviderRef = notificationProvider;
 
 /// Riverpod provider for [LocaleProvider] (R4.3c-1).
 ///
@@ -109,12 +112,14 @@ final localeProviderRef = localeProvider;
 /// with call sites that haven't migrated yet.
 final themeProviderRef = themeProvider;
 
-/// Riverpod provider for [EmergencyContactsService].
-final emergencyContactsService =
-    ChangeNotifierProvider<EmergencyContactsService>((ref) {
-  throw UnimplementedError(
-      'emergencyContactsService must be overridden in ProviderScope');
-});
+/// Riverpod provider for [EmergencyContactsService] (R4.3c-2).
+///
+/// Now backed by [EmergencyContactsNotifier] (Riverpod v3) — see
+/// `lib/services/emergency_contacts_service.dart` for the
+/// canonical definition. Re-exported under the legacy
+/// `emergencyContactsService` name so call sites importing
+/// `riverpod_providers.dart` keep working.
+final emergencyContactsService = emergencyContactsServiceProvider;
 
 /// Riverpod provider for [AuthRepository].
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

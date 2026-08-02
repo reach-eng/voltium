@@ -48,14 +48,18 @@ class EmergencyContactsScreen extends ConsumerWidget {
                 return _ContactCard(
                   contact: contact,
                   onCall: () => _callContact(contact.phone),
-                  onSetPrimary: () => service.setPrimaryContact(contact.id),
-                  onDelete: () => service.removeContact(contact.id),
+                  onSetPrimary: () => ref
+                      .read(emergencyContactsService.notifier)
+                      .setPrimaryContact(contact.id),
+                  onDelete: () => ref
+                      .read(emergencyContactsService.notifier)
+                      .removeContact(contact.id),
                 );
               },
             ),
       floatingActionButton: service.contacts.length < 5
           ? FloatingActionButton.extended(
-              onPressed: () => _showAddContactDialog(context, service),
+              onPressed: () => _showAddContactDialog(context, ref),
               backgroundColor: AppColors.primary,
               icon: const Icon(Icons.add),
               label: const Text('Add Contact'),
@@ -102,7 +106,7 @@ class EmergencyContactsScreen extends ConsumerWidget {
 
   Future<void> _showAddContactDialog(
     BuildContext context,
-    EmergencyContactsService service,
+    WidgetRef ref,
   ) async {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
@@ -145,14 +149,14 @@ class EmergencyContactsScreen extends ConsumerWidget {
             onPressed: () {
               if (nameController.text.isNotEmpty &&
                   phoneController.text.isNotEmpty) {
-                service.addContact(
-                  EmergencyContact(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: nameController.text,
-                    phone: phoneController.text,
-                    relationship: relationship,
-                  ),
-                );
+                ref.read(emergencyContactsService.notifier).addContact(
+                      EmergencyContact(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        name: nameController.text,
+                        phone: phoneController.text,
+                        relationship: relationship,
+                      ),
+                    );
                 Navigator.pop(ctx);
               }
             },
