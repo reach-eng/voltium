@@ -1,31 +1,62 @@
+// R4.3c-1 — Riverpod v3 `LocaleProvider` (Notifier + immutable state).
+//
+// Replaces the previous `ChangeNotifier`-based class while keeping
+// the same call surface (`locale`, `l10n`, `setLocale`, `setEnglish`,
+// `setHindi`, `isHindi`, `isEnglish`, `supportedLocales`) so existing
+// call sites continue to work without renames.
+
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 
-/// Manages the app locale state.
-///
-/// Persists the chosen language code to [CacheService] so it survives
-/// app restarts.  [LocaleProvider] is consumed by [MaterialApp] to rebuild
-/// the widget tree with the new locale.
-class LocaleProvider extends ChangeNotifier {
-  LocaleProvider() {
-    _locale = _loadSavedLocale();
-  }
+/// Immutable locale state.
+@immutable
+class LocaleState {
+  final Locale locale;
+  const LocaleState({required this.locale});
 
+  /// Localised string helper — convenient access without BuildContext.
+  AppLocalizations get l10n => lookupAppLocalizations(locale);
+
+  /// Whether the current locale is Hindi.
+  bool get isHindi => locale.languageCode == 'hi';
+
+  /// Whether the current locale is English.
+  bool get isEnglish => locale.languageCode == 'en';
+
+  LocaleState copyWith({Locale? locale}) =>
+      LocaleState(locale: locale ?? this.locale);
+}
+
+/// Riverpod v3 Notifier. Initial value is loaded synchronously from
+/// [CacheService] in `build()`.
+class LocaleNotifier extends Notifier<LocaleState> {
   static const List<Locale> supportedLocales = [
     Locale('en'),
     Locale('hi'),
   ];
 
-  late Locale _locale;
+  @override
+  LocaleState build() {
+    return LocaleState(locale: _loadSavedLocale());
+  }
 
-  Locale get locale => _locale;
+  /// Switch the locale and persist the choice.
+  Future<void> setLocale(Locale locale) async {
+    if (state.locale == locale) return;
+    state = state.copyWith(locale: locale);
+    await CacheService().setLocale(locale.languageCode);
+  }
 
-  /// Localised string helper — convenient access without BuildContext.
-  AppLocalizations get l10n => lookupAppLocalizations(_locale);
+  /// Convenience: switch to English.
+  Future<void> setEnglish() => setLocale(const Locale('en'));
+
+  /// Convenience: switch to Hindi.
+  Future<void> setHindi() => setLocale(const Locale('hi'));
 
   /// Load the persisted locale from shared_preferences (synchronous).
   ///
@@ -62,24 +93,14 @@ class LocaleProvider extends ChangeNotifier {
     }
     return null;
   }
-
-  /// Switch the locale and persist the choice.
-  Future<void> setLocale(Locale locale) async {
-    if (_locale == locale) return;
-    _locale = locale;
-    await CacheService().setLocale(locale.languageCode);
-    notifyListeners();
-  }
-
-  /// Convenience: switch to English.
-  Future<void> setEnglish() => setLocale(const Locale('en'));
-
-  /// Convenience: switch to Hindi.
-  Future<void> setHindi() => setLocale(const Locale('hi'));
-
-  /// Whether the current locale is Hindi.
-  bool get isHindi => _locale.languageCode == 'hi';
-
-  /// Whether the current locale is English.
-  bool get isEnglish => _locale.languageCode == 'en';
 }
+
+/// Backwards-compat alias used by call sites that still reference
+/// `LocaleProvider` as a type. The class no longer extends
+/// `ChangeNotifier`; the new entrypoint is `localeProvider` (below).
+typedef LocaleProvider = LocaleNotifier;
+
+/// Riverpod v3 provider for the app locale.
+final localeProvider = NotifierProvider<LocaleNotifier, LocaleState>(
+  LocaleNotifier.new,
+);

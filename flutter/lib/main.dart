@@ -167,13 +167,18 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
       final savedLocale = CacheService().getLocale();
 
       // ── Create providers ────────────────────────────────────────────────
-      final localeProvider = LocaleProvider();
+      // R4.3c-1: ThemeProvider and LocaleProvider are now Riverpod Notifiers.
+      // We instantiate them here so we can apply the persisted locale
+      // choice before the first build, then inject them via
+      // ProviderScope.overrides (replacing the default NotifierProvider
+      // factory).
+      final localeProviderInstance = LocaleNotifier();
       if (savedLocale == 'hi') {
-        localeProvider.setHindi();
+        localeProviderInstance.setHindi();
       }
 
       final appInstance = injectedAppProvider ?? AppProvider();
-      final themeProvider = ThemeProvider();
+      final themeProviderInstance = ThemeNotifier();
 
       if (PlatformInfo.supportsFCM) {
         try {
@@ -214,16 +219,18 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
                 .overrideWith((ref) => appInstance.devicePolicyProvider),
             connectivityProvider
                 .overrideWith((ref) => appInstance.connectivityProvider),
-            localeProviderRef.overrideWith((ref) => localeProvider),
-            themeProviderRef.overrideWith((ref) => themeProvider),
+            localeProviderRef.overrideWith(() => localeProviderInstance),
+            themeProviderRef.overrideWith(() => themeProviderInstance),
             notificationProvider.overrideWith((ref) => NotificationProvider()),
             emergencyContactsService
                 .overrideWith((ref) => emergencyContactsServiceInstance),
           ],
           child: MultiProvider(
             providers: [
-              ChangeNotifierProvider<LocaleProvider>.value(
-                  value: localeProvider),
+              // R4.3c-1: LocaleProvider and ThemeProvider are now Riverpod
+              // Notifiers, not ChangeNotifiers. They are registered via
+              // ProviderScope.overrides above and accessed via ref.watch /
+              // ref.read with the corresponding NotifierProvider.
               ChangeNotifierProvider<AppProvider>.value(value: appInstance),
               ChangeNotifierProvider<RiderProvider>.value(
                 value: appInstance.riderProvider,
@@ -244,7 +251,6 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
                 value: appInstance.connectivityProvider,
               ),
               ChangeNotifierProvider(create: (_) => NotificationProvider()),
-              ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
             ],
             child: const VoltiumApp(),
           ),
@@ -260,14 +266,16 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
   );
 }
 
-class VoltiumApp extends StatelessWidget {
+class VoltiumApp extends ConsumerWidget {
   static bool get isTestMode => AppConstants.isTestMode;
   const VoltiumApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final locale = context.watch<LocaleProvider>().locale;
-    final themeMode = context.watch<ThemeProvider>().themeMode;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // R4.3c-1: Locale + Theme are Riverpod v3 Notifiers. Use ref.watch
+    // (no longer context.watch<LocaleProvider>() / ThemeProvider()).
+    final locale = ref.watch(localeProvider).locale;
+    final themeMode = ref.watch(themeProvider).themeMode;
 
     return MaterialApp(
       title: 'Voltium',

@@ -42,7 +42,7 @@ class ProfileScreen extends ConsumerWidget {
           final rider = innerRef.watch(riderProvider.select((p) => p.rider));
           final dataState =
               innerRef.watch(riderProvider.select((p) => p.dataState));
-          final localeProv = innerRef.watch(localeProviderRef);
+          final localeProv = innerRef.watch(localeProvider);
           final currentLocale = localeProv.locale.languageCode;
           final isLoading = rider == null &&
               (dataState == DataState.initial ||
@@ -236,7 +236,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _showLanguageDialog(
-      BuildContext context, LocaleProvider localeProvider) {
+      BuildContext context, LocaleState localeState) {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
@@ -250,15 +250,22 @@ class ProfileScreen extends ConsumerWidget {
               leading: Radio<String>(
                 key: const Key('englishRadio'),
                 value: 'en',
-                groupValue: localeProvider.locale.languageCode,
+                groupValue: localeState.locale.languageCode,
                 onChanged: (v) {
-                  localeProvider.setEnglish();
+                  // R4.3c-1: read the notifier to call setEnglish. The
+                  // captured `localeState` above is the immutable view;
+                  // the notifier exposes the mutating API.
+                  ProviderScope.containerOf(ctx)
+                      .read(localeProvider.notifier)
+                      .setEnglish();
                   Navigator.pop(ctx);
                 },
                 toggleable: true,
               ),
               onTap: () {
-                localeProvider.setEnglish();
+                ProviderScope.containerOf(ctx)
+                    .read(localeProvider.notifier)
+                    .setEnglish();
                 Navigator.pop(ctx);
               },
             ),
@@ -267,14 +274,18 @@ class ProfileScreen extends ConsumerWidget {
               leading: Radio<String>(
                 key: const Key('hindiRadio'),
                 value: 'hi',
-                groupValue: localeProvider.locale.languageCode,
+                groupValue: localeState.locale.languageCode,
                 onChanged: (v) {
-                  localeProvider.setHindi();
+                  ProviderScope.containerOf(ctx)
+                      .read(localeProvider.notifier)
+                      .setHindi();
                   Navigator.pop(ctx);
                 },
               ),
               onTap: () {
-                localeProvider.setHindi();
+                ProviderScope.containerOf(ctx)
+                    .read(localeProvider.notifier)
+                    .setHindi();
                 Navigator.pop(ctx);
               },
             ),

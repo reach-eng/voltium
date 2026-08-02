@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -10,32 +11,42 @@ void main() {
     await CacheService().init();
   });
 
+  // R4.3c-1: LocaleProvider is now a Riverpod v3 Notifier. Tests use
+  // a ProviderContainer to drive the notifier and read its state.
+  ProviderContainer makeContainer() => ProviderContainer();
+
   test('LocaleProvider defaults to English', () {
-    final provider = LocaleProvider();
-    expect(provider.locale.languageCode, 'en');
-    expect(provider.isEnglish, isTrue);
-    expect(provider.isHindi, isFalse);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final state = container.read(localeProvider);
+    expect(state.locale.languageCode, 'en');
+    expect(state.isEnglish, isTrue);
+    expect(state.isHindi, isFalse);
   });
 
   test('setHindi switches to Hindi and saves to cache', () async {
-    final provider = LocaleProvider();
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(localeProvider.notifier);
 
-    await provider.setHindi();
+    await notifier.setHindi();
 
-    expect(provider.locale.languageCode, 'hi');
-    expect(provider.isHindi, isTrue);
-    expect(provider.isEnglish, isFalse);
+    expect(container.read(localeProvider).locale.languageCode, 'hi');
+    expect(container.read(localeProvider).isHindi, isTrue);
+    expect(container.read(localeProvider).isEnglish, isFalse);
     expect(CacheService().getLocale(), 'hi');
   });
 
   test('setEnglish switches to English', () async {
-    final provider = LocaleProvider();
-    await provider.setHindi();
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(localeProvider.notifier);
+    await notifier.setHindi();
 
-    await provider.setEnglish();
+    await notifier.setEnglish();
 
-    expect(provider.locale.languageCode, 'en');
-    expect(provider.isEnglish, isTrue);
+    expect(container.read(localeProvider).locale.languageCode, 'en');
+    expect(container.read(localeProvider).isEnglish, isTrue);
     expect(CacheService().getLocale(), 'en');
   });
 

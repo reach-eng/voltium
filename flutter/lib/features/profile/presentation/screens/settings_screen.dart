@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
+import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -39,13 +41,13 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeProv = ref.watch(themeProviderRef);
+    final themeProv = ref.watch(themeProvider);
     final isDark = themeProv.isDarkMode;
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isLoading = rider == null;
-    final localeProv = ref.watch(localeProviderRef);
+    final localeProv = ref.watch(localeProvider);
     final currentLocale = localeProv.locale.languageCode;
 
     return Scaffold(
@@ -95,7 +97,8 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: Switch.adaptive(
                   key: const Key('darkModeSwitch'),
                   value: isDark,
-                  onChanged: (v) => themeProv.setDarkMode(v),
+                  onChanged: (v) =>
+                      ref.read(themeProvider.notifier).setDarkMode(v),
                   activeTrackColor: AppColors.primary,
                 ),
               ),
@@ -296,7 +299,7 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showLanguageDialog(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final localeProv = ref.read(localeProviderRef);
+    final localeProv = ref.read(localeProvider);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -311,13 +314,13 @@ class SettingsScreen extends ConsumerWidget {
                 value: 'en',
                 groupValue: localeProv.locale.languageCode,
                 onChanged: (v) {
-                  localeProv.setEnglish();
+                  ref.read(localeProvider.notifier).setEnglish();
                   Navigator.pop(ctx);
                 },
                 toggleable: true,
               ),
               onTap: () {
-                localeProv.setEnglish();
+                ref.read(localeProvider.notifier).setEnglish();
                 Navigator.pop(ctx);
               },
             ),
@@ -328,12 +331,12 @@ class SettingsScreen extends ConsumerWidget {
                 value: 'hi',
                 groupValue: localeProv.locale.languageCode,
                 onChanged: (v) {
-                  localeProv.setHindi();
+                  ref.read(localeProvider.notifier).setHindi();
                   Navigator.pop(ctx);
                 },
               ),
               onTap: () {
-                localeProv.setHindi();
+                ref.read(localeProvider.notifier).setHindi();
                 Navigator.pop(ctx);
               },
             ),

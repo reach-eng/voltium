@@ -1,4 +1,3 @@
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,7 +40,7 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Start in the correct position based on current locale.
-    if (ref.watch(localeProviderRef).isHindi) {
+    if (ref.read(localeProvider).isHindi) {
       _controller.value = 1.0;
     }
   }
@@ -58,12 +57,12 @@ class _LanguageToggleState extends ConsumerState<LanguageToggle>
   }
 
   Future<void> _onTap(int index) async {
-    if (index == 0 && !ref.read(localeProviderRef).isEnglish) {
-      await ref.read(localeProviderRef).setEnglish();
+    if (index == 0 && !ref.read(localeProvider).isEnglish) {
+      await ref.read(localeProvider.notifier).setEnglish();
       _controller.reverse();
       widget.onLocaleChanged?.call(const Locale('en'));
-    } else if (index == 1 && !ref.watch(localeProviderRef).isHindi) {
-      await ref.read(localeProviderRef).setHindi();
+    } else if (index == 1 && !ref.read(localeProvider).isHindi) {
+      await ref.read(localeProvider.notifier).setHindi();
       _controller.forward();
       widget.onLocaleChanged?.call(const Locale('hi'));
     }

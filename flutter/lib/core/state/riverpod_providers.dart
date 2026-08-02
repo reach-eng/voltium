@@ -93,16 +93,21 @@ final notificationProvider =
       'NotificationProvider must be overridden in ProviderScope');
 });
 
-/// Riverpod provider for [LocaleProvider].
-final localeProviderRef = ChangeNotifierProvider<LocaleProvider>((ref) {
-  throw UnimplementedError(
-      'LocaleProvider must be overridden in ProviderScope');
-});
+/// Riverpod provider for [LocaleProvider] (R4.3c-1).
+///
+/// Now backed by [LocaleNotifier] (Riverpod v3) — see
+/// `lib/core/localization/locale_provider.dart` for the canonical
+/// definition. The legacy `localeProviderRef` alias is kept for
+/// backwards compat with call sites that haven't migrated yet.
+final localeProviderRef = localeProvider;
 
-/// Riverpod provider for [ThemeProvider].
-final themeProviderRef = ChangeNotifierProvider<ThemeProvider>((ref) {
-  throw UnimplementedError('ThemeProvider must be overridden in ProviderScope');
-});
+/// Riverpod provider for [ThemeProvider] (R4.3c-1).
+///
+/// Now backed by [ThemeNotifier] (Riverpod v3) — see
+/// `lib/theme/theme_provider.dart` for the canonical definition.
+/// The legacy `themeProviderRef` alias is kept for backwards compat
+/// with call sites that haven't migrated yet.
+final themeProviderRef = themeProvider;
 
 /// Riverpod provider for [EmergencyContactsService].
 final emergencyContactsService =

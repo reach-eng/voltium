@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/services/cache_service.dart';
@@ -10,32 +11,42 @@ void main() {
     await CacheService().init();
   });
 
+  // R4.3c-1: ThemeProvider is now a Riverpod v3 Notifier. Tests use a
+  // ProviderContainer to drive the notifier and read its state.
+  ProviderContainer makeContainer() => ProviderContainer();
+
   test('ThemeProvider starts with false (light mode) by default', () {
-    final provider = ThemeProvider();
-    expect(provider.isDarkMode, isFalse);
-    expect(provider.isLightMode, isTrue);
-    expect(provider.themeMode, ThemeMode.light);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final state = container.read(themeProvider);
+    expect(state.isDarkMode, isFalse);
+    expect(state.isLightMode, isTrue);
+    expect(state.themeMode, ThemeMode.light);
   });
 
   test('setDarkMode updates state and cache', () async {
-    final provider = ThemeProvider();
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(themeProvider.notifier);
 
-    await provider.setDarkMode(true);
+    await notifier.setDarkMode(true);
 
-    expect(provider.isDarkMode, isTrue);
-    expect(provider.themeMode, ThemeMode.dark);
+    expect(container.read(themeProvider).isDarkMode, isTrue);
+    expect(container.read(themeProvider).themeMode, ThemeMode.dark);
     expect(CacheService().getDarkMode(), isTrue);
   });
 
   test('toggleTheme toggles state', () async {
-    final provider = ThemeProvider();
-    expect(provider.isDarkMode, isFalse);
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(themeProvider.notifier);
+    expect(container.read(themeProvider).isDarkMode, isFalse);
 
-    await provider.toggleTheme();
-    expect(provider.isDarkMode, isTrue);
+    await notifier.toggleTheme();
+    expect(container.read(themeProvider).isDarkMode, isTrue);
 
-    await provider.toggleTheme();
-    expect(provider.isDarkMode, isFalse);
+    await notifier.toggleTheme();
+    expect(container.read(themeProvider).isDarkMode, isFalse);
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {
