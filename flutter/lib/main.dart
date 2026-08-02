@@ -15,7 +15,6 @@ import 'core/localization/locale_provider.dart';
 import 'core/state/app_provider.dart';
 import 'theme/theme_provider.dart';
 import 'core/state/rider_provider.dart';
-import 'features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'core/network/connectivity_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'core/state/riverpod_providers.dart';
@@ -223,7 +222,7 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
             engagementProvider
                 .overrideWith(() => appInstance.engagementProvider),
             devicePolicyProvider
-                .overrideWith((ref) => appInstance.devicePolicyProvider),
+                .overrideWith(() => appInstance.devicePolicyProvider),
             connectivityProviderRef
                 .overrideWith(() => connectivityNotifierInstance),
             localeProviderRef.overrideWith(() => localeProviderInstance),
@@ -244,9 +243,10 @@ Future<void> main({AppProvider? injectedAppProvider}) async {
               ChangeNotifierProvider<RiderProvider>.value(
                 value: appInstance.riderProvider,
               ),
-              ChangeNotifierProvider<DevicePolicyProvider>.value(
-                value: appInstance.devicePolicyProvider,
-              ),
+              // R4.3c-5: DevicePolicyProvider is now a Riverpod v3 Notifier,
+              // not a ChangeNotifier. It is registered via the
+              // ProviderScope.overrides above and consumed via
+              // ref.watch / ref.read with `devicePolicyProvider`.
               // R4.3c-3: ConnectivityProvider is now a Riverpod v3 Notifier,
               // not a ChangeNotifier. It is registered via the
               // ProviderScope.overrides above and consumed via

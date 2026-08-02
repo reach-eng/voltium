@@ -124,7 +124,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
         ref.read(riderProvider).init();
         ref.read(supportProvider.notifier).initSupportData();
         ref.read(engagementProvider.notifier).initEngagementData();
-        ref.read(devicePolicyProvider).checkSystemPermissions();
+        ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
       }
     });
   }
@@ -165,7 +165,7 @@ class _AppRouterState extends ConsumerState<AppRouter>
 
   Future<void> _checkPermissionsOnResume() async {
     if (!mounted) return;
-    await ref.read(devicePolicyProvider).checkSystemPermissions();
+    await ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
     if (!mounted) return;
     final allRequiredGranted = await _areAllRequiredPermissionsGranted();
     if (!allRequiredGranted &&

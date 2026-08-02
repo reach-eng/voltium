@@ -10,7 +10,6 @@ import 'package:voltium_rider/features/notifications/presentation/providers/noti
 import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/services/emergency_contacts_service.dart';
-import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 import 'package:voltium_rider/features/auth/domain/repository.dart';
 import 'package:voltium_rider/features/auth/data/repository_impl.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
@@ -47,6 +46,8 @@ export 'package:voltium_rider/services/emergency_contacts_service.dart'
 export 'package:voltium_rider/core/localization/locale_provider.dart'
     show localeProvider;
 export 'package:voltium_rider/theme/theme_provider.dart' show themeProvider;
+export 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart'
+    show devicePolicyProvider;
 
 /// Riverpod provider for [AppProvider] (R4.3b).
 ///
@@ -82,12 +83,11 @@ final riderProvider = ChangeNotifierProvider<RiderProvider>((ref) {
 // re-exported here so call sites that import
 // `riverpod_providers.dart` keep working with the same names.
 
-/// Riverpod provider for [DevicePolicyProvider].
-final devicePolicyProvider =
-    ChangeNotifierProvider<DevicePolicyProvider>((ref) {
-  throw UnimplementedError(
-      'DevicePolicyProvider must be overridden in ProviderScope');
-});
+// R4.3c-5: DevicePolicyProvider is now backed by
+// [DevicePolicyNotifier] (Riverpod v3) — see
+// `lib/features/device_compliance/presentation/providers/device_policy_provider.dart`
+// for the canonical definition. Re-exported via the export
+// clause at the top of this file.
 
 /// Riverpod provider for [ConnectivityProvider] (R4.3c-3).
 ///

@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/features/device_compliance/presentation/providers/device_policy_provider.dart';
 
 void main() {
@@ -34,36 +35,49 @@ void main() {
         .setMockMethodCallHandler(secureStorageChannel, null);
   });
 
-  test('setForceUpdate changes state', () {
-    final provider = DevicePolicyProvider();
-    expect(provider.forceUpdate, isFalse);
-    expect(provider.mandatoryUpdateUrl, isNull);
+  // R4.3c-5: DevicePolicyProvider is now a Riverpod v3 Notifier.
+  late ProviderContainer container;
+  late DevicePolicyNotifier notifier;
 
-    provider.setForceUpdate(true, url: 'https://example.com/update');
-    expect(provider.forceUpdate, isTrue);
-    expect(provider.mandatoryUpdateUrl, 'https://example.com/update');
+  setUp(() {
+    container = ProviderContainer();
+    notifier = container.read(devicePolicyProvider.notifier);
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  DevicePolicyState readState() => container.read(devicePolicyProvider);
+
+  test('setForceUpdate changes state', () {
+    expect(readState().forceUpdate, isFalse);
+    expect(readState().mandatoryUpdateUrl, isNull);
+
+    notifier.setForceUpdate(true, url: 'https://example.com/update');
+    expect(readState().forceUpdate, isTrue);
+    expect(readState().mandatoryUpdateUrl, 'https://example.com/update');
   });
 
   test('clearViolation changes state', () {
-    final provider = DevicePolicyProvider();
-    provider.setCameraDisabled(true); // this sets hasPermissionViolation
-    expect(provider.hasPermissionViolation, isTrue);
+    notifier.setCameraDisabled(true); // this sets hasPermissionViolation
+    expect(readState().hasPermissionViolation, isTrue);
 
-    provider.clearViolation();
-    expect(provider.hasPermissionViolation, isFalse);
+    notifier.clearViolation();
+    expect(readState().hasPermissionViolation, isFalse);
   });
 
   test('logout resets all flags', () {
-    final provider = DevicePolicyProvider();
-    provider.setForceUpdate(true, url: 'url');
-    provider.setCameraDisabled(true);
-    provider.setLockedByAdmin(true);
+    notifier.setForceUpdate(true, url: 'url');
+    notifier.setCameraDisabled(true);
+    notifier.setLockedByAdmin(true);
 
-    provider.logout();
-    expect(provider.forceUpdate, isFalse);
-    expect(provider.mandatoryUpdateUrl, isNull);
-    expect(provider.hasPermissionViolation, isFalse);
-    expect(provider.lockedByAdmin, isFalse);
+    notifier.logout();
+    final state = readState();
+    expect(state.forceUpdate, isFalse);
+    expect(state.mandatoryUpdateUrl, isNull);
+    expect(state.hasPermissionViolation, isFalse);
+    expect(state.lockedByAdmin, isFalse);
   });
 
   group('Phase E: Edge Cases & Error Handling (Density Catch-up)', () {

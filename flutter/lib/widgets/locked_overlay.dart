@@ -48,11 +48,12 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
       final data = response['data'] as Map<String, dynamic>? ?? response;
       final adminLocked = data['isAdminLocked'] as bool?;
       if (mounted) {
-        final provider = ref.read(devicePolicyProvider);
-        if (adminLocked == true && !provider.lockedByAdmin) {
-          provider.setLockedByAdmin(true);
-        } else if (adminLocked == false && provider.lockedByAdmin) {
-          provider.setLockedByAdmin(false);
+        final state = ref.read(devicePolicyProvider);
+        final notifier = ref.read(devicePolicyProvider.notifier);
+        if (adminLocked == true && !state.lockedByAdmin) {
+          notifier.setLockedByAdmin(true);
+        } else if (adminLocked == false && state.lockedByAdmin) {
+          notifier.setLockedByAdmin(false);
         }
       }
     } catch (e) {
@@ -89,8 +90,7 @@ class _LockedOverlayState extends ConsumerState<LockedOverlay>
 
       if (mounted) {
         if (isValid) {
-          final provider = ref.read(devicePolicyProvider);
-          provider.setLockedByAdmin(false);
+          ref.read(devicePolicyProvider.notifier).setLockedByAdmin(false);
           _passwordController.clear();
           setState(() {
             _error = '';

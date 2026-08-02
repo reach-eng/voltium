@@ -41,12 +41,12 @@ class OverlayManager extends ConsumerWidget {
   }
 
   Widget _buildAdminLockOverlay(
-      BuildContext context, DevicePolicyProvider provider) {
+      BuildContext context, DevicePolicyState provider) {
     return const LockedOverlay();
   }
 
   Widget _buildForceUpdateOverlay(
-      BuildContext context, DevicePolicyProvider provider) {
+      BuildContext context, DevicePolicyState provider) {
     final colors = AppColors.of(context);
     return Container(
       color: Colors.black87,

@@ -160,8 +160,9 @@ class PermissionGuard extends ConsumerWidget {
                     ),
                     SizedBox(height: 16),
                     TextButton(
-                      onPressed: () =>
-                          ref.read(devicePolicyProvider).clearViolation(),
+                      onPressed: () => ref
+                          .read(devicePolicyProvider.notifier)
+                          .clearViolation(),
                       child: Text(
                         'I\'ve re-enabled it',
                         style: GoogleFonts.plusJakartaSans(

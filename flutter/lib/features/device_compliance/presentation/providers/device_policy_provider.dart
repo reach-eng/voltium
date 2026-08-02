@@ -1,39 +1,84 @@
-import 'dart:developer';
+// R4.3c-5 — Riverpod v3 `DevicePolicyProvider` (Notifier + state).
+//
+// The previous `ChangeNotifier` had three concurrent timers
+// (security-flags poll, integrity check with exponential
+// backoff, location-sync) and a method-channel bridge to the
+// native Android device-policy module. All of that machinery
+// is preserved — the notifier holds the same `Timer` instances
+// and the same `MethodChannel` reference. Lifecycle is now
+// managed via `ref.onDispose` instead of the manual
+// `dispose()` override.
+//
+// Same external surface:
+//   - isAdminActive, lockedByAdmin, forceUpdate,
+//     mandatoryUpdateUrl, hasPermissionViolation,
+//     violationPermissionId
+//   - setForceUpdate, setCameraDisabled, setPasscodeRequired,
+//     triggerLocationVerification, setAppPersistenceRequired,
+//     setLocationRequired, setRestrictedAppsMode,
+//     setLockedByAdmin, checkSystemPermissions,
+//     requestDeviceAdmin, startSecurityFlagsPoll,
+//     startIntegrityCheck, clearViolation, logout
+
 import 'dart:async';
+import 'dart:developer' show log;
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/core/platform/platform_info.dart';
 
-class DevicePolicyProvider extends ChangeNotifier {
+@immutable
+class DevicePolicyState {
+  final bool isAdminActive;
+  final bool lockedByAdmin;
+  final bool forceUpdate;
+  final String? mandatoryUpdateUrl;
+  final bool hasPermissionViolation;
+  final String? violationPermissionId;
+
+  const DevicePolicyState({
+    this.isAdminActive = false,
+    this.lockedByAdmin = false,
+    this.forceUpdate = false,
+    this.mandatoryUpdateUrl,
+    this.hasPermissionViolation = false,
+    this.violationPermissionId,
+  });
+
+  DevicePolicyState copyWith({
+    bool? isAdminActive,
+    bool? lockedByAdmin,
+    bool? forceUpdate,
+    String? mandatoryUpdateUrl,
+    bool? hasPermissionViolation,
+    String? violationPermissionId,
+    bool clearMandatoryUpdateUrl = false,
+    bool clearViolationPermissionId = false,
+  }) =>
+      DevicePolicyState(
+        isAdminActive: isAdminActive ?? this.isAdminActive,
+        lockedByAdmin: lockedByAdmin ?? this.lockedByAdmin,
+        forceUpdate: forceUpdate ?? this.forceUpdate,
+        mandatoryUpdateUrl: clearMandatoryUpdateUrl
+            ? null
+            : (mandatoryUpdateUrl ?? this.mandatoryUpdateUrl),
+        hasPermissionViolation:
+            hasPermissionViolation ?? this.hasPermissionViolation,
+        violationPermissionId: clearViolationPermissionId
+            ? null
+            : (violationPermissionId ?? this.violationPermissionId),
+      );
+}
+
+class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
   static const _platform =
       MethodChannel('com.voltiumelectric.voltium/device_policy');
-
-  DevicePolicyProvider() {
-    _selfCheck();
-    _initLockState();
-  }
-
-  bool _isAdminActive = false;
-  bool get isAdminActive => _isAdminActive;
-
-  bool _lockedByAdmin = false;
-  bool get lockedByAdmin => _lockedByAdmin;
-
-  bool _forceUpdate = false;
-  bool get forceUpdate => _forceUpdate;
-
-  String? _mandatoryUpdateUrl;
-  String? get mandatoryUpdateUrl => _mandatoryUpdateUrl;
-
-  bool _hasPermissionViolation = false;
-  bool get hasPermissionViolation => _hasPermissionViolation;
-
-  String? _violationPermissionId;
-  String? get violationPermissionId => _violationPermissionId;
 
   Timer? _securityFlagsTimer;
   Timer? _integrityTimer;
@@ -44,40 +89,56 @@ class DevicePolicyProvider extends ChangeNotifier {
   static const Duration _integrityMaxBackoff = Duration(seconds: 60);
   static const int _integrityMaxRetries = 6;
 
+  @override
+  DevicePolicyState build() {
+    // Kick off the same async setup the old ChangeNotifier did in
+    // its constructor.
+    Future.microtask(() async {
+      await _selfCheck();
+      await _initLockState();
+    });
+    ref.onDispose(() {
+      _stopSecurityFlagsPoll();
+      _stopIntegrityCheck();
+    });
+    return const DevicePolicyState();
+  }
+
   Future<void> _selfCheck() async {
     if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
       await _platform.invokeMethod('isDeviceAdminActive');
     } catch (e) {
-      log('DevicePolicyProvider: MethodChannel self-check failed: $e');
+      log('DevicePolicyNotifier: MethodChannel self-check failed: $e');
     }
   }
 
   Future<void> _initLockState() async {
     if (PlatformInfo.isWeb) return;
     try {
-      _lockedByAdmin = await SecureStorageService().getDeviceLocked();
-      if (_lockedByAdmin && Platform.isAndroid) {
+      final locked = await SecureStorageService().getDeviceLocked();
+      state = state.copyWith(lockedByAdmin: locked);
+      if (locked && Platform.isAndroid) {
         _platform.invokeMethod('startLockTaskMode').catchError((e) {
           log('Failed to startLockTaskMode: $e');
         });
       }
-      notifyListeners();
     } catch (e) {
-      log('DevicePolicyProvider: Failed to initialize lock state: $e');
+      log('DevicePolicyNotifier: Failed to initialize lock state: $e');
     }
   }
 
   void setForceUpdate(bool force, {String? url}) {
-    _forceUpdate = force;
-    _mandatoryUpdateUrl = url;
-    notifyListeners();
+    state = state.copyWith(
+      forceUpdate: force,
+      mandatoryUpdateUrl: url,
+      clearMandatoryUpdateUrl: url == null,
+    );
   }
 
   void setCameraDisabled(bool disabled) {
-    _hasPermissionViolation = disabled;
-    notifyListeners();
+    state = state.copyWith(hasPermissionViolation: disabled);
     if (!PlatformInfo.isWeb && Platform.isAndroid) {
       _platform.invokeMethod('setCameraDisabled', {'disabled': disabled});
     }
@@ -104,8 +165,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   void setLocationRequired(bool required) {
-    _hasPermissionViolation = required;
-    notifyListeners();
+    state = state.copyWith(hasPermissionViolation: required);
     if (!PlatformInfo.isWeb && Platform.isAndroid) {
       _platform.invokeMethod('setLocationMandatory', {'enabled': required});
     }
@@ -120,7 +180,7 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   void setLockedByAdmin(bool locked) {
-    _lockedByAdmin = locked;
+    state = state.copyWith(lockedByAdmin: locked);
     SecureStorageService().setDeviceLocked(locked);
     if (!PlatformInfo.isWeb && Platform.isAndroid) {
       if (locked) {
@@ -136,16 +196,15 @@ class DevicePolicyProvider extends ChangeNotifier {
         });
       }
     }
-    notifyListeners();
   }
 
   Future<void> checkSystemPermissions() async {
     if (PlatformInfo.isWeb) return;
     if (!Platform.isAndroid) return;
     try {
-      _isAdminActive =
-          await _platform.invokeMethod('isDeviceAdminActive') ?? false;
-      notifyListeners();
+      final result = await _platform.invokeMethod('isDeviceAdminActive');
+      final active = result is bool ? result : false;
+      state = state.copyWith(isAdminActive: active);
     } catch (e) {
       log('Error checking system permissions: $e');
     }
@@ -187,7 +246,7 @@ class DevicePolicyProvider extends ChangeNotifier {
       if (PlatformInfo.isWeb) {
         if (adminLocked == true) {
           setLockedByAdmin(true);
-        } else if (adminLocked == false && _lockedByAdmin) {
+        } else if (adminLocked == false && state.lockedByAdmin) {
           setLockedByAdmin(false);
         }
         return;
@@ -212,11 +271,11 @@ class DevicePolicyProvider extends ChangeNotifier {
       if (adminLocked == true) {
         setLockedByAdmin(true);
         await _platform.invokeMethod('lockDevice');
-      } else if (adminLocked == false && _lockedByAdmin) {
+      } else if (adminLocked == false && state.lockedByAdmin) {
         setLockedByAdmin(false);
       }
     } catch (e) {
-      log('DevicePolicyProvider: Security flag poll failed: $e');
+      log('DevicePolicyNotifier: Security flag poll failed: $e');
     }
   }
 
@@ -256,7 +315,7 @@ class DevicePolicyProvider extends ChangeNotifier {
 
       _onIntegrityResult(locationOk && cameraOk);
     } catch (e) {
-      log('DevicePolicyProvider: Integrity check failed: $e');
+      log('DevicePolicyNotifier: Integrity check failed: $e');
       _onIntegrityResult(false);
     }
   }
@@ -281,17 +340,19 @@ class DevicePolicyProvider extends ChangeNotifier {
   }
 
   void _setViolation(String permissionId) {
-    _hasPermissionViolation = true;
-    _violationPermissionId = permissionId;
-    notifyListeners();
+    state = state.copyWith(
+      hasPermissionViolation: true,
+      violationPermissionId: permissionId,
+    );
     _reportViolation(permissionId);
   }
 
   void _clearViolation() {
-    if (_hasPermissionViolation) {
-      _hasPermissionViolation = false;
-      _violationPermissionId = null;
-      notifyListeners();
+    if (state.hasPermissionViolation) {
+      state = state.copyWith(
+        hasPermissionViolation: false,
+        clearViolationPermissionId: true,
+      );
     }
   }
 
@@ -305,7 +366,7 @@ class DevicePolicyProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      log('DevicePolicyProvider: Violation report failed: $e');
+      log('DevicePolicyNotifier: Violation report failed: $e');
     }
   }
 
@@ -313,23 +374,21 @@ class DevicePolicyProvider extends ChangeNotifier {
     _clearViolation();
   }
 
+  /// Sign-out: clear state and stop all timers.
   void logout() {
-    _lockedByAdmin = false;
+    state = const DevicePolicyState();
     SecureStorageService().setDeviceLocked(false);
-    _forceUpdate = false;
-    _mandatoryUpdateUrl = null;
-    _hasPermissionViolation = false;
-    _violationPermissionId = null;
     _riderId = null;
     _stopSecurityFlagsPoll();
     _stopIntegrityCheck();
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _stopSecurityFlagsPoll();
-    _stopIntegrityCheck();
-    super.dispose();
   }
 }
+
+/// Backwards-compat type alias.
+typedef DevicePolicyProvider = DevicePolicyNotifier;
+
+/// Riverpod v3 provider for the device-policy feature.
+final devicePolicyProvider =
+    NotifierProvider<DevicePolicyNotifier, DevicePolicyState>(
+  DevicePolicyNotifier.new,
+);

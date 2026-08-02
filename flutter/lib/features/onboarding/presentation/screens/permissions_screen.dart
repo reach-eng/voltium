@@ -128,7 +128,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     if (state == AppLifecycleState.resumed) {
       // Re-check permissions when user returns to app
       _checkInitialStatuses();
-      ref.read(devicePolicyProvider).checkSystemPermissions();
+      ref.read(devicePolicyProvider.notifier).checkSystemPermissions();
     }
   }
 
@@ -241,7 +241,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         }
         return;
       case 'device_admin':
-        await ref.read(devicePolicyProvider).requestDeviceAdmin();
+        await ref.read(devicePolicyProvider.notifier).requestDeviceAdmin();
         return;
       default:
         status = PermissionStatus.granted;
