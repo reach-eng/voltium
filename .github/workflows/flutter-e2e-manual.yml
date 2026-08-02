@@ -28,6 +28,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: flutter-e2e-manual-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FLUTTER_VERSION: '3.41.4'
   DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/voltium_test'
@@ -55,6 +59,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: './web/package-lock.json'
 
       - name: Install backend dependencies
         run: npm ci --legacy-peer-deps

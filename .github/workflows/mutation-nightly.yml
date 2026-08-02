@@ -1,9 +1,9 @@
 name: Weekly Mutation Testing
 
+# Deprecated scheduled cron 2026-08-01 per docs/COST_RECOMMENDATIONS_2026-08-01.md
+# Kept for manual dispatch execution
 on:
-  schedule:
-    - cron: '0 2 * * 0' # Sundays at 2:00 AM
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
 
 # R10 polish #13 (Infra 4.17) — concurrency group so re-runs don't overlap.
 concurrency:
