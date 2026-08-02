@@ -31,19 +31,18 @@ export const vehicleUseCases = {
   },
 
   async assignVehicle(vehicleId: string, riderDbId: string) {
-    const vehicle = await db.vehicle.findUnique({ where: { id: vehicleId } });
+    const [vehicle, rider, existingRental] = await Promise.all([
+      db.vehicle.findUnique({ where: { id: vehicleId } }),
+      db.rider.findUnique({ where: { id: riderDbId } }),
+      db.rentalLease.findFirst({ where: { riderId: riderDbId, status: 'ACTIVE' } }),
+    ]);
+
     if (!vehicle || vehicle.status !== 'AVAILABLE') {
       throw new Error('Vehicle is not available for assignment');
     }
-
-    const rider = await db.rider.findUnique({ where: { id: riderDbId } });
     if (!rider || rider.lifecycleStatus !== 'ACTIVE') {
       throw new Error('Rider is not in ACTIVE state');
     }
-
-    const existingRental = await db.rentalLease.findFirst({
-      where: { riderId: riderDbId, status: 'ACTIVE' },
-    });
     if (existingRental) {
       throw new Error('Rider already has an active rental');
     }

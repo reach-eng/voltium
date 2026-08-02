@@ -10,6 +10,7 @@ import { Prisma } from '@prisma/client';
 import { validateKycTransition, KycStateError } from './kyc-state-machine';
 import type { KycStatus } from './kyc.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
+import { invalidateRiderCache } from '@/lib/server-cache';
 
 function encryptKycData(data: any) {
   if (!data) return data;
@@ -74,6 +75,7 @@ export const kycRepository = {
         // Don't change status — let submitKyc handle the transition
       },
     });
+    invalidateRiderCache(riderDbId);
     return decryptKycData(kyc);
   },
 
@@ -111,6 +113,7 @@ export const kycRepository = {
         data: { lifecycleStatus: 'KYC_SUBMITTED', kycDoneAt: new Date() },
       });
 
+      invalidateRiderCache(riderDbId);
       return decryptKycData(kyc);
     });
   },
@@ -149,6 +152,8 @@ export const kycRepository = {
         data: { lifecycleStatus: 'KYC_APPROVED' },
       });
 
+      invalidateRiderCache(riderDbId);
+
       // BLOCKER 2.7: notification is dispatched by the outbox worker
       // (kyc.use-cases.ts emits NOTIFICATION_SEND inside the same
       // transaction). The repository no longer fires a duplicate
@@ -182,6 +187,8 @@ export const kycRepository = {
         data: { lifecycleStatus: 'SUSPENDED' },
       });
 
+      invalidateRiderCache(riderDbId);
+
       // BLOCKER 2.7: notification is dispatched by the outbox worker.
       // See the comment on approveKyc above.
 
@@ -204,6 +211,9 @@ export const kycRepository = {
         status: 'INFO_REQUIRED',
         rejectionReason: infoRequest,
       },
+    }).then((kyc: any) => {
+      invalidateRiderCache(riderDbId);
+      return kyc;
     });
   },
 };

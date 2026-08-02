@@ -6,6 +6,7 @@
 
 import { db } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { getCachedHub, invalidateHubCache } from '@/lib/server-cache';
 
 export const hubRepository = {
   async findAll(includeInactive = false) {
@@ -16,7 +17,7 @@ export const hubRepository = {
   },
 
   async findById(hubId: string) {
-    return db.hub.findUnique({ where: { id: hubId } });
+    return getCachedHub(hubId, () => db.hub.findUnique({ where: { id: hubId } }));
   },
 
   async create(data: Prisma.HubCreateInput) {
@@ -24,7 +25,9 @@ export const hubRepository = {
   },
 
   async update(hubId: string, data: Prisma.HubUpdateInput) {
-    return db.hub.update({ where: { id: hubId }, data });
+    const result = await db.hub.update({ where: { id: hubId }, data });
+    invalidateHubCache(hubId);
+    return result;
   },
 
   async getTeamLeaders(hubId?: string) {
@@ -54,18 +57,26 @@ export const hubRepository = {
   },
 
   async hardDelete(hubId: string) {
-    return db.hub.delete({ where: { id: hubId } });
+    const result = await db.hub.delete({ where: { id: hubId } });
+    invalidateHubCache(hubId);
+    return result;
   },
 
   async bulkActivate(ids: string[]) {
-    return db.hub.updateMany({ where: { id: { in: ids } }, data: { isActive: true } });
+    const result = await db.hub.updateMany({ where: { id: { in: ids } }, data: { isActive: true } });
+    for (const id of ids) invalidateHubCache(id);
+    return result;
   },
 
   async bulkDeactivate(ids: string[]) {
-    return db.hub.updateMany({ where: { id: { in: ids } }, data: { isActive: false } });
+    const result = await db.hub.updateMany({ where: { id: { in: ids } }, data: { isActive: false } });
+    for (const id of ids) invalidateHubCache(id);
+    return result;
   },
 
   async bulkDelete(ids: string[]) {
-    return db.hub.deleteMany({ where: { id: { in: ids } } });
+    const result = await db.hub.deleteMany({ where: { id: { in: ids } } });
+    for (const id of ids) invalidateHubCache(id);
+    return result;
   },
 };

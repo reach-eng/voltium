@@ -9,6 +9,8 @@ import { Prisma } from '@prisma/client';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
 import { createAuditLog } from '@/lib/audit-log';
+import { getCachedResponse, cacheResponse } from '@/lib/cache';
+import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 
 const REWARD_PER_REFERRAL = 500;
 
@@ -35,7 +37,9 @@ export const referralUseCases = {
    */
   async processReferralReward(refereeId: string, referrerCode: string) {
     const referrer = await db.rider.findUnique({ where: { referralCode: referrerCode } });
-    const referee = await db.rider.findUnique({ where: { id: refereeId } });
+    const referee = await getCachedRider(refereeId, () =>
+      db.rider.findUnique({ where: { id: refereeId } })
+    );
 
     if (!referrer || !referee) {
       logger.warn('[Referral] Invalid referral data', { refereeId, referrerCode });
@@ -51,9 +55,14 @@ export const referralUseCases = {
       return;
     }
 
-    // Read referral bonus from settings
-    const setting = await db.systemSetting.findFirst({ where: { key: 'referralBonus' } });
-    const bonus = parseInt(setting?.value || '200');
+    // Read referral bonus from settings (cached 60s)
+    let settingVal = getCachedResponse<string>('setting:referralBonus');
+    if (!settingVal) {
+      const setting = await db.systemSetting.findFirst({ where: { key: 'referralBonus' } });
+      settingVal = setting?.value || '200';
+      cacheResponse('setting:referralBonus', settingVal, 60);
+    }
+    const bonus = parseInt(settingVal || '200');
 
     const bonusPaise = bonus * 100;
     const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
@@ -98,6 +107,8 @@ export const referralUseCases = {
         },
       });
     });
+
+    invalidateRiderCache(referrer.id);
 
     createAuditLog({
       actorId: 'system',

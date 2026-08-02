@@ -20,6 +20,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { randomUUID } from 'crypto';
 import { logger } from '@/lib/logger';
 import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
+import { invalidateRiderCache } from '@/lib/server-cache';
 import type { WalletBalance } from './wallet.types';
 
 const TEST_PHONES = ['9876543210', '9999999999', '8888888888', '7788888801'];
@@ -136,6 +137,7 @@ export const walletUseCases = {
           where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_APPROVED'] } },
           data: { lifecycleStatus: 'DEPOSIT_PENDING' },
         });
+        invalidateRiderCache(riderDbId);
       } catch (err: unknown) {
         logger.error('[WalletUseCases] Failed to upsert deposit record', err);
       }
@@ -260,6 +262,7 @@ export const walletUseCases = {
           where: { id: txn.riderId, lifecycleStatus: { in: ['DEPOSIT_PENDING', 'GUARANTOR_APPROVED'] } },
           data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
         });
+        invalidateRiderCache(txn.riderId);
       }
 
       await OutboxService.emit(OutboxEventTypes.WALLET_TOPUP_APPROVED, {

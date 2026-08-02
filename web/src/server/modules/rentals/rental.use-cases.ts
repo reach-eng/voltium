@@ -55,13 +55,12 @@ export const rentalUseCases = {
       throw new RentalBookError('This shift is not currently active', 'VALIDATION');
 
     // Calculate dynamic pricing
-    const totalVehicles = await db.vehicle.count({ where: { hubId: vehicle.hubId } });
-    const availableVehicles = await db.vehicle.count({
-      where: { hubId: vehicle.hubId, status: 'AVAILABLE' },
-    });
+    const [totalVehicles, availableVehicles, dailyRentSetting] = await Promise.all([
+      db.vehicle.count({ where: { hubId: vehicle.hubId } }),
+      db.vehicle.count({ where: { hubId: vehicle.hubId, status: 'AVAILABLE' } }),
+      db.systemSetting.findUnique({ where: { key: 'dailyRent' } }),
+    ]);
     const availabilityRatio = totalVehicles > 0 ? availableVehicles / totalVehicles : 0;
-
-    const dailyRentSetting = await db.systemSetting.findUnique({ where: { key: 'dailyRent' } });
     const basePricePaise = dailyRentSetting ? parseInt(dailyRentSetting.value) || 18000 : 18000;
 
     const dynamicPrice = calculateDynamicPrice(basePricePaise, {

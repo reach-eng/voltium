@@ -52,10 +52,9 @@ export const walletLedgerService = {
     },
     tx?: PrismaTransaction
   ) {
-    const wallet = await findWallet(params.riderId, tx);
-
-    const work = (innerTx: PrismaTransaction) =>
-      libCreditWallet(innerTx, {
+    const work = async (innerTx: PrismaTransaction) => {
+      const wallet = await findWallet(params.riderId, innerTx);
+      return libCreditWallet(innerTx, {
         riderId: params.riderId,
         walletId: wallet.id,
         amountInPaise: params.amountInPaise,
@@ -65,6 +64,7 @@ export const walletLedgerService = {
         actorId: params.actorId,
         note: params.note,
       });
+    };
 
     const result = tx ? await work(tx) : await txDb.$transaction(work);
 
@@ -93,10 +93,9 @@ export const walletLedgerService = {
     },
     tx?: PrismaTransaction
   ) {
-    const wallet = await findWallet(params.riderId, tx);
-
-    const work = (innerTx: PrismaTransaction) =>
-      libDebitWallet(innerTx, {
+    const work = async (innerTx: PrismaTransaction) => {
+      const wallet = await findWallet(params.riderId, innerTx);
+      return libDebitWallet(innerTx, {
         riderId: params.riderId,
         walletId: wallet.id,
         amountInPaise: params.amountInPaise,
@@ -107,6 +106,7 @@ export const walletLedgerService = {
         note: params.note,
         allowNegative: params.allowNegative,
       });
+    };
 
     const result = tx ? await work(tx) : await txDb.$transaction(work);
 

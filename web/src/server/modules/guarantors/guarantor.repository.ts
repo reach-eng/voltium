@@ -10,6 +10,7 @@ import { Prisma } from '@prisma/client';
 import { validateGuarantorTransition, GuarantorStateError } from './guarantor-state-machine';
 import type { GuarantorStatus } from './guarantor.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
+import { invalidateRiderCache } from '@/lib/server-cache';
 
 function encryptGuarantorData(data: any) {
   if (!data) return data;
@@ -70,6 +71,7 @@ export const guarantorRepository = {
         where: { id: riderDbId, lifecycleStatus: { in: ['PROFILE_SUBMITTED'] } },
         data: { lifecycleStatus: 'GUARANTOR_SUBMITTED' },
       });
+      invalidateRiderCache(riderDbId);
       return decryptGuarantorData(guarantor);
     });
   },
@@ -92,6 +94,7 @@ export const guarantorRepository = {
         where: { id: riderDbId, lifecycleStatus: { in: ['GUARANTOR_SUBMITTED'] } },
         data: { lifecycleStatus: 'GUARANTOR_APPROVED' },
       });
+      invalidateRiderCache(riderDbId);
       return decryptGuarantorData(guarantor);
     });
   },
@@ -114,6 +117,7 @@ export const guarantorRepository = {
         where: { id: riderDbId },
         data: { lifecycleStatus: 'SUSPENDED' },
       });
+      invalidateRiderCache(riderDbId);
       return decryptGuarantorData(guarantor);
     });
   },
@@ -133,6 +137,7 @@ export const guarantorRepository = {
         status: 'INFO_REQUIRED',
       },
     });
+    invalidateRiderCache(riderDbId);
     return decryptGuarantorData(guarantor);
   },
 
@@ -141,6 +146,7 @@ export const guarantorRepository = {
       where: { riderId: riderDbId },
       data: { status: 'APPROVED' },
     });
+    invalidateRiderCache(riderDbId);
     return decryptGuarantorData(guarantor);
   },
 
@@ -157,6 +163,7 @@ export const guarantorRepository = {
       where: { riderId: riderDbId },
       data: { status: 'REPLACED' },
     });
+    invalidateRiderCache(riderDbId);
     return decryptGuarantorData(guarantor);
   },
 };

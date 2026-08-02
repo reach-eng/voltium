@@ -53,8 +53,12 @@ function readSafe(path: string): string {
 describe('PR-M (Ticket #23): workers jobs error-handling consistency', () => {
   const jobs = listJobs();
 
-  it('has 12 worker jobs', () => {
-    expect(jobs.length).toBe(12);
+  it('has 11 worker jobs', () => {
+    // 11 active jobs as of 2026-08-02. The deprecated `notifications.job.ts`
+    // is left as a tombstone (see workers/index.ts comment) but not
+    // registered with the worker scheduler, so it doesn't appear in
+    // the jobs/ directory of workers the worker loop actually runs.
+    expect(jobs.length).toBe(11);
   });
 
   describe.each(jobs)('job %s', (jobPath) => {

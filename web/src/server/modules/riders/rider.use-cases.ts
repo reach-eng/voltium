@@ -14,6 +14,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { transitionRiderStatus } from '@/server/modules/riders/rider-lifecycle.service';
 import type { RiderProfileUpdate, RiderState } from './rider.types';
 import { riderRepository } from './rider.repository';
+import { getCachedRider, invalidateRiderCache } from '@/lib/server-cache';
 
 // Field allowlists for mass-assignment protection
 const SAFE_RIDER_FIELDS = new Set([
@@ -73,16 +74,18 @@ export const riderUseCases = {
    * Gets full rider profile with all relations.
    */
   async getProfile(riderDbId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      include: {
-        kycProfile: true,
-        wallet: true,
-        guarantor: true,
-        vehicleReturns: true,
-        vehicle: { select: { vehicleNumber: true, model: true } },
-      },
-    });
+    const rider = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        include: {
+          kycProfile: true,
+          wallet: true,
+          guarantor: true,
+          vehicleReturns: true,
+          vehicle: { select: { vehicleNumber: true, model: true } },
+        },
+      })
+    );
     if (!rider) return null;
 
     const [unreadNotificationCount, rewardAggregates] = await Promise.all([
@@ -90,7 +93,7 @@ export const riderUseCases = {
       db.reward.aggregate({ where: { riderId: rider.id }, _sum: { points: true } }),
     ]);
 
-    const flatRider = flattenRider(rider);
+    const flatRider = flattenRider(rider as any);
     let assignedVehicleNumber = flatRider.assignedVehicle;
     let vehicleModel: string | null = null;
     if (rider.vehicle) {
@@ -130,6 +133,8 @@ export const riderUseCases = {
         lifecycleStatus: 'GUARANTOR_APPROVED',
       },
     });
+
+    invalidateRiderCache(riderDbId);
 
     await createAuditLog({
       actorId: adminId,
@@ -266,10 +271,12 @@ export const riderUseCases = {
    * Get rewards for a rider.
    */
   async getRewards(riderDbId: string) {
-    const rider = await db.rider.findUnique({
-      where: { id: riderDbId },
-      include: { wallet: { select: { paymentStreak: true } } },
-    });
+    const rider = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({
+        where: { id: riderDbId },
+        include: { wallet: { select: { paymentStreak: true } } },
+      })
+    );
     if (!rider) return null;
 
     const [rewards, aggregates] = await Promise.all([
@@ -308,9 +315,10 @@ export const riderUseCases = {
    * /api/rider/register-token route) are responsible for ensuring this.
    */
   async registerFcmToken(riderDbId: string, fcmToken: string) {
-    const rider = await db.rider.findUnique({ where: { id: riderDbId } });
+    const rider = await getCachedRider(riderDbId, () => db.rider.findUnique({ where: { id: riderDbId } }));
     if (!rider) throw new Error('Rider not found');
     await db.rider.update({ where: { id: riderDbId }, data: { fcmToken } });
+    invalidateRiderCache(riderDbId);
   },
 
   /**
@@ -403,7 +411,9 @@ export const riderUseCases = {
    * Handles safe rider fields, KYC fields, guarantor fields, and vehicle returns.
    */
   async updateProfile(riderDbId: string, input: Record<string, unknown>) {
-    const existing = await db.rider.findUnique({ where: { id: riderDbId } });
+    const existing = await getCachedRider(riderDbId, () =>
+      db.rider.findUnique({ where: { id: riderDbId } })
+    );
     if (!existing) throw new Error('Rider not found');
 
     const riderData: Record<string, unknown> = {};
@@ -528,6 +538,7 @@ export const riderUseCases = {
     }
 
     // Return updated profile
+    invalidateRiderCache(riderDbId);
     const rider = await db.rider.findUnique({
       where: { id: riderDbId },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },

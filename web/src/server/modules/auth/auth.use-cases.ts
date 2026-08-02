@@ -17,6 +17,7 @@ import { flattenRider } from '@/lib/flatten-rider';
 import { logger } from '@/lib/logger';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { env } from '@/lib/env';
+import { invalidateRiderCache } from '@/lib/server-cache';
 import type { SendOtpInput, VerifyOtpInput, VerifyOtpResult } from './auth.types';
 
 export const authUseCases = {
@@ -118,6 +119,7 @@ export const authUseCases = {
 
     // For new riders, create Wallet record and handle referral rewards
     if (isNewRider) {
+      invalidateRiderCache(rider.id);
       await db.wallet.create({
         data: {
           riderId: rider.id,
@@ -143,6 +145,7 @@ export const authUseCases = {
                 points: 500,
               },
             });
+            invalidateRiderCache(referrer.id);
           }
         } catch (rewardErr) {
           logger.error('[AuthUseCases] Failed to award referral points', { error: rewardErr });
@@ -198,6 +201,7 @@ export const authUseCases = {
       where: { id: riderDbId },
       data: { tokenVersion: { increment: 1 } },
     });
+    invalidateRiderCache(riderDbId);
     logger.info('[AuthUseCases] Logout (token version incremented)', { riderDbId });
   },
 };

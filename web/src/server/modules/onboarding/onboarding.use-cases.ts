@@ -87,34 +87,37 @@ export const onboardingUseCases = {
       (await db.vehicle.findFirst());
     if (!testVehicle) return null;
     await transitionRiderStatus(riderDbId, 'ACTIVE');
-    await db.rider.update({
-      where: { id: riderDbId },
-      data: {
-        fullName: 'Test Rider',
-        assignedVehicle: testVehicle.vehicleNumber,
-        vehicleId: testVehicle.id,
-        kycDoneAt: new Date(),
-        depositDoneAt: new Date(),
-        planDoneAt: new Date(),
-        pickedUpAt: new Date(),
-        registrationDoneAt: new Date(),
-        currentPlan: 'Weekly Premium',
-        planStartDate: new Date(),
-        planEndDate: new Date(Date.now() + 7 * 86400000),
-      },
-    });
-    await db.vehicle.update({ where: { id: testVehicle.id }, data: { status: 'ASSIGNED' } });
-    await db.guarantor.upsert({
-      where: { riderId: riderDbId },
-      create: {
-        riderId: riderDbId,
-        name: 'Test Guarantor',
-        relation: 'Father',
-        phone: '9876543211',
-        status: 'APPROVED',
-      },
-      update: { status: 'APPROVED' },
-    });
+    // Coalesce 3 independent writes into a single round-trip
+    await db.$transaction([
+      db.rider.update({
+        where: { id: riderDbId },
+        data: {
+          fullName: 'Test Rider',
+          assignedVehicle: testVehicle.vehicleNumber,
+          vehicleId: testVehicle.id,
+          kycDoneAt: new Date(),
+          depositDoneAt: new Date(),
+          planDoneAt: new Date(),
+          pickedUpAt: new Date(),
+          registrationDoneAt: new Date(),
+          currentPlan: 'Weekly Premium',
+          planStartDate: new Date(),
+          planEndDate: new Date(Date.now() + 7 * 86400000),
+        },
+      }),
+      db.vehicle.update({ where: { id: testVehicle.id }, data: { status: 'ASSIGNED' } }),
+      db.guarantor.upsert({
+        where: { riderId: riderDbId },
+        create: {
+          riderId: riderDbId,
+          name: 'Test Guarantor',
+          relation: 'Father',
+          phone: '9876543211',
+          status: 'APPROVED',
+        },
+        update: { status: 'APPROVED' },
+      }),
+    ]);
     return db.rider.findUnique({
       where: { id: riderDbId },
       include: { kycProfile: true, wallet: true, guarantor: true, vehicleReturns: true },

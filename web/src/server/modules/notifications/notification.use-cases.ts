@@ -9,6 +9,7 @@ import { notificationRepository } from './notification.repository';
 import { notificationService } from '@/lib/notification-service';
 import { createAuditLog } from '@/lib/audit-log';
 import { logger } from '@/lib/logger';
+import { getCachedRider } from '@/lib/server-cache';
 
 export const notificationUseCases = {
   async listNotifications(riderDbId: string, limit?: number) {
@@ -109,7 +110,7 @@ export const notificationUseCases = {
     type: string,
     actorId: string
   ) {
-    const rider = await db.rider.findUnique({ where: { id: riderId } });
+    const rider = await getCachedRider(riderId, () => db.rider.findUnique({ where: { id: riderId } }));
     if (!rider) throw new Error('Rider not found');
 
     const notification = await db.notification.create({
@@ -191,6 +192,7 @@ export const notificationUseCases = {
 
   async processScheduledNotifications() {
     const results = { birthdays: 0, paymentReminders: 0, referralLeaderboard: 0 };
+    const BATCH_SIZE = 50;
 
     // 1. Birthday Wishes
     const today = new Date();
@@ -203,9 +205,16 @@ export const notificationUseCases = {
       select: { id: true, fullName: true },
     });
 
-    for (const rider of birthdayRiders) {
-      await notificationService.notifyBirthdayWish(rider.id, rider.fullName || 'Rider');
-      results.birthdays++;
+    for (let i = 0; i < birthdayRiders.length; i += BATCH_SIZE) {
+      const batch = birthdayRiders.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((rider: { id: string; fullName: string | null }) =>
+          notificationService
+            .notifyBirthdayWish(rider.id, rider.fullName || 'Rider')
+            .catch((e) => logger.error(`Birthday wish error for ${rider.id}:`, e))
+        )
+      );
+      results.birthdays += batch.length;
     }
 
     // 2. Payment Reminders
@@ -214,15 +223,23 @@ export const notificationUseCases = {
       include: { wallet: true },
     })) as any;
 
-    for (const rider of ridersToRemind) {
-      if (rider.wallet) {
-        await notificationService.notifyPaymentReminder(
-          rider.id,
-          Math.abs(rider.wallet.balanceInPaise),
-          'overdue'
-        );
-        results.paymentReminders++;
-      }
+    for (let i = 0; i < ridersToRemind.length; i += BATCH_SIZE) {
+      const batch = ridersToRemind.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((rider: any) => {
+          if (rider.wallet) {
+            return notificationService
+              .notifyPaymentReminder(
+                rider.id,
+                Math.abs(rider.wallet.balanceInPaise),
+                'overdue'
+              )
+              .catch((e) => logger.error(`Payment reminder error for ${rider.id}:`, e));
+          }
+          return Promise.resolve();
+        })
+      );
+      results.paymentReminders += batch.length;
     }
 
     // 3. Referral Leaderboard Update

@@ -95,6 +95,7 @@ export const adminRiderUseCases = {
     kycStatus?: string;
     startDate?: string;
     endDate?: string;
+    cursor?: string;
     page?: number;
     limit?: number;
     sortBy?: string;
@@ -107,6 +108,7 @@ export const adminRiderUseCases = {
       kycStatus,
       startDate,
       endDate,
+      cursor,
       page = 1,
       limit = 20,
       sortBy = 'createdAt',
@@ -250,7 +252,9 @@ export const adminRiderUseCases = {
           orderByField === 'kycStatus'
             ? { kycProfile: { status: orderByDir } }
             : { [orderByField]: orderByDir },
-        skip: (page - 1) * limit,
+        ...(cursor
+          ? { cursor: { id: cursor }, skip: 1 }
+          : { skip: (page - 1) * limit }),
         take: limit,
       }),
       db.rider.count({ where }),
@@ -287,9 +291,16 @@ export const adminRiderUseCases = {
       flat.map(async (r: any) => signRiderUrlsWithProvider(r, storage, urlCache))
     );
 
+    const lastRider = signed[signed.length - 1];
     return {
       riders: signed,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        nextCursor: lastRider?.id ?? null,
+      },
       flags: {
         enableKYCVerification: flags.enableKYCVerification,
         enableGuarantorRequirement: flags.enableGuarantorRequirement,

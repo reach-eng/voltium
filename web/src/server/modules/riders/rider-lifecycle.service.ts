@@ -9,6 +9,7 @@
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { invalidateRiderCache } from '@/lib/server-cache';
 
 // ── State Definition ─────────────────────────────────────────────────────
 
@@ -169,6 +170,8 @@ export async function transitionRiderStatus(
     from: rider.lifecycleStatus,
     to: targetStatus,
   });
+
+  invalidateRiderCache(riderDbId);
 
   return { id: rider.id, riderId: rider.riderId, lifecycleStatus: targetStatus };
 }

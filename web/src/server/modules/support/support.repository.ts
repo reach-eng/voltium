@@ -31,15 +31,19 @@ export const supportRepository = {
       orderBy: { createdAt: 'desc' },
       include: {
         messages: {
-          orderBy: { createdAt: 'asc' },
+          take: 1,
+          orderBy: { createdAt: 'desc' },
           select: {
             id: true,
             message: true,
             senderType: true,
             createdAt: true,
-          }
-        }
-      }
+          },
+        },
+        _count: {
+          select: { messages: true },
+        },
+      },
     });
   },
 
@@ -51,12 +55,26 @@ export const supportRepository = {
     if (priority) where.priority = priority;
 
     const skip = (page - 1) * limit;
-    return db.supportTicket.findMany({
-      where: where as any,
-      orderBy: { updatedAt: 'desc' },
-      skip,
-      take: limit,
-    });
+    const [tickets, total] = await Promise.all([
+      db.supportTicket.findMany({
+        where: where as any,
+        orderBy: { updatedAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      db.supportTicket.count({ where: where as any }),
+    ]);
+
+    return {
+      tickets,
+      total,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   },
 
   async update(ticketId: string, data: Prisma.SupportTicketUpdateInput) {
