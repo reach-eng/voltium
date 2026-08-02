@@ -12,11 +12,13 @@ const nextConfig = {
   },
   serverExternalPackages: ['pino', 'pino-pretty'],
   experimental: {
+    optimizePackageImports: ['lucide-react', 'date-fns', 'recharts', 'framer-motion'],
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       ...(process.env.STORAGE_HOST
         ? [{ protocol: 'https', hostname: process.env.STORAGE_HOST }]
