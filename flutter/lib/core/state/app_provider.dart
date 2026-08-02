@@ -104,8 +104,7 @@ class AppProvider extends ChangeNotifier {
         walletProvider = walletProvider ?? _createDefaultWalletProvider(),
         supportProvider = supportProvider ?? _createDefaultSupportProvider(),
         engagementProvider = engagementProvider ?? EngagementProvider(),
-        devicePolicyProvider =
-            devicePolicyProvider ?? DevicePolicyProvider(),
+        devicePolicyProvider = devicePolicyProvider ?? DevicePolicyProvider(),
         connectivityProvider = connectivityProvider ?? ConnectivityProvider();
 
   bool get isReady => _rider != null;

@@ -88,7 +88,9 @@ class AppStateView {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is AppStateView && other.state == state && other.rider == rider;
+    return other is AppStateView &&
+        other.state == state &&
+        other.rider == rider;
   }
 
   @override
