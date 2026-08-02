@@ -1,9 +1,24 @@
-# Voltium — Failed Tests (2026-08-01 snapshot, v2)
+# Voltium — Failed Tests (stale snapshot, 2026-08-01 v2)
 
 **Date:** 2026-08-01 04:30 IST
-**Test state:** **1830 passing, 35 failed, 3 skipped (1868 total)**
+**Test state at the time:** 1830 passing, 35 failed, 3 skipped (1868 total)
 **TypeScript:** 0 errors
 **Lint:** 0 errors, 8 warnings (pre-existing)
+
+---
+
+## ⚠️ This doc is stale — 2026-08-02 update
+
+Since this v2 snapshot was taken, the 35 listed failures were all resolved by `523913e` + `541c929` + the cache PRs. **Current test state as of 2026-08-02:**
+
+- **1887 unit tests pass, 0 fail, 3 skipped** (across 115 test files)
+- 0 TypeScript errors
+- 0 ESLint errors
+- `flutter analyze lib` — No issues found
+
+The 12-file breakdown below is preserved for historical context but is **no longer actionable**. If you came here looking for a failing test, the failing list is empty — go ship something else.
+
+---
 
 ## Progress this session
 
