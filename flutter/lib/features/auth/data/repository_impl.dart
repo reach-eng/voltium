@@ -1,3 +1,4 @@
+import 'package:voltium_rider/core/navigation/app_state.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_models.dart';
@@ -41,13 +42,19 @@ class AuthRepositoryImpl implements AuthRepository {
     if (!PlatformInfo.isWeb && secret != null && secret.isNotEmpty) {
       await SecureStorageService().writeFcmCommandSecret(secret);
     }
+    final isNewRider = response.isNewRider ?? false;
+    final nextAppState = isNewRider
+        ? const Onboarding(OnboardingStep.kycSubmit)
+        : const PreDashboard();
+
     return VerifyOtpResult(
       riderId: response.riderId ?? '',
       token: response.token ?? '',
       refreshToken: response.refreshToken ?? '',
-      isNewRider: response.isNewRider ?? false,
+      isNewRider: isNewRider,
       fcmCommandSecret: secret ?? '',
       rawJson: response.toJson(),
+      nextState: nextAppState,
     );
   }
 

@@ -7,6 +7,7 @@
 /// route the user to the correct onboarding or dashboard screen.
 library;
 
+import 'package:voltium_rider/core/navigation/app_state.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
 
@@ -71,6 +72,26 @@ class RiderLifecycleGate {
 
     // Everyone else goes to pre-dashboard (entry point)
     return LifecycleTarget.preDashboard;
+  }
+
+  /// Return explicit modern sealed [AppState] derived from rider lifecycle.
+  static AppState redirectAppState(RiderModel rider) {
+    final target = redirect(rider);
+    switch (target) {
+      case LifecycleTarget.terminated:
+        return const AccountClosed();
+      case LifecycleTarget.suspended:
+      case LifecycleTarget.preDashboard:
+        return const PreDashboard();
+      case LifecycleTarget.dashboard:
+        return const ActiveDashboard();
+      case LifecycleTarget.guarantorForm:
+        return const Onboarding(OnboardingStep.guarantor);
+      case LifecycleTarget.intent:
+        return const Onboarding(OnboardingStep.kycSubmit);
+      case LifecycleTarget.unknown:
+        return const AuthFlow(AuthStep.phoneEntry);
+    }
   }
 
   /// Check if the rider can access the main dashboard.

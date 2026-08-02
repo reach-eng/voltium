@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:voltium_rider/core/navigation/app_state.dart';
+import 'package:voltium_rider/features/auth/domain/entity.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
@@ -178,6 +180,69 @@ void main() {
       final riderActive =
           riderNew.copyWith(lifecycleStatus: 'ACTIVE', pickupDone: true);
       expect(RiderLifecycleGate.isOnboarding(riderActive), false);
+    });
+
+    test('redirectAppState returns explicit AppState subclasses', () {
+      final terminatedRider = RiderModel(
+        riderId: '1',
+        name: 'Test',
+        phone: '999',
+        accountStatus: AccountStatus.terminated,
+      );
+      expect(RiderLifecycleGate.redirectAppState(terminatedRider),
+          isA<AccountClosed>());
+
+      final guarantorRider = RiderModel(
+        riderId: '1',
+        name: 'Test',
+        phone: '999',
+        lifecycleStatus: 'PROFILE_SUBMITTED',
+        accountStatus: AccountStatus.active,
+      );
+      expect(RiderLifecycleGate.redirectAppState(guarantorRider),
+          const Onboarding(OnboardingStep.guarantor));
+
+      final activeRider = RiderModel(
+        riderId: '1',
+        name: 'Test',
+        phone: '999',
+        lifecycleStatus: 'ACTIVE',
+        accountStatus: AccountStatus.active,
+        pickupDone: true,
+      );
+      expect(RiderLifecycleGate.redirectAppState(activeRider),
+          isA<ActiveDashboard>());
+
+      final newRider = RiderModel(
+        riderId: '1',
+        name: 'Test',
+        phone: '999',
+        lifecycleStatus: 'NEW',
+        accountStatus: AccountStatus.active,
+      );
+      expect(RiderLifecycleGate.redirectAppState(newRider),
+          const Onboarding(OnboardingStep.kycSubmit));
+    });
+
+    test('VerifyOtpResult.determineAppState works correctly', () {
+      const resultNew = VerifyOtpResult(isNewRider: true);
+      expect(resultNew.determineAppState(),
+          const Onboarding(OnboardingStep.kycSubmit));
+
+      const resultExisting =
+          VerifyOtpResult(isNewRider: false, nextState: PreDashboard());
+      expect(resultExisting.determineAppState(), const PreDashboard());
+
+      final activeRider = RiderModel(
+        riderId: '1',
+        name: 'Test',
+        phone: '999',
+        lifecycleStatus: 'ACTIVE',
+        accountStatus: AccountStatus.active,
+        pickupDone: true,
+      );
+      expect(resultExisting.determineAppState(activeRider),
+          isA<ActiveDashboard>());
     });
   });
 }

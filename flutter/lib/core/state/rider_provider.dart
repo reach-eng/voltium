@@ -43,6 +43,7 @@ import 'package:voltium_rider/services/document_local_cache.dart';
 import 'package:voltium_rider/utils/lifecycle_rank.dart';
 
 import 'package:voltium_rider/app/app_state.dart';
+import 'package:voltium_rider/core/navigation/app_state.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 
 export 'rider_provider.dart' show DataState;
@@ -412,7 +413,13 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   }
 
   /// Delegate lifecycle routing to RiderLifecycleGate.
-  /// Deprecated: use RiderLifecycleGate.redirect() directly.
+  /// Returns modern sealed [AppState].
+  AppState routeAfterLoginAppState(RiderModel r) {
+    return RiderLifecycleGate.redirectAppState(r);
+  }
+
+  /// Delegate lifecycle routing to RiderLifecycleGate.
+  /// Deprecated: use RiderLifecycleGate.redirect() or redirectAppState() directly.
   AuthState routeAfterLogin(RiderModel r) {
     final target = RiderLifecycleGate.redirect(r);
     switch (target) {

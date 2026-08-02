@@ -11,6 +11,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/core/navigation/app_state.dart';
 import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 
@@ -219,6 +220,55 @@ void main() {
       notifier.transitionTo(const LegalGate());
       notifier.reset();
       expect(container.read(appStateProvider), isA<Splash>());
+    });
+
+    group('AuthState <-> AppState conversions (R4.4)', () {
+      test('appStateFromAuthState maps all AuthState enum values to AppState',
+          () {
+        expect(appStateFromAuthState(AuthState.splash), isA<Splash>());
+        expect(appStateFromAuthState(AuthState.legal), isA<LegalGate>());
+        expect(appStateFromAuthState(AuthState.permissions),
+            isA<PermissionsGate>());
+        expect(appStateFromAuthState(AuthState.login),
+            const AuthFlow(AuthStep.phoneEntry));
+        expect(appStateFromAuthState(AuthState.otp),
+            const AuthFlow(AuthStep.otpVerify));
+        expect(appStateFromAuthState(AuthState.userForm),
+            const Onboarding(OnboardingStep.kycSubmit));
+        expect(appStateFromAuthState(AuthState.guarantorForm),
+            const Onboarding(OnboardingStep.guarantor));
+        expect(
+            appStateFromAuthState(AuthState.dashboard), isA<ActiveDashboard>());
+        expect(
+            appStateFromAuthState(AuthState.preDashboard), isA<PreDashboard>());
+        expect(appStateFromAuthState(AuthState.accountClosed),
+            isA<AccountClosed>());
+      });
+
+      test(
+          'authStateFromAppState maps AppState sealed classes back to AuthState',
+          () {
+        expect(authStateFromAppState(const Splash()), AuthState.splash);
+        expect(authStateFromAppState(const LegalGate()), AuthState.legal);
+        expect(authStateFromAppState(const PermissionsGate()),
+            AuthState.permissions);
+        expect(authStateFromAppState(const AuthFlow(AuthStep.phoneEntry)),
+            AuthState.login);
+        expect(authStateFromAppState(const AuthFlow(AuthStep.otpVerify)),
+            AuthState.otp);
+        expect(
+            authStateFromAppState(const Onboarding(OnboardingStep.kycSubmit)),
+            AuthState.userForm);
+        expect(
+            authStateFromAppState(const Onboarding(OnboardingStep.guarantor)),
+            AuthState.guarantorForm);
+        expect(authStateFromAppState(const ActiveDashboard()),
+            AuthState.dashboard);
+        expect(authStateFromAppState(const PreDashboard()),
+            AuthState.preDashboard);
+        expect(authStateFromAppState(const AccountClosed()),
+            AuthState.accountClosed);
+      });
     });
   });
 }

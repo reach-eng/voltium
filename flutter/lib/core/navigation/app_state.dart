@@ -18,6 +18,8 @@
 // Until then, `lib/app/router.dart` continues to use the legacy
 // AuthState enum. Both will coexist during the migration window.
 
+import 'package:voltium_rider/app/app_state.dart';
+
 /// Thrown when a state transition is attempted that the state machine
 /// forbids (e.g. Splash → ActiveDashboard without going through
 /// AuthFlow + Onboarding).
@@ -178,4 +180,69 @@ List<AppState> allowedNextStates(AppState from) {
     const AccountClosed(),
   ];
   return candidates.where((c) => _isAllowed(from, c)).toList();
+}
+
+// ── AuthState <-> AppState conversion ──────────────────────────────────
+
+/// Converts legacy [AuthState] enum to modern [AppState] sealed class.
+AppState appStateFromAuthState(AuthState authState) {
+  switch (authState) {
+    case AuthState.splash:
+      return const Splash();
+    case AuthState.legal:
+      return const LegalGate();
+    case AuthState.permissions:
+      return const PermissionsGate();
+    case AuthState.login:
+      return const AuthFlow(AuthStep.phoneEntry);
+    case AuthState.otp:
+      return const AuthFlow(AuthStep.otpVerify);
+    case AuthState.userForm:
+      return const Onboarding(OnboardingStep.kycSubmit);
+    case AuthState.guarantorForm:
+      return const Onboarding(OnboardingStep.guarantor);
+    case AuthState.choosePlan:
+      return const Onboarding(OnboardingStep.planSelect);
+    case AuthState.pickupHub:
+    case AuthState.pickupVerification:
+    case AuthState.pickupSuccess:
+      return const Onboarding(OnboardingStep.deposit);
+    case AuthState.dashboard:
+      return const ActiveDashboard();
+    case AuthState.preDashboard:
+    case AuthState.intent:
+    case AuthState.planSuccess:
+    case AuthState.tlDetails:
+    case AuthState.endRental:
+    case AuthState.faq:
+    case AuthState.vehiclePhotos:
+    case AuthState.topUpAmount:
+    case AuthState.topUpUpi:
+    case AuthState.topUpProof:
+    case AuthState.topUpReceipt:
+    case AuthState.referralDetails:
+    case AuthState.legalPage:
+    case AuthState.myDocuments:
+      return const PreDashboard();
+    case AuthState.accountClosed:
+      return const AccountClosed();
+  }
+}
+
+/// Converts modern [AppState] sealed class to legacy [AuthState] enum.
+AuthState authStateFromAppState(AppState appState) {
+  return switch (appState) {
+    Splash() => AuthState.splash,
+    LegalGate() => AuthState.legal,
+    PermissionsGate() => AuthState.permissions,
+    AuthFlow(step: AuthStep.phoneEntry) => AuthState.login,
+    AuthFlow(step: AuthStep.otpVerify) => AuthState.otp,
+    Onboarding(step: OnboardingStep.kycSubmit) => AuthState.userForm,
+    Onboarding(step: OnboardingStep.guarantor) => AuthState.guarantorForm,
+    Onboarding(step: OnboardingStep.planSelect) => AuthState.choosePlan,
+    Onboarding(step: OnboardingStep.deposit) => AuthState.pickupHub,
+    PreDashboard() => AuthState.preDashboard,
+    ActiveDashboard() => AuthState.dashboard,
+    AccountClosed() => AuthState.accountClosed,
+  };
 }

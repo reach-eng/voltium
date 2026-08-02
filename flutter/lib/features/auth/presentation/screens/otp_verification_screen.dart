@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -159,6 +160,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               'referral_code': widget.referralCode!,
           }));
         }
+        final nextAppState = result.determineAppState(rider);
+        ref.read(appStateProvider.notifier).replaceState(nextAppState);
         widget.onNext?.call(isNewRider);
       }
     } catch (e) {
