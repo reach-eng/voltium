@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:voltium_rider/core/navigation/app_state.dart';
+import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 import 'package:voltium_rider/core/state/rider_provider.dart';
 import 'package:voltium_rider/features/wallet/presentation/providers/wallet_provider.dart'
     show filesRepositoryProvider;
@@ -240,6 +242,51 @@ void main() {
     test('validates state transitions during loading', () async {
       final validTransition = true;
       expect(validTransition, isTrue);
+    });
+  });
+
+  group('R4.5: AppState-scoped polling lifecycle', () {
+    test('startOnboardingPoll is ignored when AppState is AuthFlow or Splash',
+        () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      container
+          .read(appStateProvider.notifier)
+          .replaceState(const AuthFlow(AuthStep.phoneEntry));
+
+      notifier.startOnboardingPoll();
+      expect(container.read(riderProvider).isPollingTimedOut, isFalse);
+    });
+
+    test('startPostPickupPoll is ignored when AppState is Onboarding', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      final notifier = container.read(riderProvider.notifier);
+      container
+          .read(appStateProvider.notifier)
+          .replaceState(const Onboarding(OnboardingStep.kycSubmit));
+
+      notifier.startPostPickupPoll();
+      expect(container.read(riderProvider).dataState, DataState.initial);
+    });
+
+    test('AppState transitions automatically update polling policy', () {
+      final container = createContainer();
+      addTearDown(container.dispose);
+
+      container.read(riderProvider);
+      container
+          .read(appStateProvider.notifier)
+          .replaceState(const ActiveDashboard());
+      expect(container.read(appStateProvider), isA<ActiveDashboard>());
+
+      container
+          .read(appStateProvider.notifier)
+          .replaceState(const AccountClosed());
+      expect(container.read(appStateProvider), isA<AccountClosed>());
     });
   });
 }

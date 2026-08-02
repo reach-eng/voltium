@@ -44,6 +44,7 @@ import 'package:voltium_rider/utils/lifecycle_rank.dart';
 
 import 'package:voltium_rider/app/app_state.dart';
 import 'package:voltium_rider/core/navigation/app_state.dart';
+import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 import 'package:voltium_rider/features/auth/presentation/rider_lifecycle_gate.dart';
 
 export 'rider_provider.dart' show DataState;
@@ -144,6 +145,11 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     // can self-pause polling and cancel the device-data sync timer
     // when the app is backgrounded.
     WidgetsBinding.instance.addObserver(this);
+
+    // R4.5 — Scope polling & background timers strictly to active AppState screen lifecycles
+    ref.listen<AppState>(appStateProvider, (previous, next) {
+      _applyAppStatePollingPolicy(next);
+    });
 
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
@@ -306,7 +312,41 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
     }
   }
 
+  /// R4.5 — Scope polling & background timers strictly to active AppState screen lifecycles.
+  void _applyAppStatePollingPolicy(AppState appState) {
+    switch (appState) {
+      case Onboarding():
+      case PreDashboard():
+        _postPickupPoller.stop();
+        _stopDeviceDataSync();
+        final r = state.rider;
+        if (r != null && !r.pickupDone && _onboardingPollCount <= 240) {
+          startOnboardingPoll();
+        }
+        break;
+
+      case ActiveDashboard():
+        _onboardingPoller.stop();
+        startPostPickupPoll();
+        _startDeviceDataSync();
+        break;
+
+      case Splash():
+      case LegalGate():
+      case PermissionsGate():
+      case AuthFlow():
+      case AccountClosed():
+        _onboardingPoller.stop();
+        _postPickupPoller.stop();
+        _stopDeviceDataSync();
+        break;
+    }
+  }
+
   void startOnboardingPoll() {
+    if (!ref.mounted) return;
+    final appState = ref.read(appStateProvider);
+    if (appState is! Onboarding && appState is! PreDashboard) return;
     if (_onboardingPoller.isRunning) return;
     _onboardingPollCount = 0;
     state = state.copyWith(isPollingTimedOut: false);
@@ -319,6 +359,9 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   }
 
   void startPostPickupPoll() {
+    if (!ref.mounted) return;
+    final appState = ref.read(appStateProvider);
+    if (appState is! ActiveDashboard) return;
     if (_postPickupPoller.isRunning) return;
     _postPickupPoller.start();
   }
@@ -365,8 +408,12 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
   }
 
   void _startDeviceDataSync() {
+    if (!ref.mounted) return;
+    final appState = ref.read(appStateProvider);
+    if (appState is! ActiveDashboard) return;
     _locationSyncTimer?.cancel();
     _locationSyncTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (!ref.mounted) return;
       DeviceDataService().syncLocation(state.riderId ?? state.rider?.id ?? '');
     });
   }
@@ -455,7 +502,9 @@ class RiderNotifier extends Notifier<RiderState> with WidgetsBindingObserver {
       case AppLifecycleState.resumed:
         _onboardingPoller.active();
         _postPickupPoller.active();
-        if (rider != null &&
+        final currentAppState = ref.read(appStateProvider);
+        if (currentAppState is ActiveDashboard &&
+            rider != null &&
             (rider.accountStatus == AccountStatus.active ||
                 lifecycleRank(rider) >= 11)) {
           _startDeviceDataSync();

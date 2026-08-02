@@ -28,6 +28,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:voltium_rider/core/navigation/app_state.dart';
+import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/services/secure_storage_service.dart';
@@ -97,6 +99,14 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
       await _selfCheck();
       await _initLockState();
     });
+    // R4.5 — Scope security polling strictly to active screen states
+    ref.listen<AppState>(appStateProvider, (previous, next) {
+      if (next is! ActiveDashboard && next is! PreDashboard) {
+        _stopSecurityFlagsPoll();
+        _stopIntegrityCheck();
+      }
+    });
+
     ref.onDispose(() {
       _stopSecurityFlagsPoll();
       _stopIntegrityCheck();
@@ -221,6 +231,8 @@ class DevicePolicyNotifier extends Notifier<DevicePolicyState> {
   }
 
   void startSecurityFlagsPoll({required String riderId}) {
+    final appState = ref.read(appStateProvider);
+    if (appState is! ActiveDashboard && appState is! PreDashboard) return;
     _riderId = riderId;
     _stopSecurityFlagsPoll();
     _securityFlagsTimer = Timer.periodic(const Duration(seconds: 120), (_) {
