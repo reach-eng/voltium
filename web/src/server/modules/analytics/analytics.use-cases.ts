@@ -94,10 +94,18 @@ export const analyticsUseCases = {
           AND "updatedAt" >= ${startOfMonth})                                                      AS churned_this_month,
         (SELECT COUNT(*) FROM "vehicles")                                                          AS total_vehicles,
         (SELECT COUNT(*) FROM "vehicles" WHERE status = 'ACTIVE_RENTAL')                          AS active_vehicles,
+        -- PR-79: MRR is the sum of RENT_PAYMENT debits only.
+        -- The previous filter summed ALL APPROVED transactions,
+        -- which inflated MRR with deposits (CREDIT), reversals,
+        -- admin adjustments, and sign-up bonuses. Dashboard
+        -- now reports real revenue.
         (SELECT SUM("amountInPaise") FROM "transactions"
-          WHERE status = 'APPROVED' AND "createdAt" >= ${startOfMonth})                           AS current_month_revenue,
+          WHERE status = 'APPROVED' AND "type" = 'DEBIT'
+            AND "purpose" = 'RENT_PAYMENT'
+            AND "createdAt" >= ${startOfMonth})                                                   AS current_month_revenue,
         (SELECT SUM("amountInPaise") FROM "transactions"
-          WHERE status = 'APPROVED'
+          WHERE status = 'APPROVED' AND "type" = 'DEBIT'
+            AND "purpose" = 'RENT_PAYMENT'
             AND "createdAt" >= ${startOfLastMonth}
             AND "createdAt" <= ${endOfLastMonth})                                                  AS last_month_revenue
     `;
@@ -143,8 +151,15 @@ async function getMonthlyTrend(startDate: Date) {
   // `amount` was renamed to `amountInPaise` in migration 20260729150000.
   // The value is in paise (integer); divide by 100 only at the response
   // boundary to keep aggregation math exact.
+  // PR-79: same RENT_PAYMENT filter as MRR — only real rent revenue
+  // is in the trend, not deposits or admin credits.
   const transactions = await db.transaction.findMany({
-    where: { status: 'APPROVED', createdAt: { gte: startDate } },
+    where: {
+      status: 'APPROVED',
+      type: 'DEBIT',
+      purpose: 'RENT_PAYMENT',
+      createdAt: { gte: startDate },
+    },
     select: { amountInPaise: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
