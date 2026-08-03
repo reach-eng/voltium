@@ -134,17 +134,19 @@ export function RiderFiltersBar({
           KYC:
         </span>
         {KYC_FILTERS.map((s) => (
-          <button
+          <Button
             key={s}
+            variant="ghost"
+            size="sm"
             onClick={() => onKycFilterChange(s)}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight transition-all ${
+            className={`h-7 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight transition-all ${
               kycFilter === s
-                ? 'bg-primary text-primary-foreground'
+                ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
                 : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
             }`}
           >
             {s.replace('_', ' ')}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

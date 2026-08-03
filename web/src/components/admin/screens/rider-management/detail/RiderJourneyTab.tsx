@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { TabsContent } from '@/components/ui/tabs';
 import { DetailGroup } from '../helpers';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
@@ -60,11 +61,13 @@ export function RiderJourneyTab({
                   )}
                 </div>
                 {isEditing ? (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       setEditForm({ ...editForm, [step.key]: !editForm[step.key] })
                     }
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold transition-all ${editForm[step.key] ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20'}`}
+                    className={`h-7 px-2 py-1 rounded-md text-[10px] font-bold ${editForm[step.key] ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-600' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-600'}`}
                   >
                     {editForm[step.key] ? (
                       <CheckCircle2 className="w-3 h-3" />
@@ -72,7 +75,7 @@ export function RiderJourneyTab({
                       <Clock className="w-3 h-3" />
                     )}
                     {editForm[step.key] ? 'Done' : 'Pending'}
-                  </button>
+                  </Button>
                 ) : rider[step.key] ? (
                   <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10 w-fit gap-1 text-[10px]">
                     <CheckCircle2 className="w-3 h-3" /> Done

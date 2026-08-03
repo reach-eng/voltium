@@ -57,11 +57,13 @@ export default function RolePermissionManagement() {
           </CardHeader>
           <CardContent className="space-y-2 p-3 pt-0">
             {roles.map((r) => (
-              <button
+              <Button
                 key={r.name}
-                className={`w-full text-left p-3 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center justify-between transition-all ${
+                variant="ghost"
+                size="sm"
+                className={`w-full h-auto justify-between px-3 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider ${
                   selectedRole === r.name
-                    ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                    ? 'bg-primary/10 text-primary border-l-4 border-primary hover:bg-primary/10 hover:text-primary'
                     : 'hover:bg-muted/50 text-muted-foreground'
                 }`}
                 onClick={() => setSelectedRole(r.name)}
@@ -70,7 +72,7 @@ export default function RolePermissionManagement() {
                 <Badge variant="outline" className="text-[10px]">
                   {r.count}
                 </Badge>
-              </button>
+              </Button>
             ))}
           </CardContent>
         </Card>

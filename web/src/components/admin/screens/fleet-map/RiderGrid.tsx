@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Map } from 'lucide-react';
 import {
   getBatteryColor,
@@ -46,10 +47,11 @@ export function RiderGrid({ riders, onSelect }: RiderGridProps) {
               const isLowBattery = (rider.batteryLevel ?? 100) < LOW_BATTERY_THRESHOLD;
 
               return (
-                <button
+                <Button
+                  variant="outline"
                   key={rider.id}
                   onClick={() => onSelect(rider)}
-                  className={`relative group flex flex-col items-center justify-center p-2 min-h-[64px] rounded-xl border transition-all hover:scale-105 hover:shadow-md ${
+                  className={`relative group flex flex-col items-center justify-center p-2 min-h-[64px] h-auto rounded-xl border transition-all hover:scale-105 hover:shadow-md ${
                     isLowBattery
                       ? 'border-rose-500/30 bg-rose-500/5 hover:border-rose-500/50'
                       : status === 'active'
@@ -67,7 +69,7 @@ export function RiderGrid({ riders, onSelect }: RiderGridProps) {
                   <span className="text-[9px] font-medium truncate w-full text-center mt-1">
                     {(rider.fullName || rider.riderId).split(' ')[0]}
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>

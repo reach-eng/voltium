@@ -52,18 +52,20 @@ export function DeviceDataSubTabs({
       </div>
       <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/50">
         {SUB_TABS.map((tab) => (
-          <button
+          <Button
             key={tab.id}
+            variant="ghost"
+            size="sm"
             onClick={() => onChange(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-lg text-xs font-bold transition-all duration-300 ${
+            className={`flex-1 h-11 rounded-lg text-xs font-bold transition-all duration-300 ${
               active === tab.id
-                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02] hover:bg-primary hover:text-white'
                 : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
             }`}
           >
             <tab.icon className="w-3.5 h-3.5" />
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
     </>

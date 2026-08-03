@@ -48,8 +48,10 @@ export function FaqListItem({
         onClick={onToggleExpand}
       >
         <div className="flex flex-col gap-0.5">
-          <button
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
             disabled={isFirstOnPage}
             onClick={(e) => {
               e.stopPropagation();
@@ -57,9 +59,11 @@ export function FaqListItem({
             }}
           >
             <ChevronUp className="h-3.5 w-3.5" />
-          </button>
-          <button
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30"
             disabled={isLastOnPage}
             onClick={(e) => {
               e.stopPropagation();
@@ -67,7 +71,7 @@ export function FaqListItem({
             }}
           >
             <ChevronDown className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 min-w-0">

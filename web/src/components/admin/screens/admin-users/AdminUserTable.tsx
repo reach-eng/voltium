@@ -84,15 +84,17 @@ export function AdminUserTable({
             className="pl-10 h-11 rounded-xl border-muted-foreground/20 text-base shadow-sm"
           />
           {search && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 setSearch('');
                 setPage(1);
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
         <Button onClick={onAddClick} className="rounded-xl h-11 px-5">

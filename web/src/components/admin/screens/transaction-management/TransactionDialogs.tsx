@@ -325,12 +325,14 @@ export function UndoToast({
       >
         <Undo2 className="w-3.5 h-3.5 mr-1.5" /> Undo (Ctrl+Z)
       </Button>
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onClose}
-        className="p-1 rounded-md hover:bg-muted/20 text-muted-foreground hover:text-foreground transition-colors"
+        className="h-7 w-7 p-0 rounded-md hover:bg-muted/20 text-muted-foreground hover:text-foreground"
       >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }
