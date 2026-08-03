@@ -68,7 +68,7 @@ export function ReconciliationTable({
       <CardContent>
         <div className="rounded-xl border border-slate-100 overflow-hidden bg-slate-50/50">
           <Table>
-            <TableHeader className="bg-slate-50">
+            <TableHeader className="bg-background">
               <TableRow>
                 <TableHead className="font-bold text-slate-700">Report Date</TableHead>
                 <TableHead className="font-bold text-slate-700">Total Wallets</TableHead>

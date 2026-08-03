@@ -35,7 +35,7 @@ export function JobCard({ job, isRunning, anyJobRunning, onTrigger }: JobCardPro
       <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors duration-300 text-xl">
+            <div className="p-2 rounded-xl bg-background border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors duration-300 text-xl">
               {getJobIcon(job.id)}
             </div>
             <CardTitle className="text-base font-bold text-slate-800">{job.name}</CardTitle>
@@ -54,7 +54,7 @@ export function JobCard({ job, isRunning, anyJobRunning, onTrigger }: JobCardPro
           <p className="text-xs text-muted-foreground leading-relaxed h-10 overflow-hidden text-ellipsis">
             {job.purpose}
           </p>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-background p-2 rounded-lg border border-slate-100">
             <Clock className="h-3.5 w-3.5 text-indigo-500" />
             <span>{job.schedule}</span>
           </div>

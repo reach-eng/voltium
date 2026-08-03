@@ -52,7 +52,7 @@ function ReportInspectorEmpty() {
 function ReportInspectorBody({ report }: { report: ReconciliationReport }) {
   return (
     <div className="space-y-4">
-      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+      <div className="p-4 rounded-2xl bg-background border border-slate-100 space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>Report Date:</span>
           <span className="font-bold text-slate-800">{report.reportDate}</span>
