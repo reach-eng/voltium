@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
+import { hasPermission } from '@/lib/permissions';
 
 export async function GET() {
   try {
@@ -36,9 +37,17 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only SUPER_ADMIN can change maintenance mode in production.
-    if (session.role !== 'SUPER_ADMIN') {
-      return NextResponse.json({ error: 'Forbidden: SUPER_ADMIN required' }, { status: 403 });
+    // R4.3 / audit: was `session.role !== 'SUPER_ADMIN'` which is
+    // always true (session.role is the user type 'admin'/'rider', the
+    // role name lives in session.adminRole). The old check blocked
+    // every real SUPER_ADMIN and would invert to a privilege hole if
+    // "fixed" naively. Use hasPermission() which resolves the right
+    // field.
+    if (!hasPermission(session, 'settings_manage')) {
+      return NextResponse.json(
+        { error: 'Forbidden: settings_manage permission required' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

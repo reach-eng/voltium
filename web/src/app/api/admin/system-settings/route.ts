@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { withApiHandler } from '@/lib/api-handler';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * Admin System Settings API
@@ -77,9 +78,13 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
     return errors.unauthorized('Unauthorized');
   }
 
-  // Only SUPER_ADMIN can edit system settings
-  if (session.role !== 'SUPER_ADMIN') {
-    return errors.forbidden('Forbidden: SUPER_ADMIN required');
+  // R4.3 / audit: was `session.role !== 'SUPER_ADMIN'` which is
+  // always true (session.role is the user type 'admin'/'rider', the
+  // role name lives in session.adminRole). Use hasPermission() which
+  // resolves the right field and respects the policy matrix in
+  // permissions-roles.ts.
+  if (!hasPermission(session, 'settings_manage')) {
+    return errors.forbidden('Forbidden: settings_manage permission required');
   }
 
   const body = await request.json();
