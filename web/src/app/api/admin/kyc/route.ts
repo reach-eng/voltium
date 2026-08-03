@@ -6,6 +6,8 @@ import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { kycRepository } from '@/server/modules/kyc/kyc.repository';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
+import { approveKyc } from '@/server/modules/kyc/use-cases/approveKyc';
+import { KycApproveError } from '@/server/modules/kyc/use-cases/errors';
 import { withApiHandler } from '@/lib/api-handler';
 
 export const GET = withApiHandler(async (request: NextRequest) => {
@@ -84,13 +86,29 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const action = String(body.action || body.decision || '').toUpperCase();
   if (!riderId || !action) return errors.badRequest('riderId and action are required');
 
-  const result = await kycUseCases.reviewKyc(riderId, session.adminId || '', {
-    reviewerId: session.adminId || '',
-    action: action as any,
-    rejectionReason: body.rejectionReason || body.reason,
-    infoRequest: body.infoRequest || body.message,
-    editableFields: body.editableFields,
-  });
+  // PR-26b: route APPROVE through the dedicated `approveKyc` use case so the
+  // cross-entity invariants (KYC must be SUBMITTED) and audit log are
+  // enforced in one place. REJECT and REQUEST_INFO still go through the
+  // shared `kycUseCases.reviewKyc` path.
+  let result;
+  if (action === 'APPROVE') {
+    try {
+      result = await approveKyc(riderId, session.adminId || '');
+    } catch (err) {
+      if (err instanceof KycApproveError) {
+        return errors.badRequest(err.message);
+      }
+      throw err;
+    }
+  } else {
+    result = await kycUseCases.reviewKyc(riderId, session.adminId || '', {
+      reviewerId: session.adminId || '',
+      action: action as any,
+      rejectionReason: body.rejectionReason || body.reason,
+      infoRequest: body.infoRequest || body.message,
+      editableFields: body.editableFields,
+    });
+  }
 
   // Approve / reject changes the KYC queue — clear cached lists so the next GET
   // reflects the new status instead of waiting up to 5s for the TTL to expire.
