@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
 import { success, errors } from '@/lib/api-response';
 import { getAdminSession } from '@/lib/get-session';
 import { hasPermission } from '@/lib/auth';
@@ -9,13 +8,7 @@ import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.servi
 import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { randomUUID } from 'crypto';
-
-const adjustSchema = z.object({
-  amount: z.number().positive(),
-  type: z.enum(['CREDIT', 'DEBIT']),
-  reason: z.string().optional(),
-  proofUrl: z.string().optional(),
-});
+import { adminWalletAdjustSchema } from '@/lib/validators/admin';
 
 export async function POST(
   req: NextRequest,
@@ -23,7 +16,7 @@ export async function POST(
 ) {
   const resolvedParams = await params;
   const riderDbId = resolvedParams.id;
-  
+
   const session = await getAdminSession();
   if (!session) return errors.unauthorized();
   if (!hasPermission(session, 'riders_update')) {
@@ -32,7 +25,7 @@ export async function POST(
 
   try {
     const body = await req.json();
-    const validation = adjustSchema.safeParse(body);
+    const validation = adminWalletAdjustSchema.safeParse(body);
     if (!validation.success) return errors.validation(validation.error.message);
 
     const { amount, type, reason, proofUrl } = validation.data;

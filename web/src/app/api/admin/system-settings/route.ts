@@ -5,6 +5,7 @@ import { createAuditLog } from '@/lib/audit-log';
 import { withApiHandler } from '@/lib/api-handler';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { hasPermission } from '@/lib/permissions';
+import { updateSystemSettingSchema } from '@/lib/validators/admin';
 
 /**
  * Admin System Settings API
@@ -88,11 +89,12 @@ export const PUT = withApiHandler(async (request: NextRequest) => {
   }
 
   const body = await request.json();
-  const { key, value } = body;
-
-  if (!key || value === undefined) {
-    return errors.badRequest('key and value are required');
+  const validation = updateSystemSettingSchema.safeParse(body);
+  if (!validation.success) {
+    return errors.validation(validation.error.message);
   }
+
+  const { key, value } = validation.data;
 
   // Check if setting exists and is editable
   const existing = await db.systemSetting.findUnique({ where: { key } });

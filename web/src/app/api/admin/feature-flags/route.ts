@@ -6,6 +6,7 @@ import { hasPermission } from '@/lib/auth';
 import { getAllFeatureFlags, updateFeatureFlag } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
 import { invalidateCache } from '@/lib/cache';
+import { updateFeatureFlagSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -31,28 +32,10 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { key, value } = body;
+    const validation = updateFeatureFlagSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
-    if (!key || typeof value === 'undefined') {
-      return errors.badRequest('Key and value are required');
-    }
-
-    const validKeys = [
-      'enableReferralSystem',
-      'enableRewardsSystem',
-      'enableVehicleAssignment',
-      'enableKYCVerification',
-      'enableGuarantorRequirement',
-      'enableDynamicPricing',
-      'enableOfflineMode',
-      'enableChatSupport',
-      'enablePushNotifications',
-      'maxUploadSizeMb',
-    ];
-
-    if (!validKeys.includes(key)) {
-      return errors.badRequest(`Invalid feature flag key: ${key}`);
-    }
+    const { key, value } = validation.data;
 
     const updated = await updateFeatureFlag(key, String(value));
     if (!updated) {

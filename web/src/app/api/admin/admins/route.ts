@@ -8,6 +8,7 @@ import { hasPermission } from '@/lib/auth';
 import { adminUseCases } from '@/server/modules/admin/admin.use-cases';
 import type { AdminRole } from '@/server/modules/admin/admin.types';
 import type { UpdateAdminParams } from '@/server/modules/admin/admin.repository';
+import { createAdminSchema, updateAdminSchema } from '@/lib/validators/admin';
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();
@@ -43,25 +44,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, email, password, role } = body;
+    const validation = createAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
-    if (!name || !email || !password)
-      return errors.badRequest('name, email, password are required');
-    if (password.length < 8) return errors.badRequest('Password must be at least 8 characters');
+    const { name, email, password, role, permissions: rawPermissions } = validation.data;
 
-    // Validate role is a known admin role — never default to SUPER_ADMIN
-    const allowedRoles = ['SUPER_ADMIN', 'OPERATIONS_ADMIN', 'KYC_REVIEWER', 'FINANCE_ADMIN', 'SUPPORT_AGENT', 'HUB_MANAGER', 'FLEET_MANAGER', 'TEAM_LEADER', 'READ_ONLY'];
-    const validatedRole = role && allowedRoles.includes(role) ? role : 'READ_ONLY';
-
-    // Validate permissions against known keys
+    // Validate permissions against known keys (server-side allowlist)
     const { PERMISSION_DESCRIPTORS } = await import('@/lib/permissions');
     const validPermissionKeys = PERMISSION_DESCRIPTORS.map(p => p.key) as string[];
-    const permissions = Array.isArray(body.permissions)
-      ? body.permissions.filter((p: unknown) => typeof p === 'string' && validPermissionKeys.includes(p))
-      : [];
+    const permissions = (rawPermissions ?? []).filter(
+      (p: unknown) => typeof p === 'string' && validPermissionKeys.includes(p)
+    );
 
     const result = await adminUseCases.createAdmin(
-      { name, email, password, role: validatedRole, permissions },
+      { name, email, password, role: (role as AdminRole) ?? 'READ_ONLY', permissions },
       session.adminId ?? session.riderDbId ?? 'system'
     );
 
@@ -81,19 +77,19 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, password, ...data } = body;
+    const validation = updateAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
-    if (!id) return errors.badRequest('id is required');
+    const { id, password, email, name, role, permissions, isActive } = validation.data;
 
     const updateData: UpdateAdminParams = {
-      email: typeof data.email === 'string' ? data.email : undefined,
-      name: typeof data.name === 'string' ? data.name : undefined,
-      role: typeof data.role === 'string' ? (data.role as AdminRole) : undefined,
-      permissions: Array.isArray(data.permissions) ? data.permissions : undefined,
-      isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
+      email,
+      name,
+      role: role as AdminRole | undefined,
+      permissions,
+      isActive,
     };
     if (password) {
-      if (password.length < 8) return errors.badRequest('Password must be at least 8 characters');
       updateData.password = await hashPassword(password);
     }
 

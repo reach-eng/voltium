@@ -1,11 +1,11 @@
 import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
-import { validateBody, updateSettingsSchema } from '@/lib/validators';
 import { logger } from '@/lib/logger';
 import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { invalidateCache } from '@/lib/cache';
 import { settingUseCases } from '@/server/modules/settings/setting.use-cases';
+import { updateSettingsAdminSchema } from '@/lib/validators/admin';
 
 export async function GET() {
   const session = await requireAdmin();
@@ -28,8 +28,8 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const validation = validateBody(updateSettingsSchema, body);
-    if (!validation.success) return errors.validation(validation.error!);
+    const validation = updateSettingsAdminSchema.safeParse(body);
+    if (!validation.success) return errors.validation(validation.error.message);
 
     const results = await settingUseCases.update(
       validation.data,
