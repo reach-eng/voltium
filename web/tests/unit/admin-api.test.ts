@@ -229,3 +229,53 @@ describe('adminApi response shape', () => {
     expect(result.error).toBe('network down');
   });
 });
+
+describe('adminApi x-request-id (PR-41, N8)', () => {
+  // UUID v4 shape: 8-4-4-4-12 hex chars.
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  it('sends an x-request-id header on GET requests', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.get('/api/admin/riders');
+    expect(fetchCalls).toHaveLength(1);
+    const headers = (fetchCalls[0].init?.headers ?? {}) as Record<string, string>;
+    expect(headers['x-request-id']).toMatch(UUID_RE);
+  });
+
+  it('sends an x-request-id header on POST/PUT/DELETE', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.post('/api/admin/riders', { phone: '9999999999' });
+    await adminApi.put('/api/admin/riders/abc', { status: 'APPROVED' });
+    await adminApi.del('/api/admin/riders/abc');
+
+    expect(fetchCalls).toHaveLength(3);
+    for (const call of fetchCalls) {
+      const headers = (call.init?.headers ?? {}) as Record<string, string>;
+      expect(headers['x-request-id']).toMatch(UUID_RE);
+    }
+  });
+
+  it('uses a distinct request id for each fetch (no dedup collision)', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.get('/api/admin/riders');
+    await adminApi.get('/api/admin/riders'); // fires a new fetch (PR-30 dedup is per in-flight, not per URL forever)
+    expect(fetchCalls).toHaveLength(2);
+    const a = ((fetchCalls[0].init?.headers ?? {}) as Record<string, string>)['x-request-id'];
+    const b = ((fetchCalls[1].init?.headers ?? {}) as Record<string, string>)['x-request-id'];
+    expect(a).toMatch(UUID_RE);
+    expect(b).toMatch(UUID_RE);
+    expect(a).not.toEqual(b);
+  });
+
+  it('does not allow caller-supplied headers to strip x-request-id', async () => {
+    const { adminApi } = await getFreshApi();
+    await adminApi.get('/api/admin/riders', {
+      headers: { 'x-request-id': 'caller-supplied-should-be-overridden' },
+    });
+    const headers = (fetchCalls[0].init?.headers ?? {}) as Record<string, string>;
+    // The generated UUID should win (or at least be present); caller cannot
+    // force a server-log collision.
+    expect(headers['x-request-id']).not.toBe('caller-supplied-should-be-overridden');
+    expect(headers['x-request-id']).toMatch(UUID_RE);
+  });
+});

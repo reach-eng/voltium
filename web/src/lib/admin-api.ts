@@ -97,10 +97,25 @@ async function runRequest<T>(
   fetchOptions: FetchOptions,
   quiet?: boolean
 ): Promise<{ data?: T; pagination?: { totalPages: number; total: number; page: number; limit: number }; error?: string; success: boolean }> {
+  // Generate a per-request ID so server logs (which read x-request-id via
+  // withApiHandler) can be correlated to client-side errors. crypto.randomUUID
+  // is available in all modern browsers and Node 19+; the 'use client' module
+  // only runs in the browser, so this is safe.
+  const requestId = crypto.randomUUID();
+
   try {
+    // Pull `headers` out of fetchOptions so the trailing `...fetchOptions`
+    // spread below doesn't replace the headers object we just built.
+    const { headers: callerHeaders, ...restFetchOptions } = fetchOptions;
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(fetchOptions.headers as Record<string, string>) },
-      ...fetchOptions,
+      headers: {
+        'Content-Type': 'application/json',
+        // Caller-supplied headers first, then x-request-id overrides last.
+        // This prevents a caller from spoofing the trace id in server logs.
+        ...(callerHeaders as Record<string, string> | undefined),
+        'x-request-id': requestId,
+      },
+      ...restFetchOptions,
     });
 
     let json: ApiResponse<T> | null = null;
@@ -120,6 +135,7 @@ async function runRequest<T>(
           url,
           status: res.status,
           error: errorMessage,
+          requestId,
         });
       }
 
@@ -143,7 +159,7 @@ async function runRequest<T>(
   } catch (err) {
     const errorMessage = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : 'Network error';
     if (!quiet) {
-      logger.error('API network error', { url, error: errorMessage });
+      logger.error('API network error', { url, error: errorMessage, requestId });
     }
     return { success: false, error: errorMessage };
   }
