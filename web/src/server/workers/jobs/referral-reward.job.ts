@@ -42,8 +42,13 @@ export const referralRewardJob = {
       return result;
     }
 
-    // Credit reward points to referrer (e.g., ₹100 in paise)
-    const REWARD_AMOUNT_PAISE = 10000; // ₹100
+    // PR-77: read reward amount from settings so the use-case path
+    // and the job path pay the same amount. The previous hardcoded
+    // ₹100 (10000 paise) was lower than the use-case's default
+    // ₹200 (20000 paise), creating a divergence if both paths
+    // were ever wired. Default to 20000 paise (₹200) to match.
+    const rewardSetting = await db.systemSetting.findUnique({ where: { key: 'referralBonus' } });
+    const REWARD_AMOUNT_PAISE = rewardSetting ? parseInt(rewardSetting.value) || 20000 : 20000;
     const idempotencyKey = `referral:${referrer.id}:${referredRiderId}`;
 
     try {
