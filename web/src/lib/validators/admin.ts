@@ -68,13 +68,15 @@ export const adminRiderUpdateSchema = z
 // Used by `web/src/app/api/admin/riders/[id]/wallet-adjust/route.ts`.
 // `reason` is required for DEBIT (enforced at the route level because
 // the discriminator check needs the parsed type). `proofUrl` is
-// required for CREDIT (same).
+// required for CREDIT (same). `coAdminId` is required for DEBIT
+// amounts above `LARGE_DEBIT_THRESHOLD_INR` (PR-89 / API N6).
 export const adminWalletAdjustSchema = z
   .object({
     type: z.enum(['CREDIT', 'DEBIT']),
     amount: z.number().positive(),
     reason: z.string().min(1).max(500).optional(),
     proofUrl: z.string().url().optional(),
+    coAdminId: z.string().min(1).max(100).optional(),
   })
   .strict();
 

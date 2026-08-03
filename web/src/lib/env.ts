@@ -78,6 +78,12 @@ export const envSchema = z.object({
     .string()
     .default('true')
     .transform((v) => v === 'true'),
+
+  // PR-89 (API N6): cap admin wallet-adjust DEBIT amounts and require a
+  // second admin to co-approve large debits. Both are INR; the route
+  // multiplies by 100 to get paise.
+  MAX_ADMIN_DEBIT_INR: z.coerce.number().int().positive().default(50000),
+  LARGE_DEBIT_THRESHOLD_INR: z.coerce.number().int().positive().default(10000),
 }).refine(
   (data) => {
     const isProd = data.APP_ENV === 'production' || data.APP_ENV === 'staging' || data.NODE_ENV === 'production';
