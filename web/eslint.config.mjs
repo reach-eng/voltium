@@ -99,6 +99,8 @@ const eslintConfig = [
       '.next/**',
       'out/**',
       'build/**',
+      'coverage/**',
+      'coverage',
       'dist/**',
       'next-env.d.ts',
       'examples/**',
@@ -119,6 +121,15 @@ const eslintConfig = [
       '*.ts',
       'public/**',
     ],
+  },
+  {
+    // Next.js App Router uses src/app/layout.tsx, not pages/_document.js.
+    // The no-page-custom-font rule is a false positive for the App Router
+    // when the only <link rel="stylesheet"> in <head> targets Google Fonts.
+    files: ['src/app/layout.tsx'],
+    rules: {
+      '@next/next/no-page-custom-font': 'off',
+    },
   },
   {
     rules: {
