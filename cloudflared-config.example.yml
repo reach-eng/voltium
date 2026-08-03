@@ -1,10 +1,17 @@
 tunnel: <YOUR_TUNNEL_UUID>
 credentials-file: /root/.cloudflared/<YOUR_TUNNEL_UUID>.json
 
+# PR-68c — Retry transient connection failures up to 5 times before
+# exiting. cloudflared default is 0 (no retries), which means a single
+# dropped TCP connection kills the tunnel. 5 retries with exponential
+# backoff covers ~30 seconds of network blips without operator
+# intervention.
+retries: 5
+
 ingress:
   # Map the staging API to local port 8082
   - hostname: api-staging.yourdomain.com
     service: http://localhost:8082
-  
+
   # Catch-all rule (required by cloudflared)
   - service: http_status:404

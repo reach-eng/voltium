@@ -36,6 +36,12 @@ if [ "${#SQL_FILES[@]}" -eq 0 ]; then
 fi
 
 UNSAFE_PATTERNS=("DROP COLUMN" "DROP TABLE" "TRUNCATE" "ALTER TABLE.*DROP")
+# PR-68b — warn (not error) on ADD COLUMN NOT NULL without DEFAULT.
+# A NOT NULL column added without a DEFAULT scans the entire table to
+# backfill. For a Transaction table with 1M rows, that's a 30-minute
+# write-lock. Use `::warning::` (not `::error::`) since some patterns are
+# safe (e.g., adding to a small lookup table or with concurrent backfill).
+WARN_PATTERNS=("ALTER TABLE.*ADD COLUMN.*NOT NULL[^,)]*\)")
 FAILED=0
 
 for pattern in "${UNSAFE_PATTERNS[@]}"; do
@@ -48,6 +54,19 @@ for pattern in "${UNSAFE_PATTERNS[@]}"; do
       echo "$matches"
       echo "::error:: Potentially destructive migration query detected matching pattern '$pattern' in $file"
       FAILED=1
+    fi
+  done
+done
+
+# Warning patterns — printed but don't fail the check.
+for pattern in "${WARN_PATTERNS[@]}"; do
+  for file in "${SQL_FILES[@]}"; do
+    cleaned_sql=$(sed -E 's/--.*$//g' "$file" | tr '\n' '\r' | sed -E 's/\/\*.*?\*\///g' | tr '\r' '\n')
+    matches=$(echo "$cleaned_sql" | grep -inE "$pattern" || true)
+    if [ -n "$matches" ]; then
+      echo "In $file matching '$pattern':"
+      echo "$matches"
+      echo "::warning:: ADD COLUMN NOT NULL without DEFAULT — large tables will lock for backfill. Consider adding a DEFAULT or using a multi-step migration."
     fi
   done
 done
