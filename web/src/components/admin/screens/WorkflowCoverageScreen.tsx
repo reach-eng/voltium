@@ -114,6 +114,11 @@ export default function WorkflowCoverageScreen() {
     fetchHealthData();
   }, []);
 
+  // Dev-only screen: short-circuit in non-dev to avoid bundling + fetching
+  // the workflow coverage data in production. Hooks above must still run
+  // unconditionally to satisfy the Rules of Hooks.
+  if (process.env.APP_ENV !== 'development') return null;
+
   const fetchHealthData = async () => {
     setLoading(true);
     try {
