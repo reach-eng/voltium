@@ -1,8 +1,9 @@
 import { logger } from './logger';
+import { smsBreaker, CircuitBreakerError } from './circuit-breaker';
 
 const SMS_FETCH_TIMEOUT_MS = 10_000;
 
-export async function sendSms(phone: string, message: string): Promise<boolean> {
+async function sendSmsRaw(phone: string, message: string): Promise<boolean> {
   const provider = process.env.SMS_PROVIDER || 'mock';
 
   if (provider === 'msg91') {
@@ -41,7 +42,7 @@ export async function sendSms(phone: string, message: string): Promise<boolean> 
       return true;
     } catch (err: unknown) {
       logger.error('[SMS] MSG91 provider failed', { error: (err instanceof Error ? err.message : String(err)), phone: phone.slice(-4) });
-      return false;
+      throw err;
     }
   }
 
@@ -51,4 +52,17 @@ export async function sendSms(phone: string, message: string): Promise<boolean> 
 
   logger.info('[SMS-MOCK] Would send SMS', { phone: phone.slice(-4) });
   return true;
+}
+
+export async function sendSms(phone: string, message: string): Promise<boolean> {
+  try {
+    return await smsBreaker.execute(() => sendSmsRaw(phone, message));
+  } catch (err: unknown) {
+    if (err instanceof CircuitBreakerError) {
+      logger.warn('[SMS] Circuit breaker OPEN — skipping send', { phone: phone.slice(-4) });
+    } else {
+      logger.error('[SMS] sendSms failed', { error: (err instanceof Error ? err.message : String(err)) });
+    }
+    return false;
+  }
 }
