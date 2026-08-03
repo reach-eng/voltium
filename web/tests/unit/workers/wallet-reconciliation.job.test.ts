@@ -52,4 +52,37 @@ describe('Wallet Reconciliation Job', () => {
     expect(ourWallet?.drift).toBe(500);
     expect(result.totalDrift).toBeGreaterThanOrEqual(500);
   });
+
+  // PR-70: regression guard for the post-rename drift calculation.
+  // Builds 3 ledger entries that sum to 1000 INR (100000 paise) and verifies
+  // the per-wallet drift is zero. If a future refactor reintroduces a stale
+  // `Transaction.amount` / `Wallet.balance` column reference, the test will
+  // surface the runtime throw via the live Prisma path.
+  it('PR-70: computes drift correctly across 3 transactions totaling 1000 INR', async () => {
+    const riderId = uuidv4();
+    await testDb.rider.create({
+      data: {
+        id: riderId,
+        riderId: uuidv4(),
+        referralCode: uuidv4().slice(0, 8),
+        phone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      },
+    });
+    // Wallet = 100000 paise (1000 INR). Ledger: +50000 TOP_UP, -20000 RENT_PAYMENT, +70000 REWARD = 100000 paise.
+    const wallet = await testDb.wallet.create({ data: { riderId, balanceInPaise: 100000 } });
+    await testDb.walletLedger.create({
+      data: { walletId: wallet.id, riderId, entryType: 'CREDIT', amountInPaise: 50000, category: 'TOP_UP', balanceAfter: 50000 },
+    });
+    await testDb.walletLedger.create({
+      data: { walletId: wallet.id, riderId, entryType: 'DEBIT', amountInPaise: 20000, category: 'RENT_PAYMENT', balanceAfter: 30000 },
+    });
+    await testDb.walletLedger.create({
+      data: { walletId: wallet.id, riderId, entryType: 'CREDIT', amountInPaise: 70000, category: 'REWARD', balanceAfter: 100000 },
+    });
+
+    const result = await runWalletReconciliation();
+    const ourWallet = result.driftedRiders.find((r) => r.riderId === riderId);
+    expect(ourWallet).toBeUndefined(); // 100000 - 100000 = 0 drift → healthy
+    expect(result.healthy).toBeGreaterThanOrEqual(1);
+  });
 });
