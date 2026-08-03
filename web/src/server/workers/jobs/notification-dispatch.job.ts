@@ -113,13 +113,35 @@ export const notificationDispatchJob = {
       case 'WALLET_TOPUP_REJECTED':
       case 'DEPOSIT_APPROVED':
       case 'DEPOSIT_REJECTED':
-        // These are surfaced through the in-app notification center via
-        // the Notification table; the existing wallet/deposit use-cases
-        // also call notificationService directly. We rely on that path
-        // for delivery; this job exists to ensure the OutboxEvent is
-        // acked (so it doesn't pile up in PENDING) and to provide a
-        // single audit trail.
+      case 'KYC_APPROVED':
+      case 'KYC_REJECTED': {
+        // PR-78: actually persist a Notification row so the in-app
+        // notification center has a record. The previous code returned
+        // `delivered:true, channel:'in-app'` without a side effect,
+        // so the OutboxEvent was acked but the rider never saw
+        // anything if the in-request `notificationService` call failed.
+        const notifType = String(payload.type);
+        try {
+          await db.notification.create({
+            data: {
+              riderId: payload.riderId as string,
+              type: notifType,
+              title: (payload.title as string) ?? notifType.replace(/_/g, ' '),
+              body: (payload.body as string) ?? null,
+              channel: 'in-app',
+              payload: JSON.stringify(payload),
+            },
+          });
+        } catch (err) {
+          logger.warn('[NotificationDispatch] Failed to persist in-app notification', {
+            eventType: payload.type,
+            riderId: payload.riderId,
+            err,
+          });
+          // Fall through — the OutboxEvent is acked either way.
+        }
         return { delivered: true, channel: 'in-app' };
+      }
 
       case 'SUPPORT_REPLY':
         await notificationService.notifySupportReply(
