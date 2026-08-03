@@ -88,11 +88,18 @@ export const referralRewardJob = {
         details: { amountPaise: REWARD_AMOUNT_PAISE, referredRiderId },
       }).catch(() => {});
 
-      await OutboxService.emit(OutboxEventTypes.REFERRAL_REWARD, {
-        referrerId: referrer.id,
-        amountPaise: REWARD_AMOUNT_PAISE,
-        referredRiderId,
-      }).catch(() => {});
+      // PR-75: referral reward is interactive.
+      await OutboxService.emit(
+        OutboxEventTypes.REFERRAL_REWARD,
+        {
+          referrerId: referrer.id,
+          amountPaise: REWARD_AMOUNT_PAISE,
+          referredRiderId,
+        },
+        3,
+        undefined,
+        'interactive'
+      ).catch(() => {});
 
       logger.info('[ReferralRewardJob] Reward credited', {
         referrerId: referrer.id,

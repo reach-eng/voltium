@@ -108,12 +108,21 @@ export const rentRemindersJob = {
         result.overdueDetected++;
 
         // Emit outbox event for overdue
-        await OutboxService.emit(OutboxEventTypes.RENT_OVERDUE, {
-          riderId: rider.id,
-          leaseId: lease.id,
-          amountDue: rentAmount,
-          balance,
-        }).catch(() => {});
+        // PR-75: rent overdue is rider-visible; classify as
+        // interactive so the (currently-unwired) consumer of
+        // RENT_OVERDUE doesn't get starved by background work.
+        await OutboxService.emit(
+          OutboxEventTypes.RENT_OVERDUE,
+          {
+            riderId: rider.id,
+            leaseId: lease.id,
+            amountDue: rentAmount,
+            balance,
+          },
+          3,
+          undefined,
+          'interactive'
+        ).catch(() => {});
 
         // Send overdue notification
         await notificationService

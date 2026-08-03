@@ -46,12 +46,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Process pending jobs from the PostgreSQL-backed outbox queue
-    await JobQueue.processJobs(OutboxEventTypes.SMS_SEND, async (job) => {
-      const { phone, message } = job.payload as { phone: string; message: string };
-      const success = await sendSms(phone, message);
-      if (!success) throw new Error('SMS Provider failure');
-    });
+    // PR-75: SMS dispatch is classified as 'interactive' — a 1-second
+    // job that must not be starved by a 10-minute background cleanup.
+    // The claim query filters to priority='interactive' so this route
+    // can never pick up a background event. The orchestrator
+    // (web/src/server/workers/index.ts) still drives SMS dispatch in
+    // the normal flow; this route is the manual trigger / fallback.
+    await JobQueue.processJobs(
+      OutboxEventTypes.SMS_SEND,
+      async (job) => {
+        const { phone, message } = job.payload as { phone: string; message: string };
+        const success = await sendSms(phone, message);
+        if (!success) throw new Error('SMS Provider failure');
+      },
+      5,
+      'interactive'
+    );
 
     return NextResponse.json({ success: true, processedAt: new Date().toISOString() });
   } catch (error) {

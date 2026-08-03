@@ -52,11 +52,19 @@ export const authUseCases = {
     const flags = await getFeatureFlags();
     const message = `Your Voltium verification code is: ${otp}. Do not share this code with anyone.`;
 
-    await OutboxService.emit(OutboxEventTypes.SMS_SEND, {
-      phone,
-      message,
-      channel: flags.enablePushNotifications ? 'push' : 'sms',
-    });
+    await OutboxService.emit(
+      OutboxEventTypes.SMS_SEND,
+      {
+        phone,
+        message,
+        channel: flags.enablePushNotifications ? 'push' : 'sms',
+      },
+      3,
+      undefined,
+      // PR-75: SMS dispatch is interactive — a 1-second job that must
+      // not be starved by a 10-minute background cleanup.
+      'interactive'
+    );
 
     logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
 

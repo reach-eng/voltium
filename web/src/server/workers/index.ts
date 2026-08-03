@@ -36,12 +36,21 @@ import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
 // ---------------------------------------------------------------------------
 
 type JobProcessor = (job: any) => Promise<any>;
+type OutboxPriority = 'interactive' | 'background';
 
 interface WorkerDefinition {
   jobType: string;
   processor: JobProcessor;
   concurrency: number;
   description: string;
+  /**
+   * PR-75: priority split. 'interactive' workers are polled first
+   * and are not blocked by background work. 'background' workers
+   * are gated to run only when no interactive events are PENDING
+   * (checked on each poll cycle). See AUDIT_BACKEND_2026-08-03.md
+   * §2.A.N2 and AUDIT_FIX_PLAN_2026-08-03.md PR-75 for context.
+   */
+  priority: OutboxPriority;
 }
 
 const WORKERS: WorkerDefinition[] = [
@@ -51,6 +60,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: reconciliationJob.process,
     concurrency: 1,
     description: 'Wallet reconciliation — triggered by topup approval/rejection',
+    priority: 'background',
   },
   {
     // BLOCKER 1.4: per-event notification dispatch (KYC, topup, support,
@@ -61,6 +71,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: notificationDispatchJob.process,
     concurrency: 3,
     description: 'Push/in-app notification dispatch (per-event)',
+    priority: 'interactive',
   },
   {
     // BLOCKER 1.4: daily birthday wishes + payment reminders + referral
@@ -69,6 +80,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: dailyEngagementJob.process,
     concurrency: 1,
     description: 'Daily engagement (birthday + payment reminder) at 06:00 IST',
+    priority: 'interactive',
   },
   {
     // Processes rent.due_check events (emitted on a timer by the scheduled loop below)
@@ -76,6 +88,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: rentRemindersJob.process,
     concurrency: 2,
     description: 'Rent due check & auto-debit',
+    priority: 'interactive',
   },
   {
     // Processes device.violation_scan events (emitted on a timer by the scheduled loop below)
@@ -83,6 +96,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: deviceComplianceJob.process,
     concurrency: 2,
     description: 'Device compliance violation scanner',
+    priority: 'background',
   },
   {
     // Processes referral.reward events from referral-reward job
@@ -90,6 +104,7 @@ const WORKERS: WorkerDefinition[] = [
     processor: referralRewardJob.process,
     concurrency: 3,
     description: 'Referral reward processing',
+    priority: 'interactive',
   },
   {
     // SMS sends — processes sms.send events from auth use-cases
@@ -100,6 +115,7 @@ const WORKERS: WorkerDefinition[] = [
     },
     concurrency: 5,
     description: 'SMS dispatch via provider',
+    priority: 'interactive',
   },
 ];
 
@@ -131,9 +147,15 @@ const SCHEDULED_TASKS: Array<{
     intervalMs: 60_000, // every minute
     processor: async (injectedClock) => {
       const { OutboxService } = await import('./outbox');
-      await OutboxService.emit(OutboxEventTypes.RENT_DUE_CHECK, {
-        triggeredAt: injectedClock.now().toISOString(),
-      }).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
+      // PR-75: rent-due check is interactive — the rent reminders
+      // worker is on the interactive list (see WORKERS above).
+      await OutboxService.emit(
+        OutboxEventTypes.RENT_DUE_CHECK,
+        { triggeredAt: injectedClock.now().toISOString() },
+        3,
+        undefined,
+        'interactive'
+      ).catch((e: Error) => logger.error('[Scheduler] Failed to emit rent due check', e));
     },
   },
   {
@@ -141,6 +163,8 @@ const SCHEDULED_TASKS: Array<{
     intervalMs: 60_000, // every minute
     processor: async (injectedClock) => {
       const { OutboxService } = await import('./outbox');
+      // device compliance is background — the deviceComplianceJob
+      // is wired to priority='background'.
       await OutboxService.emit(OutboxEventTypes.DEVICE_VIOLATION_SCAN, {
         triggeredAt: injectedClock.now().toISOString(),
       }).catch((e: Error) => logger.error('[Scheduler] Failed to emit device violation scan', e));
@@ -157,12 +181,21 @@ const SCHEDULED_TASKS: Array<{
       // If we're within 1 minute of the target, fire now.
       if (msUntil > 60_000) return;
       const { OutboxService } = await import('./outbox');
-      await OutboxService.emit(OutboxEventTypes.DAILY_ENGAGEMENT, {
-        triggeredAt: injectedClock.now().toISOString(),
-        istDate: new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Asia/Kolkata',
-        }).format(injectedClock.now()),
-      }).catch((e: Error) =>
+      // PR-75: daily engagement is interactive (birthday wishes,
+      // payment reminders) — the dailyEngagementJob is on the
+      // interactive list.
+      await OutboxService.emit(
+        OutboxEventTypes.DAILY_ENGAGEMENT,
+        {
+          triggeredAt: injectedClock.now().toISOString(),
+          istDate: new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata',
+          }).format(injectedClock.now()),
+        },
+        3,
+        undefined,
+        'interactive'
+      ).catch((e: Error) =>
         logger.error('[Scheduler] Failed to emit daily engagement', e)
       );
     },
@@ -231,13 +264,28 @@ export async function startWorkers(injectedClock: typeof clock = clock): Promise
 }
 
 async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clock): Promise<void> {
-  const { jobType, processor, concurrency } = worker;
+  const { jobType, processor, concurrency, priority } = worker;
 
-  logger.info(`[Worker] Starting loop for ${jobType}`, { concurrency });
+  logger.info(`[Worker] Starting loop for ${jobType}`, {
+    concurrency,
+    priority,
+  });
 
   while (running) {
     let processedCount = 0;
     try {
+      // PR-75: background workers yield to interactive work. If any
+      // interactive event of any type is PENDING, skip the claim this
+      // cycle so latency-sensitive jobs (rent-due SMS, FCM dispatch,
+      // etc.) get first dibs. The check is cheap (a single COUNT on
+      // the (priority, status, createdAt) index) and only runs for
+      // background workers.
+      if (priority === 'background' && (await hasPendingInteractive())) {
+        // Don't claim — sleep and re-check on the next tick.
+        await sleep(1000);
+        continue;
+      }
+
       processedCount = await JobQueue.processJobs(
         jobType,
         async (job) => {
@@ -253,7 +301,8 @@ async function runWorkerLoop(worker: WorkerDefinition, injectedClock: typeof clo
             activeJobs.delete(promise);
           }
         },
-        concurrency
+        concurrency,
+        priority
       );
     } catch (err) {
       logger.error(`[Worker] Error in ${jobType} loop`, err);
@@ -303,6 +352,33 @@ async function runReaperLoop(injectedClock: typeof clock): Promise<void> {
     }
     await sleep(300_000);
   }
+}
+
+/**
+ * PR-75: gate background workers. Returns true if any
+ * 'interactive' outbox event of any type is PENDING. Used by the
+ * worker loop to skip background claims when interactive work is
+ * waiting. Backs the (priority, status, createdAt) index added in
+ * prisma/migrations/20260803152322_add_outbox_priority/.
+ *
+ * The check is intentionally cheap and slightly conservative:
+ * we report a PENDING interactive event exists whenever
+ * status='PENDING', even if the row's attempts >= maxAttempts
+ * (would not be claimed) or readyAt is in the future (would not
+ * be claimed yet). The cost is one extra sleep cycle for the
+ * background worker; the benefit is a single indexed EXISTS-style
+ * check (findFirst + take: 1) instead of a more expensive join.
+ */
+async function hasPendingInteractive(): Promise<boolean> {
+  const { db } = await import('@/lib/db');
+  const found = await db.outboxEvent.findFirst({
+    where: {
+      priority: 'interactive',
+      status: 'PENDING',
+    },
+    select: { id: true },
+  });
+  return found !== null;
 }
 
 export function stopWorkers(): void {

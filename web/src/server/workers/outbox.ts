@@ -72,6 +72,15 @@ export const OutboxEventTypes = {
 
 export type OutboxEventType = (typeof OutboxEventTypes)[keyof typeof OutboxEventTypes];
 
+/**
+ * PR-75: Priority levels for outbox events. Interactive events
+ * (rent-due SMS, referral rewards, FCM dispatch, daily engagement)
+ * are polled by the worker before background events. Background
+ * is the safe default for any event type that has not been
+ * classified — it matches the pre-PR-75 FIFO order.
+ */
+export type OutboxPriority = 'interactive' | 'background';
+
 export const OutboxService = {
   /**
    * Write an event to the outbox table. The worker will pick it up later.
@@ -79,12 +88,19 @@ export const OutboxService = {
    * Pass a Prisma transaction client (`tx`) when called inside a
    * prisma.$transaction() to get atomic business writes + outbox event.
    * Without the tx param, it writes directly to the database.
+   *
+   * `priority` (PR-75) controls where the event sits in the claim
+   * order. Defaults to 'background' so callers that don't pass it
+   * keep the pre-PR-75 behavior. Interactive events (rent-due SMS,
+   * FCM dispatch, etc.) MUST pass 'interactive' to avoid being
+   * starved by long-running background jobs.
    */
   async emit(
     eventType: OutboxEventType,
     payload: Record<string, unknown>,
     maxAttempts = 3,
-    tx?: Prisma.TransactionClient
+    tx?: Prisma.TransactionClient,
+    priority: OutboxPriority = 'background'
   ): Promise<string> {
     const client = tx || db;
     try {
@@ -94,11 +110,12 @@ export const OutboxService = {
           payload: JSON.stringify(payload),
           status: 'PENDING',
           maxAttempts,
+          priority,
         },
         select: { id: true },
       });
 
-      logger.debug('[Outbox] Event emitted', { eventType, eventId: event.id });
+      logger.debug('[Outbox] Event emitted', { eventType, eventId: event.id, priority });
       return event.id;
     } catch (err) {
       logger.error('[Outbox] Failed to emit event', { eventType, err });

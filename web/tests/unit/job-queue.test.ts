@@ -177,13 +177,25 @@ vi.mock('@/lib/alerter', () => ({
 
 vi.mock('@/lib/db', () => ({
   db: {
-    // $queryRaw is a tagged template; Prisma calls it as
-    // mock(stringsArray, ...values). The job-queue.ts call site
-    // uses 3 substitutions: ${type}, ${now}::timestamptz,
-    // ${concurrency}. The first arg is the strings array.
-    $queryRaw: vi.fn((_strings: TemplateStringsArray, ...values: any[]) => {
-      // values[0] = type, values[1] = now, values[2] = concurrency
-      return (mocks.claim as any)(values[0], values[1], values[2]);
+    // $queryRaw is invoked by job-queue.ts as
+    //   db.$queryRaw(Prisma.sql`...`)
+    // which is a single-arg call passing a Prisma.Sql value object
+    // of shape { strings: string[], values: unknown[] }. Earlier
+    // versions of job-queue.ts used the tagged-template form
+    // (strings, ...values); PR-75 converted to Prisma.sql so the
+    // optional priority fragment could be interpolated. The mock
+    // accepts both shapes for forward-compat.
+    $queryRaw: vi.fn((...args: any[]) => {
+      let values: any[] = [];
+      if (args.length === 1 && args[0] && Array.isArray(args[0].strings)) {
+        values = args[0].values ?? [];
+      } else if (Array.isArray(args[0])) {
+        values = args.slice(1);
+      }
+      const type = values[0];
+      const now = values[1];
+      const concurrency = values.find((v) => typeof v === 'number');
+      return (mocks.claim as any)(type, now, concurrency);
     }),
     // $executeRaw is a tagged template; job-queue.ts uses it for the
     // reaper (single round-trip CTE+UPDATE). We route to the per-type

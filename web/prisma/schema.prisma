@@ -1081,12 +1081,27 @@ model OutboxEvent {
   /// after a failure (exponential backoff). NULL = eligible now.
   /// See prisma/migrations/20260626000000_add_outbox_readyAt/.
   readyAt     DateTime?
+  /// PR-75: priority splits the queue into 'interactive' (rent-due
+  /// SMS, referral rewards, FCM dispatch, daily engagement) vs
+  /// 'background' (telemetry cleanup, audit cleanup, scheduled
+  /// backup, wallet reconciliation, etc.). The worker orchestrator
+  /// polls interactive first; background workers are gated to run
+  /// only when no interactive events are PENDING. Default is
+  /// 'background' so existing event types and code paths keep their
+  /// old behavior. See AUDIT_BACKEND_2026-08-03.md §2.A.N2 and
+  /// AUDIT_FIX_PLAN_2026-08-03.md PR-75.
+  priority    String            @default("background")
 
   @@index([eventType])
   @@index([createdAt])
   @@index([status, createdAt])
   @@index([status, eventType, readyAt])
   @@index([status, updatedAt])
+  /// PR-75: composite index for the worker's "oldest interactive
+  /// PENDING event" claim. The (priority, status, createdAt) order
+  /// is intentional — it matches the worker's WHERE clause
+  /// (`priority = ? AND status = 'PENDING' ORDER BY createdAt ASC`).
+  @@index([priority, status, createdAt])
   @@map("outbox_events")
 }
 

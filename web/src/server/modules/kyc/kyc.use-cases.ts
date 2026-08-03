@@ -64,7 +64,10 @@ export const kycUseCases = {
           await OutboxService.emit(OutboxEventTypes.NOTIFICATION_SEND, {
             riderId: riderDbId,
             type: 'KYC_APPROVED',
-          }, 3, tx);
+          }, 3, tx,
+          // PR-75: KYC notification dispatch is interactive (rider
+          // expects timely feedback on KYC decisions).
+          'interactive');
           return result;
         });
       }
@@ -77,7 +80,9 @@ export const kycUseCases = {
             riderId: riderDbId,
             type: 'KYC_REJECTED',
             reason: rejectionReason,
-          }, 3, tx);
+          }, 3, tx,
+          // PR-75: KYC notification dispatch is interactive.
+          'interactive');
           return result;
         });
       }

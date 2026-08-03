@@ -7,12 +7,18 @@
  * - Exponential backoff: delay = 2^attempts × 5s before retry
  * - Uses maxAttempts column (not hardcoded)
  * - Reaper: reclaims stuck PROCESSING rows after 5 minutes
+ * - PR-75: optional `priority` filter for interactive vs background
+ *   job splits. When `priority` is provided, the claim query only
+ *   picks events with that priority. The orchestrator passes
+ *   'interactive' to drain latency-sensitive events first; the
+ *   default (no priority arg) keeps the pre-PR-75 FIFO behavior.
  */
 
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
 import { OutboxEventTypes } from '@/server/workers/outbox';
+import { Prisma } from '@prisma/client';
 
 export interface QueueJob {
   id: string;
@@ -26,10 +32,20 @@ export interface QueueJob {
 }
 
 export const JobQueue = {
+  /**
+   * Claim and process up to `concurrency` pending events of `type`.
+   *
+   * PR-75: `priority` is an optional filter. When undefined, the
+   * claim query is the pre-PR-75 FIFO query (preserves backward
+   * compatibility for any caller that doesn't care about priority).
+   * When 'interactive' or 'background', the claim is restricted to
+   * events of that priority only.
+   */
   async processJobs(
     type: string,
     processor: (job: QueueJob) => Promise<void>,
-    concurrency = 5
+    concurrency = 5,
+    priority?: 'interactive' | 'background'
   ): Promise<number> {
     const now = clock.now();
 
@@ -37,33 +53,50 @@ export const JobQueue = {
     // A job is eligible when status='PENDING' and readyAt is either
     // NULL (first attempt) or <= now. The composite index on
     // (status, eventType, readyAt) keeps this fast at scale.
-    const pending = await db.$queryRaw<
-      Array<{
-        id: string;
-        eventType: string;
-        payload: string;
-        status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-        attempts: number;
-        maxAttempts: number;
-        createdAt: Date;
-        readyAt: Date | null;
-      }>
-    >`
-      UPDATE "outbox_events"
-      SET status = 'PROCESSING'
-      WHERE id IN (
-        SELECT id
-        FROM "outbox_events"
-        WHERE "eventType" = ${type}
-          AND status = 'PENDING'
-          AND attempts < "maxAttempts"
-          AND ("readyAt" IS NULL OR "readyAt" <= ${now.toISOString()}::timestamp)
-        ORDER BY "createdAt" ASC
-        LIMIT ${concurrency}
-        FOR UPDATE SKIP LOCKED
-      )
-      RETURNING id, "eventType", payload, status, attempts, "maxAttempts", "createdAt", "readyAt"
-    `;
+    //
+    // PR-75: the `priority` filter is applied via a parameterised
+    // fragment. When `priority` is undefined, the fragment is empty
+    // so the query plan matches the pre-PR-75 path. The migration
+    // added a composite (priority, status, createdAt) index for the
+    // filtered case.
+    const priorityFragment = priority
+      ? Prisma.sql`AND "priority" = ${priority}`
+      : Prisma.sql``;
+
+    type ClaimedRow = {
+      id: string;
+      eventType: string;
+      payload: string;
+      status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+      attempts: number;
+      maxAttempts: number;
+      createdAt: Date;
+      readyAt: Date | null;
+    };
+
+    // PR-75: priority fragment is interpolated via Prisma.sql. The
+    // generic on $queryRaw can't be inferred through the embedded
+    // Prisma.Sql value, so we cast through unknown. The shape of the
+    // RETURNING clause is unchanged from the pre-PR-75 query.
+    const pending = (await db.$queryRaw(
+      Prisma.sql`
+        UPDATE "outbox_events"
+        SET status = 'PROCESSING'
+        WHERE id IN (
+          SELECT id
+          FROM "outbox_events"
+          WHERE "eventType" = ${type}
+            AND status = 'PENDING'
+            AND attempts < "maxAttempts"
+            AND ("readyAt" IS NULL OR "readyAt" <= ${now.toISOString()}::timestamp)
+            ${priorityFragment}
+          ORDER BY "createdAt" ASC
+          LIMIT ${concurrency}
+          FOR UPDATE SKIP LOCKED
+        )
+        RETURNING id, "eventType", payload, status, attempts, "maxAttempts", "createdAt", "readyAt"
+      `
+    )) as ClaimedRow[];
 
     if (pending.length === 0) return 0;
 
