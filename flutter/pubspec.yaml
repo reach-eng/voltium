@@ -96,6 +96,10 @@ flutter:
     - assets/fonts/
     - lib/l10n/
 
+  # Test-only assets (placeholder.png for golden tests, etc.) live in
+  # flutter/test_assets/ and are intentionally NOT bundled here so they
+  # never ship in production APKs. See PR-47 (N7 from rider audit).
+
   fonts:
     - family: PlusJakartaSans
       fonts:
