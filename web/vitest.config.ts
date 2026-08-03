@@ -2,11 +2,18 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
+  // tsconfig has `jsx: "preserve"` (Next.js convention), so Vite/oxc needs
+  // explicit JSX handling to compile .test.tsx files for vitest.
+  oxc: {
+    jsx: {
+      runtime: 'automatic',
+    },
+  },
   test: {
     environment: 'node',
     globals: true,
     fileParallelism: false,
-    include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
     setupFiles: [path.resolve(__dirname, './tests/setup-env.ts')],
     globalSetup: ['./tests/global-setup.ts'],
     css: false,
