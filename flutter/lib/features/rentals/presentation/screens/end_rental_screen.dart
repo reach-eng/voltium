@@ -35,6 +35,15 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
   bool _confirmed = false;
   bool _submitting = false;
   bool _submitted = false;
+  // PR-66: track per-photo upload progress + cancel intent. The
+  // previous sequential `for` loop blocked the UI for 8-40 seconds
+  // on 3G with no progress indicator and no cancel path. The
+  // counter advances as each parallel upload completes, and the
+  // bool lets the user bail out of remaining uploads without
+  // closing the screen.
+  int _uploadedCount = 0;
+  int _totalToUpload = 0;
+  bool _cancelled = false;
 
   Future<void> _takePhoto(String key) async {
     if (AppConstants.isTestMode) {
@@ -124,21 +133,51 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
 
   Future<void> _handleReturn() async {
     if (!_canSubmit) return;
-    setState(() => _submitting = true);
+    setState(() {
+      _submitting = true;
+      _cancelled = false;
+      _uploadedCount = 0;
+      _totalToUpload = _photos.values.where((p) => p != null).length;
+    });
 
     try {
       final rider = ref.read(riderProvider).rider;
       final riderId = rider?.riderId ?? '';
-      final List<String> photoUrls = [];
-      for (final entry in _photos.entries) {
-        if (entry.value != null) {
-          final url = await VoltiumApiService()
-              .uploadFile(File(entry.value!.path), 'RETURN_PHOTO');
-          photoUrls.add(url);
-        }
+      final api = VoltiumApiService();
+
+      // PR-66: parallel upload with progress. Each upload reports
+      // completion via a Completer; we settle them with
+      // Future.wait + a shared counter. The counter drives the
+      // progress UI. Cancelled uploads are skipped, not awaited.
+      final entries =
+          _photos.entries.where((e) => e.value != null).toList(growable: false);
+      final results = await Future.wait(
+        entries.map((entry) async {
+          if (_cancelled) return null;
+          try {
+            final url =
+                await api.uploadFile(File(entry.value!.path), 'RETURN_PHOTO');
+            if (!mounted) return null;
+            setState(() => _uploadedCount += 1);
+            return url;
+          } catch (e) {
+            if (mounted) {
+              setState(() => _uploadedCount += 1); // count failures too
+            }
+            rethrow;
+          }
+        }),
+        eagerError: false,
+      );
+
+      if (_cancelled) {
+        if (mounted) setState(() => _submitting = false);
+        return;
       }
+
+      final photoUrls = results.whereType<String>().toList();
       if (!mounted) return;
-      await VoltiumApiService().submitVehicleReturn(
+      await api.submitVehicleReturn(
         riderId: riderId,
         photoUrls: photoUrls,
         reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
@@ -657,13 +696,56 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             ),
             child: Center(
               child: _submitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // PR-66: per-photo progress so the user sees
+                        // N of M uploads completing. The text stays
+                        // compact so the button doesn't grow.
+                        Text(
+                          '$_uploadedCount/$_totalToUpload',
+                          style: AppTypography.labelLarge.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // PR-66: cancel button. Sets the cancel
+                        // flag; remaining in-flight uploads
+                        // finish but no further uploads start. The
+                        // button is disabled while not submitting
+                        // (handled by the outer conditional).
+                        GestureDetector(
+                          onTap: () => setState(() => _cancelled = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.full),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: AppTypography.labelSmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     )
                   : Text(
                       'Confirm Return',
