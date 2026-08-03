@@ -13,24 +13,36 @@
 -- been lost in earlier schema refactors. This migration re-adds them
 -- and matches schema.prisma 1:1.
 --
--- Index breakdown:
--- - riders.updatedAt: "recently updated" admin rider list
--- - riders.lifecycleStatus + updatedAt: active-rider list
--- - kyc_profiles.updatedAt: pending KYC review queue
+-- PR-72 audit fix (N2): of the 5 indexes originally in this file, 2
+-- were redundant:
+--   - `riders_updatedAt_idx`            → already declared as
+--                                          `@@index([updatedAt])` in
+--                                          schema.prisma (Rider model).
+--   - `kyc_profiles_updatedAt_idx`      → already declared as
+--                                          `@@index([updatedAt])` in
+--                                          schema.prisma (KycProfile
+--                                          model).
+-- Both removed — Prisma will create them from the schema on next
+-- `migrate dev`. The lifecycleStatus composite was renamed to use
+-- `lifecycleStage` (the column that replaced `lifecycleStatus` per
+-- PR-71); the column itself was added in
+-- 20260730150000_add_rider_lifecycle_stage, which runs before this
+-- migration, so the CREATE INDEX is valid at apply time.
+--
+-- Index breakdown (post-PR-72):
+-- - riders.lifecycleStage + updatedAt: active-rider list (R4 cache)
 -- - notifications.riderId + createdAt: notification timeline
 -- - notifications.riderId + isRead + createdAt: unread badge query
+--
+-- The `riders.updatedAt` and `kyc_profiles.updatedAt` indexes are
+-- handled by the `@@index([updatedAt])` declarations in schema.prisma
+-- (Rider line 279, KycProfile line 341) and are NOT created here.
 --
 -- Safe to apply on a non-empty table: these are CREATE INDEX
 -- statements, no DDL that takes ACCESS EXCLUSIVE.
 
 -- CreateIndex
-CREATE INDEX IF NOT EXISTS "riders_updatedAt_idx" ON "riders"("updatedAt");
-
--- CreateIndex
-CREATE INDEX IF NOT EXISTS "riders_lifecycleStatus_updatedAt_idx" ON "riders"("lifecycleStatus", "updatedAt");
-
--- CreateIndex
-CREATE INDEX IF NOT EXISTS "kyc_profiles_updatedAt_idx" ON "kyc_profiles"("updatedAt");
+CREATE INDEX IF NOT EXISTS "riders_lifecycleStage_updatedAt_idx" ON "riders"("lifecycleStage", "updatedAt");
 
 -- CreateIndex
 CREATE INDEX IF NOT EXISTS "notifications_riderId_createdAt_idx" ON "notifications"("riderId", "createdAt");
