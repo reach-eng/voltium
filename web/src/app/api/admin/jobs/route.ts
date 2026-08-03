@@ -3,19 +3,33 @@ import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { requireAdmin } from '@/lib/rbac';
 import { hasPermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
-import { runWalletReconciliation, recordReconciliation } from '@/server/workers/jobs/wallet-reconciliation.job';
-import { rentRemindersJob } from '@/server/workers/jobs/rent-reminders.job';
-import { deviceComplianceJob } from '@/server/workers/jobs/device-compliance.job';
-import { referralRewardJob } from '@/server/workers/jobs/referral-reward.job';
-import { notificationsCleanupJob } from '@/server/workers/jobs/notifications-cleanup.job';
-import { dailyEngagementJob } from '@/server/workers/jobs/daily-engagement.job';
-import { telemetryUseCases } from '@/server/modules/telemetry/telemetry.use-cases';
-import { notificationUseCases } from '@/server/modules/notifications/notification.use-cases';
+import { OutboxEventTypes, OutboxService, OutboxEventType } from '@/server/workers/outbox';
+import { logger } from '@/lib/logger';
+import { createAuditLog } from '@/lib/audit-log';
 
-type JobRunResult = {
-  success: boolean;
-  details: string;
-  raw?: unknown;
+/**
+ * PR-89 (API N3) — admin-triggered background jobs are now asynchronous.
+ *
+ * Each POST to this route enqueues a single outbox event keyed to the
+ * jobId. The route returns 202 immediately so the admin UI does not
+ * block on a long-running reconciliation or a fleet-wide compliance
+ * scan. Workers pick the event up from the outbox table; the existing
+ * `job:last_run:*` SystemSetting keys are still updated by the worker
+ * after a successful run, so the GET-side view is unchanged.
+ *
+ * Mapping from jobId → outbox event type. New types are added in
+ * `outbox.ts` (PR-89 (API N3)). The mapping is a const so a typo at
+ * one site is a compile error.
+ */
+const JOB_TO_OUTBOX_EVENT: Record<string, OutboxEventType> = {
+  'wallet-reconciliation': OutboxEventTypes.ADMIN_JOB_WALLET_RECONCILIATION,
+  'rent-due-checker': OutboxEventTypes.ADMIN_JOB_RENT_DUE_CHECK,
+  'auto-debit': OutboxEventTypes.ADMIN_JOB_RENT_DUE_CHECK,
+  'device-compliance': OutboxEventTypes.ADMIN_JOB_DEVICE_COMPLIANCE,
+  'referral-reward': OutboxEventTypes.ADMIN_JOB_REFERRAL_REWARD,
+  'notifications-cleanup': OutboxEventTypes.ADMIN_JOB_NOTIFICATIONS_CLEANUP,
+  'telemetry-cleanup': OutboxEventTypes.ADMIN_JOB_TELEMETRY_CLEANUP,
+  'daily-engagement': OutboxEventTypes.ADMIN_JOB_DAILY_ENGAGEMENT,
 };
 
 export async function GET(req: NextRequest) {
@@ -133,13 +147,17 @@ export async function GET(req: NextRequest) {
       5
     );
   } catch (err: unknown) {
-    return errors.internal(`Failed to load jobs list: ${(err instanceof Error ? err.message : String(err))}`);
+    return errors.internal('Failed to load jobs list');
   }
 }
 
 export async function POST(req: NextRequest) {
+  let body: any = null;
+  let admin: any = null;
+  let jobId: string | undefined;
+
   try {
-    const admin = await requireAdmin();
+    admin = await requireAdmin();
     if (!admin) {
       return errors.unauthorized('Admin authentication required');
     }
@@ -152,156 +170,64 @@ export async function POST(req: NextRequest) {
       return errors.forbidden('Forbidden: jobs_run permission required');
     }
 
-    const body = await req.json();
-    const { jobId } = body;
+    body = await req.json();
+    jobId = body?.jobId;
 
     if (!jobId) {
       return errors.badRequest('jobId is required');
     }
 
-    const start = Date.now();
-    let result: JobRunResult;
-
-    switch (jobId) {
-      case 'wallet-reconciliation':
-        const reconRes = await runWalletReconciliation();
-        await recordReconciliation(reconRes);
-        result = {
-          success: true,
-          details: `${reconRes.healthy} matched, ${reconRes.drifted} mismatched, drift: ₹${(reconRes.totalDrift / 100).toFixed(2)}`,
-          raw: reconRes,
-        };
-        break;
-
-      case 'rent-due-checker':
-      case 'auto-debit':
-        // Run rentReminderJob which covers both due checker and auto-debit
-        const rentRes = await rentRemindersJob.process({} as any);
-        result = {
-          success: true,
-          details: `Checked: ${rentRes.checkedRentals}, Debited: ${rentRes.autoDebited}, Overdue: ${rentRes.overdueDetected}, Notified: ${rentRes.notificationsSent}`,
-          raw: rentRes,
-        };
-        // Save status for both as they run together
-        await db.systemSetting.upsert({
-          where: { key: 'job:last_run:rent-due-checker' },
-          update: {
-            value: JSON.stringify({
-              timestamp: new Date().toISOString(),
-              status: 'SUCCESS',
-              details: `Checked: ${rentRes.checkedRentals}, Overdue detected: ${rentRes.overdueDetected}`,
-            }),
-          },
-          create: {
-            key: 'job:last_run:rent-due-checker',
-            value: JSON.stringify({
-              timestamp: new Date().toISOString(),
-              status: 'SUCCESS',
-              details: `Checked: ${rentRes.checkedRentals}, Overdue detected: ${rentRes.overdueDetected}`,
-            }),
-            valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
-          },
-        });
-        await db.systemSetting.upsert({
-          where: { key: 'job:last_run:auto-debit' },
-          update: {
-            value: JSON.stringify({
-              timestamp: new Date().toISOString(),
-              status: 'SUCCESS',
-              details: `Checked: ${rentRes.checkedRentals}, Debited: ${rentRes.autoDebited}`,
-            }),
-          },
-          create: {
-            key: 'job:last_run:auto-debit',
-            value: JSON.stringify({
-              timestamp: new Date().toISOString(),
-              status: 'SUCCESS',
-              details: `Checked: ${rentRes.checkedRentals}, Debited: ${rentRes.autoDebited}`,
-            }),
-            valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
-          },
-        });
-        break;
-
-      case 'device-compliance':
-        const compRes = await deviceComplianceJob.process({} as any);
-        result = {
-          success: true,
-          details: `Checked: ${compRes.ridersChecked}, New violations: ${compRes.violationsFound}, Resolved: ${compRes.violationsResolved}`,
-          raw: compRes,
-        };
-        break;
-
-      case 'referral-reward':
-        const refRes = await referralRewardJob.process({} as any);
-        result = {
-          success: true,
-          details: `Referred: ${refRes.referredRiders}, Rewards credited: ${refRes.rewardsCredited}`,
-          raw: refRes,
-        };
-        break;
-
-      case 'notifications-cleanup':
-        const notifRes = await notificationsCleanupJob.process();
-        result = {
-          success: true,
-          details: `Purged ${notifRes.deletedCount} read notifications.`,
-          raw: notifRes,
-        };
-        break;
-
-      case 'telemetry-cleanup':
-        const telRes = await telemetryUseCases.cleanup(30);
-        result = {
-          success: true,
-          details: `Deleted: ${telRes.locationsDeleted} locations, ${telRes.callLogsDeleted} call logs, ${telRes.contactsDeleted} contacts.`,
-          raw: telRes,
-        };
-        break;
-
-      case 'daily-engagement':
-        // BLOCKER 1.4: admin-triggered run of the 06:00 IST daily engagement.
-        const dailyRes = await dailyEngagementJob.process({ id: 'admin-trigger' });
-        result = {
-          success: true,
-          details: `Birthdays: ${dailyRes.birthdays}, Payment reminders: ${dailyRes.paymentReminders}, Referral broadcasts: ${dailyRes.referralLeaderboard}`,
-          raw: dailyRes,
-        };
-        break;
-
-      default:
-        return errors.badRequest(`Unknown jobId: ${jobId}`);
+    const eventType = JOB_TO_OUTBOX_EVENT[jobId];
+    if (!eventType) {
+      return errors.badRequest(`Unknown jobId: ${jobId}`);
     }
 
-    // Save run details in SystemSetting
-    if (jobId !== 'rent-due-checker' && jobId !== 'auto-debit') {
-      await db.systemSetting.upsert({
-        where: { key: `job:last_run:${jobId}` },
-        update: {
-          value: JSON.stringify({
-            timestamp: new Date().toISOString(),
-            status: result.success ? 'SUCCESS' : 'FAILED',
-            details: result.details,
-          }),
-        },
-        create: {
-          key: `job:last_run:${jobId}`,
-          value: JSON.stringify({
-            timestamp: new Date().toISOString(),
-            status: result.success ? 'SUCCESS' : 'FAILED',
-            details: result.details,
-          }),
-          valueType: 'STRING', category: 'INTERNAL', isSecret: false, isEditable: false,
-        },
-      });
-    }
+    // PR-89 (API N3): enqueue instead of run. The job is fire-and-forget
+    // from the API's perspective — a successful emit is the contract.
+    // If the emit itself fails, fall back to a 500 with a generic
+    // message (PR-89 (API N3) stops interpolating err.message).
+    const outboxId = await OutboxService.emit(
+      eventType,
+      {
+        jobId,
+        triggeredBy: admin.adminId ?? 'unknown',
+        triggeredAt: new Date().toISOString(),
+      },
+      3,
+      undefined,
+      'interactive'
+    );
 
-    return success({
-      jobId,
-      elapsedMs: Date.now() - start,
-      result,
-    }, 'Job executed successfully');
+    // PR-89 (API N3): audit the trigger so the admin/jobs endpoint
+    // is still traceable from the SOC2 audit trail. The worker will
+    // also write its own audit row when it actually executes the job.
+    createAuditLog({
+      actorId: admin.adminId ?? 'unknown',
+      actorType: 'ADMIN',
+      action: 'admin_job_trigger',
+      entity: 'outbox_event',
+      entityId: outboxId,
+      details: JSON.stringify({ jobId, eventType }),
+    }).catch(() => {});
+
+    return success(
+      {
+        jobId,
+        jobId_outboxId: outboxId,
+        details: 'Queued',
+      },
+      'Job execution queued',
+      202
+    );
   } catch (err: unknown) {
-    return errors.internal(`Job execution failed: ${(err instanceof Error ? err.message : String(err))}`);
+    // PR-89 (API N3): never interpolate err.message into the
+    // response body. Log the detail for the operator and return a
+    // generic message so internal failure modes don't leak.
+    logger.error('Admin job enqueue failed', {
+      jobId,
+      adminId: admin?.adminId,
+      err: err instanceof Error ? { message: err.message, stack: err.stack } : err,
+    });
+    return errors.internal('Job failed');
   }
 }

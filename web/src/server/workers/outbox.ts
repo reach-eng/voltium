@@ -65,6 +65,19 @@ export const OutboxEventTypes = {
   // ── Admin / System ─────────────────────────────────────────────────────
   ADMIN_ACTION: 'admin.action',
 
+  // PR-89 (API N3): admin-triggered job enqueue events. These types
+  // exist so that `admin/jobs` POST can publish a job request to the
+  // outbox instead of running the job synchronously. The dispatcher
+  // handles them by routing to the same internal handler that the
+  // cron tick uses.
+  ADMIN_JOB_WALLET_RECONCILIATION: 'admin.job.wallet_reconciliation',
+  ADMIN_JOB_RENT_DUE_CHECK: 'admin.job.rent_due_check',
+  ADMIN_JOB_DEVICE_COMPLIANCE: 'admin.job.device_compliance',
+  ADMIN_JOB_REFERRAL_REWARD: 'admin.job.referral_reward',
+  ADMIN_JOB_NOTIFICATIONS_CLEANUP: 'admin.job.notifications_cleanup',
+  ADMIN_JOB_TELEMETRY_CLEANUP: 'admin.job.telemetry_cleanup',
+  ADMIN_JOB_DAILY_ENGAGEMENT: 'admin.job.daily_engagement',
+
   // ── Cleanup (cron-driven, no producer) ─────────────────────────────────
   AUDIT_LOG_CLEANUP: 'cleanup.audit_log',
   TELEMETRY_DATA_CLEANUP: 'cleanup.telemetry',
