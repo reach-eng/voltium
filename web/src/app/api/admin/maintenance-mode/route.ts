@@ -1,14 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getAdminSession } from '@/lib/get-session';
 import { db } from '@/lib/db';
 import { createAuditLog } from '@/lib/audit-log';
 import { hasPermission } from '@/lib/permissions';
+import { success, errors } from '@/lib/api-response';
+import { logger } from '@/lib/logger';
+
+// PR-90 (API N12): envelope consistency. The original implementation
+// returned `NextResponse.json({error: '...'})` for every failure
+// case, which means clients had to read two different shapes (the
+// envelope and the raw body) to handle errors. After this change the
+// route is on the shared `success()` / `errors.*()` envelope and the
+// 500 body is a generic 'Internal error' with the real cause logged
+// (instead of echoed back to the caller).
 
 export async function GET() {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return errors.unauthorized('Unauthorized');
     }
 
     const [modeSetting, messageSetting] = await Promise.all([
@@ -16,17 +26,15 @@ export async function GET() {
       db.systemSetting.findUnique({ where: { key: 'MAINTENANCE_MESSAGE' } }),
     ]);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        enabled: modeSetting?.value === 'true',
-        message:
-          messageSetting?.value ??
-          'System is currently under maintenance. Please check back later.',
-      },
+    return success({
+      enabled: modeSetting?.value === 'true',
+      message:
+        messageSetting?.value ??
+        'System is currently under maintenance. Please check back later.',
     });
   } catch (err: unknown) {
-    return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
+    logger.error('[admin/maintenance-mode] GET failed', err);
+    return errors.internal('Internal error');
   }
 }
 
@@ -34,30 +42,18 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return errors.unauthorized('Unauthorized');
     }
 
-    // R4.3 / audit: was `session.role !== 'SUPER_ADMIN'` which is
-    // always true (session.role is the user type 'admin'/'rider', the
-    // role name lives in session.adminRole). The old check blocked
-    // every real SUPER_ADMIN and would invert to a privilege hole if
-    // "fixed" naively. Use hasPermission() which resolves the right
-    // field.
     if (!hasPermission(session, 'settings_manage')) {
-      return NextResponse.json(
-        { error: 'Forbidden: settings_manage permission required' },
-        { status: 403 }
-      );
+      return errors.forbidden('Forbidden: settings_manage permission required');
     }
 
     const body = await request.json();
     const { enabled, message } = body;
 
     if (enabled === undefined || message === undefined) {
-      return NextResponse.json(
-        { error: 'enabled and message fields are required' },
-        { status: 400 }
-      );
+      return errors.badRequest('enabled and message fields are required');
     }
 
     // Upsert key/value configs
@@ -89,9 +85,6 @@ export async function PUT(request: NextRequest) {
       }),
     ]);
 
-    // Legacy Setting consolidated — maintenanceMode now lives in SystemSetting as MAINTENANCE_MODE
-
-    // Audit logging
     await createAuditLog({
       actorId: session.adminId || session.riderDbId || 'unknown',
       actorType: 'ADMIN',
@@ -101,8 +94,9 @@ export async function PUT(request: NextRequest) {
       details: { enabled, message },
     });
 
-    return NextResponse.json({ success: true, data: { enabled, message } });
+    return success({ enabled, message });
   } catch (err: unknown) {
-    return NextResponse.json({ success: false, error: (err instanceof Error ? err.message : String(err)) }, { status: 500 });
+    logger.error('[admin/maintenance-mode] PUT failed', err);
+    return errors.internal('Internal error');
   }
 }
