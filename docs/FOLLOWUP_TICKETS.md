@@ -2955,3 +2955,104 @@ When the team is ready to file these as GitHub issues, follow the priority group
 - [ ] Update `SCOPE.md` "Status as of 2026-07-29" section with the new issue numbers once filed
 - [ ] Close any ticket that was already addressed (e.g., Ticket #3's Flutter primary color sub-task is closed by Phase 7)
 - [ ] **Critical:** file the 19 P0s in Phase 1 first. Don't get distracted by the easier Phase 2/3 tickets.
+
+---
+
+## 2026-08-03: 8 deep audits + Phase 1 / Phase 2 ship session
+
+**Sources:**
+- 8 audit files in `docs/AUDIT_*_2026-08-03.md` (~115 KB total)
+- Consolidated index `docs/AUDIT_INDEX_2026-08-03.md`
+- Phased fix plan `docs/AUDIT_FIX_PLAN_2026-08-03.md` (5 phases, ~43 PRs, ~1700 LOC, 5-6 weeks)
+
+**New P0s surfaced:** 18 NEW (in addition to 33 carry-overs from 2026-08-01 audit).
+
+### Session accomplishments (2026-08-03)
+
+**Phase 1 shipped (7 of 8 PRs; 1 stale reclassification):**
+- `6fefe2e` **PR-55** — fix(api): replace broken `session.role !== 'SUPER_ADMIN'` gate with `hasPermission`. Unblocks 2 dead admin features.
+- `415bd7e` **PR-59** — fix(design-system): align shadcn `--primary` with brand Voltium Blue #0053C1.
+- `9b8675b` **PR-60** — fix(security): trust impersonation header on `APP_ENV`, not `NODE_ENV`. Close staging impersonation leak.
+- `a50790c` **PR-61** — fix(security): use SHA-256 + `timingSafeEqual` for `WORKER_SECRET` in `/api/internal/worker`.
+- `ecf7eac` **PR-56** — fix(security): replace client-controllable `x-admin-id` header with `session.adminId` in 5 admin files, 7 sites.
+- `5043bcf` **PR-58** — fix(api): require `jobs_run` permission to fire background jobs.
+- `a5d454f` **PR-57** — fix(security): add audit log + `crypto.randomUUID` to rider data-deletion.
+
+**Phase 1 stale reclassifications (verified, no fix needed):**
+- **PR-63** (BackgroundJobsScreen "Run now" double-click) — STALE. R3 split already added `disabled={anyJobRunning}` at `JobCard.tsx:79` and `useBackgroundJobs` sets/clears `runningJobId` correctly.
+
+**Phase 2 shipped (1 of 7 PRs; 1 stale reclassification; PR-62 just shipped):**
+- `a9d6ea7` **PR-66** — feat(rider): parallel photo upload with progress + cancel.
+- `7d1babd` **PR-62** — fix(design-system): add `warningForeground` WCAG AA token + wire 9 surface tokens to `ThemeData.colorScheme`.
+
+**Phase 2 stale reclassifications (verified, no fix needed):**
+- **PR-64** (IncidentDetailSheet severity change no audit log) — STALE. `updateIncidentSchema` doesn't include `severity`; UI only displays severity as a badge.
+- **PR-65** (RiderDetailDialog "Reset Password" button calls non-existent route) — STALE. No "Reset Password" button exists in any file under `web/src/components/admin/screens/rider-management/`. Last refactor `c581023` removed the entire section.
+- **PR-67** (vehicle_photos_screen submitVehicleReturn not called) — STALE. Both `end_rental_screen.dart:141` AND `dashboard_sheets.dart:628` call `submitVehicleReturn`.
+
+### Verification gate (2026-08-03)
+
+- `npx tsc --noEmit` (web): clean
+- `npm test tests/unit`: **1902 passed, 3 skipped, 0 failed** (116 test files)
+- `flutter analyze --no-pub --no-fatal-infos`: **No issues found** (23s)
+- Phase 2 verification gate: 21 pre-existing flutter test failures (R4 `ThemeNotifier`/`LocaleNotifier` migration leftovers, unrelated to PR-62)
+
+### Audit reclassification summary (5 stale claims corrected in real-time during ship)
+
+- **PR-63** — `BackgroundJobsScreen.tsx:160` "Run now" double-click. Already disabled via R3 split.
+- **PR-64** — `IncidentDetailSheet.tsx:85` severity change audit. Schema doesn't allow the change.
+- **PR-65** — `RiderDetailDialog.tsx` "Reset Password" button. Doesn't exist (refactor removed it).
+- **PR-67** — `vehicle_photos_screen.dart` `submitVehicleReturn`. Both call sites already call it.
+- (Earlier) **Rider N1 query-param riderId** — File reads from session, not query param.
+
+### Next PRs (queued for ship after 2026-08-06 staging soak)
+
+- **Phase 3** (8 PRs, 2-3 days, perf & scale):
+  - PR-71 (DB schema alignment with 2026-08-06 migrations)
+  - PR-72 (verify `cache_indexes_v2` SQL vs schema `@@index` declarations)
+  - PR-68 (`--max-warnings 0` in `ci-cd.yml` + resolve 9 pre-existing warnings)
+  - PR-69 (`max_memory_restart: '1G'` in `ecosystem.config.js`)
+  - PR-73 (`@@index([entity, entityId])` to `AuditLog` + migration)
+  - + 3 more
+- **Phase 4** (5 PRs, 1-2 weeks, architecture):
+  - PR-26 — wire `lib/validators/admin.ts` into all admin mutations (0 routes use it)
+  - PR-26b — extract `submitVehicleReturn` / `completePickupVerification` / `approveKyc` use cases
+  - PR-27 — add `web/src/components/ui/heading.tsx` + migrate 287 raw typography combos
+  - PR-28 — add `--split-per-abi` to `flutter-ci-cd.yml` (60% APK reduction)
+  - + 1 more
+- **Phase 5** (~15 P1/P2 housekeeping PRs)
+
+See `docs/AUDIT_FIX_PLAN_2026-08-03.md` for the full plan with dependency graph and per-PR acceptance criteria.
+
+### 2026-08-03 (continued): Phase 3 — Performance & scale
+
+**Theme:** pre-staging-soak infrastructure. 8 PRs planned, 7 shipped + 1 stale + 1 blocked.
+
+#### Shipped (7 PRs)
+
+- `553859b` **PR-69** — fix(infra): tune PM2 `max_memory_restart` ceiling per app. The audit claim that workers ballooned to 4GB was partially stale (memory cap already present at 1200M/768M); added explanatory comments + bumped worker to 1G.
+- `969d349` **PR-70** — fix(backend): verify wallet-reconciliation column + add drift calc test. The `amountInPaise` reference was already correct; added a regression-guard unit test.
+- `4a0c530` **PR-72** — fix(db): align `cache_indexes_v2` migration with schema `@@index`. Removed 2 duplicate indexes; renamed `riders_lifecycleStatus_updatedAt_idx` → `riders_lifecycleStage_updatedAt_idx` to match post-PR-71 schema; added `scripts/check-index-drift.sh` CI guard.
+- `a2018ae` **PR-68b + PR-68c** — fix(infra): harden migration safety check (`::warning::` for ADD COLUMN NOT NULL without DEFAULT) + `retries: 5` in cloudflared config.
+- `995e0de` **PR-68 + PR-74** — fix(infra): zero-warning ESLint budget (`--max-warnings 0` in `lint` + `lint-staged`; 9 pre-existing warnings fixed: coverage ignored, layout.tsx font override, redundant dns-prefetch removed) + `?statement_timeout=60s` in DATABASE_URL.
+- `bdd2cb9` **PR-75** — feat(backend): split `JobQueue` into `interactive` + `background` priority queues. New `outbox_events.priority` column, 4 interactive jobs (rent-due, referral-reward, daily-engagement, notification-dispatch) + 7 background jobs. 12/12 unit tests pass.
+- `4f1dee3` — docs(audit): reclassify 10 stale audit claims (now 10 total in AUDIT_INDEX.md).
+
+#### Blocked / stale
+
+- **PR-71** — **BLOCKED**. The schema change is correct, but the TS code uses fine-grained `RiderLifecycleStatus` (15 values) that doesn't map cleanly to the 5-value `RiderLifecycleStage` enum. 28 typecheck errors + ~10 silent runtime writes. Needs a value-mapping shim (BEFORE INSERT trigger or value-mapping helper) before it can ship safely. The agent verified, documented, and **reverted the schema change** to leave the tree in a buildable state.
+- **PR-73** — **STALE**. `@@index([entity, entityId])` already exists on `web/prisma/schema.prisma:620`. Audit was wrong.
+
+#### Phase 3 verification gate (PASSED)
+
+- `npm run lint` — 0 errors, 0 warnings
+- `npx tsc --noEmit` — clean
+- `npm test -- --run tests/unit` — **1910 passed, 3 skipped, 0 failed** (117 test files)
+- `npx prisma db push --accept-data-loss --skip-generate` (test schema) — synced successfully after PR-75's new column was added
+
+#### Next up (Phase 4)
+
+- **PR-26** (P0) — wire `lib/validators/admin.ts` into all admin mutations. The file exists but 0 routes import it (API audit N1).
+- **PR-26b** (P0) — extract `submitVehicleReturn` / `completePickupVerification` / `approveKyc` use cases (API N3 / Backend).
+- **PR-27** (P1) — add `web/src/components/ui/heading.tsx` + migrate 287 raw typography combos across 5-7 sub-PRs.
+- **PR-28** (P1) — add `--split-per-abi` to `flutter-ci-cd.yml` (60% APK reduction).
