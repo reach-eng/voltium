@@ -15,18 +15,44 @@ import type { CreateTicketDto, TicketReplyDto } from './support.schemas';
 
 export const supportUseCases = {
   async createTicket(riderDbId: string, input: CreateTicketDto) {
-    // Generate unique ticket ID
-    const count = await db.supportTicket.count();
-    const random = randomBytes(2).toString('hex').toUpperCase();
-    const ticketId = `#${String(count + 1).padStart(4, '0')}-${random}`;
-
-    return supportRepository.create(riderDbId, {
-      ...input,
-      subject: sanitizeHtml(input.subject),
-      message: sanitizeHtml(input.message),
-      ticketId,
-      status: 'OPEN',
-    });
+    // PR-80: ticket id collision fix. The previous code used
+    // `count + 1` + a 4-hex-char (65k space) random. Two parallel
+    // creates could read the same count and collide on the random.
+    // At ~300 tickets/day, birthday-bound collision is plausible.
+    // Use 4 random bytes (4 billion space) and drop the count.
+    // The DB `@@unique` constraint on `ticketId` is the real
+    // collision guard; we add a small retry loop to handle the
+    // (now extremely rare) race.
+    let attempts = 0;
+    // PR-80: ticket id collision fix. The previous code used
+    // `count + 1` + a 4-hex-char (65k space) random. Two parallel
+    // creates could read the same count and collide on the random.
+    // At ~300 tickets/day, birthday-bound collision is plausible.
+    // Use 4 random bytes (4 billion space) and drop the count.
+    // The DB `@@unique` constraint on `ticketId` is the real
+    // collision guard; we add a small retry loop to handle the
+    // (now extremely rare) race.
+    for (;;) {
+      const random = randomBytes(4).toString('hex').toUpperCase();
+      const ticketId = `#${random}`;
+      try {
+        return await supportRepository.create(riderDbId, {
+          ...input,
+          subject: sanitizeHtml(input.subject),
+          message: sanitizeHtml(input.message),
+          ticketId,
+          status: 'OPEN',
+        });
+      } catch (err: unknown) {
+        // P2002 = unique constraint violation; retry with a new random
+        const e = err as { code?: string };
+        if (e?.code === 'P2002' && attempts < 5) {
+          attempts++;
+          continue;
+        }
+        throw err;
+      }
+    }
   },
 
   async getTickets(riderDbId: string) {
