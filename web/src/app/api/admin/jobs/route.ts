@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { requireAdmin } from '@/lib/rbac';
+import { hasPermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { runWalletReconciliation, recordReconciliation } from '@/server/workers/jobs/wallet-reconciliation.job';
 import { rentRemindersJob } from '@/server/workers/jobs/rent-reminders.job';
@@ -141,6 +142,14 @@ export async function POST(req: NextRequest) {
     const admin = await requireAdmin();
     if (!admin) {
       return errors.unauthorized('Admin authentication required');
+    }
+    // PR-58: require the `jobs_run` permission, not just `requireAdmin`.
+    // A READ_ONLY admin passes the role check but should not be able
+    // to fire `auto-debit`, `daily-engagement`, or
+    // `wallet-reconciliation`. SUPER_ADMIN still passes via the
+    // implicit bypass in `hasPermission` (permissions.ts:75).
+    if (!hasPermission(admin.adminRole || '', 'jobs_run')) {
+      return errors.forbidden('Forbidden: jobs_run permission required');
     }
 
     const body = await req.json();
