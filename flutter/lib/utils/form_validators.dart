@@ -8,8 +8,8 @@ class FormValidators {
     [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
     [6, 5, 9, 8, 7, 1, 0, 4, 3, 2],
     [7, 6, 5, 9, 8, 2, 1, 0, 4, 3],
-    [8, 7, 6, 5, 9, 3, 2, 1, 0, 4],
-    [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+    [8, 7, 5, 0, 9, 3, 2, 6, 4, 1],
+    [9, 8, 7, 5, 6, 4, 3, 2, 1, 0],
   ];
 
   static const _verhoeffP = [
@@ -22,6 +22,28 @@ class FormValidators {
     [2, 7, 9, 3, 8, 0, 6, 4, 1, 5],
     [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
   ];
+
+  /// Indian mobile number validation.
+  ///
+  /// Accepts:
+  /// - `+91XXXXXXXXXX` (with country code)
+  /// - `91XXXXXXXXXX`   (country code without +)
+  /// - `XXXXXXXXXX`     (10 raw digits)
+  ///
+  /// Strips spaces and dashes before checking. The 10-digit mobile prefix
+  /// must start with 6, 7, 8, or 9 (the only valid Indian mobile prefixes).
+  static String? indianPhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Phone number is required';
+    }
+    final cleaned = value.replaceAll(RegExp(r'[\s-]'), '');
+    // Optional +91 / 91 country code, then 10 digits starting with 6-9.
+    final pattern = RegExp(r'^(\+?91)?[6-9]\d{9}$');
+    if (!pattern.hasMatch(cleaned)) {
+      return 'Enter a valid 10-digit Indian mobile number';
+    }
+    return null;
+  }
 
   static String? required(String? value, [String fieldName = 'This field']) {
     if (value == null || value.trim().isEmpty) {

@@ -40,6 +40,69 @@ void main() {
       });
     });
 
+    group('indianPhone', () {
+      test('returns error when empty or null', () {
+        expect(FormValidators.indianPhone(''), 'Phone number is required');
+        expect(FormValidators.indianPhone(null), 'Phone number is required');
+      });
+
+      test('accepts raw 10-digit number with valid prefix', () {
+        expect(FormValidators.indianPhone('9876543210'), isNull);
+        expect(FormValidators.indianPhone('6123456789'), isNull);
+        expect(FormValidators.indianPhone('7123456789'), isNull);
+        expect(FormValidators.indianPhone('8123456789'), isNull);
+      });
+
+      test('accepts 91 country code without +', () {
+        expect(FormValidators.indianPhone('919876543210'), isNull);
+      });
+
+      test('accepts +91 country code', () {
+        expect(FormValidators.indianPhone('+919876543210'), isNull);
+      });
+
+      test('strips whitespace and dashes before validating', () {
+        expect(FormValidators.indianPhone('+91 98765 43210'), isNull);
+        expect(FormValidators.indianPhone('98765-43210'), isNull);
+        expect(FormValidators.indianPhone('  9876543210  '), isNull);
+      });
+
+      test('rejects numbers starting with 0-5 (not valid Indian mobile)', () {
+        expect(FormValidators.indianPhone('1234567890'),
+            'Enter a valid 10-digit Indian mobile number');
+        expect(FormValidators.indianPhone('5234567890'),
+            'Enter a valid 10-digit Indian mobile number');
+        expect(FormValidators.indianPhone('0123456789'),
+            'Enter a valid 10-digit Indian mobile number');
+      });
+
+      test('rejects 11+ raw digits', () {
+        expect(FormValidators.indianPhone('98765432101'),
+            'Enter a valid 10-digit Indian mobile number');
+      });
+
+      test('rejects 9 or fewer digits', () {
+        expect(FormValidators.indianPhone('987654321'),
+            'Enter a valid 10-digit Indian mobile number');
+        expect(FormValidators.indianPhone('98765'),
+            'Enter a valid 10-digit Indian mobile number');
+      });
+
+      test('rejects non-numeric junk', () {
+        expect(FormValidators.indianPhone('abcdefghij'),
+            'Enter a valid 10-digit Indian mobile number');
+        expect(FormValidators.indianPhone('98 76 54 32 1a'),
+            'Enter a valid 10-digit Indian mobile number');
+      });
+
+      test('rejects +91 with too few or too many digits', () {
+        expect(FormValidators.indianPhone('+91987654321'),
+            'Enter a valid 10-digit Indian mobile number');
+        expect(FormValidators.indianPhone('+9198765432101'),
+            'Enter a valid 10-digit Indian mobile number');
+      });
+    });
+
     group('email', () {
       test('returns null when empty (optional)', () {
         expect(FormValidators.email(''), isNull);

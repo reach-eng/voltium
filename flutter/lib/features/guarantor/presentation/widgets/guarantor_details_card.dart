@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/form_validators.dart';
 
 class GuarantorDetailsCard extends StatelessWidget {
   final TextEditingController nameController;
@@ -233,6 +234,7 @@ class GuarantorDetailsCard extends StatelessWidget {
                 maxLength: 10,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 enabled: !isPhoneVerified,
+                validator: FormValidators.indianPhone,
                 style:
                     AppTypography.bodyMedium.copyWith(color: colors.onSurface),
                 decoration: InputDecoration(
