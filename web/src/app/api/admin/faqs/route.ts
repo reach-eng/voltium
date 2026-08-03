@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     const faq = await adminFaqUseCases.create(
       validation.data,
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
     return success(faq, 'FAQ created', 201);
   } catch (error) {
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest) {
     if (!validation.success) return errors.validation(validation.error!);
 
     const { id, ...data } = validation.data;
-    const faq = await adminFaqUseCases.update(id, data, req.headers.get('x-admin-id') || 'system');
+    const faq = await adminFaqUseCases.update(id, data, session.adminId ?? session.riderDbId ?? 'system');
     return success(faq);
   } catch (error) {
     logger.error('PUT /api/admin/faqs error:', error);
@@ -79,7 +79,7 @@ export async function DELETE(req: NextRequest) {
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return errors.badRequest('id is required');
 
-    await adminFaqUseCases.delete(id, req.headers.get('x-admin-id') || 'system');
+    await adminFaqUseCases.delete(id, session.adminId ?? session.riderDbId ?? 'system');
     return success(null, 'FAQ deleted');
   } catch (error) {
     logger.error('DELETE /api/admin/faqs error:', error);

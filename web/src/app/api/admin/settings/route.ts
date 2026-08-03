@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest) {
 
     const results = await settingUseCases.update(
       validation.data,
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
     invalidateCache('admin:*');
     return success(results, 'Settings updated');

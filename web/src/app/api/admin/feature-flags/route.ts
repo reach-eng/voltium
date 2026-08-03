@@ -63,7 +63,7 @@ export async function PUT(req: NextRequest) {
     // immediately instead of waiting up to 60s for the browser cache to expire.
     invalidateCache('admin:feature-flags:*');
 
-    const actorId = req.headers.get('x-admin-id') || 'system';
+    const actorId = session.adminId ?? session.riderDbId ?? 'system';
     createAuditLog({
       actorId,
       action: 'feature_flag.update',

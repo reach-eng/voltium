@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     const result = await adminUseCases.createAdmin(
       { name, email, password, role: validatedRole, permissions },
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
 
     return success(result, 'Admin created', 201);
@@ -100,7 +100,7 @@ export async function PUT(req: NextRequest) {
     const admin = await adminUseCases.updateAdmin(
       id,
       updateData,
-      req.headers.get('x-admin-id') || 'system'
+      session.adminId ?? session.riderDbId ?? 'system'
     );
     return success(admin);
   } catch (error) {
