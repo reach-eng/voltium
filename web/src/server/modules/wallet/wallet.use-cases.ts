@@ -17,7 +17,8 @@ import { walletLedgerService } from './wallet-ledger.service';
 import { notificationService } from '@/lib/notification-service';
 import { OutboxService, OutboxEventTypes } from '@/server/workers/outbox';
 import { createAuditLog } from '@/lib/audit-log';
-import { randomUUID } from 'crypto';
+// PR-81: removed `import { randomUUID }` — no longer used after
+// the 5-min-bucket idempotency key landed.
 import { logger } from '@/lib/logger';
 import { TransactionType, TransactionPurpose, TransactionStatus, Prisma } from '@prisma/client';
 import { invalidateRiderCache } from '@/lib/server-cache';
@@ -85,10 +86,18 @@ export const walletUseCases = {
 
     let idempotencyKey = metadata?.idempotencyKey;
     if (!idempotencyKey) {
-      idempotencyKey = `topup:${riderDbId}:${randomUUID()}`;
-      logger.warn('[WalletUseCases] Client did not provide idempotencyKey, generated server UUID fallback', {
+      // PR-81: implement the documented 5-minute bucket key.
+      // The previous `topup:{riderId}:{randomUUID()}` was unique
+      // per request, so a network retry created a second PENDING
+      // top-up that an admin could double-approve.
+      // Bucket size: 5 minutes (300_000 ms).
+      const FIVE_MINUTES_MS = 300_000;
+      const bucket = Math.floor(Date.now() / FIVE_MINUTES_MS);
+      idempotencyKey = `topup:${riderDbId}:${bucket}`;
+      logger.warn('[WalletUseCases] Client did not provide idempotencyKey, generated 5-min bucket key', {
         riderId: riderDbId,
         idempotencyKey,
+        bucket,
       });
     }
 
