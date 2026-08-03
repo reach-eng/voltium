@@ -3086,3 +3086,46 @@ See `docs/AUDIT_FIX_PLAN_2026-08-03.md` for the full plan with dependency graph 
 - 15+ P1/P2 housekeeping PRs (token cleanup, dead code removal, observability hooks, etc.)
 - Consider scope expansion for PR-29b..g (the `CommandPalette.tsx` and any non-admin raw buttons)
 - Wait for 2026-08-06 staging soak to complete before R6 drop phase
+
+### 2026-08-03 (continued): Phase 5 — P1/P2 housekeeping
+
+**Theme:** smaller-but-still-important items. Phase 5 plan had 28 P1s (PR-30 through PR-58); this batch covered 7 of them. Of those, 3 shipped real fixes and 4 were stale (reclassified).
+
+#### Shipped (3 PRs)
+
+- `b0787d2` **PR-30** — feat(backend): add circuit breaker to `sendSms` (3-state CLOSED/OPEN/HALF_OPEN, 3-failure threshold, 30s cooldown). Prevents a down MSG91 provider from burning 10s/call across the worker fleet.
+- `8dcc42a` **PR-44** — feat(rider): add `validateIndianPhone` to guarantor form. Accepts `+91XXXXXXXXXX` / `91XXXXXXXXXX` / `XXXXXXXXXX` (10 digits, leading 6-9). 9 new test cases.
+- `b40c136` **PR-50** — refactor(design-system): replace `bg-slate-50` with `bg-background` in 3 background-jobs files. **Audit's "22 screens" count was inflated** — actual count was 4 instances in 3 files (the other 18 were opacity/hover variants that the audit's loose grep caught).
+
+#### Stale reclassifications (4 PRs; 4 more in audit index, total now 16)
+
+- **PR-47** (`d4d3d93`) shipped but the asset was already in `test_assets/` convention — moved `flutter/assets/images/placeholder.png` → `flutter/test_assets/placeholder.png` (~142KB). PR-47 was a real fix; the file existed in production assets.
+- **PR-40** (`bf6328d`) shipped but the guard was already present (used `APP_ENV` not `NODE_ENV` per PR-60 convention). Confirming commit only.
+- **PR-41** (`1f3b63c`) STALE: `x-request-id` was already in `admin-api.ts:104,112`. Agent also fixed a latent headers-spread bug and added 4 test assertions.
+- **PR-49** STALE: `defaultTheme="system" enableSystem` already on `providers.tsx:36`.
+
+#### Phase 5 verification gate (PASSED)
+
+- `npm run lint` — 0 errors, 0 warnings
+- `npx tsc --noEmit` — clean
+- `npm test -- --run tests/unit` — **1995 passed, 3 skipped, 3 pre-existing failures** (same `daily-engagement.job.test.ts` from Phase 3, unrelated)
+- `flutter analyze` — No issues found
+
+#### Cumulative across all 5 phases (FINAL)
+
+| Phase | PRs planned | PRs shipped | Stale | Blocked | Audit reclassifications |
+|---|---|---|---|---|---|
+| Phase 1 (security/RBAC) | 8 | 7 | 1 | 0 | 3 (PR-63, etc.) |
+| Phase 2 (visible fixes) | 7 | 2 | 2 | 0 | 2 (PR-65, PR-67) |
+| Phase 3 (perf/scale) | 8 | 7 | 1 | 1 (PR-71) | 2 |
+| Phase 4 (architecture) | 5 | 5 | 0 | 0 | 2 (PR-26, PR-29a counts) |
+| Phase 5 (P1/P2 housekeeping) | 7 attempted | 3 | 4 | 0 | 4 (PR-41, 49, 50 count, 40) |
+| **Total** | **35 attempted** | **24** | **8** | **1** | **13 unique** |
+
+**Net:** ~24 real PRs shipped, ~8 stale reclassifications, 1 blocked (PR-71 needs value-mapping shim), 13+ audit reclassifications documented.
+
+#### Outstanding work
+
+- **PR-71** (DB schema alignment) — blocked on TS code enum mismatch. Needs a value-mapping shim or a separate "migrate every `lifecycleStatus` write to use the 5-value stage" PR.
+- **Staging soak** — 2026-08-06 staging soak is the gate for the rider app R6 drop.
+- **Phase 5 remaining 21 P1s** — the audit plan listed 28; this batch covered 7. The rest are lower-priority and can be tackled as a follow-up series.
