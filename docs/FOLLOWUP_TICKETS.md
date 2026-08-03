@@ -3056,3 +3056,33 @@ See `docs/AUDIT_FIX_PLAN_2026-08-03.md` for the full plan with dependency graph 
 - **PR-26b** (P0) — extract `submitVehicleReturn` / `completePickupVerification` / `approveKyc` use cases (API N3 / Backend).
 - **PR-27** (P1) — add `web/src/components/ui/heading.tsx` + migrate 287 raw typography combos across 5-7 sub-PRs.
 - **PR-28** (P1) — add `--split-per-abi` to `flutter-ci-cd.yml` (60% APK reduction).
+
+### 2026-08-03 (continued): Phase 4 — Architecture refactors
+
+**Theme:** systemic fixes. 5 PRs planned, 5 shipped (PR-29a compressed the remaining sub-PRs because the audit inflated the count).
+
+#### Shipped (5 PRs)
+
+- `995e4ce` **PR-26** — fix(api): wire admin validators into 12 mutation routes. Added 8 new `.strict()` Zod schemas to `lib/validators/admin.ts` (now 14 total), wired all into their routes. The audit's N2 (`isSecret` flag flip) is now rejected with 400. 42 new unit test assertions.
+- `6b652c9` **PR-26b** — refactor(server): extract 3 use cases from `updateProfile` chokepoint. New `submitReturn`, `completePickupVerification`, `approveKyc` use cases enforce cross-entity invariants. 27 new unit tests, plus the audit's KYC `createAuditLog` carry-over is fixed.
+- `347762f` **PR-27a** — feat(design-system): add shared `<Heading>` component (6 levels h1-h6). Migration of 287 raw typography combos is split into PR-27b..g (5-7 sub-PRs).
+- `720acd8` **PR-28** — build(flutter): add `--split-per-abi` to CI. Per-ABI APKs (~14MB) instead of universal APK (~35MB). 60% size reduction.
+- `c2b396f` **PR-29a** — refactor(admin): migrate 11 raw `<button>` to shadcn `<Button>` in 10 files. **The audit's "41 raw buttons" claim was inflated — the real count was 11.** Entire `web/src/components/admin/screens/**` folder is now clean. PR-29b..29g have nothing left to do in admin/screens; can be skipped or scoped elsewhere.
+
+#### Phase 4 verification gate (PASSED)
+
+- `npm run lint` — 0 errors, 0 warnings
+- `npx tsc --noEmit` — clean
+- `npm test -- --run tests/unit` — **1988 passed, 3 skipped, 3 pre-existing failures** (in `tests/unit/workers/daily-engagement.job.test.ts`, unrelated to Phase 4)
+- `flutter analyze` — pending (will run in next phase)
+
+#### Audit reclassifications (2 more in this phase; total now 12)
+
+11. **"Wire 6 listed routes with admin validators"** (API N1 / PR-26) — **STALE on route list**: the audit named 6 routes (admins/feature-flags/faqs/legal/settings/system-settings) but the file's 6 schemas were actually for data-deletion/rider-update/wallet-adjust. Fix wired all 6 existing + added 8 new for the routes the audit named.
+12. **"Migrate 41 raw <button> tags"** (Admin N7 / PR-29) — **COUNT INFLATED**: actual count was 11 across 10 files. The 41 came from a case-insensitive grep that matched shadcn `<Button>` calls too.
+
+#### Next up (Phase 5)
+
+- 15+ P1/P2 housekeeping PRs (token cleanup, dead code removal, observability hooks, etc.)
+- Consider scope expansion for PR-29b..g (the `CommandPalette.tsx` and any non-admin raw buttons)
+- Wait for 2026-08-06 staging soak to complete before R6 drop phase
