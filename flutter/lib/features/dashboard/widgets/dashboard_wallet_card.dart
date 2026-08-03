@@ -88,7 +88,8 @@ class WalletCard extends StatelessWidget {
     required Color amountTextColor,
     required bool hasPulsatingRedAmountHalo,
   }) {
-    final Color themeColor = isDailyPlan ? AppColors.warning : AppColors.error;
+    final Color themeColor =
+        isDailyPlan ? AppColors.warningForeground : AppColors.error;
     final Color lightBgColor =
         isDailyPlan ? AppColors.warningSurface : AppColors.errorSurface;
     final Color borderColor =

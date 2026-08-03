@@ -46,6 +46,13 @@ class AppColors {
   static const Color warningLight = Color(0xFFFEF3C7);
   static const Color warningDark = Color(0xFFD97706);
 
+  /// Foreground `warning` for use on `warningLight` / `warningSurface` /
+  /// `warningBorder` backgrounds. `AppColors.warning` (amber-500) on those
+  /// surfaces has only ~1.9:1 contrast, which fails WCAG AA (4.5:1). This
+  /// darker variant (#92400E amber-800) gives ~6.4:1 contrast — pass.
+  /// (PR-62 / AUDIT_DESIGN_SYSTEM N1.)
+  static const Color warningForeground = Color(0xFF92400E); // amber-800
+
   static const Color error = Color(0xFFEF4444);
   static const Color errorLight = Color(0xFFFEE2E2);
   static const Color errorDark = Color(0xFFB91C1C);
@@ -410,9 +417,28 @@ class AppTheme {
         primary: AppColors.primary,
         onPrimary: Colors.white,
         secondary: AppColors.success,
+        onSecondary: Colors.white,
         surface: AppColors.surface,
         onSurface: AppColors.onSurface,
         error: AppColors.error,
+      ).copyWith(
+        // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
+        // M3 `fromSeed` would auto-generate these from the seed color, but the
+        // brand spec defines explicit values that match `AppColors` 1:1.
+        primaryContainer: AppColors.primarySurface,
+        onPrimaryContainer: AppColors.primaryDark,
+        secondaryContainer: AppColors.successLight,
+        onSecondaryContainer: AppColors.successDark,
+        // `tertiary` = warning in our design system (3rd semantic priority).
+        tertiary: AppColors.warning,
+        onTertiary: Colors.white,
+        tertiaryContainer: AppColors.warningSurface,
+        onTertiaryContainer: AppColors.warningForeground,
+        surfaceContainerLow: AppColors.surfaceBright,
+        surfaceContainerHigh: AppColors.iconBackground,
+        onSurfaceVariant: AppColors.onSurfaceVariant,
+        outline: AppColors.outline,
+        outlineVariant: AppColors.outlineVariant,
       ),
       scaffoldBackgroundColor: AppColors.surface,
       appBarTheme: AppBarTheme(
@@ -524,9 +550,25 @@ class AppTheme {
         primary: AppColors.primary,
         onPrimary: Colors.white,
         secondary: AppColors.success,
+        onSecondary: Colors.white,
         surface: darkColors.surface,
         onSurface: darkColors.onSurface,
         error: AppColors.error,
+      ).copyWith(
+        // 9 surface tokens wired to brand spec (PR-62 / AUDIT_DESIGN_SYSTEM N2).
+        primaryContainer: darkColors.primarySurface,
+        onPrimaryContainer: AppColors.primaryLight,
+        secondaryContainer: darkColors.successSurface,
+        onSecondaryContainer: darkColors.success,
+        tertiary: darkColors.warning,
+        onTertiary: Colors.black,
+        tertiaryContainer: darkColors.warningSurface,
+        onTertiaryContainer: darkColors.warningForeground,
+        surfaceContainerLow: darkColors.card,
+        surfaceContainerHigh: darkColors.inputFill,
+        onSurfaceVariant: darkColors.onSurfaceVariant,
+        outline: darkColors.outline,
+        outlineVariant: darkColors.outlineVariant,
       ),
       scaffoldBackgroundColor: darkColors.surface,
       appBarTheme: AppBarTheme(
@@ -654,6 +696,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     errorSurface: Color(0xFFFEF2F2),
     warning: Color(0xFFF59E0B),
     warningSurface: Color(0xFFFFFBEB),
+    warningForeground: Color(0xFF92400E), // amber-800 (WCAG AA on warningLight)
     primarySurface: Color(0xFFEFF6FF),
     voltAccent: Color(0xFF00E5FF),
   );
@@ -675,6 +718,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     errorSurface: Color(0xFF7F1D1D),
     warning: Color(0xFFFBBF24),
     warningSurface: Color(0xFF78350F),
+    warningForeground: Color(0xFFFCD34D), // amber-300 (dark-mode contrast pair)
     primarySurface: Color(0xFF1E293B),
     voltAccent: Color(0xFF00E5FF),
   );
@@ -695,6 +739,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   final Color errorSurface;
   final Color warning;
   final Color warningSurface;
+  final Color warningForeground;
   final Color primarySurface;
   final Color voltAccent;
 
@@ -715,6 +760,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     required this.errorSurface,
     required this.warning,
     required this.warningSurface,
+    required this.warningForeground,
     required this.primarySurface,
     required this.voltAccent,
   });
@@ -737,6 +783,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     Color? errorSurface,
     Color? warning,
     Color? warningSurface,
+    Color? warningForeground,
     Color? primarySurface,
     Color? voltAccent,
   }) {
@@ -757,6 +804,7 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       errorSurface: errorSurface ?? this.errorSurface,
       warning: warning ?? this.warning,
       warningSurface: warningSurface ?? this.warningSurface,
+      warningForeground: warningForeground ?? this.warningForeground,
       primarySurface: primarySurface ?? this.primarySurface,
       voltAccent: voltAccent ?? this.voltAccent,
     );
@@ -783,6 +831,8 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       errorSurface: Color.lerp(errorSurface, other.errorSurface, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       warningSurface: Color.lerp(warningSurface, other.warningSurface, t)!,
+      warningForeground:
+          Color.lerp(warningForeground, other.warningForeground, t)!,
       primarySurface: Color.lerp(primarySurface, other.primarySurface, t)!,
       voltAccent: Color.lerp(voltAccent, other.voltAccent, t)!,
     );

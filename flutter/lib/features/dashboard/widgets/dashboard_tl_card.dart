@@ -63,7 +63,7 @@ class TeamLeaderCard extends StatelessWidget {
                       border: Border.all(color: AppColors.warningLight),
                     ),
                     child: const Icon(Icons.stars,
-                        color: AppColors.warning, size: 24),
+                        color: AppColors.warningForeground, size: 24),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

@@ -27,7 +27,7 @@ class PreDashboardPollingBanner extends StatelessWidget {
             children: [
               const Icon(
                 Icons.hourglass_top_rounded,
-                color: AppColors.warning,
+                color: AppColors.warningForeground,
                 size: 22,
               ),
               const SizedBox(width: 12),
