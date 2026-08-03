@@ -115,6 +115,14 @@ export const rentalUseCases = {
           basePriceInPaise: dynamicPrice.basePrice,
           finalPriceInPaise: dynamicPrice.finalPrice,
           status: 'BOOKED',
+          // PR-76: period tracking. The first period is due at
+          // start of the lease + durationDays. We set nextRentDueAt
+          // to NOW so the rent-reminders job picks it up on its next
+          // tick. Period 0 = first period. The job advances
+          // periodNo and bumps nextRentDueAt by durationDays on
+          // each successful auto-debit.
+          periodNo: 0,
+          nextRentDueAt: new Date(),
         },
         include: {
           vehicle: { select: { id: true, vehicleId: true, model: true } },

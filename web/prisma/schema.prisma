@@ -454,6 +454,14 @@ model RentalLease {
   finalPriceInPaise Int
   startOdometer     Int?
   startBatteryPct   Int?
+  // PR-76: rent auto-debit period tracking. A lease is charged
+  // for its `finalPriceInPaise` once per `durationDays`-shaped
+  // period; `nextRentDueAt` advances to the next period boundary
+  // after each successful auto-debit, so a 7-day tenant is
+  // debited exactly once across 7 day-ticks, not 7 times.
+  nextRentDueAt     DateTime?
+  lastPaidAt        DateTime?
+  periodNo          Int          @default(0)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   rider             Rider        @relation(fields: [riderId], references: [id], onDelete: Cascade)
@@ -467,6 +475,7 @@ model RentalLease {
   @@index([riderId, status])
   @@index([createdAt])
   @@index([status, createdAt])
+  @@index([nextRentDueAt])
   @@map("rental_leases")
 }
 

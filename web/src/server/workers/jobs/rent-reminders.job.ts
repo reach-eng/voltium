@@ -24,14 +24,17 @@ export const rentRemindersJob = {
       notificationsSent: 0,
     };
 
-    // Find active rentals that are due or overdue
-    // Uses the RentalLease model to find active riders with active leases
-    const today = clock.now().toISOString().split('T')[0];
+    // Find active rentals that are due or overdue.
+    // PR-76: filter on `nextRentDueAt <= now()` so each lease is
+    // debited once per period (not once per day). The previous
+    // filter was `leaseDate <= today` which matched a 7-day
+    // tenant every day and drained the wallet in 1-2 days.
+    const now = clock.now();
 
     const activeLeases = (await db.rentalLease.findMany({
       where: {
         status: 'BOOKED',
-        leaseDate: { lte: today },
+        nextRentDueAt: { lte: now },
         rider: {
           lifecycleStatus: 'ACTIVE',
           wallet: { balanceInPaise: { gte: 0 } },
@@ -41,9 +44,15 @@ export const rentRemindersJob = {
         id: true,
         riderId: true,
         finalPriceInPaise: true,
+        periodNo: true,
+        nextRentDueAt: true,
+        // Look up the plan's durationDays to advance nextRentDueAt
+        // by the right amount after a successful debit.
         rider: {
-          include: {
-            wallet: true,
+          select: {
+            id: true,
+            currentPlanRef: { select: { durationDays: true } },
+            wallet: { select: { balanceInPaise: true } },
           },
         },
       },
@@ -55,14 +64,32 @@ export const rentRemindersJob = {
       const rider = lease.rider;
       const rentAmount = lease.finalPriceInPaise;
       const balance = rider.wallet?.balanceInPaise ?? 0;
+      // Default to 1 day if plan ref is missing (legacy data)
+      const durationDays = rider.currentPlanRef?.durationDays ?? 1;
 
       if (balance >= rentAmount) {
         // Auto-debit: sufficient balance
         try {
-          // Create a DEBIT transaction for rent payment
-          const idempotencyKey = `rent:${lease.id}:${today}`;
+          // PR-76: idempotency key is per-period, not per-day.
+          // The previous `rent:{lease.id}:{today}` key was unique
+          // per day, so a 7-day tenant was charged 7 times.
+          const periodKey = `rent:${lease.id}:period:${lease.periodNo}`;
+          const newPeriodNo = lease.periodNo + 1;
+          const newNextRentDueAt = new Date(
+            lease.nextRentDueAt!.getTime() + durationDays * 24 * 60 * 60 * 1000
+          );
 
           await db.$transaction(async (tx: any) => {
+            // Re-check inside tx: another worker may have already
+            // advanced this lease. If periodNo changed, skip.
+            const fresh = await tx.rentalLease.findUnique({
+              where: { id: lease.id },
+              select: { periodNo: true, nextRentDueAt: true },
+            });
+            if (!fresh || fresh.periodNo !== lease.periodNo) {
+              throw new Error('LEASE_PERIOD_ADVANCED');
+            }
+
             const txn = await tx.transaction.create({
               data: {
                 riderId: rider.id,
@@ -71,7 +98,8 @@ export const rentRemindersJob = {
                 purpose: 'RENT_PAYMENT',
                 status: 'APPROVED',
                 approvedAt: clock.now(),
-                description: `Auto-debit rent for lease ${lease.id}`,
+                description: `Auto-debit rent period ${lease.periodNo} for lease ${lease.id}`,
+                idempotencyKey: periodKey,
               },
             });
 
@@ -80,9 +108,21 @@ export const rentRemindersJob = {
               amountInPaise: rentAmount,
               category: 'RENT_PAYMENT',
               txnId: txn.id,
-              idempotencyKey,
-              note: `Auto-debit rent payment for lease ${lease.id}`,
+              idempotencyKey: periodKey,
+              note: `Auto-debit rent period ${lease.periodNo} for lease ${lease.id}`,
             }, tx);
+
+            // Advance the lease to the next period. This MUST be
+            // in the same tx as the debit so a crash mid-way doesn't
+            // leave the lease stuck on a period.
+            await tx.rentalLease.update({
+              where: { id: lease.id },
+              data: {
+                periodNo: newPeriodNo,
+                lastPaidAt: clock.now(),
+                nextRentDueAt: newNextRentDueAt,
+              },
+            });
           });
 
           createAuditLog({
@@ -90,7 +130,12 @@ export const rentRemindersJob = {
             action: 'CREATE',
             entity: 'rentalLease',
             entityId: lease.id,
-            details: { riderId: rider.id, amountPaise: rentAmount },
+            details: {
+              riderId: rider.id,
+              amountPaise: rentAmount,
+              periodNo: lease.periodNo,
+              durationDays,
+            },
           }).catch(() => {});
 
           result.autoDebited++;
@@ -101,6 +146,13 @@ export const rentRemindersJob = {
             .catch(() => {});
           result.notificationsSent++;
         } catch (err) {
+          // Concurrent worker won the race; not a real failure.
+          if (err instanceof Error && err.message === 'LEASE_PERIOD_ADVANCED') {
+            logger.debug('[RentRemindersJob] Lease period already advanced, skipping', {
+              leaseId: lease.id,
+            });
+            continue;
+          }
           logger.error('[RentRemindersJob] Auto-debit failed', { riderId: rider.id, err });
         }
       } else {
