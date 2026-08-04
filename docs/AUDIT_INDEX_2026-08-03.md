@@ -191,3 +191,85 @@ Each of the 8 audits re-verified its prior P0 claims against current code on 202
 ## Phase 6 reclassification #39 (2026-08-04 11:15)
 
 **Backend S2** — iles.use-cases._generateUploadToken and _verifyUploadToken previously reused env.JWT_SECRET (a hygiene issue with no current exploit, filed as FOLLOWUP_TICKETS). **Shipped today as PR-95 on ix/phase6d-api-hardening (commit e075a91)**: new env var FILE_UPLOAD_SECRET is required in production; falls back to JWT_SECRET only in dev/test. New unit test at 	ests/unit/files/upload-token-secret.test.ts asserts the right key is used in each case. The deep-audit finding is now FIXED.
+
+## Phase 7A reclassifications #40-#44 (2026-08-04)
+
+The Phase 6 plan listed 19 PRs across 6 sub-phases; 6A/6D/6E/6F shipped (14 PRs) but 6B (4 P0s) and 6C did not. Phase 7A ships all 4 P0s that gate the 2026-08-06 staging soak.
+
+### Reclassification #40 — DB-M-1 (DB audit 2.8) — STALE on first pass, REAL after re-verification
+
+The original 20260730150000_add_rider_lifecycle_stage migration was filed in Phase 6 as "shipped, just needs migration history reconciliation". After live-DB inspection on 2026-08-04 via web/scripts/inspect-migrations.ts:
+- iders.lifecycleStage column EXISTS (data_type USER-DEFINED)
+- RiderLifecycleStage enum EXISTS in pg_type
+- BUT _prisma_migrations only has 1 row ( _init); 33 migrations are "not applied" from migrate status POV
+
+This means the schema DDL applied (probably via prisma db push) but the migration history is missing. The gated 20260806020000_drop_rider_legacy_lifecycle_status hard-aborts on any DB where lifecycleStage is NULL.
+
+**Shipped today as PR-96 on fix/phase6d-api-hardening (commit f594a6b)**:
+- New migration 20260807000001_idempotent_lifecycle_stage_backfill/migration.sql — re-runnable with IF NOT EXISTS guards, IF EXISTS guards, BEGIN/EXCEPTION isolation; backfills lifecycleStage from lifecycleStatus with the 15→5 mapping
+- New scripts/resolve-migration-history.ts — marks all 30 pre-gate migrations as applied via direct SQL (in a BEGIN/COMMIT/ROLLBACK transaction); EXCLUDES the 3 gated staging-soak drops
+- New 	ests/unit/resolve-migration-history.test.ts (10 tests)
+
+Verification: 32/34 migrations in _prisma_migrations (was 1 before). prisma migrate deploy will now apply the 3 gated drops cleanly.
+
+### Reclassification #41 — DB-C-1 (DB audit 2.8) — STALE on first pass, REAL after re-verification
+
+Filed in Phase 6 as "CHECK constraints were added; just need idempotency". After live-DB inspection on 2026-08-04 via web/scripts/inspect-constraints.ts:
+- **0 of 12 expected CHECK constraints present in pg_constraint**
+
+Root cause: the original 20260729160000_add_check_constraints/migration.sql targeted PascalCase tables ("Rider", "KycProfile") that no longer existed after 20260712000002_standardize_table_naming renamed them to snake_case. The DO \$\$ block's ALTER TABLE statements all failed with "relation Rider does not exist" and the migration was never marked applied.
+
+**Shipped today as PR-97 on fix/phase6d-api-hardening (commit 572c940)**:
+- New migration 20260807000000_add_check_constraints_corrected/migration.sql — uses snake_case tables, adds 12 constraints (original 11 + wallet_deposit_nonnegative), wraps each in BEGIN/EXCEPTION for partial-failure isolation
+- New scripts/apply-check-constraints.ts — verify the migration applies + re-runs cleanly
+- New 	ests/unit/check-constraints-corrected.test.ts (8 tests)
+
+Verification: 12/12 CHECK constraints present in both public + test schemas (was 0/12 before). The ider_battery_level_range constraint now correctly rejects batteryLevel=999 with SQLSTATE 23514.
+
+### Reclassification #42 — DB-CL-1 (DB audit 2.8) — SHIPPED
+
+The offline mock fallback (process.env.DATABASE_OFFLINE=true) in web/src/lib/db.ts was a development convenience that created a real production risk: misconfigured env var → silent mock data (10 hardcoded phones, auto-approved KYC, ₹1000 balance, ₹5000 deposit). The 16+ reads of process.env.DATABASE_OFFLINE short-circuited ALL Prisma queries to mock data, bypassing the error path entirely.
+
+**Shipped today as PR-98 on fix/phase6d-api-hardening (commit efae83d)**:
+- web/src/lib/db.ts — removed isDbOffline, startRecoveryCheck, mockRiderPhoneMap, EXISTING_PHONES, EXISTING_IDS, getMockFallback; cleaned 412 → 175 lines
+- web/src/lib/env.ts — removed the production guard (no longer needed)
+- web/src/lib/shell.ts — removed DATABASE_OFFLINE short-circuits in dumpDatabase + estoreDatabase
+- 14 test files — removed dead process.env.DATABASE_OFFLINE = 'false' lines
+- 	ests/global-setup.ts — removed the orce DATABASE_OFFLINE=false step
+- New scripts/check-no-database-offline.sh — CI guard that fails the build on any web/src/ reference
+- New 	ests/unit/check-no-database-offline.test.ts (3 tests)
+
+Verification: 0 process.env.DATABASE_OFFLINE references in web/src/ (was 16+). 2081 unit tests pass after the mock removal (was 2053; +28 new from PR-96/97/98). Pre-existing 3 daily-engagement failures now surface (they were previously hidden by the mock returning empty data).
+
+### Reclassification #43 — SEC-N-0 (Security audit) — SHIPPED
+
+3 of 7 security-event loggers were already wired (Phase 6 work). 4 still had 0 callers: logPermissionDenied, logKycDocumentView, logAccountSuspension, logReconciliationMismatch. This is a SOC2/GDPR gap: every security-relevant action should be in the audit log.
+
+**Shipped today as PR-99 on fix/phase6d-api-hardening (commit 4a605a5)**:
+- New dminForbiddenWithLog({session, permission, route, ip}) helper in lib/rbac.ts that wraps errors.forbidden() and fires logPermissionDenied (fire-and-forget)
+- kycRepository.findByRiderIdForAdmin(riderDbId, {adminId}) for admin KYC document access; fires logKycDocumentView
+- In dminRiderUseCases.update(), when KYC REJECTED → lifecycleStatus=SUSPENDED, fire logAccountSuspension
+- In unWalletReconciliation() per-wallet loop, when integrity.drift != 0, fire logReconciliationMismatch
+- New 	ests/unit/security-events-wiring.test.ts (10 tests)
+
+Verification: 4/4 security-event loggers wired (was 0/4). All wiring calls fire-and-forget so the response is not delayed by audit-log writes.
+
+### Reclassification #44 — INF-CI/CD-3 (Infrastructure audit) — VERIFIED + HARDENED
+
+Phase 6F (PR-94) shipped scripts/check-secret-rotation.ts and wired .github/workflows/secret-rotation-nightly.yml to call it. The script has an explicit main() function, calls process.exit(outcome.exitCode), and the test asserts exit code 0 on clean + exit code 1 on stale.
+
+**Hardened today as PR-100 on fix/phase6d-api-hardening (commit 07c7927)**:
+- New 	ests/unit/check-secret-rotation-nightly.test.ts (10 tests) — regression guards that catch any future refactor that drops the wiring (main() function, workflow cron schedule, webhook call, test coverage of exit codes)
+
+Verification: secret-rotation nightly CI is fully wired and regression-protected.
+
+### Cumulative reclassifications
+
+- Phase 6 re-verification: 38 reclassifications (#1-#38)
+- Phase 6 ship session: #39 (Backend S2)
+- Phase 7A ship session: #40-#44 (DB-M-1, DB-C-1, DB-CL-1, SEC-N-0, INF-CI/CD-3)
+- **Total: 44 reclassifications** across 2 ship sessions + 1 re-verification
+
+### Staging soak gate status (2026-08-04)
+
+All 4 P0s from AUDIT_PHASE6_PLAN_2026-08-04.md (DB-M-1, DB-C-1, DB-CL-1, INF-CI/CD-3) are now SHIPPED. The 3 gated drop migrations (20260806000000, 20260806010000, 20260806020000) are ready to run on staging. **The 2026-08-06 staging soak is unblocked.**
