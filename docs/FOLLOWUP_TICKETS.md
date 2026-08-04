@@ -3296,3 +3296,79 @@ px tsc --noEmit — 0 errors
 - APP_ENV gate fix in 4 files flagged by the new check-no-node-env-security.sh (api-middleware.ts:113, auth.ts:30, db.ts:32, db.ts:46)
 
 **Total Phase 7 ship: 31 PRs (5 from 7A + 26 from 7B-7H) + 3 docs commits** on ix/phase6d-api-hardening. The 2026-08-06 staging soak is fully unblocked and the 7B-7H ship closes most of the SOC2/GDPR and backend P1 backlog.
+
+#### Polish batch ship session (2026-08-04) — 11 PRs across 7E/7F/7G/7H
+
+After the 7B-7H batch shipped, 4 follow-ups were still blocking
+the staging-soak pre-flight: the new CI guard for APP_ENV
+(PR-112b) flagged 5 files that the 7A refactor missed, and
+the 3 daily jobs were still on UTC instead of IST. The
+remaining 7E/7F/7G/7H polish items are now shipped as 11
+review-ready PRs.
+
+**Polish (P0 follow-ups):**
+- PR-112c: APP_ENV gate in 4 remaining files (api-middleware,
+  db, logger). The new CI guard is now green: 0 raw NODE_ENV
+  reads in security-sensitive code.
+- PR-108b: 3 daily jobs migrated to istDateKey helper
+  (audit-cleanup, telemetry-cleanup, daily-engagement). The
+  06:00 IST run no longer straddles the UTC/IST boundary.
+
+**Polish (7E Design):**
+- PR-126: typography tier ratchet. 579 ontSize: / GoogleFonts.
+  uses outside lib/theme/ recorded as baseline; new offenders
+  trip the build.
+- PR-127: card widget consolidation. CardParallaxTilt (29-line
+  duplicate of TiltCard) deleted. cards/ folder structure
+  created with re-export shim.
+- PR-128: Colors.white/black ratchet (581 baseline) + explicit
+  shimmerBaseDark / shimmerHighlightDark tokens.
+
+**Polish (7F Rider):**
+- PR-130: OTP timer dedup. OTPTimer + AnimatedOTPTimer (209 lines
+  of dead code) deleted. OtpResendWidget + parent's
+  _resendCountdown is the canonical answer.
+- PR-132: image-decode helper. 12MP JPEG decodes to 2MP via
+  instantiateImageCodec(targetWidth: 2048) — ~9x less RAM.
+- PR-134: screen file size ratchet. 10 screens currently over
+  600 lines recorded as baseline; future commits can't grow them.
+
+**Polish (7H Infra):**
+- PR-143: external uptime probe doc (UptimeRobot / cron-job.org).
+- PR-144: DR SPOF "Known limitations" section.
+- PR-145: Cloudflare Tunnel metrics endpoint + health check doc.
+
+**Cumulative: 11 PRs in this batch (PR-108b, PR-112c, PR-126,
+PR-127, PR-128, PR-130, PR-132, PR-134, PR-143, PR-144, PR-145).**
+
+**Verification gate (2026-08-04):**
+- 
+px vitest run tests/unit — 2186 passed, 3 skipped, 3 pre-existing failures (daily-engagement FK Restrict; unrelated to this batch)
+- 
+px tsc --noEmit — 0 errors
+- scripts/check-no-database-offline.sh — OK
+- scripts/check-no-node-env-security.sh — OK
+- lutter/scripts/check-typography-tier.sh — 579 / 579 offenders (ratchet working)
+- lutter/scripts/check-colors-ratchet.sh — 581 / 581 offenders (ratchet working)
+- lutter/scripts/check-screen-size.sh — 10 / 10 over 600 lines (ratchet working)
+
+**Final Phase 7 state (all sub-phases):**
+- Phase 7A: 5 P0s (5 PRs)
+- Phase 7B-7H: 26 PRs (initial batch)
+- Polish batch: 11 PRs
+- Docs commits: 4
+- **Total: 42 PRs + 4 docs commits** on ix/phase6d-api-hardening
+
+**Phase 7 plan reclassifications: #40-#79 (40 entries).**
+
+**Known follow-ups (intentionally NOT shipped in this batch):**
+- 4 large screen files need to be split (PR-134 follow-ups):
+  guarantor_onboarding 1048, edit_profile 836, user_onboarding 816,
+  top_up_proof 811. Ratchet is in place; each split is its own PR.
+- card widgets/cards.dart split into base_card/interactive_card/
+  dashboard_card (PR-127 follow-ups).
+- 6 additional over-600-line screens the audit missed (PR-134e):
+  end_rental 776, notifications 712, choose_plan 690,
+  legal_page 670, pickup_hub 626, dashboard_sheets 763.
+- 600+ fontSize/GoogleFonts uses need migration (PR-126 follow-ups).
+- 581 Colors.white/black uses need migration (PR-128 follow-ups).

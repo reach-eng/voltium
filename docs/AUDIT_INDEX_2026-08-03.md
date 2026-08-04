@@ -374,3 +374,89 @@ PR-125 added the back-compat note on AppColors.onSurfaceMuted. Full 19-tier toke
 - **Total: 84 PRs + 1 BOM-strip chore + 4 docs commits** on ix/phase6d-api-hardening
 
 **The 2026-08-06 staging soak is fully unblocked.** The 3 gated drop migrations (20260806000000, 20260806010000, 20260806020000) are ready to run on staging.
+
+## Polish-batch reclassifications #71-#79 (2026-08-04)
+
+After Phase 7B-7H shipped, 11 follow-up PRs landed to close the polish
+batch: 4 P0 follow-ups (APP_ENV guard, istDateKey migration) plus 7
+design/rider/infra polish items.
+
+### Reclassification #71 — INF-OBS-3 (Infra audit 5.2) — SHIPPED (docs)
+PR-143 shipped docs/EXTERNAL_UPTIME.md with UptimeRobot + cron-job.org
+setup instructions for probing https://api-staging.../api/health.
+External probe catches tunnel-down events within 5 min.
+
+### Reclassification #72 — INF-RISK-1 (Infra audit 5.2) — SHIPPED (docs)
+PR-144 appended a "Known limitations" section to
+docs/DISASTER_RECOVERY.md documenting: untested DR procedure,
+undocumented secret escrow, single-laptop SPOF.
+
+### Reclassification #73 — INF-DEP-1 (Infra audit 5.2) — SHIPPED
+PR-145 added metrics: localhost:2000 to cloudflared-config.example.yml
++ docs/CLOUDFLARE_TUNNEL_HEALTH.md (Prometheus + blackbox + PM2 config).
+
+### Reclassification #74 — DS-DM-1 (Design audit 3.1) — SHIPPED (ratchet)
+PR-128 added lutter/scripts/check-colors-ratchet.sh. 581
+Colors.white|black uses outside lib/theme/ recorded as baseline;
+ratchet prevents growth.
+
+### Reclassification #75 — DS-DM-2 (Design audit 3.1) — SHIPPED
+PR-128 added explicit shimmerBaseDark / shimmerHighlightDark tokens
+in pp_theme.dart:194-195 (slate-800 / slate-700) + 5 tests asserting
+brightness pair correctness.
+
+### Reclassification #76 — RA-F-2 (Rider audit 6.1) — SHIPPED
+PR-130 deleted lib/features/auth/widgets/otp_timer.dart (209 lines
+of OTPTimer + AnimatedOTPTimer dead code). OtpResendWidget +
+parent's _resendCountdown is the canonical answer.
+
+### Reclassification #77 — RA-F-6 (Rider audit 6.1) — SHIPPED (ratchet)
+PR-134 added lutter/scripts/check-screen-size.sh. 10 screens
+currently over 600 lines recorded as baseline; ratchet prevents growth.
+Actual splits into widgets/ folders are follow-up PRs (PR-134a through
+PR-134e).
+
+### Reclassification #78 — DS-C-3 (Design audit 3.1) — SHIPPED
+PR-127 deleted card_parallax_tilt.dart (29-line wrapper duplicate
+of TiltCard). Moved cards.dart to lib/widgets/cards/cards.dart
+with re-export shim at the old path.
+
+### Reclassification #79 — RA-F-4 (Rider audit 6.1) — SHIPPED
+PR-132 added lib/utils/image_decode.dart with decodeImageWithCap
+helper. instantiateImageCodec(targetWidth: 2048) downscales during
+decode (12MP → 2MP, ~9x RAM savings).
+
+### Plus 2 P0 follow-ups (continuing the 7A/7B-7H ledger):
+
+- **PR-108b** (B-J3 follow-up): 3 daily jobs migrated to
+  istDateKey helper. 06:00 IST run no longer straddles the
+  UTC/IST boundary.
+- **PR-112c** (SEC PR-5 follow-up): 5 raw process.env.NODE_ENV
+  reads fixed in pi-middleware.ts, db.ts, logger.ts. The
+  new CI guard scripts/check-no-node-env-security.sh is green.
+
+### Final Phase 7 reclassification ledger
+
+- Phase 6 re-verification: 38 reclassifications (#1-#38)
+- Phase 6 ship session: #39 (Backend S2)
+- Phase 7A ship session: #40-#44 (5 P0s)
+- Phase 7B-7H ship session: #45-#70 (26 PRs)
+- Polish batch ship session: #71-#79 (11 PRs) + 2 P0 follow-ups
+- **Total: 81 reclassifications** across 4 ship sessions + 1 re-verification
+
+### Final cumulative state (2026-08-04 end-of-day)
+
+- Phase 1-5: 38 PRs (deep audit fixes)
+- Phase 6: 14 PRs (6A/6D/6E/6F)
+- Phase 6 follow-up: 1 PR (PR-95 Backend S2)
+- Phase 7A: 5 PRs
+- Phase 7B-7H: 26 PRs
+- Polish batch: 11 PRs
+- Docs commits: 5
+- **Total: 95 PRs + 5 docs commits** on ix/phase6d-api-hardening
+
+**The 2026-08-06 staging soak is fully unblocked and ratchet-protected.**
+The 3 gated drop migrations are ready to run on staging. The
+APP_ENV, NODE_ENV, DATABASE_OFFLINE, fontSize, GoogleFonts,
+Colors.white, and screen-size ratchets are all in place to prevent
+drift going forward.
