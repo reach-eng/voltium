@@ -1,5 +1,14 @@
 import pino from 'pino';
 
+// PR-112c: APP_ENV-first production gate. The error-context scrubber
+// (lines below) strips 4xx API errors to a minimal shape so we don't
+// log full request bodies. APP_ENV=staging is treated as production
+// for this gate (staging ships real SMS, real auth, real money flow).
+const IS_PRODUCTION_LIKE =
+  process.env.APP_ENV === 'production' ||
+  process.env.APP_ENV === 'staging' ||
+  process.env.NODE_ENV === 'production';
+
 type LogLevel = 'info' | 'error' | 'warn' | 'debug';
 
 const SENSITIVE_KEYS = [
@@ -58,7 +67,7 @@ export const logger = {
     pinoInstance.info(context || {}, message);
   },
   error(message: string, context?: unknown): void {
-    if (process.env.NODE_ENV === 'production' && context && typeof context === 'object') {
+    if (IS_PRODUCTION_LIKE && context && typeof context === 'object') {
       const err = context as any;
       if (err.isApiError && err.statusCode >= 400 && err.statusCode < 500) {
         pinoInstance.error({ code: err.code, message: err.message, status: err.statusCode }, message);

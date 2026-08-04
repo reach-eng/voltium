@@ -1,5 +1,15 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
+import { env } from './env';
+
+/**
+ * Canonical production-like gate. APP_ENV first, NODE_ENV as fallback
+ * for plain Next.js prod builds. See scripts/check-no-node-env-security.sh.
+ */
+const IS_PRODUCTION_LIKE =
+  env.APP_ENV === 'production' ||
+  env.APP_ENV === 'staging' ||
+  process.env.NODE_ENV === 'production';
 
 /**
  * Prisma client wrapper with soft-delete support.
@@ -29,7 +39,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 const createPrismaClient = () => {
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = !IS_PRODUCTION_LIKE && process.env.NODE_ENV !== 'test';
   const showQueries = process.env.DEBUG_SQL === 'true';
 
   let dbUrl = process.env.DATABASE_URL;
@@ -43,7 +53,7 @@ const createPrismaClient = () => {
         // files share a single Prisma client. Production keeps the
         // smaller pool because concurrent load is bounded by the number
         // of Next.js workers.
-        const defaultPool = process.env.NODE_ENV === 'test' ? '50' : '10';
+        const defaultPool = process.env.NODE_ENV === 'test' ? '50' : '10'; // NODE_ENV=test is a test-runner convention; safe to keep
         url.searchParams.set('connection_limit', process.env.DATABASE_POOL_SIZE || defaultPool);
       }
       if (!url.searchParams.has('pool_timeout')) {
@@ -150,7 +160,7 @@ const createPrismaClient = () => {
 
 const db = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
+if (!IS_PRODUCTION_LIKE) {
   globalForPrisma.prisma = db;
 }
 

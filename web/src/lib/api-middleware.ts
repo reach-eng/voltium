@@ -11,6 +11,15 @@ import {
 
 const MAX_REQUEST_SIZE = 1024 * 1024;
 
+// PR-112c: APP_ENV-first production gate. A misconfigured prod with
+// APP_ENV=staging + NODE_ENV=production would otherwise ship dev stack
+// traces in error responses. NODE_ENV kept as fallback for plain Next.js
+// prod builds (no APP_ENV set).
+const IS_PRODUCTION_LIKE =
+  process.env.APP_ENV === 'production' ||
+  process.env.APP_ENV === 'staging' ||
+  process.env.NODE_ENV === 'production';
+
 export function withIdempotency(handler: (req: NextRequest) => Promise<NextResponse>) {
   return async (req: NextRequest): Promise<NextResponse> => {
     const key = req.headers.get('x-idempotency-key');
@@ -110,7 +119,7 @@ export function withErrorHandler(handler: (req: NextRequest) => Promise<NextResp
         error: error instanceof Error ? { name: error.name, message: (error instanceof Error ? error.message : String(error)) } : String(error),
       };
       // Include stack trace in development for debugging
-      if (process.env.NODE_ENV !== 'production' && error instanceof Error && error.stack) {
+      if (!IS_PRODUCTION_LIKE && error instanceof Error && error.stack) {
         errorInfo.stack = error.stack;
       }
       logger.error('[API Error]', redactPii(errorInfo));

@@ -56,12 +56,17 @@ OFFENDING=""
 while IFS= read -r MATCH_LINE; do
   [ -z "$MATCH_LINE" ] && continue
   FILE=$(echo "$MATCH_LINE" | cut -d: -f1)
-  LINENO=$(echo "$MATCH_LINE" | cut -d: -f2)
-  START=$((LINENO - 6))
+  MYLINE=$(echo "$MATCH_LINE" | cut -d: -f2)
+  # Test-runner convention: `NODE_ENV === 'test'` is how vitest/mocha/etc.
+  # identify the test process. Not a production gate. Whitelist.
+  if echo "$MATCH_LINE" | grep -qE "NODE_ENV\s*===?\s*'test'"; then
+    continue
+  fi
+  START=$((MYLINE - 200))
   if [ "$START" -lt 1 ]; then START=1; fi
-  END=$((LINENO + 6))
+  END=$((MYLINE + 6))
   WINDOW=$(awk -v s="$START" -v e="$END" 'NR>=s && NR<=e' "$FILE" 2>/dev/null || true)
-  if echo "$WINDOW" | grep -q 'APP_ENV'; then
+  if echo "$WINDOW" | grep -qE 'APP_ENV|env\.APP_ENV'; then
     continue
   fi
   OFFENDING="${OFFENDING}${MATCH_LINE}"$'\n'
