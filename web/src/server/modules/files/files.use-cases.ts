@@ -10,11 +10,26 @@ export const fileUseCases = {
   /** Token TTL: 15 minutes (in seconds) */
   UPLOAD_TOKEN_TTL_SECONDS: 15 * 60,
 
+  /** Resolve the HMAC secret used to sign file upload tokens.
+   *  PR-92 (Backend S2, 2026-08-04): upload tokens no longer share
+   *  the JWT secret. Production requires a dedicated FILE_UPLOAD_SECRET;
+   *  non-prod falls back to JWT_SECRET to keep the local laptop
+   *  setup ergonomic. The runtime env() guard at lib/env.ts:223-235
+   *  rejects production without the dedicated secret. */
+  _getUploadSecret(): string {
+    if (env.FILE_UPLOAD_SECRET) return env.FILE_UPLOAD_SECRET;
+    if (env.APP_ENV === 'production') {
+      // Defensive double-check: env() already throws on this case, but
+      // if a caller bypasses env() the runtime check protects us.
+      throw new Error('FILE_UPLOAD_SECRET is required in production');
+    }
+    return env.JWT_SECRET;
+  },
+
   /** Generate an upload token tied to a fileRecordId with a 15-minute expiry.
    *  Token format: `<expiry_epoch_ms>.<hmac>` */
   _generateUploadToken(fileRecordId: string): string {
-    const secret = env.JWT_SECRET;
-    if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
+    const secret = this._getUploadSecret();
     const expiresAt = Date.now() + this.UPLOAD_TOKEN_TTL_SECONDS * 1000;
     const payload = `${fileRecordId}:${expiresAt}`;
     const hmac = createHmac('sha256', secret).update(payload).digest('hex');
@@ -28,10 +43,8 @@ export const fileUseCases = {
       const expiresAt = parseInt(token.slice(0, dotIndex), 10);
       const providedHmac = token.slice(dotIndex + 1);
       if (isNaN(expiresAt) || Date.now() > expiresAt) return false;
-      
-      const secret = env.JWT_SECRET;
-      if (!secret) throw new Error('JWT_SECRET is required for file upload signing');
-      
+
+      const secret = this._getUploadSecret();
       const payload = `${fileRecordId}:${expiresAt}`;
       const expected = createHmac('sha256', secret).update(payload).digest('hex');
       // Constant-time comparison to prevent timing attacks

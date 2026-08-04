@@ -13,6 +13,15 @@ export const envSchema = z.object({
     .string()
     .min(32, 'FCM_COMMAND_HMAC_SECRET must be at least 32 characters'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').optional(),
+  // PR-92 (Backend S2, 2026-08-04): separate HMAC key for file upload
+  // tokens. The previous code reused JWT_SECRET across two protocols;
+  // rotating JWT_SECRET then invalidates in-flight upload tokens AND
+  // discloses the session-signing key to anyone holding a leaked upload
+  // token HMAC. FILE_UPLOAD_SECRET is required in production; falls
+  // back to JWT_SECRET ONLY in non-prod (dev/test) to keep the local
+  // laptop setup friction-free. The runtime env() below rejects the
+  // fallback when APP_ENV=production.
+  FILE_UPLOAD_SECRET: z.string().min(32, 'FILE_UPLOAD_SECRET must be at least 32 characters').optional(),
   ALLOWED_ORIGINS: z.string().default('http://localhost:8081,http://localhost:3000,http://localhost:8080'),
   CRON_SECRET: z.string().optional(),
   WORKER_SECRET: z.string().optional(),
@@ -210,6 +219,17 @@ if (isServer) {
     ) {
       throw new Error(
         'Security violation: Leaked, insecure, or placeholder FCM_COMMAND_HMAC_SECRET is not allowed.'
+      );
+    }
+
+    // PR-92 (Backend S2): require FILE_UPLOAD_SECRET in production. Falls
+    // back to JWT_SECRET only in non-prod (dev/test) for laptop-mode
+    // ergonomics. Reusing JWT_SECRET across two protocols makes rotation
+    // dangerous and creates a cross-protocol HMAC oracle.
+    if (parsedEnv.APP_ENV === 'production' && !parsedEnv.FILE_UPLOAD_SECRET) {
+      throw new Error(
+        'Security violation: FILE_UPLOAD_SECRET must be set in production. ' +
+        'Reusing JWT_SECRET for file upload tokens is not allowed.'
       );
     }
   }
