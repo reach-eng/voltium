@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { istDateKey } from '@/lib/date-keys';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
 interface TelemetryCleanupResult {
@@ -13,8 +14,8 @@ export const telemetryCleanupJob = {
   async process(job: any): Promise<TelemetryCleanupResult> {
     logger.info('[TelemetryCleanupJob] Starting', { jobId: job.id });
 
-    // Idempotency guard — one run per day
-    const today = clock.now().toISOString().split('T')[0];
+    // PR-108b: idempotency guard keyed on the IST date. See audit-cleanup.
+    const today = istDateKey(clock.now());
     const idempotencyKey = `telemetry-cleanup:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (claim.status !== 'not_found') {

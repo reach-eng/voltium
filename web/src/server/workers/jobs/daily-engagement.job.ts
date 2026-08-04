@@ -20,6 +20,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { istDateKey } from '@/lib/date-keys';
 import { notificationService } from '@/lib/notification-service';
 import {
   checkOrClaimIdempotency,
@@ -41,14 +42,11 @@ export const dailyEngagementJob = {
 
     // 06:00 IST ≈ 00:30 UTC. We key idempotency on the IST calendar day
     // so the sweep is stable regardless of when the worker fires.
-    const istDateKey = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(clock.now()); // YYYY-MM-DD in IST
+    // PR-108b: use the shared istDateKey helper instead of a hand-rolled
+    // Intl.DateTimeFormat. Same shape (YYYY-MM-DD), same TZ.
+    const today = istDateKey(clock.now());
 
-    const idempotencyKey = `daily_engagement:${istDateKey}`;
+    const idempotencyKey = `daily_engagement:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (claim.status !== 'not_found') {
       logger.info('[DailyEngagement] Already processed today', {
@@ -65,7 +63,7 @@ export const dailyEngagementJob = {
       };
 
       // 1. Birthday wishes (DD-MM match against rider.dob stored as DD-MM-YYYY)
-      const [, mm, dd] = istDateKey.split('-');
+      const [, mm, dd] = today.split('-');
       const birthdayString = `${dd}-${mm}`;
       const birthdayRiders = await db.rider.findMany({
         where: { dob: { startsWith: birthdayString } },

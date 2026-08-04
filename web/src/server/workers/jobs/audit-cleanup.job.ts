@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { clock } from '@/lib/clock';
+import { istDateKey } from '@/lib/date-keys';
 import { deleteExpiredLogs } from '@/lib/audit-log';
 import { checkOrClaimIdempotency, completeIdempotency, failIdempotency } from '@/lib/idempotency';
 
@@ -12,8 +13,11 @@ export const auditCleanupJob = {
   async process(job: any): Promise<AuditCleanupResult> {
     logger.info('[AuditCleanupJob] Starting', { jobId: job.id });
 
-    // Idempotency guard — one run per day
-    const today = clock.now().toISOString().split('T')[0];
+    // PR-108b: idempotency guard keyed on the IST date so the 06:00
+    // IST run doesn't double-process the same calendar day across the
+    // UTC/IST boundary. Old UTC keys (audit-cleanup:daily:YYYY-MM-DD
+    // in UTC) are simply ignored after the 48h TTL expires.
+    const today = istDateKey(clock.now());
     const idempotencyKey = `audit-cleanup:daily:${today}`;
     const claim = await checkOrClaimIdempotency(idempotencyKey, 172800); // 48h TTL
     if (job?.id !== 'test' && claim.status !== 'not_found') {
