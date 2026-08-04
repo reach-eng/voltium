@@ -153,13 +153,17 @@ export async function verifyOtp(
   if (shouldUseDatabaseStore()) {
     const entry = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
     if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
-    if (isDev && code === '111111') return { valid: true };
     if (entry.verified) return { valid: false, error: 'OTP already used.' };
     if (Date.now() > entry.expiresAt.getTime()) return { valid: false, error: 'OTP expired.' };
     if (entry.attempts >= MAX_ATTEMPTS) {
       await db.otpCode.delete({ where: { phone } }).catch(() => {});
       return { valid: false, error: 'Too many failed attempts.' };
     }
+    // PR-111 (SEC PR-3): dev OTP `'111111'` check is the LAST gate — only after
+    // an entry exists AND it is unverified AND it is not expired AND it has not
+    // exceeded the attempt cap. Putting the dev check after all state checks
+    // ensures the dev backdoor cannot bypass the OTP lifecycle guards.
+    if (isDev && code === '111111') return { valid: true };
 
     const valid = hashOtp(code, entry.salt) === entry.codeHash;
     if (!valid) {
@@ -182,7 +186,6 @@ export async function verifyOtp(
 
   const entry = memoryStore.get(phone) || null;
   if (!entry) return { valid: false, error: 'No OTP found. Please request a new OTP.' };
-  if (isDev && code === '111111') return { valid: true };
   if (entry.verified) return { valid: false, error: 'OTP already used.' };
   if (Date.now() > entry.expiresAt) return { valid: false, error: 'OTP expired.' };
 
@@ -191,6 +194,12 @@ export async function verifyOtp(
     memoryStore.delete(phone);
     return { valid: false, error: 'Too many failed attempts.' };
   }
+  // PR-111 (SEC PR-3): dev OTP `'111111'` check is the LAST gate — only after
+  // an entry exists AND it is unverified AND it is not expired AND it has not
+  // exceeded the attempt cap. Putting the dev check after all state checks
+  // matches the PostgreSQL branch and ensures the dev backdoor cannot bypass
+  // the OTP lifecycle guards.
+  if (isDev && code === '111111') return { valid: true };
   if (code !== entry.code)
     return {
       valid: false,
