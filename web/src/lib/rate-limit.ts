@@ -53,7 +53,16 @@ function evictIfFull(): void {
 }
 
 function shouldUseDatabaseLimiter(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.USE_DB_RATE_LIMITER === 'true';
+  // PR-112 (SEC PR-5): gate the DB limiter on the canonical APP_ENV first.
+  // NODE_ENV=production is a fallback so we still flip to the DB limiter
+  // when a process is running as a plain Next.js prod build (the typical
+  // case for the laptop-mode deploy).
+  return (
+    process.env.APP_ENV === 'production' ||
+    process.env.APP_ENV === 'staging' ||
+    process.env.NODE_ENV === 'production' ||
+    process.env.USE_DB_RATE_LIMITER === 'true'
+  );
 }
 
 if (typeof globalThis !== 'undefined' && !('$_rateLimitCleanup' in globalThis)) {

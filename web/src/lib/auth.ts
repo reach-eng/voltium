@@ -20,9 +20,18 @@ export { ADMIN_ROLES, type AdminRole, type SessionPayload } from './permissions'
 export const SESSION_COOKIE_NAME = 'voltium-session';
 export const ADMIN_SESSION_COOKIE_NAME = 'voltium-admin-session';
 
+// PR-112 (SEC PR-5): cookie `secure` flag is set in any production-adjacent
+// env (APP_ENV=production|staging wins; NODE_ENV=production is a fallback
+// for plain Next.js prod builds). Misconfigured prod with APP_ENV=staging
+// must still get the secure cookie.
+const SESSION_COOKIE_SECURE =
+  process.env.APP_ENV === 'production' ||
+  process.env.APP_ENV === 'staging' ||
+  process.env.NODE_ENV === 'production';
+
 export const SESSION_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: SESSION_COOKIE_SECURE,
   sameSite: 'strict' as const,
   path: '/',
   maxAge: 60 * 60 * 24 * 7, // 7 days (cookie TTL; token itself is shorter)

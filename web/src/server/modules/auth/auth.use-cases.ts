@@ -69,7 +69,13 @@ export const authUseCases = {
     logger.info('[AuthUseCases] OTP sent', { correlationId, phone });
 
     return {
-      otp: process.env.NODE_ENV !== 'production' ? otp : undefined,
+      // PR-112 (SEC PR-5): only echo the OTP in dev. APP_ENV=staging is
+      // production-grade for this gate (staging receives real SMS), so the
+      // echo is suppressed.
+      otp:
+        process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development'
+          ? otp
+          : undefined,
     };
   },
 
@@ -139,8 +145,14 @@ export const authUseCases = {
         },
       });
 
-      // Award referral rewards
-      if (incomingReferralCode) {
+      // Award referral rewards (PR-116: block self-referral)
+      if (incomingReferralCode && incomingReferralCode === rider.referralCode) {
+        logger.warn('[AuthUseCases] Self-referral blocked', { riderId: rider.id });
+        await db.rider.update({
+          where: { id: rider.id },
+          data: { referredBy: null },
+        });
+      } else if (incomingReferralCode) {
         try {
           const referrer = await db.rider.findUnique({
             where: { referralCode: incomingReferralCode },

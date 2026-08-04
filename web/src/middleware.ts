@@ -13,7 +13,13 @@ import {
 import { env } from './lib/env';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const isProd = process.env.NODE_ENV === 'production';
+// PR-112 (SEC PR-5): use the canonical APP_ENV for the production gate that
+// drives the strict CSP + HSTS. A misconfigured prod with APP_ENV=staging
+// (and NODE_ENV=production) would otherwise ship dev CSP to staging.
+const isProd =
+  process.env.APP_ENV === 'production' ||
+  process.env.APP_ENV === 'staging' ||
+  process.env.NODE_ENV === 'production';
 
 const VALIDATION_MAP: Record<string, Record<string, any>> = {
   '/api/auth/send-otp': { POST: sendOtpSchema },

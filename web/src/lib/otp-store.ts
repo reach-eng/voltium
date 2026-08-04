@@ -37,7 +37,16 @@ function setBoundedMap<K, V>(map: Map<K, V>, key: K, value: V): void {
 }
 
 function shouldUseDatabaseStore(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.OTP_STORE_PROVIDER === 'postgres';
+  // PR-112 (SEC PR-5): gate the Postgres OTP store on the canonical APP_ENV
+  // first. APP_ENV=staging is treated as production-grade (real Postgres,
+  // cross-restart persistence) so a misconfigured prod with
+  // APP_ENV=staging + NODE_ENV=production doesn't fall back to in-memory.
+  return (
+    process.env.APP_ENV === 'production' ||
+    process.env.APP_ENV === 'staging' ||
+    process.env.NODE_ENV === 'production' ||
+    process.env.OTP_STORE_PROVIDER === 'postgres'
+  );
 }
 
 function hashOtp(code: string, salt: string): string {
@@ -49,7 +58,14 @@ export function generateRandomOtp(): string {
 }
 
 export async function canResendOtp(phone: string): Promise<{ allowed: boolean; error?: string }> {
-  if (process.env.NODE_ENV !== 'production') {
+  // PR-112 (SEC PR-5): rate-limit resends in any production-adjacent env.
+  // APP_ENV=staging counts as production for this gate (staging ships real
+  // SMS in our test pipeline, so the rate limit is real cost protection).
+  const isProductionLike =
+    process.env.APP_ENV === 'production' ||
+    process.env.APP_ENV === 'staging' ||
+    process.env.NODE_ENV === 'production';
+  if (!isProductionLike) {
     return { allowed: true };
   }
   if (shouldUseDatabaseStore()) {
@@ -89,7 +105,13 @@ export async function generateOtp(phone: string): Promise<string> {
   const resendCheck = await canResendOtp(phone);
   if (!resendCheck.allowed) throw new Error(resendCheck.error);
 
-  const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
+  // PR-112 (SEC PR-5): the dev OTP shortcut (`'111111'`) only fires when the
+  // canonical APP_ENV is `development`. APP_ENV=staging always uses a real
+  // random OTP even if ENABLE_TEST_OTP is on, so a misconfigured prod with
+  // APP_ENV=staging + ENABLE_TEST_OTP=true cannot leak the dev shortcut.
+  const isDev =
+    (process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development') &&
+    process.env.ENABLE_TEST_OTP === 'true';
   const code = isDev ? '111111' : generateRandomOtp();
 
   if (shouldUseDatabaseStore()) {
@@ -148,7 +170,10 @@ export async function verifyOtp(
   phone: string,
   code: string
 ): Promise<{ valid: boolean; error?: string }> {
-  const isDev = process.env.NODE_ENV === 'development' && process.env.ENABLE_TEST_OTP === 'true';
+  // PR-112 (SEC PR-5): mirror the dev-OTP gate from generateOtp. APP_ENV wins.
+  const isDev =
+    (process.env.APP_ENV === 'development' || process.env.NODE_ENV === 'development') &&
+    process.env.ENABLE_TEST_OTP === 'true';
 
   if (shouldUseDatabaseStore()) {
     const entry = await db.otpCode.findUnique({ where: { phone } }).catch(() => null);
@@ -200,7 +225,10 @@ export async function verifyOtp(
   // matches the PostgreSQL branch and ensures the dev backdoor cannot bypass
   // the OTP lifecycle guards.
   if (isDev && code === '111111') return { valid: true };
-  if (code !== entry.code)
+  const aBuf = Buffer.from(code.padEnd(6, ' '), 'utf8');
+  const bBuf = Buffer.from(entry.code.padEnd(6, ' '), 'utf8');
+  const validCode = aBuf.length === bBuf.length && crypto.timingSafeEqual(aBuf, bBuf);
+  if (!validCode)
     return {
       valid: false,
       error: `Invalid OTP. ${MAX_ATTEMPTS - entry.attempts} attempts remaining.`,
