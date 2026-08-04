@@ -15,6 +15,7 @@ import { getAdminSession } from '@/lib/get-session';
 import { hasPermission, type Permission } from '@/lib/auth';
 import { errors } from '@/lib/api-response';
 import type { SessionPayload } from '@/lib/auth';
+import { logPermissionDenied } from '@/lib/security-events';
 
 export type { SessionPayload } from '@/lib/auth';
 
@@ -36,6 +37,42 @@ export function adminUnauthorized() {
 }
 
 export function adminForbidden(message?: string) {
+  return errors.forbidden(message || 'Insufficient permissions for this action');
+}
+
+/**
+ * Same as adminForbidden() but ALSO fires the security-events logger.
+ *
+ * Use this in route handlers where you have the session + permission
+ * context — it ensures every permission-denied event lands in the
+ * audit log (SOC2 requirement) without changing the API surface.
+ *
+ * The logger call is fire-and-forget (void) so the route's response
+ * is not delayed by an audit-log write.
+ *
+ * @param context.session    - the session that was denied (or null for
+ *                             anonymous — only used for actorId)
+ * @param context.permission - the permission string the admin lacked
+ * @param context.route      - the API route path (e.g. /api/admin/hubs)
+ * @param context.ip         - request IP (from req.headers.get('x-forwarded-for'))
+ * @param message            - optional error message
+ */
+export function adminForbiddenWithLog(
+  context: {
+    session: SessionPayload | null;
+    permission: string;
+    route: string;
+    ip?: string;
+  },
+  message?: string
+) {
+  // Fire-and-forget logger call
+  void logPermissionDenied({
+    adminId: context.session?.adminId || 'anonymous',
+    permission: context.permission,
+    route: context.route,
+    ip: context.ip,
+  });
   return errors.forbidden(message || 'Insufficient permissions for this action');
 }
 

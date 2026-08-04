@@ -2,7 +2,7 @@ import { KycStatus, Prisma } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { success, errors, withCacheHeaders } from '@/lib/api-response';
 import { getOrSetResponse, invalidateCache } from '@/lib/cache';
-import { requireAdmin, adminUnauthorized, adminForbidden } from '@/lib/rbac';
+import { requireAdmin, adminUnauthorized, adminForbidden, adminForbiddenWithLog } from '@/lib/rbac';
 import { hasPermission } from '@/lib/auth';
 import { kycRepository } from '@/server/modules/kyc/kyc.repository';
 import { kycUseCases } from '@/server/modules/kyc/kyc.use-cases';
@@ -13,7 +13,14 @@ import { withApiHandler } from '@/lib/api-handler';
 export const GET = withApiHandler(async (request: NextRequest) => {
   const session = await requireAdmin();
   if (!session) return adminUnauthorized();
-  if (!hasPermission(session.adminRole || '', 'kyc_view')) return adminForbidden();
+  if (!hasPermission(session.adminRole || '', 'kyc_view')) {
+    return adminForbiddenWithLog({
+      session,
+      permission: 'kyc_view',
+      route: '/api/admin/kyc',
+      ip: request.headers.get('x-forwarded-for') || undefined,
+    });
+  }
 
   const url = request.nextUrl;
   const status = url.searchParams.get('status') || undefined;

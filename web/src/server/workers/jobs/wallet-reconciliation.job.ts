@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger';
 import { alerter } from '@/lib/alerter';
 import { verifyLedgerIntegrity } from '@/lib/services/wallet-service';
 import { createAuditLog } from '@/lib/audit-log';
+import { logReconciliationMismatch } from '@/lib/security-events';
 
 export async function checkReconciliationToday(today: string) {
   return db.reconciliationReport.findUnique({ where: { reportDate: today } });
@@ -70,6 +71,16 @@ export async function runWalletReconciliation(): Promise<ReconciliationResult> {
         drift: integrity.drift,
         walletBalance: integrity.walletBalance,
         ledgerSum: integrity.ledgerSum,
+      });
+
+      // PR-99: fire security-event logger so the drift is recorded in the
+      // audit log (SOC2 requirement). Fire-and-forget so the job loop is
+      // not slowed by audit-log writes.
+      void logReconciliationMismatch({
+        riderId: wallet.riderId,
+        ledgerSum: integrity.ledgerSum,
+        walletBalance: integrity.walletBalance,
+        drift: integrity.drift,
       });
     }
   }

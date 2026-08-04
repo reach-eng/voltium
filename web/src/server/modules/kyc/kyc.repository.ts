@@ -11,6 +11,7 @@ import { validateKycTransition, KycStateError } from './kyc-state-machine';
 import type { KycStatus } from './kyc.types';
 import { encryptPii, decryptPii } from '@/lib/pii-crypto';
 import { invalidateRiderCache } from '@/lib/server-cache';
+import { logKycDocumentView } from '@/lib/security-events';
 
 function encryptKycData(data: any) {
   if (!data) return data;
@@ -37,6 +38,31 @@ export const kycRepository = {
     const kyc = await db.kycProfile.findUnique({
       where: { riderId: riderDbId },
     });
+    return decryptKycData(kyc);
+  },
+
+  /**
+   * Admin-context variant of findByRiderId. Fires the security-event
+   * logger (logKycDocumentView) so every admin document access is
+   * recorded in the audit log (SOC2 requirement).
+   *
+   * Use this from admin routes that show KYC documents to admins.
+   * Use the plain findByRiderId for the rider's own self-service path.
+   */
+  async findByRiderIdForAdmin(riderDbId: string, adminContext: { adminId: string }) {
+    const kyc = await db.kycProfile.findUnique({
+      where: { riderId: riderDbId },
+    });
+
+    // Fire-and-forget audit log. Don't block the response on the write.
+    if (kyc) {
+      void logKycDocumentView({
+        adminId: adminContext.adminId,
+        riderId: riderDbId,
+        documentType: 'full_profile',
+      });
+    }
+
     return decryptKycData(kyc);
   },
 

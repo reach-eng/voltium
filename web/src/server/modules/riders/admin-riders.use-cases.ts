@@ -15,6 +15,7 @@ import { sanitizeText } from '@/lib/sanitize';
 import { signRiderUrlsWithProvider } from '@/lib/sign-rider';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import { createAuditLog } from '@/lib/audit-log';
+import { logAccountSuspension } from '@/lib/security-events';
 import { notificationService } from '@/lib/notification-service';
 import { logger } from '@/lib/logger';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
@@ -420,8 +421,21 @@ export const adminRiderUseCases = {
       guarantorData.status = 'APPROVED';
     }
     if (kycData.status === 'REJECTED' || kycData.status === 'INFO_REQUIRED') {
-      riderData.lifecycleStatus = kycData.status === 'REJECTED' ? 'SUSPENDED' : 'KYC_SUBMITTED';
-      guarantorData.status = kycData.status === 'REJECTED' ? 'REJECTED' : 'INFO_REQUIRED';
+      const wasSuspended = kycData.status === 'REJECTED';
+      riderData.lifecycleStatus = wasSuspended ? 'SUSPENDED' : 'KYC_SUBMITTED';
+      guarantorData.status = wasSuspended ? 'REJECTED' : 'INFO_REQUIRED';
+
+      // PR-99: fire the security-event logger when a rider is suspended
+      // (KYC rejection). Fire-and-forget so the update tx is not slowed
+      // by audit-log writes. This makes "rider.suspended" a queryable
+      // event in the audit log (SOC2 requirement).
+      if (wasSuspended) {
+        void logAccountSuspension({
+          riderId: id,
+          adminId: actorId,
+          reason: 'kyc_rejected',
+        });
+      }
     }
 
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
