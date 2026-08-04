@@ -152,6 +152,11 @@ jobs:
         with:
           name: voltium-debug.apk
           path: flutter/build/app/outputs/flutter-apk/app-debug.apk
+          # PR-141: cap debug-APK retention at 7 days. Default is 90 days
+          # which, across every push, would keep 90 × daily = ~90 debug
+          # APKs (~5GB total). Debug APKs are diagnostic-only and the
+          # build can be reproduced from any commit.
+          retention-days: 7
 
   e2e-test:
     name: Flutter E2E Integration Tests
