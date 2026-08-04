@@ -188,6 +188,15 @@ class AppColors {
   // Shimmer skeleton colors (light mode). Dark mode uses AppColors.slate800/700.
   static const Color shimmerBase = Color(0xFFE8EDF5);
   static const Color shimmerHighlight = Color(0xFFF5F8FF);
+  // PR-128: explicit dark-mode shimmer tokens. Previously the dark
+  // variants were hard-coded as slate800/slate700 at the call site
+  // (shimmer_table.dart:53-55, 210-212). Centralising here so the
+  // ratchet + lint can verify all four values are brightness-
+  // aware from one place. The widgets still use the ternary
+  // `isDark ? shimmerBaseDark : shimmerBase` pattern, but at least
+  // the values are discoverable in app_theme.dart.
+  static const Color shimmerBaseDark = Color(0xFF1E293B); // slate-800
+  static const Color shimmerHighlightDark = Color(0xFF334155); // slate-700
 
   // Card / glow shadow color values (used inline as `BoxShadow(color: ...)`).
   // See `AppShadows` for the corresponding `List<BoxShadow>` recipes.
