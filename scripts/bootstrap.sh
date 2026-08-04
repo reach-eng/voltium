@@ -184,6 +184,18 @@ if [ "$DEV_MODE" = false ]; then
   npx pm2 start ../ecosystem.config.js 2>/dev/null || true
   npx pm2 save 2>/dev/null || true
   info "PM2 services started"
+
+  # PR-142: install pm2-logrotate so the access/error logs cap at ~700MB
+  # (50MB × 14 retained files) per stream. The Voltium policy is in
+  # scripts/setup-logrotate.sh (Phase 6F / PR-94). Run after `pm2 start`
+  # because pm2-logrotate hooks into a running daemon.
+  if [ -f "$REPO_DIR/scripts/setup-logrotate.sh" ]; then
+    bash "$REPO_DIR/scripts/setup-logrotate.sh" 2>/dev/null \
+      && info "pm2-logrotate configured (max_size=50M, retain=14, compress=true)" \
+      || warn "pm2-logrotate setup returned non-zero — logs may grow unbounded"
+  else
+    warn "scripts/setup-logrotate.sh not found — skipping log rotation"
+  fi
 else
   warn "Dev mode — skipping PM2 start"
 fi
