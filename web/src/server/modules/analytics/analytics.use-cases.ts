@@ -176,25 +176,32 @@ async function getMonthlyTrend(startDate: Date) {
 }
 
 async function getCohortData() {
-  const riders = await db.rider.findMany({
-    select: { id: true, createdAt: true, lifecycleStatus: true, updatedAt: true },
-  });
-  const cohorts: Record<string, { total: number; active: number; suspended: number }> = {};
+  // PR-110: aggregate cohorts in database via SQL rather than loading all riders into Node memory
+  const rows = await db.$queryRaw<
+    Array<{ month: string; total: bigint; active: bigint; suspended: bigint }>
+  >`
+    SELECT 
+      TO_CHAR("createdAt", 'YYYY-MM') AS month,
+      COUNT(*)::bigint AS total,
+      COUNT(*) FILTER (WHERE "lifecycleStatus" = 'ACTIVE')::bigint AS active,
+      COUNT(*) FILTER (WHERE "lifecycleStatus" = 'SUSPENDED')::bigint AS suspended
+    FROM "riders"
+    WHERE "deletedAt" IS NULL
+    GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
+    ORDER BY month ASC
+  `;
 
-  riders.forEach((r: { id: string; createdAt: Date; lifecycleStatus: string; updatedAt: Date }) => {
-    const key = `${r.createdAt.getFullYear()}-${String(r.createdAt.getMonth() + 1).padStart(2, '0')}`;
-    if (!cohorts[key]) cohorts[key] = { total: 0, active: 0, suspended: 0 };
-    cohorts[key].total++;
-    if (r.lifecycleStatus === 'ACTIVE') cohorts[key].active++;
-    if (r.lifecycleStatus === 'SUSPENDED') cohorts[key].suspended++;
+  return rows.map((row: { month: string; total: bigint; active: bigint; suspended: bigint }) => {
+    const total = Number(row.total);
+    const active = Number(row.active);
+    const suspended = Number(row.suspended);
+    return {
+      month: row.month,
+      total,
+      active,
+      suspended,
+      retentionRate: total > 0 ? Math.round((active / total) * 10000) / 100 : 0,
+    };
   });
-
-  return Object.entries(cohorts)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, data]) => ({
-      month,
-      ...data,
-      retentionRate: data.total > 0 ? Math.round((data.active / data.total) * 10000) / 100 : 0,
-    }));
 }
 
