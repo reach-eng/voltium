@@ -8,6 +8,13 @@ credentials-file: /root/.cloudflared/<YOUR_TUNNEL_UUID>.json
 # intervention.
 retries: 5
 
+# PR-145 — Prometheus metrics endpoint on localhost:2000. Operators
+# can scrape this from a blackbox exporter / Prometheus to alert on
+# tunnel-down conditions. Combined with the external uptime probe
+# (docs/EXTERNAL_UPTIME.md), this gives both internal and external
+# visibility into the tunnel's health.
+metrics: localhost:2000
+
 ingress:
   # Map the staging API to local port 8082
   - hostname: api-staging.yourdomain.com
