@@ -76,6 +76,21 @@ class AppColors {
   static const Color onSurface = Color(0xFF101828); // web #101828
   static const Color onSurfaceVariant =
       Color(0xFF475467); // web #475467 / #424653
+
+  /// Back-compat alias for the static (light-only) muted text color.
+  ///
+  /// **New code must use `ThemeColors.of(context).onSurfaceMuted`** instead —
+  /// the `ThemeColors` extension is brightness-aware (`#667085` light,
+  /// `#64748B` dark) while this static field is hard-coded `#737785` (web
+  /// #737785, intentionally off the dark-mode brightness ladder). The two
+  /// values are not the same on purpose: callers that pre-date the
+  /// `ThemeColors` extension (15 files as of 2026-08-04) keep their original
+  /// visual weight; new code should pick the brightness-aware variant.
+  ///
+  /// See `docs/design-system.md` §2.5 "PR-125 cleanup" and §"`onSurfaceMuted`
+  /// back-compat note" for the full rationale. Removal of this static is
+  /// blocked by `test/theme/app_colors_no_dead_test.dart` (R2.2 regression
+  /// guard) until the 15 call-sites are migrated.
   static const Color onSurfaceMuted = Color(0xFF737785); // web #737785
   static const Color onSurfaceDisabled =
       Color(0xFF6B7280); // WCAG AA: 5.3:1 on surface
