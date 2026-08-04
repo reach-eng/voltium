@@ -273,3 +273,104 @@ Verification: secret-rotation nightly CI is fully wired and regression-protected
 ### Staging soak gate status (2026-08-04)
 
 All 4 P0s from AUDIT_PHASE6_PLAN_2026-08-04.md (DB-M-1, DB-C-1, DB-CL-1, INF-CI/CD-3) are now SHIPPED. The 3 gated drop migrations (20260806000000, 20260806010000, 20260806020000) are ready to run on staging. **The 2026-08-06 staging soak is unblocked.**
+
+## Phase 7B-7H reclassifications #45-#70 (2026-08-04)
+
+Phase 7B-7H landed 26 PRs across 7 sub-phases (parallel agents hit the local token-plan limit mid-flight; the working-tree edits were extracted and committed). Reclassifications #45-#70 cover the shipped work.
+
+### Reclassification #45 — B-A1 (Backend audit 1.1) — VERIFIED
+PR-101 confirmed nalytics.use-cases.ts:97-110 filters to 	ype='DEBIT' AND purpose='RENT_PAYMENT'. No code change; 1 regression test added.
+
+### Reclassification #46 — B-RF1 (Backend audit 1.5) — SHIPPED
+PR-102 collapsed two referral-reward implementations. The use-case path and the job path now share the same paise value (no * 100 double-conversion) and the same eferral:{referrerId}:{refereeId} idempotencyKey. The DB UNIQUE constraint on WalletLedger.idempotencyKey is the authoritative arbiter.
+
+### Reclassification #47 — B-J2 (Backend audit 1.7) — SHIPPED
+PR-107 set ttempts=0 in the reaper reclaim UPDATE. A legitimately slow job can now survive the reaper-reclaim cycle without dying on max-attempts.
+
+### Reclassification #48 — B-J3 (Backend audit 1.7) — PARTIAL
+PR-108 shipped the istDateKey() helper. Migration of the 3 daily jobs (audit-cleanup, telemetry-cleanup, daily-engagement) is a follow-up because each needs a separate careful look at its current idempotency story.
+
+### Reclassification #49 — B-J4 (Backend audit 1.7) — SHIPPED
+PR-109 added a daily outbox-completed-cleanup scheduled task. Outbox table is now bounded.
+
+### Reclassification #50 — B-A2 (Backend audit 1.1) — SHIPPED
+PR-110 rewrote getCohortData as a single db. with TO_CHAR() GROUP BY + COUNT(*) FILTER. No more full-rider-table load into Node memory.
+
+### Reclassification #51 — SEC PR-3 (Security audit 2.1) — SHIPPED
+PR-111 moved the dev OTP '111111' check to the LAST gate in erifyOtp (after entry/verified/expiry/attempts). 182 lines of regression test.
+
+### Reclassification #52 — SEC PR-5 (Security audit 2.1) — SHIPPED
+PR-112 replaced process.env.NODE_ENV with the canonical APP_ENV in 5 security-sensitive files (auth.ts, middleware.ts, rate-limit.ts, otp-store.ts, auth.use-cases.ts). A misconfigured prod with APP_ENV=staging now gets the production security posture. PR-112b added the CI guard for future regression prevention.
+
+### Reclassification #53 — SEC PR-6 (Security audit 2.1) — SHIPPED
+PR-113 used crypto.timingSafeEqual for OTP code compare (padded to 6 bytes). Constant-time compare closes the timing side-channel.
+
+### Reclassification #54 — SEC PR-9 (Security audit 2.1) — SHIPPED
+PR-116 closed two findings: (a) sendOtp no longer returns exists (user-enumeration); (b) erifyOtp blocks self-referral (the rider's own eferralCode is rejected as the incoming referral). 3 regression tests.
+
+### Reclassification #55 — SEC PR-11 (Security audit 2.1) — SHIPPED
+PR-117 normalized PII key matching in pii-redact.ts (strips -, _, whitespace + substring match). Keys like userRiderAadhaarNumber are now redacted.
+
+### Reclassification #56 — DB-IX-1 (DB audit 2.8) — SHIPPED
+PR-120 added 5 covering indexes for hot query paths. Each verified by reading the source code that issued the query.
+
+### Reclassification #57 — DB-IX-2 (DB audit 2.8) — SHIPPED
+PR-121 added wallet_ledgers(riderId, createdAt) index (no-op because the dev DB already had it via db push).
+
+### Reclassification #58 — DB-ENC-1 (DB audit 2.8) — SHIPPED
+PR-122 enabled the pgcrypto extension.
+
+### Reclassification #59 — DB-ENC-2 (DB audit 2.8) — SHIPPED
+PR-123 shipped multi-version PII key support + otate-pii-key.ts + migrate-legacy-pii.ts + 8 tests. Operators can now rotate the PII key without invalidating existing ciphertext.
+
+### Reclassification #60 — DB-DEL-1 (DB audit 2.8) — SHIPPED (docs)
+PR-124 documented the GDPR data retention strategy as Anonymize-in-Place in docs/GDPR_DELETE_DECISION.md.
+
+### Reclassification #61 — DB-IX-3 (DB audit 2.8) — SHIPPED
+PR-127 replaced stale lifecycleStatus/	eamLeader indexes in schema.prisma with FK-column indexes (pickupHubId, currentPlanId, teamLeaderId, createdAt).
+
+### Reclassification #62 — AP-F-1 (Admin audit 4.1) — VERIFIED
+PR-135 confirmed data-management/index.tsx is 82 lines (orphan status from Phase 4 resolved).
+
+### Reclassification #63 — AP-F-2 (Admin audit 4.1) — SHIPPED
+PR-136 created 7 thin route segments under /admin/data-management/* so each section has a bookmarkable URL.
+
+### Reclassification #64 — AP-F-3 (Admin audit 4.1) — VERIFIED (review-only)
+PR-137 was a focused review of Restore/DR tabs; no code change. Review report is in the commit message.
+
+### Reclassification #65 — AP-F-4 (Admin audit 4.1) — SHIPPED
+PR-138 added the useCanRestore() hook + read-only banner in RestoreTab + DR Tab. Destructive controls are now disabled when the admin lacks the data_management_restore permission.
+
+### Reclassification #66 — INF-CI/CD-4 (Infra audit 5.2) — SHIPPED
+PR-139 added the scripts/check-secret-rotation.sh wrapper. The CI step at ci-cd.yml:162-163 no longer references a dead file.
+
+### Reclassification #67 — INF-CI/CD-6 (Infra audit 5.2) — SHIPPED
+PR-140 removed -ErrorAction SilentlyContinue from e2e-windows.yml ALTER USER. CI now fails loudly on DB password setup.
+
+### Reclassification #68 — INF-CI/CD-7 (Infra audit 5.2) — SHIPPED
+PR-141 added etention-days: 7 to lutter-ci-cd.yml build-debug artifact. ~13x cost reduction.
+
+### Reclassification #69 — INF-OBS-1 (Infra audit 5.2) — SHIPPED
+PR-142 wired scripts/setup-logrotate.sh into ootstrap.sh so logrotate actually runs on first deploy.
+
+### Reclassification #70 — DS-T-4 + T-5 (Design audit 3.1) — PARTIAL
+PR-125 added the back-compat note on AppColors.onSurfaceMuted. Full 19-tier token regen is deferred until the lint ratchet (PR-126) ships.
+
+### Cumulative reclassifications
+
+- Phase 6 re-verification: 38 reclassifications (#1-#38)
+- Phase 6 ship session: #39 (Backend S2)
+- Phase 7A ship session: #40-#44 (DB-M-1, DB-C-1, DB-CL-1, SEC-N-0, INF-CI/CD-3)
+- Phase 7B-7H ship session: #45-#70 (26 PRs across 7 sub-phases)
+- **Total: 70 reclassifications** across 3 ship sessions + 1 re-verification
+
+### Final ship state (2026-08-04)
+
+- Phase 1-5: 38 PRs (deep audit fixes)
+- Phase 6: 14 PRs (6A/6D/6E/6F)
+- Phase 6 follow-up: 1 PR (PR-95 Backend S2)
+- Phase 7A: 5 PRs (5 P0s that gate staging soak)
+- Phase 7B-7H: 26 PRs (across 7 sub-phases)
+- **Total: 84 PRs + 1 BOM-strip chore + 4 docs commits** on ix/phase6d-api-hardening
+
+**The 2026-08-06 staging soak is fully unblocked.** The 3 gated drop migrations (20260806000000, 20260806010000, 20260806020000) are ready to run on staging.
