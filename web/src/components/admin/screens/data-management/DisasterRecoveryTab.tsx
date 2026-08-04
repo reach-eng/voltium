@@ -81,6 +81,7 @@ import {
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { useCanRestore } from './use-destroy-permission';
 
 // ── Types ──────────────────────────────────────────────────────────────
 

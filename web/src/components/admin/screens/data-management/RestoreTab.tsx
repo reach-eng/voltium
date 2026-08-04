@@ -81,6 +81,7 @@ import {
 } from 'lucide-react';
 import { AdminErrorBoundary } from '../../error-boundary';
 import { formatDateDDMMYYYY, formatDateTimeDDMMYYYY } from '@/lib/date-utils';
+import { useCanRestore } from './use-destroy-permission';
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -225,6 +226,13 @@ function getStoragePercent(bytes: number, total: number): number {
 
 
 export function RestoreTab() {
+  // Phase 7G PR-138: gate destructive controls on the
+  // `data_management_restore` permission. Defaulting to `false`
+  // when the session is missing or still loading is intentional —
+  // the safer default is to show the controls in their disabled
+  // state rather than the click-through state.
+  const canRestore = useCanRestore();
+
   const [backups, setBackups] = useState<BackupJobData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -330,6 +338,24 @@ export function RestoreTab() {
 
   return (
     <div className="space-y-6">
+      {/* Phase 7G PR-138: read-only banner when the admin lacks
+          `data_management_restore`. The destructive controls below
+          stay visible (so the user can still see the wizard and
+          understand the flow) but every button is `disabled`. */}
+      {!canRestore && (
+        <div
+          className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm"
+          data-testid="restore-readonly-banner"
+          role="status"
+        >
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <span>
+            You do not have the <code className="font-mono text-xs">data_management_restore</code>{' '}
+            permission. Restore actions are disabled in read-only mode.
+          </span>
+        </div>
+      )}
+
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-sm">
         {restoreSteps.map((step, i) => (
@@ -429,7 +455,11 @@ export function RestoreTab() {
             )}
 
             <div className="mt-4 flex justify-end">
-              <Button onClick={handleValidate} disabled={!selectedId || validating}>
+              <Button
+                onClick={handleValidate}
+                disabled={!selectedId || validating || !canRestore}
+                title={!canRestore ? 'You do not have the data_management_restore permission' : undefined}
+              >
                 {validating ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Validating...
@@ -577,7 +607,8 @@ export function RestoreTab() {
                 variant="destructive"
                 size="lg"
                 onClick={handleStartRestore}
-                disabled={restoring}
+                disabled={restoring || !canRestore}
+                title={!canRestore ? 'You do not have the data_management_restore permission' : undefined}
               >
                 {restoring ? (
                   <>
