@@ -136,6 +136,15 @@ const SCHEDULED_TASKS: Array<{
     },
   },
   {
+    name: 'outbox-completed-cleanup',
+    intervalMs: 24 * 60 * 60 * 1000, // daily
+    processor: async () => {
+      const { OutboxService } = await import('./outbox');
+      const count = await OutboxService.cleanupCompleted(1);
+      logger.info('[Scheduler] Outbox completed events cleanup', { count });
+    },
+  },
+  {
     name: 'telemetry-cleanup',
     intervalMs: 300_000,
     processor: async () => {
