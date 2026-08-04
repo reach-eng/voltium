@@ -47,8 +47,18 @@ export const referralRewardJob = {
     // ₹100 (10000 paise) was lower than the use-case's default
     // ₹200 (20000 paise), creating a divergence if both paths
     // were ever wired. Default to 20000 paise (₹200) to match.
+    // PR-102 (B-RF1): the stored value is in PAISE (see
+    // settings.registry.ts coerceSettingValue). We use it directly —
+    // no `* 100` conversion. This matches the use-case path.
     const rewardSetting = await db.systemSetting.findUnique({ where: { key: 'referralBonus' } });
     const REWARD_AMOUNT_PAISE = rewardSetting ? parseInt(rewardSetting.value) || 20000 : 20000;
+    // PR-102 (B-RF1): the idempotencyKey format is the SINGLE GUARD
+    // that prevents a double-pay if both this job AND the use-case
+    // path (POST /api/admin/referrals) race for the same (referrer,
+    // referee) pair. The key format MUST match the use-case's
+    // `referral:${referrer.id}:${refereeId}` exactly — the
+    // `WalletLedger.idempotencyKey` UNIQUE constraint in the DB is
+    // the authoritative arbiter. Keep both paths in lockstep.
     const idempotencyKey = `referral:${referrer.id}:${referredRiderId}`;
 
     try {

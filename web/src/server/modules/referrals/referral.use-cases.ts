@@ -34,6 +34,23 @@ export const referralUseCases = {
    * Processes a referral reward when a new rider signs up with a referral code.
    * Credits the referrer's wallet via the referral reward mechanism.
    * Idempotent — checks for existing transactions before awarding.
+   *
+   * PR-102 (B-RF1): this use-case and `referral-reward.job.ts` MUST emit
+   * the same `idempotencyKey` (`referral:{referrer.id}:{refereeId}`) and
+   * the same amount so the database unique constraint on
+   * `WalletLedger.idempotencyKey` is the single source of truth for
+   * "only one reward may be paid for this (referrer, referee) pair".
+   *
+   * The use-case path is reached from the admin `POST /api/admin/referrals`
+   * endpoint (manual reconciliation by an operator). The job path is the
+   * default for the on-signup flow (PR-75). Both must converge.
+   *
+   * PR-102 (B-RF1): the job is the source of truth for new rewards
+   * (it has exponential backoff, outbox retries, and the canonical
+   * `setting:referralBonus` paise value). The use-case is kept as a
+   * manual-reconciliation fallback for admins. Both paths are now
+   * aligned on the paise value (no rupees→paise double-conversion
+   * that previously inflated the use-case amount by 100x).
    */
   async processReferralReward(refereeId: string, referrerCode: string) {
     const referrer = await db.rider.findUnique({ where: { referralCode: referrerCode } });
@@ -46,7 +63,10 @@ export const referralUseCases = {
       return;
     }
 
-    // Check if already rewarded (idempotency)
+    // Check if already rewarded (idempotency) — this is the
+    // pre-`WalletLedger.idempotencyKey` short-circuit. The database
+    // unique constraint is the authoritative guard, but checking
+    // up front avoids spinning up a $transaction just to P2002-roll.
     const existingReward = await db.transaction.findFirst({
       where: { riderId: referrer.id, purpose: 'REWARD', description: { contains: referee.id } },
     });
@@ -55,16 +75,23 @@ export const referralUseCases = {
       return;
     }
 
-    // Read referral bonus from settings (cached 60s)
+    // Read referral bonus from settings (cached 60s).
+    // The value is stored in PAISE (see settings.registry.ts coerceSettingValue
+    // which multiplies BUSINESS/NUMBER by 100). Default '20000' = ₹200 in
+    // paise. We do NOT multiply by 100 again here — that would inflate
+    // the use-case amount 100x vs the job path (PR-102 alignment).
     let settingVal = getCachedResponse<string>('setting:referralBonus');
     if (!settingVal) {
       const setting = await db.systemSetting.findFirst({ where: { key: 'referralBonus' } });
-      settingVal = setting?.value || '200';
+      settingVal = setting?.value || '20000';
       cacheResponse('setting:referralBonus', settingVal, 60);
     }
-    const bonus = parseInt(settingVal || '200');
+    const bonusPaise = parseInt(settingVal || '20000');
 
-    const bonusPaise = bonus * 100;
+    // PR-102: this key MUST match the key emitted by
+    // referral-reward.job.ts. The `WalletLedger.idempotencyKey` UNIQUE
+    // constraint is the only thing that prevents a double-pay if both
+    // paths race (e.g. admin clicks reconcile while the job is running).
     const idempotencyKey = `referral:${referrer.id}:${refereeId}`;
 
     await db.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -121,7 +148,7 @@ export const referralUseCases = {
     logger.info('[Referral] Reward processed', {
       referrerId: referrer.id,
       refereeId,
-      bonus,
+      bonusPaise,
     });
   },
 
