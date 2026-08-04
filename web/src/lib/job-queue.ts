@@ -170,6 +170,7 @@ export const JobQueue = {
     const result = await db.$executeRaw`
       UPDATE "outbox_events"
       SET status = 'PENDING',
+          attempts = 0,
           error = 'Reclaimed by reaper — stuck in PROCESSING'
       WHERE status = 'PROCESSING'
         AND (
