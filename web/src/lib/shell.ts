@@ -13,7 +13,6 @@
 import { execFileSync, execSync } from 'child_process';
 import { platform } from 'os';
 import { logger } from '@/lib/logger';
-import { writeFileSync } from 'fs';
 
 const IS_WIN = platform() === 'win32';
 
@@ -75,10 +74,6 @@ export function extractArchive(archiveFile: string, outputDir: string): void {
  * Connection string is passed via --dbname to avoid shell interpolation.
  */
 export function dumpDatabase(dbUrl: string, outputFile: string): void {
-  if (process.env.DATABASE_OFFLINE === 'true') {
-    writeFileSync(outputFile, '-- Mock Database Dump\nSELECT 1;\n');
-    return;
-  }
   execFileSync('pg_dump', [`--dbname=${dbUrl}`, '-f', outputFile, '--no-owner', '--no-acl'], {
     timeout: 300_000,
     stdio: 'pipe',
@@ -90,9 +85,6 @@ export function dumpDatabase(dbUrl: string, outputFile: string): void {
  * Uses -f to read from file instead of shell redirect (<).
  */
 export function restoreDatabase(dbUrl: string, inputFile: string): void {
-  if (process.env.DATABASE_OFFLINE === 'true') {
-    return;
-  }
   execFileSync('psql', [`--dbname=${dbUrl}`, '-f', inputFile], { timeout: 600_000, stdio: 'pipe' });
 }
 

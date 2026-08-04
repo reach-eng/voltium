@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 describe('Device Compliance Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

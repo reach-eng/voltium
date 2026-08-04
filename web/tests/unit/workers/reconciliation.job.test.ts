@@ -8,7 +8,6 @@ import { OutboxEventTypes, OutboxService } from '../../../src/server/workers/out
 
 describe('Reconciliation Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

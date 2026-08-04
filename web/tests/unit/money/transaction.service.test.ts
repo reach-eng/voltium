@@ -11,7 +11,6 @@ import { TransactionType, TransactionPurpose, TransactionStatus } from '@prisma/
 
 describe('transactionService', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

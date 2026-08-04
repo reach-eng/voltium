@@ -15,7 +15,6 @@ vi.mock('../../../src/lib/notification-service', () => ({
 
 describe('Daily Engagement Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

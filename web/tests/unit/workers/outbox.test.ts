@@ -5,7 +5,6 @@ import { OutboxService, OutboxEventTypes } from '../../../src/server/workers/out
 
 describe('Outbox Service', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

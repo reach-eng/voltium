@@ -5,7 +5,6 @@ import { kycRepository } from '../../../src/server/modules/kyc/kyc.repository';
 
 describe('kycRepository', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

@@ -19,7 +19,6 @@ vi.mock('../../../src/server/modules/data-management/schedule/schedule.service',
 
 describe('Scheduled Backup Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

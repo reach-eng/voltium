@@ -6,7 +6,6 @@ import { TransactionType, TransactionPurpose, TransactionStatus, LedgerEntryType
 
 describe('walletRepository', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

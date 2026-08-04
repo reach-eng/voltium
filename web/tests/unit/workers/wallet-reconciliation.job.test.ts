@@ -5,7 +5,6 @@ import { runWalletReconciliation } from '../../../src/server/workers/jobs/wallet
 
 describe('Wallet Reconciliation Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

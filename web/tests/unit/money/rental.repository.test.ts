@@ -5,7 +5,6 @@ import { rentalRepository } from '../../../src/server/modules/rentals/rental.rep
 
 describe('rentalRepository', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

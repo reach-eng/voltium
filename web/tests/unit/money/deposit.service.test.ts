@@ -11,7 +11,6 @@ import { DepositStatus } from '@prisma/client';
 
 describe('depositService', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

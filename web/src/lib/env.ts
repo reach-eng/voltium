@@ -147,12 +147,6 @@ if (!_env.success) {
 const parsedEnv = _env.data;
 
 if (isServer && (parsedEnv.APP_ENV === 'production' || process.env.NODE_ENV === 'production')) {
-  if (process.env.DATABASE_OFFLINE === 'true') {
-    throw new Error(
-      'Production architecture violation: DATABASE_OFFLINE mock fallback is not allowed in production.'
-    );
-  }
-
   if (!process.env.CRON_SECRET) {
     throw new Error(
       'Production architecture violation: CRON_SECRET environment variable is required.'

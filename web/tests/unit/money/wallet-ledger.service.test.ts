@@ -7,7 +7,6 @@ import { LedgerCategory } from '@prisma/client';
 
 describe('walletLedgerService', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

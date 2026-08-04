@@ -7,7 +7,6 @@ import { walletRepository } from '../../../src/server/modules/wallet/wallet.repo
 
 describe('depositLedgerService', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

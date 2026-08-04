@@ -11,7 +11,6 @@ describe('Worker Dispatcher & Clock Injection Integration', () => {
   let customClock: typeof clock;
   
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
     vi.useFakeTimers();
   });
 

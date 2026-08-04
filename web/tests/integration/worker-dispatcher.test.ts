@@ -6,7 +6,6 @@ import { clock } from '../../src/lib/clock';
 
 describe('Worker Dispatcher & JobQueue Integration', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {

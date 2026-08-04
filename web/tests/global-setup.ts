@@ -9,9 +9,6 @@
  *   3. Skip prisma db push if SKIP_PRISMA_PUSH=1 (the test schema is
  *      already in sync from a previous run; pushing again is slow on
  *      Windows and can hang the test runner)
- *   4. Force DATABASE_OFFLINE=false so the Prisma client doesn't short
- *      circuit queries to [] (the production code only does this when
- *      the DB is genuinely offline)
  *
  * Replaces the per-file `setupTestPostgres()` call that was previously
  * invoked in 43 test files. That per-file approach caused two problems:
@@ -28,11 +25,6 @@ export default async function globalSetup(): Promise<void> {
         process.env.DATABASE_URL.includes('?') ? '&schema=test' : '?schema=test';
     }
   }
-
-  // Force the Prisma client to attempt real queries. The per-file
-  // beforeAll handlers used to set this, but with global setup it must
-  // be set here so it takes effect before any test imports the db client.
-  process.env.DATABASE_OFFLINE = 'false';
 
   // Skip the prisma db push if SKIP_PRISMA_PUSH=1. The test schema is
   // managed by a separate migration script (scripts/sync-test-schema.sh)

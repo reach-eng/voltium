@@ -12,7 +12,6 @@ vi.mock('../../../src/lib/notification-service', () => ({
 
 describe('Rent Reminders Job', () => {
   beforeAll(async () => {
-    process.env.DATABASE_OFFLINE = 'false';
   });
 
   afterAll(async () => {
