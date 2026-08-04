@@ -186,3 +186,8 @@ Each of the 8 audits re-verified its prior P0 claims against current code on 202
 **The 8 audits are independent** — the cross-references between them (e.g. "API N3 = Backend N11 = the chokepoint") are noted in each file. The Rider app audit's "see API audit N3" line is intentional — the same underlying issue surfaces in multiple scopes.
 
 **No code changes made** — audit only.
+
+
+## Phase 6 reclassification #39 (2026-08-04 11:15)
+
+**Backend S2** — iles.use-cases._generateUploadToken and _verifyUploadToken previously reused env.JWT_SECRET (a hygiene issue with no current exploit, filed as FOLLOWUP_TICKETS). **Shipped today as PR-95 on ix/phase6d-api-hardening (commit e075a91)**: new env var FILE_UPLOAD_SECRET is required in production; falls back to JWT_SECRET only in dev/test. New unit test at 	ests/unit/files/upload-token-secret.test.ts asserts the right key is used in each case. The deep-audit finding is now FIXED.

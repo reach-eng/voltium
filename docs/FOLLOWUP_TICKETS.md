@@ -3168,3 +3168,22 @@ pm run lint — 0 warnings
 **Phase 6 P0 backlog cleared**: 6 of 6 P0s from AUDIT_PHASE6_PLAN_2026-08-04.md shipped (B-R1, DS-T-1, DS-T-2, DS-T-3, API-N6 partial, API-N3 partial). Total P0s remaining: 4 in AUDIT_PHASE6_PLAN_2026-08-04.md (DB-M-1, DB-C-1, DB-CL-1, INF-CI/CD-3 — these are 6B and are blocked on the 2026-08-06 staging soak).
 
 **Reclassifications added to AUDIT_INDEX_2026-08-03.md** (entries 15-23): see that file for the 9 new reclassifications from Phase 6 work.
+
+#### Backend S2 fixed (2026-08-04)
+
+**PR-95 (Backend S2)**: file upload token HMAC no longer reuses JWT_SECRET.
+- Added FILE_UPLOAD_SECRET env var (optional, min 32 chars)
+- Production env guard: env() throws if APP_ENV=production and FILE_UPLOAD_SECRET is unset
+- Use-cases resolve the secret via _getUploadSecret() — uses FILE_UPLOAD_SECRET if set, falls back to JWT_SECRET only in dev/test
+- Added unit test (	ests/unit/files/upload-token-secret.test.ts) that asserts:
+  - With FILE_UPLOAD_SECRET set, a token signed with FILE_UPLOAD_SECRET verifies; a token signed with JWT_SECRET does not
+  - Without FILE_UPLOAD_SECRET in dev, JWT_SECRET is used
+- Updated .env.example with a FILE_UPLOAD_SECRET placeholder
+
+**Verification gate**:
+- 
+pm test — 2031 passed, 3 skipped, 1 pre-existing failure (deploy-scripts.test.ts UTF-8 BOM, unrelated)
+- 
+pm run lint — 0 warnings
+- 
+pm run typecheck — 0 errors
