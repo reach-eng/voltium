@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -182,24 +183,13 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                 maxHeight: MediaQuery.of(context).size.height * 0.45,
               ),
               child: _filtered.isEmpty
-                  ? Padding(
-                      padding: Spacing.paddingXl,
-                      child: Column(
-                        children: [
-                          const Icon(
-                            Icons.electric_moped_outlined,
-                            size: 40,
-                            color: _outline,
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'No vehicles match your search',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              color: _textMuted,
-                            ),
-                          ),
-                        ],
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: IllustratedEmptyState(
+                        icon: Icons.electric_moped_outlined,
+                        title: 'No vehicles match',
+                        subtitle:
+                            'Try a different search term, or check back once more vehicles are available at your hub.',
                       ),
                     )
                   : ListView.separated(

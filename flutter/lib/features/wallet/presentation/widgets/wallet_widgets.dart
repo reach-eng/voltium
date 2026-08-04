@@ -4,6 +4,7 @@ import 'package:voltium_rider/models/transaction_model.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import '../../../../theme/app_theme.dart';
 import '../../../../widgets/animated_balance_counter.dart';
+import '../../../../widgets/illustrated_empty_state.dart';
 import '../../../../widgets/streak_celebration_bar.dart';
 import '../../../../widgets/effect_widgets.dart';
 import '../screens/top_up_flow.dart';
@@ -770,20 +771,25 @@ class TransactionHistorySection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: Text(
-                  selectedFilter == 'All'
-                      ? 'No transactions yet'
-                      : 'No transactions matching filter',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    color: colors.onSurfaceMuted,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ),
+            IllustratedEmptyState(
+              icon: selectedFilter == 'All'
+                  ? Icons.account_balance_wallet_outlined
+                  : Icons.filter_list_off_rounded,
+              title: selectedFilter == 'All'
+                  ? 'No transactions yet'
+                  : 'No matching transactions',
+              subtitle: selectedFilter == 'All'
+                  ? 'Your wallet activity will show up here once you top up or make a payment.'
+                  : 'Try a different filter to see more results.',
+              actionLabel: selectedFilter == 'All' ? 'Top up wallet' : null,
+              onAction: selectedFilter == 'All'
+                  ? () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TopUpFlow(),
+                        ),
+                      )
+                  : null,
             )
           else
             ListView.separated(

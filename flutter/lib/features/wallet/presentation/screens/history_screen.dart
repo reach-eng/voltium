@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
+import 'package:voltium_rider/widgets/skeleton_loader.dart';
 
 /// Matches web HistoryScreen.tsx:
 /// - Header with back button and refresh
@@ -180,9 +182,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
   }
 
   Widget _buildLoading() {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
-    );
+    // PR #6: replaced raw spinner with a layout-matched skeleton so the
+    // screen doesn't jump when transactions arrive.
+    return const HistoryListSkeleton();
   }
 
   Widget _buildContent(
@@ -207,23 +209,14 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
           ),
         ),
         if (filtered.isEmpty)
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: 40),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.filter_list_off,
-                    size: 48,
-                    color: AppColors.outline,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'No transactions found',
-                    style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.onSurfaceMuted),
-                  ),
-                ],
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: IllustratedEmptyState(
+                icon: Icons.filter_list_off_rounded,
+                title: 'No transactions found',
+                subtitle:
+                    'Try a different filter or search term to see your wallet history.',
               ),
             ),
           )

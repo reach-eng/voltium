@@ -5,6 +5,7 @@ import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 
 import 'notification_preferences_screen.dart';
@@ -486,42 +487,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   Widget _buildEmptyState() {
-    final colors = AppColors.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 80,
-            width: 80,
-            decoration: BoxDecoration(
-              color: colors.card,
-              borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 20),
-              ],
-            ),
-            child: Icon(
-              _getTabIcon(_selectedTab),
-              size: 40,
-              color: AppColors.primary.withValues(alpha: 0.15),
-            ),
-          ),
-          SizedBox(height: 24),
-          Text(
-            'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
-            style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "You're all caught up!",
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 14, color: colors.onSurfaceVariant),
-          ),
-        ],
-      ),
+    return IllustratedEmptyState(
+      icon: _getTabIcon(_selectedTab),
+      title: 'No ${_getTabLabel(_selectedTab).toLowerCase()} notifications',
+      subtitle: "You're all caught up! Updates from Voltium will appear here.",
     );
   }
 

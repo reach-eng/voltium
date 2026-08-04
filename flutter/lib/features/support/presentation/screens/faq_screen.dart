@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -86,10 +87,16 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
                         ),
                       ),
                       if (filteredFaqs.isEmpty)
-                        SliverToBoxAdapter(
+                        const SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: _buildEmptyFaqState(),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 32),
+                            child: IllustratedEmptyState(
+                              icon: Icons.search_off_rounded,
+                              title: 'No results found',
+                              subtitle:
+                                  "We couldn't find any FAQ matching your search. Try a different word, or scroll up to use the 'Create ticket' button.",
+                            ),
                           ),
                         )
                       else
@@ -250,33 +257,6 @@ class _FaqScreenState extends ConsumerState<FaqScreen> {
           );
         }).toList(),
       ),
-    );
-  }
-
-  Widget _buildEmptyFaqState() {
-    return Column(
-      children: [
-        const SizedBox(height: 60),
-        Container(
-          height: 64,
-          width: 64,
-          decoration: const BoxDecoration(
-            color: AppColors.primarySurface,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.search, color: AppColors.primary, size: 24),
-        ),
-        SizedBox(height: 16),
-        Text(
-          'No results found',
-          style: AppTypography.titleSmall.copyWith(color: AppColors.slate800),
-        ),
-        Text(
-          "We couldn't find any match for your search.",
-          style: GoogleFonts.plusJakartaSans(
-              fontSize: 13, color: AppColors.slate500),
-        ),
-      ],
     );
   }
 
