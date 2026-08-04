@@ -111,10 +111,17 @@ export function redactPii<T>(value: T): T {
     return value.map((item) => redactPii(item)) as unknown as T;
   }
 
+  const SENSITIVE_KEYS_LIST = Array.from(SENSITIVE_KEYS);
   const redacted: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
     const lowerKey = key.toLowerCase();
-    if (SENSITIVE_KEYS.has(lowerKey) || SENSITIVE_KEYS.has(key)) {
+    const normalizedKey = lowerKey.replace(/[-_\s]/g, '');
+    const isSensitive =
+      SENSITIVE_KEYS.has(lowerKey) ||
+      SENSITIVE_KEYS.has(key) ||
+      SENSITIVE_KEYS.has(normalizedKey) ||
+      SENSITIVE_KEYS_LIST.some((sk) => normalizedKey.includes(sk));
+    if (isSensitive) {
       redacted[key] = val !== null && val !== undefined ? REDACTED : val;
     } else if (typeof val === 'object' && val !== null) {
       redacted[key] = redactPii(val);
