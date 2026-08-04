@@ -25,6 +25,7 @@ import { deviceComplianceJob } from './jobs/device-compliance.job';
 import { referralRewardJob } from './jobs/referral-reward.job';
 import { auditCleanupJob } from './jobs/audit-cleanup.job';
 import { telemetryCleanupJob } from './jobs/telemetry-cleanup.job';
+import { notificationsCleanupJob } from './jobs/notifications-cleanup.job';
 // notifications.job.ts is deprecated (BLOCKER 1.4). Its birthday/payment
 // reminder logic moved to daily-engagement.job.ts; its outbox mapping was
 // the misroute that dropped per-event KYC/topup notifications. The file
@@ -116,6 +117,17 @@ const WORKERS: WorkerDefinition[] = [
     concurrency: 5,
     description: 'SMS dispatch via provider',
     priority: 'interactive',
+  },
+  {
+    // PR-115: notification cleanup — purges read notifications older than 30 days.
+    // Triggered by the admin "Run now" button on the Background Jobs screen
+    // (see /api/admin/jobs/route.ts). Background priority — interactive work
+    // (per-event notification dispatch) takes precedence.
+    jobType: OutboxEventTypes.ADMIN_JOB_NOTIFICATIONS_CLEANUP,
+    processor: notificationsCleanupJob.process,
+    concurrency: 1,
+    description: 'Notification cleanup — purge read notifications older than 30 days',
+    priority: 'background',
   },
 ];
 
