@@ -21,6 +21,43 @@ D:\VoltiumServer\data\backups\[type]\backup_20260616_020000\
 └── backup.log             # Operation log
 ```
 
+## Encryption
+
+> **Canonical scheme (PR-94 / INF-DR-3):** All new backups MUST be encrypted
+> with **OpenSSL AES-256-CBC + PBKDF2 (100,000 iterations)** using
+> `BACKUP_ENCRYPTION_KEY` from `.env.local`. This is implemented by
+> `scripts/db-backup.sh` (the `openssl enc -aes-256-cbc -pbkdf2 -salt
+> -iter 100000` command) and is the only scheme the in-app restore API
+> (`/api/admin/data-management/restore`) and `scripts/db-restore.sh`
+> understand. Operators are expected to rotate `BACKUP_ENCRYPTION_KEY` per
+> the policy in `web/src/lib/secret-rotation.ts` (≤90 days).
+
+Verify or round-trip test the canonical scheme any time you change the
+key:
+
+```bash
+bash scripts/db-backup.sh --test-encrypt
+```
+
+### Legacy (age / PowerShell)
+
+> **Status:** legacy, supported for compatibility only. New backups
+> should not be created with this scheme.
+
+`scripts/backup-local.ps1` is the older Windows-side variant that uses
+the [`age`](https://github.com/FiloSottile/age) CLI to encrypt each
+artifact (`.age` extension) with `BACKUP_ENCRYPTION_KEY` interpreted as
+an age recipient (typically `age1...`). It is kept around for operators
+who already have age-encrypted archives in cold storage and need a
+matching decryption path. It is **not** interoperable with the OpenSSL
+scheme above — restoring an `.age` archive requires `age -d` with the
+recipient identity, not `openssl enc -d`.
+
+If you are choosing an encryption tool for a new environment, use
+`scripts/db-backup.sh` (OpenSSL). The PowerShell variant will be removed
+once all legacy archives have been re-encrypted under the canonical
+scheme.
+
 ## Creating a Backup
 
 ### Via Admin UI

@@ -1,6 +1,19 @@
 # Voltium Local Backup Script (Windows PowerShell)
 # Usage: .\scripts\backup-local.ps1 -BackupDir "D:\VoltiumServer\data\backups\manual"
 # Requires: PostgreSQL client tools (pg_dump) in PATH
+#
+# ----------------------------------------------------------------------------
+# LEGACY (PR-94 / INF-DR-3)
+# ----------------------------------------------------------------------------
+# This script uses the `age` CLI for encryption. It is the LEGACY variant.
+# The canonical scheme is OpenSSL AES-256-CBC + PBKDF2 (100k iterations)
+# implemented by scripts/db-backup.sh — see docs/BACKUP_RESTORE.md.
+#
+# This script is preserved ONLY for operators who already have age-encrypted
+# archives in cold storage and need a matching decryption path. It is NOT
+# interoperable with the OpenSSL scheme and will be removed once all legacy
+# archives have been re-encrypted under the canonical scheme.
+# ----------------------------------------------------------------------------
 
 param(
     [Parameter(Mandatory = $true)]

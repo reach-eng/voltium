@@ -89,6 +89,15 @@ module.exports = {
       kill_signal: 'SIGINT',      // Graceful shutdown signal for Next.js
       kill_retry_time: 5000,      // Retry SIGTERM 5s before SIGKILL
       listen_timeout: 60000,      // Bumped from 30s — Next.js cold start
+      // PM2 log rotation (PR-94 / INF-OBS-1)
+      // The values below are declarative intent; the actual rotation is
+      // configured globally via `pm2-logrotate` at runtime. Run
+      // `bash scripts/setup-logrotate.sh` once per host to apply.
+      // PM2 ignores these keys in the app definition, but keeping them
+      // here makes the policy visible alongside the apps it applies to.
+      max_size: '50M',
+      retain: 14,
+      compress: true,
     },
     {
       name: 'voltium-worker',
@@ -113,6 +122,12 @@ module.exports = {
       merge_logs: true,
       kill_timeout: 30000,        // Bumped from 10s
       kill_retry_time: 5000,      // Retry SIGTERM 5s before SIGKILL
+      // PM2 log rotation (PR-94 / INF-OBS-1)
+      // See comment on the voltium-web block above; these keys are
+      // declarative intent and are applied globally by setup-logrotate.sh.
+      max_size: '50M',
+      retain: 14,
+      compress: true,
     },
   ],
 };
