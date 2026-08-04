@@ -3,6 +3,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/accessibility.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 
 /// The "Enter" / "Send OTP" pill button at the bottom of [LoginScreen].
 ///
@@ -55,8 +56,17 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
               _isInteractive ? (_) => setState(() => _isPressed = false) : null,
           onTapCancel: () => setState(() => _isPressed = false),
           onTap: AppConstants.isTestMode
-              ? widget.onPressed
-              : (widget.canSubmit ? widget.onPressed : null),
+              ? () {
+                  // PR #6: medium haptic on this high-stakes auth action.
+                  HapticService.medium();
+                  widget.onPressed();
+                }
+              : (widget.canSubmit
+                  ? () {
+                      HapticService.medium();
+                      widget.onPressed();
+                    }
+                  : null),
           child: AnimatedScale(
             scale: _isPressed ? 0.96 : 1.0,
             duration: const Duration(milliseconds: 150),
@@ -74,13 +84,27 @@ class _OtpTriggerWidgetState extends State<OtpTriggerWidget> {
                 ),
                 child: Center(
                   child: widget.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                      ? const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Sending…',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         )
                       : Text(
                           'Enter',

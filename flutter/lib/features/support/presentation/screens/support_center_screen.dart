@@ -6,6 +6,7 @@ import 'package:voltium_rider/features/support/presentation/screens/faq_screen.d
 import 'package:voltium_rider/features/support/presentation/screens/troubleshooter_screen.dart';
 import '../../../../theme/app_theme.dart';
 import 'create_ticket_screen.dart';
+import 'package:voltium_rider/widgets/illustrated_empty_state.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -418,14 +419,24 @@ class RecentTicketsContainer extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           if (ticketState.isLoading)
-            const Center(child: CircularProgressIndicator())
+            // PR #6: replaced raw spinner with a layout-matched skeleton
+            // (4 list tiles) so the tickets area doesn't jump on load.
+            const TicketListSkeleton()
           else if (ticketState.filteredTickets.isEmpty)
             Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                'No tickets found in this category.',
-                style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurfaceVariant),
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: IllustratedEmptyState(
+                icon: Icons.confirmation_number_outlined,
+                title: 'No tickets yet',
+                subtitle:
+                    'Anything you raise with support will appear here. Need a hand? Start a new ticket.',
+                actionLabel: 'Create ticket',
+                onAction: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CreateTicketScreen(),
+                  ),
+                ),
               ),
             )
           else

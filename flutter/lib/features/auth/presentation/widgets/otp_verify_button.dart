@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 import 'dart:ui' as ui;
 
 /// "Verify & Proceed" floating button at the bottom of
@@ -68,7 +69,13 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
                 ? (_) => setState(() => _isPressed = false)
                 : null,
             onTapCancel: () => setState(() => _isPressed = false),
-            onTap: _isInteractive ? widget.onPressed : null,
+            onTap: _isInteractive
+                ? () {
+                    // PR #6: medium haptic on this high-stakes auth action.
+                    HapticService.medium();
+                    widget.onPressed();
+                  }
+                : null,
             child: AnimatedScale(
               scale: _isPressed ? 0.96 : 1.0,
               duration: const Duration(milliseconds: 150),
@@ -85,13 +92,27 @@ class _OtpVerifyButtonState extends State<OtpVerifyButton> {
                   ),
                   child: Center(
                     child: widget.isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Verifying…',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           )
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,

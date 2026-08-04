@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
@@ -14,6 +15,7 @@ class TopUpAmountScreen extends ConsumerStatefulWidget {
   final Function(int)? onAmountChanged;
   final int? securityDeposit;
   final int? rentalPrice;
+  final int? initialAmount;
 
   const TopUpAmountScreen({
     super.key,
@@ -22,6 +24,7 @@ class TopUpAmountScreen extends ConsumerStatefulWidget {
     this.onAmountChanged,
     this.securityDeposit,
     this.rentalPrice,
+    this.initialAmount,
   });
 
   @override
@@ -51,7 +54,12 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
         ? (secDeposit + rentPrice)
         : (secDeposit > 0 ? secDeposit : (rentPrice > 0 ? rentPrice : 0));
 
-    _selectedAmount = planTotal > 0 ? planTotal : 1000;
+    final initial = widget.initialAmount;
+    if (initial != null && initial > 0) {
+      _selectedAmount = initial;
+    } else {
+      _selectedAmount = planTotal > 0 ? planTotal : 1000;
+    }
     _customAmountCtrl = TextEditingController(text: _selectedAmount.toString());
 
     // Generate quick amounts based on plan total if available
@@ -365,7 +373,13 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
   Widget _buildProceedButton() {
     return GestureDetector(
       key: const Key('proceedToPaymentButton'),
-      onTap: _canProceed ? () => widget.onProceed?.call(_finalAmount) : null,
+      onTap: _canProceed
+          ? () {
+              // PR #6: medium haptic on this high-stakes money action.
+              HapticService.medium();
+              widget.onProceed?.call(_finalAmount);
+            }
+          : null,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

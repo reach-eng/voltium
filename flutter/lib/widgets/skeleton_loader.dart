@@ -566,3 +566,59 @@ class NotificationSkeleton extends StatelessWidget {
     );
   }
 }
+
+/// PR #6: Skeleton for wallet history + transaction list — same shape as
+/// the actual list (header card + N row tiles) so the layout doesn't
+/// jump when data arrives. Default count is 6 rows.
+class HistoryListSkeleton extends StatelessWidget {
+  final int itemCount;
+  const HistoryListSkeleton({super.key, this.itemCount = 6});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ShimmerLoading(
+            width: double.infinity,
+            height: 96,
+            borderRadius: 16,
+          ),
+          const SizedBox(height: 16),
+          ...List.generate(
+            itemCount,
+            (i) => const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: ShimmerListTile(showTrailing: true),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// PR #6: Skeleton for support ticket list — matches the ListTile +
+/// subtitle shape of the real tickets list.
+class TicketListSkeleton extends StatelessWidget {
+  final int itemCount;
+  const TicketListSkeleton({super.key, this.itemCount = 4});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Column(
+        children: List.generate(
+          itemCount,
+          (i) => const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: ShimmerListTile(showTrailing: false),
+          ),
+        ),
+      ),
+    );
+  }
+}

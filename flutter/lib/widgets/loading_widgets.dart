@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../utils/haptic_service.dart';
 
 class LoadingButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String label;
+
+  /// PR #6: shown in place of [label] while [isLoading] is true. Falls
+  /// back to the spinner (no text) if null. Use for verbs the rider
+  /// expects to see: "Sending…", "Verifying…", "Processing…".
+  final String? loadingLabel;
   final bool isLoading;
   final bool isDestructive;
   final IconData? icon;
+
+  /// PR #6: when true, fires [HapticService.medium] on press. Default
+  /// true (most callers are high-stakes actions). Set false for
+  /// low-stakes buttons where a heavy tap feels wrong.
+  final bool hapticOnPress;
 
   const LoadingButton({
     super.key,
     required this.onPressed,
     required this.label,
+    this.loadingLabel,
     this.isLoading = false,
     this.isDestructive = false,
     this.icon,
+    this.hapticOnPress = true,
   });
 
   @override
@@ -23,7 +36,12 @@ class LoadingButton extends StatelessWidget {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading
+            ? null
+            : () {
+                if (hapticOnPress) HapticService.medium();
+                onPressed?.call();
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: isDestructive ? AppColors.error : AppColors.primary,
           foregroundColor: Colors.white,
@@ -38,14 +56,31 @@ class LoadingButton extends StatelessWidget {
           ),
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+            ? (loadingLabel != null
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(loadingLabel!),
+                    ],
+                  )
+                : const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ))
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
