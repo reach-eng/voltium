@@ -20,7 +20,10 @@ import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
 import 'package:voltium_rider/widgets/ui_animations.dart';
-import 'package:voltium_rider/widgets/card_parallax_tilt.dart';
+// PR-127: TiltCard is the canonical parallax-tilt widget.
+// CardParallaxTilt was a 29-line wrapper that just delegated to
+// TiltCard; deleted in PR-127.
+import 'package:voltium_rider/widgets/tilt_card.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -267,7 +270,7 @@ class _DashboardContentWidget extends ConsumerWidget {
                   FadeSlideEntrance(
                     index: 3,
                     child: RepaintBoundary(
-                      child: CardParallaxTilt(
+                      child: TiltCard(
                         child: WalletCard(
                           walletBalance: rider.walletBalance,
                           requiredPayment: rider.activeRentalPlanPrice > 0
