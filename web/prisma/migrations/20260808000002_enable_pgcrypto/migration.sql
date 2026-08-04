@@ -1,0 +1,39 @@
+-- Phase 7D PR-122 (DB-ENC-1, P1) — enable pgcrypto extension
+--
+-- Pre-check state (verified 2026-08-04 via web/scripts/inspect-extensions.ts):
+--   pg_extension shows only `plpgsql`. pgcrypto is NOT enabled.
+--
+-- Why pgcrypto is needed:
+--   The current pii-crypto.ts uses Node's `crypto` module (AES-256-GCM) and
+--   stores ciphertext in VARCHAR columns. This is application-level
+--   encryption: the DB never sees plaintext. The next iteration of the
+--   encryption_at_rest story (post-7D) will use Postgres-native column
+--   encryption via pgp_sym_encrypt / pgp_sym_decrypt so:
+--     1. The DB can decrypt without round-tripping to the app server
+--     2. Encryption is transparent to Prisma (the app gets plaintext
+--        via a view or computed column)
+--     3. The key can be rotated at the DB level without a full
+--        app-side re-encrypt pass
+--
+-- pgcrypto also provides:
+--   - gen_random_bytes() (used by _prisma_migrations for the id column
+--     already; the resolve-migration-history.ts script relies on this)
+--   - digest() for one-way hashing (alternative to bcrypt for non-password
+--     tokens)
+--   - crypt() / gen_salt() for password hashing (pgcrypto's bcrypt
+--     equivalent)
+--
+-- Why `IF NOT EXISTS`:
+--   The extension is idempotent. Re-running this migration is a no-op
+--   on any DB that already has pgcrypto enabled. Safe on staging and
+--   production.
+--
+-- Why not `CREATE EXTENSION` with superuser role:
+--   pgcrypto is shipped with the standard PostgreSQL distribution as
+--   a "trusted" extension — it can be created by any user with CREATE
+--   privilege on the current database. No superuser escalation needed.
+--   The voltium_user role has the necessary privilege (verified by
+--   `psql \du`).
+
+-- EnableExtension
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
