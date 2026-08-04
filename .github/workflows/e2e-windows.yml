@@ -47,7 +47,12 @@ jobs:
               }
               $pgPassword = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 24 | ForEach-Object { [char]$_ })
               $env:PGPASSWORD = $pgPassword
-              psql -U postgres -c "ALTER USER postgres PASSWORD '$pgPassword';" -ErrorAction SilentlyContinue
+              # PR-140: removed -ErrorAction SilentlyContinue from the ALTER USER
+              # so a password-set failure (e.g. wrong pg_hba.conf, missing
+              # superuser) fails the job loudly. Previously the step could
+              # silently leave the DB with the default password while CI
+              # reported green.
+              psql -U postgres -c "ALTER USER postgres PASSWORD '$pgPassword';"
               psql -U postgres -c "CREATE DATABASE voltium_test;" -ErrorAction SilentlyContinue
               # Re-export the connection string with the random password
               "DATABASE_URL=postgresql://postgres:$pgPassword@localhost:5432/voltium_test" | Out-File -FilePath $env:GITHUB_ENV -Append
