@@ -3134,7 +3134,8 @@ See `docs/AUDIT_FIX_PLAN_2026-08-03.md` for the full plan with dependency graph 
 
 **6A Money correctness** (6 PRs, ~1.5d):
 - PR-76 (P0): rent auto-debit period tracking. Added 
-extRentDueAt/lastPaidAt/periodNo to RentalLease; per-period idempotency key (ent:{leaseId}:period:{n}); advances period in same tx as debit. A 7-day tenant is now debited exactly once across 7 day-ticks, not 7 times. Migration 20260804001000_rental_lease_period_tracking.
+extRentDueAt/lastPaidAt/periodNo to RentalLease; per-period idempotency key (
+ent:{leaseId}:period:{n}); advances period in same tx as debit. A 7-day tenant is now debited exactly once across 7 day-ticks, not 7 times. Migration 20260804001000_rental_lease_period_tracking.
 - PR-77: referral reward job reads amount from system_settings.referralBonus (default ₹200).
 - PR-78: notification-dispatch persists in-app Notification row for KYC/topup/deposit events.
 - PR-79: MRR filters to RENT_PAYMENT debits only.
@@ -3150,7 +3151,7 @@ extRentDueAt/lastPaidAt/periodNo to RentalLease; per-period idempotency key (en
 **6E Design + rider** (3 PRs):
 - PR-91: DS-T-1 dead colors reclassification (already removed by R2.2).
 - PR-92: DS-T-2+T-3+XP-3 token sync + brand-aligned globals.css + delete tailwind.config.ts.
-- PR-93: DS-C-1 status color + RA-F-3 remove lutter_background_service + RA-F-5 token dedup.
+- PR-93: DS-C-1 status color + RA-F-3 remove lutter_background_service + RA-F-5 token dedup.
 
 **6F Infra + observability** (1 PR):
 - PR-94: secret-rotation CI entrypoint + db-restore --yes + logrotate + 2 Grafana dashboards.
@@ -3190,7 +3191,7 @@ pm run typecheck — 0 errors
 
 #### Phase 7A ship session (2026-08-04) — 5 P0s unblock 2026-08-06 staging soak
 
-The Phase 6 plan listed 19 PRs across 6 sub-phases; 6A/6D/6E/6F shipped (14 PRs) but **6B (4 P0s) and 6C did not**. The 4 P0s gate the 2026-08-06 staging soak per docs/RUNBOOK_DB_DROPS_2026-08-06.md. Phase 7A ships them as a single batch on ix/phase6d-api-hardening:
+The Phase 6 plan listed 19 PRs across 6 sub-phases; 6A/6D/6E/6F shipped (14 PRs) but **6B (4 P0s) and 6C did not**. The 4 P0s gate the 2026-08-06 staging soak per docs/RUNBOOK_DB_DROPS_2026-08-06.md. Phase 7A ships them as a single batch on ix/phase6d-api-hardening:
 
 - **PR-96 (DB-M-1)**: idempotent lifecycleStage backfill + migration history bootstrap. The original 20260730150000_add_rider_lifecycle_stage migration applied to the live DB (column + enum exist) but was applied via prisma db push rather than migrate deploy. Result: 33 of 34 migrations missing from _prisma_migrations. New migration 20260807000001_idempotent_lifecycle_stage_backfill/migration.sql is re-runnable (IF NOT EXISTS guards everywhere). New scripts/resolve-migration-history.ts marks all pre-gate migrations as applied, EXCLUDING the 3 gated staging-soak drops so they run when staging is ready. 10 tests in 	ests/unit/resolve-migration-history.test.ts.
 
@@ -3202,7 +3203,8 @@ The Phase 6 plan listed 19 PRs across 6 sub-phases; 6A/6D/6E/6F shipped (14 PRs)
   - dminForbiddenWithLog({session, permission, route, ip}) helper in lib/rbac.ts that wraps errors.forbidden() and fires logPermissionDenied (fire-and-forget). Adopted in kyc/route.ts as the high-value example; future call sites are a drop-in replacement.
   - kycRepository.findByRiderIdForAdmin(riderDbId, {adminId}) for admin KYC document access; fires logKycDocumentView.
   - In dminRiderUseCases.update(), when KYC status REJECTED causes lifecycleStatus→SUSPENDED, fire logAccountSuspension.
-  - In unWalletReconciliation() per-wallet loop, when integrity.drift != 0, fire logReconciliationMismatch.
+  - In 
+unWalletReconciliation() per-wallet loop, when integrity.drift != 0, fire logReconciliationMismatch.
   10 tests in 	ests/unit/security-events-wiring.test.ts verify the wiring.
 
 - **PR-100 (INF-CI/CD-3)**: verified Phase 6F PR-94's secret-rotation nightly CI. The script has explicit main(), the workflow wires to it, the test asserts exit codes. 10 regression-guard tests in 	ests/unit/check-secret-rotation-nightly.test.ts to catch any future refactor that drops the wiring.
@@ -3231,7 +3233,8 @@ Phase 7A shipped 5 P0s. The remaining 7B-7H sub-phases (45 PRs) were launched as
 
 **Phase 7B — Backend P1s (10 PRs, 4 shipped):**
 - PR-101 (B-A1): MRR filter regression test (verify-only + 1 new test)
-- PR-102 (B-RF1): collapse two referral-reward implementations. Aligned the use-case and job paths on the same paise value (no * 100 double-conversion) and the same eferral:{referrerId}:{refereeId} idempotencyKey. WalletLedger.idempotencyKey UNIQUE is the authoritative arbiter.
+- PR-102 (B-RF1): collapse two referral-reward implementations. Aligned the use-case and job paths on the same paise value (no * 100 double-conversion) and the same 
+eferral:{referrerId}:{refereeId} idempotencyKey. WalletLedger.idempotencyKey UNIQUE is the authoritative arbiter.
 - PR-107 (B-J2): runReaper resets ttempts=0 on reclaim so reaped jobs can survive the cycle
 - PR-108 (B-J3): date-keys helper (istDateKey in web/src/lib/date-keys.ts). Migration of the 3 daily jobs is a follow-up — each needs separate careful look
 - PR-109 (B-J4): outbox cleanupCompleted wired into the daily scheduler
@@ -3245,13 +3248,15 @@ Phase 7A shipped 5 P0s. The remaining 7B-7H sub-phases (45 PRs) were launched as
 - PR-113 (SEC PR-6): crypto.timingSafeEqual for OTP code compare in erifyOtp (padded to 6 bytes)
 - PR-116 (SEC PR-9): self-referral blocked + sendOtp response no longer leaks exists (user-enumeration closed). 3 tests
 - PR-117 (SEC PR-11): pii-redact key matching normalized (strips -, _, whitespace + substring match) so userRiderAadhaarNumber doesn't leak
-- PR-114, 115, 118, 119 (verify-only or env guard): not committed — guards already in env.ts from prior work
+- PR-114, 115 (NEW post-Phase 7 audit pass 2026-08-04): PR-115 wired notificationsCleanupJob into WORKERS[]; PR-114 added GoogleFonts widget-bypass ratchet (ceiling=307). Both shipped as commits 985c3a5 and 35e6af0
+- PR-118, 119 (verify-only or env guard): not committed — guards already in env.ts from prior work
 
 **Phase 7D — Database P1s (5 PRs, 4 shipped):**
 - PR-120 (DB-IX-1): 5 covering indexes via CREATE INDEX CONCURRENTLY IF NOT EXISTS for outbox_events(status, readyAt), audit_logs(action, createdAt), support_tickets(status, createdAt), backup_jobs(status, createdAt), rental_leases(riderId, status, createdAt)
 - PR-121 (DB-IX-2): wallet_ledgers(riderId, createdAt) no-op migration + test
 - PR-122 (DB-ENC-1): pgcrypto extension enabled
-- PR-123 (DB-ENC-2): pii-crypto key rotation scripts (otate-pii-key.ts + migrate-legacy-pii.ts) + multi-version key support + 8 tests
+- PR-123 (DB-ENC-2): pii-crypto key rotation scripts (
+otate-pii-key.ts + migrate-legacy-pii.ts) + multi-version key support + 8 tests
 - PR-124 (DB-DEL-1): GDPR data retention decision doc (docs/GDPR_DELETE_DECISION.md) — Anonymize-in-Place is the canonical strategy
 - PR-127 (DB-IX-3): prisma schema index alignment (replaced stale lifecycleStatus/	eamLeader indexes with FK-column indexes)
 - Other items: not committed in this batch (deferred)
@@ -3273,7 +3278,7 @@ Phase 7A shipped 5 P0s. The remaining 7B-7H sub-phases (45 PRs) were launched as
 **Phase 7H — Infrastructure (7 PRs, 4 shipped):**
 - PR-139 (INF-CI/CD-4): scripts/check-secret-rotation.sh wrapper + test
 - PR-140 (INF-CI/CD-6): e2e-windows.yml ALTER USER fails loudly (removed SilentlyContinue)
-- PR-141 (INF-CI/CD-7): lutter-ci-cd.yml build-debug retention 7 days (was 90, ~13x cost reduction)
+- PR-141 (INF-CI/CD-7): lutter-ci-cd.yml build-debug retention 7 days (was 90, ~13x cost reduction)
 - PR-142 (INF-OBS-1): pm2 logrotate wired into ootstrap.sh (Phase 6F config finally run on first deploy)
 - PR-143, 144, 145 (docs/external): not committed in this batch (UptimeRobot setup is operator action, DR SPOF docs are doc-only, Cloudflare Tunnel config update is operator work)
 
@@ -3295,7 +3300,7 @@ px tsc --noEmit — 0 errors
 - 7B/7C/7D test additions for items the agents couldn't complete
 - APP_ENV gate fix in 4 files flagged by the new check-no-node-env-security.sh (api-middleware.ts:113, auth.ts:30, db.ts:32, db.ts:46)
 
-**Total Phase 7 ship: 31 PRs (5 from 7A + 26 from 7B-7H) + 3 docs commits** on ix/phase6d-api-hardening. The 2026-08-06 staging soak is fully unblocked and the 7B-7H ship closes most of the SOC2/GDPR and backend P1 backlog.
+**Total Phase 7 ship: 31 PRs (5 from 7A + 26 from 7B-7H) + 3 docs commits** on ix/phase6d-api-hardening. The 2026-08-06 staging soak is fully unblocked and the 7B-7H ship closes most of the SOC2/GDPR and backend P1 backlog.
 
 #### Polish batch ship session (2026-08-04) — 11 PRs across 7E/7F/7G/7H
 
@@ -3315,7 +3320,7 @@ review-ready PRs.
   06:00 IST run no longer straddles the UTC/IST boundary.
 
 **Polish (7E Design):**
-- PR-126: typography tier ratchet. 579 ontSize: / GoogleFonts.
+- PR-126: typography tier ratchet. 579 ontSize: / GoogleFonts.
   uses outside lib/theme/ recorded as baseline; new offenders
   trip the build.
 - PR-127: card widget consolidation. CardParallaxTilt (29-line
@@ -3348,16 +3353,16 @@ px vitest run tests/unit — 2186 passed, 3 skipped, 3 pre-existing failures (da
 px tsc --noEmit — 0 errors
 - scripts/check-no-database-offline.sh — OK
 - scripts/check-no-node-env-security.sh — OK
-- lutter/scripts/check-typography-tier.sh — 579 / 579 offenders (ratchet working)
-- lutter/scripts/check-colors-ratchet.sh — 581 / 581 offenders (ratchet working)
-- lutter/scripts/check-screen-size.sh — 10 / 10 over 600 lines (ratchet working)
+- lutter/scripts/check-typography-tier.sh — 579 / 579 offenders (ratchet working)
+- lutter/scripts/check-colors-ratchet.sh — 581 / 581 offenders (ratchet working)
+- lutter/scripts/check-screen-size.sh — 10 / 10 over 600 lines (ratchet working)
 
 **Final Phase 7 state (all sub-phases):**
 - Phase 7A: 5 P0s (5 PRs)
 - Phase 7B-7H: 26 PRs (initial batch)
 - Polish batch: 11 PRs
 - Docs commits: 4
-- **Total: 42 PRs + 4 docs commits** on ix/phase6d-api-hardening
+- **Total: 42 PRs + 4 docs commits** on ix/phase6d-api-hardening
 
 **Phase 7 plan reclassifications: #40-#79 (40 entries).**
 

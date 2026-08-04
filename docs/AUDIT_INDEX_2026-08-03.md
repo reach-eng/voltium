@@ -190,7 +190,7 @@ Each of the 8 audits re-verified its prior P0 claims against current code on 202
 
 ## Phase 6 reclassification #39 (2026-08-04 11:15)
 
-**Backend S2** — iles.use-cases._generateUploadToken and _verifyUploadToken previously reused env.JWT_SECRET (a hygiene issue with no current exploit, filed as FOLLOWUP_TICKETS). **Shipped today as PR-95 on ix/phase6d-api-hardening (commit e075a91)**: new env var FILE_UPLOAD_SECRET is required in production; falls back to JWT_SECRET only in dev/test. New unit test at 	ests/unit/files/upload-token-secret.test.ts asserts the right key is used in each case. The deep-audit finding is now FIXED.
+**Backend S2** — iles.use-cases._generateUploadToken and _verifyUploadToken previously reused env.JWT_SECRET (a hygiene issue with no current exploit, filed as FOLLOWUP_TICKETS). **Shipped today as PR-95 on ix/phase6d-api-hardening (commit e075a91)**: new env var FILE_UPLOAD_SECRET is required in production; falls back to JWT_SECRET only in dev/test. New unit test at 	ests/unit/files/upload-token-secret.test.ts asserts the right key is used in each case. The deep-audit finding is now FIXED.
 
 ## Phase 7A reclassifications #40-#44 (2026-08-04)
 
@@ -199,7 +199,8 @@ The Phase 6 plan listed 19 PRs across 6 sub-phases; 6A/6D/6E/6F shipped (14 PRs)
 ### Reclassification #40 — DB-M-1 (DB audit 2.8) — STALE on first pass, REAL after re-verification
 
 The original 20260730150000_add_rider_lifecycle_stage migration was filed in Phase 6 as "shipped, just needs migration history reconciliation". After live-DB inspection on 2026-08-04 via web/scripts/inspect-migrations.ts:
-- iders.lifecycleStage column EXISTS (data_type USER-DEFINED)
+- 
+iders.lifecycleStage column EXISTS (data_type USER-DEFINED)
 - RiderLifecycleStage enum EXISTS in pg_type
 - BUT _prisma_migrations only has 1 row ( _init); 33 migrations are "not applied" from migrate status POV
 
@@ -224,7 +225,8 @@ Root cause: the original 20260729160000_add_check_constraints/migration.sql targ
 - New scripts/apply-check-constraints.ts — verify the migration applies + re-runs cleanly
 - New 	ests/unit/check-constraints-corrected.test.ts (8 tests)
 
-Verification: 12/12 CHECK constraints present in both public + test schemas (was 0/12 before). The ider_battery_level_range constraint now correctly rejects batteryLevel=999 with SQLSTATE 23514.
+Verification: 12/12 CHECK constraints present in both public + test schemas (was 0/12 before). The 
+ider_battery_level_range constraint now correctly rejects batteryLevel=999 with SQLSTATE 23514.
 
 ### Reclassification #42 — DB-CL-1 (DB audit 2.8) — SHIPPED
 
@@ -233,9 +235,10 @@ The offline mock fallback (process.env.DATABASE_OFFLINE=true) in web/src/lib/db.
 **Shipped today as PR-98 on fix/phase6d-api-hardening (commit efae83d)**:
 - web/src/lib/db.ts — removed isDbOffline, startRecoveryCheck, mockRiderPhoneMap, EXISTING_PHONES, EXISTING_IDS, getMockFallback; cleaned 412 → 175 lines
 - web/src/lib/env.ts — removed the production guard (no longer needed)
-- web/src/lib/shell.ts — removed DATABASE_OFFLINE short-circuits in dumpDatabase + estoreDatabase
+- web/src/lib/shell.ts — removed DATABASE_OFFLINE short-circuits in dumpDatabase + 
+estoreDatabase
 - 14 test files — removed dead process.env.DATABASE_OFFLINE = 'false' lines
-- 	ests/global-setup.ts — removed the orce DATABASE_OFFLINE=false step
+- 	ests/global-setup.ts — removed the orce DATABASE_OFFLINE=false step
 - New scripts/check-no-database-offline.sh — CI guard that fails the build on any web/src/ reference
 - New 	ests/unit/check-no-database-offline.test.ts (3 tests)
 
@@ -249,7 +252,8 @@ Verification: 0 process.env.DATABASE_OFFLINE references in web/src/ (was 16+). 2
 - New dminForbiddenWithLog({session, permission, route, ip}) helper in lib/rbac.ts that wraps errors.forbidden() and fires logPermissionDenied (fire-and-forget)
 - kycRepository.findByRiderIdForAdmin(riderDbId, {adminId}) for admin KYC document access; fires logKycDocumentView
 - In dminRiderUseCases.update(), when KYC REJECTED → lifecycleStatus=SUSPENDED, fire logAccountSuspension
-- In unWalletReconciliation() per-wallet loop, when integrity.drift != 0, fire logReconciliationMismatch
+- In 
+unWalletReconciliation() per-wallet loop, when integrity.drift != 0, fire logReconciliationMismatch
 - New 	ests/unit/security-events-wiring.test.ts (10 tests)
 
 Verification: 4/4 security-event loggers wired (was 0/4). All wiring calls fire-and-forget so the response is not delayed by audit-log writes.
@@ -282,7 +286,8 @@ Phase 7B-7H landed 26 PRs across 7 sub-phases (parallel agents hit the local tok
 PR-101 confirmed nalytics.use-cases.ts:97-110 filters to 	ype='DEBIT' AND purpose='RENT_PAYMENT'. No code change; 1 regression test added.
 
 ### Reclassification #46 — B-RF1 (Backend audit 1.5) — SHIPPED
-PR-102 collapsed two referral-reward implementations. The use-case path and the job path now share the same paise value (no * 100 double-conversion) and the same eferral:{referrerId}:{refereeId} idempotencyKey. The DB UNIQUE constraint on WalletLedger.idempotencyKey is the authoritative arbiter.
+PR-102 collapsed two referral-reward implementations. The use-case path and the job path now share the same paise value (no * 100 double-conversion) and the same 
+eferral:{referrerId}:{refereeId} idempotencyKey. The DB UNIQUE constraint on WalletLedger.idempotencyKey is the authoritative arbiter.
 
 ### Reclassification #47 — B-J2 (Backend audit 1.7) — SHIPPED
 PR-107 set ttempts=0 in the reaper reclaim UPDATE. A legitimately slow job can now survive the reaper-reclaim cycle without dying on max-attempts.
@@ -306,7 +311,8 @@ PR-112 replaced process.env.NODE_ENV with the canonical APP_ENV in 5 security-se
 PR-113 used crypto.timingSafeEqual for OTP code compare (padded to 6 bytes). Constant-time compare closes the timing side-channel.
 
 ### Reclassification #54 — SEC PR-9 (Security audit 2.1) — SHIPPED
-PR-116 closed two findings: (a) sendOtp no longer returns exists (user-enumeration); (b) erifyOtp blocks self-referral (the rider's own eferralCode is rejected as the incoming referral). 3 regression tests.
+PR-116 closed two findings: (a) sendOtp no longer returns exists (user-enumeration); (b) erifyOtp blocks self-referral (the rider's own 
+eferralCode is rejected as the incoming referral). 3 regression tests.
 
 ### Reclassification #55 — SEC PR-11 (Security audit 2.1) — SHIPPED
 PR-117 normalized PII key matching in pii-redact.ts (strips -, _, whitespace + substring match). Keys like userRiderAadhaarNumber are now redacted.
@@ -321,7 +327,8 @@ PR-121 added wallet_ledgers(riderId, createdAt) index (no-op because the dev DB 
 PR-122 enabled the pgcrypto extension.
 
 ### Reclassification #59 — DB-ENC-2 (DB audit 2.8) — SHIPPED
-PR-123 shipped multi-version PII key support + otate-pii-key.ts + migrate-legacy-pii.ts + 8 tests. Operators can now rotate the PII key without invalidating existing ciphertext.
+PR-123 shipped multi-version PII key support + 
+otate-pii-key.ts + migrate-legacy-pii.ts + 8 tests. Operators can now rotate the PII key without invalidating existing ciphertext.
 
 ### Reclassification #60 — DB-DEL-1 (DB audit 2.8) — SHIPPED (docs)
 PR-124 documented the GDPR data retention strategy as Anonymize-in-Place in docs/GDPR_DELETE_DECISION.md.
@@ -348,7 +355,8 @@ PR-139 added the scripts/check-secret-rotation.sh wrapper. The CI step at ci-cd.
 PR-140 removed -ErrorAction SilentlyContinue from e2e-windows.yml ALTER USER. CI now fails loudly on DB password setup.
 
 ### Reclassification #68 — INF-CI/CD-7 (Infra audit 5.2) — SHIPPED
-PR-141 added etention-days: 7 to lutter-ci-cd.yml build-debug artifact. ~13x cost reduction.
+PR-141 added 
+etention-days: 7 to lutter-ci-cd.yml build-debug artifact. ~13x cost reduction.
 
 ### Reclassification #69 — INF-OBS-1 (Infra audit 5.2) — SHIPPED
 PR-142 wired scripts/setup-logrotate.sh into ootstrap.sh so logrotate actually runs on first deploy.
@@ -371,7 +379,7 @@ PR-125 added the back-compat note on AppColors.onSurfaceMuted. Full 19-tier toke
 - Phase 6 follow-up: 1 PR (PR-95 Backend S2)
 - Phase 7A: 5 PRs (5 P0s that gate staging soak)
 - Phase 7B-7H: 26 PRs (across 7 sub-phases)
-- **Total: 84 PRs + 1 BOM-strip chore + 4 docs commits** on ix/phase6d-api-hardening
+- **Total: 84 PRs + 1 BOM-strip chore + 4 docs commits** on ix/phase6d-api-hardening
 
 **The 2026-08-06 staging soak is fully unblocked.** The 3 gated drop migrations (20260806000000, 20260806010000, 20260806020000) are ready to run on staging.
 
@@ -396,7 +404,7 @@ PR-145 added metrics: localhost:2000 to cloudflared-config.example.yml
 + docs/CLOUDFLARE_TUNNEL_HEALTH.md (Prometheus + blackbox + PM2 config).
 
 ### Reclassification #74 — DS-DM-1 (Design audit 3.1) — SHIPPED (ratchet)
-PR-128 added lutter/scripts/check-colors-ratchet.sh. 581
+PR-128 added lutter/scripts/check-colors-ratchet.sh. 581
 Colors.white|black uses outside lib/theme/ recorded as baseline;
 ratchet prevents growth.
 
@@ -411,7 +419,7 @@ of OTPTimer + AnimatedOTPTimer dead code). OtpResendWidget +
 parent's _resendCountdown is the canonical answer.
 
 ### Reclassification #77 — RA-F-6 (Rider audit 6.1) — SHIPPED (ratchet)
-PR-134 added lutter/scripts/check-screen-size.sh. 10 screens
+PR-134 added lutter/scripts/check-screen-size.sh. 10 screens
 currently over 600 lines recorded as baseline; ratchet prevents growth.
 Actual splits into widgets/ folders are follow-up PRs (PR-134a through
 PR-134e).
@@ -435,6 +443,38 @@ decode (12MP → 2MP, ~9x RAM savings).
   reads fixed in pi-middleware.ts, db.ts, logger.ts. The
   new CI guard scripts/check-no-node-env-security.sh is green.
 
+## Post-Phase 7 audit-pass reclassifications #82-#83 (2026-08-04)
+
+A live-tree audit pass after the polish batch shipped caught 5 false
+positives (api-handler instanceof check, device-route guard asymmetry,
+admin folder structure) and 2 real issues that needed their own
+follow-up PRs:
+
+### Reclassification #82 — B-W1 (Backend audit 2.3) — SHIPPED
+
+PR-115 wired `notificationsCleanupJob.process` into `WORKERS[]` in
+`web/src/server/workers/index.ts`. The job file existed and the admin
+"Run now" button advertised it as "Weekly (Sun 03:00 IST)" but no
+worker consumed the `OutboxEventTypes.ADMIN_JOB_NOTIFICATIONS_CLEANUP`
+event — admin clicks would have stranded events in the outbox until
+the daily cleanup task purged them. New entry at `priority: 'background'`
+(interactive per-event notification dispatch takes precedence per the
+PR-75 priority split). 5-test regression guard in
+`web/tests/unit/workers/notifications-cleanup-worker-registered.test.ts`.
+
+### Reclassification #83 — DS-TY-3 (Design audit 3.1) — SHIPPED (ratchet)
+
+PR-114 added `flutter/tool/lint_google_fonts_bypass.dart` to count
+widget-side `GoogleFonts.plusJakartaSans(...)` calls in `lib/`
+(excluding `lib/theme/app_theme.dart`). Ceiling pinned at 307 (the
+actual measured count, not the 20 originally reported). This is the
+same ratchet pattern as PR-126 (typography), PR-128 (colors), PR-134
+(screen size), and PR-142 (touch targets) — token discipline without
+bulk migration. 6-test regression guard in
+`flutter/test/tools/lint_google_fonts_bypass_test.dart` (live subprocess
+test is skipped on sandboxes where `dart` isn't on PATH for the test
+process).
+
 ### Final Phase 7 reclassification ledger
 
 - Phase 6 re-verification: 38 reclassifications (#1-#38)
@@ -442,7 +482,8 @@ decode (12MP → 2MP, ~9x RAM savings).
 - Phase 7A ship session: #40-#44 (5 P0s)
 - Phase 7B-7H ship session: #45-#70 (26 PRs)
 - Polish batch ship session: #71-#79 (11 PRs) + 2 P0 follow-ups
-- **Total: 81 reclassifications** across 4 ship sessions + 1 re-verification
+- Post-Phase 7 audit pass: #82-#83 (PR-115, PR-114)
+- **Total: 83 reclassifications** across 5 ship sessions + 1 re-verification + 1 audit pass
 
 ### Final cumulative state (2026-08-04 end-of-day)
 
@@ -452,11 +493,12 @@ decode (12MP → 2MP, ~9x RAM savings).
 - Phase 7A: 5 PRs
 - Phase 7B-7H: 26 PRs
 - Polish batch: 11 PRs
+- Post-Phase 7 audit pass: 2 PRs (PR-115 worker wiring, PR-114 GoogleFonts ratchet)
 - Docs commits: 5
-- **Total: 95 PRs + 5 docs commits** on ix/phase6d-api-hardening
+- **Total: 97 PRs + 5 docs commits** on fix/phase6d-api-hardening
 
 **The 2026-08-06 staging soak is fully unblocked and ratchet-protected.**
 The 3 gated drop migrations are ready to run on staging. The
 APP_ENV, NODE_ENV, DATABASE_OFFLINE, fontSize, GoogleFonts,
-Colors.white, and screen-size ratchets are all in place to prevent
-drift going forward.
+Colors.white, screen-size, and touch-target ratchets are all in place
+to prevent drift going forward.
