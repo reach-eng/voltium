@@ -18,6 +18,13 @@ export const walletRepository = {
     return wallet?.balanceInPaise || 0;
   },
 
+  /**
+   * @deprecated Dead code — no callers as of 2026-08-04. Wallet balance
+   * mutations go through walletService.creditWallet / debitWallet which
+   * use optimistic-locking $transaction blocks. Direct calls to
+   * updateBalance bypass the ledger and can corrupt the reconciliation
+   * invariant. Kept for backwards compatibility; remove in v0.4.
+   */
   async updateBalance(riderDbId: string, balanceInPaise: number) {
     return db.wallet.upsert({
       where: { riderId: riderDbId },

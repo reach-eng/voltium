@@ -23,6 +23,7 @@ describe('Daily Engagement Job', () => {
 
   beforeEach(async () => {
     await testDb.idempotencyKey.deleteMany();
+    await testDb.walletLedger.deleteMany();
     await testDb.wallet.deleteMany();
     await testDb.rider.deleteMany();
     clock.reset();

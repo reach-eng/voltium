@@ -34,27 +34,59 @@ export interface OutboxEventData {
 
 export const OutboxEventTypes = {
   // ── Wallet / Transactions ──────────────────────────────────────────────
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   WALLET_TOPUP_REQUESTED: 'wallet.topup_requested',
   WALLET_TOPUP_APPROVED: 'wallet.topup_approved',
   WALLET_TOPUP_REJECTED: 'wallet.topup_rejected',
   WALLET_RECONCILIATION: 'wallet.reconciliation',
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   DEPOSIT_APPROVED: 'deposit.approved',
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   DEPOSIT_REJECTED: 'deposit.rejected',
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   DEPOSIT_REFUNDED: 'deposit.refunded',
 
   // ── Notifications ──────────────────────────────────────────────────────
   NOTIFICATION_SEND: 'notification.send',
   SMS_SEND: 'sms.send',
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   ANNOUNCEMENT_DISPATCH: 'notification.announcement',
   DAILY_ENGAGEMENT: 'engagement.daily',
 
   // ── Referrals ──────────────────────────────────────────────────────────
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   REFERRAL_SIGNUP: 'referral.signup',
   REFERRAL_REWARD: 'referral.reward',
 
   // ── Rent / Leases ──────────────────────────────────────────────────────
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   RENT_DUE: 'rent.due',
   RENT_OVERDUE: 'rent.overdue',
+  /**
+   * @deprecated Unused — never emitted, never consumed. Scheduled
+   * for removal in v0.4.
+   */
   RENT_PAID: 'rent.paid',
   RENT_DUE_CHECK: 'rent.due_check',
 
@@ -79,7 +111,17 @@ export const OutboxEventTypes = {
   ADMIN_JOB_DAILY_ENGAGEMENT: 'admin.job.daily_engagement',
 
   // ── Cleanup (cron-driven, no producer) ─────────────────────────────────
+  /**
+   * @deprecated Unused — the audit-cleanup job runs on a direct
+   * timer in workers/index.ts, not the outbox path. Scheduled for
+   * removal in v0.4.
+   */
   AUDIT_LOG_CLEANUP: 'cleanup.audit_log',
+  /**
+   * @deprecated Unused — the telemetry-cleanup job runs on a direct
+   * timer in workers/index.ts, not the outbox path. Scheduled for
+   * removal in v0.4.
+   */
   TELEMETRY_DATA_CLEANUP: 'cleanup.telemetry',
 } as const;
 
@@ -94,6 +136,44 @@ export type OutboxEventType = (typeof OutboxEventTypes)[keyof typeof OutboxEvent
  */
 export type OutboxPriority = 'interactive' | 'background';
 
+/**
+ * Maximum serialized payload size for a single outbox event.
+ * 64 KB is large enough for any realistic event (a wallet ledger
+ * entry, a notification with FCM token, a referral record, etc.)
+ * but small enough that a misbehaving producer cannot fill the
+ * outbox table with megabytes of garbage.
+ *
+ * If a producer tries to emit a payload larger than this, the emit
+ * call throws OutboxPayloadTooLargeError. The transaction is rolled
+ * back so the outbox is never partially written.
+ */
+export const MAX_OUTBOX_PAYLOAD_BYTES = 64 * 1024;
+
+/**
+ * Thrown by OutboxService.emit() when the serialized payload exceeds
+ * MAX_OUTBOX_PAYLOAD_BYTES. Caught at the route boundary as a 500
+ * (after we log the offending eventType so the operator can find
+ * the buggy producer).
+ */
+export class OutboxPayloadTooLargeError extends Error {
+  readonly eventType: OutboxEventType;
+  readonly actualBytes: number;
+  readonly limitBytes: number;
+
+  constructor(eventType: OutboxEventType, actualBytes: number, limitBytes: number) {
+    super(
+      `Outbox payload for event '${eventType}' is ${actualBytes} bytes, ` +
+        `exceeds the ${limitBytes}-byte limit. Either split the event ` +
+        `into smaller sub-events or store the large payload in storage ` +
+        `and reference it by URL in the event payload.`
+    );
+    this.name = 'OutboxPayloadTooLargeError';
+    this.eventType = eventType;
+    this.actualBytes = actualBytes;
+    this.limitBytes = limitBytes;
+  }
+}
+
 export const OutboxService = {
   /**
    * Write an event to the outbox table. The worker will pick it up later.
@@ -107,6 +187,10 @@ export const OutboxService = {
    * keep the pre-PR-75 behavior. Interactive events (rent-due SMS,
    * FCM dispatch, etc.) MUST pass 'interactive' to avoid being
    * starved by long-running background jobs.
+   *
+   * Throws OutboxPayloadTooLargeError if the serialized payload
+   * exceeds MAX_OUTBOX_PAYLOAD_BYTES. The throw is BEFORE the DB
+   * write, so no partial state is created.
    */
   async emit(
     eventType: OutboxEventType,
@@ -115,12 +199,30 @@ export const OutboxService = {
     tx?: Prisma.TransactionClient,
     priority: OutboxPriority = 'background'
   ): Promise<string> {
+    // Validate payload size before any DB work. Serializing here
+    // (instead of in Prisma) keeps the threshold check transparent
+    // and avoids an extra round-trip for events that would fail.
+    const serialized = JSON.stringify(payload);
+    const sizeBytes = Buffer.byteLength(serialized, 'utf8');
+    if (sizeBytes > MAX_OUTBOX_PAYLOAD_BYTES) {
+      logger.error('[Outbox] Payload exceeds size cap', {
+        eventType,
+        actualBytes: sizeBytes,
+        limitBytes: MAX_OUTBOX_PAYLOAD_BYTES,
+      });
+      throw new OutboxPayloadTooLargeError(
+        eventType,
+        sizeBytes,
+        MAX_OUTBOX_PAYLOAD_BYTES
+      );
+    }
+
     const client = tx || db;
     try {
       const event = await client.outboxEvent.create({
         data: {
           eventType,
-          payload: JSON.stringify(payload),
+          payload: serialized,
           status: 'PENDING',
           maxAttempts,
           priority,
