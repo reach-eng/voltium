@@ -67,16 +67,29 @@ Widget a11yButtonWidget({
   );
 }
 
-Widget a11yFocusable({
+
+/// PR Batch 3 (RA-F-7) — Touch target accessibility standard
+/// Minimum touch target size (44×44 dp) per Apple HIG and Android Accessibility guidelines.
+const double kMinTouchTarget = 44.0;
+
+/// Wraps [child] in a BoxConstraints/Center wrapper that guarantees at least a
+/// [minSize]×[minSize] (default 44.0) touch target area without distorting the child.
+Widget a11yTouchTarget({
   required Widget child,
-  String? semanticsLabel,
-  FocusNode? focusNode,
+  double minSize = kMinTouchTarget,
+  Key? key,
 }) {
-  return Focus(
-    focusNode: focusNode,
-    child: Semantics(
-      label: semanticsLabel,
+  return ConstrainedBox(
+    key: key,
+    constraints: BoxConstraints(
+      minWidth: minSize,
+      minHeight: minSize,
+    ),
+    child: Center(
+      widthFactor: 1.0,
+      heightFactor: 1.0,
       child: child,
     ),
   );
 }
+
