@@ -31,7 +31,8 @@ void main() {
     expect(content, contains('BASELINE_FILE'));
   });
 
-  test('top_up_proof_screen.dart is currently over the threshold (regression guard)',
+  test(
+      'top_up_proof_screen.dart is currently over the threshold (regression guard)',
       () {
     // This test documents the CURRENT state (811 lines). Once the
     // split PRs land, this test will be updated to assert the file

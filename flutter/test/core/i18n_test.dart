@@ -87,15 +87,18 @@ void main() {
       addTearDown(container.dispose);
       final notifier = container.read(localeProviderRef.notifier);
 
-      expect(container.read(localeProviderRef).locale.languageCode, equals('en'));
+      expect(
+          container.read(localeProviderRef).locale.languageCode, equals('en'));
       expect(container.read(localeProviderRef).isHindi, isFalse);
 
       await notifier.setHindi();
-      expect(container.read(localeProviderRef).locale.languageCode, equals('hi'));
+      expect(
+          container.read(localeProviderRef).locale.languageCode, equals('hi'));
       expect(container.read(localeProviderRef).isHindi, isTrue);
 
       await notifier.setEnglish();
-      expect(container.read(localeProviderRef).locale.languageCode, equals('en'));
+      expect(
+          container.read(localeProviderRef).locale.languageCode, equals('en'));
       expect(container.read(localeProviderRef).isHindi, isFalse);
     });
   });

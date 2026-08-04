@@ -97,8 +97,7 @@ void main() {
         ..sort();
 
       expect(staleAllowlist, isEmpty,
-          reason:
-              'allowedKeepSet has entries that are no longer declared in '
+          reason: 'allowedKeepSet has entries that are no longer declared in '
               'app_theme.dart (remove them from the allowlist): '
               '${staleAllowlist.join(', ')}');
 

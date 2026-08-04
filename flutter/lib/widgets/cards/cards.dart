@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../../theme/app_theme.dart';
 
 class TapCard extends StatefulWidget {
   final Widget child;
@@ -190,7 +190,7 @@ class GradientCard extends StatelessWidget {
   const GradientCard({
     super.key,
     required this.child,
-    this.gradientColors = const [AppColors.primary, AppColors.primaryDeep],
+    this.gradientColors = const [AppColors.primary, AppColors.primaryDark],
     this.borderRadius,
     this.padding,
     this.margin,

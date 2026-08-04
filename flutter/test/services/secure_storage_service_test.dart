@@ -111,7 +111,8 @@ void main() {
       final token = await svc.getToken();
 
       expect(token, 'legacy-token-abc',
-          reason: 'getToken should return the value that lived in the legacy key');
+          reason:
+              'getToken should return the value that lived in the legacy key');
       expect(keychain.store['auth_token'], 'legacy-token-abc',
           reason: 'legacy value should have been copied to the canonical key');
       expect(keychain.store.containsKey('session_token'), isFalse,
@@ -140,7 +141,8 @@ void main() {
 
       expect(keychain.store['auth_token'], 'fresh-token-123');
       expect(keychain.store.containsKey('session_token'), isFalse,
-          reason: 'PR-93 removes the dual write; new code must only write auth_token');
+          reason:
+              'PR-93 removes the dual write; new code must only write auth_token');
     });
 
     test('getToken returns null when neither key is set', () async {

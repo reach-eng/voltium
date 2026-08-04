@@ -108,7 +108,8 @@ void main() {
         // log a note and exit the test early. This keeps the test useful
         // on dev machines while not breaking CI sandboxes.
         // ignore: avoid_print
-        print('SKIP: dart not on PATH for test subprocess; skipping live ratchet test');
+        print(
+            'SKIP: dart not on PATH for test subprocess; skipping live ratchet test');
         return;
       }
       // On Windows, `where dart` may return the bare `dart` binary path
@@ -118,7 +119,8 @@ void main() {
       // otherwise fall back to passing just 'dart' so the OS resolves it
       // via PATHEXT on the PATH.
       String dartCmd = dartOnPath;
-      if (Platform.isWindows && !dartOnPath.toLowerCase().endsWith('.bat') &&
+      if (Platform.isWindows &&
+          !dartOnPath.toLowerCase().endsWith('.bat') &&
           !dartOnPath.toLowerCase().endsWith('.exe')) {
         // Try the .bat variant next to the same location.
         final batCandidate =

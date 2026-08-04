@@ -67,7 +67,6 @@ Widget a11yButtonWidget({
   );
 }
 
-
 /// PR Batch 3 (RA-F-7) — Touch target accessibility standard
 /// Minimum touch target size (44×44 dp) per Apple HIG and Android Accessibility guidelines.
 const double kMinTouchTarget = 44.0;
@@ -92,4 +91,3 @@ Widget a11yTouchTarget({
     ),
   );
 }
-

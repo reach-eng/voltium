@@ -48,8 +48,7 @@ void main() {
     }
   });
 
-  test(
-      'lib/theme/ contains the canonical 19-style typography tier (sanity)',
+  test('lib/theme/ contains the canonical 19-style typography tier (sanity)',
       () {
     final typographyFile = File('lib/theme/app_typography.dart');
     expect(typographyFile.existsSync(), isTrue);
@@ -58,7 +57,8 @@ void main() {
     final tierPattern = RegExp(
       r'static const TextStyle (\w+) = TextStyle\(',
     );
-    final matches = tierPattern.allMatches(content).map((m) => m.group(1)!).toSet();
+    final matches =
+        tierPattern.allMatches(content).map((m) => m.group(1)!).toSet();
     // R2.1 collapsed to 19 tiers. Allow some slack for additive tiers
     // (e.g. utility/specialized) — anything between 15 and 30 is fine.
     expect(

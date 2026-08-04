@@ -58,7 +58,8 @@ void main() {
     // in COMMENTS (e.g. explaining the migration) but not in import
     // statements or build() calls.
     expect(content, contains('TiltCard'));
-    expect(content, contains("import 'package:voltium_rider/widgets/tilt_card.dart';"));
+    expect(content,
+        contains("import 'package:voltium_rider/widgets/tilt_card.dart';"));
     // The import for the deleted card_parallax_tilt.dart must be gone.
     expect(
       content,

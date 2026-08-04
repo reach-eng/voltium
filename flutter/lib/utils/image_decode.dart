@@ -35,7 +35,6 @@ import 'package:flutter/painting.dart';
 /// Performance:
 /// - 12MP JPEG (4032x3024) → 2MP (2016x1512): ~9x less RAM
 /// - Decode time: ~150ms → ~25ms (smaller bitmap = less work)
-library;
 
 class DecodeResult {
   final ui.Image image;

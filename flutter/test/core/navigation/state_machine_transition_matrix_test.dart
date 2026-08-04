@@ -72,8 +72,7 @@ void main() {
 
         test('Matrix [$key] is ${expectedAllowed ? "ALLOWED" : "FORBIDDEN"}',
             () {
-          final isAllowed =
-              isAllowedTransition(entryFrom.value, entryTo.value);
+          final isAllowed = isAllowedTransition(entryFrom.value, entryTo.value);
           expect(isAllowed, expectedAllowed,
               reason:
                   'Transition $key expected $expectedAllowed but got $isAllowed');
@@ -209,8 +208,7 @@ void main() {
       expect((state as AuthFlow).step, AuthStep.otpVerify);
     });
 
-    test('AccountClosed state blocks transitionTo to different state',
-        () {
+    test('AccountClosed state blocks transitionTo to different state', () {
       final notifier = container.read(appStateProvider.notifier);
 
       notifier.replaceState(const AccountClosed());

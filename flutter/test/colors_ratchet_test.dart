@@ -45,7 +45,8 @@ void main() {
       expect(darkBase, lessThan(lightBase),
           reason: 'shimmerBaseDark should be darker than shimmerBase');
       expect(darkHighlight, lessThan(lightHighlight),
-          reason: 'shimmerHighlightDark should be darker than shimmerHighlight');
+          reason:
+              'shimmerHighlightDark should be darker than shimmerHighlight');
     });
 
     test('shimmer highlight is lighter than shimmer base (within each mode)',
@@ -58,7 +59,8 @@ void main() {
       expect(lightHighlightL, greaterThan(lightBaseL),
           reason: 'shimmerHighlight should be lighter than shimmerBase');
       expect(darkHighlightL, greaterThan(darkBaseL),
-          reason: 'shimmerHighlightDark should be lighter than shimmerBaseDark');
+          reason:
+              'shimmerHighlightDark should be lighter than shimmerBaseDark');
     });
   });
 }

@@ -22,8 +22,7 @@ void main() {
     expect(
       oldFile.existsSync(),
       isFalse,
-      reason:
-          'otp_timer.dart must be deleted; the OTP countdown is owned by '
+      reason: 'otp_timer.dart must be deleted; the OTP countdown is owned by '
           'OtpResendWidget + the parent screen state. See PR-130.',
     );
   });

@@ -72,8 +72,7 @@ class _TierSpec {
   final String? fontFamily;
 
   @override
-  String toString() =>
-      '$tier(fontSize: $fontSize, fontWeight: $fontWeight'
+  String toString() => '$tier(fontSize: $fontSize, fontWeight: $fontWeight'
       '${fontFamily == null ? '' : ', fontFamily: $fontFamily'})';
 }
 
@@ -102,9 +101,7 @@ List<_TierSpec> _parseAppTypography(File file) {
     final decl = declRe.firstMatch(raw);
     if (decl != null) {
       // Flush previous.
-      if (currentTier != null &&
-          currentSize != null &&
-          currentWeight != null) {
+      if (currentTier != null && currentSize != null && currentWeight != null) {
         specs.add(_TierSpec(
           tier: currentTier,
           fontSize: currentSize,
@@ -152,8 +149,7 @@ Map<String, dynamic> _parseJsonTypography(File file) {
   }
   final typography = tokens['typography'] as Map<String, dynamic>?;
   if (typography == null) {
-    throw StateError(
-        'design-tokens.json: missing "tokens.typography" key — '
+    throw StateError('design-tokens.json: missing "tokens.typography" key — '
         'see docs/design-system.md §2.5 (PR-125 cleanup) for the canonical 19 tiers');
   }
   return typography;
@@ -211,8 +207,7 @@ void main() {
       // Banned stale names.
       for (final banned in _bannedStaleJsonNames) {
         expect(json.containsKey(banned), isFalse,
-            reason:
-                'design-tokens.json still contains stale tier "$banned" '
+            reason: 'design-tokens.json still contains stale tier "$banned" '
                 '(removed in PR-125). Update the JSON to use the canonical '
                 'name (see _canonicalTierOrder).');
       }
@@ -220,8 +215,7 @@ void main() {
       // Required canonical names.
       for (final expected in _canonicalTierOrder) {
         expect(json.containsKey(expected), isTrue,
-            reason:
-                'design-tokens.json is missing canonical tier "$expected". '
+            reason: 'design-tokens.json is missing canonical tier "$expected". '
                 'See docs/design-system.md §2.5 (PR-125 cleanup).');
       }
 
@@ -229,14 +223,14 @@ void main() {
       // (catches accidental re-additions of old names).
       for (final key in json.keys) {
         expect(_canonicalTierOrder, contains(key),
-            reason:
-                'design-tokens.json has unknown tier "$key" that is not in '
+            reason: 'design-tokens.json has unknown tier "$key" that is not in '
                 'the canonical 19. Remove it or add it to the canonical list '
                 'and the docs.');
       }
     });
 
-    test('every tier matches between design-tokens.json and app_typography.dart',
+    test(
+        'every tier matches between design-tokens.json and app_typography.dart',
         () {
       final dartFile = File('lib/theme/app_typography.dart');
       final jsonFile = File('../design-tokens.json');
@@ -277,8 +271,7 @@ void main() {
       }
 
       expect(mismatches, isEmpty,
-          reason:
-              'design-tokens.json and app_typography.dart diverge on '
+          reason: 'design-tokens.json and app_typography.dart diverge on '
               '${mismatches.length} tier(s):\n  - ${mismatches.join('\n  - ')}\n'
               'See docs/design-system.md §2.5 (PR-125 cleanup) for the '
               'canonical values.');
