@@ -269,15 +269,15 @@ model Rider {
   walletLedger            WalletLedger[]
   rewards                 Reward[]
 
-  @@index([lifecycleStatus])
   @@index([phone])
   @@index([riderId])
   @@index([referralCode])
   @@index([referredBy])
-  @@index([teamLeader])
-  @@index([phone, lifecycleStatus])
+  @@index([pickupHubId])
+  @@index([currentPlanId])
+  @@index([teamLeaderId])
+  @@index([createdAt])
   @@index([updatedAt])
-  @@index([lifecycleStatus, updatedAt])
   @@map("riders")
 }
 
