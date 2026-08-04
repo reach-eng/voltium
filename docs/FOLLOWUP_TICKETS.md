@@ -3129,3 +3129,42 @@ See `docs/AUDIT_FIX_PLAN_2026-08-03.md` for the full plan with dependency graph 
 - **PR-71** (DB schema alignment) — blocked on TS code enum mismatch. Needs a value-mapping shim or a separate "migrate every `lifecycleStatus` write to use the 5-value stage" PR.
 - **Staging soak** — 2026-08-06 staging soak is the gate for the rider app R6 drop.
 - **Phase 5 remaining 21 P1s** — the audit plan listed 28; this batch covered 7. The rest are lower-priority and can be tackled as a follow-up series.
+
+#### Phase 6 ship session (2026-08-04)
+
+**6A Money correctness** (6 PRs, ~1.5d):
+- PR-76 (P0): rent auto-debit period tracking. Added 
+extRentDueAt/lastPaidAt/periodNo to RentalLease; per-period idempotency key (ent:{leaseId}:period:{n}); advances period in same tx as debit. A 7-day tenant is now debited exactly once across 7 day-ticks, not 7 times. Migration 20260804001000_rental_lease_period_tracking.
+- PR-77: referral reward job reads amount from system_settings.referralBonus (default ₹200).
+- PR-78: notification-dispatch persists in-app Notification row for KYC/topup/deposit events.
+- PR-79: MRR filters to RENT_PAYMENT debits only.
+- PR-80: support ticket id uses 4-byte random + P2002 retry loop.
+- PR-81: requestTopup 5-minute bucket idempotency key.
+
+**6D API hardening** (4 PRs):
+- PR-89a (P0 partial): admin wallet-adjust DEBIT caps + co-admin for large debits.
+- PR-89b: admin/jobs async enqueue + 202 + generic error body.
+- PR-90a: cron/reconciliation unique-index race safety (P2002 catch).
+- PR-90b: admin routes use shared success/errors envelope.
+
+**6E Design + rider** (3 PRs):
+- PR-91: DS-T-1 dead colors reclassification (already removed by R2.2).
+- PR-92: DS-T-2+T-3+XP-3 token sync + brand-aligned globals.css + delete tailwind.config.ts.
+- PR-93: DS-C-1 status color + RA-F-3 remove lutter_background_service + RA-F-5 token dedup.
+
+**6F Infra + observability** (1 PR):
+- PR-94: secret-rotation CI entrypoint + db-restore --yes + logrotate + 2 Grafana dashboards.
+
+**Cumulative: 14 PRs shipped (6A: 6, 6D: 4, 6E: 3, 6F: 1)**.
+
+**Verification gate (2026-08-04)**:
+- 
+pm test — 2029 passed, 3 skipped, 1 pre-existing failure (deploy-scripts.test.ts UTF-8 BOM)
+- 
+pm run typecheck — 0 errors
+- 
+pm run lint — 0 warnings
+
+**Phase 6 P0 backlog cleared**: 6 of 6 P0s from AUDIT_PHASE6_PLAN_2026-08-04.md shipped (B-R1, DS-T-1, DS-T-2, DS-T-3, API-N6 partial, API-N3 partial). Total P0s remaining: 4 in AUDIT_PHASE6_PLAN_2026-08-04.md (DB-M-1, DB-C-1, DB-CL-1, INF-CI/CD-3 — these are 6B and are blocked on the 2026-08-06 staging soak).
+
+**Reclassifications added to AUDIT_INDEX_2026-08-03.md** (entries 15-23): see that file for the 9 new reclassifications from Phase 6 work.
