@@ -79,10 +79,9 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name="id.flutter.flutter_background_service.BackgroundService"
-            android:foregroundServiceType="location"
-            android:exported="true"/>
+        <!-- PR-93 (RA-F-3): flutter_background_service plugin removed.
+             The BackgroundLocationService Dart class was deleted and no
+             longer registers the BackgroundService native service. -->
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

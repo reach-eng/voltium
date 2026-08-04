@@ -16,20 +16,59 @@ class SecureStorageService {
     ),
   );
 
+  /// Canonical session-token storage key. All reads and writes for the
+  /// rider's auth token go through this single key.
+  ///
+  /// PR-93 (RA-F-5, 2026-08-04): collapsed the previously-dual-key storage
+  /// (`auth_token` + `session_token`) into a single key. The old
+  /// `session_token` key is now only read by [getToken] once, on the
+  /// first access after the upgrade, as part of a one-time migration.
   static const String _keyToken = 'auth_token';
+
+  /// @deprecated Pre-RA-F-5 legacy key. Read once by [getToken] to migrate
+  /// any value the previous app version wrote here into [_keyToken], then
+  /// deleted. New code must not write to this key.
   static const String _keySessionToken = 'session_token';
+
+  /// Tracks whether the one-time [getToken] migration has already run for
+  /// the lifetime of this isolate. After the first migration attempt the
+  /// flag is set, so the same key is never re-scanned on every call.
+  bool _sessionTokenMigrationDone = false;
+
   static const String _keyRefreshToken = 'refresh_token';
   static const String _keyPhone = 'user_phone';
   static const String _keyRiderId = 'rider_id';
 
   Future<void> setToken(String token) async {
     await _storage.write(key: _keyToken, value: token);
-    await _storage.write(key: _keySessionToken, value: token);
   }
 
+  /// Returns the canonical session token, performing a one-time migration
+  /// from the legacy `session_token` key on first access.
+  ///
+  /// Migration rules (PR-93 / RA-F-5):
+  ///   1. If [_keyToken] has a value, return it.
+  ///   2. Else, if the legacy [_keySessionToken] has a value, copy it into
+  ///      [_keyToken] and delete the legacy key. Return the migrated value.
+  ///   3. Else, return null.
+  ///
+  /// The migration is attempted at most once per process; after that the
+  /// legacy key is never read again.
   Future<String?> getToken() async {
-    return await _storage.read(key: _keyToken) ??
-        await _storage.read(key: _keySessionToken);
+    final primary = await _storage.read(key: _keyToken);
+    if (primary != null) return primary;
+
+    if (!_sessionTokenMigrationDone) {
+      _sessionTokenMigrationDone = true;
+      final legacy = await _storage.read(key: _keySessionToken);
+      if (legacy != null && legacy.isNotEmpty) {
+        await _storage.write(key: _keyToken, value: legacy);
+        await _storage.delete(key: _keySessionToken);
+        return legacy;
+      }
+    }
+
+    return null;
   }
 
   Future<void> saveSessionToken(String token) => setToken(token);

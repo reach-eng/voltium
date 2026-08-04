@@ -27,7 +27,7 @@
           "statusNeutral": "#94A3B8",
           "statusSuccess": "#34D399",
           "statusWarning": "#FBBF24",
-          "statusError": "#F87171"
+          "statusError": "#FCA5A5"
         }
       }
     },
