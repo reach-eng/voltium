@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:voltium_rider/widgets/network_status_banner.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_driver/driver_extension.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -389,17 +390,21 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            const SyncBanner(),
-            const SuspensionBanner(),
-            Expanded(
-              child: IndexedStack(
-                index: _currentIndex,
-                children: _buildScreens(),
+        // PR #3: persistent offline banner (ErrorState.network copy, but in
+        // non-modal pill form so it doesn't block the screen).
+        child: NetworkStatusBanner(
+          child: Column(
+            children: [
+              const SyncBanner(),
+              const SuspensionBanner(),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: _buildScreens(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: AppBottomNav(

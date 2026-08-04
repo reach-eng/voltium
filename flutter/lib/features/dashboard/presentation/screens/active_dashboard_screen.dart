@@ -13,9 +13,10 @@ import 'package:voltium_rider/widgets/dashboard_profile_card.dart';
 import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
 import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
 import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
-import 'package:voltium_rider/widgets/error_state_widget.dart';
+import 'package:voltium_rider/widgets/error_state.dart';
 import 'package:voltium_rider/widgets/dashboard_tl_card.dart';
 import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_rent_prompt_card.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
@@ -89,10 +90,12 @@ class _DashboardErrorWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ErrorStateWidget.network(
+    // PR #3: renamed ErrorStateWidget → ErrorState; copy is now from the
+    // canonical .network factory (no longer leaks $errorMessage verbatim).
+    return ErrorState.network(
       message: errorMessage != null
-          ? 'Unable to connect: $errorMessage'
-          : 'Unable to connect to command center.',
+          ? 'Couldn\'t reach the command center: $errorMessage'
+          : 'Couldn\'t reach the command center. We\'ll keep trying — tap retry if you want to force a refresh now.',
       onRetry: () => ref.read(riderProvider.notifier).refresh(),
     );
   }
@@ -241,6 +244,16 @@ class _DashboardContentWidget extends ConsumerWidget {
                           submissionDate:
                               rider.submissionDate?.toIso8601String(),
                           pickupHub: rider.pickupHub,
+                        ),
+                      ),
+                    ),
+                  if (rider.upcomingRentPrompt != null &&
+                      rider.upcomingRentPrompt!.showPrompt)
+                    FadeSlideEntrance(
+                      index: 0,
+                      child: RepaintBoundary(
+                        child: DashboardRentPromptCard(
+                          prompt: rider.upcomingRentPrompt!,
                         ),
                       ),
                     ),

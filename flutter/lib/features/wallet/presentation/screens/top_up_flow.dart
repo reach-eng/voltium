@@ -9,9 +9,12 @@ import 'top_up_proof_screen.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
 
 class TopUpFlow extends ConsumerStatefulWidget {
-  const TopUpFlow({super.key});
+  final int? initialAmount;
+  const TopUpFlow({super.key, this.initialAmount});
 
   @override
   ConsumerState<TopUpFlow> createState() => _TopUpFlowState();
@@ -20,9 +23,15 @@ class TopUpFlow extends ConsumerStatefulWidget {
 class _TopUpFlowState extends ConsumerState<TopUpFlow> {
   final PageController _pageController = PageController();
 
-  int _amount = 2000;
+  late int _amount;
   File? _proofImage;
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _amount = widget.initialAmount ?? 2000;
+  }
 
   void _nextPage() {
     _pageController.nextPage(
@@ -60,6 +69,7 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
           onPageChanged: (page) => setState(() => _currentPage = page),
           children: [
             TopUpAmountScreen(
+              initialAmount: widget.initialAmount,
               securityDeposit: ref
                   .watch(riderProvider)
                   .rider
@@ -135,8 +145,41 @@ class _TopUpFlowState extends ConsumerState<TopUpFlow> {
                   }
                 } catch (e) {
                   if (context.mounted) {
+                    // PR #3: was "Failed: $e" — leaked the raw exception to
+                    // the rider. Now branded error copy with a clear next step
+                    // (tap "Check status" to re-poll the backend).
+                    appDebug('[TopUpFlow] submit failed: $e');
+                    PostHogService.captureError(
+                      e,
+                      null,
+                      reason: 'topup_submit_failed',
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed: $e')),
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.account_balance_wallet_outlined,
+                                color: Colors.white, size: 20),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Payment not received yet. We\'ll auto-refresh in 30s — or tap "Check status" below.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                        ),
+                        margin: const EdgeInsets.all(16),
+                        duration: const Duration(seconds: 5),
+                      ),
                     );
                   }
                 }

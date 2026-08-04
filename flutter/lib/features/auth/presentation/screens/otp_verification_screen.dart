@@ -168,14 +168,36 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       appDebug('[OtpScreen] Error in verifyOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
-        String errorMsg = 'Failed to verify OTP. Please try again.';
-        if (e is ApiException) {
-          errorMsg = e.message;
-        }
+        // PR #3: branded SnackBar (was raw "Failed to verify OTP. Please try
+        // again.") — Voltium-Blue accent, error icon, clear "Wrong code" copy.
+        // Stays as a SnackBar (not a modal dialog) so the rider can immediately
+        // retype the code without dismissing anything.
+        final apiMessage = e is ApiException ? e.message : null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
+            content: Row(
+              children: [
+                const Icon(Icons.password_rounded,
+                    color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    apiMessage ?? 'Wrong code. Please try again.',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -198,22 +220,64 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         });
         _startCountdown();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP code resent successfully!'),
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'New code sent. Check your messages.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        String errorMsg = 'Error resending OTP';
-        if (e is ApiException) {
-          errorMsg = e.message;
-        }
+        // PR #3: branded error copy for resend failure. Was raw "Error
+        // resending OTP" — now clarifies the next step and stays consistent
+        // with the verify-failure SnackBar above.
+        final apiMessage = e is ApiException ? e.message : null;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
+            content: Row(
+              children: [
+                const Icon(Icons.refresh_rounded,
+                    color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    apiMessage ??
+                        'Couldn\'t resend the code. Please try again in a moment.',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
           ),
         );
       }

@@ -428,8 +428,35 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   void _showError(String msg) {
+    // PR #3: branded error SnackBar. Was a plain red bar with a bare text
+    // child — now has the same shape as the OTP + top-up error SnackBars so
+    // a rider sees one consistent error language across the app.
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.error),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                msg,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+      ),
     );
   }
 
@@ -579,9 +606,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
         if (msg.contains('422') || msg.contains('VALIDATION')) {
           final match = RegExp(r'"message":"([^"]+)"').firstMatch(msg);
+          // PR #3: was a generic "please check your documents" — now
+          // specific, action-oriented copy for blurry/illegible doc rejects.
           userMessage = match != null
               ? match.group(1)!
-              : 'Please check your documents and try uploading again.';
+              : 'Photo not clear. Hold the camera steady, make sure all 4 corners are visible, and try again in good light.';
         } else if (msg.contains('401') || msg.contains('unauthorized')) {
           userMessage = 'Session expired. Please log in again.';
         } else if (msg.contains('network') || msg.contains('timeout')) {
