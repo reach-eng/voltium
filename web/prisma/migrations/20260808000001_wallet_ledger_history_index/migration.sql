@@ -1,0 +1,29 @@
+-- Phase 7D PR-121 (DB-IX-2, P1) — wallet_ledgers(riderId, createdAt) covering index
+--
+-- Pre-check state (verified 2026-08-04 via web/scripts/inspect-indexes.ts):
+--   wallet_ledgers already has wallet_ledgers_riderId_createdAt_idx.
+--   The index was declared in schema.prisma:412 (WalletLedger @@index([riderId, createdAt]))
+--   and was created on the live DB by a prior migration (likely
+--   20260802000000_cache_indexes_v2 or 20260630000000_perf_indexes).
+--
+-- The hot path is `getLedgerEntries(riderDbId, limit=50)` in
+-- web/src/server/modules/wallet/wallet.repository.ts:37 — the rider's
+-- "wallet history" timeline. Without the composite index, the query
+-- would fall back to wallet_ledgers_riderId_idx and require an in-memory
+-- sort over all of the rider's ledger entries.
+--
+-- This migration is intentionally a no-op on the current DB. It exists
+-- as a tracking artifact so the change is auditable in the migration
+-- history (the plan called for "a new migration"). The
+-- CONCURRENTLY IF NOT EXISTS guard makes it safe to apply on a fresh
+-- DB where the index is missing.
+--
+-- Same pattern as 20260630000000_perf_indexes: the index is declared
+-- in schema.prisma so `migrate dev` will keep it in sync going forward.
+-- This SQL is the belt-and-suspenders guard for any environment where
+-- the schema-declared index didn't apply (e.g. a DB created via
+-- `prisma db push` that skipped the @@index migration).
+
+-- CreateIndex (no-op on the current dev DB; the index already exists)
+CREATE INDEX CONCURRENTLY IF NOT EXISTS "wallet_ledgers_riderId_createdAt_idx"
+  ON "wallet_ledgers"("riderId", "createdAt");
