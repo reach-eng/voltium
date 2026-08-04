@@ -55,16 +55,19 @@
   --color-vf-on-surface-muted: #98a2b3;
   --color-vf-outline: #d0d5dd;
   --color-vf-outline-variant: #e2e8f0;
-  --color-vf-secondary: #16a34a;
-  --color-vf-error: #d92d20;
-  --color-vf-success: #16a34a;
-  --color-vf-warning: #d97706;
-  --color-vf-info: #0284c7;
+  --color-vf-secondary: #10B981;
+  --color-vf-error: #EF4444;
+  --color-vf-success: #10B981;
+  --color-vf-warning: #F59E0B;
+  --color-vf-info: #0053C1;
 }
 
 :root {
   --radius: 0.75rem; /* 12px = Flutter md */
-  --background: #f8fafc;
+  /* PR-92: align with Voltium brand tokens (DS-T-3 / DS-XP-1).
+     Was: --background #f8fafc (slate-50), --ring #0369a1 (sky-700),
+     --muted-foreground #475569 (slate-600). Now uses Voltium surfaces. */
+  --background: #f7f9fb;
   --foreground: #020617;
   --card: #ffffff;
   --card-foreground: #020617;
@@ -75,13 +78,13 @@
   --secondary: #334155;
   --secondary-foreground: #ffffff;
   --muted: #f1f5f9;
-  --muted-foreground: #475569;
+  --muted-foreground: #475467;
   --accent: #f59e0b;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --border: #e2e8f0;
   --input: #ffffff;
-  --ring: #0369a1;
+  --ring: var(--color-vf-primary);
 }
 
 .dark {
@@ -242,7 +245,9 @@
 }
 
 .vf-gradient-logo {
-  background: linear-gradient(180deg, #3b82f6 0%, #0f172a 100%);
+  /* PR-92: was #3b82f6 (Tailwind blue-500, not a Voltium token).
+     Now uses the brand Voltium Blue. */
+  background: linear-gradient(180deg, var(--color-vf-primary) 0%, #0f172a 100%);
 }
 
 /* Pulse Animation */

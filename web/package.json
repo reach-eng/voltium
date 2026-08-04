@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "voltium-electric-mobility",
   "version": "0.2.0",
   "private": true,
@@ -59,6 +59,7 @@
     "check:screen-workflows": "bash ../scripts/check-screen-workflow-coverage.sh",
     "check:backend-workflows": "bash ../scripts/check-backend-workflows.sh",
     "check:branding": "bash ../scripts/check-voltium-branding.sh",
+    "check:tokens": "tsx ../scripts/sync-tokens.ts",
     "verify:env": "tsx scripts/verify-env.ts",
     "build:rider-web": "cd ../flutter && flutter build web --release --base-href \"/rider-app/\" && bash ../web/scripts/copy-flutter-web.sh",
     "deploy:staging": "bash ../scripts/deploy-staging.sh",
@@ -183,3 +184,4 @@
     "undici": "6.21.1"
   }
 }
+
