@@ -6,7 +6,6 @@
     "colors": {
       "primitive": {
         "blue500": "#0053C1",
-        "voltCyan": "#00E5FF",
         "slate900": "#0F172A",
         "slate500": "#64748B",
         "emerald500": "#10B981",
@@ -16,7 +15,6 @@
       "semantic": {
         "light": {
           "actionPrimary": "#0053C1",
-          "voltAccent": "#00E5FF",
           "statusInfo": "#3B82F6",
           "statusNeutral": "#64748B",
           "statusSuccess": "#10B981",
@@ -25,7 +23,6 @@
         },
         "dark": {
           "actionPrimary": "#0053C1",
-          "voltAccent": "#00E5FF",
           "statusInfo": "#60A5FA",
           "statusNeutral": "#94A3B8",
           "statusSuccess": "#34D399",

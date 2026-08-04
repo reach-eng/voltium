@@ -24,7 +24,6 @@ This document defines the single, authoritative design specification for the Vol
 | `onSurface` | `#101828` | `#F1F5F9` | Primary text & icons |
 | `onSurfaceVariant` | `#475467` | `#94A3B8` | Subtitles, section headers |
 | `onSurfaceMuted` | `#667085` | `#64748B` | Captions, secondary labels |
-| `voltAccent` | `#00E5FF` | `#00E5FF` | High-energy EV accents & action highlights |
 | `actionPrimary` | `#0053C1` | `#0053C1` | Primary CTA buttons |
 | `statusSuccess` | `#16A34A` | `#34D399` | Positive feedback, verified status |
 | `statusWarning` | `#F59E0B` | `#FBBF24` | Warnings, pending reviews |
@@ -138,17 +137,32 @@ Plus a 6-step **slate scale** (`slate400`…`slate900`) for dark mode surfaces, 
 
 ### **R2.2 cleanup (2026-07-31)**
 
-Removed 5 dead colors that had **0** call-sites in `flutter/lib/`:
+Removed 2 dead colors that had **0** call-sites in `flutter/lib/`:
 
 | Removed | Reason | Replaced with |
 | :--- | :--- | :--- |
 | `iconBackgroundBlue` (`#F0F4FA`) | Unused | `iconBackground` |
 | `inputBorder` (`#D0D5DD`) | Duplicate of `outline` (9 callers) | `outline` |
-| `voltAccent` (`#00E5FF`) | Unused; "electric cyan" was a flavor-of-the-month | n/a |
+
+### **PR-91 cleanup (DS-T-1, 2026-08-04)**
+
+Removed 3 more dead colors that the original R2.2 header had documented as
+removed but were actually still in `app_theme.dart` (and in
+`design-tokens.json` for the `voltAccent` ones). The header comment in
+`app_theme.dart` was therefore inaccurate until this PR.
+
+| Removed | Reason | Replaced with |
+| :--- | :--- | :--- |
+| `voltAccent` (`#00E5FF`) | Unused; "electric cyan" was a flavor-of-the-month | n/a (use `primary` for any high-energy accent) |
 | `purpleIconVivid` (`#6D28D9`) | Unused after caller migration | `purpleIcon` (caller migrated) |
 | `orangeAccentLight` (`#FFE082`) | Unused after caller migration | `warningBorder` (caller migrated) |
 
-After R2.2 part 1: 82 named colors (down from 87 pre-R2.2).
+`voltAccent` was also stripped from the `ThemeColors` extension (light +
+dark factory constants, constructor, `copyWith`, `lerp`) and from
+`design-tokens.json` (semantic light + dark `voltAccent` keys, plus the
+`voltCyan` primitive it implied).
+
+After R2.2 part 1: 82 named colors (down from 87 pre-R2.2). After PR-91: 79.
 
 ### **Group 7 candidates for R2.2 part 2 (NOT YET CONSOLIDATED)**
 

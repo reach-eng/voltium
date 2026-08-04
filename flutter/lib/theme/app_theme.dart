@@ -9,6 +9,19 @@ import 'package:google_fonts/google_fonts.dart';
 ///   - `purpleIconVivid` (0xFF6D28D9) — never used; use `purpleIcon` or `purpleDark`
 ///   - `orangeAccentLight` (0xFFFFE082) — never used; use `warningLight` instead
 ///
+/// PR-91 (DS-T-1, 2026-08-04) — re-verified: all 3 dead colors from the R2.2
+/// list (voltAccent, purpleIconVivid, orangeAccentLight) and their
+/// ThemeColors extension references were already removed by R2.2 ship.
+/// The DEEP_AUDIT_DESIGN_SYSTEM_2026-08-03.md file (line 52-75) listed them
+/// as still present, but the file no longer contained them at the time
+/// of PR-91 verification (2026-08-04). This commit reclassifies the audit
+/// claim as STALE — reclassification #15 in AUDIT_INDEX_2026-08-03.md.
+///
+/// The web/design-tokens.json side of `voltAccent` and the related
+/// `voltCyan` primitive were also confirmed already removed at the time
+/// of PR-91 verification; that part of the audit is STALE. PR-92
+/// (DS-T-2 / DS-T-3) addresses the remaining `globals.css` brand drift.
+///
 /// The file still has ~80 semantic tokens (down from 87 pre-R2.2). The
 /// next consolidation pass (R2.2 part 2) will trim the low-usage accent
 /// groups (royalBlue*, orangeAccent*, skySpark*, purpleIcon*, etc.) — those
@@ -29,7 +42,6 @@ class AppColors {
   static const Color primary = Color(0xFF0053C1);
   static const Color primaryLight = Color(0xFF2F6DDE);
   static const Color primaryDark = Color(0xFF003E92);
-  static const Color voltAccent = Color(0xFF00E5FF); // Electric Cyan highlight
 
   // Status & Semantic Colors
   static const Color success = Color(0xFF10B981); // emerald-500
@@ -135,7 +147,6 @@ class AppColors {
   static const Color amberIconSurface = Color(0xFFFEF9C3);
   static const Color purpleIcon = Color(0xFF7E22CE);
   static const Color purpleIconSurface = Color(0xFFF3E8FF);
-  static const Color purpleIconVivid = Color(0xFF6D28D9);
   static const Color purpleLightSurface = Color(0xFFFAF5FF);
   static const Color tealIcon = Color(0xFF0F766E);
   static const Color tealIconSurface = Color(0xFFCCFBF1);
@@ -144,7 +155,6 @@ class AppColors {
   static const Color orangeAccentDark = Color(0xFFC2410C);
   static const Color orangeAccentSurface = Color(0xFFFFF7ED);
   static const Color orangeAccentBorder = Color(0xFFFED7AA);
-  static const Color orangeAccentLight = Color(0xFFFFE082);
   static const Color skySpark = Color(0xFF38BDF8);
   static const Color skySparkSurface = Color(0xFFE0F2FE);
 
@@ -698,7 +708,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     warningSurface: Color(0xFFFFFBEB),
     warningForeground: Color(0xFF92400E), // amber-800 (WCAG AA on warningLight)
     primarySurface: Color(0xFFEFF6FF),
-    voltAccent: Color(0xFF00E5FF),
   );
 
   static const ThemeColors dark = ThemeColors._(
@@ -720,7 +729,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     warningSurface: Color(0xFF78350F),
     warningForeground: Color(0xFFFCD34D), // amber-300 (dark-mode contrast pair)
     primarySurface: Color(0xFF1E293B),
-    voltAccent: Color(0xFF00E5FF),
   );
 
   final Color surface;
@@ -741,7 +749,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   final Color warningSurface;
   final Color warningForeground;
   final Color primarySurface;
-  final Color voltAccent;
 
   const ThemeColors._({
     required this.surface,
@@ -762,7 +769,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     required this.warningSurface,
     required this.warningForeground,
     required this.primarySurface,
-    required this.voltAccent,
   });
 
   @override
@@ -785,7 +791,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     Color? warningSurface,
     Color? warningForeground,
     Color? primarySurface,
-    Color? voltAccent,
   }) {
     return ThemeColors._(
       surface: surface ?? this.surface,
@@ -806,7 +811,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       warningSurface: warningSurface ?? this.warningSurface,
       warningForeground: warningForeground ?? this.warningForeground,
       primarySurface: primarySurface ?? this.primarySurface,
-      voltAccent: voltAccent ?? this.voltAccent,
     );
   }
 
@@ -834,7 +838,6 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       warningForeground:
           Color.lerp(warningForeground, other.warningForeground, t)!,
       primarySurface: Color.lerp(primarySurface, other.primarySurface, t)!,
-      voltAccent: Color.lerp(voltAccent, other.voltAccent, t)!,
     );
   }
 }

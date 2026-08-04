@@ -131,7 +131,6 @@ void main() {
     test('purple icon pair (settings: feedback, referrals)', () {
       expect(AppColors.purpleIcon.toARGB32(), 0xFF7E22CE);
       expect(AppColors.purpleIconSurface.toARGB32(), 0xFFF3E8FF);
-      expect(AppColors.purpleIconVivid.toARGB32(), 0xFF6D28D9);
       expect(AppColors.purpleLightSurface.toARGB32(), 0xFFFAF5FF);
     });
 
@@ -149,7 +148,6 @@ void main() {
       expect(AppColors.orangeAccentDark.toARGB32(), 0xFFC2410C);
       expect(AppColors.orangeAccentSurface.toARGB32(), 0xFFFFF7ED);
       expect(AppColors.orangeAccentBorder.toARGB32(), 0xFFFED7AA);
-      expect(AppColors.orangeAccentLight.toARGB32(), 0xFFFFE082);
     });
 
     test('sky spark + sky surface (OTP input, info toast)', () {
