@@ -13,6 +13,7 @@ import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/utils/app_logger.dart';
 import 'package:voltium_rider/widgets/spark_otp_input.dart';
+import 'package:voltium_rider/widgets/underline_otp_input.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_app_bar.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_resend_widget.dart';
 import 'package:voltium_rider/features/auth/presentation/widgets/otp_verify_button.dart';
@@ -26,7 +27,7 @@ import 'package:voltium_rider/features/auth/presentation/widgets/otp_verify_butt
 ///   │  Bouncing smartphone icon                 │
 ///   │  "Verify OTP" / "Welcome Back!" title   │
 ///   │  Subtitle with phone in primary          │
-///   │  SparkOtpInput (6 boxes)                  │
+///   │  UnderlineOtpInput (Apple-style 6 slots)   │
 ///   │  OtpResendWidget (timer + button)        │
 ///   │                                          │
 ///   │  OtpVerifyButton (Verify & Proceed)      │
@@ -65,7 +66,18 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
     with TickerProviderStateMixin {
-  final GlobalKey<SparkOtpInputState> _otpKey = GlobalKey<SparkOtpInputState>();
+  /// Toggle between the new Apple/Google-style underline OTP input and the
+  /// original spark-glow OTP boxes. Flip to `false` to roll back instantly
+  /// if the underline variant has any field issues.
+  ///
+  /// Lives here (not in AppConstants) so the OTP screen is the only thing
+  /// that branches on it — keeps blast radius small.
+  static const bool useUnderlineOtp = true;
+
+  // Key is intentionally loosely typed because either widget (SparkOtpInputState
+  // or UnderlineOtpInputState) can be the active implementation. Both expose
+  // the same public surface used below: `value`, `clear()`.
+  final GlobalKey _otpKey = GlobalKey();
 
   bool _isLoading = false;
   bool _isOtpComplete = false;
@@ -75,6 +87,22 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceAnim;
   late final AnimationController _entryCtrl;
+
+  /// Read the current OTP value regardless of which widget is mounted.
+  /// Both `SparkOtpInputState` and `UnderlineOtpInputState` expose `value`.
+  String _readOtpValue() {
+    final state = _otpKey.currentState;
+    if (state is SparkOtpInputState) return state.value;
+    if (state is UnderlineOtpInputState) return state.value;
+    return '';
+  }
+
+  /// Clear the OTP regardless of which widget is mounted.
+  void _clearOtp() {
+    final state = _otpKey.currentState;
+    if (state is SparkOtpInputState) return state.clear();
+    if (state is UnderlineOtpInputState) return state.clear();
+  }
 
   @override
   void initState() {
@@ -129,7 +157,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   Future<void> _handleVerify() async {
-    final code = _otpKey.currentState?.value ?? '';
+    final code = _readOtpValue();
     if (code.length != 6) return;
 
     setState(() => _isLoading = true);
@@ -191,7 +219,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       await ref.read(authRepositoryProvider).sendOtp(phone);
       PostHogService.capture('otp_resent');
       if (mounted) {
-        _otpKey.currentState?.clear();
+        _clearOtp();
         setState(() {
           _resendCountdown = 30;
           _isOtpComplete = false;
@@ -380,12 +408,19 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         parent: _entryCtrl,
         curve: const Interval(0.2, 0.9),
       ),
-      child: SparkOtpInput(
-        key: _otpKey,
-        onCompleted: (_) => _handleVerify(),
-        onChanged: _onOtpChanged,
-        autoFocus: true,
-      ),
+      child: useUnderlineOtp
+          ? UnderlineOtpInput(
+              key: _otpKey,
+              onCompleted: (_) => _handleVerify(),
+              onChanged: _onOtpChanged,
+              autoFocus: true,
+            )
+          : SparkOtpInput(
+              key: _otpKey,
+              onCompleted: (_) => _handleVerify(),
+              onChanged: _onOtpChanged,
+              autoFocus: true,
+            ),
     );
   }
 }
