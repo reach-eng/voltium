@@ -8,9 +8,13 @@
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { paiseToRupees } from '@/lib/flatten-rider';
+import { lifecycleRankOf } from '@/lib/lifecycle-ranks';
+import { MAX_ADMIN_BONUS_CREDIT_RUPEES } from '@/lib/validators';
 import { transactionRepository } from './transaction.repository';
 import { transactionService } from './transaction.service';
 import { walletLedgerService } from '@/server/modules/wallet/wallet-ledger.service';
+import { invalidateRiderCache } from '@/lib/server-cache';
+import { invalidateCache } from '@/lib/cache';
 import type { TransactionFilter, TransactionApproval } from './transaction.types';
 
 export const transactionUseCases = {
@@ -22,8 +26,19 @@ export const transactionUseCases = {
     return transactionRepository.findById(txnId);
   },
 
-  async getByRiderId(riderDbId: string, page?: number, limit?: number) {
-    return transactionRepository.findByRiderId(riderDbId, page, limit);
+  async getByRiderId(
+    riderDbId: string,
+    page?: number,
+    limit?: number,
+    // H6-2026-08-13: forwarded to the repo; defaults to 'USER' there.
+    audience?: 'USER' | 'SYSTEM' | 'ALL'
+  ) {
+    return transactionRepository.findByRiderId(
+      riderDbId,
+      page,
+      limit,
+      audience
+    );
   },
 
   async deleteHistory(riderDbId: string) {
@@ -40,6 +55,16 @@ export const transactionUseCases = {
     const { transactionId, action, rejectionReason, adminId } = input;
     const txn = await transactionService.requireTransaction(transactionId);
 
+    // P0-1 (financial audit): the schema caps walletCreditAmount, but this
+    // re-check is the security boundary for non-schema callers (e.g. the
+    // bulk route). A single admin action must never credit an unbounded sum.
+    if (input.walletCreditAmount && input.walletCreditAmount > MAX_ADMIN_BONUS_CREDIT_RUPEES) {
+      throw new TransactionError(
+        `Bonus credit cannot exceed ₹${MAX_ADMIN_BONUS_CREDIT_RUPEES.toLocaleString('en-IN')} per transaction`,
+        'VALIDATION'
+      );
+    }
+
     if (action === 'REVERSE') {
       return this.reverseTransaction(
         transactionId,
@@ -50,8 +75,11 @@ export const transactionUseCases = {
 
     if (action === 'REJECT') {
       transactionService.validateTransition(txn.status, 'REJECTED');
+      // P0-2 (financial audit): CAS claim — if another admin already moved
+      // this transaction, updateStatus throws CONFLICT and the route returns 409.
       const result = await transactionRepository.updateStatus(
         transactionId,
+        txn.status,
         'REJECTED',
         adminId,
         rejectionReason
@@ -60,13 +88,26 @@ export const transactionUseCases = {
         actorId: adminId,
         action: 'transaction.reject',
         transactionId,
-        details: { amount: paiseToRupees(txn.amount), reason: rejectionReason },
+        details: { amount: paiseToRupees(txn.amountInPaise), reason: rejectionReason },
       });
-      return { ...result, amount: paiseToRupees(result.amount) };
+      return { ...result, amount: paiseToRupees(result.amountInPaise) };
     }
 
     // APPROVE path
     transactionService.validateTransition(txn.status, 'APPROVED');
+
+    // P1-13 (financial audit): DEBIT transactions must not be silently
+    // approved. The CREDIT branch credits the wallet and the SECURITY_DEPOSIT
+    // branch delegates to the deposit module — neither handles a DEBIT, so
+    // the old code flipped the status to APPROVED with no wallet effect and
+    // an audit trail claiming a settlement that never happened. Debits are
+    // settled by the system, not by admin approval.
+    if (txn.type === 'DEBIT') {
+      throw new TransactionError(
+        'Cannot approve a DEBIT transaction — debits are settled automatically',
+        'VALIDATION'
+      );
+    }
 
     const rider = await db.rider.findUnique({
       where: { id: txn.riderId },
@@ -74,40 +115,66 @@ export const transactionUseCases = {
     });
     if (!rider) throw new Error('Rider not found');
 
-    const lifecycleRank: Record<string, number> = {
-      NEW: 0,
-      PHONE_VERIFIED: 1,
-      PROFILE_SUBMITTED: 2,
-      KYC_SUBMITTED: 3,
-      KYC_APPROVED: 4,
-      GUARANTOR_SUBMITTED: 5,
-      GUARANTOR_APPROVED: 6,
-      DEPOSIT_PENDING: 7,
-      DEPOSIT_APPROVED: 8,
-      PLAN_SELECTED: 9,
-      PICKUP_SCHEDULED: 10,
-      ACTIVE: 11,
-      SUSPENDED: 12,
-      RETURN_PENDING: 13,
-      CLOSED: 14,
-    };
-    const rank = lifecycleRank[rider.lifecycleStatus] ?? 0;
-    const finalPurpose = rank < 8 ? 'SECURITY_DEPOSIT' : txn.purpose;
+    // P1-12: shared lifecycle ranking (single source of truth).
+    // PR-ONBOARDING-FLOW-2026-08-13: threshold bumped from `rank < 8`
+    // to `rank < 10` to match wallet.use-cases.ts. See the comment
+    // there for the full rationale — active-path riders at
+    // PLAN_SELECTED (rank 9) were getting their deposit misrouted
+    // to TOP_UP.
+    const rank = lifecycleRankOf(rider.lifecycleStatus);
+    const finalPurpose = rank < 10 ? 'SECURITY_DEPOSIT' : txn.purpose;
+
+    // P1-14 (financial audit): ordering is credit → CAS claim → audit log.
+    // If the process dies between credit and claim, the credit is idempotent
+    // on `idempotencyKey` (P0-9), so a retry replays a no-op credit and the
+    // CAS claim completes — the state self-heals. The audit log runs last;
+    // its failure is logged with full context (P1-15), never silently dropped.
 
     if (finalPurpose === 'SECURITY_DEPOSIT') {
-      // Delegate deposit approval to the deposit module
-      const { depositUseCases } = await import('@/server/modules/deposits/deposit.use-cases');
-      await depositUseCases.reviewDeposit(txn.riderId, adminId, {
-        action: 'APPROVE',
+      const depositRecord = await db.depositRecord.findUnique({
+        where: { riderId: txn.riderId },
       });
 
-      // Optional bonus wallet credit
+      if (depositRecord && depositRecord.status === 'PENDING') {
+        const { depositUseCases } = await import('@/server/modules/deposits/deposit.use-cases');
+        await depositUseCases.reviewDeposit(txn.riderId, adminId, {
+          action: 'APPROVE',
+        });
+      } else {
+        await walletLedgerService.creditSecurityDeposit({
+          riderId: txn.riderId,
+          amountInPaise: txn.amountInPaise,
+          txnId: transactionId,
+          actorId: adminId,
+          note: `Security deposit approved: ${finalPurpose}`,
+        });
+        // PR-AUDIT 2026-08-12 (H3): threshold bumped from `rank < 8`
+        // to `rank < 10` to match wallet.use-cases.ts. Active-path
+        // riders are at PLAN_SELECTED (rank 9) when they submit the
+        // security deposit, and the previous guard skipped the
+        // lifecycle bump — so they stayed at PLAN_SELECTED forever,
+        // the lifecycle gate re-routed them to `topUpAmount` on every
+        // cold start, and they could submit duplicate SECURITY_DEPOSIT
+        // transactions. The wallet guard now also covers PLAN_SELECTED
+        // (sets it to DEPOSIT_PENDING on submit, rank 7), and this
+        // guard now approves the bump up to DEPOSIT_APPROVED (rank 8)
+        // for any pre-ACTIVE rider.
+        if (rank < 10) {
+          await db.rider.update({
+            where: { id: txn.riderId },
+            data: { lifecycleStatus: 'DEPOSIT_APPROVED', depositDoneAt: new Date() },
+          });
+        }
+      }
+
+      // Optional bonus wallet credit.
       if (input.walletCreditAmount && input.walletCreditAmount > 0) {
         await walletLedgerService.credit({
           riderId: txn.riderId,
           amountInPaise: Math.round(input.walletCreditAmount * 100),
           category: 'ADMIN_ADJUSTMENT',
           txnId: transactionId,
+          idempotencyKey: `approve-bonus:${transactionId}`,
           actorId: adminId,
           note: 'Bonus credit on deposit approval',
         });
@@ -117,7 +184,7 @@ export const transactionUseCases = {
       const idempotencyKey = `approve:${transactionId}`;
       await walletLedgerService.credit({
         riderId: txn.riderId,
-        amountInPaise: txn.amount,
+        amountInPaise: txn.amountInPaise,
         category: finalPurpose === 'TOP_UP' ? 'TOP_UP' : 'ADMIN_ADJUSTMENT',
         txnId: transactionId,
         idempotencyKey,
@@ -126,15 +193,25 @@ export const transactionUseCases = {
       });
     }
 
-    const result = await transactionRepository.updateStatus(transactionId, 'APPROVED', adminId);
+    // P0-2: CAS claim (expected = the status we validated against).
+    const result = await transactionRepository.updateStatus(
+      transactionId,
+      txn.status,
+      'APPROVED',
+      adminId
+    );
     await transactionService.logAction({
       actorId: adminId,
       action: 'transaction.approve',
       transactionId,
-      details: { status: 'APPROVED', amount: paiseToRupees(txn.amount) },
+      details: { status: 'APPROVED', amount: paiseToRupees(txn.amountInPaise) },
     });
 
-    return { ...result, amount: paiseToRupees(result.amount) };
+    // Invalidate rider cache & admin rider lists so Rider App & Admin Rider Section update instantly
+    invalidateRiderCache(txn.riderId);
+    invalidateCache('admin:riders:*');
+
+    return { ...result, amount: paiseToRupees(result.amountInPaise) };
   },
 
   /**
@@ -151,6 +228,16 @@ export const transactionUseCases = {
       );
     }
 
+    // P0-2: CAS-claim FIRST. reverseWalletEntry has no idempotency guard, so
+    // the old credit-then-claim order let two concurrent reversals both write
+    // an offsetting ledger entry before either CAS landed. Claiming REVERSED
+    // first means the loser gets a 409 before touching the wallet.
+    //
+    // Residual edge (accepted): if the ledger write below fails AFTER the
+    // claim, the status is REVERSED with no offset entry — a manual fix-up,
+    // strictly safer than a double-reversal.
+    await transactionRepository.updateStatus(transactionId, txn.status, 'REVERSED', adminId);
+
     const wallet = await db.wallet.findUnique({
       where: { riderId: txn.riderId },
       select: { id: true },
@@ -160,18 +247,17 @@ export const transactionUseCases = {
     const result = await walletLedgerService.reverse({
       riderId: txn.riderId,
       originalTxnId: transactionId,
-      originalAmount: txn.amount,
+      originalAmount: txn.amountInPaise,
       originalType: txn.type as 'CREDIT' | 'DEBIT',
       actorId: adminId,
       reason,
     });
 
-    await transactionRepository.updateStatus(transactionId, 'REVERSED', adminId);
     await transactionService.logAction({
       actorId: adminId,
       action: 'transaction.reverse',
       transactionId,
-      details: { amount: paiseToRupees(txn.amount), reason },
+      details: { amount: paiseToRupees(txn.amountInPaise), reason },
     });
 
     return { id: transactionId, status: 'REVERSED' as const };

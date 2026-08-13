@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
 import { testDb } from '../../_setup/test-postgres';
 import { walletRepository } from '../../../src/server/modules/wallet/wallet.repository';
-import { TransactionType, TransactionPurpose, TransactionStatus, LedgerEntryType, LedgerCategory } from '@prisma/client';
+import { TransactionType, TransactionPurpose, TransactionStatus, TransactionAudience, LedgerEntryType, LedgerCategory } from '@prisma/client';
 
 describe('walletRepository', () => {
   beforeAll(async () => {
@@ -98,6 +98,47 @@ describe('walletRepository', () => {
       expect(txn.id).toBeDefined();
       expect(txn.amountInPaise).toBe(5000);
       expect(txn.status).toBe(TransactionStatus.PENDING);
+    });
+
+    // H6-2026-08-13: audience is stamped at write time.
+    it('stamps audience=USER for TOP_UP and SECURITY_DEPOSIT', async () => {
+      const topup = await walletRepository.createTransaction({
+        riderId: riderDbId,
+        type: TransactionType.CREDIT,
+        amountInPaise: 1000,
+        purpose: TransactionPurpose.TOP_UP,
+        idempotencyKey: `idem-${uuidv4()}`,
+      });
+      expect(topup.audience).toBe(TransactionAudience.USER);
+
+      const deposit = await walletRepository.createTransaction({
+        riderId: riderDbId,
+        type: TransactionType.CREDIT,
+        amountInPaise: 100000,
+        purpose: TransactionPurpose.SECURITY_DEPOSIT,
+        idempotencyKey: `idem-${uuidv4()}`,
+      });
+      expect(deposit.audience).toBe(TransactionAudience.USER);
+    });
+
+    it('stamps audience=SYSTEM for non-user purposes', async () => {
+      const rent = await walletRepository.createTransaction({
+        riderId: riderDbId,
+        type: TransactionType.DEBIT,
+        amountInPaise: 5000,
+        purpose: TransactionPurpose.RENT_PAYMENT,
+        idempotencyKey: `idem-${uuidv4()}`,
+      });
+      expect(rent.audience).toBe(TransactionAudience.SYSTEM);
+
+      const reward = await walletRepository.createTransaction({
+        riderId: riderDbId,
+        type: TransactionType.CREDIT,
+        amountInPaise: 200,
+        purpose: TransactionPurpose.REWARD,
+        idempotencyKey: `idem-${uuidv4()}`,
+      });
+      expect(reward.audience).toBe(TransactionAudience.SYSTEM);
     });
 
     it('should create transaction with all optional fields', async () => {
@@ -202,7 +243,7 @@ describe('walletRepository', () => {
       expect(updated.approvedAt).toBeDefined();
     });
 
-    it('should update transaction status to REJECTED with approvedAt set', async () => {
+    it('should update transaction status to REJECTED without approvedAt (P1-16)', async () => {
       const txn = await walletRepository.createTransaction({
         riderId: riderDbId,
         type: TransactionType.CREDIT,
@@ -212,7 +253,7 @@ describe('walletRepository', () => {
 
       const updated = await walletRepository.updateTransactionStatus(txn.id, TransactionStatus.REJECTED, 'admin-2');
       expect(updated.status).toBe(TransactionStatus.REJECTED);
-      expect(updated.approvedAt).toBeDefined();
+      expect(updated.approvedAt).toBeNull();
     });
 
     it('should update transaction status to FAILED without approvedAt', async () => {

@@ -6,7 +6,21 @@
  */
 
 import { db } from '@/lib/db';
-import { TransactionType, TransactionPurpose, TransactionStatus } from '@prisma/client';
+import { TransactionType, TransactionPurpose, TransactionStatus, TransactionAudience } from '@prisma/client';
+
+// H6-2026-08-13: centralized audience assignment. Any purpose not in
+// this set defaults to SYSTEM via the schema default; SYSTEM is also
+// the safe default for new purposes added later.
+const USER_AUDIENCE_PURPOSES: ReadonlySet<TransactionPurpose> = new Set([
+  TransactionPurpose.TOP_UP,
+  TransactionPurpose.SECURITY_DEPOSIT,
+]);
+
+function audienceFor(purpose: TransactionPurpose): TransactionAudience {
+  return USER_AUDIENCE_PURPOSES.has(purpose)
+    ? TransactionAudience.USER
+    : TransactionAudience.SYSTEM;
+}
 
 export const walletRepository = {
   async findByRiderId(riderDbId: string) {
@@ -69,6 +83,11 @@ export const walletRepository = {
         type: data.type,
         amountInPaise: finalAmount,
         purpose: data.purpose,
+        // H6-2026-08-13: stamp audience at write time. Top-ups and
+        // security deposits are rider-initiated (USER); everything else
+        // is system (rent, rewards, reversals, admin adjustments, etc.)
+        // and stays out of the rider's history endpoint by default.
+        audience: audienceFor(data.purpose),
         method: data.method || null,
         status: data.status || TransactionStatus.PENDING,
         proofUrl: data.proofUrl || null,
@@ -92,12 +111,18 @@ export const walletRepository = {
       where: { id: txnId },
       data: {
         status,
-        approvedAt: [
-          TransactionStatus.APPROVED as string,
-          TransactionStatus.REJECTED as string,
-        ].includes(status as string)
-          ? new Date()
-          : undefined,
+        // P1-16/17 (financial audit, same defect as transaction.repository):
+        // approvedAt must only be stamped on an actual approval. REJECTED used
+        // to get an approvedAt too (the schema name lied), and it was never
+        // cleared on PENDING/REJECTED/FAILED. REVERSED/REFUNDED keep the
+        // original approval time; everything else is cleared.
+        approvedAt:
+          status === TransactionStatus.APPROVED
+            ? new Date()
+            : status === TransactionStatus.REVERSED ||
+                status === TransactionStatus.REFUNDED
+              ? undefined
+              : null,
         approvedBy: approvedBy || undefined,
       },
     });
