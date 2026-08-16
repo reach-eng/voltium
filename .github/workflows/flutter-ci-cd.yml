@@ -85,6 +85,19 @@ jobs:
         # in emergencies; that env var is checked inside the script.
         run: bash flutter/scripts/lint-design-system.sh
 
+      - name: Run static palette token ratchet
+        # DARK-MODE-AUDIT 2026-08-14 PR3: Catches light-only `AppColors.X`
+        # references outside `lib/theme/app_theme.dart`. The migration target
+        # is `AppColors.of(context).X` (brightness-aware). Allowed exceptions
+        # are documented in `flutter/tool/lint_static_palette_tokens.dart`.
+        # Bypass with `ALLOW_PALETTE_LINT=1` only in emergencies.
+        run: |
+          if [ "${ALLOW_PALETTE_LINT:-0}" = "1" ]; then
+            echo "[lint_static_palette_tokens] ALLOW_PALETTE_LINT=1 — emergency bypass, skipping checks."
+            exit 0
+          fi
+          cd flutter && dart run tool/lint_static_palette_tokens.dart
+
   test:
     name: Flutter Tests
     runs-on: ubuntu-latest

@@ -129,6 +129,19 @@ jobs:
       - name: TypeScript Check
         run: npm run typecheck
 
+      - name: Run dark-mode token ratchet
+        # DARK-MODE-AUDIT 2026-08-14 PR3: Catches `text-X-600` (and other
+        # light-mode-dark weights) without a sibling `dark:text-X-300` or
+        # `dark:text-X-400`. Mirrors the Flutter ratchet at
+        # `flutter/tool/lint_static_palette_tokens.dart`. Bypass with
+        # `ALLOW_DARK_TOKEN_LINT=1` only in emergencies.
+        run: |
+          if [ "${ALLOW_DARK_TOKEN_LINT:-0}" = "1" ]; then
+            echo "[lint-dark-mode-tokens] ALLOW_DARK_TOKEN_LINT=1 — emergency bypass, skipping checks."
+            exit 0
+          fi
+          node web/scripts/lint-dark-mode-tokens.js
+
   # ─── Prisma Validate & Migration Status ───────────────────────────────────
   prisma-check:
     name: Prisma Validate & Migration Status
@@ -242,6 +255,11 @@ jobs:
     env:
       TEST_DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
       DATABASE_URL: postgresql://voltium_test:voltium_test@localhost:5432/voltium_test
+      # The test schema is synced once by sync-test-schema.sh below; skip the
+      # slow per-invocation `prisma db push` in vitest's global-setup. The
+      # purgedAt sentinel check in web/tests/global-setup.ts then acts as the
+      # loud drift gate (see web/scripts/sync-test-schema.sh).
+      SKIP_PRISMA_PUSH: '1'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -259,6 +277,20 @@ jobs:
 
       - name: Check migration status
         run: npx prisma migrate status
+
+      # Sync the ?schema=test database (prisma db push + datetime->timestamptz
+      # conversion) before any vitest run. global-setup then verifies the sync
+      # via the purgedAt sentinel column and fails loudly on drift.
+      - name: Sync test schema
+        run: bash scripts/sync-test-schema.sh
+
+      # TEST-STRATEGY-AUDIT T-P1-5 (2026-08-08): the no-trivial-tests
+      # linter catches the placeholder pattern that hid 3 Flutter
+      # golden tests. Runs before the actual test job so a CI fail
+      # here is a fast, cheap signal that doesn't require spinning
+      # up Postgres or running the full unit-test suite.
+      - name: Lint for placeholder / trivial tests
+        run: node scripts/lint-no-trivial-tests.js
 
       - name: Run unit tests with coverage
         run: npm run test:coverage

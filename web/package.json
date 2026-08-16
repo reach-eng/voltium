@@ -23,6 +23,8 @@
     "check:openapi-drift": "npx tsx scripts/check-openapi-drift.ts",
     "audit:openapi": "npx tsx scripts/audit-openapi.ts",
     "test:contracts": "vitest --run src/contracts/__tests__/",
+    "test:lint": "node scripts/lint-no-trivial-tests.js",
+    "lint:dark-tokens": "node scripts/lint-dark-mode-tokens.js",
     "test": "vitest",
     "test:coverage": "vitest --run --coverage tests/unit",
     "test:coverage:html": "vitest --run --coverage tests/unit && open coverage/index.html",

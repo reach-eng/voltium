@@ -17,4 +17,20 @@ void main() {
       matchesGoldenFile('goldens/rewardsscreen_golden.png'),
     );
   });
+
+  // DARK-MODE-AUDIT 2026-08-14 PR3: dark-mode golden counterpart.
+  testWidgets('Golden test for RewardsScreen (dark mode)',
+      (WidgetTester tester) async {
+    configureGoldenSurface(tester);
+
+    // ignore: prefer_const_constructors
+    await tester
+        .pumpWidget(wrapForGolden(RewardsScreen(), themeMode: ThemeMode.dark));
+    await tester.pump(const Duration(seconds: 1));
+
+    await expectLater(
+      find.byType(RewardsScreen),
+      matchesGoldenFile('goldens/rewardsscreen_golden_dark.png'),
+    );
+  });
 }

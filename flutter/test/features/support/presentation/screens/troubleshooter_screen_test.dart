@@ -18,4 +18,20 @@ void main() {
       matchesGoldenFile('goldens/troubleshooterscreen_golden.png'),
     );
   });
+
+  // DARK-MODE-AUDIT 2026-08-14 PR3: dark-mode golden counterpart.
+  testWidgets('Golden test for TroubleshooterScreen (dark mode)',
+      (WidgetTester tester) async {
+    configureGoldenSurface(tester);
+
+    // ignore: prefer_const_constructors
+    await tester.pumpWidget(
+        wrapForGolden(TroubleshooterScreen(), themeMode: ThemeMode.dark));
+    await tester.pump(const Duration(seconds: 1));
+
+    await expectLater(
+      find.byType(TroubleshooterScreen),
+      matchesGoldenFile('goldens/troubleshooterscreen_golden_dark.png'),
+    );
+  });
 }
