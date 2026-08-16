@@ -9,6 +9,7 @@ import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
+import 'package:voltium_rider/core/network/file_category.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -26,7 +27,10 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final _messageController = TextEditingController();
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
-  File? _attachmentFile;
+  // CONSOLIDATED-FIX-2026-08-16 §4.13: up to 3 attachment photos so the
+  // rider can show multiple angles of the damage / issue.
+  static const int _maxAttachments = 3;
+  final List<File> _attachmentFiles = [];
 
   final List<String> _categories = [
     'TECHNICAL',
@@ -46,9 +50,12 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     if (AppConstants.isTestMode) {
       final image =
           File('${Directory.systemTemp.path}/mock_ticket_attachment.png');
-      setState(() => _attachmentFile = image);
+      setState(() {
+        if (_attachmentFiles.length < _maxAttachments) _attachmentFiles.add(image);
+      });
       return;
     }
+    if (_attachmentFiles.length >= _maxAttachments) return;
     final picked = await _picker.pickImage(
       source: source,
       imageQuality: 85,
@@ -57,10 +64,18 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
       requestFullMetadata: false,
     );
     if (picked == null || !mounted) return;
-    setState(() => _attachmentFile = File(picked.path));
+    setState(() => _attachmentFiles.add(File(picked.path)));
   }
 
   Future<void> _showAttachmentSourceSheet() async {
+    if (_attachmentFiles.length >= _maxAttachments) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Up to $_maxAttachments photos per ticket'),
+        ),
+      );
+      return;
+    }
     final source = await ImageSourceBottomSheet.show(context: context);
     if (source != null) await _pickAttachment(source);
   }
@@ -71,24 +86,26 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // SUPPORT P0-4: upload the attachment (if any) first, then attach its
-      // storage path to the ticket so the admin can view the evidence photo.
-      String? uploadedUrl;
-      final attachment = _attachmentFile;
-      if (attachment != null) {
-        uploadedUrl = await ref
-            .read(filesRepositoryProvider)
-            .uploadFile(attachment, 'support_ticket');
-      }
+      // SUPPORT P0-4: upload each attachment in parallel and pass the comma-
+      // separated URLs to the server. Mirrors the KYC upload pattern (the
+      // files endpoint is idempotent on duplicate uploads).
+      final repo = ref.read(filesRepositoryProvider);
+      final uploadedUrls = await Future.wait(
+        _attachmentFiles.map((f) => repo.uploadFile(f, FileCategory.supportAttachment)),
+      );
+      final attachmentsCsv = uploadedUrls
+          .where((u) => u.isNotEmpty)
+          .join(',');
       await ref.read(supportProvider.notifier).createTicket(
             category: _selectedCategory,
             subject: _subjectController.text.trim(),
             message: _messageController.text.trim(),
             riderId: ref.read(riderProvider).riderId,
-            attachments: uploadedUrl,
+            attachments: attachmentsCsv.isEmpty ? null : attachmentsCsv,
           );
       PostHogService.capture('ticket_created', properties: {
         'category': _selectedCategory,
+        'attachment_count': _attachmentFiles.length,
       });
 
       if (mounted) {
@@ -304,13 +321,26 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Attachment Photo (SUPPORT P0-4)
-                Text(
-                  'Attachment (optional)',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+                // Attachment Photo (SUPPORT P0-4) — up to 3 photos so the
+                // rider can show multiple angles of the damage.
+                Row(
+                  children: [
+                    Text(
+                      'Photos (optional, up to $_maxAttachments)',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_attachmentFiles.length}/$_maxAttachments',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.of(context).onSurfaceMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 InkWell(
@@ -325,7 +355,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: AppColors.outlineVariant),
                     ),
-                    child: _attachmentFile == null
+                    child: _attachmentFiles.isEmpty
                         ? Column(
                             children: [
                               const Icon(
@@ -335,7 +365,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Add a photo',
+                                'Add photos',
                                 style: AppTypography.labelLarge
                                     .copyWith(color: AppColors.onSurface),
                               ),
@@ -350,34 +380,69 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                           )
                         : Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    _attachmentFile!,
-                                    width: 48,
-                                    height: 48,
-                                    fit: BoxFit.cover,
+                                for (var i = 0; i < _attachmentFiles.length; i++)
+                                  Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          _attachmentFiles[i],
+                                          width: 64,
+                                          height: 64,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: -6,
+                                        right: -6,
+                                        child: IconButton(
+                                          key: Key('removeTicketAttachment_$i'),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 24,
+                                            minHeight: 24,
+                                          ),
+                                          icon: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black54,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: const Icon(Icons.close,
+                                                size: 16, color: Colors.white),
+                                          ),
+                                          onPressed: () => setState(
+                                              () => _attachmentFiles.removeAt(i)),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Photo attached',
-                                    style: AppTypography.labelLarge
-                                        .copyWith(color: AppColors.onSurface),
+                                if (_attachmentFiles.length < _maxAttachments)
+                                  InkWell(
+                                    key: const Key('addAnotherAttachment'),
+                                    onTap: _showAttachmentSourceSheet,
+                                    child: Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.of(context)
+                                            .iconBackground,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color:
+                                                AppColors.outlineVariant),
+                                      ),
+                                      child: const Icon(
+                                        Icons.add_a_photo_outlined,
+                                        color: AppColors.primary,
+                                        size: 24,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                IconButton(
-                                  key: const Key('removeTicketAttachment'),
-                                  icon: Icon(Icons.close,
-                                      size: 20,
-                                      color:
-                                          AppColors.of(context).onSurfaceMuted),
-                                  onPressed: () =>
-                                      setState(() => _attachmentFile = null),
-                                ),
                               ],
                             ),
                           ),

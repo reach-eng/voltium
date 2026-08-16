@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,6 +37,7 @@ class GuarantorOnboardingState {
   final bool isOtpSent;
   final bool isPhoneVerified;
   final String verifiedGuarantorPhone;
+  final String? guarantorPhoneReceipt;
 
   /// PR-GUARANTOR-OTP: epoch-ms of when the guarantor phone was OTP-
   /// verified. Persisted with the form cache so a rider killed mid-form
@@ -66,6 +68,7 @@ class GuarantorOnboardingState {
     this.isOtpSent = false,
     this.isPhoneVerified = false,
     this.verifiedGuarantorPhone = '',
+    this.guarantorPhoneReceipt,
     this.verifiedGuarantorPhoneAt,
     this.aadhaarFrontUploaded = false,
     this.aadhaarFrontPath,
@@ -90,6 +93,7 @@ class GuarantorOnboardingState {
     bool? isOtpSent,
     bool? isPhoneVerified,
     String? verifiedGuarantorPhone,
+    String? guarantorPhoneReceipt,
     int? verifiedGuarantorPhoneAt,
     bool? aadhaarFrontUploaded,
     String? aadhaarFrontPath,
@@ -114,6 +118,8 @@ class GuarantorOnboardingState {
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       verifiedGuarantorPhone:
           verifiedGuarantorPhone ?? this.verifiedGuarantorPhone,
+      guarantorPhoneReceipt:
+          guarantorPhoneReceipt ?? this.guarantorPhoneReceipt,
       verifiedGuarantorPhoneAt:
           verifiedGuarantorPhoneAt ?? this.verifiedGuarantorPhoneAt,
       aadhaarFrontUploaded: aadhaarFrontUploaded ?? this.aadhaarFrontUploaded,
@@ -152,11 +158,12 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
       state = state.copyWith(isSendingOtp: false, isOtpSent: isSent);
   void setVerifyingOtp(bool isVerifying) =>
       state = state.copyWith(isVerifyingOtp: isVerifying);
-  void setPhoneVerified(bool verified, [String phone = '']) {
+  void setPhoneVerified(bool verified, [String phone = '', String? receipt]) {
     state = state.copyWith(
       isVerifyingOtp: false,
       isPhoneVerified: verified,
       verifiedGuarantorPhone: phone,
+      guarantorPhoneReceipt: receipt,
       // PR-GUARANTOR-OTP: stamp the epoch-ms receipt on success; clearing
       // verification also clears the timestamp so a stale receipt can
       // never be re-hydrated later.
@@ -171,6 +178,7 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
         isPhoneVerified: false,
         isOtpSent: false,
         verifiedGuarantorPhoneAt: null,
+        guarantorPhoneReceipt: null,
       );
     }
   }
@@ -280,6 +288,9 @@ class _GuarantorOnboardingScreenState
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(6, (_) => FocusNode());
 
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
+
   void _saveCache() {
     final riderId = ref.read(riderProvider).riderId;
     if (riderId == null) return;
@@ -366,7 +377,11 @@ class _GuarantorOnboardingScreenState
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCache();
-      if (AppConstants.isTestMode) {
+      // CONSOLIDATED-FIX-2026-08-16 §4.11: gate the test-mode auto-fill on
+      // kDebugMode so a misconfigured production build (isTestMode=true env
+      // leak) can never silently mark a real rider's phone as verified
+      // (audit #7 P1-1). The dev-OTP echo at line ~515 is already guarded.
+      if (kDebugMode && AppConstants.isTestMode) {
         if (_nameController.text.isEmpty)
           _nameController.text = 'Test Guarantor';
         if (_dobController.text.isEmpty) _dobController.text = '01-01-1980';
@@ -400,6 +415,7 @@ class _GuarantorOnboardingScreenState
     _addressController.removeListener(_onFieldChanged);
     _phoneController.removeListener(_onPhoneChanged);
 
+    _cooldownTimer?.cancel();
     _nameController.dispose();
     _dobController.dispose();
     _phoneController.dispose();
@@ -478,6 +494,8 @@ class _GuarantorOnboardingScreenState
   }
 
   Future<void> _sendOtp() async {
+    if (_resendCooldown > 0) return;
+
     final phone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
     if (phone.length < 10) {
       _showError('Please enter a valid 10-digit phone number');
@@ -503,6 +521,22 @@ class _GuarantorOnboardingScreenState
       final result = response.toJson();
       if (mounted) {
         ref.read(guarantorOnboardingNotifierProvider.notifier).setOtpSent(true);
+        _resendCooldown = 30;
+        _cooldownTimer?.cancel();
+        _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (!mounted) {
+            timer.cancel();
+            return;
+          }
+          setState(() {
+            if (_resendCooldown > 0) {
+              _resendCooldown--;
+            } else {
+              timer.cancel();
+            }
+          });
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('OTP sent to guarantor phone'),
@@ -563,10 +597,14 @@ class _GuarantorOnboardingScreenState
         }
         return;
       }
+      final receipt = response['data']?['receipt']?.toString() ??
+          response['receipt']?.toString();
       if (mounted) {
+        _cooldownTimer?.cancel();
+        setState(() => _resendCooldown = 0);
         ref
             .read(guarantorOnboardingNotifierProvider.notifier)
-            .setPhoneVerified(true, phone);
+            .setPhoneVerified(true, phone, receipt);
         _saveCache();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -725,6 +763,7 @@ class _GuarantorOnboardingScreenState
           guarantorName: _nameController.text,
           guarantorDob: _dobController.text,
           guarantorPhone: _phoneController.text,
+          guarantorPhoneReceipt: state.guarantorPhoneReceipt,
           guarantorFatherName: _fatherNameController.text,
           guarantorMotherName: _motherNameController.text,
           guarantorAddress: _addressController.text,
@@ -740,7 +779,11 @@ class _GuarantorOnboardingScreenState
       await provider.refresh();
       PostHogService.capture('guarantor_form_submitted');
       if (mounted) {
-        widget.onNext?.call();
+        if (widget.onNext != null) {
+          widget.onNext!.call();
+        } else {
+          Navigator.maybePop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -786,9 +829,9 @@ class _GuarantorOnboardingScreenState
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           _buildDot(1, currentStep),
-          _buildLine(),
+          _buildLine(1, currentStep),
           _buildDot(2, currentStep),
-          _buildLine(),
+          _buildLine(2, currentStep),
           _buildDot(3, currentStep),
         ],
       ),
@@ -819,11 +862,14 @@ class _GuarantorOnboardingScreenState
     );
   }
 
-  Widget _buildLine() {
+  Widget _buildLine(int leftStep, int currentStep) {
+    final isCompleted = currentStep > leftStep;
     return Container(
       width: 40,
       height: 2,
-      color: AppColors.of(context).borderSubtle,
+      color: isCompleted
+          ? AppColors.primary
+          : AppColors.of(context).borderSubtle,
     );
   }
 
@@ -862,11 +908,31 @@ class _GuarantorOnboardingScreenState
   }
 
   Future<void> _selectDob() async {
+    DateTime initial = DateTime(1990);
+    if (_dobController.text.isNotEmpty) {
+      final parts = _dobController.text.split(RegExp(r'[-/]'));
+      if (parts.length == 3) {
+        try {
+          if (parts[0].length == 4) {
+            initial = DateTime(
+                int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          } else {
+            initial = DateTime(
+                int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          }
+        } catch (_) {}
+      }
+    }
+    final firstDate = DateTime(1940);
+    final lastDate = DateTime.now().subtract(const Duration(days: 365 * 18));
+    if (initial.isBefore(firstDate)) initial = firstDate;
+    if (initial.isAfter(lastDate)) initial = lastDate;
+
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime(1990),
-      firstDate: DateTime(1940),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
+      initialDate: initial,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
     if (date != null && mounted) {
       _dobController.text =
@@ -933,6 +999,7 @@ class _GuarantorOnboardingScreenState
                                 isSendingOtp: state.isSendingOtp,
                                 isOtpSent: state.isOtpSent,
                                 isVerifyingOtp: state.isVerifyingOtp,
+                                resendCooldown: _resendCooldown,
                                 onSendOtp: _sendOtp,
                                 onVerifyOtp: _verifyOtp,
                                 onSelectDob: _selectDob,

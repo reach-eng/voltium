@@ -26,9 +26,15 @@ class MyDocumentsScreen extends ConsumerWidget {
       final localPath = await DocumentLocalCache.get(cacheKey);
       if (localPath != null && File(localPath).existsSync()) {
         final uri = Uri.file(localPath);
-        if (await canLaunchUrl(uri)) {
+        try {
+          // CONSOLIDATED-FIX-2026-08-16 §4.10: prefer the
+          // LaunchUrlException catch over the canLaunchUrl pre-check
+          // (deprecated in Flutter 4.x — the pre-check can race with the
+          // actual launch on slow devices).
           await launchUrl(uri, mode: LaunchMode.externalApplication);
           return;
+        } catch (_) {
+          // Fall through to the network download below.
         }
       }
     }
@@ -41,9 +47,9 @@ class MyDocumentsScreen extends ConsumerWidget {
       fullUrl = '$baseUrl/api/files/$path';
     }
     final uri = Uri.parse(fullUrl);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded English

@@ -166,8 +166,9 @@ class _EarningsScreenState extends State<EarningsScreen> {
     );
 
     if (result != null && mounted) {
+      final localId = DateTime.now().millisecondsSinceEpoch.toString();
       final entry = EarningEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: localId,
         date: result['date'] as DateTime,
         platform: result['platform'] as GigPlatform,
         amount: (result['amount'] as num).toDouble(),
@@ -175,34 +176,37 @@ class _EarningsScreenState extends State<EarningsScreen> {
         hours: (result['hours'] as num).toDouble(),
         notes: result['notes'] as String?,
       );
-      setState(() => _entries.add(entry));
-      await _saveEntries();
 
-      // PR-39 (PROFILE P0-6): mirror the entry to the backend so the
-      // admin's earnings analytics see it. Best-effort — a network
-      // failure leaves the local copy in place; the next app launch
-      // will retry via _syncPendingEntries().
+      // PR-VER-2026-08-16 (PROFILE P0-6): sync to the backend FIRST. Only
+      // persist to local cache if the server acknowledges — the old code
+      // wrote to SharedPreferences optimistically and a network failure
+      // left a "ghost" entry that the rider had to retry manually. Now:
+      //   - Server OK  → add to local + persist with 'srv-' canonical id
+      //   - Server fail → don't add locally; show a snackbar with retry
+      // The retry path is _syncPendingEntries() on next cold start.
       final synced = await _syncEntryToBackend(entry);
-      if (synced && mounted) {
-        // Replace the local id with the server's canonical id so
-        // future updates/deletes (when those exist) target the right
-        // row.
-        setState(() {
-          final idx = _entries.indexWhere((e) => e.id == entry.id);
-          if (idx != -1) {
-            _entries[idx] = EarningEntry(
-              id: synced ? 'srv-${entry.id}' : entry.id,
-              date: entry.date,
-              platform: entry.platform,
-              amount: entry.amount,
-              trips: entry.trips,
-              hours: entry.hours,
-              notes: entry.notes,
-            );
-          }
-        });
-        await _saveEntries();
+      if (!synced) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Couldn't save the entry — we'll retry on your next sign-in.",
+              ),
+            ),
+          );
+        }
+        return;
       }
+      setState(() => _entries.add(EarningEntry(
+            id: 'srv-$localId',
+            date: entry.date,
+            platform: entry.platform,
+            amount: entry.amount,
+            trips: entry.trips,
+            hours: entry.hours,
+            notes: entry.notes,
+          )));
+      await _saveEntries();
 
       if (mounted &&
           (entry.date.isBefore(_weekStart) ||

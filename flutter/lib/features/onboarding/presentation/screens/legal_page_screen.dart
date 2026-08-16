@@ -8,15 +8,20 @@ import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/app_config.dart';
 import 'package:voltium_rider/features/onboarding/presentation/legal_fallback_loader.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 part 'legal_page_content.dart';
 
 // ─── Branding ────────────────────────────────────────────────────────────────
 const _kBrandFull = 'Voltium Electric Mobility Private Limited';
 const _kBrandShort = 'Voltium';
-const _kSupportEmail = 'support@voltium.app';
-const _kSupportPhone = '+91 1800-889-VOLT';
+// CONSOLIDATED-FIX-2026-08-16 §4.14: support contact info centralised in
+// `AppConfig` so the 3 hardcoded variants across legal/FAQ/support screens
+// can't drift (see audit #5 P1-19 / #18 P1-1 / #19 P1-1).
+const _kSupportEmail = AppConfig.supportEmail;
+const _kSupportPhone = AppConfig.supportPhone;
 
 // ─── Document Sections ───────────────────────────────────────────────────────
 
@@ -288,7 +293,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: AppColors.of(context).surfaceBright,
+                                  color: AppColors.of(context).primarySurface,
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.lg),
                                 ),
@@ -319,16 +324,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'SIGNED BY',
+                                            AppLocalizations.of(context)?.txtsignedBy ?? 'SIGNED BY',
                                             style: AppTypography.bodySmall
                                                 .copyWith(
                                                     fontWeight: FontWeight.w800,
                                                     letterSpacing: 1.2)
                                                 .copyWith(
-                                                    color: AppColors.slate400,
+                                                    color: AppColors.of(context).onSurfaceVariant,
                                                     letterSpacing: 1.2),
                                           ),
-                                          SizedBox(height: 2),
+                                          const SizedBox(height: 2),
                                           Text(
                                             signerName,
                                             style: GoogleFonts.plusJakartaSans(
@@ -347,16 +352,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           CrossAxisAlignment.end,
                                       children: [
                                         Text(
-                                          'DATE',
+                                          AppLocalizations.of(context)?.txtdate ?? 'DATE',
                                           style: AppTypography.bodySmall
                                               .copyWith(
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 1.2)
                                               .copyWith(
-                                                  color: AppColors.slate400,
+                                                  color: AppColors.of(context).onSurfaceVariant,
                                                   letterSpacing: 1.2),
                                         ),
-                                        SizedBox(height: 2),
+                                        const SizedBox(height: 2),
                                         Text(
                                           _currentDate,
                                           style: GoogleFonts.plusJakartaSans(
@@ -381,11 +386,11 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                   vertical: 14,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: AppColors.of(context).card,
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.lg),
                                   border: Border.all(
-                                    color: AppColors.borderMedium,
+                                    color: AppColors.of(context).outline.withValues(alpha: 0.2),
                                     style: BorderStyle.solid,
                                     width: 1,
                                   ),
@@ -404,6 +409,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                               alignment: Alignment.centerLeft,
                                               errorWidget: (_, __, ___) =>
                                                   _buildElectronicSignaturePlaceholder(
+                                                context,
                                                 signerName,
                                               ),
                                               placeholder: (_, __) =>
@@ -421,6 +427,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                               ),
                                             )
                                           : _buildElectronicSignaturePlaceholder(
+                                              context,
                                               signerName,
                                             ),
                                     ),
@@ -436,9 +443,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                               AppRadius.md),
                                           border: Border.all(
                                             color: AppColors.of(context)
-                                                .iconBackground,
+                                                .outline.withValues(alpha: 0.2),
                                           ),
-                                          boxShadow: AppShadows.glass,
+                                          boxShadow: AppShadows.card,
                                         ),
                                         clipBehavior: Clip.antiAlias,
                                         child: CachedNetworkImage(
@@ -448,9 +455,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           memCacheWidth: 96,
                                           memCacheHeight: 96,
                                           errorWidget: (_, __, ___) =>
-                                              const Icon(
+                                              Icon(
                                             Icons.person,
-                                            color: AppColors.slate400,
+                                            color: AppColors.of(context).onSurfaceVariant,
                                             size: 20,
                                           ),
                                         ),
@@ -462,10 +469,6 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                               const SizedBox(height: 16),
 
                               // ── Copy-on-request note ──
-                              // Audit #5 P0-1: the old button shared plain
-                              // text and called it a "Download Signed PDF"
-                              // (no PDF, no signature metadata). Replaced
-                              // with an honest copy-on-request path.
                               Container(
                                 key: Key('pdf_on_request_${section.id}'),
                                 padding: const EdgeInsets.symmetric(
@@ -491,7 +494,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                         'Your acceptance is recorded. To request a signed copy, email $_kSupportEmail.',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
-                                          color: AppColors.onSurfaceVariant,
+                                          color: AppColors.of(context).onSurfaceVariant,
                                           height: 1.5,
                                         ),
                                       ),
@@ -513,7 +516,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                       if (index < _visibleSections.length - 1)
                         Container(
                           height: 1,
-                          color: AppColors.of(context).iconBackground,
+                          color: AppColors.of(context).outline.withValues(alpha: 0.2),
                         ),
                     ],
                   );
@@ -527,14 +530,16 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
             Container(
               padding: Spacing.paddingMd,
               decoration: BoxDecoration(
-                color: AppColors.of(context).iconBackground,
+                color: AppColors.of(context).card,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.of(context).outline.withValues(alpha: 0.2)),
+                boxShadow: AppShadows.card,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'NEED HELP?',
+                    AppLocalizations.of(context)?.txtneedHelp ?? 'NEED HELP?',
                     style: AppTypography.bodySmall
                         .copyWith(
                             fontWeight: FontWeight.w800, letterSpacing: 1.2)
@@ -542,7 +547,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                             color: AppColors.of(context).onSurfaceVariant,
                             letterSpacing: 1.2),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
                       style: GoogleFonts.plusJakartaSans(
@@ -551,8 +556,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                         height: 1.5,
                       ),
                       children: [
-                        const TextSpan(
-                          text:
+                        TextSpan(
+                          text: AppLocalizations.of(context)?.txtlegalHelpText ??
                               'If you have any questions about our policies, please contact our support team at ',
                         ),
                         TextSpan(
@@ -562,7 +567,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                             color: AppColors.primary,
                           ),
                         ),
-                        const TextSpan(text: ' or call '),
+                        TextSpan(
+                          text: AppLocalizations.of(context)?.txtorCall ?? ' or call ',
+                        ),
                         TextSpan(
                           text: _kSupportPhone,
                           style: GoogleFonts.plusJakartaSans(
@@ -587,16 +594,17 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final type = widget.documentType;
+    final l10n = AppLocalizations.of(context);
     String title;
     if (type == null || type == LegalDocumentType.all) {
-      title = 'Legal';
+      title = l10n?.txtlegal ?? 'Legal';
     } else {
       switch (type) {
         case LegalDocumentType.terms:
-          title = 'Terms of Service';
+          title = l10n?.txttermsOfService ?? 'Terms of Service';
           break;
         case LegalDocumentType.privacy:
-          title = 'Privacy Policy';
+          title = l10n?.txtprivacyPolicy ?? 'Privacy Policy';
           break;
         case LegalDocumentType.refund:
           title = 'Refund Policy';
@@ -605,12 +613,12 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
           title = "Guarantor's Agreement";
           break;
         case LegalDocumentType.all:
-          title = 'Legal';
+          title = l10n?.txtlegal ?? 'Legal';
           break;
       }
     }
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.of(context).surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leadingWidth: 68,
@@ -621,8 +629,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.of(context).card.withValues(alpha: 0.8),
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.of(context).outline.withValues(alpha: 0.2)),
               boxShadow: AppShadows.card,
             ),
             child: Material(
@@ -652,16 +661,17 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     );
   }
 
-  Widget _buildElectronicSignaturePlaceholder(String name) {
+  Widget _buildElectronicSignaturePlaceholder(BuildContext context, String name) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         const Icon(Icons.edit_rounded, color: AppColors.primary, size: 16),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Flexible(
           child: Text(
-            '$name (Electronic Signature)',
+            '$name ${l10n?.txtelectronicSignature ?? "(Electronic Signature)"}',
             style: AppTypography.bodySmall.copyWith(
-                fontStyle: FontStyle.italic, color: AppColors.slate400),
+                fontStyle: FontStyle.italic, color: AppColors.of(context).onSurfaceVariant),
             overflow: TextOverflow.ellipsis,
           ),
         ),

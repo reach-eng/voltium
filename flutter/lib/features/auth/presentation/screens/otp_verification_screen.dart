@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
@@ -51,10 +52,14 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 
   final String? referralCode;
 
+  // CONSOLIDATED-FIX-2026-08-16 §5.1: `phoneNumber` is required — the
+  // placeholder `+91 98765 43210` default could collide with the EMERGENCY
+  // audit's hardcoded support number. The only caller (router_body.dart:235)
+  // always passes `state._phone`, so removing the default is safe.
   const OtpVerificationScreen({
     super.key,
     this.onNext,
-    this.phoneNumber = '+91 98765 43210',
+    required this.phoneNumber,
     this.isLogin = false,
     this.onBack,
     this.referralCode,
@@ -121,6 +126,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
     if (state is UnderlineOtpInputState) return state.clear();
   }
 
+  /// Display inline error on the active OTP widget.
+  void _setOtpError(String error) {
+    final state = _otpKey.currentState;
+    if (state is SparkOtpInputState) return state.setError(error);
+    if (state is UnderlineOtpInputState) return state.setError(error);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -132,7 +144,9 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    if (AppConstants.isTestMode) {
+    // CONSOLIDATED-FIX-2026-08-16 §4.11: skip the bounce animation in
+    // production (a release with isTestMode=true should behave normally).
+    if (kDebugMode && AppConstants.isTestMode) {
       _bounceCtrl.value = 0.0;
     } else {
       _bounceCtrl.repeat(reverse: true);
@@ -188,7 +202,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   void _startCountdown() {
-    if (AppConstants.isTestMode) {
+    if (kDebugMode && AppConstants.isTestMode) {
       setState(() => _resendCountdown = 0);
       return;
     }
@@ -208,6 +222,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   void _onOtpChanged(String value) {
+    _setOtpError('');
     setState(() {
       _isOtpComplete = value.length == 6;
     });
@@ -270,6 +285,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         if (e is ApiException) {
           errorMsg = e.message;
         }
+        _setOtpError(errorMsg);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
@@ -415,13 +431,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
                   width: 96,
                   height: 96,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: AppColors.of(context).card.withValues(alpha: 0.8),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
+                      color: AppColors.of(context).outline.withValues(alpha: 0.2),
                       width: 1.5,
                     ),
-                    boxShadow: AppShadows.glass,
+                    boxShadow: AppShadows.card,
                   ),
                   child: const Icon(
                     Icons.smartphone,

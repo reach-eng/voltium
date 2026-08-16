@@ -170,11 +170,11 @@ class SettingsScreen extends ConsumerWidget {
             FadeUpWidget(
               delay: 125,
               child: QuickLinkItem(
-                key: const Key('changePhoneTile'),
-                icon: Icons.phone_outlined,
+                key: const Key('editProfileTile'),
+                icon: Icons.person_outline,
                 iconColor: AppColors.info,
                 iconBgColor: AppColors.of(context).primarySurface,
-                title: l10n.settings_changePhone,
+                title: l10n.txteditProfile,
                 onTap: () =>
                     AppNavigator.push(context, const EditProfileScreen()),
               ),
@@ -278,8 +278,14 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () async {
                   final url = Uri.parse(
                       'https://play.google.com/store/apps/details?id=com.voltium.rider');
-                  if (await canLaunchUrl(url)) {
+                  // CONSOLIDATED-FIX-2026-08-16 §4.10: LaunchUrlException
+                  // catch instead of deprecated canLaunchUrl pre-check.
+                  try {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } catch (_) {
+                    // No-op — the rider sees no feedback, but the next
+                    // tap will retry. A snackbar is overkill for the
+                    // Rate-Us path (it's optional UX).
                   }
                 },
               ),

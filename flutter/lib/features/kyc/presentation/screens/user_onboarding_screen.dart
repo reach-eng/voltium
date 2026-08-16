@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:universal_io/io.dart';
@@ -13,10 +15,12 @@ import 'package:voltium_rider/features/kyc/data/kyc_repository.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/form_validators.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/network/generated/api_client.dart';
+import 'package:voltium_rider/core/network/file_category.dart';
 import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
@@ -94,8 +98,9 @@ class UserOnboardingNotifier extends Notifier<UserOnboardingState> {
 
   void reset() => state = const UserOnboardingState();
 
-  void setStep(int step) => state = state.copyWith(currentStep: step);
-  void nextStep() => state = state.copyWith(currentStep: state.currentStep + 1);
+  void setStep(int step) => state = state.copyWith(currentStep: step.clamp(1, 3));
+  void nextStep() =>
+      state = state.copyWith(currentStep: (state.currentStep + 1).clamp(1, 3));
   void prevStep() =>
       state = state.copyWith(currentStep: (state.currentStep - 1).clamp(1, 3));
 
@@ -177,20 +182,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   final _bankAccountController = TextEditingController();
   final _bankIfscController = TextEditingController();
 
-  // ONBOARDING-AUDIT 2026-08-14 P1-1: stable reference to the
-  // listener attached to every text controller. The previous
-  // implementation added an inline closure in `initState` and tried
-  // to remove `_saveCache` in `dispose()` — but `_saveCache` was
-  // never the listener (it was `onFieldChanged` calling
-  // `_saveCache`), so the remove was a no-op and the actual closure
-  // (and its closure-captured references) outlived the controller.
-  // Storing the function reference here lets us add the same instance
-  // we later remove.
-  // ignore: prefer_function_declarations_over_variables
-  late final VoidCallback _onFieldChanged = () {
+  void _onFieldChanged() {
     _saveCache();
     if (mounted) setState(() {});
-  };
+  }
 
   void _saveCache() {
     final riderId = ref.read(riderProvider).riderId;
@@ -241,9 +236,6 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     super.initState();
     _loadCache();
 
-    // ONBOARDING-AUDIT 2026-08-14 P1-1: use the stable field
-    // reference (see _onFieldChanged) so dispose() can remove the
-    // exact same listener instance.
     _nameController.addListener(_onFieldChanged);
     _emailController.addListener(_onFieldChanged);
     _addressController.addListener(_onFieldChanged);
@@ -255,23 +247,30 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     _bankIfscController.addListener(_onFieldChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (AppConstants.isTestMode) {
-        if (_dobController.text.isEmpty) _dobController.text = '01-01-2000';
+      if (kDebugMode && AppConstants.isTestMode) {
+        if (_dobController.text.isEmpty) _dobController.text = '2000-01-01';
         if (_nameController.text.isEmpty) _nameController.text = 'Test Rider';
-        if (_emailController.text.isEmpty)
+        if (_emailController.text.isEmpty) {
           _emailController.text = 'test@example.com';
-        if (_fatherNameController.text.isEmpty)
+        }
+        if (_fatherNameController.text.isEmpty) {
           _fatherNameController.text = 'Father Name';
-        if (_motherNameController.text.isEmpty)
+        }
+        if (_motherNameController.text.isEmpty) {
           _motherNameController.text = 'Mother Name';
-        if (_addressController.text.isEmpty)
+        }
+        if (_addressController.text.isEmpty) {
           _addressController.text = '123 Test Street';
-        if (_bankNameController.text.isEmpty)
+        }
+        if (_bankNameController.text.isEmpty) {
           _bankNameController.text = 'Test Bank';
-        if (_bankAccountController.text.isEmpty)
+        }
+        if (_bankAccountController.text.isEmpty) {
           _bankAccountController.text = '1234567890';
-        if (_bankIfscController.text.isEmpty)
+        }
+        if (_bankIfscController.text.isEmpty) {
           _bankIfscController.text = 'TEST0001234';
+        }
       }
       final rider = ref.read(riderProvider).rider;
       if (rider != null) {
@@ -288,9 +287,6 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   @override
   void dispose() {
-    // ONBOARDING-AUDIT 2026-08-14 P1-1: remove the same instance
-    // that was added in initState (was `_saveCache` — the wrong
-    // reference, see field doc).
     _nameController.removeListener(_onFieldChanged);
     _emailController.removeListener(_onFieldChanged);
     _addressController.removeListener(_onFieldChanged);
@@ -353,6 +349,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   }
 
   void _showDocumentSourceDialog(String type) {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -364,7 +361,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt, color: AppColors.primary),
-                title: const Text('Take a Photo'),
+                title: Text(l10n?.txttakeAPhoto ?? 'Take a Photo'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickDocument(type, true);
@@ -373,7 +370,7 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
               ListTile(
                 leading:
                     const Icon(Icons.photo_library, color: AppColors.primary),
-                title: const Text('Choose from Gallery'),
+                title: Text(l10n?.txtchooseFromGallery ?? 'Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickDocument(type, false);
@@ -400,12 +397,9 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   bool get _isFormComplete {
     final state = ref.read(userOnboardingNotifierProvider);
-    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    final emailText = _emailController.text.trim();
-    final isEmailValid = emailText.isEmpty || emailRegex.hasMatch(emailText);
     return _nameController.text.trim().isNotEmpty &&
         _dobController.text.trim().isNotEmpty &&
-        isEmailValid &&
+        FormValidators.email(_emailController.text.trim()) == null &&
         _fatherNameController.text.trim().isNotEmpty &&
         _motherNameController.text.trim().isNotEmpty &&
         _addressController.text.trim().isNotEmpty &&
@@ -415,47 +409,46 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         state.selfieUploaded &&
         state.signatureUploaded &&
         _bankNameController.text.trim().isNotEmpty &&
-        _bankAccountController.text.trim().length >= 6 &&
-        _bankIfscController.text.trim().length >= 8;
+        FormValidators.bankAccount(_bankAccountController.text) == null &&
+        FormValidators.ifsc(_bankIfscController.text) == null;
   }
 
   void _showBankDetailsDialog() {
+    final l10n = AppLocalizations.of(context);
     final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Bank Details'),
+        title: Text(l10n?.txtbankDetails ?? 'Bank Details'),
         content: SingleChildScrollView(
           child: Form(
             key: formKey,
-            // PR-ONBOARDING-2026-08-11 (audit 2.4): the dialog previously
-            // accepted any string for bank name, account number, and IFSC.
-            // A rider could reach step 3 with an empty IFSC and only learn
-            // at the 422 from the server. Now uses the canonical
-            // FormValidators.bankAccount + FormValidators.ifsc helpers (used
-            // by the guarantor and the post-save review screen) so the
-            // dialog rejects bad input at the source.
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: _bankNameController,
-                  decoration: const InputDecoration(labelText: 'Bank Name'),
+                  decoration: InputDecoration(
+                    labelText: l10n?.txtbankName ?? 'Bank Name',
+                  ),
                   textCapitalization: TextCapitalization.words,
                   validator: (v) => FormValidators.required(v, 'Bank name'),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _bankAccountController,
-                  decoration:
-                      const InputDecoration(labelText: 'Account Number'),
+                  decoration: InputDecoration(
+                    labelText: l10n?.txtaccountNumber ?? 'Account Number',
+                  ),
                   keyboardType: TextInputType.number,
                   validator: FormValidators.bankAccount,
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _bankIfscController,
-                  decoration: const InputDecoration(labelText: 'IFSC Code'),
+                  decoration: InputDecoration(
+                    labelText: l10n?.txtifscCode ?? 'IFSC Code',
+                  ),
                   textCapitalization: TextCapitalization.characters,
                   validator: FormValidators.ifsc,
                 ),
@@ -466,15 +459,17 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text(l10n?.txtclose ?? 'Close'),
           ),
           TextButton(
             onPressed: () {
               if (formKey.currentState?.validate() ?? false) {
                 Navigator.pop(ctx);
+                _saveCache();
+                if (mounted) setState(() {});
               }
             },
-            child: const Text('Save'),
+            child: Text(l10n?.txtsave ?? 'Save'),
           ),
         ],
       ),
@@ -489,28 +484,21 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
 
   Future<void> _handleNext() async {
     final state = ref.read(userOnboardingNotifierProvider);
-    // ONBOARDING-AUDIT 2026-08-14 follow-up: double-tap guard at the
-    // top of the handler. The bottom button is gated on
-    // `!isUploading && canProceed` and `setUploading(true)` is set
-    // below, but a rapid double-tap can land two onPressed callbacks
-    // before the framework repaints — that would race two
-    // `Future.wait(uploadTasks)` chains and double-POST
-    // /api/rider/profile. Bail out before any work begins.
     if (state.isUploading) return;
     final isTestMode = AppConstants.isTestMode;
     if (!isTestMode && !_isFormComplete) {
-      final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-      final emailText = _emailController.text.trim();
       final missing = <String>[];
       if (_nameController.text.trim().isEmpty) missing.add('Name');
       if (_dobController.text.trim().isEmpty) missing.add('DOB');
-      if (emailText.isNotEmpty && !emailRegex.hasMatch(emailText)) {
+      if (FormValidators.email(_emailController.text.trim()) != null) {
         missing.add('Valid Email');
       }
-      if (_fatherNameController.text.trim().isEmpty)
+      if (_fatherNameController.text.trim().isEmpty) {
         missing.add('Father\'s Name');
-      if (_motherNameController.text.trim().isEmpty)
+      }
+      if (_motherNameController.text.trim().isEmpty) {
         missing.add('Mother\'s Name');
+      }
       if (_addressController.text.trim().isEmpty) missing.add('Address');
       if (!state.aadhaarFrontUploaded) missing.add('Aadhaar Front');
       if (!state.aadhaarBackUploaded) missing.add('Aadhaar Back');
@@ -518,9 +506,10 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
       if (!state.selfieUploaded) missing.add('Selfie');
       if (!state.signatureUploaded) missing.add('Signature');
       if (_bankNameController.text.trim().isEmpty ||
-          _bankAccountController.text.trim().length < 6 ||
-          _bankIfscController.text.trim().length < 8)
+          FormValidators.bankAccount(_bankAccountController.text) != null ||
+          FormValidators.ifsc(_bankIfscController.text) != null) {
         missing.add('Bank Details');
+      }
 
       _showError('Please complete: ${missing.join(', ')}');
       return;
@@ -556,21 +545,26 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl = 'mock_url_signature.png';
       } else {
         final Map<String, dynamic> tasks = {};
-        if (state.aadhaarFrontPath != null)
+        if (state.aadhaarFrontPath != null) {
           tasks['Aadhaar Front'] = () => _kycRepository!
-              .uploadDocument(File(state.aadhaarFrontPath!), 'kyc_document');
-        if (state.aadhaarBackPath != null)
+              .uploadDocument(File(state.aadhaarFrontPath!), FileCategory.kycDocument);
+        }
+        if (state.aadhaarBackPath != null) {
           tasks['Aadhaar Back'] = () => _kycRepository!
-              .uploadDocument(File(state.aadhaarBackPath!), 'kyc_document');
-        if (state.panPath != null)
+              .uploadDocument(File(state.aadhaarBackPath!), FileCategory.kycDocument);
+        }
+        if (state.panPath != null) {
           tasks['PAN'] = () => _kycRepository!
-              .uploadDocument(File(state.panPath!), 'kyc_document');
-        if (state.selfiePath != null)
+              .uploadDocument(File(state.panPath!), FileCategory.kycDocument);
+        }
+        if (state.selfiePath != null) {
           tasks['Selfie'] = () => _kycRepository!
-              .uploadDocument(File(state.selfiePath!), 'profile_photo');
-        if (state.signaturePath != null)
+              .uploadDocument(File(state.selfiePath!), FileCategory.profilePhoto);
+        }
+        if (state.signaturePath != null) {
           tasks['Signature'] = () => _kycRepository!
-              .uploadDocument(File(state.signaturePath!), 'kyc_document');
+              .uploadDocument(File(state.signaturePath!), FileCategory.kycDocument);
+        }
 
         int completed = 0;
         final results = <String, String>{};
@@ -601,27 +595,24 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         signatureUrl = results['Signature'] ?? '';
 
         // Cache documents locally so they can be viewed offline.
-        if (state.aadhaarFrontPath != null)
+        if (state.aadhaarFrontPath != null) {
           DocumentLocalCache.save('aadhaarFront', state.aadhaarFrontPath!);
-        if (state.aadhaarBackPath != null)
+        }
+        if (state.aadhaarBackPath != null) {
           DocumentLocalCache.save('aadhaarBack', state.aadhaarBackPath!);
-        if (state.panPath != null)
+        }
+        if (state.panPath != null) {
           DocumentLocalCache.save('panCard', state.panPath!);
-        if (state.signaturePath != null)
+        }
+        if (state.signaturePath != null) {
           DocumentLocalCache.save('signature', state.signaturePath!);
+        }
       }
 
       ref
           .read(userOnboardingNotifierProvider.notifier)
           .setUploading(true, 'Saving profile...');
 
-      // ONBOARDING-AUDIT 2026-08-14 P2-8: split the upload and
-      // refresh into two distinct steps so the rider gets a
-      // specific error message instead of one generic catch-all.
-      // The previous version lumped updateProfile + clearFormCache
-      // + refresh() into a single try/catch — a refresh failure
-      // looked like an upload failure and the rider re-entered the
-      // form even though the server already had their data.
       try {
         await _kycRepository!.updateProfile(
           riderId: riderId,
@@ -641,23 +632,36 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
           signatureUrl: signatureUrl,
         );
         await KycRepository.clearFormCache(riderId: riderId);
+
+        // F4 fix: Clean up local temporary document files from disk on success
+        final tempPaths = [
+          state.aadhaarFrontPath,
+          state.aadhaarBackPath,
+          state.panPath,
+          state.selfiePath,
+          state.signaturePath,
+        ];
+        for (final p in tempPaths) {
+          if (p != null && p.isNotEmpty) {
+            try {
+              final f = File(p);
+              if (f.existsSync()) {
+                f.deleteSync();
+              }
+            } catch (_) {}
+          }
+        }
       } catch (e) {
-        // Upload step failed — rider must retry; the form data is
-        // still local and they can re-submit.
         if (!mounted) return;
         _showError(_formatKycError(e));
         return;
       }
 
-      // Upload succeeded. Refresh the rider provider separately so
-      // a refresh failure shows a distinct message and the rider
-      // isn't sent back through the form.
       try {
         await ref.read(riderProvider.notifier).refresh();
       } catch (e) {
         if (!mounted) return;
         appDebug('KYC submit: refresh failed after upload success: $e');
-        // The profile IS saved; just tell the rider what happened.
         _showError(
           'Profile saved, but we couldn\'t refresh your session. '
           'Pull to retry, or restart the app.',
@@ -685,21 +689,37 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
     }
   }
 
-  /// ONBOARDING-AUDIT 2026-08-14 P2-8: extract the error formatting
-  /// so the split upload/refresh handlers can reuse the same
-  /// user-friendly mapping (422 → validation, 401 → session
-  /// expired, network → offline).
+  /// F14: Typed ApiException error handling
   String _formatKycError(Object e) {
-    final msg = e.toString();
-    appDebug('KYC submit error: $msg');
-    if (msg.contains('422') || msg.contains('VALIDATION')) {
-      final match = RegExp(r'"message":"([^"]+)"').firstMatch(msg);
-      return match != null
-          ? match.group(1)!
-          : 'Please check your documents and try uploading again.';
-    } else if (msg.contains('401') || msg.contains('unauthorized')) {
-      return 'Session expired. Please log in again.';
-    } else if (msg.contains('network') || msg.contains('timeout')) {
+    appDebug('KYC submit error: $e');
+    if (e is ApiException) {
+      switch (e.statusCode) {
+        case 422:
+          return e.message.isNotEmpty
+              ? e.message
+              : 'Please check your documents and try uploading again.';
+        case 401:
+          return 'Session expired. Please log in again.';
+        case 403:
+          return 'Access denied. Please check your verification status.';
+        case 408:
+        case 504:
+          return 'Upload timed out. Please check your connection and retry.';
+        case 500:
+        case 502:
+        case 503:
+          return 'Server temporarily unavailable. Please try again later.';
+        default:
+          return e.message.isNotEmpty
+              ? e.message
+              : 'Something went wrong. Please try again.';
+      }
+    }
+    final msg = e.toString().toLowerCase();
+    if (msg.contains('network') ||
+        msg.contains('timeout') ||
+        msg.contains('socketexception') ||
+        msg.contains('connection')) {
       return 'No internet connection. Please check and retry.';
     }
     return 'Something went wrong. Please try again.';
@@ -768,9 +788,6 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   bool get _canProceedCurrentStep {
     if (AppConstants.isTestMode) return true;
     final state = ref.read(userOnboardingNotifierProvider);
-    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    final emailText = _emailController.text.trim();
-    final isEmailValid = emailText.isEmpty || emailRegex.hasMatch(emailText);
     switch (state.currentStep) {
       case 1:
         return _nameController.text.trim().isNotEmpty &&
@@ -778,15 +795,11 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
             _fatherNameController.text.trim().isNotEmpty &&
             _motherNameController.text.trim().isNotEmpty &&
             _addressController.text.trim().isNotEmpty &&
-            isEmailValid;
+            FormValidators.email(_emailController.text.trim()) == null;
       case 2:
         return state.aadhaarFrontUploaded &&
             state.aadhaarBackUploaded &&
             state.panUploaded &&
-            // PR-ONBOARDING-2026-08-11 (audit 2.4): step 2 progression now
-            // requires bank name + account number + IFSC, not just an
-            // account number. A rider can no longer reach step 3 with an
-            // empty IFSC and only learn at the 422 from the server.
             _bankNameController.text.trim().isNotEmpty &&
             FormValidators.bankAccount(_bankAccountController.text) == null &&
             FormValidators.ifsc(_bankIfscController.text) == null;
@@ -810,12 +823,24 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final onboardingState = ref.watch(userOnboardingNotifierProvider);
+    final isOnline = ref.watch(connectivityProvider.select((p) => p.isOnline));
+
+    // Compute inline bank summary for tile (F8)
+    String? bankSummary;
+    final bankName = _bankNameController.text.trim();
+    final bankAcc = _bankAccountController.text.trim();
+    if (bankName.isNotEmpty && bankAcc.length >= 4) {
+      final last4 = bankAcc.substring(bankAcc.length - 4);
+      bankSummary = '✓ $bankName •••• $last4';
+    }
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+        HapticFeedback.lightImpact(); // F15 haptic feedback
         if (onboardingState.currentStep > 1) {
           ref.read(userOnboardingNotifierProvider.notifier).prevStep();
         } else {
@@ -826,15 +851,41 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
         backgroundColor: colors.surface,
         body: Column(
           children: [
+            if (!isOnline)
+              Container(
+                width: double.infinity,
+                color: AppColors.warning.withValues(alpha: 0.15),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cloud_off,
+                        size: 16, color: AppColors.warning),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n?.txtofflineDraftBanner ??
+                            "You're offline — your draft is saved locally. Connect to internet to submit.",
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
                     buildCurtainHeader(
                       context: context,
-                      title: 'Rider Profile',
-                      subtitle: 'Complete your details to finish onboarding',
+                      title: l10n?.txtriderProfile ?? 'Rider Profile',
+                      subtitle: l10n?.txtcompleteDetailsSubtitle ??
+                          'Complete your details to finish onboarding',
                       onBack: () {
+                        HapticFeedback.lightImpact();
                         if (onboardingState.currentStep > 1) {
                           ref
                               .read(userOnboardingNotifierProvider.notifier)
@@ -892,10 +943,13 @@ class _UserOnboardingScreenState extends ConsumerState<UserOnboardingScreen> {
                                 bankDetailsDone: _bankNameController.text
                                         .trim()
                                         .isNotEmpty &&
-                                    _bankAccountController.text
-                                        .trim()
-                                        .isNotEmpty &&
-                                    _bankIfscController.text.trim().isNotEmpty,
+                                    FormValidators.bankAccount(
+                                            _bankAccountController.text) ==
+                                        null &&
+                                    FormValidators.ifsc(
+                                            _bankIfscController.text) ==
+                                        null,
+                                bankSummary: bankSummary,
                                 bankEnabled:
                                     _isFieldEditable('accountNumber') ||
                                         _isFieldEditable('bankName') ||
