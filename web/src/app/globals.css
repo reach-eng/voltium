@@ -118,6 +118,25 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* Universal pointer cursor for all interactive elements & links */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="link"],
+  [role="menuitem"],
+  [role="option"],
+  [role="switch"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  [type="checkbox"],
+  [type="radio"],
+  summary,
+  .cursor-pointer {
+    cursor: pointer !important;
+  }
 }
 
 /* Premium Scrollbar */
@@ -307,11 +326,18 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 .shimmer {
+  /* WEB-AUDIT 2026-08-14 P0-1: the previous version used
+   * `hsl(var(--muted))` — but `--muted` is a hex token, not a
+   * channel triplet, so the browser discards the whole
+   * gradient. The class animated nothing. Replace with
+   * `color-mix` (works with the hex tokens defined in
+   * `:root` and `.dark` above) so the skeleton pulse
+   * actually renders in both modes. */
   background: linear-gradient(
     90deg,
-    hsl(var(--muted)) 25%,
-    hsl(var(--muted) / 0.5) 50%,
-    hsl(var(--muted)) 75%
+    color-mix(in srgb, var(--muted) 25%, transparent) 25%,
+    color-mix(in srgb, var(--muted) 50%, transparent) 50%,
+    color-mix(in srgb, var(--muted) 25%, transparent) 75%
   );
   background-size: 200% 100%;
   animation: shimmer-wave 1.8s ease-in-out infinite;

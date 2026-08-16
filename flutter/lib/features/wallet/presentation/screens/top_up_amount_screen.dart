@@ -97,10 +97,28 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
 
   int get _finalAmount => int.tryParse(_customAmountCtrl.text) ?? 0;
 
-  bool get _canProceed {
+  int get _requiredMinAmount {
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
+    final secDeposit =
+        (widget.securityDeposit != null && widget.securityDeposit! > 0)
+            ? widget.securityDeposit!
+            : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
+    final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
+        ? widget.rentalPrice!
+        : (rider?.activeRentalPlanPrice.toInt() ?? 0);
+
+    final planTotal = isAdvanceRentPaid
+        ? (secDeposit + rentPrice)
+        : (secDeposit > 0 ? secDeposit : rentPrice);
+
     final minTopup =
         ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt();
-    return _finalAmount >= (minTopup > 0 ? minTopup : 100);
+    return planTotal > 0 ? planTotal : (minTopup > 0 ? minTopup : 100);
+  }
+
+  bool get _canProceed {
+    return _finalAmount >= _requiredMinAmount;
   }
 
   void _selectQuickAmount(int amount) {
@@ -111,10 +129,123 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
     });
   }
 
+  Widget _buildTopUpBreakdownCard() {
+    final rider = ref.watch(riderProvider.select((p) => p.rider));
+    final isAdvanceRentPaid = rider?.advanceRentPaid ?? false;
+    final secDeposit =
+        (widget.securityDeposit != null && widget.securityDeposit! > 0)
+            ? widget.securityDeposit!
+            : (rider?.activeRentalPlanSecurityDeposit.toInt() ?? 0);
+    final rentPrice = (widget.rentalPrice != null && widget.rentalPrice! > 0)
+        ? widget.rentalPrice!
+        : (rider?.activeRentalPlanPrice.toInt() ?? 0);
+
+    if (secDeposit <= 0 && rentPrice <= 0) return const SizedBox.shrink();
+
+    final totalRequired = isAdvanceRentPaid
+        ? (secDeposit + rentPrice)
+        : (secDeposit > 0 ? secDeposit : rentPrice);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_outlined,
+                  color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Required Deposit Breakdown',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  // DARK-MODE-AUDIT 2026-08-14 P0-7: same
+                  // `slate800` issue.
+                  color: AppColors.of(context).onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (secDeposit > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Security Deposit',
+                      style:
+                          TextStyle(fontSize: 13, color: AppColors.slate600)),
+                  Text('₹$secDeposit',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                          color: AppColors.of(context).onSurface)),
+                ],
+              ),
+            ),
+          if (isAdvanceRentPaid && rentPrice > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Advance Rental Plan Fee',
+                      style:
+                          TextStyle(fontSize: 13, color: AppColors.slate600)),
+                  Text('₹$rentPrice',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                          color: AppColors.of(context).onSurface)),
+                ],
+              ),
+            ),
+          const Divider(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Minimum Required Top-Up',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary),
+              ),
+              Text(
+                '₹$totalRequired',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-4: the previous version used
+    // the static `AppColors.surface` (light). In dark mode the
+    // scaffold stayed light. Read from the theme extension.
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.of(context).surface,
       extendBody: true, // For glass bottom nav
       body: Column(
         children: [
@@ -150,7 +281,7 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.slate500,
+                                color: AppColors.of(context).onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -170,7 +301,12 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 56,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.slate800,
+                                  // DARK-MODE-AUDIT 2026-08-14
+                                  // P0-7: the big rupee-amount
+                                  // text. Same `slate800`
+                                  // disappearing-in-dark
+                                  // issue.
+                                  color: AppColors.of(context).onSurface,
                                   letterSpacing: -2,
                                 ),
                                 decoration: const InputDecoration(
@@ -196,7 +332,9 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+                    _buildTopUpBreakdownCard(),
+                    const SizedBox(height: 16),
 
                     // Grid of 4 chips
                     GridView.count(
@@ -260,10 +398,10 @@ class _TopUpAmountScreenState extends ConsumerState<TopUpAmountScreen>
                                   .copyWith(color: AppColors.slate600),
                             ),
                             Text(
-                              'Min: ₹${ref.watch(walletProvider.select((p) => p.walletMinTopup)).toInt()}',
+                              'Min Required: ₹$_requiredMinAmount',
                               style: AppTypography.bodyMedium
                                   .copyWith(fontWeight: FontWeight.w600)
-                                  .copyWith(color: AppColors.slate500),
+                                  .copyWith(color: AppColors.primary),
                             ),
                           ],
                         );

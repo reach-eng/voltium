@@ -31,10 +31,13 @@ class PlanHeaderCard extends StatelessWidget {
                         color: AppColors.outlineVariant,
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_ios_new,
                       size: 18,
-                      color: AppColors.slate800,
+                      // DARK-MODE-AUDIT 2026-08-14 P0-7:
+                      // `slate800` is identical to the dark
+                      // card surface — disappears in dark mode.
+                      color: AppColors.of(context).onSurface,
                     ),
                   ),
                 ),
@@ -44,7 +47,9 @@ class PlanHeaderCard extends StatelessWidget {
                 child: Text(
                   'Select a new plan',
                   style: AppTypography.headingMedium.copyWith(
-                    color: AppColors.slate800,
+                    // DARK-MODE-AUDIT 2026-08-14 P0-7:
+                    // same as above — read from the theme.
+                    color: AppColors.of(context).onSurface,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -58,7 +63,7 @@ class PlanHeaderCard extends StatelessWidget {
             'Choose the rental duration that best fits your needs. You can change this at any time.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.slate500,
+              color: AppColors.of(context).onSurfaceVariant,
               height: 1.5,
             ),
           ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
@@ -34,8 +35,8 @@ class UnderlineOtpInput extends StatefulWidget {
     this.onChanged,
     this.autoFocus = true,
     this.slotWidth = 44,
-    this.slotHeight = 64,
-    this.spacing = 8,
+    this.slotHeight = 56,
+    this.spacing = 10,
   });
 
   @override
@@ -44,7 +45,15 @@ class UnderlineOtpInput extends StatefulWidget {
 
 class UnderlineOtpInputState extends State<UnderlineOtpInput> {
   late final TextEditingController _controller;
-  late final FocusNode _focusNode;
+  // ONBOARDING-AUDIT 2026-08-14 P0-2: the previous implementation
+  // supplied a custom `FocusNode` to the inner TextField. On this
+  // device, that left the EditableText's internal IME connection
+  // un-initialised — the system engaged the IME with an empty
+  // `EditorInfo{inputType=0, …}` and hid it immediately
+  // (`HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR`). The canonical fix
+  // (mirrored from `phone_entry_widget.dart`) is to let the
+  // TextField own its own focus node and use `autofocus: true`.
+  Timer? _keyboardTimer;
   String _error = '';
 
   /// The full concatenated OTP value (e.g., "123456").
@@ -56,7 +65,7 @@ class UnderlineOtpInputState extends State<UnderlineOtpInput> {
   /// Clear all digits and refocus.
   void clear() {
     _controller.clear();
-    _focusNode.requestFocus();
+    SystemChannels.textInput.invokeMethod('TextInput.show');
     setState(() {});
   }
 
@@ -69,19 +78,29 @@ class UnderlineOtpInputState extends State<UnderlineOtpInput> {
   void initState() {
     super.initState();
     _controller = TextEditingController();
-    _focusNode = FocusNode();
 
     if (widget.autoFocus) {
+      // Defer the IME show until the field has had a chance to mount
+      // and the framework has wired up its internal EditableText. We
+      // can't reach into the field's own focus node (we deliberately
+      // don't own it anymore), so we just ask the system to surface
+      // the IME — the focused TextField will pick it up.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _focusNode.requestFocus();
+        if (mounted) {
+          _keyboardTimer = Timer(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              SystemChannels.textInput.invokeMethod('TextInput.show');
+            }
+          });
+        }
       });
     }
   }
 
   @override
   void dispose() {
+    _keyboardTimer?.cancel();
     _controller.dispose();
-    _focusNode.dispose();
     super.dispose();
   }
 
@@ -127,14 +146,20 @@ class UnderlineOtpInputState extends State<UnderlineOtpInput> {
       children: [
         GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => _focusNode.requestFocus(),
+          onTap: () {
+            // ONBOARDING-AUDIT 2026-08-14 P0-2: we no longer hold a
+            // custom FocusNode. Asking the system to surface the IME
+            // is enough — the TextField below owns its own focus and
+            // will pick up the input.
+            SystemChannels.textInput.invokeMethod('TextInput.show');
+          },
           child: SizedBox(
             key: const Key('otpInputRow'),
             height: widget.slotHeight,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Visual underline slots (behind the transparent text field).
+                // Visual underline slots (behind the text field).
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -154,36 +179,44 @@ class UnderlineOtpInputState extends State<UnderlineOtpInput> {
                     );
                   }),
                 ),
-                // Invisible TextField that captures the actual keystrokes.
-                // Transparent so the underline slots above show through.
-                Opacity(
-                  opacity: 0.0,
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    keyboardType: TextInputType.number,
-                    maxLength: widget.length,
-                    autocorrect: false,
-                    enableSuggestions: false,
-                    textAlign: TextAlign.center,
-                    cursorWidth: 0, // we render our own cursor in the slot
-                    showCursor: false,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(widget.length),
-                    ],
-                    onChanged: _onChanged,
-                    style: AppTypography.headingMedium
-                        .copyWith(color: AppColors.onSurface),
-                    decoration: const InputDecoration(
-                      counterText: '',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: true,
-                      fillColor: Colors.transparent,
-                      contentPadding: EdgeInsets.zero,
-                    ),
+                // ONBOARDING-AUDIT 2026-08-14 P0-2: this is now a real
+                // TextField (no Opacity wrapper, no custom focusNode,
+                // cursor visible). The IME connection initialises
+                // correctly because the framework owns the focus node.
+                // The digits are visually hidden by a transparent
+                // text color so the underline slots above still show
+                // through; the field is also `filled: true` with a
+                // transparent fill so it covers the slot row for hit
+                // testing.
+                TextField(
+                  controller: _controller,
+                  autofocus: widget.autoFocus,
+                  keyboardType: TextInputType.number,
+                  maxLength: widget.length,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textAlign: TextAlign.center,
+                  // Keep the cursor visible (don't hide it via
+                  // cursorWidth: 0 / showCursor: false) — those
+                  // flags were part of the IME regression. The
+                  // transparent text + transparent fill make the
+                  // cursor invisible enough for the visual design.
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(widget.length),
+                  ],
+                  onChanged: _onChanged,
+                  style: AppTypography.headingMedium.copyWith(
+                    color: Colors.transparent,
+                  ),
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ],
@@ -285,10 +318,19 @@ class _UnderlineSlotState extends State<_UnderlineSlot>
                 alignment: Alignment.center,
                 children: [
                   if (isFilled)
+                    // DARK-MODE-AUDIT 2026-08-14 P0-3: the previous
+                    // version used the static `AppColors.onSurface`,
+                    // which is `#101828` (light-mode body text). In
+                    // dark mode the value never resolved to the
+                    // dark palette and the digit was 1.01:1 against
+                    // the dark surface — completely invisible.
+                    // Read via the theme extension so the digit
+                    // colour tracks the active palette.
                     Text(
                       widget.character,
-                      style: AppTypography.headingLarge
-                          .copyWith(color: AppColors.onSurface),
+                      style: AppTypography.headingLarge.copyWith(
+                        color: AppColors.of(context).onSurface,
+                      ),
                     ),
                   if (isActive)
                     FadeTransition(
@@ -298,7 +340,7 @@ class _UnderlineSlotState extends State<_UnderlineSlot>
                         height: widget.height * 0.45,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(1),
+                          borderRadius: BorderRadius.circular(AppRadius.xxs),
                         ),
                       ),
                     ),
@@ -312,7 +354,7 @@ class _UnderlineSlotState extends State<_UnderlineSlot>
               height: hasError || isActive || isFilled ? 2.5 : 1.5,
               decoration: BoxDecoration(
                 color: underlineColor,
-                borderRadius: BorderRadius.circular(1),
+                borderRadius: BorderRadius.circular(AppRadius.xxs),
               ),
             ),
           ],

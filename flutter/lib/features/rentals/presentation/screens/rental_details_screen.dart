@@ -32,15 +32,16 @@ class RentalDetailsScreen extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground, // Subtle light background
+      backgroundColor: AppColors.of(context).iconBackground, // Subtle light background
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         title: Text('Rental Details',
-            style:
-                AppTypography.titleMedium.copyWith(color: AppColors.slate800)),
+            style: AppTypography.titleMedium.copyWith(
+                // DARK-MODE-AUDIT 2026-08-14 P0-7: same issue.
+                color: AppColors.of(context).onSurface)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -51,22 +52,25 @@ class RentalDetailsScreen extends ConsumerWidget {
                   Navigator.pop(context);
                 }
               },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                  ],
-                ),
-                child: const Icon(Icons.arrow_back,
-                    color: AppColors.slate800, size: 20),
-              ),
+              child: Builder(builder: (context) {
+                final colors = AppColors.of(context);
+                return Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4))
+                    ],
+                  ),
+                  child: Icon(Icons.arrow_back,
+                      color: colors.onSurface, size: 20),
+                );
+              }),
             ),
           ),
         ),
@@ -147,8 +151,9 @@ class RentalDetailsScreen extends ConsumerWidget {
             SizedBox(height: 32),
             Text(
               'Rental Information',
-              style:
-                  AppTypography.titleMedium.copyWith(color: AppColors.slate800),
+              style: AppTypography.titleMedium.copyWith(
+                  // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                  color: AppColors.of(context).onSurface),
             ),
             const SizedBox(height: 16),
             Container(
@@ -165,37 +170,52 @@ class RentalDetailsScreen extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  _buildDetailRow(Icons.calendar_today_rounded, 'Start Date',
+                  _buildDetailRow(context, Icons.calendar_today_rounded,
+                      'Start Date',
                       startDate != null ? dateFormat.format(startDate) : 'N/A'),
-                  const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.event_busy_rounded, 'End Date',
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.event_busy_rounded,
+                      'End Date',
                       endDate != null ? dateFormat.format(endDate) : 'N/A'),
-                  const Divider(height: 1, color: AppColors.iconBackground),
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
                   if (endDate != null) ...[
-                    _buildDetailRow(Icons.timer_outlined, 'Days Remaining',
-                        '${endDate.difference(DateTime.now()).inDays.clamp(0, 999)} Days',
-                        valueColor:
-                            endDate.difference(DateTime.now()).inDays <= 3
-                                ? AppColors.error
-                                : AppColors.primary),
-                    const Divider(height: 1, color: AppColors.iconBackground),
+                    Builder(builder: (context) {
+                      final daysRemaining =
+                          endDate.difference(DateTime.now()).inDays;
+                      final String remainingText = daysRemaining < 0
+                          ? 'Expired'
+                          : (daysRemaining == 0
+                              ? 'Expires Today'
+                              : '$daysRemaining Days');
+                      final Color remainingColor = daysRemaining <= 3
+                          ? AppColors.error
+                          : AppColors.primary;
+                      return _buildDetailRow(
+                        context,
+                        Icons.timer_outlined,
+                        'Days Remaining',
+                        remainingText,
+                        valueColor: remainingColor,
+                      );
+                    }),
+                    Divider(height: 1, color: AppColors.of(context).iconBackground),
                   ],
-                  _buildDetailRow(Icons.electric_moped_rounded,
+                  _buildDetailRow(context, Icons.electric_moped_rounded,
                       'Assigned Vehicle', vehicle),
-                  const Divider(height: 1, color: AppColors.iconBackground),
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
                   _buildDetailRow(
-                      Icons.store_mall_directory_rounded, 'Pickup Hub', hub),
-                  const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.person_rounded, 'Team Leader', tl),
-                  const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.account_balance_wallet_rounded,
+                      context, Icons.store_mall_directory_rounded, 'Pickup Hub', hub),
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.person_rounded, 'Team Leader', tl),
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.account_balance_wallet_rounded,
                       'Wallet Balance', '₹${wallet.toStringAsFixed(0)}',
                       valueColor: AppColors.success),
-                  const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.shield_rounded, 'Security Deposit',
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.shield_rounded, 'Security Deposit',
                       '₹${deposit.toStringAsFixed(0)}'),
-                  const Divider(height: 1, color: AppColors.iconBackground),
-                  _buildDetailRow(Icons.local_fire_department_rounded,
+                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.local_fire_department_rounded,
                       'Payment Streak', '$streak Days',
                       valueColor: AppColors.primary),
                 ],
@@ -217,7 +237,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.slate800,
+                      // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                      foregroundColor: AppColors.of(context).onSurface,
                       side: const BorderSide(
                           color: AppColors.outlineVariant, width: 1.5),
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -240,13 +261,29 @@ class RentalDetailsScreen extends ConsumerWidget {
                 SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      // PR-13 (RENTAL P0-4): after a successful return we must
+                      // refresh the rider data so the details screen reflects
+                      // the new rental status (e.g. status: 'RETURNED' or
+                      // 'PENDING'). Previously the EndRentalScreen popped
+                      // optimistically without refetching, leaving the rider
+                      // looking like they still had an active rental until
+                      // the next app restart.
+                      final returned = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const EndRentalScreen(),
+                          builder: (_) => EndRentalScreen(
+                            onSuccess: () => Navigator.of(context).pop(true),
+                            onBack: () => Navigator.of(context).pop(false),
+                          ),
                         ),
                       );
+                      if (returned == true && context.mounted) {
+                        // Pull the latest rider state (lease status, plan
+                        // status, etc.) — without this the screen shows
+                        // stale "Active" data after a successful end.
+                        await ref.read(riderProvider.notifier).refreshFromApi();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.error,
@@ -278,8 +315,13 @@ class RentalDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value,
-      {Color? valueColor}) {
+  Widget _buildDetailRow(BuildContext context, IconData icon,
+      String label, String value, {Color? valueColor}) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-7: helper method — needs
+    // a BuildContext to read brightness-aware tokens. The
+    // public call sites are inside the build method, so we
+    // accept a context parameter and read via the theme
+    // extension.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -287,22 +329,25 @@ class RentalDetailsScreen extends ConsumerWidget {
           Container(
             padding: Spacing.paddingSm,
             decoration: BoxDecoration(
-              color: AppColors.iconBackground,
+              color: AppColors.of(context).iconBackground,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.slate500, size: 20),
+            child: Icon(icon, color: AppColors.of(context).onSurfaceVariant, size: 20),
           ),
           SizedBox(width: 16),
           Text(
             label,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.slate500),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.of(context).onSurfaceVariant),
           ),
           const Spacer(),
           Text(
             value,
             style: AppTypography.labelLarge
                 .copyWith(fontWeight: FontWeight.w700)
-                .copyWith(color: valueColor ?? AppColors.slate800),
+                .copyWith(
+                    color: valueColor ??
+                        // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                        AppColors.of(context).onSurface),
           ),
         ],
       ),

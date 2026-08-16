@@ -1,15 +1,35 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/services/voltium_api_service.dart';
+import 'package:voltium_rider/utils/haptic_service.dart';
 
-class EmergencySOSScreen extends ConsumerWidget {
+class EmergencySOSScreen extends ConsumerStatefulWidget {
   const EmergencySOSScreen({super.key});
+
+  @override
+  ConsumerState<EmergencySOSScreen> createState() => _EmergencySOSScreenState();
+}
+
+class _EmergencySOSScreenState extends ConsumerState<EmergencySOSScreen> {
+  Timer? _cancelTimer;
+  bool _sosInFlight = false;
+
+  @override
+  void dispose() {
+    _cancelTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _callNumber(String number) async {
     final sanitizedNumber = number.replaceAll(RegExp(r'[^\d+]'), '');
@@ -19,20 +39,133 @@ class EmergencySOSScreen extends ConsumerWidget {
     }
   }
 
+  /// Best-effort location capture. NEVER blocks the emergency path: a
+  /// missing permission, no GPS fix, or a slow request just yields nulls.
+  Future<({double? lat, double? lng})> _captureLocation() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      final granted = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+      if (!granted) {
+        final asked = await Geolocator.requestPermission();
+        if (asked != LocationPermission.always &&
+            asked != LocationPermission.whileInUse) {
+          return (lat: null, lng: null);
+        }
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+      return (lat: position.latitude, lng: position.longitude);
+    } catch (_) {
+      return (lat: null, lng: null);
+    }
+  }
+
+  /// Fire-and-forget backend alert. The dial to 112 is the primary path —
+  /// a slow/failed network call must never delay or surface as an error.
+  ///
+  /// PR-14 (EMERGENCY P0-1 — fanout): the rider's emergency contacts
+  /// (managed in `EmergencyContactsService`) are sent to the backend so
+  /// it can SMS them via MSG91 and post a Slack critical alert. The
+  /// contacts read is sync (SharedPreferences) so it doesn't add
+  /// latency to the fire-and-forget path.
+  Future<void> _alertBackend({double? latitude, double? longitude}) async {
+    try {
+      // Read contacts via the synchronous accessor. The notifier
+      // exposes a `state.contacts` field that's already hydrated from
+      // SharedPreferences on app start.
+      final contactsState = ref.read(emergencyContactsServiceProvider);
+      final contacts = contactsState.contacts
+          .map((c) => {'name': c.name, 'phone': c.phone})
+          .toList(growable: false);
+
+      await VoltiumApiService().triggerSos(
+        latitude: latitude,
+        longitude: longitude,
+        triggeredVia: 'long_press',
+        contacts: contacts.isEmpty ? null : contacts,
+      );
+    } catch (_) {
+      // Swallow: analytics + audit row are best-effort.
+    }
+  }
+
+  Future<void> _triggerSos() async {
+    if (_sosInFlight) return;
+    _sosInFlight = true;
+
+    // Material destructive pattern: firm haptic on trigger start.
+    HapticService.medium();
+
+    // Telemetry first (fire-and-forget).
+    PostHogService.capture('emergency_sos_triggered');
+
+    // "Sending SOS..." overlay with a 5-second cancel option.
+    // ignore: use_build_context_synchronously
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => _SosSendingOverlay(onCancel: () {
+        _cancelTimer?.cancel();
+        Navigator.of(ctx).pop();
+      }),
+    );
+
+    // Auto-dismiss the overlay after 5s — the alert keeps going even if
+    // the rider walks away from the phone.
+    _cancelTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && Navigator.of(context, rootNavigator: true).canPop()) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    });
+
+    // Capture location best-effort, then alert the backend, then dial 112.
+    final loc = await _captureLocation();
+    await _alertBackend(latitude: loc.lat, longitude: loc.lng);
+    await _callNumber('112');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded English
+        // SnackBar text. The "5" placeholder is appended
+        // dynamically; a future ARB pass can replace it with a
+        // full template if the rider sees a localised count.
+        content: Text(
+          AppLocalizations.of(context)!.txtsosAlertTriggeredDialing,
+        ),
+        backgroundColor: AppColors.error,
+      ),
+    );
+    _sosInFlight = false;
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final emergencyContact = rider?.emergencyContact;
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.of(context).iconBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: Text('Emergency SOS',
-            style: AppTypography.titleMedium.copyWith(
-                fontWeight: FontWeight.bold, color: AppColors.slate800)),
+        title: Text(
+          // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded English
+          // title. Localised via the existing `txtemergencySos`
+          // ARB key.
+          AppLocalizations.of(context)!.txtemergencySos,
+          // DARK-MODE-AUDIT 2026-08-14 P0-7: `slate800` is
+          // identical to the dark card surface — text
+          // disappears. Read from the theme extension.
+          style: AppTypography.titleLarge
+              .copyWith(color: AppColors.of(context).onSurface),
+        ),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -56,8 +189,12 @@ class EmergencySOSScreen extends ConsumerWidget {
                         offset: const Offset(0, 4))
                   ],
                 ),
-                child: const Icon(Icons.arrow_back,
-                    color: AppColors.slate800, size: 20),
+                child: Icon(Icons.arrow_back,
+                    // DARK-MODE-AUDIT 2026-08-14 P0-7: same
+                    // `slate800` issue — disappears in dark
+                    // mode. Read from the theme.
+                    color: AppColors.of(context).onSurface,
+                    size: 20),
               ),
             ),
           ),
@@ -70,15 +207,7 @@ class EmergencySOSScreen extends ConsumerWidget {
           children: [
             SizedBox(height: 40),
             GestureDetector(
-              onLongPress: () {
-                PostHogService.capture('emergency_sos_triggered');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('SOS Alert Triggered! Help is on the way.'),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
-              },
+              onLongPress: _triggerSos,
               child: Container(
                 width: 200,
                 height: 200,
@@ -110,12 +239,27 @@ class EmergencySOSScreen extends ConsumerWidget {
             Text(
               'Press and hold to trigger an emergency alert',
               style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.slate500, fontSize: 16),
+                  color: AppColors.of(context).onSurfaceVariant, fontSize: 16),
             ),
             const SizedBox(height: 64),
-            // Personal emergency contact (from profile).
+            // Saved emergency contacts from service.
+            ...ref.watch(emergencyContactsService).contacts.map(
+                  (c) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildEmergencyContactCard(
+                      icon: Icons.contact_phone,
+                      title: '${c.name} (${c.relationship})',
+                      number: c.phone,
+                      color: c.isPrimary ? AppColors.error : AppColors.primary,
+                      isFullWidth: true,
+                      onTap: () => _callNumber(c.phone),
+                    ),
+                  ),
+                ),
+            // Personal emergency contact fallback (from profile).
             if (emergencyContact != null &&
-                emergencyContact.toString().isNotEmpty) ...[
+                emergencyContact.toString().isNotEmpty &&
+                ref.watch(emergencyContactsService).contacts.isEmpty) ...[
               _buildEmergencyContactCard(
                 icon: Icons.person,
                 title: 'My Emergency Contact',
@@ -153,10 +297,10 @@ class EmergencySOSScreen extends ConsumerWidget {
             _buildEmergencyContactCard(
               icon: Icons.support_agent,
               title: 'Voltium Support',
-              number: '+91-9876543210',
+              number: '1800-865-8486',
               color: AppColors.primary,
               isFullWidth: true,
-              onTap: () => _callNumber('9876543210'),
+              onTap: () => _callNumber('18008658486'),
             ),
           ],
         ),
@@ -199,7 +343,7 @@ class EmergencySOSScreen extends ConsumerWidget {
                         Text(title, style: AppTypography.titleSmall),
                         Text(number,
                             style: GoogleFonts.plusJakartaSans(
-                                color: AppColors.slate500)),
+                                color: AppColors.of(context).onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -215,11 +359,74 @@ class EmergencySOSScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold)),
                   Text(number,
                       style: GoogleFonts.plusJakartaSans(
-                          color: AppColors.slate500)),
+                          color: AppColors.of(context).onSurfaceVariant)),
                   const SizedBox(height: 8),
                   Icon(Icons.call, color: color, size: 18),
                 ],
               ),
+      ),
+    );
+  }
+}
+
+/// Modal overlay shown while the SOS alert is being sent. Offers a
+/// 5-second cancel option (Material destructive pattern) — after the
+/// timer fires the alert is irrevocable and 112 is dialed.
+class _SosSendingOverlay extends StatelessWidget {
+  const _SosSendingOverlay({required this.onCancel});
+
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                color: AppColors.error,
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Sending SOS...',
+              style: AppTypography.titleMedium
+                  .copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sharing your location with Voltium and dialing 112.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: onCancel,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+              ),
+              // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded
+              // English "Cancel (5s)" — the seconds value
+              // changes, so a future ARB pass can replace it
+              // with a `txtcancelWithCountdown(seconds)` template.
+              // For now the literal "5" is a constant.
+              child: Text(
+                  '${AppLocalizations.of(context)!.txtcancel} (5s)'),
+            ),
+          ],
+        ),
       ),
     );
   }

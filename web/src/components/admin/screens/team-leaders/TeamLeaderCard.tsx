@@ -3,6 +3,7 @@
 import { Loader2, Mail, Pencil, Phone, Trash2, UserCircle, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatPhone } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -77,7 +78,7 @@ export function TeamLeaderCard({
         <div className="space-y-1.5 text-sm">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-3.5 w-3.5" />
-            <span>{leader.phone}</span>
+            <span>{formatPhone(leader.phone)}</span>
           </div>
           {leader.email && (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -108,7 +109,12 @@ export function TeamLeaderCard({
           <Button
             variant="secondary"
             size="sm"
-            className="dark:text-white"
+            // WEB-AUDIT 2026-08-14 P0-4: the previous `dark:text-white`
+            // override combined with a light-locked secondary-button
+            // surface produced white-on-light in dark mode. The
+            // default secondary variant already binds to the
+            // `secondary-foreground` token (which flips in `.dark`),
+            // so the explicit override can be dropped.
             onClick={() => onViewStats(leader)}
           >
             Drivers &amp; Stats

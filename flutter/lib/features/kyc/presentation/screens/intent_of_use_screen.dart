@@ -24,11 +24,21 @@ class IntentOfUseScreen extends ConsumerStatefulWidget {
 
 class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
   IntentType? _selectedIntent;
+  // PR-ONBOARDING-2026-08-11 (audit 2.1): double-tap guard for the in-flight
+  // PUT /api/rider/profile. The previous implementation had no _isLoading
+  // flag, so rapid double-tap issued a second PUT before the first returned.
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-4: the previous version used
+    // the static `AppColors.surface` (#F7F9FB) — the LIGHT
+    // surface. In dark mode the scaffold stayed light even
+    // though the rest of the app was dark. Read from the
+    // brightness-aware theme extension so the scaffold flips
+    // with the user's theme.
     return Scaffold(
-      backgroundColor: AppColors.surface, // Light bluish background
+      backgroundColor: AppColors.of(context).surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -165,50 +175,61 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                 height: 56,
                 child: ElevatedButton(
                   key: const Key('confirmIntentButton'),
-                  onPressed: _selectedIntent == null
+                  onPressed: (_selectedIntent == null || _isSubmitting)
                       ? null
                       : () async {
-                          if (_selectedIntent != null) {
-                            final intentStr =
-                                _selectedIntent == IntentType.delivery
-                                    ? 'deliver'
-                                    : 'personal';
-                            final provider = ref.read(riderProvider.notifier);
-                            final riderId = ref.watch(riderProvider).riderId ??
-                                ref.watch(riderProvider).rider?.id;
-                            final messenger = ScaffoldMessenger.of(context);
-                            if (riderId == null) {
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Rider session not ready. Please try again.'),
-                                ),
-                              );
-                              return;
-                            }
-                            try {
-                              await VoltiumApiClient(ApiClient())
-                                  .putRiderProfile(
-                                UpdateProfileRequest(intent: intentStr),
-                              );
-                              await provider.refresh();
-                              PostHogService.capture(
-                                'intent_of_use_submitted',
-                                properties: {'intent': intentStr},
-                              );
-                            } catch (_) {
-                              if (!mounted) return;
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Couldn\'t save your selection. Please try again.'),
-                                ),
-                              );
-                              return;
+                          // ONBOARDING-AUDIT 2026-08-14 P1-4:
+                          // double-tap race guard. The button's
+                          // onPressed is gated on `_isSubmitting`,
+                          // but the framework may not have repainted
+                          // yet when the second tap arrives — a fast
+                          // double-tap can fire onPressed twice and
+                          // call putRiderProfile() + refresh() twice.
+                          // Bail early on the second tap.
+                          if (_isSubmitting) return;
+                          final intentStr =
+                              _selectedIntent == IntentType.delivery
+                                  ? 'deliver'
+                                  : 'personal';
+                          final provider = ref.read(riderProvider.notifier);
+                          final riderId = ref.watch(riderProvider).riderId ??
+                              ref.watch(riderProvider).rider?.id;
+                          final messenger = ScaffoldMessenger.of(context);
+                          if (riderId == null) {
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Rider session not ready. Please try again.'),
+                              ),
+                            );
+                            return;
+                          }
+                          setState(() => _isSubmitting = true);
+                          try {
+                            await VoltiumApiClient(ApiClient()).putRiderProfile(
+                              UpdateProfileRequest(intent: intentStr),
+                            );
+                            await provider.refresh();
+                            await PostHogService.capture(
+                              'intent_of_use_submitted',
+                              properties: {'intent': intentStr},
+                            );
+                            if (!mounted) return;
+                            widget.onNext?.call();
+                          } catch (_) {
+                            if (!mounted) return;
+                            messenger.showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Couldn\'t save your selection. Please try again.'),
+                              ),
+                            );
+                            return;
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isSubmitting = false);
                             }
                           }
-                          if (!mounted) return;
-                          widget.onNext?.call();
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -221,10 +242,20 @@ class _IntentOfUseScreenState extends ConsumerState<IntentOfUseScreen> {
                           BorderRadius.circular(AppRadius.radiusModal),
                     ),
                   ),
-                  child: Text(
-                    'Confirm Selection',
-                    style: AppTypography.titleSmall,
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'Confirm Selection',
+                          style: AppTypography.titleSmall,
+                        ),
                 ),
               ),
             ),

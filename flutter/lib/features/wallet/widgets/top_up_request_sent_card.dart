@@ -50,7 +50,8 @@ class TopUpRequestSentCard extends StatelessWidget {
               Text(
                 'Top-up Request',
                 style: AppTypography.titleSmall
-                    .copyWith(color: AppColors.slate800),
+                    // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+                    .copyWith(color: AppColors.of(context).onSurface),
               ),
               Container(
                 padding:
@@ -93,15 +94,15 @@ class TopUpRequestSentCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 16),
-          _buildRow('Security Deposit', '₹${rider.securityDeposit}'),
+          _buildRow(context, 'Security Deposit', '₹${rider.securityDeposit}'),
           const SizedBox(height: 8),
           _buildRow(
-              'Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
+              context, 'Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppColors.outlineVariant),
           ),
-          _buildRow('Total Pending', '₹$topUpAmount', isBold: true),
+          _buildRow(context, 'Total Pending', '₹$topUpAmount', isBold: true),
           if (record?.proofUrl != null && record!.proofUrl!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Row(
@@ -109,7 +110,7 @@ class TopUpRequestSentCard extends StatelessWidget {
                 Text(
                   'Uploaded Proof:',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppColors.slate500,
+                    color: AppColors.of(context).onSurfaceVariant,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -175,14 +176,18 @@ class TopUpRequestSentCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String label, String value, {bool isBold = false}) {
+  Widget _buildRow(BuildContext context, String label, String value,
+      {bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: isBold ? AppColors.slate800 : AppColors.slate500,
+            // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+            color: isBold
+                ? AppColors.of(context).onSurface
+                : AppColors.of(context).onSurfaceVariant,
             fontSize: isBold ? 14 : 13,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
           ),
@@ -190,7 +195,8 @@ class TopUpRequestSentCard extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.plusJakartaSans(
-            color: AppColors.slate800,
+            // DARK-MODE-AUDIT 2026-08-14 P0-7: same.
+            color: AppColors.of(context).onSurface,
             fontSize: isBold ? 16 : 14,
             fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
           ),

@@ -97,15 +97,23 @@ class _OtpInputState extends State<OtpInput> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // DARK-MODE-AUDIT 2026-08-14 P0-3: the previous version
+    // used a hand-rolled `isDark` flag and a static
+    // `AppColors.of(context).onSurface` background. In dark mode the
+    // background was identical to the dark card surface AND
+    // the digit text used the hard-coded `Colors.white` /
+    // `Colors.black` pair. Both now read from the brightness-
+    // aware theme extension so the widget tracks the user's
+    // theme choice end-to-end.
+    final colors = AppColors.of(context);
     final defaultDecoration = BoxDecoration(
-      color: isDark ? AppColors.slate800 : AppColors.iconBackground,
+      color: colors.iconBackground,
       borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: Colors.transparent),
     );
     final focused = widget.focusedDecoration ??
         BoxDecoration(
-          color: isDark ? AppColors.slate800 : Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.primary, width: 2),
           boxShadow: [
@@ -118,7 +126,7 @@ class _OtpInputState extends State<OtpInput> {
         );
     final errorDecoration = widget.errorDecoration ??
         BoxDecoration(
-          color: isDark ? AppColors.slate800 : AppColors.errorLight,
+          color: colors.errorSurface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.error, width: 2),
         );
@@ -157,7 +165,7 @@ class _OtpInputState extends State<OtpInput> {
                       GoogleFonts.plusJakartaSans(
                         fontSize: widget.size * 0.5,
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
+                        color: colors.onSurface,
                       ),
                   decoration: const InputDecoration(
                     border: InputBorder.none,

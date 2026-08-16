@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminStore } from '@/store/admin';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -95,11 +95,11 @@ const riderGroups = [
 function StatusIcon({ status }: { status: string }) {
   switch (status) {
     case 'green':
-      return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
+      return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
     case 'yellow':
       return <AlertTriangle className="h-4 w-4 text-amber-500" />;
     case 'red':
-      return <XCircle className="h-4 w-4 text-rose-600" />;
+      return <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />;
     default:
       return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
   }
@@ -110,16 +110,7 @@ export default function WorkflowCoverageScreen() {
   const [healthData, setHealthData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchHealthData();
-  }, []);
-
-  // Dev-only screen: short-circuit in non-dev to avoid bundling + fetching
-  // the workflow coverage data in production. Hooks above must still run
-  // unconditionally to satisfy the Rules of Hooks.
-  if (process.env.APP_ENV !== 'development') return null;
-
-  const fetchHealthData = async () => {
+  const fetchHealthData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/workflow-coverage');
@@ -134,7 +125,16 @@ export default function WorkflowCoverageScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchHealthData();
+  }, [fetchHealthData]);
+
+  // Dev-only screen: short-circuit in non-dev to avoid bundling + fetching
+  // the workflow coverage data in production. Hooks above must still run
+  // unconditionally to satisfy the Rules of Hooks.
+  if (process.env.APP_ENV !== 'development') return null;
 
   const getWorkflowStatus = (sectionId: string): string => {
     if (!healthData) return 'unknown';
@@ -159,7 +159,9 @@ export default function WorkflowCoverageScreen() {
           </Badge>
           {healthData && (
             <span className="text-xs text-muted-foreground ml-2">
-              Updated: {new Date(healthData.timestamp).toLocaleTimeString()}
+              {/* P2-20: pin the locale — toLocaleTimeString() with no locale
+                  varies by browser; the dashboard renders en-GB. */}
+              Updated: {new Date(healthData.timestamp).toLocaleTimeString('en-GB')}
             </span>
           )}
         </div>
@@ -174,10 +176,11 @@ export default function WorkflowCoverageScreen() {
       {healthData && (
         <div className="flex flex-wrap gap-3">
           <Badge
+            // WEB-AUDIT 2026-08-14 P0-2: same dark-aware pattern.
             className={`px-3 py-1 ${
               healthData.database.status === 'green'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border-rose-200'
+                ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400'
+                : 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400'
             }`}
             variant="outline"
           >
@@ -187,10 +190,10 @@ export default function WorkflowCoverageScreen() {
           <Badge
             className={`px-3 py-1 ${
               healthData.workers.status === 'green'
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400'
                 : healthData.workers.status === 'yellow'
-                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                : 'bg-rose-50 text-rose-700 border-rose-200'
+                ? 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400'
+                : 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400'
             }`}
             variant="outline"
           >
@@ -246,7 +249,7 @@ export default function WorkflowCoverageScreen() {
           {riderGroups.map(([title, description]) => (
             <div key={title} className="rounded-2xl border bg-muted/30 p-4">
               <div className="flex items-center gap-2 font-bold">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 {title}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{description}</p>

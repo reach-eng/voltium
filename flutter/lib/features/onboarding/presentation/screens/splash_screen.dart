@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
+import 'package:voltium_rider/services/secure_storage_service.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -72,24 +74,47 @@ class _SplashScreenState extends State<SplashScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!AppConstants.isTestMode) {
+      // PR-47 removed assets/images/* from the bundle — the placeholder image
+      // no longer exists, so only the real logo is precached.
       precacheImage(const AssetImage('assets/logo.png'), context)
           .catchError((_) {});
-      precacheImage(
-        const AssetImage('assets/images/vehicle_placeholder.png'),
-        context,
-      ).catchError((_) {});
     }
   }
 
   Future<void> _startSequence() async {
     PostHogService.capture('splash_viewed');
 
-    // Trigger speculative profile & state hydration while animation plays
-    Future.microtask(() {
-      try {
-        // Hydrate background caches
-      } catch (_) {}
-    });
+    // PR-VER-2026-08-07 (SPLASH P0): returning riders with a valid session
+    // skip the ~3s showcase animation — a 300ms beat is enough to avoid a
+    // jarring cut. New / logged-out riders still get the full sequence.
+    // SecureStorage throws MissingPluginException in widget tests, so the
+    // check is best-effort and defaults to the full animation.
+    var hasSession = false;
+    try {
+      hasSession = await SecureStorageService().isLoggedIn();
+    } catch (_) {
+      hasSession = false;
+    }
+    if (hasSession) {
+      // ONBOARDING-AUDIT 2026-08-14 P2-12: the previous 300ms
+      // fast-path was too short to be useful (rider saw a flash of
+      // empty screen on stale-JWT before the 401 hit) and too short
+      // to feel intentional. Bumped to 1000ms — a returning rider
+      // with a valid session gets routed forward fast, a rider with
+      // a stale JWT gets a clear 401 → "session expired" path (see
+      // P0-4 in rider_provider.dart). The longer wait is acceptable
+      // because the splash animation is part of the brand.
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (mounted) widget.onComplete();
+      return;
+    }
+
+    // ONBOARDING-AUDIT 2026-08-14 P3-3: the previous implementation
+    // had an empty `Future.microtask` with a try/catch that did
+    // nothing — the comment said "Hydrate background caches" but the
+    // body was empty. Deleted; the actual hydration is triggered by
+    // the router's `ref.read(riderProvider.notifier).init()` call on
+    // the splash `onComplete` callback (router.dart initState).
 
     await Future.delayed(const Duration(milliseconds: 200));
     if (!mounted) return;
@@ -117,8 +142,22 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-1: the previous version of this
+    // build method used static `AppColors.surface` /
+    // `AppColors.slate900` / `AppColors.of(context).onSurfaceVariant` for the scaffold
+    // and the wordmark. In dark mode:
+    //   - `AppColors.surface` (#F7F9FB) is the LIGHT surface — the
+    //     splash stayed light even when the rest of the app went
+    //     dark, which contradicted the user's theme choice.
+    //   - `AppColors.slate900` (#0F172A) is identical to
+    //     `ThemeColors.dark.surface` — the wordmark and the
+    //     loading-bar track were invisible against the dark bg
+    //     (1.00:1 contrast).
+    // Every color now reads from the brightness-aware theme
+    // extension via `AppColors.of(context)`.
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colors.surface,
       body: SizedBox(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -175,19 +214,28 @@ class _SplashScreenState extends State<SplashScreen>
                         offset: Offset(0, _textSlide.value),
                         child: Column(
                           children: [
+                            // LANGUAGE-AUDIT (2026-08-16) #5: brand name
+                            // stays as "Voltium" in every locale (it's a
+                            // proper noun, not a translation). The
+                            // tagline below it is localised via l10n.
                             Text(
                               'Voltium',
                               style: AppTypography.displayLarge.copyWith(
-                                  color: AppColors.slate900, letterSpacing: -1),
+                                  color: colors.onSurface,
+                                  letterSpacing: -1),
                             ),
                             SizedBox(height: 8),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Electric scooter rentals',
+                                  // LANGUAGE-AUDIT (2026-08-16) #5: was a
+                                  // hardcoded English "Electric scooter
+                                  // rentals" string. Now localisable.
+                                  AppLocalizations.of(context)!
+                                      .txtsplashTagline,
                                   style: AppTypography.bodyLarge.copyWith(
-                                      color: AppColors.slate500,
+                                      color: colors.onSurfaceVariant,
                                       letterSpacing: 1.5),
                                 ),
                                 SizedBox(width: 8),
@@ -221,12 +269,19 @@ class _SplashScreenState extends State<SplashScreen>
                             width: 160,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: AppColors.slate900.withValues(alpha: 0.05),
+                              // DARK-MODE-AUDIT 2026-08-14 P0-2:
+                              // the previous version used
+                              // `AppColors.slate900.withValues(alpha:
+                              // 0.05)` — slate-900 IS the dark
+                              // surface, so the track was
+                              // invisible in dark mode.
+                              // Brightness-aware outline keeps the
+                              // pill readable in both modes.
+                              color: colors.outline.withValues(alpha: 0.25),
                               borderRadius:
                                   BorderRadius.circular(AppRadius.full),
                               border: Border.all(
-                                color:
-                                    AppColors.slate900.withValues(alpha: 0.1),
+                                color: colors.outline,
                                 width: 0.5,
                               ),
                             ),
@@ -262,10 +317,15 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       SizedBox(height: 16),
+                      // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded
+                      // English "CONNECTING TO GRID" string. Now
+                      // localisable via the existing `txtconnectingToGrid`
+                      // ARB key (one of the 475 keys this audit unblocks).
                       Text(
-                        'CONNECTING TO GRID',
+                        AppLocalizations.of(context)!.txtconnectingToGrid,
                         style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.slate400, letterSpacing: 2.5),
+                            color: colors.onSurfaceMuted,
+                            letterSpacing: 2.5),
                       ),
                     ],
                   ),

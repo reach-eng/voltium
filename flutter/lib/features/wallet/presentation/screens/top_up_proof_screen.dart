@@ -4,14 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
+import 'package:voltium_rider/widgets/pending_uploads_pill.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:voltium_rider/core/state/riverpod_providers.dart';
 
 class TopUpProofScreen extends ConsumerStatefulWidget {
   final int amount;
@@ -33,31 +32,41 @@ class TopUpProofScreen extends ConsumerStatefulWidget {
   ConsumerState<TopUpProofScreen> createState() => _TopUpProofScreenState();
 }
 
-enum PaymentMode { cash, upi, online }
+enum PaymentMode { cash, upi, instant }
 
 class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _imageFile;
   bool _isUploading = false;
   PaymentMode _selectedPaymentMode = PaymentMode.cash;
-  String _selectedGateway = 'razorpay';
+  final String _mdrBearer = 'RIDER';
+  final double _extraFeePercent = 2.5;
 
-  void _showOnlinePaymentAlertDialog() {
-    showDialog(
+  Future<void> _showInstantPaymentAlert() async {
+    HapticFeedback.lightImpact();
+    final isRiderBearer = _mdrBearer == 'RIDER';
+    final fee =
+        isRiderBearer ? (widget.amount * (_extraFeePercent / 100)).round() : 0;
+
+    final proceed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.bolt, color: AppColors.primaryLight, size: 28),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Instant Online Top-Up',
-                style: AppTypography.titleMedium
-                    .copyWith(color: AppColors.slate800),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
+              child: const Icon(Icons.bolt,
+                  color: AppColors.primaryLight, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Instant Payment',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -65,107 +74,68 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              isRiderBearer
+                  ? 'Top-up will be instant. Up to 2.5% extra (₹$fee) gateway fee will be added to your top-up amount.'
+                  : 'Top-up will be instant. Gateway fee is 100% covered by Voltium (₹0 extra fee for rider).',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                height: 1.4,
+                color: AppColors.of(context).onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(Spacing.sm),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.warningSurface,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                color: AppColors.of(context).primarySurface,
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.info_outline,
-                      color: AppColors.onSurface, size: 20),
+                      size: 18, color: AppColors.primaryLight),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Instant Top-Up Notice',
-                      style: AppTypography.labelLarge
-                          .copyWith(color: AppColors.onSurface),
+                      'Points to current active payment gateway',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryLight,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Your wallet top-up will be processed instantly upon successful payment.',
-              style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14, color: AppColors.slate700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Note: Payment gateway fee of up to 2.5% extra will apply on online transactions when enabled by admin.',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.error,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Select Payment Gateway:',
-              style:
-                  AppTypography.labelMedium.copyWith(color: AppColors.slate800),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
-              value: _selectedGateway,
-              decoration: InputDecoration(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md)),
-              ),
-              items: const [
-                DropdownMenuItem(
-                    value: 'razorpay', child: Text('Razorpay Gateway')),
-                DropdownMenuItem(
-                    value: 'phonepe', child: Text('PhonePe Gateway')),
-                DropdownMenuItem(
-                    value: 'cashfree', child: Text('Cashfree Gateway')),
-                DropdownMenuItem(
-                    value: 'easebuzz', child: Text('Easebuzz Gateway')),
-              ],
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() => _selectedGateway = val);
-                }
-              },
-            ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: TextStyle(color: AppColors.of(context).onSurfaceVariant)),
           ),
           ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryLight,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md)),
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             ),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              setState(() {
-                _selectedPaymentMode = PaymentMode.online;
-              });
-              final rider = ref.read(riderProvider).rider;
-              final riderId = rider?.id ?? rider?.riderId ?? '';
-              final checkoutUrl = Uri.parse(
-                'https://api.razorpay.com/v1/checkout/embedded?rider_id=$riderId&amount=${widget.amount}&gateway=$_selectedGateway',
-              );
-              if (await canLaunchUrl(checkoutUrl)) {
-                await launchUrl(checkoutUrl,
-                    mode: LaunchMode.externalApplication);
-              }
-            },
-            child: const Text('Proceed to Pay'),
+            child: const Text('Proceed',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
+
+    if (proceed == true) {
+      setState(() => _selectedPaymentMode = PaymentMode.instant);
+    }
   }
 
   Widget _buildPaymentMethodSelector() {
@@ -277,19 +247,17 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _showOnlinePaymentAlertDialog();
-                  },
+                  key: const Key('instantPaymentOption'),
+                  onTap: _showInstantPaymentAlert,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: _selectedPaymentMode == PaymentMode.online
+                      color: _selectedPaymentMode == PaymentMode.instant
                           ? colors.primarySurface
                           : colors.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: _selectedPaymentMode == PaymentMode.online
+                        color: _selectedPaymentMode == PaymentMode.instant
                             ? AppColors.primaryLight
                             : colors.outlineVariant,
                         width: 1.5,
@@ -298,8 +266,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     child: Column(
                       children: [
                         Icon(
-                          Icons.credit_card,
-                          color: _selectedPaymentMode == PaymentMode.online
+                          Icons.bolt_rounded,
+                          color: _selectedPaymentMode == PaymentMode.instant
                               ? AppColors.primaryLight
                               : colors.onSurfaceMuted,
                           size: 22,
@@ -308,7 +276,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                         Text(
                           'Instant',
                           style: AppTypography.labelMedium.copyWith(
-                            color: _selectedPaymentMode == PaymentMode.online
+                            color: _selectedPaymentMode == PaymentMode.instant
                                 ? AppColors.primaryLight
                                 : colors.onSurface,
                           ),
@@ -320,30 +288,6 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
               ),
             ],
           ),
-          if (_selectedPaymentMode == PaymentMode.online) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: colors.primarySurface,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.bolt,
-                      color: AppColors.primaryLight, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Gateway: ${_selectedGateway.toUpperCase()} selected. Instant top-up (up to 2.5% extra fee may apply).',
-                      style: AppTypography.bodySmall
-                          .copyWith(color: AppColors.primaryLight),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -387,15 +331,30 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   }
 
   Future<void> _submit() async {
-    if (_imageFile == null) return;
+    // ONBOARDING-AUDIT 2026-08-14 follow-up: double-tap guard at the
+    // top of the handler. The submit button is gated on
+    // `!_isUploading` but `setState(() => _isUploading = true)` is
+    // only set below — a rapid double-tap can fire two onTaps before
+    // the framework repaints, which would submit two SECURITY_DEPOSIT
+    // (or TOP_UP) transactions. Bail out before any work begins.
+    if (_isUploading) return;
     setState(() => _isUploading = true);
-    final methodStr = _selectedPaymentMode == PaymentMode.upi ? 'UPI' : 'CASH';
+    final methodStr = _selectedPaymentMode == PaymentMode.instant
+        ? 'INSTANT'
+        : (_selectedPaymentMode == PaymentMode.upi ? 'UPI' : 'CASH');
     final refVal = _selectedPaymentMode == PaymentMode.upi &&
             _upiRefCtrl.text.trim().isNotEmpty
         ? _upiRefCtrl.text.trim()
         : null;
-    await widget.onSubmit?.call(_imageFile!, methodStr, refVal);
-    if (mounted) setState(() => _isUploading = false);
+
+    final fileToSubmit = _imageFile ??
+        File('${Directory.systemTemp.path}/instant_payment_receipt.png');
+
+    try {
+      await widget.onSubmit?.call(fileToSubmit, methodStr, refVal);
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   @override
@@ -416,6 +375,10 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   _buildAmountCard(),
                   const SizedBox(height: 16),
                   _buildPaymentMethodSelector(),
+                  if (_selectedPaymentMode == PaymentMode.instant) ...[
+                    const SizedBox(height: 16),
+                    _buildInstantBreakdownCard(),
+                  ],
                   const SizedBox(height: 16),
                   _buildInstructionCard(),
                   const SizedBox(height: 16),
@@ -495,7 +458,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 32),
+              const PendingUploadsPill(),
             ],
           ),
           SizedBox(height: 24),
@@ -540,7 +503,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 'TOP-UP AMOUNT',
                 style: AppTypography.bodySmall
                     .copyWith(fontWeight: FontWeight.w600)
-                    .copyWith(color: AppColors.slate500, letterSpacing: 0.5),
+                    .copyWith(color: AppColors.of(context).onSurfaceVariant, letterSpacing: 0.5),
               ),
               SizedBox(height: 4),
               Text(
@@ -570,10 +533,11 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   }
 
   Widget _buildInstructionCard() {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: AppShadows.glass,
       ),
@@ -582,8 +546,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: const BoxDecoration(
-              color: AppColors.primarySurface,
+            decoration: BoxDecoration(
+              color: AppColors.of(context).primarySurface,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -600,7 +564,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 Text(
                   'Proof of Top Up',
                   style: AppTypography.titleSmall
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: colors.onSurface),
                 ),
                 SizedBox(height: 6),
                 Text(
@@ -608,7 +572,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     height: 1.4,
-                    color: AppColors.slate500,
+                    color: colors.onSurfaceMuted,
                   ),
                 ),
               ],
@@ -620,6 +584,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   }
 
   Widget _buildUploadCard() {
+    final colors = AppColors.of(context);
     return InkWell(
       key: const Key('uploadProofCard'),
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -627,7 +592,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
       child: Container(
         padding: const EdgeInsets.all(Spacing.md),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: AppShadows.glass,
         ),
@@ -636,9 +601,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.image_outlined,
-                  color: AppColors.slate800,
+                  color: colors.onSurface,
                   size: 20,
                 ),
                 SizedBox(width: 8),
@@ -646,7 +611,7 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   child: Text(
                     'Upload Photo Proof',
                     style: AppTypography.titleSmall
-                        .copyWith(color: AppColors.slate800),
+                        .copyWith(color: colors.onSurface),
                   ),
                 ),
                 if (_imageFile != null)
@@ -678,13 +643,13 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                     Text(
                       'Tap to upload photo',
                       style: AppTypography.labelLarge
-                          .copyWith(color: AppColors.slate800),
+                          .copyWith(color: AppColors.of(context).onSurface),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Camera or gallery',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.slate500,
+                        color: AppColors.of(context).onSurfaceVariant,
                         fontSize: 14,
                       ),
                     ),
@@ -736,6 +701,107 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
     );
   }
 
+  Widget _buildInstantBreakdownCard() {
+    final isRiderBearer = _mdrBearer == 'RIDER';
+    final fee =
+        isRiderBearer ? (widget.amount * (_extraFeePercent / 100)).round() : 0;
+    final total = widget.amount + fee;
+
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.of(context).primarySurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+            color: AppColors.primaryLight.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt, color: AppColors.primaryLight, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Instant Payment Breakdown',
+                style: AppTypography.titleSmall
+                    .copyWith(color: AppColors.of(context).onSurface),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isRiderBearer
+                      ? AppColors.primaryLight
+                      : AppColors.success,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isRiderBearer ? '+$_extraFeePercent% Fee' : '₹0 Rider Fee',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Top-Up Amount (Added to Wallet)',
+                  style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.of(context).onSurfaceVariant, fontSize: 14)),
+              Text('₹${widget.amount}',
+                  style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.of(context).onSurface,
+                      fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                  isRiderBearer
+                      ? 'Gateway Fee ($_extraFeePercent%)'
+                      : 'Gateway Fee',
+                  style: GoogleFonts.plusJakartaSans(
+                      color: AppColors.of(context).onSurfaceVariant, fontSize: 14)),
+              Text(
+                isRiderBearer ? '+₹$fee' : '₹0 (Paid by Voltium)',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                  color: isRiderBearer ? AppColors.warning : AppColors.success,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total Payable',
+                  style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.of(context).onSurface,
+                      fontSize: 15)),
+              Text('₹$total',
+                  style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryLight,
+                      fontSize: 18)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNoteCard() {
     return Container(
       padding: Spacing.paddingMd,
@@ -766,7 +832,12 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
   }
 
   Widget _buildSubmitButton() {
-    final canSubmit = _imageFile != null && !_isUploading;
+    final isInstant = _selectedPaymentMode == PaymentMode.instant;
+    final canSubmit = (isInstant || _imageFile != null) && !_isUploading;
+    final isRiderBearer = _mdrBearer == 'RIDER';
+    final fee =
+        isRiderBearer ? (widget.amount * (_extraFeePercent / 100)).round() : 0;
+    final total = widget.amount + fee;
 
     return GestureDetector(
       onTap: canSubmit ? _submit : null,
@@ -799,7 +870,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                   ),
                 )
               : Text(
-                  'Submit Proof',
+                  isInstant
+                      ? 'Proceed to Instant Pay (₹$total)'
+                      : 'Submit Proof',
                   style: AppTypography.titleSmall.copyWith(
                       letterSpacing: 0.5,
                       color: canSubmit ? Colors.white : AppColors.slate400),

@@ -18,10 +18,19 @@ class _PermissionItem {
   final String description;
   final IconData icon;
 
+  /// Optional clarifying tooltip shown as an info icon on the tile
+  /// (PR-VER-2026-08-06 ONBOARDING P0-2 residual): the `phone` tile
+  /// maps to Android `READ_PHONE_STATE` — call-state detection, not
+  /// call history. The tooltip makes the difference explicit so the
+  /// tile doesn't mislead riders.
+  final String? tooltip;
+
   /// Whether the user MUST grant this permission to proceed past the
-  /// permissions screen. `ignoreBatteryOptimizations` is not required
-  /// because it lives in Android Settings (5+ taps) and only affects
-  /// background reliability, not core functionality.
+  /// permissions screen. PR-VER-2026-08-07 (ONBOARDING P0-2 residual):
+  /// only the three core permissions gate onboarding — location, camera,
+  /// notifications. Battery (Android Settings, 5+ taps), phone state,
+  /// contacts, mic, and device-admin gate individual features but no
+  /// longer block signup.
   final bool isRequired;
   bool isEnabled;
 
@@ -30,6 +39,7 @@ class _PermissionItem {
     required this.name,
     required this.description,
     required this.icon,
+    this.tooltip,
     this.isRequired = true,
   }) : isEnabled = false;
 }
@@ -65,7 +75,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       name: 'Battery Optimization',
       description: 'Allow the app to run reliably in the background.',
       icon: Icons.battery_saver_outlined,
-      isRequired: true,
+      isRequired: false,
     ),
     _PermissionItem(
       id: 'camera',
@@ -75,33 +85,33 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     ),
     _PermissionItem(
       id: 'phone',
-      name: 'Phone',
-      description: 'Access device phone state for ride safety features',
+      name: 'Phone State',
+      description: 'Phone state (for safety call detection)',
       icon: Icons.phone_outlined,
+      tooltip: 'Reads call state (incoming/outgoing) so ride-safety features '
+          'can detect emergency calls — it never reads call history or contacts.',
+      isRequired: false,
     ),
     _PermissionItem(
       id: 'contacts',
       name: 'Contacts',
       description: 'Access contacts for emergency SOS and referrals',
       icon: Icons.contacts_outlined,
-    ),
-    _PermissionItem(
-      id: 'call_log',
-      name: 'Call Log',
-      description: 'Access call logs for ride safety features',
-      icon: Icons.call_outlined,
+      isRequired: false,
     ),
     _PermissionItem(
       id: 'mic',
       name: 'Microphone',
       description: 'Required for audio recording and verification',
       icon: Icons.mic_outlined,
+      isRequired: false,
     ),
     _PermissionItem(
       id: 'device_admin',
       name: 'Device Admin',
       description: 'Required for fleet security and remote lock features',
       icon: Icons.security_outlined,
+      isRequired: false,
     ),
   ];
 
@@ -132,6 +142,32 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     }
   }
 
+  /// Maps an onboarding permission tile to its backend consent type so the
+  /// grant is recorded for EVERY requested permission (PR-VER-2026-08-07
+  /// FLUTTER_CONSENT P1-1) — previously only location/contacts synced.
+  ConsentType? _consentTypeFor(String permissionId) {
+    switch (permissionId) {
+      case 'location':
+        return ConsentType.location;
+      case 'contacts':
+        return ConsentType.contacts;
+      case 'camera':
+        return ConsentType.camera;
+      case 'phone':
+        return ConsentType.phone;
+      case 'mic':
+        return ConsentType.mic;
+      case 'battery':
+        return ConsentType.battery;
+      case 'notifications':
+        return ConsentType.notifications;
+      case 'device_admin':
+        return ConsentType.deviceAdmin;
+      default:
+        return null;
+    }
+  }
+
   Future<void> _checkInitialStatuses() async {
     for (var perm in _permissions) {
       if (!mounted) return;
@@ -155,9 +191,6 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
         case 'phone':
           status = await Permission.phone.status;
           break;
-        case 'call_log':
-          status = await Permission.phone.status;
-          break;
         case 'battery':
           status = await Permission.ignoreBatteryOptimizations.status;
           break;
@@ -171,9 +204,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
       if (status.isGranted && mounted) {
         setState(() => perm.isEnabled = true);
-        if (perm.id == 'location') {
-          await ConsentService()
-              .setConsent(ConsentType.location, granted: true);
+        final consent = _consentTypeFor(perm.id);
+        if (consent != null) {
+          await ConsentService().setConsent(consent, granted: true);
         }
       }
     }
@@ -231,9 +264,6 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       case 'phone':
         status = await Permission.phone.request();
         break;
-      case 'call_log':
-        status = await Permission.phone.request();
-        break;
       case 'battery':
         status = await Permission.ignoreBatteryOptimizations.request();
         if (mounted) {
@@ -251,11 +281,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       setState(() => item.isEnabled = status.isGranted);
     }
 
-    if (item.id == 'location') {
-      await ConsentService().setConsent(
-        ConsentType.location,
-        granted: status.isGranted,
-      );
+    final consent = _consentTypeFor(item.id);
+    if (consent != null) {
+      await ConsentService().setConsent(consent, granted: status.isGranted);
     }
 
     if (status.isPermanentlyDenied) {
@@ -287,7 +315,11 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                     Text(
                       'Permissions',
                       style: AppTypography.headingLarge.copyWith(
-                          color: AppColors.slate800, letterSpacing: -0.5),
+                          // DARK-MODE-AUDIT 2026-08-14 P0-7:
+                          // same `slate800` issue — read
+                          // from the theme.
+                          color: AppColors.of(context).onSurface,
+                          letterSpacing: -0.5),
                     ),
                     SizedBox(height: 8),
                     Text(
@@ -338,7 +370,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.surfaceSubtle),
+        border: Border.all(color: AppColors.of(context).surfaceSubtle),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -376,6 +408,18 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                             .copyWith(color: AppColors.slate900),
                       ),
                     ),
+                    if (perm.tooltip != null) ...[
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: perm.tooltip!,
+                        triggerMode: TooltipTriggerMode.tap,
+                        child: const Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 SizedBox(height: 4),
@@ -474,7 +518,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           duration: const Duration(milliseconds: 200),
           height: 56,
           decoration: BoxDecoration(
-            color: canProceed ? AppColors.primary : AppColors.borderSubtle,
+            color: canProceed ? AppColors.primary : AppColors.of(context).borderSubtle,
             borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: canProceed
                 ? [

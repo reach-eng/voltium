@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/models/plan_model.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_constants.dart';
 
@@ -98,15 +99,25 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
       if (riderId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please log in again.')),
+            // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+            // English SnackBar. Localised via the existing
+            // `txtpleaseLogInAgain` ARB key.
+            SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.txtpleaseLogInAgain),
+            ),
           );
         }
         return;
       }
       final hubId = ref.watch(riderProvider).rider?.pickupHub ?? '';
       final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
-      final securityDeposit =
-          AppConstants.getPlanSecurityDeposit(selectedPlan.name);
+      // PR-47 (WALLET P1-1): use the live `securityDeposit` from the
+      // backend-provided `PlanModel` instead of the
+      // `AppConstants.planSecurityDepositRupees` hardcoded map. The
+      // backend `plan.use-cases.ts:57, 74, 131, 170, 201` already
+      // includes `securityDeposit` (in rupees) in the plan response.
+      final securityDeposit = selectedPlan.securityDeposit;
       await VoltiumApiService().subscribePlan(
         hubId: hubId,
         planId: _selectedPlanId!,
@@ -222,8 +233,16 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-5: the previous version used
+    // the static `AppColors.of(context).surfaceBright` (#F8FAFC) which is
+    // the LIGHT slate-50. In dark mode the scaffold stayed
+    // light even when the rest of the app was dark. The
+    // `surfaceBright` token has no dark variant in `ThemeColors`,
+    // so we route through the brightness-aware `surface` token
+    // (the difference between the two in light mode is one
+    // digit of luminance — visually indistinguishable).
     return Scaffold(
-      backgroundColor: AppColors.surfaceBright, // Light Slate 50
+      backgroundColor: AppColors.of(context).surface,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -239,7 +258,10 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchPlans,
-                        child: const Text('Retry'),
+                        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+                        // English button label. Localised via the
+                        // existing `txtretry` ARB key.
+                        child: Text(AppLocalizations.of(context)!.txtretry),
                       ),
                     ],
                   ),
@@ -268,10 +290,10 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                       color: AppColors.outlineVariant,
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.arrow_back_ios_new,
                                     size: 18,
-                                    color: AppColors.slate800,
+                                    color: AppColors.of(context).onSurface,
                                   ),
                                 ),
                               ),
@@ -281,7 +303,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                               child: Text(
                                 'Select a new plan',
                                 style: AppTypography.headingMedium.copyWith(
-                                    color: AppColors.slate800,
+                                    color: AppColors.of(context).onSurface,
                                     letterSpacing: -0.5),
                               ),
                             ),
@@ -294,7 +316,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                           'Choose the rental duration that best fits your needs. You can change this at any time.',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
-                            color: AppColors.slate500,
+                            color: AppColors.of(context).onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -497,7 +519,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             color: isSelected
                                                 ? Colors.white
                                                     .withValues(alpha: 0.8)
-                                                : AppColors.slate500,
+                                                : AppColors.of(context).onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -548,7 +570,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         color: isSelected
                                             ? Colors.white
                                                 .withValues(alpha: 0.15)
-                                            : AppColors.iconBackground,
+                                            : AppColors.of(context).iconBackground,
                                         height: 1,
                                       ),
                                       const SizedBox(height: 16),
@@ -579,7 +601,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.7)
-                                                        : AppColors.slate500,
+                                                        : AppColors.of(context).onSurfaceVariant,
                                                   ),
                                             ),
                                           ],
@@ -634,7 +656,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             .copyWith(
                                                 fontWeight: FontWeight.w800)
                                             .copyWith(
-                                              color: AppColors.slate800,
+                                              color: AppColors.of(context).onSurface,
                                             ),
                                       ),
                                     ),

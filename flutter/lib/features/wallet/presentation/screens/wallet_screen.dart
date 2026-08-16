@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:voltium_rider/widgets/top_up_request_sent_card.dart';
+import 'package:voltium_rider/features/wallet/widgets/top_up_request_sent_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
@@ -50,10 +50,21 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final isLoading =
         rider == null && (dataState == DataState.initial || isRefreshing);
 
+    // DARK-MODE-AUDIT 2026-08-14 P0-6 + P0-7: the previous
+    // version used static `AppColors.of(context).iconBackground` (#F1F5F9,
+    // light) for the scaffold AND the AppBar AND
+    // `AppColors.of(context).onSurface` (#1E293B, which IS the dark card
+    // surface) for the "Wallet" title. In dark mode:
+    //   - the scaffold stayed light while the cards inside
+    //     were dark, producing a 2014-era dark-mode attempt;
+    //   - the title became the same colour as the dark card
+    //     and disappeared against it.
+    // Both now read from the brightness-aware theme.
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.iconBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: colors.iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -62,7 +73,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         title: Text(
           'Wallet',
           style: AppTypography.headingMedium
-              .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
+              .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),
       ),
       body: isLoading
@@ -110,8 +121,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                             child: TopUpRequestSentCard(
                               rider: rider,
                               topUpAmount: rider.depositRecord != null
-                                  ? (rider.depositRecord!.amountInPaise / 100)
-                                      .round()
+                                  ? rider.depositRecord!.amountInRupees.round()
                                   : 0,
                               onResubmit: () => Navigator.of(context).push(
                                 MaterialPageRoute(

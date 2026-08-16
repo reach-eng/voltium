@@ -34,10 +34,15 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
     final isLoading = rider == null &&
         (dataState == DataState.initial || dataState == DataState.loading);
 
+    final colors = AppColors.of(context);
+    final supportConfig = ref.watch(supportProvider).supportConfig;
+    final supportPhone = supportConfig?.supportPhone ?? '+919876543210';
+    final supportEmail = supportConfig?.supportEmail ?? 'support@voltium.app';
+
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -46,15 +51,17 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
         title: Text(
           'Support Center',
           style: AppTypography.headingMedium
-              .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
+              .copyWith(color: colors.onSurface, letterSpacing: -0.5),
         ),
       ),
       body: isLoading
           ? const SupportSkeleton()
           : RefreshIndicator(
               onRefresh: () async {
-                await ref.read(supportTicketsProvider.notifier).fetchTickets();
-                await ref.read(supportProvider.notifier).refreshTickets();
+                await Future.wait([
+                  ref.read(supportTicketsProvider.notifier).fetchTickets(),
+                  ref.read(supportProvider.notifier).refreshFaqs(),
+                ]);
               },
               child: CustomScrollView(
                 slivers: [
@@ -76,25 +83,25 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                               onChanged: (_) {
                                 controller.openView();
                               },
-                              leading: const Icon(Icons.search,
-                                  color: AppColors.slate500),
+                              leading: Icon(Icons.search,
+                                  color: AppColors.of(context).onSurfaceVariant),
                               hintText: 'Search FAQs, topics...',
                               elevation: const WidgetStatePropertyAll(0),
                               backgroundColor: WidgetStatePropertyAll(
-                                  AppColors.iconBackground),
+                                  AppColors.of(context).iconBackground),
                             );
                           },
                           suggestionsBuilder: (BuildContext context,
                               SearchController controller) {
                             final keyword = controller.text.toLowerCase();
-                            final staticFaqs = [
-                              'How to lock the scooter?',
-                              'Payment failed',
-                              'Report a damaged vehicle',
-                              'Refund policy'
-                            ];
-                            final matches = staticFaqs
-                                .where((f) => f.toLowerCase().contains(keyword))
+                            final realFaqs = ref.read(supportProvider).faqs;
+                            final matches = realFaqs
+                                .where((f) =>
+                                    f.question
+                                        .toLowerCase()
+                                        .contains(keyword) ||
+                                    f.answer.toLowerCase().contains(keyword))
+                                .map((f) => f.question)
                                 .toList();
                             return matches.map((faq) => ListTile(
                                   title: Text(faq),
@@ -112,8 +119,14 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         // Quick Help section (Moved to top)
                         Text(
                           'Quick Help',
+                          // DARK-MODE-AUDIT 2026-08-14 P0-7:
+                          // `AppColors.of(context).onSurface` (#1E293B) is
+                          // identical to the dark `card` surface —
+                          // text disappears in dark mode. Read
+                          // from the theme extension.
                           style: AppTypography.titleMedium
-                              .copyWith(color: AppColors.slate800),
+                              .copyWith(
+                                  color: AppColors.of(context).onSurface),
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -141,8 +154,10 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         Container(
                           padding: const EdgeInsets.all(Spacing.md),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colors.card,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
+                            border: Border.all(
+                                color: colors.outlineVariant.withValues(alpha: 0.5)),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.05),
@@ -158,14 +173,15 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                               SizedBox(height: 16),
                               Text(
                                 'Contact Support',
-                                style: AppTypography.titleMedium,
+                                style: AppTypography.titleMedium
+                                    .copyWith(color: colors.onSurface),
                               ),
                               SizedBox(height: 8),
                               Text(
                                 'Our team is here to help you with any issues.',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.plusJakartaSans(
-                                    color: AppColors.slate500),
+                                    color: colors.onSurfaceMuted),
                               ),
                               SizedBox(height: 20),
                               SizedBox(
@@ -237,22 +253,26 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                           _buildContactCard(
                             icon: Icons.email_outlined,
                             title: 'Email Us',
-                            subtitle: 'support@voltium.in',
+                            subtitle: supportEmail,
                             actionLabel: 'Send',
                             actionIcon: Icons.open_in_new,
                             color: AppColors.primary,
-                            onTap: () => launchUrl(
-                                Uri.parse('mailto:support@voltium.in')),
+                            onTap: () =>
+                                launchUrl(Uri.parse('mailto:$supportEmail')),
                           ),
                           const SizedBox(height: 12),
                           _buildContactCard(
                             icon: Icons.phone_outlined,
                             title: 'Call Us',
-                            subtitle: '+91-9876543210',
+                            subtitle: supportPhone,
                             actionLabel: 'Call',
                             actionIcon: Icons.call,
                             color: AppColors.success,
-                            onTap: () => launchUrl(Uri.parse('tel:9876543210')),
+                            onTap: () {
+                              final sanitized = supportPhone.replaceAll(
+                                  RegExp(r'[^\d+]'), '');
+                              launchUrl(Uri.parse('tel:$sanitized'));
+                            },
                           ),
                         ],
                       ),
@@ -266,7 +286,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
 
   Widget _buildQuickChip(IconData icon, String label, VoidCallback onTap) {
     return Material(
-      color: AppColors.surfaceBright,
+      color: AppColors.of(context).surfaceBright,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -281,7 +301,11 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
               Text(label,
                   style: AppTypography.bodyMedium
                       .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
-                      .copyWith(color: AppColors.slate800)),
+                      // DARK-MODE-AUDIT 2026-08-14 P0-7:
+                      // `AppColors.of(context).onSurface` is identical to the
+                      // dark card surface — text disappears in
+                      // dark mode. Read from the theme extension.
+                      .copyWith(color: AppColors.of(context).onSurface)),
             ],
           ),
         ),
@@ -332,7 +356,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         .copyWith(fontWeight: FontWeight.w600)),
                 Text(subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.slate500, fontSize: 12)),
+                        color: AppColors.of(context).onSurfaceVariant, fontSize: 12)),
               ],
             ),
           ),
@@ -371,12 +395,15 @@ class RecentTicketsContainer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketState = ref.watch(supportTicketsProvider);
+    final colors = AppColors.of(context);
 
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+            color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -390,7 +417,7 @@ class RecentTicketsContainer extends ConsumerWidget {
         children: [
           Text(
             'Recent Tickets',
-            style: AppTypography.titleMedium,
+            style: AppTypography.titleMedium.copyWith(color: colors.onSurface),
           ),
           SizedBox(height: 12),
           SingleChildScrollView(
@@ -405,7 +432,7 @@ class RecentTicketsContainer extends ConsumerWidget {
                       style: AppTypography.labelMedium.copyWith(
                           color: ticketState.filter == filter
                               ? Colors.white
-                              : AppColors.slate500),
+                              : AppColors.of(context).onSurfaceVariant),
                     ),
                     selected: ticketState.filter == filter,
                     selectedColor: AppColors.primary,

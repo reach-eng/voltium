@@ -188,8 +188,8 @@ export default function PlanManagement() {
                     / {plan.durationDays} day(s)
                   </span>
                 </div>
-                <div className="text-sm font-semibold text-blue-600">
-                  Security Deposit: ₹{(plan.securityDeposit || 0).toLocaleString('en-IN')}
+                <div className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                  Security Deposit: ₹{((plan.securityDeposit ?? (((plan as any).securityDepositInPaise || 0) / 100)) || 0).toLocaleString('en-IN')}
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-2 h-10">
                   {plan.description}
@@ -209,7 +209,7 @@ export default function PlanManagement() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-11 w-11 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="h-11 w-11 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/15"
                     onClick={() => handleDelete(plan.id, plan.name)}
                   >
                     <Trash2 className="h-5 w-5" />

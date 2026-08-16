@@ -17,6 +17,8 @@ export interface JobData {
   lastRun: string | null;
   lastStatus: string;
   details: string | null;
+  lastError?: string | null;
+  nextRun?: string | null;
 }
 
 export interface ReconciliationReport {
@@ -57,13 +59,20 @@ export function getJobIcon(id: string): ReactNode {
 
 /** Tailwind classes for the job status badge. */
 export function getJobStatusBadgeClass(status: string): string {
+  // WEB-AUDIT 2026-08-14 P0-2: the previous version returned
+  // light-mode pastel pills (`bg-emerald-50 text-emerald-700
+  // border-emerald-100`). In dark mode these render as bright
+  // pastel pills on a dark card — high-contrast but the wrong
+  // family. Switch to the established dark-aware pattern
+  // (border-X-500/20 text-X-600 bg-X-500/5 dark:text-X-400) used
+  // elsewhere in the admin.
   if (status === 'SUCCESS') {
-    return 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50';
+    return 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400 hover:bg-emerald-500/10';
   }
   if (status === 'FAILED') {
-    return 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-50';
+    return 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400 hover:bg-rose-500/10';
   }
-  return 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-50';
+  return 'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400 hover:bg-slate-500/10';
 }
 
 /** Human label for the job status badge. */
@@ -76,8 +85,8 @@ export function getJobStatusLabel(status: string): string {
 /** Tailwind classes for the reconciliation-status badge. */
 export function getReconStatusBadgeClass(mismatched: number): string {
   return mismatched === 0
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-50'
-    : 'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-50';
+    ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400 hover:bg-emerald-500/10'
+    : 'border-rose-500/20 text-rose-600 bg-rose-500/5 dark:text-rose-400 hover:bg-rose-500/10';
 }
 
 /** Human label for the reconciliation-status badge. */

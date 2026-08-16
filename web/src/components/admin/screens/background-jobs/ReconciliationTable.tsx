@@ -42,11 +42,11 @@ export function ReconciliationTable({
   onSelect,
 }: ReconciliationTableProps) {
   return (
-    <Card className="xl:col-span-2 border border-slate-200/80 shadow-sm bg-white">
+    <Card className="xl:col-span-2 border border-slate-200/80 dark:border-slate-700 shadow-sm bg-white dark:bg-card">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <CardTitle className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <History className="h-5 w-5 text-indigo-500" /> Wallet Reconciliation Reports
             </CardTitle>
             <CardDescription>
@@ -60,22 +60,22 @@ export function ReconciliationTable({
               placeholder="Search reports..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 h-11 text-base rounded-xl border-slate-200 focus-visible:ring-indigo-500"
+              className="pl-9 pr-4 h-11 text-base rounded-xl border-slate-200 dark:border-slate-700 focus-visible:ring-indigo-500"
             />
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="rounded-xl border border-slate-100 overflow-hidden bg-slate-50/50">
+        <div className="rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden bg-slate-50/50 dark:bg-slate-900/30">
           <Table>
             <TableHeader className="bg-background">
               <TableRow>
-                <TableHead className="font-bold text-slate-700">Report Date</TableHead>
-                <TableHead className="font-bold text-slate-700">Total Wallets</TableHead>
-                <TableHead className="font-bold text-slate-700">Matched</TableHead>
-                <TableHead className="font-bold text-slate-700 text-rose-600">Mismatched</TableHead>
-                <TableHead className="font-bold text-slate-700">Total Drift</TableHead>
-                <TableHead className="font-bold text-slate-700">Status</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200">Report Date</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200">Total Wallets</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200">Matched</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200 text-rose-600 dark:text-rose-400">Mismatched</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200">Total Drift</TableHead>
+                <TableHead className="font-bold text-slate-700 dark:text-slate-200">Status</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -90,20 +90,22 @@ export function ReconciliationTable({
                 reports.map((report) => (
                   <TableRow
                     key={report.id}
-                    className={`cursor-pointer hover:bg-indigo-50/30 transition-colors ${
-                      selectedReportId === report.id ? 'bg-indigo-50/50' : ''
+                    className={`cursor-pointer hover:bg-indigo-50/30 dark:hover:bg-indigo-500/10 transition-colors ${
+                      selectedReportId === report.id ? 'bg-indigo-50/50 dark:bg-indigo-500/15' : ''
                     }`}
                     onClick={() => onSelect(report)}
                   >
-                    <TableCell className="font-semibold text-slate-800">
+                    <TableCell className="font-semibold text-slate-800 dark:text-slate-100">
                       {report.reportDate}
                     </TableCell>
-                    <TableCell className="text-slate-600">{report.totalWallets}</TableCell>
-                    <TableCell className="text-slate-600">{report.matched}</TableCell>
-                    <TableCell className="text-rose-600 font-medium">{report.mismatched}</TableCell>
+                    <TableCell className="text-slate-600 dark:text-slate-300">{report.totalWallets}</TableCell>
+                    <TableCell className="text-slate-600 dark:text-slate-300">{report.matched}</TableCell>
+                    <TableCell className="text-rose-600 dark:text-rose-400 font-medium">{report.mismatched}</TableCell>
                     <TableCell
                       className={`font-semibold ${
-                        report.drift === 0 ? 'text-slate-600' : 'text-rose-600'
+                        report.drift === 0
+                          ? 'text-slate-600 dark:text-slate-300'
+                          : 'text-rose-600 dark:text-rose-400'
                       }`}
                     >
                       ₹{(report.drift / 100).toFixed(2)}
