@@ -82,22 +82,22 @@ void main() {
 
     test('parses int color value', () {
       final faq = FaqCategory.fromJson(_base(iconColor: 0xFF4CAF50));
-      expect(faq.iconColor.value, 0xFF4CAF50);
+      expect(faq.iconColor?.value, 0xFF4CAF50);
     });
 
     test('parses hex string 0xFF... color value', () {
       final faq = FaqCategory.fromJson(_base(iconColor: '0xFFD97706'));
-      expect(faq.iconColor.value, 0xFFD97706);
+      expect(faq.iconColor?.value, 0xFFD97706);
     });
 
     test('parses decimal string color value', () {
       final faq = FaqCategory.fromJson(_base(iconColor: '4292409094'));
-      expect(faq.iconColor.value, 4292409094);
+      expect(faq.iconColor?.value, 4292409094);
     });
 
     test('defaults to black for invalid string', () {
       final faq = FaqCategory.fromJson(_base(iconColor: 'invalid'));
-      expect(faq.iconColor.value, 0xFF000000);
+      expect(faq.iconColor?.value, 0xFF000000);
     });
   });
 

@@ -77,6 +77,15 @@ Widget buildHubDropdown(
   );
 }
 
+/// Fixed team-leader options shown in the pickup hub form. Shared with
+/// [PickupHubScreen]'s draft-restore guard (a restored team leader that is
+/// not in this list is dropped rather than crashing the dropdown).
+const kPickupTeamLeaderOptions = [
+  'Rajesh Kumar (TL-01)',
+  'Not assigned',
+  'Sanjay Singh (TL-03)',
+];
+
 /// Team Leader dropdown
 Widget buildTeamLeaderDropdown(
   BuildContext context,
@@ -85,12 +94,7 @@ Widget buildTeamLeaderDropdown(
   List<String>? teamLeaderOptions,
 }) {
   final colors = AppColors.of(context);
-  final teamLeaders = teamLeaderOptions ??
-      [
-        'Rajesh Kumar (TL-01)',
-        'Not assigned',
-        'Sanjay Singh (TL-03)',
-      ];
+  final teamLeaders = teamLeaderOptions ?? kPickupTeamLeaderOptions;
 
   return DropdownButtonFormField<String>(
     key: const Key('teamLeaderDropdown'),
@@ -324,28 +328,55 @@ class EmergencyContactField extends StatelessWidget {
   }
 }
 
-/// OTP grid for the 6-digit code
+/// OTP grid for the 6-digit code.
+///
+/// ONBOARDING-AUDIT 2026-08-14 P0-3: the previous version wrapped the
+/// TextFormField in `Opacity(0.0)`, which broke the IME on this
+/// device (same root cause as the C2 / P0-2 fix in
+/// `UnderlineOtpInput` and `phone_entry_widget`). We now render a
+/// real TextFormField with a transparent text color so the digits
+/// are visually hidden behind the slot row above, but the IME
+/// connection initialises normally. We also accept an `onCompleted`
+/// callback so the parent can auto-submit when all 6 digits are
+/// filled — the previous version had no such callback and the rider
+/// had to tap Verify by hand even after typing the full code.
 class OtpGrid extends StatelessWidget {
   final TextEditingController controller;
+  final ValueChanged<String>? onCompleted;
 
-  const OtpGrid({super.key, required this.controller});
+  const OtpGrid({super.key, required this.controller, this.onCompleted});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Opacity(
-          opacity: 0.0,
-          child: SizedBox(
-            height: 50,
-            child: TextFormField(
-              key: const Key('otpInputField'),
-              controller: controller,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(6),
-              ],
+        SizedBox(
+          height: 50,
+          child: TextFormField(
+            key: const Key('otpInputField'),
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onChanged: (val) {
+              if (val.length == 6) onCompleted?.call(val);
+            },
+            // The digits are visually hidden by a transparent text
+            // color; the slot row above renders them. A real
+            // TextFormField (no Opacity wrapper) keeps the IME happy.
+            style: const TextStyle(color: Colors.transparent),
+            cursorColor: Colors.transparent,
+            decoration: const InputDecoration(
+              counterText: '',
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: true,
+              fillColor: Colors.transparent,
+              contentPadding: EdgeInsets.zero,
             ),
           ),
         ),
@@ -585,6 +616,7 @@ class PhotoUploadCard extends StatelessWidget {
 
 /// Curtain header for pickup hub screen
 Widget buildCurtainHeader({
+  required BuildContext context,
   required String title,
   required String subtitle,
   VoidCallback? onBack,
@@ -627,11 +659,15 @@ Widget buildCurtainHeader({
         SizedBox(height: 8),
         Text(
           subtitle,
-          style: AppTypography.bodyMedium
-              .copyWith(color: AppColors.onSurfaceMuted)
-              .copyWith(
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
+          // Pre-existing #22 cleanup: the first `.copyWith(color:
+          // AppColors.of(context).onSurfaceMuted)` was dead — the
+          // second `.copyWith` overwrote it, AND this is a free
+          // function with no `context` in scope. Use the second
+          // colour directly (a translucent white on the primary
+          // brand colour background) and drop the bogus first call.
+          style: AppTypography.bodyMedium.copyWith(
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
         ),
       ],
     ),

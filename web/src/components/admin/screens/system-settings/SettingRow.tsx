@@ -55,7 +55,7 @@ export function SettingRow({
         <div className="flex items-center gap-2">
           <Label className="text-sm font-medium">{label}</Label>
           {setting.isSecret && (
-            <Badge variant="outline" className="text-[8px] border-amber-500/30 text-amber-600">
+            <Badge variant="outline" className="text-[8px] border-amber-500/30 text-amber-600 dark:text-amber-400">
               SECRET
             </Badge>
           )}

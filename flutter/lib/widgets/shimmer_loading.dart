@@ -20,9 +20,10 @@ class ShimmerLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Blue-tinted shimmer for brand identity in light mode
-    final baseColor = isDark ? AppColors.slate800 : AppColors.primaryLight;
+    final baseColor =
+        isDark ? AppColors.of(context).onSurface : AppColors.primaryLight;
     final highlightColor =
-        isDark ? AppColors.slate700 : AppColors.primarySurface;
+        isDark ? AppColors.slate700 : AppColors.of(context).primarySurface;
     return TickerMode(
       enabled: TickerMode.of(context),
       child: Shimmer.fromColors(

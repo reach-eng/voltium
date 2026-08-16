@@ -77,20 +77,10 @@ class AppColors {
   static const Color onSurfaceVariant =
       Color(0xFF475467); // web #475467 / #424653
 
-  /// Back-compat alias for the static (light-only) muted text color.
-  ///
-  /// **New code must use `ThemeColors.of(context).onSurfaceMuted`** instead —
-  /// the `ThemeColors` extension is brightness-aware (`#667085` light,
-  /// `#64748B` dark) while this static field is hard-coded `#737785` (web
-  /// #737785, intentionally off the dark-mode brightness ladder). The two
-  /// values are not the same on purpose: callers that pre-date the
-  /// `ThemeColors` extension (15 files as of 2026-08-04) keep their original
-  /// visual weight; new code should pick the brightness-aware variant.
-  ///
-  /// See `docs/design-system.md` §2.5 "PR-125 cleanup" and §"`onSurfaceMuted`
-  /// back-compat note" for the full rationale. Removal of this static is
-  /// blocked by `test/theme/app_colors_no_dead_test.dart` (R2.2 regression
-  /// guard) until the 15 call-sites are migrated.
+  /// `onSurfaceMuted` (light/dark) lives on `ThemeColors` only — see
+  /// `AppColors.of(context).onSurfaceMuted`. The previous static alias is
+  /// kept here as a `0xFF737785` back-compat constant for one external
+  /// consumer (see `app_colors_no_dead_test.dart::allowedKeepSet`).
   static const Color onSurfaceMuted = Color(0xFF737785); // web #737785
   static const Color onSurfaceDisabled =
       Color(0xFF6B7280); // WCAG AA: 5.3:1 on surface
@@ -103,6 +93,12 @@ class AppColors {
       Color(0xFFE6EAEF); // web #E6EAEF pill inputs
 
   // Icon backgrounds
+  // `iconBackground` (light/dark) lives on `ThemeColors` only — see
+  // `AppColors.of(context).iconBackground`. The static alias is retained
+  // because `notification_model.dart::iconBgColor` and
+  // `streak_celebration_bar.dart` constructor defaults need a non-context
+  // Color value (those files are intentionally outside the
+  // ThemeColors migration scope).
   static const Color iconBackground = Color(0xFFF1F5F9); // slate-100
 
   // Misc
@@ -110,20 +106,31 @@ class AppColors {
   static const Color outline = Color(0xFFD0D5DD);
   static const Color outlineVariant = Color(0xFFE2E8F0);
 
-  // Slate palette (used for dark mode surfaces and text)
+  // Slate palette (used for dark mode surfaces and text). The brightness-aware
+  // text colors now live on `ThemeColors` (slate800 → onSurface,
+  // slate500 → onSurfaceVariant) — see DARK-MODE-AUDIT 2026-08-14 PR2.
+  // Remaining statics here are the raw palette values used by
+  // `app_theme.dart` itself (sliders, dividers, etc).
   static const Color slate400 = Color(0xFF94A3B8);
   static const Color slate500 = Color(0xFF64748B);
   static const Color slate600 = Color(0xFF475569);
   static const Color slate700 = Color(0xFF334155);
-  static const Color slate800 = Color(0xFF1E293B);
+  static const Color slate800 =
+      Color(0xFF1E293B); // legacy — see ThemeColors.onSurface
   static const Color slate900 = Color(0xFF0F172A);
 
   // Extended surface colors
+  // `surfaceBright` / `surfaceSubtle` (light/dark) live on `ThemeColors` only.
+  // The static aliases are retained because `app_theme.dart` itself uses them
+  // in `ColorScheme` construction (e.g. `surfaceContainerLow`).
   static const Color surfaceBright = Color(0xFFF8FAFC); // slate-50
   static const Color surfaceSubtle = Color(0xFFF3F4F6); // gray-100
   static const Color surfaceHover = Color(0xFFF9F9FF); // custom light
 
   // Extended border colors
+  // `borderSubtle` (light/dark) lives on `ThemeColors` only.
+  // The static alias is retained because it appears in comments and
+  // documentation as the canonical light-mode value.
   static const Color borderSubtle = Color(0xFFE5E7EB); // gray-200
   static const Color borderDefault = Color(0xFFD1D5DB); // gray-300
   static const Color borderMedium = Color(0xFFCBD5E1); // slate-300
@@ -131,7 +138,8 @@ class AppColors {
   // Error extended
   static const Color errorSurface = Color(0xFFFEF2F2); // red-50
   static const Color errorBorder = Color(0xFFFECACA); // red-200
-  static const Color errorRose = Color(0xFFFFE4E6); // rose-100
+  static const Color errorRose =
+      Color(0xFFFFE4E6); // rose-100 — see ThemeColors.errorRose
 
   // Warning extended
   static const Color warningSurface = Color(0xFFFFFBEB); // amber-50
@@ -140,16 +148,15 @@ class AppColors {
   // Primary extended
   static const Color primarySurface = Color(0xFFEFF6FF); // blue-50
   static const Color primaryLightBlue = Color(0xFF93C5FD); // blue-300
-  static const Color primaryDeep = Color(0xFF142B5B); // dark blue
+  /// Pressed / dark-variant of primary (#0053C1). Matches web --color-vf-primary-dark.
+  /// Corrected from #142B5B (near-black) → #003E92 in DS-3a cleanup (2026-08-04).
+  static const Color primaryDeep = Color(0xFF003E92); // pressed state — #003E92
 
   // Accent purple (rewards, referral, premium-tier features).
   // Distinct from `primary` (brand blue) — used to signal a non-default path
   // through the app. Pairs a 600-weight foreground with a 50-weight surface.
   static const Color accentPurple = Color(0xFF7C3AED); // violet-600
   static const Color accentPurpleSurface = Color(0xFFF5F3FF); // violet-50
-
-  // Feature Colors
-  static const Color whatsappGreen = Color(0xFF25D366);
 
   // ── Feather palette ──────────────────────────────────────────────────────
   // Lightweight accent surface/icon pairs. Use these instead of raw
@@ -182,6 +189,28 @@ class AppColors {
   // Referral / earning gradient endpoints.
   static const Color indigoVivid = Color(0xFF4F46E5); // indigo-600
 
+  // ── Dashboard rent-prompt palette (DS-3a token migration) ───────────────
+  // Previously inline `Color(0xFF...)` literals in dashboard_rent_prompt_card
+  // / dashboard_earnings_card. Tokenized so the design-system ratchet passes
+  // and the palette can be tuned from one place.
+  /// Dark-brown gradient start (shortfall/overdue state).
+  static const Color rentPromptBrownStart = Color(0xFF2C1810);
+
+  /// Dark-brown gradient end (shortfall/overdue state).
+  static const Color rentPromptBrownEnd = Color(0xFF1E100A);
+
+  /// Dark-green gradient start (healthy / sufficient-balance state).
+  static const Color rentPromptGreenStart = Color(0xFF1A261C);
+
+  /// Dark-green gradient end (healthy / sufficient-balance state).
+  static const Color rentPromptGreenEnd = Color(0xFF0F1A11);
+
+  /// Orange accent — shortfall icon / CTA / border (amber-orange family).
+  static const Color rentPromptOrange = Color(0xFFFF6B00);
+
+  /// Light-orange label text on the shortfall chip.
+  static const Color rentPromptOrangeLight = Color(0xFFFF9E59);
+
   // Translucent text/shadow — used over brand gradient backgrounds.
   static const Color white70 = Color(0xB3FFFFFF); // 70% white (over gradient)
 
@@ -190,11 +219,9 @@ class AppColors {
   static const Color shimmerHighlight = Color(0xFFF5F8FF);
   // PR-128: explicit dark-mode shimmer tokens. Previously the dark
   // variants were hard-coded as slate800/slate700 at the call site
-  // (shimmer_table.dart:53-55, 210-212). Centralising here so the
-  // ratchet + lint can verify all four values are brightness-
-  // aware from one place. The widgets still use the ternary
-  // `isDark ? shimmerBaseDark : shimmerBase` pattern, but at least
-  // the values are discoverable in app_theme.dart.
+  // (shimmer_table.dart:53-55, 210-212). The call sites now use these
+  // tokens directly, so the ratchet + lint verify all four values are
+  // brightness-aware from one place.
   static const Color shimmerBaseDark = Color(0xFF1E293B); // slate-800
   static const Color shimmerHighlightDark = Color(0xFF334155); // slate-700
 
@@ -563,6 +590,20 @@ class AppTheme {
         ),
         margin: const EdgeInsets.symmetric(vertical: Spacing.sm),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: ThemeColors.light.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: ThemeColors.light.card,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 1,
@@ -690,6 +731,20 @@ class AppTheme {
         ),
         margin: const EdgeInsets.symmetric(vertical: Spacing.sm),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: darkColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: darkColors.card,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
       dividerTheme: DividerThemeData(
         color: darkColors.divider,
         thickness: 1,
@@ -732,6 +787,23 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     warningSurface: Color(0xFFFFFBEB),
     warningForeground: Color(0xFF92400E), // amber-800 (WCAG AA on warningLight)
     primarySurface: Color(0xFFEFF6FF),
+    // PR2: the previously-static `AppColors.xxxLight` /
+    // `surfaceBright` / `surfaceSubtle` / `borderSubtle` /
+    // `errorRose` now mirror the static AppColors values
+    // (which are kept for back-compat) so the migration is
+    // a no-op visually in light mode.
+    successLight: Color(0xFFD1FAE5), // emerald-100
+    successLightForeground: Color(0xFF166534), // emerald-800
+    errorLight: Color(0xFFFEE2E2), // red-100
+    errorLightForeground: Color(0xFF991B1B), // red-800
+    errorRose: Color(0xFFFFE4E6), // rose-100
+    warningLight: Color(0xFFFEF3C7), // amber-100
+    warningLightForeground: Color(0xFF92400E), // amber-800
+    infoLight: Color(0xFFDBEAFE), // blue-100
+    infoLightForeground: Color(0xFF1E3A8A), // blue-900
+    surfaceBright: Color(0xFFF8FAFC), // slate-50
+    surfaceSubtle: Color(0xFFF3F4F6), // gray-100
+    borderSubtle: Color(0xFFE5E7EB), // gray-200
   );
 
   static const ThemeColors dark = ThemeColors._(
@@ -747,11 +819,24 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     iconBackground: Color(0xFF1E293B),
     success: Color(0xFF34D399),
     successSurface: Color(0xFF064E3B),
+    successLight:
+        Color(0xFF064E3B), // dark emerald-900 surface (was light #D1FAE5)
+    successLightForeground: Color(0xFF6EE7B7), // dark emerald-300 fg
     error: Color(0xFFFCA5A5),
     errorSurface: Color(0xFF7F1D1D),
+    errorLight: Color(0xFF7F1D1D), // dark red-900 surface
+    errorLightForeground: Color(0xFFFCA5A5), // dark red-300 fg
+    errorRose: Color(0xFF4C0519), // dark rose-950 surface (was light #FFE4E6)
     warning: Color(0xFFFBBF24),
     warningSurface: Color(0xFF78350F),
     warningForeground: Color(0xFFFCD34D), // amber-300 (dark-mode contrast pair)
+    warningLight: Color(0xFF78350F), // dark amber-900 surface
+    warningLightForeground: Color(0xFFFCD34D), // dark amber-300 fg
+    infoLight: Color(0xFF1E3A8A), // dark blue-900 surface
+    infoLightForeground: Color(0xFF93C5FD), // dark blue-300 fg
+    surfaceBright: Color(0xFF1E293B), // dark card surface (was light #F8FAFC)
+    surfaceSubtle: Color(0xFF1E293B), // dark card surface (was light #F3F4F6)
+    borderSubtle: Color(0xFF334155), // dark slate-700 (was light #E5E7EB)
     primarySurface: Color(0xFF1E293B),
   );
 
@@ -774,6 +859,27 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
   final Color warningForeground;
   final Color primarySurface;
 
+  // PR2 (DARK-MODE-AUDIT 2026-08-14): the `xxxLight` /
+  // `surfaceBright` / `surfaceSubtle` / `borderSubtle` /
+  // `errorRose` static tokens all previously had light-only
+  // values. They're now brightness-aware. The `xxxLightForeground`
+  // pair is the new "icon-on-xxxLight" foreground so a chip
+  // using `backgroundColor: colors.successLight` plus
+  // `color: colors.successLightForeground` reads in both modes.
+  // See `AppColors.surface` migration in #onboarding-audit-2026-08-14.
+  final Color successLight;
+  final Color successLightForeground;
+  final Color errorLight;
+  final Color errorLightForeground;
+  final Color errorRose;
+  final Color warningLight;
+  final Color warningLightForeground;
+  final Color infoLight;
+  final Color infoLightForeground;
+  final Color surfaceBright;
+  final Color surfaceSubtle;
+  final Color borderSubtle;
+
   const ThemeColors._({
     required this.surface,
     required this.card,
@@ -793,6 +899,18 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     required this.warningSurface,
     required this.warningForeground,
     required this.primarySurface,
+    required this.successLight,
+    required this.successLightForeground,
+    required this.errorLight,
+    required this.errorLightForeground,
+    required this.errorRose,
+    required this.warningLight,
+    required this.warningLightForeground,
+    required this.infoLight,
+    required this.infoLightForeground,
+    required this.surfaceBright,
+    required this.surfaceSubtle,
+    required this.borderSubtle,
   });
 
   @override
@@ -815,6 +933,18 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
     Color? warningSurface,
     Color? warningForeground,
     Color? primarySurface,
+    Color? successLight,
+    Color? successLightForeground,
+    Color? errorLight,
+    Color? errorLightForeground,
+    Color? errorRose,
+    Color? warningLight,
+    Color? warningLightForeground,
+    Color? infoLight,
+    Color? infoLightForeground,
+    Color? surfaceBright,
+    Color? surfaceSubtle,
+    Color? borderSubtle,
   }) {
     return ThemeColors._(
       surface: surface ?? this.surface,
@@ -835,6 +965,20 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       warningSurface: warningSurface ?? this.warningSurface,
       warningForeground: warningForeground ?? this.warningForeground,
       primarySurface: primarySurface ?? this.primarySurface,
+      successLight: successLight ?? this.successLight,
+      successLightForeground:
+          successLightForeground ?? this.successLightForeground,
+      errorLight: errorLight ?? this.errorLight,
+      errorLightForeground: errorLightForeground ?? this.errorLightForeground,
+      errorRose: errorRose ?? this.errorRose,
+      warningLight: warningLight ?? this.warningLight,
+      warningLightForeground:
+          warningLightForeground ?? this.warningLightForeground,
+      infoLight: infoLight ?? this.infoLight,
+      infoLightForeground: infoLightForeground ?? this.infoLightForeground,
+      surfaceBright: surfaceBright ?? this.surfaceBright,
+      surfaceSubtle: surfaceSubtle ?? this.surfaceSubtle,
+      borderSubtle: borderSubtle ?? this.borderSubtle,
     );
   }
 
@@ -862,6 +1006,22 @@ class ThemeColors extends ThemeExtension<ThemeColors> {
       warningForeground:
           Color.lerp(warningForeground, other.warningForeground, t)!,
       primarySurface: Color.lerp(primarySurface, other.primarySurface, t)!,
+      successLight: Color.lerp(successLight, other.successLight, t)!,
+      successLightForeground:
+          Color.lerp(successLightForeground, other.successLightForeground, t)!,
+      errorLight: Color.lerp(errorLight, other.errorLight, t)!,
+      errorLightForeground:
+          Color.lerp(errorLightForeground, other.errorLightForeground, t)!,
+      errorRose: Color.lerp(errorRose, other.errorRose, t)!,
+      warningLight: Color.lerp(warningLight, other.warningLight, t)!,
+      warningLightForeground:
+          Color.lerp(warningLightForeground, other.warningLightForeground, t)!,
+      infoLight: Color.lerp(infoLight, other.infoLight, t)!,
+      infoLightForeground:
+          Color.lerp(infoLightForeground, other.infoLightForeground, t)!,
+      surfaceBright: Color.lerp(surfaceBright, other.surfaceBright, t)!,
+      surfaceSubtle: Color.lerp(surfaceSubtle, other.surfaceSubtle, t)!,
+      borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
     );
   }
 }

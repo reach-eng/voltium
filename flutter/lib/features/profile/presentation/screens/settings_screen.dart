@@ -4,12 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/notification_service.dart';
+import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
+import 'package:voltium_rider/theme/theme_provider.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/widgets/language_toggle.dart';
 import 'package:voltium_rider/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:voltium_rider/features/profile/presentation/widgets/profile_widgets.dart';
 
@@ -26,10 +30,13 @@ import 'package:voltium_rider/gen/app_localizations.dart';
 /// Renders the rider's account summary, app preferences, support/legal
 /// links, about info, and account/danger-zone actions.
 ///
-/// Exposed widget keys (must stay in sync with `integration_test/e2e/settings_test.dart`):
+/// Exposed widget keys (must stay in sync with
+/// `integration_test/e2e_individual/24_settings_screen_test.dart`):
 /// - `appSettingsLink`   — the entry-point on the Profile screen.
 /// - `backButton`        — the AppBar back button.
-/// - `darkModeSwitch`    — the dark-mode switch on the Preferences tile.
+/// - `themeOption`       — the Appearance tile on the Preferences section
+///   (opens the tri-state theme dialog with `themeSystemRadio` /
+///   `themeLightRadio` / `themeDarkRadio`).
 /// - `rateUsTile`        — the "Rate Us" row.
 /// - `deleteAccountButton` — the "Delete Account" row in the danger zone.
 /// - `cancelDeleteButton`  / `confirmDeleteButton` — buttons in the delete dialog.
@@ -40,13 +47,11 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeProv = ref.watch(themeProvider);
-    final isDark = themeProv.isDarkMode;
     final colors = AppColors.of(context);
     final l10n = AppLocalizations.of(context)!;
     final rider = ref.watch(riderProvider.select((p) => p.rider));
     final isLoading = rider == null;
     final localeProv = ref.watch(localeProvider);
-    final currentLocale = localeProv.locale.languageCode;
 
     return Scaffold(
       backgroundColor: colors.iconBackground,
@@ -87,18 +92,25 @@ class SettingsScreen extends ConsumerWidget {
             FadeUpWidget(
               delay: 50,
               child: QuickLinkItem(
-                key: const Key('darkModeTile'),
-                icon: Icons.dark_mode_outlined,
+                key: const Key('themeOption'),
+                icon: Icons.brightness_6_outlined,
                 iconColor: colors.onSurfaceVariant,
                 iconBgColor: colors.iconBackground,
-                title: l10n.settings_darkMode,
-                trailing: Switch.adaptive(
-                  key: const Key('darkModeSwitch'),
-                  value: isDark,
-                  onChanged: (v) =>
-                      ref.read(themeProvider.notifier).setDarkMode(v),
-                  activeTrackColor: AppColors.primary,
+                title: l10n.settings_appearance,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _themeModeLabel(themeProv, l10n),
+                      style: AppTypography.bodyMedium
+                          .copyWith(fontWeight: FontWeight.w600)
+                          .copyWith(color: colors.onSurfaceMuted),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chevron_right, color: colors.outline, size: 20),
+                  ],
                 ),
+                onTap: () => _showThemeDialog(context, ref),
               ),
             ),
             const SizedBox(height: 8),
@@ -109,7 +121,14 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Language & Region ───────────────────────────────────────
-            _SectionLabel('LANGUAGE'),
+            // LANGUAGE-AUDIT (2026-08-16) #4: was a hardcoded 'LANGUAGE'
+            // string, the only ALL-CAPS section label on the screen —
+            // every other section uses `l10n.settings_*Section` (or the
+            // existing styled `l10n.settings_*` keys) so the rider sees
+            // a localised Title-Case header in sync with the rest of
+            // the section. The `_SectionLabel` widget applies w800 +
+            // letterSpacing 1.2 — that's the only visual treatment.
+            _SectionLabel(l10n.settings_language),
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 100,
@@ -117,15 +136,21 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('languageOption'),
                 icon: Icons.language,
                 iconColor: AppColors.success,
-                iconBgColor: AppColors.successLight,
+                iconBgColor: AppColors.of(context).successLight,
                 title: l10n.menu_language,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // LANGUAGE-AUDIT (2026-08-16) #11: was a hardcoded
+                    // `currentLocale == 'hi' ? l10n.settings_hindi :
+                    // l10n.settings_english` ternary. Now uses the
+                    // LocaleNotifier helper so a 3rd language shows
+                    // its own name without a code change here.
                     Text(
-                      currentLocale == 'hi'
-                          ? l10n.settings_hindi
-                          : l10n.settings_english,
+                      localeProv.isFollowingSystem
+                          ? l10n.settings_followSystem
+                          : LocaleNotifier.displayNameFor(
+                              localeProv.locale, l10n),
                       style: AppTypography.bodyMedium
                           .copyWith(fontWeight: FontWeight.w600)
                           .copyWith(color: colors.onSurfaceMuted),
@@ -148,7 +173,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('changePhoneTile'),
                 icon: Icons.phone_outlined,
                 iconColor: AppColors.info,
-                iconBgColor: AppColors.primarySurface,
+                iconBgColor: AppColors.of(context).primarySurface,
                 title: l10n.settings_changePhone,
                 onTap: () =>
                     AppNavigator.push(context, const EditProfileScreen()),
@@ -161,9 +186,15 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('changePasswordTile'),
                 icon: Icons.lock_outline,
                 iconColor: AppColors.warning,
-                iconBgColor: AppColors.warningLight,
-                title: l10n.settings_changePassword,
-                onTap: () => _showComingSoonSnack(context, l10n),
+                iconBgColor: AppColors.of(context).warningLight,
+                // PR-VER-2026-08-07 (LEGAL_DEVICE P0-2 / PASS3): the tile opens
+                // the lock-password VERIFICATION step of a change flow — label
+                // it as what the rider is actually doing.
+                // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+                // English. Localised via `txtchangeLockPassword`
+                // (new ARB key, see app_en.arb).
+                title: l10n.txtchangeLockPassword,
+                onTap: () => _showVerifyLockPasswordDialog(context),
               ),
             ),
             const SizedBox(height: 24),
@@ -191,7 +222,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('termsTile'),
                 icon: Icons.description_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.successLight,
+                iconBgColor: AppColors.of(context).successLight,
                 title: l10n.settings_termsOfService,
                 onTap: () => AppNavigator.push(
                     context,
@@ -206,7 +237,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('privacyTile'),
                 icon: Icons.privacy_tip_outlined,
                 iconColor: AppColors.successDark,
-                iconBgColor: AppColors.successLight,
+                iconBgColor: AppColors.of(context).successLight,
                 title: l10n.settings_privacyPolicy,
                 onTap: () => AppNavigator.push(
                     context,
@@ -242,7 +273,7 @@ class SettingsScreen extends ConsumerWidget {
                 key: const Key('rateUsTile'),
                 icon: Icons.star_outline,
                 iconColor: AppColors.warning,
-                iconBgColor: AppColors.warningLight,
+                iconBgColor: AppColors.of(context).warningLight,
                 title: l10n.settings_rateUs,
                 onTap: () async {
                   final url = Uri.parse(
@@ -258,13 +289,17 @@ class SettingsScreen extends ConsumerWidget {
             // ── Account / danger zone ───────────────────────────────────
             _SectionLabel(l10n.settings_accountSection),
             const SizedBox(height: 12),
+            // PR-3 (2026-08-07 verification, Section 2): delete flow now
+            // records a real request via /api/rider/account/delete-request
+            // (audit log + rider marker) — the tile is safe to show in all
+            // builds (audit #6 P0-4 was resolved by the endpoint).
             FadeUpWidget(
               delay: 300,
               child: QuickLinkItem(
                 key: const Key('deleteAccountButton'),
                 icon: Icons.delete_outline,
                 iconColor: AppColors.error,
-                iconBgColor: AppColors.errorRose,
+                iconBgColor: AppColors.of(context).errorRose,
                 title: l10n.settings_deleteAccount,
                 onTap: () => _showDeleteAccountDialog(context),
               ),
@@ -278,9 +313,13 @@ class SettingsScreen extends ConsumerWidget {
                   if (confirmed == true && context.mounted) {
                     ref.read(riderProvider.notifier).logout();
                     if (context.mounted) {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AppShell()),
+                      // Clear the whole stack so the back button can't
+                      // resurrect the logged-out rider's screens; the router
+                      // re-renders the splash/auth flow from app state.
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (_) => const AppShell(),
+                        ),
                         (route) => false,
                       );
                     }
@@ -295,46 +334,175 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
+  void _showVerifyLockPasswordDialog(BuildContext context) {
+    final controller = TextEditingController();
+    final colors = AppColors.of(context);
+    // LANGUAGE-AUDIT (2026-08-16) T-66: every string in the
+    // dialog body, the actions row, and the error snackbar is
+    // now routed through `l10n`. Three new ARB keys
+    // (`txtchangeLockPassword`, `txtlockPassword`,
+    // `txtlockPasswordVerifyFailed`, `txtlockPasswordSubtitle`)
+    // were added in this PR; `txtchangeLockPassword` is shared
+    // with the tile label above.
     final l10n = AppLocalizations.of(context)!;
-    final localeProv = ref.read(localeProvider);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        bool isSubmitting = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: colors.surface,
+              title: Text(l10n.txtchangeLockPassword),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.txtlockPasswordSubtitle,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      key: const Key('lockPasswordInput'),
+                      controller: controller,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: l10n.txtlockPassword,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                  child: Text(l10n.txtcancel),
+                ),
+                ElevatedButton(
+                  key: const Key('confirmVerifyLockButton'),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final pw = controller.text.trim();
+                          if (pw.isEmpty) return;
+                          setDialogState(() => isSubmitting = true);
+                          try {
+                            final result = await VoltiumApiService()
+                                .verifyLockPassword(pw);
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            final isSuccess =
+                                result['data']?['success'] == true ||
+                                    result['success'] == true;
+                            final msg = result['message'] as String? ??
+                                (isSuccess
+                                    ? 'Lock password verified successfully'
+                                    : 'Verification failed');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(msg),
+                                  backgroundColor: isSuccess
+                                      ? AppColors.success
+                                      : AppColors.error,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text(l10n.txtlockPasswordVerifyFailed),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.txtverify),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
+    showAppLanguageDialog(context, ref);
+  }
+
+  /// Tri-state theme picker (Follow System / Light / Dark).
+  void _showThemeDialog(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final currentMode = ref.read(themeProvider).themeMode;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.menu_selectLanguage),
+        title: Text(l10n.settings_appearance),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: Text(l10n.settings_english),
-              leading: Radio<String>(
-                key: const Key('englishRadio'),
-                value: 'en',
-                groupValue: localeProv.locale.languageCode,
+              title: Text(l10n.settings_followSystem),
+              leading: Radio<ThemeMode>(
+                key: const Key('themeSystemRadio'),
+                value: ThemeMode.system,
+                groupValue: currentMode,
                 onChanged: (v) {
-                  ref.read(localeProvider.notifier).setEnglish();
+                  ref
+                      .read(themeProvider.notifier)
+                      .setThemeMode(ThemeMode.system);
                   Navigator.pop(ctx);
                 },
-                toggleable: true,
               ),
               onTap: () {
-                ref.read(localeProvider.notifier).setEnglish();
+                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.system);
                 Navigator.pop(ctx);
               },
             ),
             ListTile(
-              title: Text('${l10n.settings_hindi} (Hindi)'),
-              leading: Radio<String>(
-                key: const Key('hindiRadio'),
-                value: 'hi',
-                groupValue: localeProv.locale.languageCode,
+              title: Text(l10n.settings_themeLight),
+              leading: Radio<ThemeMode>(
+                key: const Key('themeLightRadio'),
+                value: ThemeMode.light,
+                groupValue: currentMode,
                 onChanged: (v) {
-                  ref.read(localeProvider.notifier).setHindi();
+                  ref
+                      .read(themeProvider.notifier)
+                      .setThemeMode(ThemeMode.light);
                   Navigator.pop(ctx);
                 },
               ),
               onTap: () {
-                ref.read(localeProvider.notifier).setHindi();
+                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.light);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: Text(l10n.settings_themeDark),
+              leading: Radio<ThemeMode>(
+                key: const Key('themeDarkRadio'),
+                value: ThemeMode.dark,
+                groupValue: currentMode,
+                onChanged: (v) {
+                  ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
+                  Navigator.pop(ctx);
+                },
+              ),
+              onTap: () {
+                ref.read(themeProvider.notifier).setThemeMode(ThemeMode.dark);
                 Navigator.pop(ctx);
               },
             ),
@@ -344,14 +512,15 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showComingSoonSnack(BuildContext context, AppLocalizations l10n) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(l10n.settings_comingSoon),
-        backgroundColor: AppColors.warning,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  static String _themeModeLabel(ThemeState theme, AppLocalizations l10n) {
+    switch (theme.themeMode) {
+      case ThemeMode.light:
+        return l10n.settings_themeLight;
+      case ThemeMode.dark:
+        return l10n.settings_themeDark;
+      case ThemeMode.system:
+        return l10n.settings_followSystem;
+    }
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
@@ -371,16 +540,49 @@ class SettingsScreen extends ConsumerWidget {
           ),
           FilledButton(
             key: const Key('confirmDeleteButton'),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    l10n.settings_deleteNotAvailable,
+              // PR-3 (2026-08-07 verification report, Section 2): the old
+              // code POSTed `{action: 'DELETE_REQUEST'}` to /api/rider/profile
+              // which had no handler — the request was silently dropped while
+              // the app showed a success snackbar. Now records the request via
+              // the dedicated endpoint (audit log + rider marker).
+              try {
+                await VoltiumApiService().post(
+                  '/api/rider/account/delete-request',
+                  body: {
+                    'reason': l10n.settings_deleteReason,
+                    'timestamp': DateTime.now().toIso8601String(),
+                  },
+                );
+              } catch (_) {
+                // Best-effort: the request is also recorded client-side only
+                // on success; on failure surface an error instead of a false
+                // success.
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Failed to submit deletion request. Please try again or contact support.',
+                      ),
+                      duration: Duration(seconds: 5),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+                return;
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Account deletion request submitted successfully. An administrator will review and process it.',
+                    ),
+                    duration: Duration(seconds: 5),
+                    backgroundColor: AppColors.success,
                   ),
-                  backgroundColor: AppColors.warning,
-                ),
-              );
+                );
+              }
             },
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
@@ -499,8 +701,9 @@ class _RiderIdentityCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color:
-                  verified ? AppColors.successLight : AppColors.warningSurface,
+              color: verified
+                  ? AppColors.of(context).successLight
+                  : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.full),
               border: Border.all(
                 color: verified
@@ -576,7 +779,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
       key: const Key('notificationsTile'),
       icon: Icons.notifications_outlined,
       iconColor: AppColors.primary,
-      iconBgColor: AppColors.primarySurface,
+      iconBgColor: AppColors.of(context).primarySurface,
       title: l10n.settings_notifications,
       trailing: Switch.adaptive(
         key: const Key('notificationsSwitch'),

@@ -84,9 +84,9 @@ function ReadOnlyCell({ keyName, value }: { keyName: string; value: string }) {
 
   const badgeClass =
     badgeVariant === 'configured'
-      ? 'bg-emerald-500/10 text-emerald-600'
+      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
       : badgeVariant === 'missing'
-        ? 'bg-rose-500/10 text-rose-600'
+        ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
         : '';
 
   return (

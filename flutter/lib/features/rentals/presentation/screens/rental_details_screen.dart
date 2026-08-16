@@ -32,7 +32,8 @@ class RentalDetailsScreen extends ConsumerWidget {
     final dateFormat = DateFormat('MMM dd, yyyy');
 
     return Scaffold(
-      backgroundColor: AppColors.of(context).iconBackground, // Subtle light background
+      backgroundColor:
+          AppColors.of(context).iconBackground, // Subtle light background
       appBar: AppBar(
         backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
@@ -67,8 +68,8 @@ class RentalDetailsScreen extends ConsumerWidget {
                           offset: const Offset(0, 4))
                     ],
                   ),
-                  child: Icon(Icons.arrow_back,
-                      color: colors.onSurface, size: 20),
+                  child:
+                      Icon(Icons.arrow_back, color: colors.onSurface, size: 20),
                 );
               }),
             ),
@@ -170,14 +171,17 @@ class RentalDetailsScreen extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  _buildDetailRow(context, Icons.calendar_today_rounded,
+                  _buildDetailRow(
+                      context,
+                      Icons.calendar_today_rounded,
                       'Start Date',
                       startDate != null ? dateFormat.format(startDate) : 'N/A'),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
-                  _buildDetailRow(context, Icons.event_busy_rounded,
-                      'End Date',
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.event_busy_rounded, 'End Date',
                       endDate != null ? dateFormat.format(endDate) : 'N/A'),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
                   if (endDate != null) ...[
                     Builder(builder: (context) {
                       final daysRemaining =
@@ -198,23 +202,30 @@ class RentalDetailsScreen extends ConsumerWidget {
                         valueColor: remainingColor,
                       );
                     }),
-                    Divider(height: 1, color: AppColors.of(context).iconBackground),
+                    Divider(
+                        height: 1, color: AppColors.of(context).iconBackground),
                   ],
                   _buildDetailRow(context, Icons.electric_moped_rounded,
                       'Assigned Vehicle', vehicle),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.store_mall_directory_rounded,
+                      'Pickup Hub', hub),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
                   _buildDetailRow(
-                      context, Icons.store_mall_directory_rounded, 'Pickup Hub', hub),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
-                  _buildDetailRow(context, Icons.person_rounded, 'Team Leader', tl),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                      context, Icons.person_rounded, 'Team Leader', tl),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
                   _buildDetailRow(context, Icons.account_balance_wallet_rounded,
                       'Wallet Balance', '₹${wallet.toStringAsFixed(0)}',
                       valueColor: AppColors.success),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
-                  _buildDetailRow(context, Icons.shield_rounded, 'Security Deposit',
-                      '₹${deposit.toStringAsFixed(0)}'),
-                  Divider(height: 1, color: AppColors.of(context).iconBackground),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
+                  _buildDetailRow(context, Icons.shield_rounded,
+                      'Security Deposit', '₹${deposit.toStringAsFixed(0)}'),
+                  Divider(
+                      height: 1, color: AppColors.of(context).iconBackground),
                   _buildDetailRow(context, Icons.local_fire_department_rounded,
                       'Payment Streak', '$streak Days',
                       valueColor: AppColors.primary),
@@ -315,8 +326,9 @@ class RentalDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context, IconData icon,
-      String label, String value, {Color? valueColor}) {
+  Widget _buildDetailRow(
+      BuildContext context, IconData icon, String label, String value,
+      {Color? valueColor}) {
     // DARK-MODE-AUDIT 2026-08-14 P0-7: helper method — needs
     // a BuildContext to read brightness-aware tokens. The
     // public call sites are inside the build method, so we
@@ -332,12 +344,14 @@ class RentalDetailsScreen extends ConsumerWidget {
               color: AppColors.of(context).iconBackground,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.of(context).onSurfaceVariant, size: 20),
+            child: Icon(icon,
+                color: AppColors.of(context).onSurfaceVariant, size: 20),
           ),
           SizedBox(width: 16),
           Text(
             label,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.of(context).onSurfaceVariant),
+            style: AppTypography.bodyMedium
+                .copyWith(color: AppColors.of(context).onSurfaceVariant),
           ),
           const Spacer(),
           Text(

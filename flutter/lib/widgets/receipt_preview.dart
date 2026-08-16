@@ -53,7 +53,8 @@ class ReceiptPreview extends StatelessWidget {
                   Text(
                     'Transaction Receipt',
                     style: AppTypography.overline.copyWith(
-                        color: AppColors.onSurfaceMuted, letterSpacing: 1.5),
+                        color: AppColors.of(context).onSurfaceMuted,
+                        letterSpacing: 1.5),
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -85,13 +86,13 @@ class ReceiptPreview extends StatelessWidget {
           const SizedBox(height: 20),
           const Divider(),
           const SizedBox(height: 16),
-          _buildRow(
-              'Date', _formatDate(date), colors.onSurfaceMuted.hashCode == 0),
-          _buildRow(
-              'Time', _formatTime(date), colors.onSurfaceMuted.hashCode == 0),
-          if (riderName != null) _buildRow('Rider', riderName!, false),
+          _buildRow(context, 'Date', _formatDate(date),
+              colors.onSurfaceMuted.hashCode == 0),
+          _buildRow(context, 'Time', _formatTime(date),
+              colors.onSurfaceMuted.hashCode == 0),
+          if (riderName != null) _buildRow(context, 'Rider', riderName!, false),
           if (vehicleNumber != null)
-            _buildRow('Vehicle', vehicleNumber!, false),
+            _buildRow(context, 'Vehicle', vehicleNumber!, false),
           const SizedBox(height: 16),
           Container(
             padding: Spacing.paddingMd,
@@ -142,7 +143,8 @@ class ReceiptPreview extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(String label, String value, bool isDark) {
+  Widget _buildRow(
+      BuildContext context, String label, String value, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -152,7 +154,7 @@ class ReceiptPreview extends StatelessWidget {
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.onSurfaceMuted,
+              color: AppColors.of(context).onSurfaceMuted,
             ),
           ),
           Text(

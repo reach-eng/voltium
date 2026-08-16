@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:voltium_rider/theme/app_theme.dart';
 
 part 'notification_model.g.dart';
 
@@ -167,33 +166,6 @@ class AppNotification {
       case AppNotificationType.system:
       case AppNotificationType.info:
         return Colors.grey;
-    }
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  Color get iconBgColor {
-    switch (type) {
-      case AppNotificationType.rideStarted:
-      case AppNotificationType.vehicle:
-        return AppColors.primarySurface;
-      case AppNotificationType.rideEnded:
-      case AppNotificationType.paymentReceived:
-        return AppColors.successLight;
-      case AppNotificationType.paymentSent:
-      case AppNotificationType.payment:
-        return AppColors.warningLight;
-      case AppNotificationType.lowBattery:
-      case AppNotificationType.alert:
-        return AppColors.errorLight;
-      case AppNotificationType.sosAlert:
-      case AppNotificationType.sos:
-        return AppColors.errorLight;
-      case AppNotificationType.promo:
-      case AppNotificationType.promotion:
-        return AppColors.primaryLight;
-      case AppNotificationType.system:
-      case AppNotificationType.info:
-        return AppColors.iconBackground;
     }
   }
 }

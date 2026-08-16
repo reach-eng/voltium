@@ -147,7 +147,7 @@ export function DataDeletionApprovalCard({
         {isSoftDeleted ? (
           <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 space-y-3">
             <div className="flex items-center gap-2 text-amber-800 font-medium">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>Rider is currently Soft-Deleted</span>
             </div>
             <p className="text-xs text-amber-700">

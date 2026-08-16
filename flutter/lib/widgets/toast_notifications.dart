@@ -184,13 +184,13 @@ class _ToastWidgetState extends State<_ToastWidget>
   Color _getBackgroundColor() {
     switch (widget.type) {
       case ToastType.success:
-        return AppColors.successLight;
+        return AppColors.of(context).successLight;
       case ToastType.error:
-        return AppColors.errorLight;
+        return AppColors.of(context).errorLight;
       case ToastType.warning:
-        return AppColors.warningLight;
+        return AppColors.of(context).warningLight;
       case ToastType.info:
-        return AppColors.infoLight;
+        return AppColors.of(context).infoLight;
     }
   }
 

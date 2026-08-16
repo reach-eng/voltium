@@ -17,7 +17,7 @@ export function RiderInspectionTab({ rider }: RiderInspectionTabProps) {
     >
       <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10">
         <div className="flex items-center justify-between mb-8">
-          <h4 className="text-sm font-black uppercase tracking-widest text-rose-600 flex items-center gap-2">
+          <h4 className="text-sm font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 flex items-center gap-2">
             <Camera className="w-5 h-5" /> Vehicle Pickup Photos
           </h4>
           <div className="text-[10px] font-bold uppercase text-rose-500/60 tracking-tighter">
@@ -38,12 +38,12 @@ export function RiderInspectionTab({ rider }: RiderInspectionTabProps) {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6">
-            <MediaPreview src={rider.pickupPhotoFront} label="Front View" />
-            <MediaPreview src={rider.pickupPhotoBack} label="Rear View" />
-            <MediaPreview src={rider.pickupPhotoLeft} label="Left Side" />
-            <MediaPreview src={rider.pickupPhotoRight} label="Right Side" />
+            <MediaPreview src={rider.pickupPhotoFront ?? null} label="Front View" />
+            <MediaPreview src={rider.pickupPhotoBack ?? null} label="Rear View" />
+            <MediaPreview src={rider.pickupPhotoLeft ?? null} label="Left Side" />
+            <MediaPreview src={rider.pickupPhotoRight ?? null} label="Right Side" />
             <MediaPreview
-              src={rider.pickupPhotoWithVehicle}
+              src={rider.pickupPhotoWithVehicle ?? null}
               label="With Vehicle"
             />
           </div>

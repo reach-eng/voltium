@@ -115,7 +115,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('Cancel',
-                style: TextStyle(color: AppColors.of(context).onSurfaceVariant)),
+                style:
+                    TextStyle(color: AppColors.of(context).onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -503,7 +504,9 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                 'TOP-UP AMOUNT',
                 style: AppTypography.bodySmall
                     .copyWith(fontWeight: FontWeight.w600)
-                    .copyWith(color: AppColors.of(context).onSurfaceVariant, letterSpacing: 0.5),
+                    .copyWith(
+                        color: AppColors.of(context).onSurfaceVariant,
+                        letterSpacing: 0.5),
               ),
               SizedBox(height: 4),
               Text(
@@ -753,7 +756,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
             children: [
               Text('Top-Up Amount (Added to Wallet)',
                   style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.of(context).onSurfaceVariant, fontSize: 14)),
+                      color: AppColors.of(context).onSurfaceVariant,
+                      fontSize: 14)),
               Text('₹${widget.amount}',
                   style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w600,
@@ -770,7 +774,8 @@ class _TopUpProofScreenState extends ConsumerState<TopUpProofScreen> {
                       ? 'Gateway Fee ($_extraFeePercent%)'
                       : 'Gateway Fee',
                   style: GoogleFonts.plusJakartaSans(
-                      color: AppColors.of(context).onSurfaceVariant, fontSize: 14)),
+                      color: AppColors.of(context).onSurfaceVariant,
+                      fontSize: 14)),
               Text(
                 isRiderBearer ? '+₹$fee' : '₹0 (Paid by Voltium)',
                 style: GoogleFonts.plusJakartaSans(

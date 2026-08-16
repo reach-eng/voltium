@@ -88,7 +88,7 @@ class UploadPreview extends StatelessWidget {
                       children: [
                         Icon(
                           isLoading ? Icons.upload : Icons.add_photo_alternate,
-                          color: AppColors.onSurfaceMuted,
+                          color: AppColors.of(context).onSurfaceMuted,
                           size: 28,
                         ),
                         SizedBox(height: 4),

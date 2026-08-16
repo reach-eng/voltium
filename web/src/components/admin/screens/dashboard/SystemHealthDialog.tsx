@@ -26,20 +26,20 @@ function getStatusStyle(status: HealthCheck['status']): {
   if (status === 'ok') {
     return {
       Icon: CheckCircle2,
-      color: 'text-emerald-600',
+      color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-500/5',
     };
   }
   if (status === 'warn') {
     return {
       Icon: AlertTriangle,
-      color: 'text-amber-600',
+      color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-500/5',
     };
   }
   return {
     Icon: XCircle,
-    color: 'text-rose-600',
+    color: 'text-rose-600 dark:text-rose-400',
     bg: 'bg-rose-500/5',
   };
 }

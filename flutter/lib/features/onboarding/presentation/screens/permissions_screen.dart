@@ -518,7 +518,9 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
           duration: const Duration(milliseconds: 200),
           height: 56,
           decoration: BoxDecoration(
-            color: canProceed ? AppColors.primary : AppColors.of(context).borderSubtle,
+            color: canProceed
+                ? AppColors.primary
+                : AppColors.of(context).borderSubtle,
             borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: canProceed
                 ? [

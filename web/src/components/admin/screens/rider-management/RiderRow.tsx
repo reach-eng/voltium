@@ -30,9 +30,9 @@ export const RiderRow = React.memo(function RiderRow({
     rider.lifecycleStatus === 'KYC_SUBMITTED' ||
     rider.lifecycleStatus === 'PROFILE_SUBMITTED';
   const nameColor = isRed
-    ? 'text-rose-600'
+    ? 'text-rose-600 dark:text-rose-400'
     : isActive
-      ? 'text-emerald-600'
+      ? 'text-emerald-600 dark:text-emerald-400'
       : isOrange
         ? 'text-orange-500'
         : 'text-foreground';
@@ -70,7 +70,7 @@ export const RiderRow = React.memo(function RiderRow({
         <div>
           <p className={`font-semibold flex items-center gap-2 ${nameColor}`}>
             {rider.fullName || '—'}
-            {rider.sharedGuarantorWith?.length > 0 && (
+            {rider.sharedGuarantorWith && Array.isArray(rider.sharedGuarantorWith) && rider.sharedGuarantorWith.length > 0 && (
               <span title="Shared guarantor detected">
                 <ShieldAlert className="w-3 h-3 text-rose-500" />
               </span>
@@ -84,7 +84,7 @@ export const RiderRow = React.memo(function RiderRow({
       </TableCell>
       <TableCell className="text-xs font-medium">
         {rider.activeVehicle ? (
-          <span className="text-blue-600 flex items-center gap-1">
+          <span className="text-blue-600 dark:text-blue-400 flex items-center gap-1">
             <Bike className="w-3 h-3" /> {rider.activeVehicle}
           </span>
         ) : (
@@ -93,7 +93,7 @@ export const RiderRow = React.memo(function RiderRow({
       </TableCell>
       <TableCell className="text-xs">
         {rider.pickedUpAt ? (
-          <span className="text-emerald-600 font-medium">
+          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
             {formatDateDDMMYYYY(rider.pickedUpAt)}
           </span>
         ) : (
@@ -103,9 +103,9 @@ export const RiderRow = React.memo(function RiderRow({
       <TableCell>
         <Badge
           variant="outline"
-          className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge(rider.kycStatus)}`}
+          className={`text-[10px] uppercase font-black tracking-widest ${getKycBadge((rider.kycStatus as string) ?? 'PENDING')}`}
         >
-          {rider.kycStatus}
+          {rider.kycStatus ?? 'PENDING'}
         </Badge>
       </TableCell>
       <TableCell className="font-semibold text-sm">
@@ -121,12 +121,12 @@ export const RiderRow = React.memo(function RiderRow({
               onClick={onViewDetails}
               title="View Details"
             >
-              <Eye className="w-4 h-4 text-blue-600" />
+              <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+              className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-50"
               onClick={onDelete}
               title="Remove Rider"
             >

@@ -67,7 +67,7 @@ export function RiderJourneyTab({
                     onClick={() =>
                       setEditForm({ ...editForm, [step.key]: !editForm[step.key] })
                     }
-                    className={`h-7 px-2 py-1 rounded-md text-[10px] font-bold ${editForm[step.key] ? 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-600' : 'bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-600'}`}
+                    className={`h-7 px-2 py-1 rounded-md text-[10px] font-bold ${editForm[step.key] ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 hover:text-amber-600 dark:text-amber-400'}`}
                   >
                     {editForm[step.key] ? (
                       <CheckCircle2 className="w-3 h-3" />

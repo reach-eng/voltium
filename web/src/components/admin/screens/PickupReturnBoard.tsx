@@ -86,7 +86,7 @@ export default function PickupReturnBoard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Returns Queue</CardTitle>
-            <Badge variant="outline" className="bg-amber-500/5 text-amber-600 border-amber-200">
+            <Badge variant="outline" className="bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-200">
               Inspections Pending
             </Badge>
           </CardHeader>

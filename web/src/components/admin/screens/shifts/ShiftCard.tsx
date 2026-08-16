@@ -30,7 +30,7 @@ export function ShiftCard({ shift, onToggle, onEdit, onDelete }: ShiftCardProps)
               className={`p-2 rounded-full ${shift.isActive ? 'bg-blue-500/10' : 'bg-muted'}`}
             >
               <Clock
-                className={`h-6 w-6 ${shift.isActive ? 'text-blue-600' : 'text-muted-foreground'}`}
+                className={`h-6 w-6 ${shift.isActive ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`}
               />
             </div>
             <div>

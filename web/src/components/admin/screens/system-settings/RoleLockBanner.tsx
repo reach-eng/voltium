@@ -16,7 +16,7 @@ interface RoleLockBannerProps {
 export function RoleLockBanner({ adminRole }: RoleLockBannerProps) {
   return (
     <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-      <AlertTriangle className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
+      <AlertTriangle className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
       <div>
         <p className="text-sm font-medium text-amber-700 dark:text-amber-400">View-only mode</p>
         <p className="text-xs text-muted-foreground mt-0.5">

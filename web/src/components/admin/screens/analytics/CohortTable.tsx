@@ -50,10 +50,10 @@ export function CohortTable({ cohorts }: { cohorts: AnalyticsCohort[] }) {
                     {getMonthLabel(cohort.month)}
                   </TableCell>
                   <TableCell>{cohort.total}</TableCell>
-                  <TableCell className="text-emerald-600 font-semibold">
+                  <TableCell className="text-emerald-600 dark:text-emerald-400 font-semibold">
                     {cohort.active}
                   </TableCell>
-                  <TableCell className="text-rose-600 font-semibold">
+                  <TableCell className="text-rose-600 dark:text-rose-400 font-semibold">
                     {cohort.suspended}
                   </TableCell>
                   <TableCell className="text-right pr-6">
@@ -61,10 +61,10 @@ export function CohortTable({ cohorts }: { cohorts: AnalyticsCohort[] }) {
                       variant="outline"
                       className={`rounded-md text-xs font-bold ${
                         cohort.retentionRate >= 70
-                          ? 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5'
+                          ? 'border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5'
                           : cohort.retentionRate >= 40
-                            ? 'border-amber-500/20 text-amber-600 bg-amber-500/5'
-                            : 'border-rose-500/20 text-rose-600 bg-rose-500/5'
+                            ? 'border-amber-500/20 text-amber-600 dark:text-amber-400 bg-amber-500/5'
+                            : 'border-rose-500/20 text-rose-600 dark:text-rose-400 bg-rose-500/5'
                       }`}
                     >
                       {cohort.retentionRate.toFixed(1)}%

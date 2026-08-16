@@ -54,7 +54,7 @@ class ReturnStepIndicator extends StatelessWidget {
                 description,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
-                  color: AppColors.slate500,
+                  color: AppColors.of(context).onSurfaceVariant,
                   height: 1.4,
                 ),
               ),

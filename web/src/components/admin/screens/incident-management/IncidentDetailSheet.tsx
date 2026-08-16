@@ -1,8 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Dialog,
@@ -11,6 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   FileText,
   Camera,
@@ -44,6 +51,33 @@ export function IncidentDetailSheet({
   onUpdateStatus,
   onAssign,
 }: IncidentDetailSheetProps) {
+  // PR-VER-2026-08-06 (SUPPORT_INCIDENT P0-4): assignment used a free-text
+  // <Input> with no validation — a typo'd admin id was persisted silently and
+  // the ticket could never be claimed. Replace with a validated Select backed
+  // by the real admin list.
+  const [admins, setAdmins] = useState<{ id: string; name: string }[]>([]);
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/admin/admins?limit=100&page=1')
+      .then((r) => r.json())
+      .then((body) => {
+        if (cancelled) return;
+        const list = Array.isArray(body?.data) ? body.data : [];
+        setAdmins(
+          list.map((a: any) => ({
+            id: a.id,
+            name: a.name || a.email || a.id,
+          }))
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -222,7 +256,7 @@ export function IncidentDetailSheet({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/10"
+                        className="border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
                         onClick={() => onUpdateStatus(selectedIncident.id, 'RESOLVED')}
                       >
                         Mark Resolved
@@ -250,12 +284,44 @@ export function IncidentDetailSheet({
                 </div>
                 <div className="space-y-2">
                   <Label>Assign To</Label>
-                  <Input
-                    placeholder="Admin ID or name"
-                    onBlur={(e) => {
-                      if (e.target.value) onAssign(selectedIncident.id, e.target.value);
+                  <Select
+                    value={selectedIncident.assignedTo ?? ''}
+                    onValueChange={(value) => {
+                      if (!value || assigning) return;
+                      setAssigning(true);
+                      onAssign(selectedIncident.id, value);
+                      // The parent refetches/updates `selectedIncident`, so
+                      // re-enable after a tick; a failed assignment keeps the
+                      // previous value (the Select is controlled).
+                      setTimeout(() => setAssigning(false), 500);
                     }}
-                  />
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue
+                        placeholder={
+                          admins.length === 0
+                            ? 'Loading admins…'
+                            : 'Select an admin to assign'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {admins.length === 0 && (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                          No admins available
+                        </div>
+                      )}
+                      {admins.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Assignment is validated against the admin list — typos are
+                    impossible.
+                  </p>
                 </div>
                 {selectedIncident.assignedToName && (
                   <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">

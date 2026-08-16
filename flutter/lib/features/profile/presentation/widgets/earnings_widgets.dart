@@ -98,12 +98,14 @@ class TotalEarningsCard extends StatelessWidget {
   final double total;
   final int trips;
   final double hours;
+  final String? growthPercentage;
 
   const TotalEarningsCard({
     super.key,
     required this.total,
     required this.trips,
     required this.hours,
+    this.growthPercentage,
   });
 
   @override
@@ -149,7 +151,7 @@ class TotalEarningsCard extends StatelessWidget {
                     Icon(Icons.trending_up, color: AppColors.success, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      '+12%',
+                      growthPercentage ?? '—',
                       style: AppTypography.labelSmall
                           .copyWith(color: AppColors.success),
                     ),
@@ -377,7 +379,7 @@ class DayEarningsCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.primarySurface,
+                    color: AppColors.of(context).primarySurface,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(

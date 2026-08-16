@@ -44,7 +44,7 @@ export const MediaPreview = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-5 w-5 p-0 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+              className="h-5 w-5 p-0 text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
               onClick={onDelete}
               title={`Delete ${label}`}
             >

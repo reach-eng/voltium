@@ -377,7 +377,7 @@ export function OverviewTab() {
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Auto-backup:</span>
                 {data.scheduleStatus.enabled ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px]">
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px]">
                     Enabled
                   </Badge>
                 ) : (

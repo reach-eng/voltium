@@ -90,7 +90,7 @@ export function HubGrid({
                     className={`p-2 rounded-full bg-amber-500/10 ${!hub.isActive ? 'opacity-40' : ''}`}
                   >
                     <Building2
-                      className={`h-6 w-6 ${hub.isActive ? 'text-amber-600' : 'text-muted-foreground'}`}
+                      className={`h-6 w-6 ${hub.isActive ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
                     />
                   </div>
                   <div>

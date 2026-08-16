@@ -78,7 +78,7 @@ export function VehicleRow({
       <TableCell>
         {activeLease ? (
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-bold text-blue-600">
+            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
               {activeLease.rider.fullName}
             </span>
             <span className="text-[10px] text-muted-foreground uppercase">
@@ -130,7 +130,7 @@ export function VehicleRow({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 text-rose-500 hover:text-rose-600"
+            className="h-10 w-10 text-rose-500 hover:text-rose-600 dark:text-rose-400"
             onClick={() => onDelete(vehicle.id)}
             title="Delete Vehicle"
           >

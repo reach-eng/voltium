@@ -166,7 +166,7 @@ class PlanCardTile extends StatelessWidget {
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF0F172A),
+                                      color: AppColors.slate900,
                                     ),
                                   ),
                                 ),
@@ -218,7 +218,7 @@ class PlanCardTile extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.8)
-                            : AppColors.slate500,
+                            : AppColors.of(context).onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -228,7 +228,7 @@ class PlanCardTile extends StatelessWidget {
                   Divider(
                     color: isSelected
                         ? Colors.white.withValues(alpha: 0.15)
-                        : AppColors.iconBackground,
+                        : AppColors.of(context).iconBackground,
                   ),
                   const SizedBox(height: 12),
                   ...features.map(

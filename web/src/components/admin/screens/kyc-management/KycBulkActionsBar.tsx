@@ -29,7 +29,7 @@ export function KycBulkActionsBar({
         onClick={() => handleBulkAction('approve')}
         disabled={bulkLoading}
         className="h-10 text-sm px-4 bg-emerald-600 hover:bg-emerald-700 transition-all duration-200"
-        title="Approve All (Ctrl+K)"
+        title="Approve all selected"
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -43,7 +43,7 @@ export function KycBulkActionsBar({
         variant="outline"
         onClick={() => handleBulkAction('info_required')}
         disabled={bulkLoading}
-        className="h-10 text-sm px-4 border-orange-500/30 text-orange-600 transition-all duration-200"
+        className="h-10 text-sm px-4 border-orange-500/30 text-orange-600 dark:text-orange-400 transition-all duration-200"
         title="Needs Correction"
       >
         {bulkLoading ? (
@@ -59,7 +59,7 @@ export function KycBulkActionsBar({
         onClick={() => handleBulkAction('reject')}
         disabled={bulkLoading}
         className="h-10 text-sm px-4 transition-all duration-200"
-        title="Reject All (Ctrl+R)"
+        title="Reject all selected"
       >
         {bulkLoading ? (
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -77,7 +77,7 @@ export function KycBulkActionsBar({
             onClick={handleUndo}
             disabled={bulkLoading}
             className="h-10 text-sm px-4 transition-all duration-200"
-            title="Undo (Ctrl+Z)"
+            title="Undo last bulk action"
           >
             <Undo2 className="w-4 h-4 mr-1.5" /> Undo
           </Button>

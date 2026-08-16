@@ -5,7 +5,6 @@ interface AdminState {
   activeSection: string;
   rootSection: string;
   sidebarCollapsed: boolean;
-  darkMode: boolean;
   /** Breadcrumb trail for deep navigation (e.g. Riders → Rider Detail → KYC) */
   breadcrumbs: { label: string; section: string }[];
   /** Whether the ⌘K command palette is open */
@@ -13,7 +12,6 @@ interface AdminState {
 
   setActiveSection: (s: string) => void;
   toggleSidebar: () => void;
-  toggleDarkMode: () => void;
   pushBreadcrumb: (label: string, section: string) => void;
   popBreadcrumb: () => void;
   clearBreadcrumbs: () => void;
@@ -26,13 +24,11 @@ export const useAdminStore = create<AdminState>()(
       activeSection: 'overview',
       rootSection: 'overview',
       sidebarCollapsed: false,
-      darkMode: false,
       breadcrumbs: [],
       commandPaletteOpen: false,
 
       setActiveSection: (s) => set({ activeSection: s, rootSection: s, breadcrumbs: [] }),
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
       pushBreadcrumb: (label, section) =>
         set((state) => ({
           breadcrumbs: [...state.breadcrumbs, { label, section }],
@@ -52,7 +48,6 @@ export const useAdminStore = create<AdminState>()(
       name: 'voltium-admin-prefs',
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
-        darkMode: state.darkMode,
       }),
     }
   )

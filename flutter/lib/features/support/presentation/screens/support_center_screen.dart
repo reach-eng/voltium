@@ -84,7 +84,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                                 controller.openView();
                               },
                               leading: Icon(Icons.search,
-                                  color: AppColors.of(context).onSurfaceVariant),
+                                  color:
+                                      AppColors.of(context).onSurfaceVariant),
                               hintText: 'Search FAQs, topics...',
                               elevation: const WidgetStatePropertyAll(0),
                               backgroundColor: WidgetStatePropertyAll(
@@ -125,8 +126,7 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                           // text disappears in dark mode. Read
                           // from the theme extension.
                           style: AppTypography.titleMedium
-                              .copyWith(
-                                  color: AppColors.of(context).onSurface),
+                              .copyWith(color: AppColors.of(context).onSurface),
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -157,7 +157,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                             color: colors.card,
                             borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
-                                color: colors.outlineVariant.withValues(alpha: 0.5)),
+                                color: colors.outlineVariant
+                                    .withValues(alpha: 0.5)),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withValues(alpha: 0.05),
@@ -356,7 +357,8 @@ class _SupportCenterScreenState extends ConsumerState<SupportCenterScreen> {
                         .copyWith(fontWeight: FontWeight.w600)),
                 Text(subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.of(context).onSurfaceVariant, fontSize: 12)),
+                        color: AppColors.of(context).onSurfaceVariant,
+                        fontSize: 12)),
               ],
             ),
           ),
@@ -402,8 +404,7 @@ class RecentTicketsContainer extends ConsumerWidget {
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-            color: colors.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),

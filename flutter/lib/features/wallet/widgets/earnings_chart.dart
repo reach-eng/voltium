@@ -37,8 +37,9 @@ class EarningsChart extends StatelessWidget {
         children: [
           Text(
             'DAILY BREAKDOWN',
-            style: AppTypography.overline
-                .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
+            style: AppTypography.overline.copyWith(
+                color: AppColors.of(context).onSurfaceVariant,
+                letterSpacing: 1.5),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -51,6 +52,8 @@ class EarningsChart extends StatelessWidget {
                   dayLabels: dayLabels,
                   maxAmount: maxAmount,
                   bestDayIndex: bestDayIndex,
+                  valueColor: AppColors.of(context).onSurface,
+                  labelColor: AppColors.of(context).onSurfaceVariant,
                 ),
               ),
             ),
@@ -66,12 +69,16 @@ class _BarChartPainter extends CustomPainter {
   final List<String> dayLabels;
   final double maxAmount;
   final int bestDayIndex;
+  final Color valueColor;
+  final Color labelColor;
 
   _BarChartPainter({
     required this.amounts,
     required this.dayLabels,
     required this.maxAmount,
     required this.bestDayIndex,
+    required this.valueColor,
+    required this.labelColor,
   });
 
   @override
@@ -125,7 +132,7 @@ class _BarChartPainter extends CustomPainter {
           text: '\u20B9${amounts[i].toStringAsFixed(0)}',
           style: AppTypography.labelSmall
               .copyWith(fontSize: 9)
-              .copyWith(color: AppColors.slate800),
+              .copyWith(color: valueColor),
         );
         valuePaint.layout();
         valuePaint.paint(
@@ -138,7 +145,7 @@ class _BarChartPainter extends CustomPainter {
         text: dayLabels.length > i ? dayLabels[i] : '',
         style: AppTypography.labelSmall
             .copyWith(fontSize: 10)
-            .copyWith(color: AppColors.slate500),
+            .copyWith(color: labelColor),
       );
       labelPaint.layout();
       labelPaint.paint(

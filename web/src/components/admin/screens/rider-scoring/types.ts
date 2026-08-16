@@ -72,10 +72,10 @@ export function getRiskIcon(risk: RiskLevel | string): LucideIcon {
 
 /** Tailwind text colour for a numeric score (0-100). */
 export function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600';
-  if (score >= 60) return 'text-amber-600';
-  if (score >= 40) return 'text-orange-600';
-  return 'text-rose-600';
+  if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
+  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
+  if (score >= 40) return 'text-orange-600 dark:text-orange-400';
+  return 'text-rose-600 dark:text-rose-400';
 }
 
 /** Tailwind background colour for the score progress bar. */

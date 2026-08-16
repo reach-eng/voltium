@@ -221,8 +221,7 @@ class _SplashScreenState extends State<SplashScreen>
                             Text(
                               'Voltium',
                               style: AppTypography.displayLarge.copyWith(
-                                  color: colors.onSurface,
-                                  letterSpacing: -1),
+                                  color: colors.onSurface, letterSpacing: -1),
                             ),
                             SizedBox(height: 8),
                             Row(
@@ -324,8 +323,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         AppLocalizations.of(context)!.txtconnectingToGrid,
                         style: AppTypography.labelSmall.copyWith(
-                            color: colors.onSurfaceMuted,
-                            letterSpacing: 2.5),
+                            color: colors.onSurfaceMuted, letterSpacing: 2.5),
                       ),
                     ],
                   ),

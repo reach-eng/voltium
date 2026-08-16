@@ -37,10 +37,12 @@ class EndRentalPhotoGrid extends StatelessWidget {
       child: Container(
         height: 110,
         decoration: BoxDecoration(
-          color: hasPhoto ? Colors.black : AppColors.surfaceBright,
+          color: hasPhoto ? Colors.black : AppColors.of(context).surfaceBright,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: hasPhoto ? AppColors.success : AppColors.borderSubtle,
+            color: hasPhoto
+                ? AppColors.success
+                : AppColors.of(context).borderSubtle,
             width: hasPhoto ? 2 : 1.5,
           ),
         ),
@@ -56,7 +58,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
                 )
               else if (hasPhoto && photo.path == 'mock_photo.png')
                 Container(
-                  color: AppColors.successLight,
+                  color: AppColors.of(context).successLight,
                   child: const Center(
                     child: Icon(
                       Icons.check_circle_rounded,
@@ -98,7 +100,7 @@ class EndRentalPhotoGrid extends StatelessWidget {
                   top: 6,
                   right: 6,
                   child: Container(
-                    padding: const EdgeInsets.all(3),
+                    padding: const EdgeInsets.all(Spacing.xs),
                     decoration: const BoxDecoration(
                       color: AppColors.success,
                       shape: BoxShape.circle,

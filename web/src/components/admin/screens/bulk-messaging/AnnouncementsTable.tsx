@@ -94,10 +94,10 @@ export function AnnouncementsTable({
                       {a.targetAudience.replace('_', ' ')}
                     </TableCell>
                     <TableCell className="text-sm font-medium">{a.totalRecipients}</TableCell>
-                    <TableCell className="text-sm text-emerald-600">
+                    <TableCell className="text-sm text-emerald-600 dark:text-emerald-400">
                       {a.deliveredCount}
                     </TableCell>
-                    <TableCell className="text-sm text-blue-600">{a.readCount}</TableCell>
+                    <TableCell className="text-sm text-blue-600 dark:text-blue-400">{a.readCount}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"

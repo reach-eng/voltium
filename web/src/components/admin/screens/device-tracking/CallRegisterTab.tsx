@@ -16,9 +16,9 @@ interface CallRegisterTabProps {
 }
 
 function callIconBg(type: CallLog['type']): string {
-  if (type === 'INCOMING') return 'bg-emerald-500/10 text-emerald-600';
-  if (type === 'OUTGOING') return 'bg-blue-500/10 text-blue-600';
-  return 'bg-rose-500/10 text-rose-600';
+  if (type === 'INCOMING') return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+  if (type === 'OUTGOING') return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
+  return 'bg-rose-500/10 text-rose-600 dark:text-rose-400';
 }
 
 function CallTypeIcon({ type }: { type: CallLog['type'] }) {
@@ -27,8 +27,19 @@ function CallTypeIcon({ type }: { type: CallLog['type'] }) {
   return <PhoneMissed className="w-4 h-4" />;
 }
 
-function formatDuration(seconds: number): string {
-  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+// P2-13 (2026-08-05 legal/device audit): the old formatter printed "60m 0s"
+// for an hour and "NaNm NaNs" for garbage input. Now hours are collapsed,
+// and NaN / negative / non-finite values degrade to "—" instead of corrupt
+// output. Exported for unit tests.
+export function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+  const total = Math.floor(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
 
 /**

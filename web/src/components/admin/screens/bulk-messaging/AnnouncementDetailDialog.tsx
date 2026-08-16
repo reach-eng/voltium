@@ -67,19 +67,19 @@ export function AnnouncementDetailDialog({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Delivered</span>
-                <span className="text-emerald-600 font-semibold">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                   {announcement.deliveredCount}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Read</span>
-                <span className="text-blue-600 font-semibold">
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">
                   {announcement.readCount}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Failed</span>
-                <span className="text-rose-600 font-semibold">
+                <span className="text-rose-600 dark:text-rose-400 font-semibold">
                   {announcement.failedCount}
                 </span>
               </div>
@@ -119,19 +119,19 @@ export function AnnouncementDetailDialog({
                       label="Delivered"
                       count={announcement.deliveredCount}
                       total={announcement.totalRecipients}
-                      colorClass="text-emerald-600"
+                      colorClass="text-emerald-600 dark:text-emerald-400"
                     />
                     <DeliveryRow
                       label="Read"
                       count={announcement.readCount}
                       total={announcement.totalRecipients}
-                      colorClass="text-blue-600"
+                      colorClass="text-blue-600 dark:text-blue-400"
                     />
                     <DeliveryRow
                       label="Failed"
                       count={announcement.failedCount}
                       total={announcement.totalRecipients}
-                      colorClass="text-rose-600"
+                      colorClass="text-rose-600 dark:text-rose-400"
                     />
                   </TableBody>
                 </Table>

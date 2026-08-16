@@ -66,10 +66,13 @@ export default function MaintenanceModeScreen() {
   const handleSaveMessage = async () => {
     setSaving(true);
     try {
+      // PR-2 (2026-08-06 verification, Section 2): PATCH sends ONLY the
+      // message — the old PUT echoed `enabled` back, so saving a draft
+      // message while maintenance was off silently re-enabled it.
       const res = await fetch('/api/admin/maintenance-mode', {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled, message }),
+        body: JSON.stringify({ message }),
       });
       if (res.ok) {
         toast.success('Maintenance banner message updated successfully');
@@ -127,13 +130,23 @@ export default function MaintenanceModeScreen() {
 
             <div className="space-y-2">
               <label className="text-sm font-semibold">User Banner Message</label>
+              <p className="text-xs text-muted-foreground">
+                {enabled
+                  ? 'Edit the banner riders see during maintenance.'
+                  : 'Draft the banner riders will see during maintenance. It is saved independently of the maintenance toggle.'}
+              </p>
               <div className="flex gap-2">
                 <Input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  disabled={enabled}
+                  disabled={saving}
+                  placeholder="System is currently under maintenance..."
                 />
-                <Button variant="outline" onClick={handleSaveMessage} disabled={saving || enabled}>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveMessage}
+                  disabled={saving}
+                >
                   <Save className="h-4 w-4 mr-1" /> Save
                 </Button>
               </div>
@@ -143,7 +156,7 @@ export default function MaintenanceModeScreen() {
 
         <Card className="bg-amber-500/5 border-amber-500/20 text-amber-900">
           <CardHeader className="flex flex-row items-center gap-2 pb-2">
-            <AlertOctagon className="h-5 w-5 text-amber-600 shrink-0" />
+            <AlertOctagon className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
             <CardTitle className="text-base text-amber-800">Pre-requisite</CardTitle>
           </CardHeader>
           <CardContent className="text-xs space-y-2 text-amber-700 font-medium">

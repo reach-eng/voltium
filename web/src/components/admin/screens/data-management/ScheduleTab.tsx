@@ -394,7 +394,7 @@ export function ScheduleTab() {
               </p>
               <Badge
                 variant="outline"
-                className={`text-[10px] ${config.enabled ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : ''}`}
+                className={`text-[10px] ${config.enabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : ''}`}
               >
                 {config.enabled ? 'Enabled' : 'Disabled'}
               </Badge>

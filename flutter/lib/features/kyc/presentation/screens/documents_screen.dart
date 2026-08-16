@@ -11,6 +11,7 @@ import 'package:universal_io/io.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 class MyDocumentsScreen extends ConsumerWidget {
@@ -45,7 +46,13 @@ class MyDocumentsScreen extends ConsumerWidget {
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to open document')),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded English
+          // SnackBar. Localised via the existing
+          // `txtunableToOpenDocument` ARB key.
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.txtunableToOpenDocument),
+          ),
         );
       }
     }
@@ -53,10 +60,11 @@ class MyDocumentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.iconBackground, // mesh-gradient equivalent bg
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: colors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 68,
@@ -67,8 +75,11 @@ class MyDocumentsScreen extends ConsumerWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.5),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -82,9 +93,9 @@ class MyDocumentsScreen extends ConsumerWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back,
-                    color: AppColors.slate800,
+                    color: colors.onSurface,
                     size: 18,
                   ),
                 ),
@@ -94,7 +105,7 @@ class MyDocumentsScreen extends ConsumerWidget {
         ),
         title: Text(
           'My Documents',
-          style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
+          style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
         ),
         centerTitle: false,
       ),
@@ -107,6 +118,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               FadeUpWidget(
                 delay: 0,
                 child: _buildVerificationStatusCard(
+                  context,
                   rider?.kycStatus.name ?? 'PENDING',
                 ),
               ),
@@ -114,6 +126,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               FadeUpWidget(
                 delay: 100,
                 child: _buildCategoryHeader(
+                  context,
                   'YOUR DOCUMENTS',
                   _countDocs([
                     rider?.aadhaarFront,
@@ -158,6 +171,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               FadeUpWidget(
                 delay: 400,
                 child: _buildCategoryHeader(
+                  context,
                   "GUARANTOR'S DOCUMENTS",
                   _countDocs([
                     rider?.guarantorAadhaarFront,
@@ -223,14 +237,18 @@ class MyDocumentsScreen extends ConsumerWidget {
     return urls.where((u) => u != null && u.isNotEmpty).length;
   }
 
-  Widget _buildVerificationStatusCard(String status) {
+  Widget _buildVerificationStatusCard(BuildContext context, String status) {
+    final colors = AppColors.of(context);
     final bool isApproved = status.toUpperCase() == 'APPROVED' ||
         status.toUpperCase() == 'VERIFIED';
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -250,8 +268,8 @@ class MyDocumentsScreen extends ConsumerWidget {
                   Container(
                     height: 40,
                     width: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.successLight,
+                    decoration: BoxDecoration(
+                      color: AppColors.of(context).successLight,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -260,7 +278,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                       size: 20,
                     ),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -270,14 +288,15 @@ class MyDocumentsScreen extends ConsumerWidget {
                             .copyWith(
                                 fontWeight: FontWeight.w800, letterSpacing: 1.2)
                             .copyWith(
-                                color: AppColors.onSurface, letterSpacing: 1.2),
+                                color: colors.onSurfaceMuted,
+                                letterSpacing: 1.2),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         'Verified & Secure',
                         style: AppTypography.bodyMedium
                             .copyWith(fontWeight: FontWeight.w600)
-                            .copyWith(color: AppColors.slate800),
+                            .copyWith(color: colors.onSurface),
                       ),
                     ],
                   ),
@@ -287,7 +306,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 height: 4,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.successLight,
+                  color: AppColors.of(context).successLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
                 child: FractionallySizedBox(
@@ -303,34 +322,37 @@ class MyDocumentsScreen extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             isApproved
                 ? 'Your identity and guarantor information have been verified. You can view or download copies of your documents below.'
                 : 'Your verification is in progress. Some documents may still be under review by our safety team.',
             style: AppTypography.bodySmall
-                .copyWith(color: AppColors.slate500, height: 1.5),
+                .copyWith(color: colors.onSurfaceMuted, height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryHeader(String title, int count) {
+  Widget _buildCategoryHeader(BuildContext context, String title, int count) {
+    final colors = AppColors.of(context);
     return Row(
       children: [
         Text(
           title,
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-              .copyWith(color: AppColors.slate500, letterSpacing: 1.2),
+              .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child:
-              Container(height: 1, color: Colors.black.withValues(alpha: 0.05)),
+          child: Container(
+            height: 1,
+            color: colors.outlineVariant.withValues(alpha: 0.5),
+          ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Text(
           '$count FILES',
           style: AppTypography.bodySmall
@@ -346,15 +368,16 @@ class MyDocumentsScreen extends ConsumerWidget {
     List<_DocModel> docs,
     int baseDelay,
   ) {
+    final colors = AppColors.of(context);
     final filtered = docs.where((d) => d.url != null).toList();
     if (filtered.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 32),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.4),
+          color: colors.card.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: colors.outlineVariant.withValues(alpha: 0.5),
             style: BorderStyle.solid,
           ),
         ),
@@ -364,7 +387,7 @@ class MyDocumentsScreen extends ConsumerWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontStyle: FontStyle.italic,
-              color: AppColors.slate500,
+              color: colors.onSurfaceMuted,
             ),
           ),
         ),
@@ -385,6 +408,7 @@ class MyDocumentsScreen extends ConsumerWidget {
   }
 
   Widget _buildDocItem(BuildContext context, _DocModel doc) {
+    final colors = AppColors.of(context);
     final bool isVideo = doc.isVideo;
     return InkWell(
       onTap: () => _viewDocument(context, doc.url, cacheKey: doc.cacheKey),
@@ -392,8 +416,11 @@ class MyDocumentsScreen extends ConsumerWidget {
       child: Container(
         padding: Spacing.paddingMd,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: colors.outlineVariant.withValues(alpha: 0.5),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -401,7 +428,6 @@ class MyDocumentsScreen extends ConsumerWidget {
               offset: const Offset(0, 8),
             ),
           ],
-          border: Border.all(color: Colors.transparent),
         ),
         child: Row(
           children: [
@@ -411,7 +437,7 @@ class MyDocumentsScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isVideo
                     ? AppColors.warningSurface
-                    : AppColors.primarySurface,
+                    : AppColors.of(context).primarySurface,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Icon(
@@ -420,7 +446,7 @@ class MyDocumentsScreen extends ConsumerWidget {
                 size: 22,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,9 +455,9 @@ class MyDocumentsScreen extends ConsumerWidget {
                     doc.label,
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(color: AppColors.slate800),
+                        .copyWith(color: colors.onSurface),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
@@ -446,19 +472,19 @@ class MyDocumentsScreen extends ConsumerWidget {
                       Container(
                         height: 3,
                         width: 3,
-                        decoration: const BoxDecoration(
-                          color: AppColors.borderMedium,
+                        decoration: BoxDecoration(
+                          color: colors.outlineVariant,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      SizedBox(width: 6),
+                      const SizedBox(width: 6),
                       Text(
                         isVideo ? 'VIDEO' : 'IMAGE',
                         style: AppTypography.bodySmall
                             .copyWith(
                                 fontWeight: FontWeight.w800, letterSpacing: 1.2)
                             .copyWith(
-                                color: AppColors.slate500, letterSpacing: 1),
+                                color: colors.onSurfaceMuted, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -468,13 +494,13 @@ class MyDocumentsScreen extends ConsumerWidget {
             Container(
               height: 36,
               width: 36,
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceBright,
+              decoration: BoxDecoration(
+                color: colors.iconBackground,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isVideo ? Icons.videocam_outlined : Icons.open_in_new,
-                color: AppColors.slate400,
+                color: colors.onSurfaceVariant,
                 size: 18,
               ),
             ),

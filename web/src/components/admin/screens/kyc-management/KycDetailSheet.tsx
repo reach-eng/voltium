@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -8,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Shield, ShieldCheck } from 'lucide-react';
+import { Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { MediaPreview, kycDocuments } from './helpers';
 import { formatDateDDMMYYYY } from '@/lib/date-utils';
 import type { KycRider } from './types';
@@ -22,16 +24,25 @@ export function KycDetailSheet({
   selectedRider,
   setSelectedRider,
 }: KycDetailSheetProps) {
+  const [showPii, setShowPii] = useState(false);
+
   if (!selectedRider) return null;
+
+  const maskString = (val?: string) => {
+    if (!val) return '—';
+    if (showPii) return val;
+    if (val.length <= 4) return '••••';
+    return `••••••••${val.slice(-4)}`;
+  };
 
   return (
     <Dialog open={!!selectedRider} onOpenChange={() => setSelectedRider(null)}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="shrink-0">
           <DialogTitle>KYC Documents - {selectedRider.fullName}</DialogTitle>
           <DialogDescription>{selectedRider.riderId}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 no-scrollbar">
+        <div className="space-y-6 flex-1 overflow-y-auto min-h-0 pr-2 no-scrollbar">
           {/* Profile Header */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/30 border">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shrink-0 bg-background">
@@ -104,7 +115,7 @@ export function KycDetailSheet({
             (selectedRider.kycStatus === 'REJECTED' ||
               selectedRider.kycStatus === 'INFO_REQUIRED') && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 mb-4">
-                <p className="text-[10px] font-black uppercase text-rose-600 tracking-widest mb-1">
+                <p className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-widest mb-1">
                   Rejection Reason
                 </p>
                 <p className="text-sm text-rose-700 dark:text-rose-400">
@@ -131,18 +142,18 @@ export function KycDetailSheet({
                 const total = docs.length;
                 if (present === total)
                   return (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px]">
+                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px]">
                       All Complete ({total}/{total})
                     </Badge>
                   );
                 if (present === 0)
                   return (
-                    <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[10px]">
+                    <Badge className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-[10px]">
                       No Documents Uploaded (0/{total})
                     </Badge>
                   );
                 return (
-                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px]">
+                  <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[10px]">
                     Missing {total - present} of {total} docs
                   </Badge>
                 );
@@ -154,7 +165,7 @@ export function KycDetailSheet({
                 return (
                   <div
                     key={doc.key}
-                    className={`text-[9px] font-bold uppercase px-1.5 py-1 rounded ${present ? 'bg-emerald-500/5 text-emerald-600' : 'bg-muted text-muted-foreground'}`}
+                    className={`text-[9px] font-bold uppercase px-1.5 py-1 rounded ${present ? 'bg-emerald-500/5 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}
                   >
                     {present ? '✓' : '✗'} {doc.label.split(' ')[0]}
                   </div>
@@ -198,9 +209,21 @@ export function KycDetailSheet({
 
           {/* Bank Details */}
           <div className="p-4 rounded-xl bg-muted/30 border border-border/50 space-y-3">
-            <p className="text-[10px] font-bold uppercase text-muted-foreground">
-              Bank Details
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                Bank Details
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-[11px] rounded-lg"
+                onClick={() => setShowPii((v) => !v)}
+              >
+                {showPii ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {showPii ? 'Hide PII' : 'Reveal PII'}
+              </Button>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase text-muted-foreground mb-0.5">
@@ -213,7 +236,7 @@ export function KycDetailSheet({
                   Account Number
                 </p>
                 <p className="text-sm font-medium font-mono">
-                  {selectedRider.accountNumber || '—'}
+                  {selectedRider.accountNumber ? maskString(selectedRider.accountNumber) : '—'}
                 </p>
               </div>
               <div className="col-span-2">
@@ -221,7 +244,7 @@ export function KycDetailSheet({
                   IFSC Code
                 </p>
                 <p className="text-sm font-medium font-mono">
-                  {selectedRider.ifscCode || '—'}
+                  {selectedRider.ifscCode ? maskString(selectedRider.ifscCode) : '—'}
                 </p>
               </div>
             </div>

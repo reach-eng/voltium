@@ -109,7 +109,8 @@ class _SignaturePadScreenState extends State<SignaturePadScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    border: Border.all(color: AppColors.borderSubtle),
+                    border:
+                        Border.all(color: AppColors.of(context).borderSubtle),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Stack(

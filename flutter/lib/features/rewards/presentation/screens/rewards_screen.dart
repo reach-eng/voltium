@@ -46,14 +46,15 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     final pointsToNext = nextTierThreshold - points;
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.of(context).iconBackground,
       appBar: AppBar(
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: Text('Rewards',
             style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.bold, color: AppColors.slate800)),
+                fontWeight: FontWeight.bold,
+                color: AppColors.of(context).onSurface)),
         leadingWidth: 68,
         leading: Padding(
           padding: const EdgeInsets.only(left: 20),
@@ -77,8 +78,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                         offset: const Offset(0, 4))
                   ],
                 ),
-                child: const Icon(Icons.arrow_back,
-                    color: AppColors.slate800, size: 20),
+                child: Icon(Icons.arrow_back,
+                    color: AppColors.of(context).onSurface, size: 20),
               ),
             ),
           ),
@@ -257,8 +258,8 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             SizedBox(height: 40),
             Text(
               'Available Rewards',
-              style:
-                  AppTypography.titleLarge.copyWith(color: AppColors.slate800),
+              style: AppTypography.titleLarge
+                  .copyWith(color: AppColors.of(context).onSurface),
             ),
             const SizedBox(height: 24),
             // Custom Empty State
@@ -307,14 +308,14 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     Text(
                       'No rewards unlocked yet',
                       style: AppTypography.titleMedium
-                          .copyWith(color: AppColors.slate800),
+                          .copyWith(color: AppColors.of(context).onSurface),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Keep riding and completing milestones\nto unlock exclusive rewards.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.slate500,
+                        color: AppColors.of(context).onSurfaceVariant,
                         fontSize: 14,
                         height: 1.5,
                       ),

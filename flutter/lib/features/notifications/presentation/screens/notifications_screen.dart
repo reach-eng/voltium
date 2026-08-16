@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:voltium_rider/models/notification_model.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/widgets/fluid_list_wrapper.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
@@ -120,12 +121,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   }
 
   void _clearReadNotifications(EngagementState state) {
-    setState(() {
-      // R4.3c-4: notifications live in immutable state; we can no
-      // longer mutate them in place. We trigger a refresh on the
-      // notifier instead.
-      ref.read(engagementProvider.notifier).refreshNotifications();
-    });
+    ref.read(engagementProvider.notifier).clearReadNotifications();
   }
 
   @override
@@ -135,7 +131,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       backgroundColor: colors.surface,
       body: Consumer(
         builder: (context, ref, _) {
-          final notifications = ref.read(engagementProvider).notifications;
+          final engagementState = ref.watch(engagementProvider);
+          final notifications = engagementState.notifications;
           final filtered = _getFilteredNotifications(notifications);
           final unreadCount = notifications.where((n) => !n.isRead).length;
 
@@ -145,8 +142,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
               SafeArea(
                 child: Column(
                   children: [
-                    _buildHeader(
-                        context, ref.read(engagementProvider), unreadCount),
+                    _buildHeader(context, engagementState, unreadCount),
                     _buildTabBar(),
                     Expanded(
                       child: filtered.isEmpty
@@ -189,7 +185,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                           ),
                                         ),
                                         confirmDismiss: (direction) async {
-                                          return await showDialog<bool>(
+                                          final confirmed =
+                                              await showDialog<bool>(
                                             context: context,
                                             builder: (ctx) => AlertDialog(
                                               title: const Text(
@@ -203,35 +200,64 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                                   onPressed: () =>
                                                       Navigator.of(ctx)
                                                           .pop(false),
-                                                  child: const Text('Cancel'),
+                                                  // LANGUAGE-AUDIT (2026-08-16)
+                                                  // #5: hardcoded English
+                                                  // button labels. Localised via
+                                                  // existing `txtcancel` /
+                                                  // `txtdelete` ARB keys.
+                                                  child: Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .txtcancel),
                                                 ),
                                                 FilledButton(
                                                   onPressed: () =>
                                                       Navigator.of(ctx)
                                                           .pop(true),
-                                                  child: const Text('Delete'),
+                                                  child: Text(
+                                                      AppLocalizations.of(
+                                                              context)!
+                                                          .txtdelete),
                                                 ),
                                               ],
                                             ),
                                           );
+                                          if (confirmed != true) return false;
+                                          // PR-VER-2026-08-06 (SUPPORT_NOTIFICATIONS
+                                          // P0-5): the delete used to be
+                                          // local-only (setState + removeWhere) —
+                                          // the row came back on the next
+                                          // refresh. Delete server-side and only
+                                          // dismiss on success.
+                                          final ok = await ref
+                                              .read(engagementProvider.notifier)
+                                              .deleteNotification(
+                                                  filtered[index].id);
+                                          if (!ok && context.mounted) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Failed to delete notification'),
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                          }
+                                          return ok;
                                         },
                                         onDismissed: (direction) {
-                                          setState(() {
-                                            ref
-                                                .read(engagementProvider)
-                                                .notifications
-                                                .removeWhere(
-                                                  (n) =>
-                                                      n.id ==
-                                                      filtered[index].id,
-                                                );
-                                          });
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
-                                            const SnackBar(
-                                              content:
-                                                  Text('Notification deleted'),
-                                              duration: Duration(seconds: 2),
+                                            SnackBar(
+                                              // LANGUAGE-AUDIT (2026-08-16)
+                                              // #5: hardcoded English
+                                              // SnackBar. Localised via
+                                              // `txtnotificationDeleted`.
+                                              content: Text(
+                                                  AppLocalizations.of(context)!
+                                                      .txtnotificationDeleted),
+                                              duration:
+                                                  const Duration(seconds: 2),
                                             ),
                                           );
                                         },
@@ -239,7 +265,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                                           child: _buildNotificationCard(
                                             context,
                                             filtered[index],
-                                            ref.read(engagementProvider),
+                                            engagementState,
                                           ),
                                         ),
                                       ),
@@ -262,11 +288,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
   Widget _buildMeshBackground() {
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.surfaceBright],
+            colors: [
+              AppColors.of(context).iconBackground,
+              AppColors.of(context).surfaceBright
+            ],
           ),
         ),
       ),
@@ -333,10 +362,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           ),
           Row(
             children: [
-              if (ref
-                  .read(engagementProvider)
-                  .notifications
-                  .any((n) => n.isRead))
+              if (provider.notifications.any((n) => n.isRead))
                 InkWell(
                   onTap: () => _clearReadNotifications(provider),
                   child: Container(
@@ -358,10 +384,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     ),
                   ),
                 ),
-              if (ref
-                  .read(engagementProvider)
-                  .notifications
-                  .any((n) => n.isRead))
+              if (provider.notifications.any((n) => n.isRead))
                 const SizedBox(width: 8),
               if (unreadCount > 0)
                 InkWell(
@@ -657,7 +680,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.currency_rupee,
         color: AppColors.success,
-        bgColor: AppColors.successLight,
+        bgColor: AppColors.of(context).successLight,
         label: 'Payment'
       );
     }
@@ -679,7 +702,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       return (
         icon: Icons.build_outlined,
         color: AppColors.primary,
-        bgColor: AppColors.primarySurface,
+        bgColor: AppColors.of(context).primarySurface,
         label: 'Maintenance'
       );
     }
@@ -696,7 +719,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
     }
     return (
       icon: Icons.notifications_outlined,
-      color: AppColors.slate500,
+      color: AppColors.of(context).onSurfaceVariant,
       bgColor: colors.iconBackground,
       label: 'General'
     );

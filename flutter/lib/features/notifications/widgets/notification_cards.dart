@@ -39,7 +39,7 @@ class NotificationCard extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 left: BorderSide(
-                  color: _getColor(),
+                  color: _getColor(context),
                   width: 4,
                 ),
               ),
@@ -50,12 +50,12 @@ class NotificationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _getColor().withValues(alpha: 0.1),
+                    color: _getColor(context).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     _getIcon(),
-                    color: _getColor(),
+                    color: _getColor(context),
                     size: 20,
                   ),
                 ),
@@ -134,7 +134,7 @@ class NotificationCard extends StatelessWidget {
     }
   }
 
-  Color _getColor() {
+  Color _getColor(BuildContext context) {
     switch (type) {
       case NotificationType.ride:
         return AppColors.primary;
@@ -145,7 +145,7 @@ class NotificationCard extends StatelessWidget {
       case NotificationType.alert:
         return AppColors.error;
       case NotificationType.system:
-        return AppColors.onSurfaceMuted;
+        return AppColors.of(context).onSurfaceMuted;
     }
   }
 
@@ -186,10 +186,10 @@ class NotificationListTile extends StatelessWidget {
       leading: Container(
         padding: Spacing.paddingSm,
         decoration: BoxDecoration(
-          color: _getColor().withValues(alpha: 0.1),
+          color: _getColor(context).withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: Icon(_getIcon(), color: _getColor(), size: 20),
+        child: Icon(_getIcon(), color: _getColor(context), size: 20),
       ),
       title: Text(title),
       subtitle: Text(subtitle),
@@ -213,7 +213,7 @@ class NotificationListTile extends StatelessWidget {
     }
   }
 
-  Color _getColor() {
+  Color _getColor(BuildContext context) {
     switch (type) {
       case NotificationType.ride:
         return AppColors.primary;
@@ -224,7 +224,7 @@ class NotificationListTile extends StatelessWidget {
       case NotificationType.alert:
         return AppColors.error;
       case NotificationType.system:
-        return AppColors.onSurfaceMuted;
+        return AppColors.of(context).onSurfaceMuted;
     }
   }
 }

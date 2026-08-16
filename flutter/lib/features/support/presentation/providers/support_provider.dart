@@ -13,8 +13,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
 
 import 'package:voltium_rider/features/support/domain/repository.dart';
+import 'package:voltium_rider/features/support/data/repository_impl.dart';
+import 'package:voltium_rider/core/network/api_client.dart';
+import 'package:voltium_rider/core/network/generated/api_client.dart';
 import 'package:voltium_rider/models/support_model.dart';
-import 'package:voltium_rider/theme/app_theme.dart';
 
 import '../../../../utils/app_logger.dart';
 
@@ -77,8 +79,6 @@ class SupportNotifier extends Notifier<SupportState> {
           subtitle: 'App & Device help',
           articleCount: 12,
           icon: Icons.build_outlined,
-          iconColor: AppColors.warningDark,
-          iconBgColor: AppColors.warningLight,
         ),
         FaqCategory(
           id: 'payment',
@@ -86,8 +86,6 @@ class SupportNotifier extends Notifier<SupportState> {
           subtitle: 'Billing & Top-ups',
           articleCount: 8,
           icon: Icons.credit_card_outlined,
-          iconColor: AppColors.success,
-          iconBgColor: AppColors.successLight,
         ),
         FaqCategory(
           id: 'vehicle',
@@ -95,8 +93,6 @@ class SupportNotifier extends Notifier<SupportState> {
           subtitle: 'Moped & Battery',
           articleCount: 15,
           icon: Icons.electric_moped_outlined,
-          iconColor: AppColors.primary,
-          iconBgColor: AppColors.infoLight,
         ),
       ],
       faqs: const [
@@ -126,16 +122,16 @@ class SupportNotifier extends Notifier<SupportState> {
   Future<void> refreshFaqs() async {
     try {
       final response = await _repo.fetchFaqs();
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>?;
-        if (data != null) {
-          final faqsList = data['faqs'] as List<dynamic>? ?? [];
-          state = state.copyWith(
-            faqs: faqsList
-                .map((e) => FaqItem.fromJson(e as Map<String, dynamic>))
-                .toList(),
-          );
-        }
+      final dynamic rawList = response['faqs'] ??
+          (response['data'] is Map<String, dynamic>
+              ? (response['data'] as Map<String, dynamic>)['faqs']
+              : null);
+      if (rawList is List<dynamic>) {
+        state = state.copyWith(
+          faqs: rawList
+              .map((e) => FaqItem.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        );
       }
     } catch (e) {
       appDebug('Failed to fetch FAQs: $e');
@@ -147,16 +143,16 @@ class SupportNotifier extends Notifier<SupportState> {
     state = state.copyWith(isRefreshingTickets: true);
     try {
       final response = await _repo.fetchTickets();
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>?;
-        if (data != null) {
-          final ticketsList = data['tickets'] as List<dynamic>? ?? [];
-          state = state.copyWith(
-            tickets: ticketsList
-                .map((e) => IssueModel.fromJson(e as Map<String, dynamic>))
-                .toList(),
-          );
-        }
+      final dynamic rawList = response['tickets'] ??
+          (response['data'] is Map<String, dynamic>
+              ? (response['data'] as Map<String, dynamic>)['tickets']
+              : null);
+      if (rawList is List<dynamic>) {
+        state = state.copyWith(
+          tickets: rawList
+              .map((e) => IssueModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        );
       }
     } catch (e) {
       appDebug('Error fetching tickets: $e');
@@ -170,6 +166,7 @@ class SupportNotifier extends Notifier<SupportState> {
     required String subject,
     required String message,
     String? riderId,
+    String? attachments,
   }) async {
     try {
       await _repo.createTicket(
@@ -178,6 +175,7 @@ class SupportNotifier extends Notifier<SupportState> {
         message,
         riderId: riderId ?? '',
         priority: 'MEDIUM',
+        attachments: attachments,
       );
       await refreshTickets(riderId: riderId);
     } catch (e) {
@@ -200,6 +198,5 @@ final supportProvider = NotifierProvider<SupportNotifier, SupportState>(
 
 /// Repository provider — overridden in `main.dart` with the real impl.
 final supportRepositoryProvider = Provider<SupportRepository>((ref) {
-  throw UnimplementedError(
-      'supportRepositoryProvider must be overridden in ProviderScope');
+  return SupportRepositoryImpl(VoltiumApiClient(ApiClient()));
 });

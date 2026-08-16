@@ -141,8 +141,6 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     });
 
     try {
-      final rider = ref.read(riderProvider).rider;
-      final riderId = rider?.riderId ?? '';
       final api = VoltiumApiService();
 
       // PR-66: parallel upload with progress. Each upload reports
@@ -178,8 +176,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
       final photoUrls = results.whereType<String>().toList();
       if (!mounted) return;
       await api.submitVehicleReturn(
-        riderId: riderId,
-        photoUrls: photoUrls,
+        returnPhotos: photoUrls,
         reason: 'End of rental – odometer: ${_odometerCtrl.text.trim()}',
       );
 
@@ -224,8 +221,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: const BoxDecoration(
-                    color: AppColors.successLight,
+                  decoration: BoxDecoration(
+                    color: AppColors.of(context).successLight,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -343,7 +340,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.errorLight,
+        color: AppColors.of(context).errorLight,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.errorBorder, width: 2),
       ),
@@ -353,8 +350,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
           Container(
             width: 40,
             height: 40,
-            decoration: const BoxDecoration(
-              color: AppColors.errorLight,
+            decoration: BoxDecoration(
+              color: AppColors.of(context).errorLight,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -450,7 +447,8 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
-                  color: taken ? AppColors.successLight : colors.card,
+                  color:
+                      taken ? AppColors.of(context).successLight : colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: taken ? AppColors.greenFill : AppColors.divider,
@@ -576,7 +574,7 @@ class _EndRentalScreenState extends ConsumerState<EndRentalScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.successLight,
+              color: AppColors.of(context).successLight,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(

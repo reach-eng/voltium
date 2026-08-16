@@ -77,11 +77,11 @@ export default function AdjustWalletModal({ riderId, currentBalance, isOpen, onC
             <RadioGroup defaultValue="CREDIT" value={type} onValueChange={(v: 'CREDIT' | 'DEBIT') => setType(v)} className="flex gap-4">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="CREDIT" id="credit" />
-                <Label htmlFor="credit" className="text-emerald-600 font-semibold cursor-pointer">Top Up (+)</Label>
+                <Label htmlFor="credit" className="text-emerald-600 dark:text-emerald-400 font-semibold cursor-pointer">Top Up (+)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="DEBIT" id="debit" />
-                <Label htmlFor="debit" className="text-rose-600 font-semibold cursor-pointer">Deduct (-)</Label>
+                <Label htmlFor="debit" className="text-rose-600 dark:text-rose-400 font-semibold cursor-pointer">Deduct (-)</Label>
               </div>
             </RadioGroup>
           </div>

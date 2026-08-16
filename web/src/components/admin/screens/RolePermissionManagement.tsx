@@ -86,7 +86,7 @@ export default function RolePermissionManagement() {
           <CardContent className="space-y-4">
             {selectedRole === 'SUPER_ADMIN' ? (
               <div className="flex items-center gap-3 p-4 border border-emerald-200 bg-emerald-500/5 text-emerald-950 text-xs rounded-xl">
-                <Key className="h-5 w-5 text-emerald-600 shrink-0" />
+                <Key className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>
                   SUPER ADMIN possesses bypass authority and has all permissions enabled implicitly.
                 </span>

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/features/notifications/presentation/screens/notifications_screen.dart';
@@ -9,13 +10,13 @@ import 'package:voltium_rider/widgets/notification_bell.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/widgets/cards.dart';
-import 'package:voltium_rider/widgets/dashboard_profile_card.dart';
-import 'package:voltium_rider/widgets/dashboard_plan_card.dart';
-import 'package:voltium_rider/widgets/dashboard_wallet_card.dart';
-import 'package:voltium_rider/widgets/dashboard_referral_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_profile_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_plan_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_wallet_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_referral_card.dart';
 import 'package:voltium_rider/widgets/error_state_widget.dart';
-import 'package:voltium_rider/widgets/dashboard_tl_card.dart';
-import 'package:voltium_rider/widgets/dashboard_scooter_banner.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_tl_card.dart';
+import 'package:voltium_rider/features/dashboard/widgets/dashboard_scooter_banner.dart';
 import 'package:voltium_rider/features/dashboard/widgets/dashboard_sheets.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/features/wallet/presentation/screens/top_up_flow.dart';
@@ -39,6 +40,14 @@ class ActiveDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _ActiveDashboardScreenState extends ConsumerState<ActiveDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(engagementProvider.notifier).initEngagementData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
@@ -103,6 +112,7 @@ class _DashboardEmptyWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return Center(
       child: GlassCard(
         child: Column(
@@ -110,13 +120,17 @@ class _DashboardEmptyWidget extends ConsumerWidget {
           children: [
             Text(
               'No data available',
-              style: AppTypography.titleMedium.copyWith(color: Colors.white),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.onSurface),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: () => ref.read(riderProvider.notifier).refresh(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Initialize System'),
+              // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded English
+              // button label. Localised via the existing
+              // `txtinitializeSystem` ARB key.
+              label: Text(AppLocalizations.of(context)!.txtinitializeSystem),
             ),
           ],
         ),
@@ -142,11 +156,11 @@ class _DashboardContentWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildCacheIndicator() {
+  Widget _buildCacheIndicator(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.warningLight,
+        color: AppColors.of(context).warningLight,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: AppColors.warningBorder),
       ),
@@ -189,13 +203,15 @@ class _DashboardContentWidget extends ConsumerWidget {
             centerTitle: false,
             titleSpacing: 20,
             title: Builder(builder: (context) {
-              final hour = DateTime.now().hour;
+              final nowIst = DateTime.now()
+                  .toUtc()
+                  .add(const Duration(hours: 5, minutes: 30));
+              final hour = nowIst.hour;
               final firstName = rider.name.split(' ').first;
               final displayName = firstName.isEmpty ? 'Rider' : firstName;
-              String greeting = 'Good Evening';
-              if (hour < 12)
-                greeting = 'Good Morning';
-              else if (hour < 17) greeting = 'Good Afternoon';
+              final greeting = hour < 12
+                  ? 'Good Morning'
+                  : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +248,7 @@ class _DashboardContentWidget extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (isCache) _buildCacheIndicator(),
+                  if (isCache) _buildCacheIndicator(context),
                   if (rider.returnPending || rider.intent == 'RETURN')
                     FadeSlideEntrance(
                       index: 0,
@@ -305,10 +321,22 @@ class _DashboardContentWidget extends ConsumerWidget {
                         onCall: () async {
                           final phone = (rider.emergencyContact == null ||
                                   rider.emergencyContact!.isEmpty)
-                              ? '+91 98765 12345'
+                              ? ''
                               : rider.emergencyContact!;
                           final sanitized =
                               phone.replaceAll(RegExp(r'[^\d+]'), '');
+                          if (sanitized.isEmpty) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'No contact number available for your Team Leader.'),
+                                  backgroundColor: AppColors.warning,
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           final uri = Uri.parse('tel:$sanitized');
 
                           try {

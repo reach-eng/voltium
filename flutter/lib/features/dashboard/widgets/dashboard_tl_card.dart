@@ -60,7 +60,8 @@ class TeamLeaderCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColors.warningSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(color: AppColors.warningLight),
+                      border:
+                          Border.all(color: AppColors.of(context).warningLight),
                     ),
                     child: const Icon(Icons.stars,
                         color: AppColors.warningForeground, size: 24),

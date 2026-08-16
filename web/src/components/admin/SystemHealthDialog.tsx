@@ -94,10 +94,10 @@ export default function SystemHealthDialog({ open, onOpenChange }: SystemHealthD
                     : XCircle;
               const statusColor =
                 check.status === 'ok'
-                  ? 'text-emerald-600'
+                  ? 'text-emerald-600 dark:text-emerald-400'
                   : check.status === 'warn'
-                    ? 'text-amber-600'
-                    : 'text-rose-600';
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-rose-600 dark:text-rose-400';
               const statusBg =
                 check.status === 'ok'
                   ? 'bg-emerald-500/5'

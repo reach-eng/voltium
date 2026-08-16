@@ -22,7 +22,7 @@ class PreDashboardBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kycRejected) {
-      return _buildRejectedBanner();
+      return _buildRejectedBanner(context);
     }
     if (kycVerified) {
       return _buildApprovedBanner(context);
@@ -30,12 +30,12 @@ class PreDashboardBanner extends StatelessWidget {
     return _buildActionRequiredBanner(context);
   }
 
-  Widget _buildRejectedBanner() {
+  Widget _buildRejectedBanner(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.errorRose,
+        color: AppColors.of(context).errorRose,
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Row(
@@ -188,12 +188,12 @@ class PreDashboardProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kycRejected) {
-      return _buildRejectedProfile();
+      return _buildRejectedProfile(context);
     }
-    return _buildNormalProfile();
+    return _buildNormalProfile(context);
   }
 
-  Widget _buildRejectedProfile() {
+  Widget _buildRejectedProfile(BuildContext context) {
     return PremiumDoubleBezelCard(
       padding: EdgeInsets.zero,
       child: Builder(
@@ -222,8 +222,8 @@ class PreDashboardProfileCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border:
-                            Border.all(color: AppColors.errorRose, width: 3),
+                        border: Border.all(
+                            color: AppColors.of(context).errorRose, width: 3),
                       ),
                       padding: const EdgeInsets.all(2),
                       child: Container(
@@ -315,14 +315,16 @@ class PreDashboardProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildNormalProfile() {
+  Widget _buildNormalProfile(BuildContext context) {
     final String badgeText = kycVerified ? 'KYC VERIFIED' : 'PENDING KYC';
-    final Color badgeBg =
-        kycVerified ? AppColors.successLight : AppColors.warningSurface;
+    final Color badgeBg = kycVerified
+        ? AppColors.of(context).successLight
+        : AppColors.warningSurface;
     final Color badgeTextColor =
         kycVerified ? AppColors.success : AppColors.warning;
-    final Color badgeBorder =
-        kycVerified ? AppColors.successLight : AppColors.warningBorder;
+    final Color badgeBorder = kycVerified
+        ? AppColors.of(context).successLight
+        : AppColors.warningBorder;
 
     return PremiumDoubleBezelCard(
         padding: EdgeInsets.zero,
@@ -443,7 +445,7 @@ class RejectionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: AppColors.errorRose,
+        color: AppColors.of(context).errorRose,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         border: Border.all(color: AppColors.errorBorder, width: 1.5),
       ),
@@ -458,7 +460,7 @@ class RejectionCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.errorRose,
+                    color: AppColors.of(context).errorRose,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: const Icon(
@@ -555,11 +557,11 @@ class PreDashboardCtaCard extends StatelessWidget {
     required VoidCallback? onPressed,
   }) {
     return PreDashboardCtaCard(
-      title: 'Ready to hit the road?',
+      title: 'Rental Plan Selection',
       description:
-          'Available plans are fetched from admin panel. Complete your profile to start your first journey.',
-      buttonLabel: 'BOOK VEHICLE',
-      buttonIcon: Icons.arrow_forward,
+          'Choose a rental plan (Daily, Weekly, or Monthly) to proceed with your vehicle booking.',
+      buttonLabel: 'SELECT RENTAL PLAN',
+      buttonIcon: Icons.two_wheeler,
       gradientColors: [AppColors.primary, AppColors.primaryDark],
       buttonColor: AppColors.primary,
       onPressed: onPressed,

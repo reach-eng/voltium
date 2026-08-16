@@ -1,6 +1,6 @@
 'use client';
 
-import { Key, Lock, MapPin, Phone, ShieldAlert, Trash2 } from 'lucide-react';
+import { Key, Lock, MapPin, Phone, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,7 +45,7 @@ function LockedAdminCard({
             className={`w-10 h-10 rounded-full flex items-center justify-center ${
               rider.isAdminLocked
                 ? 'bg-amber-500 text-white animate-pulse'
-                : 'bg-amber-500/10 text-amber-600'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
             }`}
           >
             <Lock className="w-5 h-5" />
@@ -72,7 +72,7 @@ function LockedAdminCard({
             <Button
               size="default"
               variant={rider.isAdminLocked ? 'secondary' : 'outline'}
-              className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 border-amber-500/30 text-amber-600"
+              className="flex-1 text-[10px] font-bold uppercase tracking-widest h-11 border-amber-500/30 text-amber-600 dark:text-amber-400"
               onClick={() => onTrigger('ADMIN_LOCK')}
               disabled={busy}
             >
@@ -120,7 +120,7 @@ function RestrictHardwareCard({
     <Card className="bg-blue-500/5 border-blue-500/20 border-dashed hover:bg-blue-500/10 transition-colors">
       <CardContent className="pt-6">
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+          <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Badge className="p-0 border-0">
               <Phone className="w-5 h-5" />
             </Badge>
@@ -159,7 +159,7 @@ function RestrictHardwareCard({
                 className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                   rider.isUninstallBlocked
                     ? 'bg-blue-500 text-white border-0 hover:bg-blue-600 hover:text-white shadow-sm'
-                    : 'border-blue-500/30 text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                    : 'border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-50 hover:text-blue-700'
                 }`}
                 onClick={() =>
                   onTrigger('PERSIST_APP', { enabled: !rider.isUninstallBlocked })
@@ -174,7 +174,7 @@ function RestrictHardwareCard({
                 className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                   rider.isAppsControlRestricted
                     ? 'bg-indigo-500 text-white border-0 hover:bg-indigo-600 hover:text-white shadow-sm'
-                    : 'border-indigo-500/30 text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700'
+                    : 'border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 hover:text-indigo-700'
                 }`}
                 onClick={() =>
                   onTrigger('RESTRICT_APPS_CONTROL', {
@@ -208,11 +208,11 @@ function LocationIntegrityCard({
     <Card className="bg-emerald-500/5 border-emerald-500/20 border-dashed hover:bg-emerald-500/10 transition-colors">
       <CardContent className="pt-6">
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+          <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
             <MapPin className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs font-bold text-emerald-600">Location Integrity</p>
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Location Integrity</p>
             <p className="text-[10px] text-muted-foreground mt-1">
               Audit or enforce GPS persistence.
             </p>
@@ -221,7 +221,7 @@ function LocationIntegrityCard({
             <Button
               size="default"
               variant="outline"
-              className="w-full text-[10px] font-bold uppercase tracking-widest h-11 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+              className="w-full text-[10px] font-bold uppercase tracking-widest h-11 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
               onClick={() => onTrigger('CHECK_LOCATION_INTEGRITY')}
               disabled={busy}
             >
@@ -233,7 +233,7 @@ function LocationIntegrityCard({
               className={`w-full text-[10px] font-bold uppercase tracking-widest h-11 transition-all ${
                 rider.isLocationMandatory
                   ? 'bg-emerald-500 text-white border-0 hover:bg-emerald-600 hover:text-white shadow-sm'
-                  : 'border-emerald-500/30 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'
+                  : 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700'
               }`}
               onClick={() =>
                 onTrigger('ENFORCE_LOCATION', { enabled: !rider.isLocationMandatory })
@@ -262,11 +262,11 @@ function FactoryResetCard({
       <CardContent className="py-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600">
+            <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400">
               <Trash2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-rose-600">Emergency Factory Reset</p>
+              <p className="text-xs font-bold text-rose-600 dark:text-rose-400">Emergency Factory Reset</p>
               <p className="text-[10px] text-muted-foreground mt-1">
                 Wipe all device data. Use only in case of theft or total loss.
               </p>
@@ -327,7 +327,6 @@ export function SecurityControls({
   // Default flags so missing rider object doesn't break render
   const r: DeviceRiderSettings = rider || {
     isAdminLocked: false,
-    lockPassword: null,
     isUninstallBlocked: false,
     isLocationMandatory: false,
     isAppsControlRestricted: false,
@@ -348,6 +347,3 @@ export function SecurityControls({
     </div>
   );
 }
-
-// Suppress unused-import warning for ShieldAlert (kept for future use)
-void ShieldAlert;

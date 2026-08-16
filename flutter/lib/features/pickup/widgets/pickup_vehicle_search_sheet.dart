@@ -23,11 +23,9 @@ class VehicleSearchSheet extends StatefulWidget {
 
 class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
   static const Color _primary = AppColors.primary;
-  static const Color _surface = AppColors.surfaceBright;
   static const Color _outline = AppColors.borderMedium;
   static const Color _success = AppColors.success;
   static const Color _textDark = AppColors.slate900;
-  static const Color _textMuted = AppColors.onSurfaceMuted;
 
   final TextEditingController _searchCtrl = TextEditingController();
   List<Map<String, dynamic>> _filtered = [];
@@ -142,22 +140,24 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                   hintText: 'Search by ID, model or plate…',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
-                    color: _textMuted.withValues(alpha: 0.7),
+                    color: AppColors.of(context)
+                        .onSurfaceMuted
+                        .withValues(alpha: 0.7),
                   ),
                   prefixIcon:
                       const Icon(Icons.search, color: _primary, size: 20),
                   suffixIcon: _searchCtrl.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
                             size: 18,
-                            color: _textMuted,
+                            color: AppColors.of(context).onSurfaceMuted,
                           ),
                           onPressed: () => _searchCtrl.clear(),
                         )
                       : null,
                   filled: true,
-                  fillColor: _surface,
+                  fillColor: AppColors.of(context).surfaceBright,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(
@@ -196,7 +196,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                             'No vehicles match your search',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
-                              color: _textMuted,
+                              color: AppColors.of(context).onSurfaceMuted,
                             ),
                           ),
                         ],
@@ -229,12 +229,14 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                   shape: BoxShape.circle,
                                   color: isSelected
                                       ? _primary.withValues(alpha: 0.1)
-                                      : _surface,
+                                      : AppColors.of(context).surfaceBright,
                                 ),
                                 child: Icon(
                                   Icons.electric_moped_outlined,
                                   size: 20,
-                                  color: isSelected ? _primary : _textMuted,
+                                  color: isSelected
+                                      ? _primary
+                                      : AppColors.of(context).onSurfaceMuted,
                                 ),
                               ),
                               title: Text(
@@ -252,7 +254,7 @@ class _VehicleSearchSheetState extends State<VehicleSearchSheet> {
                                 ].where((s) => s.isNotEmpty).join(' · '),
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
-                                  color: _textMuted,
+                                  color: AppColors.of(context).onSurfaceMuted,
                                 ),
                               ),
                               trailing: Row(

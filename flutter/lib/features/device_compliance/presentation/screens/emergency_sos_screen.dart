@@ -422,8 +422,7 @@ class _SosSendingOverlay extends StatelessWidget {
               // changes, so a future ARB pass can replace it
               // with a `txtcancelWithCountdown(seconds)` template.
               // For now the literal "5" is a constant.
-              child: Text(
-                  '${AppLocalizations.of(context)!.txtcancel} (5s)'),
+              child: Text('${AppLocalizations.of(context)!.txtcancel} (5s)'),
             ),
           ],
         ),

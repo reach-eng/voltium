@@ -12,7 +12,6 @@ import 'package:voltium_rider/features/wallet/presentation/screens/history_scree
 import 'package:voltium_rider/features/rentals/presentation/screens/choose_plan_screen.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/rental_details_screen.dart';
 import 'package:voltium_rider/features/rentals/presentation/screens/end_rental_screen.dart';
-import 'package:voltium_rider/features/pickup/presentation/screens/pickup_hub_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_checklist_screen.dart';
 import 'package:voltium_rider/features/support/presentation/screens/faq_screen.dart';
@@ -40,10 +39,10 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
     final riderId = ref.read(riderProvider).riderId ?? 'local';
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.of(context).iconBackground,
       appBar: AppBar(
         title: const Text('Workflow & Services'),
-        backgroundColor: AppColors.iconBackground,
+        backgroundColor: AppColors.of(context).iconBackground,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
@@ -124,26 +123,15 @@ class RiderWorkflowHubScreen extends ConsumerWidget {
           _Section(
             title: 'Pickup, rental & return',
             children: [
-              _Tile(
-                'Pickup hub and vehicle',
-                Icons.store_mall_directory_outlined,
-                () => AppNavigator.push(
-                  context,
-                  PickupHubScreen(
-                    onNext: (
-                      _,
-                      __,
-                      ___,
-                      ____,
-                      _____,
-                      ______,
-                      _______,
-                      ________,
-                      _________,
-                    ) {},
-                  ),
-                ),
-              ),
+              // PR-ONBOARDING-2026-08-11 (audit 1.7): the previous tile opened
+              // PickupHubScreen with a 9-arg no-op `onNext`. Riders who reached
+              // the screen via this shortcut filled the form, hit finish, and
+              // nothing happened — they were stranded with no error message.
+              // Pickup is a state-machine flow driven by the router
+              // (RiderLifecycleGate). Riders reach it via the canonical
+              // onboarding route, never via this manual shortcut. The tile
+              // has been removed; "Rental details" + "End rental / return"
+              // below still cover the post-pickup cases.
               _Tile(
                 'Rental details',
                 Icons.description_outlined,
@@ -288,7 +276,7 @@ class _Tile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Material(
-      color: AppColors.surfaceBright,
+      color: AppColors.of(context).surfaceBright,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -304,7 +292,7 @@ class _Tile extends ConsumerWidget {
                   title,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w800,
-                    color: AppColors.slate800,
+                    color: AppColors.of(context).onSurface,
                   ),
                 ),
               ),

@@ -13,7 +13,7 @@ export function DeviceTrackingLoadingState() {
 
 export function DeviceTrackingPermissionDenied() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 bg-rose-500/5 rounded-2xl border border-rose-500/20 text-rose-600">
+    <div className="flex flex-col items-center justify-center py-20 bg-rose-500/5 rounded-2xl border border-rose-500/20 text-rose-600 dark:text-rose-400">
       <ShieldAlert className="w-12 h-12 mb-4 opacity-40" />
       <p className="text-lg font-bold">Access Denied</p>
       <p className="text-sm opacity-70">

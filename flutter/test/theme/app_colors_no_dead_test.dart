@@ -19,14 +19,29 @@ import 'package:flutter_test/flutter_test.dart';
 // documented as still-in-use, not-yet-consolidated. Each entry is intentionally
 // allowed; do NOT add a color here unless it has a corresponding row in
 // `docs/design-system.md` §2.5 "Group 7 candidates for R2.2 part 2".
+//
+// DARK-MODE-AUDIT 2026-08-14 PR2: the `xxxLight` / `surfaceBright` /
+// `surfaceSubtle` / `borderSubtle` / `errorRose` / `slate800` static
+// tokens were migrated to `AppColors.of(context).X` (brightness-aware).
+// Their static values are kept ONLY for:
+//   - internal use by `app_theme.dart` (`surfaceBright` in
+//     `ColorScheme.surfaceContainerLow`)
+//   - non-context call sites in `notification_model.dart` and
+//     `streak_celebration_bar.dart` (intentionally out of scope)
 const Set<String> allowedKeepSet = {
   'amberIcon',
   'amberIconSurface',
+  'borderSubtle', // see PR2 note above
   'dangerText',
+  'errorLight', // see PR2 note above
+  'errorRose', // see PR2 note above
+  'infoLight', // see PR2 note above
+  'onSurfaceMuted', // legacy back-compat (0xFF737785); ThemeColors variant is the canonical muted text color
   'orangeAccent',
   'orangeAccentBorder',
   'orangeAccentDark',
   'orangeAccentSurface',
+  'primarySurface', // see PR2 note above
   'purpleIcon',
   'purpleIconSurface',
   'purpleLightSurface',
@@ -35,11 +50,16 @@ const Set<String> allowedKeepSet = {
   'royalBlueTint',
   'skySpark',
   'skySparkSurface',
+  'slate800', // see PR2 note above
   'successBorderLight',
+  'successLight', // see PR2 note above
   'successOutline',
   'successTint',
+  'surfaceBright', // see PR2 note above; used in `app_theme.dart` ColorScheme
+  'surfaceSubtle', // see PR2 note above
   'tealIcon',
   'tealIconSurface',
+  'warningLight', // see PR2 note above
   'white70',
 };
 

@@ -6,6 +6,7 @@ import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
+import 'package:voltium_rider/widgets/language_toggle.dart';
 import 'package:voltium_rider/features/rewards/presentation/screens/rewards_screen.dart';
 import 'profile_detail_screen.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/documents_screen.dart';
@@ -18,7 +19,6 @@ import '../widgets/profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
-import 'package:voltium_rider/core/localization/locale_provider.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/widgets/skeleton_loader.dart';
 import 'package:voltium_rider/gen/app_localizations.dart';
@@ -80,7 +80,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.person_outline,
                       activeIcon: Icons.person,
                       iconColor: AppColors.primary,
-                      iconBgColor: AppColors.primarySurface,
+                      iconBgColor: AppColors.of(context).primarySurface,
                       title: l10n.menu_profile,
                       onTap: () => AppNavigator.push(
                           context, const ProfileDetailScreen()),
@@ -95,7 +95,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.contact_page_outlined,
                       activeIcon: Icons.contact_page,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.successLight,
+                      iconBgColor: AppColors.of(context).successLight,
                       title: l10n.menu_myDocuments,
                       onTap: () =>
                           AppNavigator.push(context, const MyDocumentsScreen()),
@@ -146,7 +146,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.route_outlined,
                       activeIcon: Icons.route,
                       iconColor: AppColors.primary,
-                      iconBgColor: AppColors.primarySurface,
+                      iconBgColor: AppColors.of(context).primarySurface,
                       title: l10n.menu_workflowServices,
                       onTap: () => AppNavigator.push(
                           context, const RiderWorkflowHubScreen()),
@@ -161,7 +161,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.tune_outlined,
                       activeIcon: Icons.tune,
                       iconColor: AppColors.successDark,
-                      iconBgColor: AppColors.successLight,
+                      iconBgColor: AppColors.of(context).successLight,
                       title: l10n.menu_appSettings,
                       onTap: () =>
                           AppNavigator.push(context, const SettingsScreen()),
@@ -175,7 +175,7 @@ class ProfileScreen extends ConsumerWidget {
                       key: const Key('languageLink'),
                       icon: Icons.language,
                       iconColor: AppColors.success,
-                      iconBgColor: AppColors.successLight,
+                      iconBgColor: AppColors.of(context).successLight,
                       title: l10n.menu_language,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -194,7 +194,7 @@ class ProfileScreen extends ConsumerWidget {
                               color: colors.outline, size: 20),
                         ],
                       ),
-                      onTap: () => _showLanguageDialog(context, localeProv),
+                      onTap: () => _showLanguageDialog(context, ref),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -234,63 +234,8 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _showLanguageDialog(BuildContext context, LocaleState localeState) {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.menu_selectLanguage),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: Text(l10n.settings_english),
-              leading: Radio<String>(
-                key: const Key('englishRadio'),
-                value: 'en',
-                groupValue: localeState.locale.languageCode,
-                onChanged: (v) {
-                  // R4.3c-1: read the notifier to call setEnglish. The
-                  // captured `localeState` above is the immutable view;
-                  // the notifier exposes the mutating API.
-                  ProviderScope.containerOf(ctx)
-                      .read(localeProvider.notifier)
-                      .setEnglish();
-                  Navigator.pop(ctx);
-                },
-                toggleable: true,
-              ),
-              onTap: () {
-                ProviderScope.containerOf(ctx)
-                    .read(localeProvider.notifier)
-                    .setEnglish();
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: Text('${l10n.settings_hindi} (Hindi)'),
-              leading: Radio<String>(
-                key: const Key('hindiRadio'),
-                value: 'hi',
-                groupValue: localeState.locale.languageCode,
-                onChanged: (v) {
-                  ProviderScope.containerOf(ctx)
-                      .read(localeProvider.notifier)
-                      .setHindi();
-                  Navigator.pop(ctx);
-                },
-              ),
-              onTap: () {
-                ProviderScope.containerOf(ctx)
-                    .read(localeProvider.notifier)
-                    .setHindi();
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  void _showLanguageDialog(BuildContext context, WidgetRef ref) {
+    showAppLanguageDialog(context, ref);
   }
 }
 

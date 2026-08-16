@@ -141,7 +141,7 @@ class RaiseTicketCard extends StatelessWidget {
                 key: const Key('issueTypeDropdown'),
                 isExpanded: true,
                 value: selectedCategory,
-                dropdownColor: AppColors.slate800,
+                dropdownColor: AppColors.of(context).onSurface,
                 icon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white70,
@@ -339,13 +339,15 @@ class TicketListItem extends StatelessWidget {
         statusColor = AppColors.error;
         break;
       default:
-        statusColor = AppColors.slate500;
+        statusColor = AppColors.of(context).onSurfaceVariant;
     }
 
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -364,7 +366,7 @@ class TicketListItem extends StatelessWidget {
                 height: 40,
                 width: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.iconBackground,
+                  color: AppColors.of(context).primarySurface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: const Icon(
@@ -386,7 +388,7 @@ class TicketListItem extends StatelessWidget {
                             ticket.subject,
                             style: AppTypography.bodyMedium
                                 .copyWith(fontWeight: FontWeight.w600)
-                                .copyWith(color: AppColors.slate800),
+                                .copyWith(color: colors.onSurface),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -424,7 +426,7 @@ class TicketListItem extends StatelessWidget {
                           '${ticket.createdAt.day} ${_getMonth(ticket.createdAt.month)}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: AppColors.slate500,
+                            color: AppColors.of(context).onSurfaceVariant,
                           ),
                         ),
                         SizedBox(width: 8),
@@ -448,7 +450,7 @@ class TicketListItem extends StatelessWidget {
               ticket.message,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: AppColors.slate500,
+                color: AppColors.of(context).onSurfaceVariant,
                 height: 1.5,
               ),
               maxLines: 2,
@@ -461,66 +463,9 @@ class TicketListItem extends StatelessWidget {
   }
 }
 
-class TopActionCard extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBgColor;
-  final String label;
-  final VoidCallback onTap;
-
-  const TopActionCard({
-    super.key,
-    required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Column(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: iconBgColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  label,
-                  style: AppTypography.bodyMedium
-                      .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
-                      .copyWith(color: AppColors.slate800),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// `TopActionCard` was removed in DARK-MODE-AUDIT 2026-08-14 PR2: it was
+// never wired up to a screen and held a static `iconColor`/`iconBgColor`
+// pair that bypassed the brightness-aware `ThemeColors` extension. If a
+// future screen needs the same shape, prefer resolving the icon colors
+// from `AppColors.of(context)` at the call site rather than baking them
+// into the constructor.

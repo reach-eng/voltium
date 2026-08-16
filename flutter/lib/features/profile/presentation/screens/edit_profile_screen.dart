@@ -1,4 +1,5 @@
 import 'package:universal_io/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +15,9 @@ import '../widgets/edit_profile_widgets.dart';
 import '../../../../theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/date_formatters.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -67,8 +70,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to capture photo'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via
+          // `txtfailedToCapturePhoto` ARB key.
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.txtfailedToCapturePhoto),
             backgroundColor: AppColors.error,
           ),
         );
@@ -82,16 +89,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final rider = ref.read(riderProvider).rider;
     _nameController = TextEditingController(text: rider?.name ?? '');
     _emailController = TextEditingController(text: rider?.email ?? '');
-    _phoneController = TextEditingController(text: rider?.phone ?? '');
+    final rawPhone = rider?.phone ?? '';
+    final cleanPhoneDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+    final tenDigitPhone = cleanPhoneDigits.length >= 10
+        ? cleanPhoneDigits.substring(cleanPhoneDigits.length - 10)
+        : cleanPhoneDigits;
+    _phoneController = TextEditingController(text: tenDigitPhone);
     _fatherNameController =
         TextEditingController(text: rider?.fatherName ?? '');
     _motherNameController =
         TextEditingController(text: rider?.motherName ?? '');
     final dob = rider?.dob;
+    // PR-A: the server expects ISO yyyy-MM-dd. The old dd-MM-yyyy here made
+    // an untouched DOB fail validation on save (audit #5 P0-3).
     _dobController = TextEditingController(
-      text: dob != null
-          ? '${_twoDigits(dob.day)}-${_twoDigits(dob.month)}-${dob.year}'
-          : '',
+      text: dob != null ? formatDobForApi(dob) : '',
     );
     _addressController =
         TextEditingController(text: rider?.currentAddress ?? '');
@@ -147,8 +159,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     if (phone.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter a valid 10-digit number'),
+        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+        // English SnackBar. Localised via the new
+        // `txtenterAValid10DigitNumber` ARB key.
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context)!.txtenterAValid10DigitNumber),
           backgroundColor: AppColors.error,
         ),
       );
@@ -157,8 +173,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final rider = ref.read(riderProvider).rider;
     if (phone == rider?.phone) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Guarantor phone cannot be the same as your phone'),
+        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+        // English SnackBar. Localised via
+        // `txtguarantorPhoneCannotBeTheSameAsYourPhone`.
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .txtguarantorPhoneCannotBeTheSameAsYourPhone),
           backgroundColor: AppColors.error,
         ),
       );
@@ -176,23 +196,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _isGOtpSent = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP sent to guarantor phone'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via
+          // `txtotpSentToGuarantorPhone`.
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.txtotpSentToGuarantorPhone),
             backgroundColor: AppColors.success,
           ),
         );
-        // In dev mode, auto-fill OTP if returned by the API
-        final devOtp = result['data']?['otp']?.toString();
-        if (devOtp != null && devOtp.length == 6) {
-          _gOtpController.text = devOtp;
+        // Dev-mode only: never autofill an echoed OTP in production
+        // builds even if the server leaks it (audit #7 P0-5).
+        if (kDebugMode) {
+          final devOtp = result['data']?['otp']?.toString();
+          if (devOtp != null && devOtp.length == 6) {
+            _gOtpController.text = devOtp;
+          }
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSendingGOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send OTP'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via
+          // `txtfailedToSendOtp`.
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.txtfailedToSendOtp),
             backgroundColor: AppColors.error,
           ),
         );
@@ -203,8 +233,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _verifyGuarantorOtp() async {
     if (_gOtpController.text.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter the 6-digit OTP'),
+        // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+        // English SnackBar. Localised via the new
+        // `txtenterThe6DigitOtp` ARB key.
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.txtenterThe6DigitOtp),
           backgroundColor: AppColors.error,
         ),
       );
@@ -213,8 +246,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final phone = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
     setState(() => _isVerifyingGOtp = true);
     try {
-      await VoltiumApiService()
+      final response = await VoltiumApiService()
           .verifyPhone(phone: phone, otp: _gOtpController.text);
+      final verified =
+          response['data']?['verified'] == true || response['verified'] == true;
+      if (!verified) {
+        if (mounted) {
+          setState(() => _isVerifyingGOtp = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  response['data']?['message']?.toString() ?? 'Invalid OTP'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
       if (mounted) {
         setState(() {
           _isVerifyingGOtp = false;
@@ -222,8 +270,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           _isGOtpSent = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Guarantor phone verified'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via
+          // `txtguarantorPhoneVerified`.
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.txtguarantorPhoneVerified),
             backgroundColor: AppColors.success,
           ),
         );
@@ -232,8 +284,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (mounted) {
         setState(() => _isVerifyingGOtp = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid OTP'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via `txtinvalidOtp`.
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.txtinvalidOtp),
             backgroundColor: AppColors.error,
           ),
         );
@@ -246,15 +300,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final rider = ref.watch(riderProvider).rider;
     if (rider == null || rider.riderId.isEmpty) return;
 
+    if (_gPhoneController.text.trim().isNotEmpty && !_isGPhoneVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Please verify the new guarantor phone number before saving.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
+      String? uploadedPhotoUrl;
+      if (_profileImage != null) {
+        uploadedPhotoUrl = await VoltiumApiService().uploadFile(
+          File(_profileImage!.path),
+          'profile_photo',
+        );
+      }
+
       await VoltiumApiService().updateProfile(
         riderId: rider.riderId,
         data: {
-          'name': _nameController.text,
+          'fullName': _nameController.text,
           'email': _emailController.text,
-          'phone': _phoneController.text,
           'fatherName': _fatherNameController.text,
           'motherName': _motherNameController.text,
           'dob': _dobController.text.isNotEmpty ? _dobController.text : null,
@@ -263,6 +335,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           'guarantorName': _gNameController.text,
           'guarantorPhone': _gPhoneController.text,
           'guarantorAddress': _gAddressController.text,
+          if (uploadedPhotoUrl != null) 'profilePhoto': uploadedPhotoUrl,
+          if (uploadedPhotoUrl != null) 'riderPhoto': uploadedPhotoUrl,
         },
       );
 
@@ -271,8 +345,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
+          // LANGUAGE-AUDIT (2026-08-16) T-66: hardcoded
+          // English SnackBar. Localised via
+          // `txtprofileUpdatedSuccessfully`.
+          SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.txtprofileUpdatedSuccessfully),
             backgroundColor: AppColors.success,
           ),
         );
@@ -281,9 +359,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
+        final rawMsg =
+            e.toString().replaceAll(RegExp(r'^(Exception:\s*|Error:\s*)'), '');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update profile. Please try again.'),
+          SnackBar(
+            content: Text(
+              rawMsg.isNotEmpty && !rawMsg.contains('XMLHttpRequest')
+                  ? rawMsg
+                  : 'Failed to update profile. Please try again.',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -293,8 +377,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surface,
       body: Stack(
         children: [
           _buildMeshBackground(),
@@ -333,6 +418,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 controller: _phoneController,
                                 icon: Icons.phone_outlined,
                                 keyboardType: TextInputType.phone,
+                                readOnly: true,
+                                suffixIcon: Icon(
+                                  Icons.lock_outline,
+                                  size: 16,
+                                  color: colors.outlineVariant,
+                                ),
+                                helperText:
+                                    'Primary phone is verified and cannot be edited directly.',
                               ),
                               const SizedBox(height: 16),
                               EditProfileTextField(
@@ -362,15 +455,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 label: 'Date of Birth',
                                 controller: _dobController,
                                 onTap: () async {
+                                  final firstDate = DateTime(1940);
+                                  final lastDate = DateTime.now().subtract(
+                                    const Duration(days: 18 * 365),
+                                  );
+                                  final parsed = (_dobController.text.isNotEmpty
+                                          ? DateTime.tryParse(
+                                              _dobController.text)
+                                          : null) ??
+                                      DateTime(2000, 1, 1);
+                                  final initialDate = parsed.isBefore(firstDate)
+                                      ? firstDate
+                                      : (parsed.isAfter(lastDate)
+                                          ? lastDate
+                                          : parsed);
+
                                   final picked = await showDatePicker(
                                     context: context,
-                                    initialDate: _dobController.text.isNotEmpty
-                                        ? DateTime.tryParse(_dobController.text)
-                                        : DateTime(2000, 1, 1),
-                                    firstDate: DateTime(1940),
-                                    lastDate: DateTime.now().subtract(
-                                      const Duration(days: 18 * 365),
-                                    ),
+                                    initialDate: initialDate,
+                                    firstDate: firstDate,
+                                    lastDate: lastDate,
                                   );
                                   if (picked != null) {
                                     setState(() {
@@ -398,10 +502,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(left: 4, top: 4),
                                 child: Text(
-                                  'Changes to emergency contact require admin approval.',
+                                  // PR-48 (PROFILE Pass3 #3): the audit
+                                  // flagged this as misleading copy. The
+                                  // emergency contact is part of the
+                                  // standard profile update — it's saved
+                                  // immediately via the same PUT as the
+                                  // rest of the form (no separate admin
+                                  // review). The hint now reflects the
+                                  // actual behavior: "used to contact you
+                                  // in case of an emergency" so riders
+                                  // know what to put here.
+                                  'Used to contact you in case of an emergency.',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
-                                    color: AppColors.slate500,
+                                    color:
+                                        AppColors.of(context).onSurfaceVariant,
                                     fontStyle: FontStyle.italic,
                                   ),
                                 ),
@@ -493,11 +608,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget _buildMeshBackground() {
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.surfaceBright],
+            colors: [
+              AppColors.of(context).iconBackground,
+              AppColors.of(context).surfaceBright
+            ],
           ),
         ),
       ),
@@ -505,6 +623,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
@@ -514,8 +633,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(Spacing.md2),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colors.card,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.5),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.05),
@@ -523,18 +645,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: AppColors.slate800,
+                color: colors.onSurface,
               ),
             ),
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Text(
             'Edit Profile',
-            style:
-                AppTypography.headingSmall.copyWith(color: AppColors.slate800),
+            style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
           ),
         ],
       ),
@@ -542,10 +663,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildAvatarSection() {
+    final colors = AppColors.of(context);
     final rider = ref.watch(riderProvider).rider;
     String? getAvatarUrl() {
-      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty) {
         return null;
+      }
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       final baseUrl = ApiClient().baseUrl;
       return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
@@ -558,10 +681,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         children: [
           Container(
             padding: Spacing.paddingXs,
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: colors.card,
               shape: BoxShape.circle,
-              boxShadow: [
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black12,
                   blurRadius: 20,
@@ -571,7 +697,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             child: CircleAvatar(
               radius: 54,
-              backgroundColor: AppColors.iconBackground,
+              backgroundColor: colors.iconBackground,
               child: _profileImage != null
                   ? ClipOval(
                       child: Image.file(
@@ -626,7 +752,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Widget _buildGuarantorPhoneField() {
-    final phoneChanged = _gPhoneController.text != _originalGPhone;
+    final colors = AppColors.of(context);
+    final cleanCurrent = _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    final cleanOrig = _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
+    final phoneChanged = cleanCurrent != cleanOrig && cleanCurrent.isNotEmpty;
     final needsVerification = phoneChanged && !_isGPhoneVerified;
 
     return Column(
@@ -636,19 +765,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           padding: const EdgeInsets.only(left: 4),
           child: Text(
             'Guarantor Phone',
-            style: AppTypography.bodyMedium
+            style: AppTypography.bodySmall
                 .copyWith(fontWeight: FontWeight.w800)
-                .copyWith(color: AppColors.slate500),
+                .copyWith(color: colors.onSurfaceMuted),
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colors.card,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                    color: colors.outlineVariant.withValues(alpha: 0.5),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.02),
@@ -662,21 +794,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   controller: _gPhoneController,
                   keyboardType: TextInputType.phone,
                   onChanged: (_) {
+                    final curr =
+                        _gPhoneController.text.replaceAll(RegExp(r'\D'), '');
+                    final orig =
+                        _originalGPhone?.replaceAll(RegExp(r'\D'), '') ?? '';
                     setState(() {
-                      _isGPhoneVerified =
-                          _gPhoneController.text == _originalGPhone &&
-                              (_originalGPhone?.isNotEmpty ?? false);
+                      _isGPhoneVerified = curr == orig && (orig.isNotEmpty);
                       _isGOtpSent = false;
                       _gOtpController.clear();
                     });
                   },
                   style: AppTypography.bodyLarge
                       .copyWith(fontWeight: FontWeight.w600)
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: colors.onSurface),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.phone_android_outlined,
-                      color: AppColors.slate400,
+                      color: colors.onSurfaceVariant,
                       size: 18,
                     ),
                     suffixIcon: _isGPhoneVerified
@@ -696,7 +830,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               ),
             ),
             if (needsVerification) ...[
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
@@ -733,14 +867,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         // OTP input section
         if (_isGOtpSent && !_isGPhoneVerified) ...[
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: colors.card,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: colors.outlineVariant.withValues(alpha: 0.5),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.02),
@@ -755,30 +892,33 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     maxLength: 6,
                     style: AppTypography.bodyLarge
                         .copyWith(fontWeight: FontWeight.w600)
-                        .copyWith(color: AppColors.slate800, letterSpacing: 8),
-                    decoration: const InputDecoration(
+                        .copyWith(color: colors.onSurface, letterSpacing: 8),
+                    decoration: InputDecoration(
                       prefixIcon: Icon(
                         Icons.lock_outline,
-                        color: AppColors.slate400,
+                        color: colors.onSurfaceVariant,
                         size: 18,
                       ),
                       hintText: '••••••',
+                      hintStyle: TextStyle(color: colors.onSurfaceMuted),
                       counterText: '',
                       border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                     ),
                   ),
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               SizedBox(
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isVerifyingGOtp ? null : _verifyGuarantorOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    disabledBackgroundColor: AppColors.successLight,
+                    disabledBackgroundColor: AppColors.of(context).successLight,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
@@ -808,11 +948,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ],
         // Verified badge
         if (_isGPhoneVerified && phoneChanged) ...[
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.successLight,
+              color: AppColors.of(context).successLight,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
@@ -820,7 +960,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               children: [
                 const Icon(Icons.check_circle,
                     color: AppColors.success, size: 14),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
                   'Phone verified',
                   style: AppTypography.labelSmall

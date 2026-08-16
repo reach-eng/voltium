@@ -24,7 +24,7 @@ export function RewardsSummaryCards({ summary }: RewardsSummaryCardsProps) {
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-amber-50">
-              <Award className="h-5 w-5 text-amber-600" />
+              <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Points Awarded</p>
@@ -41,7 +41,7 @@ export function RewardsSummaryCards({ summary }: RewardsSummaryCardsProps) {
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-green-50">
-              <Users className="h-5 w-5 text-green-600" />
+              <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Unique Riders Rewarded</p>
@@ -54,7 +54,7 @@ export function RewardsSummaryCards({ summary }: RewardsSummaryCardsProps) {
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-blue-50">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">This Month</p>

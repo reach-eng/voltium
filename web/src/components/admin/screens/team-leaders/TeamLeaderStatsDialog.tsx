@@ -96,21 +96,21 @@ export function TeamLeaderStatsDialog({
                   value={payload.data.stats.overdueRent}
                   bgClass="bg-red-500/5"
                   borderClass="border-red-500/20"
-                  valueClass="text-red-600"
+                  valueClass="text-red-600 dark:text-red-400"
                 />
                 <StatTile
                   label="Upcoming Rent"
                   value={payload.data.stats.upcomingRent}
                   bgClass="bg-orange-500/5"
                   borderClass="border-orange-500/20"
-                  valueClass="text-orange-600"
+                  valueClass="text-orange-600 dark:text-orange-400"
                 />
                 <StatTile
                   label="Timely Rent"
                   value={payload.data.stats.timelyRent}
                   bgClass="bg-emerald-500/5"
                   borderClass="border-emerald-500/20"
-                  valueClass="text-emerald-600"
+                  valueClass="text-emerald-600 dark:text-emerald-400"
                 />
               </div>
 

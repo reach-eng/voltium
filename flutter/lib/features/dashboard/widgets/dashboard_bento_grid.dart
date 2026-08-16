@@ -23,7 +23,7 @@ class BentoGrid extends StatelessWidget {
           child: _BentoTile(
             icon: Icons.location_on,
             iconColor: AppColors.primary,
-            iconBgColor: AppColors.primarySurface,
+            iconBgColor: AppColors.of(context).primarySurface,
             title: 'ACTIVE HUB',
             value: (pickupHub == null ||
                     pickupHub!.isEmpty ||

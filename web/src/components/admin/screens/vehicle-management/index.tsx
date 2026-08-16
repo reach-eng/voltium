@@ -621,7 +621,7 @@ export default function VehicleManagement() {
                         <TableCell>
                           {activeLease ? (
                             <div className="flex flex-col gap-0.5">
-                              <span className="text-sm font-bold text-blue-600">
+                              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                                 {activeLease.rider.fullName}
                               </span>
                               <span className="text-[10px] text-muted-foreground uppercase">
@@ -673,7 +673,7 @@ export default function VehicleManagement() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600"
+                              className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600 dark:text-rose-400"
                               onClick={() => setDeleteConfirm(vehicle.id)}
                               title="Delete Vehicle"
                             >

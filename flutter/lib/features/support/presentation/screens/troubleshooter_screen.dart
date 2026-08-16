@@ -372,15 +372,15 @@ class _TroubleshooterScreenState extends ConsumerState<TroubleshooterScreen>
           SizedBox(height: 16),
           Text(
             'What issue are you experiencing?',
-            style: AppTypography.headingSmall
-                .copyWith(color: AppColors.slate800, letterSpacing: -0.5),
+            style: AppTypography.headingSmall.copyWith(
+                color: AppColors.of(context).onSurface, letterSpacing: -0.5),
           ),
           SizedBox(height: 8),
           Text(
             'Select a category and we will guide you through a step‑by‑step diagnosis.',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              color: AppColors.slate500,
+              color: AppColors.of(context).onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 20),

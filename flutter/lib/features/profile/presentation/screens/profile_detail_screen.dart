@@ -22,10 +22,11 @@ class ProfileDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     final rider = ref.watch(riderProvider.select((p) => p.rider));
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surface,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -50,7 +51,7 @@ class ProfileDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             FadeUpWidget(
               delay: 150,
-              child: _buildPersonalDetailsCard(rider),
+              child: _buildPersonalDetailsCard(context, rider),
             ),
             const SizedBox(height: 16),
             FadeUpWidget(
@@ -74,8 +75,9 @@ class ProfileDetailScreen extends ConsumerWidget {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final colors = AppColors.of(context);
     return AppBar(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       leadingWidth: 68,
@@ -86,8 +88,11 @@ class ProfileDetailScreen extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colors.card,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.5),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -103,9 +108,9 @@ class ProfileDetailScreen extends ConsumerWidget {
                 onTap: () {
                   if (Navigator.canPop(context)) Navigator.pop(context);
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
-                  color: AppColors.slate800,
+                  color: colors.onSurface,
                   size: 20,
                 ),
               ),
@@ -115,15 +120,17 @@ class ProfileDetailScreen extends ConsumerWidget {
       ),
       title: Text(
         'Profile',
-        style: AppTypography.headingSmall.copyWith(color: AppColors.slate800),
+        style: AppTypography.headingSmall.copyWith(color: colors.onSurface),
       ),
     );
   }
 
   Widget _buildProfileCard(BuildContext context, RiderModel? rider) {
+    final colors = AppColors.of(context);
     String? getAvatarUrl() {
-      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty)
+      if (rider?.profilePhoto == null || rider!.profilePhoto!.isEmpty) {
         return null;
+      }
       if (rider.profilePhoto!.startsWith('http')) return rider.profilePhoto;
       final baseUrl = ApiClient().baseUrl;
       return '$baseUrl/api/files/${rider.profilePhoto!.replaceFirst(RegExp(r'^/+'), '')}';
@@ -140,8 +147,11 @@ class ProfileDetailScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -219,17 +229,17 @@ class ProfileDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             rider?.name ?? 'Test Rider',
-            style: AppTypography.titleLarge.copyWith(color: AppColors.slate800),
+            style: AppTypography.titleLarge.copyWith(color: colors.onSurface),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: isVerified
-                  ? AppColors.successLight
+                  ? AppColors.of(context).successLight
                   : AppColors.warningSurface,
               borderRadius: BorderRadius.circular(AppRadius.radiusModal),
               border: Border.all(
@@ -246,7 +256,7 @@ class ProfileDetailScreen extends ConsumerWidget {
                   color: isVerified ? AppColors.success : AppColors.warningDark,
                   size: 14,
                 ),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
                   'KYC: ${kycStatusName == 'SUBMITTED' ? 'Under Review' : _capitalize(kycStatusName.toLowerCase())}',
                   style: AppTypography.bodyMedium
@@ -264,7 +274,8 @@ class ProfileDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPersonalDetailsCard(RiderModel? rider) {
+  Widget _buildPersonalDetailsCard(BuildContext context, RiderModel? rider) {
+    final colors = AppColors.of(context);
     String dobFormatted = 'Not provided';
     if (rider?.dob != null) {
       dobFormatted = DateFormat('dd MMM yyyy').format(rider!.dob!);
@@ -272,8 +283,11 @@ class ProfileDetailScreen extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -402,11 +416,12 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Text(
       label,
       style: AppTypography.bodySmall
           .copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2)
-          .copyWith(color: AppColors.slate600, letterSpacing: 1.2),
+          .copyWith(color: colors.onSurfaceMuted, letterSpacing: 1.2),
     );
   }
 }
@@ -417,10 +432,14 @@ class _EditProfileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.radiusModal),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -442,24 +461,27 @@ class _EditProfileTile extends StatelessWidget {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primarySurface,
+                  decoration: BoxDecoration(
+                    color: AppColors.of(context).primarySurface,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.edit_outlined,
                       color: AppColors.info, size: 22),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     'Edit Profile',
                     style: AppTypography.labelLarge
                         .copyWith(fontWeight: FontWeight.w700)
-                        .copyWith(color: AppColors.slate800),
+                        .copyWith(color: colors.onSurface),
                   ),
                 ),
-                const Icon(Icons.chevron_right,
-                    color: AppColors.borderMedium, size: 20),
+                Icon(
+                  Icons.chevron_right,
+                  color: colors.outlineVariant,
+                  size: 20,
+                ),
               ],
             ),
           ),

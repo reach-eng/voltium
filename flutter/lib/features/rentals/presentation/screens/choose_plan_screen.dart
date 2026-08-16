@@ -103,8 +103,7 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
             // English SnackBar. Localised via the existing
             // `txtpleaseLogInAgain` ARB key.
             SnackBar(
-              content: Text(
-                  AppLocalizations.of(context)!.txtpleaseLogInAgain),
+              content: Text(AppLocalizations.of(context)!.txtpleaseLogInAgain),
             ),
           );
         }
@@ -519,7 +518,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             color: isSelected
                                                 ? Colors.white
                                                     .withValues(alpha: 0.8)
-                                                : AppColors.of(context).onSurfaceVariant,
+                                                : AppColors.of(context)
+                                                    .onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -570,7 +570,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                         color: isSelected
                                             ? Colors.white
                                                 .withValues(alpha: 0.15)
-                                            : AppColors.of(context).iconBackground,
+                                            : AppColors.of(context)
+                                                .iconBackground,
                                         height: 1,
                                       ),
                                       const SizedBox(height: 16),
@@ -601,7 +602,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                                         ? Colors.white
                                                             .withValues(
                                                                 alpha: 0.7)
-                                                        : AppColors.of(context).onSurfaceVariant,
+                                                        : AppColors.of(context)
+                                                            .onSurfaceVariant,
                                                   ),
                                             ),
                                           ],
@@ -656,7 +658,8 @@ class _ChoosePlanScreenState extends ConsumerState<ChoosePlanScreen> {
                                             .copyWith(
                                                 fontWeight: FontWeight.w800)
                                             .copyWith(
-                                              color: AppColors.of(context).onSurface,
+                                              color: AppColors.of(context)
+                                                  .onSurface,
                                             ),
                                       ),
                                     ),

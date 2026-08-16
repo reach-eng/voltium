@@ -16,12 +16,19 @@ function formatAccuracy(loc: LocationPing): string {
   return `Accuracy: ${loc.accuracy?.toFixed(1) || '0'}m · Speed: ${loc.speed || '0'} km/h`;
 }
 
+// P2-10 (2026-08-05 legal/device audit): "Live Active" was hardcoded — a
+// rider whose last ping was 3 days ago still showed the emerald badge. A ping
+// is considered live only if it arrived within the last minute.
+const LIVE_THRESHOLD_MS = 60_000;
+
 /**
  * R3.7bb split — Live GPS sub-tab with radar + ping list.
  */
 export function LocationTab({ locations }: LocationTabProps) {
   const hasLocations = locations && locations.length > 0;
   const current = hasLocations ? locations[0] : null;
+  const isLive =
+    current !== null && Date.now() - new Date(current.timestamp).getTime() < LIVE_THRESHOLD_MS;
 
   return (
     <div className="space-y-4">
@@ -29,7 +36,21 @@ export function LocationTab({ locations }: LocationTabProps) {
         <h4 className="text-sm font-bold uppercase tracking-widest text-muted-foreground/60">
           GPS Telemetry history
         </h4>
-        <Badge className="bg-emerald-500 text-white border-0">Live Active</Badge>
+        {current ? (
+          <Badge
+            className={
+              isLive
+                ? 'bg-emerald-500 text-white border-0'
+                : 'bg-muted text-muted-foreground border border-border/50'
+            }
+          >
+            {isLive ? 'Live Active' : 'Last ping > 1 min ago'}
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="text-muted-foreground">
+            No pings
+          </Badge>
+        )}
       </div>
       <div className="aspect-video w-full rounded-2xl bg-slate-900 border-2 border-slate-800 flex flex-col items-center justify-center text-slate-400 group overflow-hidden relative p-6 shadow-[inset_0_0_100px_rgba(16,185,129,0.05)] dark:shadow-[inset_0_0_100px_rgba(16,185,129,0.1)]">
         <div className="absolute inset-0 pointer-events-none opacity-20">
@@ -92,12 +113,15 @@ export function LocationTab({ locations }: LocationTabProps) {
             </div>
             <div className="flex flex-col items-end gap-1">
               <p className="text-[10px] text-muted-foreground font-mono tabular-nums font-bold">
-                {new Date(loc.timestamp).toLocaleTimeString()}
+                {/* P2-11/P2-12 (2026-08-05 legal/device audit): pin the locale —
+                    the rest of the dashboard renders en-GB; toLocaleTimeString()
+                    with no locale varies by browser. */}
+                {new Date(loc.timestamp).toLocaleTimeString('en-GB')}
               </p>
               {loc.isMocked && (
                 <Badge
                   variant="outline"
-                  className="bg-rose-500/10 text-rose-600 border-rose-500/20 text-[9px] h-4 py-0 px-1"
+                  className="bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20 text-[9px] h-4 py-0 px-1"
                 >
                   Mocked
                 </Badge>

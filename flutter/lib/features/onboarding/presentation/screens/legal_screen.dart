@@ -4,7 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/utils/app_navigator.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/services/cache_service.dart';
+import 'package:voltium_rider/utils/app_logger.dart';
+import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'legal_page_screen.dart';
+import '../legal_fallback_loader.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 /// Matches web LegalConsentScreen.tsx exactly:
@@ -18,20 +22,17 @@ import 'package:voltium_rider/theme/app_typography.dart';
 /// - Custom checkbox: 24×24 rounded-lg, gradient when checked, spring animation
 /// - "Continue" gradient pill button (56px, disabled opacity 0.4)
 
-const _kTermsContent =
-    'These Terms of Service ("Terms") govern your access to and use of Voltium\'s services, including our electric vehicle rental platform, mobile application, and related services.\n\nBy creating an account or using our services, you agree to be bound by these Terms.\n\n1. Account Registration: You must provide accurate, current, and complete information during registration and keep your account information updated.\n\n2. Vehicle Rental: All vehicle rentals are subject to availability and our rental policies. You must hold a valid driver\'s license and meet minimum age requirements.\n\n3. Safety Requirements: You agree to follow all safety guidelines, traffic laws, and Voltium usage policies while operating our vehicles.\n\n4. Payment Terms: You authorize Voltium to charge your selected payment method for rental fees, security deposits, and any applicable charges.\n\n5. Liability: You are responsible for any damage to the vehicle during your rental period, subject to the terms of your selected plan.';
-
-const _kPrivacyContent =
-    'Voltium respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information.\n\n1. Information We Collect: We collect your name, phone number, email, government-issued ID (Aadhaar, PAN), bank details, location data, and vehicle usage information.\n\n2. How We Use Your Data: We use your information to provide and improve our services, process transactions, communicate with you, and comply with legal obligations.\n\n3. Data Sharing: We may share your data with trusted partners, government authorities as required by law, and service providers who assist our operations.\n\n4. Data Security: We implement industry-standard security measures including encryption, secure servers, and access controls to protect your data.\n\n5. Your Rights: You can access, correct, or delete your personal data by contacting our support team or through your account settings.\n\n6. Data Retention: We retain your data for as long as necessary to provide our services and comply with legal requirements.';
-
-const _kRentalSafetyContent =
-    'This Rental and Safety Agreement ("Agreement") governs the rental and operation of Voltium electric vehicles.\n\n1. Vehicle Inspection: You must inspect the vehicle before each ride and report any damage immediately. You are responsible for pre-existing damage not reported.\n\n2. Safe Operation: You agree to operate the vehicle in accordance with all traffic laws, wear a helmet at all times, and not operate under the influence of alcohol or drugs.\n\n3. Parking and Storage: Vehicles must be returned to designated hubs. Overnight parking is permitted only at approved locations. Improper parking may result in additional charges.\n\n4. Damage and Theft: You are liable for damage or theft during your rental period. Voltium recommends opting for damage protection plans where available.\n\n5. Speed and Usage Limits: Vehicles have speed governors and geo-fencing. Violation of usage zones or speed limits may result in penalties or account suspension.\n\n6. Accident Protocol: In case of an accident, ensure your safety first, contact emergency services if needed, and report the incident through the Voltium app within 24 hours.';
-
-const _kRefundContent =
-    'This Refund and Cancellation Policy outlines the terms for cancellations and refunds on Voltium\'s rental services.\n\n1. Rental Cancellation: You may cancel a rental booking up to 2 hours before the scheduled start time for a full refund. Cancellations within 2 hours may incur a fee of 10% of the booking amount.\n\n2. Security Deposit Refund: Security deposits are refundable after 180 days of active service, subject to the terms outlined in your rental agreement. Deductions may apply for outstanding dues, damages, or non-returned accessories.\n\n3. Top-Up Refunds: Wallet top-ups are non-refundable but remain in your Voltium wallet for future rentals. Refund requests for technical errors or duplicate transactions will be processed within 5-7 business days.\n\n4. Plan Changes: You may upgrade your rental plan at any time. Downgrades take effect at the next billing cycle. Prorated refunds are provided for unused days on annual or monthly plans.\n\n5. Service Disruptions: If Voltium is unable to provide a booked vehicle due to operational issues, you will receive a full refund or a comparable vehicle upgrade at no additional charge.';
-
-const _kGuarantorAgreementContent =
-    'This Guarantor\'s Agreement ("Agreement") is a legally binding contract between you (the "Guarantor") and Voltium, guaranteeing the obligations of the rider you are sponsoring.\n\n1. Guarantor Obligations: As a guarantor, you agree to be jointly and severally liable for all rental charges, damages, and penalties incurred by the rider during the rental period.\n\n2. Financial Responsibility: You authorize Voltium to recover any outstanding amounts from the rider\'s security deposit or wallet balance. If the balance is insufficient, you agree to pay the outstanding amount upon demand.\n\n3. Duration: This guarantor obligation remains in effect for the entire duration of the rider\'s active subscription with Voltium and for 30 days after the account is closed or terminated.\n\n4. Termination: You may request to be released as a guarantor by providing 30 days written notice. Voltium reserves the right to require the rider to provide an alternate guarantor before releasing you.\n\n5. Communication: You agree to receive communications from Voltium regarding the rider\'s account status, payment defaults, and other relevant notifications at the phone number and email address provided during registration.\n\n6. Verification: You confirm that all information provided during the guarantor registration process is accurate and complete. Voltium may verify your identity and financial standing through third-party services.';
+// ── Offline fallback content (2026-08-05 legal/device audit P0-3) ─────────
+// The admin panel is the source of truth for legal documents; the screen
+// fetches them from GET /api/rider/legal (SWR-cached for offline). The
+// JSON asset at `assets/json/legal_fallback.json` is only rendered when
+// the API is unreachable AND no cached copy exists, so the legal
+// acceptance gate can never hard-block onboarding.
+//
+// PR-1 (2026-08-07 master fix plan): the 5 inline `const _k*Content`
+// strings were moved to the JSON asset so the legal team can update
+// copy without a Flutter release. The asset ships in the APK via
+// `pubspec.yaml` assets section.
 
 class LegalScreen extends StatefulWidget {
   final VoidCallback? onNext;
@@ -45,8 +46,31 @@ class LegalScreen extends StatefulWidget {
 
 class _LegalScreenState extends State<LegalScreen>
     with TickerProviderStateMixin {
-  String? _expandedId;
+  final Set<String> _expandedIds = {};
   bool _accepted = false;
+  // ONBOARDING-AUDIT 2026-08-14 follow-up: double-tap guard for
+  // `_handleContinue`. The button is a GestureDetector (not an
+  // ElevatedButton), so the framework doesn't debounce taps and a
+  // rapid double-tap would call `widget.onNext?.call()` twice. The
+  // router swap is idempotent but the duplicate work is wasteful
+  // (cache write, PostHog capture) and risks a transient mismatch
+  // if the rider backgrounds between the two fires.
+  bool _isContinuing = false;
+
+  // API-sourced documents keyed by type; the JSON asset is only used as an
+  // offline fallback when the fetch fails and no cache exists.
+  Map<String, ({String title, String content})> _apiDocs = const {};
+  bool _loadingDocs = false;
+
+  // PR-1 (2026-08-07 master fix plan): the 5 inline `const _k*Content`
+  // strings used to live at the top of this file as a 3KB literal. They
+  // are now bundled in `assets/json/legal_fallback.json` and loaded once
+  // per mount. Loading is fast (a single `rootBundle.loadString` from a
+  // <8KB JSON asset) and the result is cached in `_fallback` for the
+  // lifetime of the screen. The empty default is safe — the sections
+  // short-circuit to the API docs when the asset load fails, and the
+  // hardcoded string titles are still used as a last-resort fallback.
+  Map<String, ({String title, String content})> _fallback = const {};
 
   late final AnimationController _entryCtrl;
   late final AnimationController _checkCtrl;
@@ -63,6 +87,59 @@ class _LegalScreenState extends State<LegalScreen>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
+    _loadFallback();
+    _loadDocs();
+  }
+
+  /// PR-1 (2026-08-07 master fix plan): load the offline fallback content
+  /// from the bundled JSON asset. Runs once per mount; failure is silent
+  /// (the API docs and the hardcoded titles still keep the legal gate
+  /// functional).
+  Future<void> _loadFallback() async {
+    try {
+      final loaded = await const LegalFallbackLoader().loadAll();
+      if (mounted) setState(() => _fallback = loaded);
+    } catch (e) {
+      // ONBOARDING-AUDIT 2026-08-14 P3-7: log the failure so silent
+      // asset/parse errors are visible. Asset missing or malformed —
+      // fall through to the API docs only.
+      appDebug('[legalScreen] fallback load failed: $e');
+    }
+  }
+
+  /// Fetch legal documents from the server, merging into the fallback set.
+  /// Uses the ApiClient's SWR cache (see [ApiClient.getWithSWR]) so the last
+  /// successful fetch renders instantly offline. Failures are silent — the
+  /// fallback constants above keep the legal gate functional.
+  Future<void> _loadDocs() async {
+    setState(() => _loadingDocs = true);
+    try {
+      final envelope = await VoltiumApiService().fetchLegalDocuments();
+      final data = envelope['data'];
+      if (data is List) {
+        final docs = <String, ({String title, String content})>{};
+        for (final raw in data) {
+          if (raw is Map<String, dynamic>) {
+            final type = raw['type'] as String?;
+            final title = raw['title'] as String?;
+            final content = raw['content'] as String?;
+            if (type != null && content != null && content.isNotEmpty) {
+              docs[type] = (title: title ?? type, content: content);
+            }
+          }
+        }
+        if (docs.isNotEmpty && mounted) {
+          setState(() => _apiDocs = docs);
+        }
+      }
+    } catch (e) {
+      // ONBOARDING-AUDIT 2026-08-14 P3-7: log the failure so silent
+      // offline/server errors are visible. Fallback content stays in
+      // place.
+      appDebug('[legalScreen] API docs load failed: $e');
+    } finally {
+      if (mounted) setState(() => _loadingDocs = false);
+    }
   }
 
   @override
@@ -81,10 +158,16 @@ class _LegalScreenState extends State<LegalScreen>
     }
   }
 
-  void _handleContinue() {
-    if (!_accepted) return;
-    PostHogService.capture('legal_accepted');
-    widget.onNext?.call();
+  Future<void> _handleContinue() async {
+    if (!_accepted || _isContinuing) return;
+    _isContinuing = true;
+    try {
+      await CacheService().setBool('legal_accepted_v1', true);
+      PostHogService.capture('legal_accepted');
+      widget.onNext?.call();
+    } finally {
+      if (mounted) _isContinuing = false;
+    }
   }
 
   @override
@@ -157,40 +240,31 @@ class _LegalScreenState extends State<LegalScreen>
                         ),
                         child: Column(
                           children: [
-                            _buildExpandableSection(
-                              id: 'terms',
-                              title: 'Terms of Service',
-                              content: _kTermsContent,
-                              headerKey: const Key('termsExpand'),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildExpandableSection(
-                              id: 'privacy',
-                              title: 'Privacy Policy',
-                              content: _kPrivacyContent,
-                              headerKey: const Key('privacyExpand'),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildExpandableSection(
-                              id: 'rental_safety',
-                              title: 'Rental & Safety Agreement',
-                              content: _kRentalSafetyContent,
-                              headerKey: const Key('rentalSafetyExpand'),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildExpandableSection(
-                              id: 'refund',
-                              title: 'Refund & Cancellation',
-                              content: _kRefundContent,
-                              headerKey: const Key('refundExpand'),
-                            ),
-                            const SizedBox(height: 12),
-                            _buildExpandableSection(
-                              id: 'guarantor',
-                              title: "Guarantor's Agreement",
-                              content: _kGuarantorAgreementContent,
-                              headerKey: const Key('guarantorExpand'),
-                            ),
+                            if (_loadingDocs && _apiDocs.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Syncing latest documents…',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        color: AppColors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ..._buildSections(),
                           ],
                         ),
                       ),
@@ -221,10 +295,10 @@ class _LegalScreenState extends State<LegalScreen>
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadows.glass,
         ),
-        child: const Icon(
+        child: Icon(
           Icons.arrow_back,
           size: 20,
-          color: AppColors.onSurfaceMuted,
+          color: AppColors.of(context).onSurfaceMuted,
         ),
       ),
     );
@@ -267,7 +341,7 @@ class _LegalScreenState extends State<LegalScreen>
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceMuted,
+                color: AppColors.of(context).onSurfaceMuted,
                 letterSpacing: -0.5,
               ),
             ),
@@ -277,13 +351,94 @@ class _LegalScreenState extends State<LegalScreen>
     );
   }
 
+  /// Ordered fallback sections; API docs override by `type` when present, and
+  /// any API-only types (e.g. `lease`) are appended after the fallback set.
+  ///
+  /// The fallback content is loaded from `assets/json/legal_fallback.json`
+  /// via [LegalFallbackLoader]. Loaded once per screen mount and cached in
+  /// [_fallback] so the rebuild loop is free of I/O.
+  List<Widget> _buildSections() {
+    final fallback =
+        <({String id, String title, String content, Key headerKey})>[
+      (
+        id: 'terms',
+        title: _fallback['terms']?.title ?? 'Terms of Service',
+        content: _fallback['terms']?.content ?? '',
+        headerKey: const Key('termsExpand'),
+      ),
+      (
+        id: 'privacy',
+        title: _fallback['privacy']?.title ?? 'Privacy Policy',
+        content: _fallback['privacy']?.content ?? '',
+        headerKey: const Key('privacyExpand'),
+      ),
+      (
+        id: 'rental_safety',
+        title: _fallback['rentalSafety']?.title ?? 'Rental & Safety Agreement',
+        content: _fallback['rentalSafety']?.content ?? '',
+        headerKey: const Key('rentalSafetyExpand'),
+      ),
+      (
+        id: 'refund',
+        title: _fallback['refund']?.title ?? 'Refund & Cancellation',
+        content: _fallback['refund']?.content ?? '',
+        headerKey: const Key('refundExpand'),
+      ),
+      (
+        id: 'guarantor',
+        title: _fallback['guarantor']?.title ?? "Guarantor's Agreement",
+        content: _fallback['guarantor']?.content ?? '',
+        headerKey: const Key('guarantorExpand'),
+      ),
+    ];
+
+    final widgets = <Widget>[];
+    final renderedIds = <String>{};
+
+    void addSection(
+      String id,
+      String title,
+      String content,
+      Key headerKey,
+    ) {
+      renderedIds.add(id);
+      widgets.add(_buildExpandableSection(
+        id: id,
+        title: title,
+        content: content,
+        headerKey: headerKey,
+      ));
+      widgets.add(const SizedBox(height: 12));
+    }
+
+    for (final section in fallback) {
+      final api = _apiDocs[section.id];
+      addSection(
+        section.id,
+        api?.title ?? section.title,
+        api?.content ?? section.content,
+        section.headerKey,
+      );
+    }
+
+    // API-only types not covered by the fallback set (e.g. lease).
+    for (final entry in _apiDocs.entries) {
+      if (renderedIds.contains(entry.key)) continue;
+      addSection(entry.key, entry.value.title, entry.value.content,
+          ValueKey(entry.key));
+    }
+
+    if (widgets.isNotEmpty) widgets.removeLast(); // trailing SizedBox
+    return widgets;
+  }
+
   Widget _buildExpandableSection({
     required String id,
     required String title,
     required String content,
     Key? headerKey,
   }) {
-    final isExpanded = _expandedId == id;
+    final isExpanded = _expandedIds.contains(id);
     return RepaintBoundary(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -301,7 +456,13 @@ class _LegalScreenState extends State<LegalScreen>
               InkWell(
                 key: headerKey,
                 onTap: () {
-                  setState(() => _expandedId = isExpanded ? null : id);
+                  setState(() {
+                    if (isExpanded) {
+                      _expandedIds.remove(id);
+                    } else {
+                      _expandedIds.add(id);
+                    }
+                  });
                 },
                 child: Padding(
                   padding:
@@ -313,7 +474,8 @@ class _LegalScreenState extends State<LegalScreen>
                         title,
                         style: AppTypography.bodyLarge
                             .copyWith(fontWeight: FontWeight.w600)
-                            .copyWith(color: AppColors.onSurfaceMuted),
+                            .copyWith(
+                                color: AppColors.of(context).onSurfaceMuted),
                       ),
                       AnimatedRotation(
                         turns: isExpanded ? 0.5 : 0.0,

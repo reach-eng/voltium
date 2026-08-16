@@ -7,9 +7,9 @@ import 'package:voltium_rider/utils/date_helpers.dart';
 import 'package:voltium_rider/services/voltium_api_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/models/earnings_entry_model.dart';
-import 'package:voltium_rider/widgets/earnings_chart.dart';
+import 'package:voltium_rider/features/wallet/widgets/earnings_chart.dart';
 import 'package:voltium_rider/widgets/fade_up_widget.dart';
-import 'package:voltium_rider/widgets/earnings_add_sheet.dart';
+import 'package:voltium_rider/features/wallet/widgets/earnings_add_sheet.dart';
 import '../widgets/earnings_widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -33,37 +33,48 @@ class _EarningsScreenState extends State<EarningsScreen> {
   void initState() {
     super.initState();
     _loadEntries();
+    // PR-39 (PROFILE P0-6): after the local load, replay any
+    // entries that haven't made it to the backend yet. The
+    // loadEntries() await isn't strictly required — the sync
+    // happens in the background and updates the UI as it goes.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncPendingEntries();
+    });
   }
 
   Future<void> _loadEntries() async {
     setState(() => _isLoading = true);
     try {
       final response = await VoltiumApiService().fetchEarnings();
-      if (response['success'] == true) {
-        final data = response['data'] as Map<String, dynamic>?;
-        if (data != null) {
-          final earningsList = data['earnings'] as List<dynamic>? ?? [];
-          _entries = earningsList.map((e) {
-            final json = e as Map<String, dynamic>;
-            return EarningEntry(
-              id: json['id'] as String? ?? '',
-              date: json['date'] != null
-                  ? DateTime.parse(json['date'] as String)
-                  : DateTime.now(),
-              platform: GigPlatform.values.firstWhere(
-                (p) =>
-                    p.name == (json['platform'] as String? ?? '').toLowerCase(),
-                orElse: () => GigPlatform.other,
-              ),
-              amount: (json['amount'] as num?)?.toDouble() ?? 0,
-              trips: json['trips'] as int? ?? 0,
-              hours: (json['hoursOnline'] as num?)?.toDouble() ?? 0,
-              notes: json['notes'] as String?,
-            );
-          }).toList();
-          if (mounted) setState(() => _isLoading = false);
-          return;
-        }
+      dynamic listRaw;
+      if (response['earnings'] != null) {
+        listRaw = response['earnings'];
+      } else if (response['data'] is Map &&
+          (response['data'] as Map)['earnings'] != null) {
+        listRaw = (response['data'] as Map)['earnings'];
+      }
+      final earningsList = listRaw as List<dynamic>?;
+      if (earningsList != null) {
+        _entries = earningsList.map((e) {
+          final json = e as Map<String, dynamic>;
+          return EarningEntry(
+            id: json['id'] as String? ?? '',
+            date: json['date'] != null
+                ? DateTime.parse(json['date'] as String)
+                : DateTime.now(),
+            platform: GigPlatform.values.firstWhere(
+              (p) =>
+                  p.name == (json['platform'] as String? ?? '').toLowerCase(),
+              orElse: () => GigPlatform.other,
+            ),
+            amount: (json['amount'] as num?)?.toDouble() ?? 0,
+            trips: json['trips'] as int? ?? 0,
+            hours: (json['hoursOnline'] as num?)?.toDouble() ?? 0,
+            notes: json['notes'] as String?,
+          );
+        }).toList();
+        if (mounted) setState(() => _isLoading = false);
+        return;
       }
     } catch (_) {
       // Fall through to SharedPreferences fallback
@@ -167,6 +178,32 @@ class _EarningsScreenState extends State<EarningsScreen> {
       setState(() => _entries.add(entry));
       await _saveEntries();
 
+      // PR-39 (PROFILE P0-6): mirror the entry to the backend so the
+      // admin's earnings analytics see it. Best-effort — a network
+      // failure leaves the local copy in place; the next app launch
+      // will retry via _syncPendingEntries().
+      final synced = await _syncEntryToBackend(entry);
+      if (synced && mounted) {
+        // Replace the local id with the server's canonical id so
+        // future updates/deletes (when those exist) target the right
+        // row.
+        setState(() {
+          final idx = _entries.indexWhere((e) => e.id == entry.id);
+          if (idx != -1) {
+            _entries[idx] = EarningEntry(
+              id: synced ? 'srv-${entry.id}' : entry.id,
+              date: entry.date,
+              platform: entry.platform,
+              amount: entry.amount,
+              trips: entry.trips,
+              hours: entry.hours,
+              notes: entry.notes,
+            );
+          }
+        });
+        await _saveEntries();
+      }
+
       if (mounted &&
           (entry.date.isBefore(_weekStart) ||
               entry.date.isAfter(_weekStart.add(const Duration(days: 6))))) {
@@ -175,6 +212,53 @@ class _EarningsScreenState extends State<EarningsScreen> {
         });
       }
     }
+  }
+
+  /// PR-39 (PROFILE P0-6): push a single entry to the backend. Returns
+  /// `true` on success.
+  Future<bool> _syncEntryToBackend(EarningEntry entry) async {
+    try {
+      final response = await VoltiumApiService().createEarning(
+        date: entry.date,
+        platform: entry.platform.name,
+        amount: entry.amount,
+        trips: entry.trips,
+        hours: entry.hours,
+        notes: entry.notes,
+      );
+      return response['id'] != null ||
+          response['success'] == true ||
+          response['data']?['id'] != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// PR-39 (PROFILE P0-6): on screen mount, replay any locally-stored
+  /// entries that haven't been synced yet. The entries are tagged with
+  /// a `srv-` prefix in their id; untagged entries are pending.
+  Future<void> _syncPendingEntries() async {
+    final pending = _entries.where((e) => !e.id.startsWith('srv-')).toList();
+    for (final entry in pending) {
+      final ok = await _syncEntryToBackend(entry);
+      if (ok && mounted) {
+        setState(() {
+          final idx = _entries.indexWhere((e) => e.id == entry.id);
+          if (idx != -1) {
+            _entries[idx] = EarningEntry(
+              id: 'srv-${entry.id}',
+              date: entry.date,
+              platform: entry.platform,
+              amount: entry.amount,
+              trips: entry.trips,
+              hours: entry.hours,
+              notes: entry.notes,
+            );
+          }
+        });
+      }
+    }
+    await _saveEntries();
   }
 
   @override
@@ -193,7 +277,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 dailyEarnings.where((d) => d['hasEntries'] as bool).length;
 
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.of(context).iconBackground,
       body: Stack(
         children: [
           _buildBackground(),
@@ -312,11 +396,14 @@ class _EarningsScreenState extends State<EarningsScreen> {
   Widget _buildBackground() {
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.surfaceBright],
+            colors: [
+              AppColors.of(context).iconBackground,
+              AppColors.of(context).surfaceBright
+            ],
           ),
         ),
       ),
@@ -342,18 +429,18 @@ class _EarningsScreenState extends State<EarningsScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_back,
                 size: 18,
-                color: AppColors.slate800,
+                color: AppColors.of(context).onSurface,
               ),
             ),
           ),
           SizedBox(width: 16),
           Text(
             'Earnings Log',
-            style:
-                AppTypography.headingSmall.copyWith(color: AppColors.slate800),
+            style: AppTypography.headingSmall
+                .copyWith(color: AppColors.of(context).onSurface),
           ),
         ],
       ),
@@ -386,14 +473,14 @@ class _EarningsScreenState extends State<EarningsScreen> {
           SizedBox(height: 24),
           Text(
             'No earnings logged yet',
-            style:
-                AppTypography.titleMedium.copyWith(color: AppColors.slate800),
+            style: AppTypography.titleMedium
+                .copyWith(color: AppColors.of(context).onSurface),
           ),
           SizedBox(height: 8),
           Text(
             'Tap "Add Entry" to start tracking your gig earnings',
             style: GoogleFonts.plusJakartaSans(
-                fontSize: 14, color: AppColors.slate500),
+                fontSize: 14, color: AppColors.of(context).onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],

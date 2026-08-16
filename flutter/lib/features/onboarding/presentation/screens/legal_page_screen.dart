@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/features/onboarding/presentation/legal_fallback_loader.dart';
 
 part 'legal_page_content.dart';
 
@@ -88,6 +88,17 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
     with TickerProviderStateMixin {
   late final AnimationController _entryCtrl;
 
+  /// PR-29 (LEGAL P0): the inlined `$_k*` strings in
+  /// `legal_page_content.dart` are kept as a `part` file because they
+  /// need string interpolation (`$_kBrandShort`, `$_kBrandFull`).
+  /// But the *primary* source of truth for the document body is now
+  /// `assets/json/legal_fallback.json` (loaded by [LegalFallbackLoader]).
+  /// This map is populated in `initState` and used to override the
+  /// inlined content for any section that the JSON contains — the
+  /// `part` copy becomes a last-resort fallback when the asset is
+  /// missing.
+  Map<String, ({String title, String content})> _fallback = const {};
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +106,20 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+    // PR-29: load the JSON-backed legal copy. Best-effort: if the
+    // asset fails to load (corrupt bundle, missing file) we fall
+    // back to the inlined `part` copy so the rider still sees a
+    // complete legal page.
+    const LegalFallbackLoader().loadAll().then((docs) {
+      if (!mounted) return;
+      setState(() {
+        _fallback = docs;
+      });
+    }).catchError((_) {
+      // Asset missing or malformed JSON — silently keep the inlined
+      // part file content. The error is already logged by
+      // `rootBundle.loadString` and the inlined copy renders.
+    });
   }
 
   @override
@@ -106,60 +131,40 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
   String get _currentDate => DateFormat('dd MMMM yyyy').format(DateTime.now());
 
   /// Sections the screen should show, based on the constructor filter.
+  ///
+  /// PR-29 (LEGAL P0): the inlined `part` file is the legacy source of
+  /// truth. The legal team can update copy in
+  /// `assets/json/legal_fallback.json` without a Flutter release, so
+  /// we prefer the JSON content when available.
   List<_LegalSection> get _visibleSections {
     final type = widget.documentType;
-    if (type == null || type == LegalDocumentType.all) return _sections;
-    return _sections.where((s) {
-      switch (type) {
-        case LegalDocumentType.terms:
-          return s.id == 'terms';
-        case LegalDocumentType.privacy:
-          return s.id == 'privacy';
-        case LegalDocumentType.refund:
-          return s.id == 'refund';
-        case LegalDocumentType.guarantor:
-          return s.id == 'guarantor';
-        case LegalDocumentType.all:
-          return true;
-      }
-    }).toList();
-  }
+    final filtered = (type == null || type == LegalDocumentType.all)
+        ? List<_LegalSection>.from(_sections)
+        : _sections.where((s) {
+            switch (type) {
+              case LegalDocumentType.terms:
+                return s.id == 'terms';
+              case LegalDocumentType.privacy:
+                return s.id == 'privacy';
+              case LegalDocumentType.refund:
+                return s.id == 'refund';
+              case LegalDocumentType.guarantor:
+                return s.id == 'guarantor';
+              case LegalDocumentType.all:
+                return true;
+            }
+          }).toList();
 
-  // ── PDF Generation ─────────────────────────────────────────────────────────
-
-  Future<void> _downloadSignedPdf(
-    _LegalSection section,
-    RiderModel? rider,
-  ) async {
-    final pageState = ref.read(legalPageNotifierProvider);
-    if (pageState.isGeneratingPdf) return;
-    ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(true);
-
-    try {
-      final isGuarantor = section.id == 'guarantor';
-      final signerName = isGuarantor
-          ? (rider?.guarantorName ?? 'Guarantor')
-          : (rider?.name.isNotEmpty == true ? rider!.name : 'Rider');
-
-      await SharePlus.instance.share(
-        ShareParams(
-          text:
-              '${section.title} — Voltium Electric Mobility\nSigner: $signerName\nDate: $_currentDate\nDocument: ${section.title}',
-          title: '${section.title} — $_kBrandShort',
-        ),
+    if (_fallback.isEmpty) return filtered;
+    return filtered.map((s) {
+      final override = _fallback[s.id];
+      if (override == null) return s;
+      return _LegalSection(
+        id: s.id,
+        title: override.title,
+        content: override.content,
       );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not generate PDF: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      ref.read(legalPageNotifierProvider.notifier).setGeneratingPdf(false);
-    }
+    }).toList();
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -224,7 +229,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                     section.title,
                                     style: AppTypography.bodyMedium
                                         .copyWith(fontWeight: FontWeight.w800)
-                                        .copyWith(color: AppColors.slate800),
+                                        .copyWith(
+                                            color: AppColors.of(context)
+                                                .onSurface),
                                   ),
                                 ),
                                 AnimatedRotation(
@@ -259,7 +266,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                     section.content,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
-                                      color: AppColors.slate500,
+                                      color: AppColors.of(context)
+                                          .onSurfaceVariant,
                                       height: 1.7,
                                     ),
                                   ),
@@ -271,7 +279,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                               // ── Divider ──
                               Container(
                                 height: 1,
-                                color: AppColors.iconBackground,
+                                color: AppColors.of(context).iconBackground,
                               ),
 
                               const SizedBox(height: 20),
@@ -280,7 +288,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceBright,
+                                  color: AppColors.of(context).surfaceBright,
                                   borderRadius:
                                       BorderRadius.circular(AppRadius.lg),
                                 ),
@@ -326,7 +334,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w800,
-                                              color: AppColors.slate800,
+                                              color: AppColors.of(context)
+                                                  .onSurface,
                                             ),
                                           ),
                                         ],
@@ -353,7 +362,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w800,
-                                            color: AppColors.slate800,
+                                            color:
+                                                AppColors.of(context).onSurface,
                                           ),
                                         ),
                                       ],
@@ -425,7 +435,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                                           borderRadius: BorderRadius.circular(
                                               AppRadius.md),
                                           border: Border.all(
-                                            color: AppColors.iconBackground,
+                                            color: AppColors.of(context)
+                                                .iconBackground,
                                           ),
                                           boxShadow: AppShadows.glass,
                                         ),
@@ -450,48 +461,42 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
 
                               const SizedBox(height: 16),
 
-                              // ── Download button ──
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: ElevatedButton.icon(
-                                  key: Key('download_pdf_${section.id}'),
-                                  onPressed: pageState.isGeneratingPdf
-                                      ? null
-                                      : () =>
-                                          _downloadSignedPdf(section, rider),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    elevation: 4,
-                                    shadowColor: AppColors.primary
-                                        .withValues(alpha: 0.25),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
+                              // ── Copy-on-request note ──
+                              // Audit #5 P0-1: the old button shared plain
+                              // text and called it a "Download Signed PDF"
+                              // (no PDF, no signature metadata). Replaced
+                              // with an honest copy-on-request path.
+                              Container(
+                                key: Key('pdf_on_request_${section.id}'),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.of(context).primarySurface,
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(
+                                      Icons.info_outline,
+                                      color: AppColors.primary,
+                                      size: 18,
                                     ),
-                                  ),
-                                  icon: pageState.isGeneratingPdf
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.download_rounded,
-                                          size: 18,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Your acceptance is recorded. To request a signed copy, email $_kSupportEmail.',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: AppColors.onSurfaceVariant,
+                                          height: 1.5,
                                         ),
-                                  label: Text(
-                                    pageState.isGeneratingPdf
-                                        ? 'Generating…'
-                                        : 'Download Signed PDF',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -508,7 +513,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                       if (index < _visibleSections.length - 1)
                         Container(
                           height: 1,
-                          color: AppColors.iconBackground,
+                          color: AppColors.of(context).iconBackground,
                         ),
                     ],
                   );
@@ -522,7 +527,7 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
             Container(
               padding: Spacing.paddingMd,
               decoration: BoxDecoration(
-                color: AppColors.iconBackground,
+                color: AppColors.of(context).iconBackground,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Column(
@@ -534,14 +539,15 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                         .copyWith(
                             fontWeight: FontWeight.w800, letterSpacing: 1.2)
                         .copyWith(
-                            color: AppColors.slate500, letterSpacing: 1.2),
+                            color: AppColors.of(context).onSurfaceVariant,
+                            letterSpacing: 1.2),
                   ),
                   SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: AppColors.slate500,
+                        color: AppColors.of(context).onSurfaceVariant,
                         height: 1.5,
                       ),
                       children: [
@@ -628,9 +634,9 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
                     Navigator.pop(context);
                   }
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
-                  color: AppColors.slate800,
+                  color: AppColors.of(context).onSurface,
                   size: 20,
                 ),
               ),
@@ -640,7 +646,8 @@ class _LegalPageScreenState extends ConsumerState<LegalPageScreen>
       ),
       title: Text(
         title,
-        style: AppTypography.headingSmall.copyWith(color: AppColors.slate800),
+        style: AppTypography.headingSmall
+            .copyWith(color: AppColors.of(context).onSurface),
       ),
     );
   }

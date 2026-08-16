@@ -29,10 +29,14 @@ class SyncBanner extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isOnline ? AppColors.successLight : AppColors.surfaceBright,
+        color: isOnline
+            ? AppColors.of(context).successLight
+            : AppColors.of(context).surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isOnline ? AppColors.successLight : AppColors.outlineVariant,
+          color: isOnline
+              ? AppColors.of(context).successLight
+              : AppColors.outlineVariant,
         ),
       ),
       child: Row(
@@ -40,7 +44,9 @@ class SyncBanner extends ConsumerWidget {
           Icon(
             isOnline ? Icons.check_circle_outline : Icons.wifi_off_outlined,
             size: 20,
-            color: isOnline ? AppColors.success : AppColors.slate500,
+            color: isOnline
+                ? AppColors.success
+                : AppColors.of(context).onSurfaceVariant,
           ),
           SizedBox(width: 12),
           Expanded(
@@ -55,7 +61,7 @@ class SyncBanner extends ConsumerWidget {
                       .copyWith(
                           color: isOnline
                               ? AppColors.successDark
-                              : AppColors.slate800),
+                              : AppColors.of(context).onSurface),
                 ),
                 Text(
                   pendingCount > 0
@@ -63,7 +69,9 @@ class SyncBanner extends ConsumerWidget {
                       : 'Data shown may be outdated',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
-                    color: isOnline ? AppColors.success : AppColors.slate500,
+                    color: isOnline
+                        ? AppColors.success
+                        : AppColors.of(context).onSurfaceVariant,
                   ),
                 ),
               ],
@@ -74,8 +82,8 @@ class SyncBanner extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? AppColors.successLight
-                    : AppColors.iconBackground,
+                    ? AppColors.of(context).successLight
+                    : AppColors.of(context).iconBackground,
                 borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
@@ -207,8 +215,8 @@ class _SuspensionBannerState extends ConsumerState<SuspensionBanner> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: isCritical
-                          ? AppColors.errorLight
-                          : AppColors.warningLight,
+                          ? AppColors.of(context).errorLight
+                          : AppColors.of(context).warningLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(

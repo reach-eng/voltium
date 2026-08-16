@@ -126,7 +126,7 @@ const TransactionTableRow = React.memo(function TransactionTableRow({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                className="h-7 w-7 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                 onClick={() => onConfirmAction({ tx, action: 'approve' })}
                 title="Approve"
               >

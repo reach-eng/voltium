@@ -61,12 +61,19 @@ export function PaymentGatewayCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span
+              className={`text-xs font-semibold ${
+                gateway.isActive
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-red-600 dark:text-red-400'
+              }`}
+            >
               {gateway.isActive ? 'Active' : 'Inactive'}
             </span>
             <Switch
               checked={gateway.isActive}
               onCheckedChange={(val) => onToggleActive(gateway, val)}
+              className="data-[state=unchecked]:bg-red-500 dark:data-[state=unchecked]:bg-red-600"
             />
           </div>
         </div>
@@ -108,7 +115,7 @@ export function PaymentGatewayCard({
           <div>
             <span className="font-semibold block text-foreground">Key / App ID</span>
             <span className="truncate block font-mono text-[11px]">
-              {gateway.keyId ? `${gateway.keyId.substring(0, 10)}...` : 'Not set'}
+              {gateway.keyId ? `${gateway.keyId.substring(0, 4)}••••••••` : 'Not set'}
             </span>
           </div>
           <div>

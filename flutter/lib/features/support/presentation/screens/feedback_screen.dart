@@ -108,14 +108,14 @@ class _TutorialDialogState extends State<TutorialDialog> {
                 Text(
                   'Quick Tip',
                   style: AppTypography.titleLarge
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: AppColors.of(context).onSurface),
                 ),
                 SizedBox(height: 12),
                 Text(
                   tip.message,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
-                    color: AppColors.slate500,
+                    color: AppColors.of(context).onSurfaceVariant,
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -202,7 +202,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.iconBackground,
+      backgroundColor: AppColors.of(context).iconBackground,
       body: Stack(
         children: [
           _buildMeshBackground(),
@@ -248,8 +248,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                           delay: 100,
                           child: Text(
                             'Share Your Thoughts',
-                            style: AppTypography.headingMedium
-                                .copyWith(color: AppColors.slate800),
+                            style: AppTypography.headingMedium.copyWith(
+                                color: AppColors.of(context).onSurface),
                           ),
                         ),
                         SizedBox(height: 12),
@@ -259,7 +259,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             'Your feedback helps us improve the experience for everyone.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15,
-                              color: AppColors.slate500,
+                              color: AppColors.of(context).onSurfaceVariant,
                               height: 1.5,
                             ),
                             textAlign: TextAlign.center,
@@ -296,11 +296,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Widget _buildMeshBackground() {
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.primarySurface],
+            colors: [
+              AppColors.of(context).iconBackground,
+              AppColors.of(context).primarySurface
+            ],
           ),
         ),
       ),
@@ -327,14 +330,14 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   ),
                 ],
               ),
-              child:
-                  const Icon(Icons.close, size: 18, color: AppColors.slate800),
+              child: Icon(Icons.close,
+                  size: 18, color: AppColors.of(context).onSurface),
             ),
           ),
           Text(
             'Feedback',
-            style:
-                AppTypography.titleMedium.copyWith(color: AppColors.slate800),
+            style: AppTypography.titleMedium
+                .copyWith(color: AppColors.of(context).onSurface),
           ),
           const SizedBox(width: 40), // Balance
         ],
@@ -377,7 +380,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
         controller: _commentController,
         maxLines: 4,
         style: GoogleFonts.plusJakartaSans(
-            fontSize: 15, color: AppColors.slate800),
+            fontSize: 15, color: AppColors.of(context).onSurface),
         decoration: InputDecoration(
           hintText: 'Tell us more about your experience...',
           hintStyle: GoogleFonts.plusJakartaSans(
@@ -484,7 +487,7 @@ class RateAppPrompt {
                 Text(
                   'Enjoying Voltium?',
                   style: AppTypography.headingSmall
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: AppColors.of(context).onSurface),
                 ),
                 SizedBox(height: 12),
                 Text(
@@ -492,7 +495,7 @@ class RateAppPrompt {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
-                    color: AppColors.slate500,
+                    color: AppColors.of(context).onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),

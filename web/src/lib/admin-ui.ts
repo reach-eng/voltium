@@ -30,10 +30,10 @@ const KYC_COLOR_MAP: Record<string, string> = {
   SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
   KYC_SUBMITTED: 'bg-blue-100 text-blue-800 border-blue-300',
   INFO_REQUIRED: 'bg-orange-100 text-orange-800 border-orange-300',
-  ONBOARDING: 'bg-slate-100 text-slate-600 border-slate-300',
+  ONBOARDING: 'bg-slate-100 text-slate-600 dark:text-slate-400 border-slate-300',
 };
 
-const FALLBACK_COLOR = 'bg-slate-100 text-slate-600 border-slate-300';
+const FALLBACK_COLOR = 'bg-slate-100 text-slate-600 dark:text-slate-400 border-slate-300';
 
 /**
  * Returns a Tailwind class string for a given KYC status.

@@ -221,7 +221,7 @@ export function RiderDetailDialog({
                 </Button>
                 <Badge
                   variant="outline"
-                  className="h-10 px-4 rounded-xl bg-blue-500/5 border-blue-500/20 text-blue-600 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2"
+                  className="h-10 px-4 rounded-xl bg-blue-500/5 border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-[10px] flex items-center gap-2"
                 >
                   <ShieldCheck className="w-3 h-3" /> Rider Details
                 </Badge>
@@ -377,124 +377,7 @@ export function RiderDetailDialog({
         </DialogContent>
       </Dialog>
 
-      {/* ── KYC Action Confirmation Dialog ── */}
-      <AlertDialog
-        open={!!confirmKycAction}
-        onOpenChange={() => {
-          setConfirmKycAction(null);
-          setKycRejectionReason('');
-        }}
-      >
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmKycAction?.action === 'approve'
-                ? 'Approve KYC'
-                : confirmKycAction?.action === 'info_required'
-                  ? 'Request Correction'
-                  : 'Reject KYC'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to{' '}
-              {confirmKycAction?.action === 'info_required'
-                ? 'request corrections for'
-                : confirmKycAction?.action}{' '}
-              the KYC verification for <strong>{confirmKycAction?.rider.fullName}</strong>?
-              {(confirmKycAction?.action === 'reject' ||
-                confirmKycAction?.action === 'info_required') && (
-                <textarea
-                  className="w-full mt-3 p-2 border rounded-lg text-sm"
-                  placeholder={
-                    confirmKycAction?.action === 'info_required'
-                      ? 'What needs correction...'
-                      : 'Rejection reason...'
-                  }
-                  value={kycRejectionReason}
-                  onChange={(e) => setKycRejectionReason(e.target.value)}
-                />
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setConfirmKycAction(null);
-                setKycRejectionReason('');
-              }}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleKycAction}
-              disabled={
-                saving ||
-                ((confirmKycAction?.action === 'reject' ||
-                  confirmKycAction?.action === 'info_required') &&
-                  !kycRejectionReason.trim())
-              }
-              className={
-                confirmKycAction?.action === 'reject'
-                  ? 'bg-destructive hover:bg-destructive/90'
-                  : confirmKycAction?.action === 'info_required'
-                    ? 'bg-orange-500 hover:bg-orange-600'
-                    : ''
-              }
-            >
-              {confirmKycAction?.action === 'approve'
-                ? 'Approve'
-                : confirmKycAction?.action === 'info_required'
-                  ? 'Request Correction'
-                  : 'Reject'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
-      {/* ── Delete KYC Document Confirmation ── */}
-      <AlertDialog open={!!deleteDocKey} onOpenChange={() => setDeleteDocKey(null)}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Document</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this <strong>{deleteDocKey}</strong> document? This
-              action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDocKey(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteKycDoc}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* ── Clear Guarantor Confirmation ── */}
-      <AlertDialog open={confirmClearGuarantor} onOpenChange={setConfirmClearGuarantor}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear Guarantor</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to clear all guarantor information for this rider? This action
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmClearGuarantor(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmClearGuarantorAction}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Clear Guarantor
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

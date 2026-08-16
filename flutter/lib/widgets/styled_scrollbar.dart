@@ -79,8 +79,8 @@ class ScrollIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final indicatorColor =
-        color ?? (isDark ? AppColors.slate500 : AppColors.slate400);
+    final indicatorColor = color ??
+        (isDark ? AppColors.of(context).onSurfaceVariant : AppColors.slate400);
 
     return AnimatedBuilder(
       animation: controller,

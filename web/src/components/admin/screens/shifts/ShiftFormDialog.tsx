@@ -60,7 +60,7 @@ export function ShiftFormDialog({
         </DialogHeader>
         <div className="space-y-4">
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
               {error}
             </div>
           )}

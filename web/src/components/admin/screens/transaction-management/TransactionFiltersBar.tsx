@@ -81,6 +81,9 @@ export function TransactionFiltersBar({
             <TabsTrigger value="pending" className="h-10 px-4 text-xs">
               Pending
             </TabsTrigger>
+            <TabsTrigger value="SECURITY_DEPOSIT" className="h-10 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              Deposits
+            </TabsTrigger>
             <TabsTrigger value="TOP_UP" className="h-10 px-4 text-xs">
               Top-ups
             </TabsTrigger>

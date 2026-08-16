@@ -88,7 +88,7 @@ export function EarningsTable({
                           {e.platform || '—'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-semibold text-emerald-600">
+                      <TableCell className="font-semibold text-emerald-600 dark:text-emerald-400">
                         {formatINR(e.amount)}
                       </TableCell>
                       <TableCell>{e.trips}</TableCell>

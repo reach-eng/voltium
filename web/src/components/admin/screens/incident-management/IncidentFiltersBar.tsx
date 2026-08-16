@@ -74,11 +74,11 @@ export function IncidentFiltersBar({
         <Card className="rounded-2xl border-blue-500/20 bg-blue-500/5">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-blue-600" />
+              <AlertTriangle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">Open</p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {statusCounts.OPEN}
               </p>
             </div>
@@ -87,13 +87,13 @@ export function IncidentFiltersBar({
         <Card className="rounded-2xl border-amber-500/20 bg-amber-500/5">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-              <Search className="w-5 h-5 text-amber-600" />
+              <Search className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">
                 Investigating
               </p>
-              <p className="text-2xl font-bold text-amber-600">
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {statusCounts.INVESTIGATING}
               </p>
             </div>
@@ -102,13 +102,13 @@ export function IncidentFiltersBar({
         <Card className="rounded-2xl border-emerald-500/20 bg-emerald-500/5">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">
                 Resolved
               </p>
-              <p className="text-2xl font-bold text-emerald-600">
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                 {statusCounts.RESOLVED}
               </p>
             </div>
@@ -117,13 +117,13 @@ export function IncidentFiltersBar({
         <Card className="rounded-2xl border-slate-500/20 bg-slate-500/5">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-slate-500/20 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-slate-600" />
+              <Shield className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium">
                 Closed
               </p>
-              <p className="text-2xl font-bold text-slate-600">
+              <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">
                 {statusCounts.CLOSED}
               </p>
             </div>

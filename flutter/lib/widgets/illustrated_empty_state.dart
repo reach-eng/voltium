@@ -53,7 +53,7 @@ class IllustratedEmptyState extends StatelessWidget {
               subtitle,
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium
-                  .copyWith(color: AppColors.onSurfaceMuted)
+                  .copyWith(color: AppColors.of(context).onSurfaceMuted)
                   .copyWith(color: colors.onSurfaceMuted, height: 1.4),
             ),
             if (actionLabel != null && onAction != null) ...[

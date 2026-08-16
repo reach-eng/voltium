@@ -59,7 +59,7 @@ export function ReferralsSummaryCards({
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-blue-500/5">
-              <TrendingUp className="h-5 w-5 text-blue-600" />
+              <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">

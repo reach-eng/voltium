@@ -114,7 +114,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
           Text(
             'Payment Submitted',
             style: AppTypography.headingMedium
-                .copyWith(color: AppColors.onSurfaceMuted),
+                .copyWith(color: AppColors.of(context).onSurfaceMuted),
           ),
           SizedBox(height: 12),
           RichText(
@@ -132,7 +132,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                       '₹${widget.amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.onSurfaceMuted,
+                    color: AppColors.of(context).onSurfaceMuted,
                   ),
                 ),
                 TextSpan(
@@ -164,8 +164,8 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: AppColors.warningLight,
+              decoration: BoxDecoration(
+                color: AppColors.of(context).warningLight,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -182,7 +182,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
                   Text(
                     'Verification in Progress',
                     style: AppTypography.labelLarge
-                        .copyWith(color: AppColors.onSurfaceMuted),
+                        .copyWith(color: AppColors.of(context).onSurfaceMuted),
                   ),
                   SizedBox(height: 2),
                   Text(
@@ -208,7 +208,7 @@ class _TopUpReceiptScreenState extends State<TopUpReceiptScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.primarySurface,
+          color: AppColors.of(context).primarySurface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(

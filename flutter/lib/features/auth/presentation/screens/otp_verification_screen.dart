@@ -6,6 +6,7 @@ import 'package:voltium_rider/core/navigation/app_state_notifier.dart';
 import 'package:voltium_rider/core/network/api_client.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/models/rider_model.dart';
 import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
@@ -65,14 +66,24 @@ class OtpVerificationScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   /// Toggle between the new Apple/Google-style underline OTP input and the
   /// original spark-glow OTP boxes. Flip to `false` to roll back instantly
   /// if the underline variant has any field issues.
   ///
   /// Lives here (not in AppConstants) so the OTP screen is the only thing
   /// that branches on it — keeps blast radius small.
-  static const bool useUnderlineOtp = true;
+  ///
+  /// PR-ONBOARDING-2026-08-11 (audit 2.6): was a `static const true` so a
+  /// regression in the new underline UI required shipping a release to roll
+  /// back. Now reads `OTP_UNDERLINE_UI` at build time so QA can flip it
+  /// without a release. Build with
+  /// `--dart-define=OTP_UNDERLINE_UI=false` to roll back to the legacy
+  /// `SparkOtpInput` boxes. Defaults to `true` (current behavior).
+  static const bool useUnderlineOtp = bool.fromEnvironment(
+    'OTP_UNDERLINE_UI',
+    defaultValue: true,
+  );
 
   // Key is intentionally loosely typed because either widget (SparkOtpInputState
   // or UnderlineOtpInputState) can be the active implementation. Both expose
@@ -83,6 +94,12 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   bool _isOtpComplete = false;
   int _resendCountdown = 30;
   Timer? _countdownTimer;
+  // ONBOARDING-AUDIT 2026-08-14 P2-6: wall-clock anchor for the
+  // resend countdown so a backgrounded app can recompute the actual
+  // remaining seconds on resume (the per-second tick is paused by
+  // the OS while the app is backgrounded; without this anchor the
+  // rider sees a stale countdown that resumes from the wrong value).
+  DateTime? _resendStartedAt;
 
   late final AnimationController _bounceCtrl;
   late final Animation<double> _bounceAnim;
@@ -107,6 +124,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   @override
   void initState() {
     super.initState();
+    // ONBOARDING-AUDIT 2026-08-14 P2-6: register as a
+    // WidgetsBindingObserver so we can recompute the resend
+    // countdown against the wall clock when the app resumes.
+    WidgetsBinding.instance.addObserver(this);
     _bounceCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -129,10 +150,41 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     _bounceCtrl.dispose();
     _entryCtrl.dispose();
     super.dispose();
+  }
+
+  // ONBOARDING-AUDIT 2026-08-14 P2-6: on resume, recompute the
+  // resend countdown from the wall-clock anchor so a backgrounded
+  // app shows the correct remaining seconds instead of the stale
+  // value the per-second timer was paused at.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _recomputeCountdownFromWallClock();
+    }
+  }
+
+  void _recomputeCountdownFromWallClock() {
+    final startedAt = _resendStartedAt;
+    if (startedAt == null) return;
+    const countdownTotal = 30;
+    final elapsed = DateTime.now().difference(startedAt).inSeconds;
+    final remaining = countdownTotal - elapsed;
+    if (remaining <= 0) {
+      _countdownTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _resendCountdown = 0;
+          _resendStartedAt = null;
+        });
+      }
+    } else if (mounted) {
+      setState(() => _resendCountdown = remaining);
+    }
   }
 
   void _startCountdown() {
@@ -140,10 +192,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       setState(() => _resendCountdown = 0);
       return;
     }
+    // ONBOARDING-AUDIT 2026-08-14 P2-6: anchor the countdown to the
+    // wall clock so the resume handler can recompute the actual
+    // remaining seconds if the app was backgrounded.
+    _resendStartedAt = DateTime.now();
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted || _resendCountdown <= 0) {
         timer.cancel();
+        _resendStartedAt = null; // ONBOARDING-AUDIT 2026-08-14 P2-6
         return;
       }
       setState(() => _resendCountdown--);
@@ -157,14 +214,23 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   Future<void> _handleVerify() async {
+    // ONBOARDING-AUDIT 2026-08-14 P1-3: early-return double-tap
+    // guard. The OtpVerifyButton already disables itself while
+    // `_isLoading` is true, but a fast double-tap can still land two
+    // onPressed callbacks before the framework repaints. Bail out
+    // early so the second tap is a no-op.
+    if (_isLoading) return;
     final code = _readOtpValue();
     if (code.length != 6) return;
 
     setState(() => _isLoading = true);
     try {
       final phone = widget.phoneNumber.replaceAll(RegExp(r'\D'), '');
-      final result =
-          await ref.read(authRepositoryProvider).verifyOtp(phone, code);
+      final result = await ref.read(authRepositoryProvider).verifyOtp(
+            phone,
+            code,
+            referralCode: widget.referralCode,
+          );
       if (mounted) {
         final isNewRider = result.isNewRider;
         final rider = RiderModel.fromJson(result.rawJson);
@@ -174,19 +240,19 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
             .read(riderProvider.notifier)
             .setRider(rider);
         if (rider.riderId.isNotEmpty) {
-          unawaited(PostHogService.identify(rider.riderId, properties: {
+          await PostHogService.identify(rider.riderId, properties: {
             'lifecycle_status': rider.lifecycleStatus,
             'account_status': rider.accountStatus.name,
-          }));
+          });
         }
-        unawaited(PostHogService.capture('otp_verified', properties: {
+        await PostHogService.capture('otp_verified', properties: {
           'is_new_rider': isNewRider.toString(),
-        }));
+        });
         if (isNewRider) {
-          unawaited(PostHogService.capture('signup_completed', properties: {
+          await PostHogService.capture('signup_completed', properties: {
             if (widget.referralCode != null)
               'referral_code': widget.referralCode!,
-          }));
+          });
         }
         final nextAppState = result.determineAppState(rider);
         ref.read(appStateProvider.notifier).replaceState(nextAppState);
@@ -196,7 +262,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       appDebug('[OtpScreen] Error in verifyOtp: $e');
       PostHogService.captureError(e, null, reason: 'otp_verification_failed');
       if (mounted) {
-        String errorMsg = 'Failed to verify OTP. Please try again.';
+        // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
+        // fallback. Localised via `txtotpVerifyFailed`. The
+        // `ApiException` branch keeps the server-provided
+        // (already-localised) message.
+        String errorMsg = AppLocalizations.of(context)!.txtotpVerifyFailed;
         if (e is ApiException) {
           errorMsg = e.message;
         }
@@ -226,15 +296,18 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
         });
         _startCountdown();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP code resent successfully!'),
+          SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.txtotpCodeResentSuccessfully),
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        String errorMsg = 'Error resending OTP';
+        // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
+        // fallback. Localised via `txtotpResendError`.
+        String errorMsg = AppLocalizations.of(context)!.txtotpResendError;
         if (e is ApiException) {
           errorMsg = e.message;
         }
@@ -250,8 +323,11 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
 
   @override
   Widget build(BuildContext context) {
+    // DARK-MODE-AUDIT 2026-08-14 P0-4: the previous version used
+    // the static `AppColors.surface` (light). In dark mode the
+    // scaffold stayed light. Read from the theme extension.
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.of(context).surface,
       extendBody: true,
       bottomNavigationBar: OtpVerifyButton(
         canVerify: _isOtpComplete,
@@ -362,6 +438,13 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
   }
 
   Widget _buildTitle() {
+    // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded English
+    // title + subtitle pair. Localised via `txtotpVerifyTitle` /
+    // `txtotpWelcomeBack` for the title and `txtotpSignupSubtitle`
+    // / `txtotpLoginSubtitle` for the body. The phone-number
+    // TextSpan stays as the literal widget input (digits, not
+    // localisable).
+    final l10n = AppLocalizations.of(context)!;
     return FadeTransition(
       opacity: CurvedAnimation(
         parent: _entryCtrl,
@@ -370,7 +453,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
       child: Column(
         children: [
           Text(
-            widget.isLogin ? 'Welcome Back!' : 'Verify OTP',
+            widget.isLogin ? l10n.txtotpWelcomeBack : l10n.txtotpVerifyTitle,
             style: AppTypography.headingMedium
                 .copyWith(color: AppColors.onSurface, letterSpacing: -0.5),
           ),
@@ -385,8 +468,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen>
               children: [
                 TextSpan(
                   text: widget.isLogin
-                      ? 'Enter the code to login to your account '
-                      : 'Enter the 6-digit code sent to ',
+                      ? l10n.txtotpLoginSubtitle
+                      : l10n.txtotpSignupSubtitle,
                 ),
                 TextSpan(
                   text: widget.phoneNumber,

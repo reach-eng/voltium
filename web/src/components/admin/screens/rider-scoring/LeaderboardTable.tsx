@@ -19,9 +19,9 @@ interface LeaderboardTableProps {
 
 /** Tailwind chip styles for the top-3 rank circles. */
 function getRankClass(idx: number): string {
-  if (idx === 0) return 'bg-amber-500/20 text-amber-600';
-  if (idx === 1) return 'bg-slate-400/20 text-slate-600';
-  if (idx === 2) return 'bg-orange-500/20 text-orange-600';
+  if (idx === 0) return 'bg-amber-500/20 text-amber-600 dark:text-amber-400';
+  if (idx === 1) return 'bg-slate-400/20 text-slate-600 dark:text-slate-400';
+  if (idx === 2) return 'bg-orange-500/20 text-orange-600 dark:text-orange-400';
   return 'bg-muted text-muted-foreground';
 }
 

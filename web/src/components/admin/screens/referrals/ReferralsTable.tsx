@@ -122,7 +122,7 @@ export function ReferralsTable({
                   <TableCell>
                     <div className="flex flex-col">
                       <span
-                        className={`text-[11px] font-black uppercase tracking-tight ${r.refereeLifecycleStatus === 'ACTIVE' ? 'text-emerald-600' : 'text-amber-600'}`}
+                        className={`text-[11px] font-black uppercase tracking-tight ${r.refereeLifecycleStatus === 'ACTIVE' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}
                       >
                         {r.refereeLifecycleStatus === 'ACTIVE' ? 'Paid & Active' : 'No Active Plan'}
                       </span>
@@ -143,7 +143,7 @@ export function ReferralsTable({
                   </TableCell>
                   <TableCell>
                     <p
-                      className={`text-sm font-black ${r.earningForReferrer > 0 ? 'text-emerald-600' : 'text-muted-foreground/40'}`}
+                      className={`text-sm font-black ${r.earningForReferrer > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground/40'}`}
                     >
                       {r.earningForReferrer > 0 ? `₹${r.earningForReferrer}` : '—'}
                     </p>

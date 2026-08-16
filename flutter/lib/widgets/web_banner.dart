@@ -13,7 +13,7 @@ class WebPlatformBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.warningLight,
+      color: AppColors.of(context).warningLight,
       child: Row(
         children: [
           const Icon(Icons.info_outline,

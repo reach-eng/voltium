@@ -261,8 +261,16 @@ export function DisasterRecoveryTab() {
       label: 'Sufficient free disk space',
       check: () => overview?.storage?.freeDiskBytes > 10 * 1024 * 1024 * 1024,
     }, // 10 GB
-    { id: 'secondary', label: 'Secondary backup location configured', check: () => false }, // depends on schedule config
-    { id: 'verify', label: 'Latest backup verified', check: () => false }, // requires separate verification check
+    {
+      id: 'secondary',
+      label: 'Secondary backup location configured',
+      check: () => Boolean((overview?.scheduleStatus as any)?.secondaryBackupRoot),
+    },
+    {
+      id: 'verify',
+      label: 'Latest backup verified',
+      check: () => Boolean((overview?.stats as any)?.lastBackupVerified || overview?.stats?.lastBackupStatus === 'COMPLETED'),
+    },
     { id: 'maintenance', label: 'Maintenance mode not active', check: () => !maintenanceMode },
   ];
 
@@ -298,7 +306,7 @@ export function DisasterRecoveryTab() {
           checks.worker = { status: 'degraded', message: 'Worker process may not be running' };
         }
       } catch {
-        checks.worker = { status: 'degraded', message: 'Could not check worker status' };
+        checks.worker = { status: 'degraded', message: 'Worker status unavailable' };
       }
 
       if (overviewRes.ok && json?.data?.storage) {
@@ -336,7 +344,7 @@ export function DisasterRecoveryTab() {
 
       setHealth(checks);
     } catch {
-      toast.error('Failed to load health data');
+      toast.error('Failed to fetch system health');
     } finally {
       setLoading(false);
     }
@@ -349,16 +357,20 @@ export function DisasterRecoveryTab() {
   const handleToggleMaintenance = async () => {
     setTogglingMaintenance(true);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch('/api/admin/maintenance-mode', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ maintenanceMode: !maintenanceMode }),
+        body: JSON.stringify({
+          enabled: !maintenanceMode,
+          message: 'Disaster recovery drill in progress',
+        }),
       });
       if (res.ok) {
         setMaintenanceMode(!maintenanceMode);
         toast.success(maintenanceMode ? 'Maintenance mode disabled' : 'Maintenance mode enabled');
       } else {
-        toast.error('Failed to toggle maintenance mode');
+        const errJson = await res.json().catch(() => ({}));
+        toast.error(errJson.error || 'Failed to toggle maintenance mode');
       }
     } catch {
       toast.error('Failed to toggle maintenance mode');
@@ -388,14 +400,19 @@ export function DisasterRecoveryTab() {
 
       let verified = 0;
       let failed = 0;
-      for (const backup of backups) {
-        try {
-          const verifyRes = await fetch(`/api/admin/data-management/backups/${backup.id}/verify`, {
-            method: 'POST',
-          });
-          if (verifyRes.ok) verified++;
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < backups.length; i += CHUNK_SIZE) {
+        const chunk = backups.slice(i, i + CHUNK_SIZE);
+        const results = await Promise.allSettled(
+          chunk.map((backup: any) =>
+            fetch(`/api/admin/data-management/backups/${backup.id}/verify`, {
+              method: 'POST',
+            })
+          )
+        );
+        for (const r of results) {
+          if (r.status === 'fulfilled' && r.value.ok) verified++;
           else failed++;
-        } catch {
           failed++;
         }
       }
@@ -572,7 +589,7 @@ export function DisasterRecoveryTab() {
                   </span>
                 </div>
                 {item.passed && (
-                  <Badge className="text-[8px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                  <Badge className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
                     ✓ Passed
                   </Badge>
                 )}

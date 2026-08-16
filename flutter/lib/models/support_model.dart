@@ -10,8 +10,12 @@ class FaqCategory {
   final String subtitle;
   final int articleCount;
   final IconData icon;
-  final Color iconColor;
-  final Color iconBgColor;
+  // Optional — populated from JSON when present. Widgets that render a
+  // `FaqCategory` should resolve these via `AppColors.of(context)` based on
+  // the category id (see the `topActionCardAccent` helper in
+  // `support_widgets.dart`) so the colors are brightness-aware in dark mode.
+  final Color? iconColor;
+  final Color? iconBgColor;
 
   const FaqCategory({
     required this.id,
@@ -19,8 +23,8 @@ class FaqCategory {
     required this.subtitle,
     required this.articleCount,
     required this.icon,
-    required this.iconColor,
-    required this.iconBgColor,
+    this.iconColor,
+    this.iconBgColor,
   });
 
   factory FaqCategory.fromJson(Map<String, dynamic> json) {
@@ -30,8 +34,12 @@ class FaqCategory {
       subtitle: json['subtitle'] as String,
       articleCount: json['articleCount'] as int,
       icon: _getIconData(json['icon'] as String),
-      iconColor: Color(_parseColor(json['iconColor'])),
-      iconBgColor: Color(_parseColor(json['iconBgColor'])),
+      iconColor: json['iconColor'] != null
+          ? Color(_parseColor(json['iconColor']))
+          : null,
+      iconBgColor: json['iconBgColor'] != null
+          ? Color(_parseColor(json['iconBgColor']))
+          : null,
     );
   }
 

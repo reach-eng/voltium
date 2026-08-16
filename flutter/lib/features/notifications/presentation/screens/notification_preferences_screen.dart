@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/services/notification_service.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -75,10 +76,14 @@ class _NotificationPreferencesScreenState
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Preferences saved'),
+          // LANGUAGE-AUDIT (2026-08-16) #5: hardcoded English
+          // SnackBars. Localised via the existing
+          // `txtpreferencesSaved` / `txtfailedToSavePreferences`
+          // ARB keys.
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.txtpreferencesSaved),
             backgroundColor: AppColors.success,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -87,8 +92,9 @@ class _NotificationPreferencesScreenState
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save preferences'),
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.txtfailedToSavePreferences),
             backgroundColor: AppColors.error,
           ),
         );
@@ -118,7 +124,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.notifications_active,
                             iconColor: AppColors.primary,
-                            iconBg: AppColors.primarySurface,
+                            iconBg: AppColors.of(context).primarySurface,
                             title: 'Push Notifications',
                             subtitle: 'Receive push notifications from Voltium',
                             value: _pushEnabled,
@@ -152,7 +158,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.currency_rupee,
                             iconColor: AppColors.success,
-                            iconBg: AppColors.successLight,
+                            iconBg: AppColors.of(context).successLight,
                             title: 'Payments',
                             subtitle: 'Top-ups, rent deductions, refunds',
                             value: _paymentsEnabled,
@@ -171,7 +177,7 @@ class _NotificationPreferencesScreenState
                           _buildToggleTile(
                             icon: Icons.build_outlined,
                             iconColor: AppColors.primary,
-                            iconBg: AppColors.primarySurface,
+                            iconBg: AppColors.of(context).primarySurface,
                             title: 'Maintenance',
                             subtitle: 'Service reminders, battery swaps',
                             value: _maintenanceEnabled,
@@ -230,11 +236,14 @@ class _NotificationPreferencesScreenState
   Widget _buildBackground() {
     return Positioned.fill(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.iconBackground, AppColors.surfaceBright],
+            colors: [
+              AppColors.of(context).iconBackground,
+              AppColors.of(context).surfaceBright
+            ],
           ),
         ),
       ),

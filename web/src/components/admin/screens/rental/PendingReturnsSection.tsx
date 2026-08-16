@@ -38,7 +38,7 @@ export function PendingReturnsSection({
         </div>
         <h2 className="text-xl font-bold text-foreground">
           Pending Return Approvals
-          <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-rose-100 text-rose-600 dark:text-rose-400 text-xs font-bold">
             {pendingReturns.length}
           </span>
         </h2>
@@ -64,7 +64,7 @@ export function PendingReturnsSection({
               </div>
 
               <div className="bg-white/60 rounded-xl p-3 border border-rose-100/50">
-                <p className="text-[10px] font-bold uppercase text-rose-600 mb-1">
+                <p className="text-[10px] font-bold uppercase text-rose-600 dark:text-rose-400 mb-1">
                   Scooter Submitted On
                 </p>
                 <p className="text-sm font-semibold">
@@ -84,7 +84,7 @@ export function PendingReturnsSection({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-100 rounded-lg"
+                  className="flex-1 border-rose-200 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-lg"
                   onClick={() => onReview(rental)}
                 >
                   Review

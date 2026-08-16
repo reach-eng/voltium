@@ -65,13 +65,13 @@ class TransactionListTile extends StatelessWidget {
         statusBgColor = AppColors.warningSurface;
       } else if (purpose.contains('REFUND')) {
         statusTextColor = AppColors.primary;
-        statusBgColor = AppColors.primarySurface;
+        statusBgColor = AppColors.of(context).primarySurface;
       } else if (isCredit) {
         statusTextColor = AppColors.success;
-        statusBgColor = AppColors.successLight;
+        statusBgColor = AppColors.of(context).successLight;
       } else {
         statusTextColor = AppColors.primary;
-        statusBgColor = AppColors.primarySurface;
+        statusBgColor = AppColors.of(context).primarySurface;
       }
     }
 
@@ -129,13 +129,38 @@ class TransactionListTile extends StatelessWidget {
                       ),
                   ],
                 ),
-                Text(
-                  dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
+                Builder(builder: (context) {
+                  if (dateStr.isEmpty) return const SizedBox.shrink();
+                  final dt = DateTime.tryParse(dateStr)?.toLocal();
+                  String formatted =
+                      dateStr.length >= 10 ? dateStr.substring(0, 10) : dateStr;
+                  if (dt != null) {
+                    const months = [
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'May',
+                      'Jun',
+                      'Jul',
+                      'Aug',
+                      'Sep',
+                      'Oct',
+                      'Nov',
+                      'Dec'
+                    ];
+                    final m = months[dt.month - 1];
+                    final d = dt.day.toString().padLeft(2, '0');
+                    formatted = '$m $d, ${dt.year}';
+                  }
+                  return Text(
+                    formatted,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -191,7 +216,9 @@ class MethodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.iconBackground,
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.of(context).iconBackground,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Text(
@@ -334,12 +361,13 @@ class WalletBalanceCard extends StatelessWidget {
         ? (rider!.currentPlanPrice as num).toDouble()
         : AppConstants.defaultRentalPrice;
     final DateTime? planEndDate = rider?.planEndDate as DateTime?;
-    final int daysUntilDue =
-        planEndDate != null ? planEndDate.difference(DateTime.now()).inDays : 0;
+    final bool hasActivePlan = planEndDate != null;
+    final int? daysUntilDue =
+        hasActivePlan ? planEndDate.difference(DateTime.now()).inDays : null;
 
     // Rule 1: Pulsating red halo around amount text only if balance < top up required AND days <= 3
     final bool hasPulsatingRedAmountHalo =
-        (balance < rentAmount) && (daysUntilDue <= 3);
+        hasActivePlan && (balance < rentAmount) && (daysUntilDue! <= 3);
 
     // Rule 2 & 3: Amount text color (Green if >= rent required, Amber if < rent required)
     final Color amountTextColor =
@@ -347,7 +375,7 @@ class WalletBalanceCard extends StatelessWidget {
 
     // Rule 4: Whole card red halo if balance < rent required AND days <= 1
     final bool hasWholeCardRedHalo =
-        (balance < rentAmount) && (daysUntilDue <= 1);
+        hasActivePlan && (balance < rentAmount) && (daysUntilDue! <= 1);
 
     Widget balanceCounter = AnimatedBalanceCounter(
       value: balance,
@@ -577,8 +605,8 @@ class WalletActionButtons extends StatelessWidget {
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: const BoxDecoration(
-                          color: AppColors.successLight,
+                        decoration: BoxDecoration(
+                          color: AppColors.of(context).successLight,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -625,8 +653,8 @@ class WalletActionButtons extends StatelessWidget {
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primarySurface,
+                        decoration: BoxDecoration(
+                          color: AppColors.of(context).primarySurface,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -724,7 +752,24 @@ class TransactionHistorySection extends StatelessWidget {
               Text(
                 'Recent Transactions',
                 style: AppTypography.labelLarge
-                    .copyWith(color: AppColors.onSurfaceMuted),
+                    .copyWith(color: AppColors.of(context).onSurfaceMuted),
+              ),
+              InkWell(
+                key: const Key('seeAllTransactionsButton'),
+                onTap: () {
+                  Navigator.of(context).pushNamed('/history');
+                },
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    'See All',
+                    style: AppTypography.labelMedium.copyWith(
+                      color: AppColors.primaryLight,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

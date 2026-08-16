@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,11 +13,10 @@ import 'package:voltium_rider/core/network/files_repository.dart';
 import 'package:voltium_rider/widgets/image_source_sheet.dart';
 import 'package:voltium_rider/services/image_compression_service.dart';
 import 'package:voltium_rider/services/document_local_cache.dart';
-import 'package:voltium_rider/services/cache_service.dart';
 import 'package:voltium_rider/features/kyc/presentation/screens/signature_pad_screen.dart';
 import 'package:voltium_rider/features/guarantor/presentation/widgets/guarantor_onboarding_widgets.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
-import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
 import 'package:voltium_rider/features/guarantor/domain/form_validator.dart';
 import 'package:voltium_rider/features/guarantor/data/guarantor_cache.dart';
 
@@ -36,6 +36,13 @@ class GuarantorOnboardingState {
   final bool isOtpSent;
   final bool isPhoneVerified;
   final String verifiedGuarantorPhone;
+
+  /// PR-GUARANTOR-OTP: epoch-ms of when the guarantor phone was OTP-
+  /// verified. Persisted with the form cache so a rider killed mid-form
+  /// resumes without re-verifying — but only while the receipt is still
+  /// inside [AppConstants.emergencyContactVerificationWindow] (the same
+  /// short-lived rule as the pickup emergency-contact flow).
+  final int? verifiedGuarantorPhoneAt;
 
   final bool aadhaarFrontUploaded;
   final String? aadhaarFrontPath;
@@ -59,6 +66,7 @@ class GuarantorOnboardingState {
     this.isOtpSent = false,
     this.isPhoneVerified = false,
     this.verifiedGuarantorPhone = '',
+    this.verifiedGuarantorPhoneAt,
     this.aadhaarFrontUploaded = false,
     this.aadhaarFrontPath,
     this.aadhaarBackUploaded = false,
@@ -82,6 +90,7 @@ class GuarantorOnboardingState {
     bool? isOtpSent,
     bool? isPhoneVerified,
     String? verifiedGuarantorPhone,
+    int? verifiedGuarantorPhoneAt,
     bool? aadhaarFrontUploaded,
     String? aadhaarFrontPath,
     bool? aadhaarBackUploaded,
@@ -105,6 +114,8 @@ class GuarantorOnboardingState {
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       verifiedGuarantorPhone:
           verifiedGuarantorPhone ?? this.verifiedGuarantorPhone,
+      verifiedGuarantorPhoneAt:
+          verifiedGuarantorPhoneAt ?? this.verifiedGuarantorPhoneAt,
       aadhaarFrontUploaded: aadhaarFrontUploaded ?? this.aadhaarFrontUploaded,
       aadhaarFrontPath: aadhaarFrontPath ?? this.aadhaarFrontPath,
       aadhaarBackUploaded: aadhaarBackUploaded ?? this.aadhaarBackUploaded,
@@ -146,14 +157,27 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
       isVerifyingOtp: false,
       isPhoneVerified: verified,
       verifiedGuarantorPhone: phone,
+      // PR-GUARANTOR-OTP: stamp the epoch-ms receipt on success; clearing
+      // verification also clears the timestamp so a stale receipt can
+      // never be re-hydrated later.
+      verifiedGuarantorPhoneAt:
+          verified ? DateTime.now().millisecondsSinceEpoch : null,
     );
   }
 
   void resetPhoneVerification() {
     if (state.isPhoneVerified) {
-      state = state.copyWith(isPhoneVerified: false, isOtpSent: false);
+      state = state.copyWith(
+        isPhoneVerified: false,
+        isOtpSent: false,
+        verifiedGuarantorPhoneAt: null,
+      );
     }
   }
+
+  /// Full reset on logout — clears every field so the next rider never
+  /// sees the previous rider's guarantor data (audit #7 P0-1).
+  void reset() => state = const GuarantorOnboardingState();
 
   void updateDocument(String type, String path) {
     switch (type) {
@@ -188,9 +212,28 @@ class GuarantorOnboardingNotifier extends Notifier<GuarantorOnboardingState> {
     final sigP = cacheData['signaturePath'] as String?;
     final photoP = cacheData['photoPath'] as String?;
 
+    // PR-GUARANTOR-OTP: the persisted `isPhoneVerified` boolean is NOT
+    // trusted on its own — a rider killed mid-form resumes as "verified"
+    // only while the verification receipt (verifiedPhone + verifiedAt) is
+    // still inside the short validity window AND matches the phone the
+    // form currently carries. Expired, mismatched, or missing receipts
+    // force re-verification, exactly like a fresh session. The old cache
+    // shape (boolean without a timestamp) therefore re-verifies once on
+    // upgrade — the safe default.
+    final cachedPhone = (cacheData['phone'] as String?) ?? '';
+    final cachedVerifiedPhone = cacheData['verifiedPhone'] as String?;
+    final cachedVerifiedAt = cacheData['verifiedAt'] as int?;
+    final verificationFresh = AppConstants.isEmergencyContactVerificationFresh(
+      verifiedPhone: cachedVerifiedPhone,
+      contact: cachedPhone,
+      verifiedAt: cachedVerifiedAt,
+    );
+
     state = state.copyWith(
-      isPhoneVerified: cacheData['isPhoneVerified'] ?? false,
-      verifiedGuarantorPhone: cacheData['verifiedPhone'] ?? '',
+      isPhoneVerified: verificationFresh,
+      verifiedGuarantorPhone:
+          verificationFresh ? (cachedVerifiedPhone ?? '') : '',
+      verifiedGuarantorPhoneAt: verificationFresh ? cachedVerifiedAt : null,
       aadhaarFrontPath: afPath,
       aadhaarFrontUploaded: afPath != null && afPath.isNotEmpty,
       aadhaarBackPath: abPath,
@@ -250,6 +293,11 @@ class _GuarantorOnboardingScreenState
       'address': _addressController.text,
       'isPhoneVerified': state.isPhoneVerified,
       'verifiedPhone': state.verifiedGuarantorPhone,
+      // PR-GUARANTOR-OTP: epoch-ms receipt timestamp persisted alongside
+      // the marker so a resumed rider only skips re-verification while the
+      // receipt is still fresh (GuarantorCache null-filters it, so an
+      // unverified form simply has no entry).
+      'verifiedAt': state.verifiedGuarantorPhoneAt,
       'aadhaarFrontPath': state.aadhaarFrontPath,
       'aadhaarBackPath': state.aadhaarBackPath,
       'panPath': state.panPath,
@@ -269,7 +317,11 @@ class _GuarantorOnboardingScreenState
       try {
         _nameController.text = cacheData['name'] ?? '';
         _dobController.text = cacheData['dob'] ?? '';
-        _phoneController.text = cacheData['phone'] ?? '';
+        final rawPhone =
+            (cacheData['phone'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
+        _phoneController.text = rawPhone.length > 10
+            ? rawPhone.substring(rawPhone.length - 10)
+            : rawPhone;
         _fatherNameController.text = cacheData['fatherName'] ?? '';
         _motherNameController.text = cacheData['motherName'] ?? '';
         _addressController.text = cacheData['address'] ?? '';
@@ -283,12 +335,37 @@ class _GuarantorOnboardingScreenState
     }
   }
 
+  // ignore: prefer_function_declarations_over_variables
+  late final VoidCallback _onFieldChanged = () {
+    if (mounted) setState(() {});
+    _saveCache();
+  };
+
+  // ignore: prefer_function_declarations_over_variables
+  late final VoidCallback _onPhoneChanged = () {
+    if (mounted) setState(() {});
+    final inputPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final state = ref.read(guarantorOnboardingNotifierProvider);
+    final cleanVerified =
+        state.verifiedGuarantorPhone.replaceAll(RegExp(r'\D'), '');
+
+    if (state.isPhoneVerified && inputPhone != cleanVerified) {
+      ref
+          .read(guarantorOnboardingNotifierProvider.notifier)
+          .resetPhoneVerification();
+      for (final controller in _otpControllers) {
+        controller.clear();
+      }
+    }
+    _saveCache();
+  };
+
   @override
   void initState() {
     super.initState();
-    _loadCache();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCache();
       if (AppConstants.isTestMode) {
         if (_nameController.text.isEmpty)
           _nameController.text = 'Test Guarantor';
@@ -306,34 +383,22 @@ class _GuarantorOnboardingScreenState
       }
     });
 
-    _nameController.addListener(_saveCache);
-    _dobController.addListener(_saveCache);
-    _fatherNameController.addListener(_saveCache);
-    _motherNameController.addListener(_saveCache);
-    _addressController.addListener(_saveCache);
-
-    _phoneController.addListener(() {
-      final inputPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-      final state = ref.read(guarantorOnboardingNotifierProvider);
-      final cleanVerified =
-          state.verifiedGuarantorPhone.replaceAll(RegExp(r'\D'), '');
-
-      if (state.isPhoneVerified && inputPhone != cleanVerified) {
-        ref
-            .read(guarantorOnboardingNotifierProvider.notifier)
-            .resetPhoneVerification();
-      }
-      _saveCache();
-    });
+    _nameController.addListener(_onFieldChanged);
+    _dobController.addListener(_onFieldChanged);
+    _fatherNameController.addListener(_onFieldChanged);
+    _motherNameController.addListener(_onFieldChanged);
+    _addressController.addListener(_onFieldChanged);
+    _phoneController.addListener(_onPhoneChanged);
   }
 
   @override
   void dispose() {
-    _nameController.removeListener(_saveCache);
-    _dobController.removeListener(_saveCache);
-    _fatherNameController.removeListener(_saveCache);
-    _motherNameController.removeListener(_saveCache);
-    _addressController.removeListener(_saveCache);
+    _nameController.removeListener(_onFieldChanged);
+    _dobController.removeListener(_onFieldChanged);
+    _fatherNameController.removeListener(_onFieldChanged);
+    _motherNameController.removeListener(_onFieldChanged);
+    _addressController.removeListener(_onFieldChanged);
+    _phoneController.removeListener(_onPhoneChanged);
 
     _nameController.dispose();
     _dobController.dispose();
@@ -420,7 +485,12 @@ class _GuarantorOnboardingScreenState
     }
 
     // Prevent guarantor phone from being the same as rider phone
-    if (phone == ref.watch(riderProvider).rider?.phone) {
+    final riderPhone = (ref.read(riderProvider).rider?.phone ?? '')
+        .replaceAll(RegExp(r'\D'), '');
+    final tenDigitRiderPhone = riderPhone.length > 10
+        ? riderPhone.substring(riderPhone.length - 10)
+        : riderPhone;
+    if (phone == tenDigitRiderPhone) {
       _showError('Guarantor phone cannot be the same as your phone');
       return;
     }
@@ -439,11 +509,15 @@ class _GuarantorOnboardingScreenState
             backgroundColor: AppColors.success,
           ),
         );
-        // In dev mode, auto-fill OTP if returned by the API
-        final devOtp = result['data']?['otp']?.toString();
-        if (devOtp != null && devOtp.length == 6) {
-          for (int i = 0; i < 6; i++) {
-            _otpControllers[i].text = devOtp[i];
+        // Dev-mode only: auto-fill the OTP the server echoes. Guarded by
+        // kDebugMode so a misconfigured production server can never leak
+        // the OTP into the UI (audit #7 P0-5).
+        if (kDebugMode) {
+          final devOtp = result['data']?['otp']?.toString();
+          if (devOtp != null && devOtp.length == 6) {
+            for (int i = 0; i < 6; i++) {
+              _otpControllers[i].text = devOtp[i];
+            }
           }
         }
       }
@@ -473,7 +547,22 @@ class _GuarantorOnboardingScreenState
         .read(guarantorOnboardingNotifierProvider.notifier)
         .setVerifyingOtp(true);
     try {
-      await VoltiumApiService().verifyPhone(phone: phone, otp: otp);
+      // PR-A: trust the server's verdict — the response carries
+      // `{ verified: false, message }` for a wrong OTP and the UI must not
+      // mark the phone verified unless the server confirms it (audit #7 P0-2).
+      final response =
+          await VoltiumApiService().verifyPhone(phone: phone, otp: otp);
+      final verified = verifyPhoneResponseVerified(response);
+      if (!verified) {
+        if (mounted) {
+          ref
+              .read(guarantorOnboardingNotifierProvider.notifier)
+              .setVerifyingOtp(false);
+          _showError(response['data']?['message']?.toString() ??
+              'Invalid OTP. Please try again.');
+        }
+        return;
+      }
       if (mounted) {
         ref
             .read(guarantorOnboardingNotifierProvider.notifier)
@@ -504,6 +593,7 @@ class _GuarantorOnboardingScreenState
 
   Future<void> _handleSubmit() async {
     final state = ref.read(guarantorOnboardingNotifierProvider);
+    if (state.isUploading) return;
     final isTestMode = AppConstants.isTestMode;
     final provider = ref.read(riderProvider.notifier);
     final rider = ref.watch(riderProvider).rider;
@@ -571,34 +661,43 @@ class _GuarantorOnboardingScreenState
         if (state.panPath != null)
           tasks['PAN'] =
               () => filesRepo.uploadFile(File(state.panPath!), 'kyc_document');
+        if (state.photoPath != null)
+          tasks['Photo'] = () =>
+              filesRepo.uploadFile(File(state.photoPath!), 'profile_photo');
         if (state.videoPath != null)
           tasks['Video'] = () =>
               filesRepo.uploadFile(File(state.videoPath!), 'kyc_document');
         if (state.signaturePath != null)
           tasks['Signature'] = () =>
               filesRepo.uploadFile(File(state.signaturePath!), 'kyc_document');
-        if (state.photoPath != null)
-          tasks['Photo'] = () =>
-              filesRepo.uploadFile(File(state.photoPath!), 'profile_photo');
 
         int completed = 0;
         final results = <String, String>{};
 
-        for (final entry in tasks.entries) {
-          ref.read(guarantorOnboardingNotifierProvider.notifier).setUploading(
-                true,
-                'Uploading ${completed + 1} of ${tasks.length}...',
-              );
-          results[entry.key] = await entry.value();
-          completed++;
+        final uploadTasks = tasks.entries.map((entry) async {
+          try {
+            final url = await entry.value();
+            completed++;
+            ref.read(guarantorOnboardingNotifierProvider.notifier).setUploading(
+                  true,
+                  'Uploaded $completed of ${tasks.length}',
+                );
+            return MapEntry(entry.key, url);
+          } catch (e) {
+            throw Exception('Failed to upload ${entry.key}: $e');
+          }
+        });
+        final pairs = await Future.wait(uploadTasks);
+        for (final p in pairs) {
+          results[p.key] = p.value;
         }
 
         aadhaarFrontUrl = results['Aadhaar Front'] ?? '';
         aadhaarBackUrl = results['Aadhaar Back'] ?? '';
         panUrl = results['PAN'] ?? '';
+        photoUrl = results['Photo'] ?? '';
         videoUrl = results['Video'] ?? '';
         signatureUrl = results['Signature'] ?? '';
-        photoUrl = results['Photo'] ?? '';
 
         // Cache guarantor documents locally.
         if (state.aadhaarFrontPath != null)
@@ -609,6 +708,8 @@ class _GuarantorOnboardingScreenState
               'guarantorAadhaarBack', state.aadhaarBackPath!);
         if (state.panPath != null)
           DocumentLocalCache.save('guarantorPan', state.panPath!);
+        if (state.photoPath != null)
+          DocumentLocalCache.save('guarantorPhoto', state.photoPath!);
         if (state.videoPath != null)
           DocumentLocalCache.save('guarantorVideo', state.videoPath!);
         if (state.signaturePath != null)
@@ -663,104 +764,17 @@ class _GuarantorOnboardingScreenState
     }
   }
 
-  /// User tapped "Skip" on the guarantor form. Show a confirmation
-  /// dialog that explains the consequence (higher deposit tier) and
-  /// then proceed to the pre-dashboard.
-  ///
-  /// The higher-deposit-tier behaviour is opt-in per user: we set a
-  /// `requiresHigherDeposit: true` flag in the cache and let the
-  /// pre-dashboard read it. The backend does not yet enforce a
-  /// different deposit amount for users without a guarantor, so this
-  /// is currently a UI-only signal.
-  Future<void> _handleSkip() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.radiusModal),
-        ),
-        backgroundColor: Theme.of(ctx).colorScheme.surface,
-        child: Padding(
-          padding: Spacing.paddingLg,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Skip Guarantor?',
-                style: AppTypography.titleLarge
-                    .copyWith(color: AppColors.slate900, letterSpacing: -0.5),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'Without a guarantor, you will be required to pay a higher '
-                'security deposit (₹5,000 instead of ₹2,000) when you select '
-                'a plan.\n\n'
-                'You can add a guarantor later from Profile → Settings.',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  height: 1.5,
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-              SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    key: const Key('skipGuarantorCancelButton'),
-                    onPressed: () => Navigator.of(ctx).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.onSurfaceDisabled,
-                      textStyle: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w600),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                    key: const Key('skipGuarantorConfirmButton'),
-                    onPressed: () => Navigator.of(ctx).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                    ),
-                    child: Text(
-                      'Skip',
-                      style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    // Persist the higher-deposit flag in cache so the pre-dashboard
-    // can read it. The backend does not have a `requiresHigherDeposit`
-    // field yet, so this is a local signal only.
-    final riderId = ref.read(riderProvider).riderId;
-    if (riderId != null) {
-      await CacheService()
-          .setString('voltium_requires_higher_deposit:$riderId', 'true');
-    }
-
-    // Clear the form cache so a returning user doesn't see a half-
-    // filled guarantor form if they change their mind.
-    await CacheService().remove('guarantor_onboarding_form_cache');
-
-    if (mounted) widget.onNext?.call();
-  }
+  /// ONBOARDING-AUDIT 2026-08-14 (fix #5d): the previous "Skip for
+  /// now?" path was removed entirely. The button claimed a
+  /// higher-deposit tier would be unlocked by skipping, but the
+  /// backend never enforced `requiresHigherDeposit` — so the rider
+  /// was promised a consequence that did not exist. Worse, skipping
+  /// meant the rider had no guarantor on file, which (per the
+  /// active-path server contract) blocks the rental flow
+  /// outright. The button is gone from the screen below
+  /// (`onSkip: null`) and the handler was deleted. If you ever
+  /// want to re-introduce skipping, wire the server-side
+  /// `requiresHigherDeposit` flag end-to-end FIRST.
 
   Widget _buildStepIndicator() {
     final currentStep = ref.watch(
@@ -788,8 +802,11 @@ class _GuarantorOnboardingScreenState
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isActive ? AppColors.primary : AppColors.surfaceSubtle,
-        border: isActive ? null : Border.all(color: AppColors.borderSubtle),
+        color:
+            isActive ? AppColors.primary : AppColors.of(context).surfaceSubtle,
+        border: isActive
+            ? null
+            : Border.all(color: AppColors.of(context).borderSubtle),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -806,7 +823,7 @@ class _GuarantorOnboardingScreenState
     return Container(
       width: 40,
       height: 2,
-      color: AppColors.borderSubtle,
+      color: AppColors.of(context).borderSubtle,
     );
   }
 
@@ -853,7 +870,7 @@ class _GuarantorOnboardingScreenState
     );
     if (date != null && mounted) {
       _dobController.text =
-          '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     }
   }
 
@@ -881,6 +898,7 @@ class _GuarantorOnboardingScreenState
                 child: Column(
                   children: [
                     buildCurtainHeader(
+                      context: context,
                       title: 'Guarantor Details',
                       subtitle: 'Add a guarantor for additional security',
                       onBack: () {
@@ -977,7 +995,12 @@ class _GuarantorOnboardingScreenState
               uploadProgressText: state.uploadProgressText,
               buttonText: state.currentStep < 3 ? 'NEXT STEP' : 'FINISH SETUP',
               onSubmit: _onBottomButtonPressed,
-              onSkip: state.currentStep == 1 ? _handleSkip : null,
+              // ONBOARDING-AUDIT 2026-08-14 (fix #5d): the Skip button
+              // was removed. It promised a higher-deposit tier that the
+              // backend never enforced, and skipping would block the
+              // rental flow (a rider without a guarantor on file cannot
+              // start a rental per the active-path server contract).
+              onSkip: null,
             ),
           ],
         ),
@@ -1003,7 +1026,7 @@ class _GuarantorLiabilityBanner extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.warningLight,
+        color: AppColors.of(context).warningLight,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.warning, width: 1),
       ),

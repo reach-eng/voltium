@@ -26,10 +26,14 @@ import type { Admin } from './types';
 
 const roleColors: Record<string, string> = {
   SUPER_ADMIN: 'border-red-500/20 text-red-600 bg-red-500/5 dark:text-red-400',
-  ADMIN: 'border-primary/20 text-primary bg-primary/5',
-  MANAGER: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
+  OPERATIONS_ADMIN: 'border-primary/20 text-primary bg-primary/5',
+  FINANCE_ADMIN: 'border-emerald-500/20 text-emerald-600 bg-emerald-500/5 dark:text-emerald-400',
   FLEET_MANAGER: 'border-amber-500/20 text-amber-600 bg-amber-500/5 dark:text-amber-400',
+  HUB_MANAGER: 'border-indigo-500/20 text-indigo-600 bg-indigo-500/5 dark:text-indigo-400',
   TEAM_LEADER: 'border-cyan-500/20 text-cyan-600 bg-cyan-500/5 dark:text-cyan-400',
+  KYC_REVIEWER: 'border-purple-500/20 text-purple-600 bg-purple-500/5 dark:text-purple-400',
+  SUPPORT_AGENT: 'border-blue-500/20 text-blue-600 bg-blue-500/5 dark:text-blue-400',
+  READ_ONLY: 'border-slate-500/20 text-slate-600 bg-slate-500/5 dark:text-slate-400',
 };
 
 interface AdminUserTableProps {
@@ -147,7 +151,7 @@ export function AdminUserTable({
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={`text-[10px] font-bold ${roleColors[a.role] || 'border-slate-500/20 text-slate-600 bg-slate-500/5'}`}
+                      className={`text-[10px] font-bold ${roleColors[a.role] || 'border-slate-500/20 text-slate-600 dark:text-slate-400 bg-slate-500/5'}`}
                     >
                       {a.role}
                     </Badge>

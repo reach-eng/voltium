@@ -5,7 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
+import 'package:voltium_rider/features/support/presentation/screens/support_center_screen.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/utils/app_navigator.dart';
 
 class TlDetailsScreen extends ConsumerWidget {
   const TlDetailsScreen({super.key});
@@ -34,11 +36,11 @@ class TlDetailsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   children: [
-                    _buildTLProfileCard(tlName),
+                    _buildTLProfileCard(context, tlName),
                     const SizedBox(height: 20),
-                    if (tlPhone.isNotEmpty) _buildContactCard(tlPhone),
+                    if (tlPhone.isNotEmpty) _buildContactCard(context, tlPhone),
                     const SizedBox(height: 16),
-                    _buildInfoCard(),
+                    _buildInfoCard(context),
                     const SizedBox(height: 32),
                     _buildActions(context),
                   ],
@@ -86,7 +88,7 @@ class TlDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTLProfileCard(String name) {
+  Widget _buildTLProfileCard(BuildContext context, String name) {
     return Container(
       padding: Spacing.paddingLg,
       decoration: BoxDecoration(
@@ -96,9 +98,9 @@ class TlDetailsScreen extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 48,
-            backgroundColor: AppColors.iconBackground,
+            backgroundColor: AppColors.of(context).iconBackground,
             child:
                 Icon(Icons.person, size: 48, color: AppColors.onSurfaceVariant),
           ),
@@ -120,11 +122,11 @@ class TlDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContactCard(String phone) {
+  Widget _buildContactCard(BuildContext context, String phone) {
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.surfaceBright,
+        color: AppColors.of(context).surfaceBright,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
@@ -149,7 +151,7 @@ class TlDetailsScreen extends ConsumerWidget {
             child: Container(
               padding: Spacing.paddingSm,
               decoration: BoxDecoration(
-                color: AppColors.successLight,
+                color: AppColors.of(context).successLight,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(Icons.call, color: AppColors.success, size: 18),
@@ -160,13 +162,13 @@ class TlDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
     return Container(
       padding: Spacing.paddingMd,
       decoration: BoxDecoration(
-        color: AppColors.primarySurface,
+        color: AppColors.of(context).primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.infoLight),
+        border: Border.all(color: AppColors.of(context).infoLight),
       ),
       child: Row(
         children: [
@@ -191,18 +193,15 @@ class TlDetailsScreen extends ConsumerWidget {
     return Column(
       children: [
         _buildActionBtn(
-          label: 'Change Team Leader',
+          // PR-ONBOARDING-2026-08-11 (audit 1.8): the previous onTap popped the
+          // screen and showed a green "Request submitted to support team"
+          // snackbar without calling any API. Riders thought their TL-change
+          // request was submitted; it was not. Now routes to the support
+          // center so the rider can actually file a ticket.
+          label: 'Request Team Leader change',
           icon: Icons.swap_horiz,
           color: AppColors.error,
-          onTap: () {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Request submitted to support team'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          },
+          onTap: () => AppNavigator.push(context, const SupportCenterScreen()),
         ),
         const SizedBox(height: 12),
         _buildActionBtn(

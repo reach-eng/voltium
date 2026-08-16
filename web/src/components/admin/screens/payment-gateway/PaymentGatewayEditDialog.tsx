@@ -23,6 +23,63 @@ interface Props {
   onSaved: () => void;
 }
 
+/** Mutable form state of the edit dialog. */
+export interface GatewayFormState {
+  name: string;
+  mdrBearer: MdrBearer;
+  extraFeePercent: number;
+  keyId: string;
+  keySecret: string;
+  merchantId: string;
+  webhookSecret: string;
+  apiEndpoint: string;
+  environment: Environment;
+}
+
+/**
+ * PR-VER-2026-08-07 (PAYMENT_GATEWAY P0-4): change-only credential semantics.
+ * The API returns stored credentials decrypted, so the form must NEVER
+ * pre-populate them — echoing them back into the inputs re-exposes the
+ * plaintext secret. Both secret fields start blank and are only included in
+ * the update payload when the admin types a new value (an empty string would
+ * silently wipe the stored secret). Extracted as pure functions so the
+ * invariant is unit-testable without a DOM.
+ */
+export function gatewayFormDefaults(gateway: PaymentGateway): GatewayFormState {
+  return {
+    name: gateway.name || '',
+    mdrBearer: gateway.mdrBearer || 'RIDER',
+    extraFeePercent: gateway.extraFeePercent ?? 2.5,
+    keyId: gateway.keyId || '',
+    keySecret: '', // never pre-populated
+    merchantId: gateway.merchantId || '',
+    webhookSecret: '', // never pre-populated
+    apiEndpoint: gateway.apiEndpoint || '',
+    environment: gateway.environment || 'TEST',
+  };
+}
+
+export function buildGatewayUpdateFields(
+  form: GatewayFormState
+): Partial<PaymentGateway> {
+  const fields: Partial<PaymentGateway> = {
+    name: form.name,
+    mdrBearer: form.mdrBearer,
+    extraFeePercent: Number(form.extraFeePercent),
+    keyId: form.keyId,
+    merchantId: form.merchantId,
+    apiEndpoint: form.apiEndpoint,
+    environment: form.environment,
+  };
+  // Change-only credentials: sending an empty string would silently wipe
+  // the stored secret, so only include a field when the admin typed one.
+  if (form.keySecret.trim().length > 0) fields.keySecret = form.keySecret;
+  if (form.webhookSecret.trim().length > 0) {
+    fields.webhookSecret = form.webhookSecret;
+  }
+  return fields;
+}
+
 /**
  * R3 split — edit dialog for a single payment gateway. Owns its own
  * form state (initialized from the gateway prop when it opens). Calls
@@ -43,24 +100,29 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
   // Reset form when the gateway changes
   useEffect(() => {
     if (!gateway) return;
-    setFormName(gateway.name || '');
-    setFormMdrBearer(gateway.mdrBearer || 'RIDER');
-    setFormExtraFeePercent(gateway.extraFeePercent ?? 2.5);
-    setFormKeyId(gateway.keyId || '');
-    setFormKeySecret(gateway.keySecret || '');
-    setFormMerchantId(gateway.merchantId || '');
-    setFormWebhookSecret(gateway.webhookSecret || '');
-    setFormApiEndpoint(gateway.apiEndpoint || '');
-    setFormEnvironment(gateway.environment || 'TEST');
+    const defaults = gatewayFormDefaults(gateway);
+    setFormName(defaults.name);
+    setFormMdrBearer(defaults.mdrBearer);
+    setFormExtraFeePercent(defaults.extraFeePercent);
+    setFormKeyId(defaults.keyId);
+    // PR-VER-2026-08-07 (PAYMENT_GATEWAY P0-4): never pre-populate the
+    // credential fields — the API returns them decrypted, so echoing them
+    // back into the form re-exposes the plaintext secret. Change-only
+    // semantics: the fields start blank and are only sent when typed.
+    setFormKeySecret(defaults.keySecret);
+    setFormMerchantId(defaults.merchantId);
+    setFormWebhookSecret(defaults.webhookSecret);
+    setFormApiEndpoint(defaults.apiEndpoint);
+    setFormEnvironment(defaults.environment);
   }, [gateway]);
 
   const handleSave = async () => {
     if (!gateway) return;
     setSaving(true);
-    const ok = await onSave(gateway.id, {
+    const fields = buildGatewayUpdateFields({
       name: formName,
       mdrBearer: formMdrBearer,
-      extraFeePercent: Number(formExtraFeePercent),
+      extraFeePercent: formExtraFeePercent,
       keyId: formKeyId,
       keySecret: formKeySecret,
       merchantId: formMerchantId,
@@ -68,6 +130,7 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
       apiEndpoint: formApiEndpoint,
       environment: formEnvironment,
     });
+    const ok = await onSave(gateway.id, fields);
     setSaving(false);
     if (ok) {
       toast.success(`${gateway.name} updated successfully`);
@@ -77,7 +140,18 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
   };
 
   return (
-    <Dialog open={!!gateway} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={!!gateway}
+      onOpenChange={(open) => {
+        if (!open) {
+          // Clear credential state on close so the next open never shows
+          // (or re-sends) the previous gateway's secret.
+          setFormKeySecret('');
+          setFormWebhookSecret('');
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Gateway - {gateway?.name}</DialogTitle>
@@ -145,6 +219,9 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
               onChange={(e) => setFormKeySecret(e.target.value)}
               placeholder="••••••••••••"
             />
+            <p className="text-xs text-muted-foreground">
+              Leave blank to keep the existing secret unchanged.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -158,9 +235,15 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
           <div className="space-y-1.5">
             <Label>Webhook Secret</Label>
             <Input
+              type="password"
               value={formWebhookSecret}
               onChange={(e) => setFormWebhookSecret(e.target.value)}
+              placeholder="••••••••••••"
+              autoComplete="new-password"
             />
+            <p className="text-xs text-muted-foreground">
+              Leave blank to keep the existing secret unchanged.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -188,7 +271,7 @@ export function PaymentGatewayEditDialog({ gateway, onClose, onSave, onSaved }: 
                 <RadioGroupItem value="LIVE" id="env-live" />
                 <Label
                   htmlFor="env-live"
-                  className="cursor-pointer text-xs font-semibold text-emerald-600"
+                  className="cursor-pointer text-xs font-semibold text-emerald-600 dark:text-emerald-400"
                 >
                   Live Production
                 </Label>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import RiderSelector from '@/components/admin/RiderSelector';
 import { hasPermission } from '@/lib/permissions';
 import { CallRegisterTab } from './device-tracking/CallRegisterTab';
@@ -22,14 +22,26 @@ import { useDeviceTracking } from './device-tracking/useDeviceTracking';
  */
 export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?: string }) {
   const [selectedRiderId, setSelectedRiderId] = useState<string | undefined>(riderIdProp);
+  // P2-14: the local selector initialized from the prop only on mount — if the
+  // parent navigated from rider A to rider B, the state stayed stale. Sync it
+  // whenever the prop changes (inline mode ignores the state entirely).
+  useEffect(() => {
+    setSelectedRiderId(riderIdProp);
+  }, [riderIdProp]);
   const riderId = riderIdProp ?? selectedRiderId;
   const isStandalone = !riderIdProp;
 
   const t = useDeviceTracking(riderId);
 
-  if (t.loading) return <DeviceTrackingLoadingState />;
+  // P1-16: the old `t.session &&` short-circuit skipped the permission check
+  // while /me was still pending (session null) — a user with a failed session
+  // fetch saw the full screen. Wait for the session fetch to SETTLE, then run
+  // the check unconditionally (a null session = cannot verify = denied).
+  // P2-16: the underlying device-data route enforces the same permission
+  // server-side, so this is UX parity, not the security boundary.
+  if (t.loading || !t.sessionLoaded) return <DeviceTrackingLoadingState />;
 
-  if (t.session && !hasPermission(t.session, 'device_tracking_view')) {
+  if (!t.session || !hasPermission(t.session, 'device_tracking_view')) {
     return <DeviceTrackingPermissionDenied />;
   }
 
@@ -54,10 +66,19 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
         <DeviceTrackingHeader
           isStandalone={isStandalone}
           onChangeRider={() => {
+            // P1-17: the old handler also called t.fetchData(), which used the
+            // STALE riderId from the hook closure. Setting the local state to
+            // undefined makes the hook's riderId effect reset data + loading
+            // on the next render — no explicit fetch needed.
             setSelectedRiderId(undefined);
-            t.fetchData();
           }}
         />
+
+        {t.error && (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
+            {t.error}
+          </div>
+        )}
 
         <DeviceDataSubTabs
           active={t.activeSubTab}
@@ -66,6 +87,7 @@ export default function DeviceTrackingView({ riderId: riderIdProp }: { riderId?:
           onSync={() => {
             void t.handleSecurityAction('SYNC_DEVICE_DATA', {});
           }}
+          session={t.session}
         />
 
         <div className="min-h-[400px]">

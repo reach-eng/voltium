@@ -96,8 +96,8 @@ class TopUpRequestSentCard extends StatelessWidget {
           const SizedBox(height: 16),
           _buildRow(context, 'Security Deposit', '₹${rider.securityDeposit}'),
           const SizedBox(height: 8),
-          _buildRow(
-              context, 'Rental Charges', '₹${topUpAmount - rider.securityDeposit}'),
+          _buildRow(context, 'Rental Charges',
+              '₹${topUpAmount - rider.securityDeposit}'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(height: 1, color: AppColors.outlineVariant),

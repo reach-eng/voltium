@@ -360,9 +360,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.primarySurface,
+        color: AppColors.of(context).primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.infoLight),
+        border: Border.all(color: AppColors.of(context).infoLight),
       ),
       child: Row(
         children: [
@@ -418,7 +418,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                     height: 40,
                     decoration: BoxDecoration(
                       color: isCredit
-                          ? AppColors.successLight
+                          ? AppColors.of(context).successLight
                           : AppColors.errorSurface,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
@@ -435,8 +435,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                       children: [
                         Text(
                           tx.description ?? tx.purpose ?? 'Transaction',
-                          style: AppTypography.labelLarge
-                              .copyWith(color: AppColors.onSurfaceMuted),
+                          style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.of(context).onSurfaceMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -509,9 +509,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final breakdowns = tx.breakdowns;
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.surfaceSubtle)),
+        border:
+            Border(top: BorderSide(color: AppColors.of(context).surfaceSubtle)),
       ),
       padding: Spacing.paddingMd,
       child: Column(
@@ -543,7 +544,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
                 '₹${tx.amount.toInt()}',
                 style: AppTypography.bodyMedium
                     .copyWith(fontWeight: FontWeight.w800)
-                    .copyWith(color: AppColors.onSurfaceMuted),
+                    .copyWith(color: AppColors.of(context).onSurfaceMuted),
               ),
             ],
           ),
@@ -557,8 +558,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     final label = b.label;
     final amount = b.amount;
 
-    Color color = AppColors.onSurfaceMuted;
-    Color bg = AppColors.surfaceSubtle;
+    Color color = AppColors.of(context).onSurfaceMuted;
+    Color bg = AppColors.of(context).surfaceSubtle;
     String prefix = '';
 
     if (type == 'TAX') {
@@ -567,7 +568,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }
     if (type == 'DISCOUNT') {
       color = AppColors.successDark;
-      bg = AppColors.successLight;
+      bg = AppColors.of(context).successLight;
       prefix = '-';
     }
     if (type == 'PENALTY') {
@@ -576,7 +577,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
     }
     if (type == 'ADJUSTMENT') {
       color = AppColors.primaryDark;
-      bg = AppColors.primarySurface;
+      bg = AppColors.of(context).primarySurface;
     }
 
     return Padding(
@@ -603,7 +604,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
               Text(
                 label,
                 style: AppTypography.bodySmall
-                    .copyWith(color: AppColors.onSurfaceMuted),
+                    .copyWith(color: AppColors.of(context).onSurfaceMuted),
               ),
             ],
           ),

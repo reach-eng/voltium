@@ -227,7 +227,7 @@ export function KycTable({
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs border-orange-500/30 text-orange-600"
+                            className="text-xs border-orange-500/30 text-orange-600 dark:text-orange-400"
                             onClick={() =>
                               setConfirmAction({ rider, action: 'info_required' })
                             }

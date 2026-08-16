@@ -102,20 +102,20 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                 Text(
                   'Add Earning',
                   style: AppTypography.titleLarge
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: AppColors.of(context).onSurface),
                 ),
                 InkWell(
                   onTap: () => Navigator.of(context).pop(),
                   child: Container(
                     padding: Spacing.paddingSm,
-                    decoration: const BoxDecoration(
-                      color: AppColors.iconBackground,
+                    decoration: BoxDecoration(
+                      color: AppColors.of(context).iconBackground,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close,
                       size: 18,
-                      color: AppColors.slate500,
+                      color: AppColors.of(context).onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -128,7 +128,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                 initialValue: _selectedPlatform,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.iconBackground,
+                  fillColor: AppColors.of(context).iconBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
@@ -154,7 +154,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.iconBackground,
+                  fillColor: AppColors.of(context).iconBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
@@ -176,7 +176,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.iconBackground,
+                        fillColor: AppColors.of(context).iconBackground,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           borderSide: BorderSide.none,
@@ -200,7 +200,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                           const TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: AppColors.iconBackground,
+                        fillColor: AppColors.of(context).iconBackground,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           borderSide: BorderSide.none,
@@ -225,7 +225,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.iconBackground,
+                    color: AppColors.of(context).iconBackground,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Row(
@@ -235,13 +235,13 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                         '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: AppColors.slate800,
+                          color: AppColors.of(context).onSurface,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.calendar_today,
                         size: 16,
-                        color: AppColors.slate500,
+                        color: AppColors.of(context).onSurfaceVariant,
                       ),
                     ],
                   ),
@@ -256,7 +256,7 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.iconBackground,
+                  fillColor: AppColors.of(context).iconBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                     borderSide: BorderSide.none,
@@ -296,9 +296,9 @@ class _AddEarningSheetState extends State<AddEarningSheet> {
       children: [
         Text(
           label,
-          style: AppTypography.labelSmall
-              .copyWith(fontSize: 9)
-              .copyWith(color: AppColors.slate500, letterSpacing: 1.5),
+          style: AppTypography.labelSmall.copyWith(fontSize: 9).copyWith(
+              color: AppColors.of(context).onSurfaceVariant,
+              letterSpacing: 1.5),
         ),
         const SizedBox(height: 6),
         child,

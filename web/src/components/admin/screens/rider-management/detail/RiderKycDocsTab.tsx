@@ -70,9 +70,9 @@ export function RiderKycDocsTab({
         <div className="flex items-center gap-3">
           <Badge
             variant="outline"
-            className={`text-xs uppercase font-black tracking-widest ${getKycBadge(rider.kycStatus)}`}
+            className={`text-xs uppercase font-black tracking-widest ${getKycBadge((rider.kycStatus as string) ?? 'PENDING')}`}
           >
-            {rider.kycStatus}
+            {rider.kycStatus ?? 'PENDING'}
           </Badge>
           {rider.kycRejectionReason && (
             <span className="text-xs text-muted-foreground">
@@ -96,7 +96,7 @@ export function RiderKycDocsTab({
             <Button
               size="sm"
               variant="outline"
-              className="h-7 text-xs border-orange-500/30 text-orange-600 hover:bg-orange-500/10"
+              className="h-7 text-xs border-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10"
               onClick={() =>
                 setConfirmKycAction({ rider: rider, action: 'info_required' })
               }
@@ -119,7 +119,7 @@ export function RiderKycDocsTab({
       <div className="grid grid-cols-3 gap-6">
         <div className="space-y-2">
           <MediaPreview
-            src={rider.profilePhoto}
+            src={rider.profilePhoto ?? null}
             label="Profile Photo"
             onDelete={() => handleDeleteKycDoc('profilePhoto')}
             selected={selectedKycDocs.has('profilePhoto')}
@@ -139,7 +139,7 @@ export function RiderKycDocsTab({
 
         <div className="space-y-2">
           <MediaPreview
-            src={rider.riderPhoto}
+            src={rider.riderPhoto ?? null}
             label="Rider Photo *"
             onDelete={() => handleDeleteKycDoc('riderPhoto')}
             selected={selectedKycDocs.has('riderPhoto')}
@@ -179,7 +179,7 @@ export function RiderKycDocsTab({
 
         <div className="space-y-2">
           <MediaPreview
-            src={rider.signature}
+            src={rider.signature ?? null}
             label="Rider Signature"
             onDelete={() => handleDeleteKycDoc('signature')}
             selected={selectedKycDocs.has('signature')}
@@ -198,7 +198,7 @@ export function RiderKycDocsTab({
         </div>
         <div className="space-y-2">
           <MediaPreview
-            src={rider.aadhaarFront}
+            src={rider.aadhaarFront ?? null}
             label="Aadhaar Front"
             onDelete={() => handleDeleteKycDoc('aadhaarFront')}
             selected={selectedKycDocs.has('aadhaarFront')}
@@ -217,7 +217,7 @@ export function RiderKycDocsTab({
         </div>
         <div className="space-y-2">
           <MediaPreview
-            src={rider.aadhaarBack}
+            src={rider.aadhaarBack ?? null}
             label="Aadhaar Back"
             onDelete={() => handleDeleteKycDoc('aadhaarBack')}
             selected={selectedKycDocs.has('aadhaarBack')}
@@ -236,7 +236,7 @@ export function RiderKycDocsTab({
         </div>
         <div className="space-y-2">
           <MediaPreview
-            src={rider.panCard}
+            src={rider.panCard ?? null}
             label="PAN Card"
             onDelete={() => handleDeleteKycDoc('panCard')}
             selected={selectedKycDocs.has('panCard')}
@@ -254,7 +254,7 @@ export function RiderKycDocsTab({
       </div>
       <div className="p-8 rounded-3xl bg-blue-500/5 border border-blue-500/10">
         <div className="flex items-center gap-3 mb-6">
-          <Building className="w-8 h-8 text-blue-600" />
+          <Building className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           <h4 className="text-lg font-black tracking-tight text-blue-900">
             Bank Details
           </h4>

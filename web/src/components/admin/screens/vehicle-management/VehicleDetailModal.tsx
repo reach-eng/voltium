@@ -26,7 +26,7 @@ export function VehicleDetailModal({
             <DialogHeader className="px-8 pt-8 pb-4 bg-muted/20">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-                  <Bike className="w-7 h-7 text-blue-600" />
+                  <Bike className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <DialogTitle className="text-2xl font-black tracking-tight">
@@ -74,7 +74,7 @@ export function VehicleDetailModal({
                           className="flex items-center justify-between p-4 rounded-2xl bg-muted/20 border border-muted/30"
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
                               {lease.rider.fullName[0]}
                             </div>
                             <div>
@@ -90,7 +90,7 @@ export function VehicleDetailModal({
                             </p>
                             <Badge
                               variant="outline"
-                              className="text-[8px] uppercase tracking-widest bg-blue-500/5 text-blue-600"
+                              className="text-[8px] uppercase tracking-widest bg-blue-500/5 text-blue-600 dark:text-blue-400"
                             >
                               {lease.status}
                             </Badge>
@@ -153,7 +153,7 @@ export function VehicleDetailModal({
                     <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
-                          <p className="text-[10px] font-bold uppercase text-blue-600 mb-1">
+                          <p className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 mb-1">
                             Return Date
                           </p>
                           <p className="font-bold">

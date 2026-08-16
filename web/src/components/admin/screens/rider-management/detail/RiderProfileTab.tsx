@@ -36,7 +36,7 @@ export function RiderProfileTab({
                   <History className="w-5 h-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-rose-600">
+                  <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
                     Vehicle Return Pending
                   </p>
                   <p className="text-xs text-rose-500/70">
@@ -47,7 +47,7 @@ export function RiderProfileTab({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-rose-500/20 text-rose-600 hover:bg-rose-500/10"
+                className="border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"
               >
                 Review Photos
               </Button>
@@ -61,7 +61,7 @@ export function RiderProfileTab({
                     <UserPlus className="w-5 h-5 text-amber-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-amber-600">
+                    <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
                       TL Change Requested
                     </p>
                     <p className="text-xs text-amber-500/70">
@@ -73,7 +73,7 @@ export function RiderProfileTab({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-rose-600 hover:bg-rose-500/10 hover:text-rose-600"
+                    className="text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400"
                     onClick={() => handleTlAction(rider.id, 'reject')}
                   >
                     Reject
@@ -158,7 +158,7 @@ export function RiderProfileTab({
           isEditing={isEditing}
           field="lifecycleStatus"
           type="select"
-          options={STATE_FILTERS}
+          options={[...STATE_FILTERS]}
           onEdit={(v) => setEditForm({ ...editForm, lifecycleStatus: v })}
         />
       </div>

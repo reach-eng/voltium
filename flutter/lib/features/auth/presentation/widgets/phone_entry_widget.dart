@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:voltium_rider/gen/app_localizations.dart';
 import 'package:voltium_rider/theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 import 'package:voltium_rider/utils/phone_validator.dart';
@@ -56,7 +57,13 @@ class PhoneEntryWidget extends StatefulWidget {
 class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
   late final TextEditingController _phoneController;
   late final TextEditingController _referralController;
-  final FocusNode _phoneFocusNode = FocusNode();
+  // NOTE: we intentionally let the TextFormField own its own focus node
+  // instead of providing one explicitly. On this device, supplying
+  // `focusNode: customNode` to the field left the EditableText's internal
+  // IME connection un-initialised — the system engaged the IME with an
+  // empty `EditorInfo{inputType=0, inputTypeString=NULL, …}` and hid it
+  // immediately (`HIDE_SAME_WINDOW_FOCUSED_WITHOUT_EDITOR`). Letting the
+  // field manage its own focus + `autofocus: true` is the canonical fix.
   final FocusNode _referralFocusNode = FocusNode();
   String? _phoneError;
 
@@ -65,12 +72,15 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     super.initState();
     _phoneController = widget.phoneController ?? TextEditingController();
     _referralController = widget.referralController ?? TextEditingController();
-    if (widget.autoFocus) {
-      // Defer to post-frame so the input is in the tree before we ask for focus.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _phoneFocusNode.requestFocus();
-      });
-    }
+    // ONBOARDING-AUDIT 2026-08-14 P2-2: the previous implementation
+    // had a `Future.delayed(300ms)` to manually invoke
+    // `TextInput.show` on top of `autofocus: true`. The 300ms timer
+    // is fragile (too short on slow devices, redundant on fast ones)
+    // and the manual nudge is no longer needed: the C2 IME fix (PR
+    // 2026-08-12) made the field own its own focus node + use
+    // `autofocus: true`, which is sufficient. If a future device
+    // regression appears, re-add a one-line `WidgetsBinding.instance
+    // .addPostFrameCallback` here, not a delayed timer.
   }
 
   @override
@@ -78,24 +88,26 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
     // Only dispose controllers we own.
     if (widget.phoneController == null) _phoneController.dispose();
     if (widget.referralController == null) _referralController.dispose();
-    _phoneFocusNode.dispose();
     _referralFocusNode.dispose();
     super.dispose();
   }
 
   void _onPhoneChanged(String value) {
     setState(() {
+      // PR-ONBOARDING-FLOW-2026-08-13: PhoneValidator.validate is the
+      // single source of truth for phone validation — it covers
+      // required, digits-only, length, and prefix (6-9). The
+      // previous in-line checks duplicated the rules and produced
+      // different error messages at different lengths ("must start
+      // with 6-9" while typing, "must be 10 digits" at length 10),
+      // which was confusing. Now: empty input is silently cleared
+      // (the rider is mid-typing); every other state goes through
+      // the validator.
       final digits = value.replaceAll(RegExp(r'\D'), '');
       if (digits.isEmpty) {
         _phoneError = null;
-      } else if (digits.length == 10) {
-        _phoneError = PhoneValidator.validate(digits);
-      } else if (digits.length > 10) {
-        _phoneError = 'Phone number cannot exceed 10 digits';
-      } else if (!RegExp(r'^[6-9]').hasMatch(digits)) {
-        _phoneError = 'Phone number must start with 6, 7, 8, or 9';
       } else {
-        _phoneError = null;
+        _phoneError = PhoneValidator.validate(digits);
       }
     });
     widget.onPhoneChanged(value);
@@ -151,7 +163,9 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                 children: [
                   GestureDetector(
                     behavior: HitTestBehavior.translucent,
-                    onTap: () => _phoneFocusNode.requestFocus(),
+                    onTap: () {
+                      SystemChannels.textInput.invokeMethod('TextInput.show');
+                    },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -178,9 +192,16 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     child: TextFormField(
                       key: const Key('phoneInput'),
                       controller: _phoneController,
-                      focusNode: _phoneFocusNode,
+                      // PR-AUDIT 2026-08-12: removed `focusNode: customNode`
+                      // (the field now owns its own focusNode). The
+                      // custom node was suppressing the EditableText's
+                      // internal IME connection on this device.
+                      autofocus: true,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.done,
+                      onTap: () {
+                        SystemChannels.textInput.invokeMethod('TextInput.show');
+                      },
                       autofillHints: const [AutofillHints.telephoneNumber],
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -255,7 +276,10 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
           ),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => _referralFocusNode.requestFocus(),
+            onTap: () {
+              _referralFocusNode.requestFocus();
+              SystemChannels.textInput.invokeMethod('TextInput.show');
+            },
             child: Row(
               children: [
                 const Padding(
@@ -272,6 +296,10 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                     controller: _referralController,
                     focusNode: _referralFocusNode,
                     textCapitalization: TextCapitalization.characters,
+                    onTap: () {
+                      _referralFocusNode.requestFocus();
+                      SystemChannels.textInput.invokeMethod('TextInput.show');
+                    },
                     style: AppTypography.bodyMedium
                         .copyWith(fontWeight: FontWeight.w600)
                         .copyWith(color: AppColors.onSurface),
@@ -281,9 +309,18 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
                       focusedBorder: InputBorder.none,
                       filled: true,
                       fillColor: Colors.transparent,
-                      hintText: 'Referral Code (Optional)',
+                      // LANGUAGE-AUDIT (2026-08-16) #5: was a
+                      // hardcoded English hint. Localised via
+                      // `txtloginReferralHint`.
+                      hintText:
+                          AppLocalizations.of(context)!.txtloginReferralHint,
+                      // ONBOARDING-AUDIT 2026-08-14 P1-5: the
+                      // previous chain had a dead first call
+                      // `.copyWith(color: AppColors.of(context).onSurfaceMuted)`
+                      // that was immediately overridden by the
+                      // second call. Collapsed to the effective
+                      // value.
                       hintStyle: AppTypography.bodyMedium
-                          .copyWith(color: AppColors.onSurfaceMuted)
                           .copyWith(color: AppColors.onSurfaceDisabled),
                       contentPadding: EdgeInsets.zero,
                     ),
@@ -298,6 +335,8 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
   }
 
   Widget _buildOtpNote() {
+    // LANGUAGE-AUDIT (2026-08-16) #5: was a hardcoded
+    // English note. Localised via `txtloginSecureOtpNote`.
     return Row(
       children: [
         Container(
@@ -310,7 +349,7 @@ class _PhoneEntryWidgetState extends State<PhoneEntryWidget> {
         ),
         const SizedBox(width: 8),
         Text(
-          'A secure OTP will be sent',
+          AppLocalizations.of(context)!.txtloginSecureOtpNote,
           style: AppTypography.bodySmall
               .copyWith(fontWeight: FontWeight.w800)
               .copyWith(letterSpacing: 1.2, color: AppColors.onSurfaceVariant),

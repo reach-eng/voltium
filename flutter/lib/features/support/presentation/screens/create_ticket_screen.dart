@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:universal_io/io.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/features/support/presentation/screens/support_checklist_screen.dart';
 import 'package:voltium_rider/core/observability/posthog_service.dart';
+import 'package:voltium_rider/widgets/image_source_sheet.dart';
+import 'package:voltium_rider/utils/app_constants.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
@@ -21,6 +25,8 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
   final _subjectController = TextEditingController();
   final _messageController = TextEditingController();
   bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
+  File? _attachmentFile;
 
   final List<String> _categories = [
     'TECHNICAL',
@@ -36,17 +42,50 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
     super.dispose();
   }
 
+  Future<void> _pickAttachment(ImageSource source) async {
+    if (AppConstants.isTestMode) {
+      final image =
+          File('${Directory.systemTemp.path}/mock_ticket_attachment.png');
+      setState(() => _attachmentFile = image);
+      return;
+    }
+    final picked = await _picker.pickImage(
+      source: source,
+      imageQuality: 85,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      requestFullMetadata: false,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _attachmentFile = File(picked.path));
+  }
+
+  Future<void> _showAttachmentSourceSheet() async {
+    final source = await ImageSourceBottomSheet.show(context: context);
+    if (source != null) await _pickAttachment(source);
+  }
+
   Future<void> _submitTicket() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
+      // SUPPORT P0-4: upload the attachment (if any) first, then attach its
+      // storage path to the ticket so the admin can view the evidence photo.
+      String? uploadedUrl;
+      final attachment = _attachmentFile;
+      if (attachment != null) {
+        uploadedUrl = await ref
+            .read(filesRepositoryProvider)
+            .uploadFile(attachment, 'support_ticket');
+      }
       await ref.read(supportProvider.notifier).createTicket(
             category: _selectedCategory,
             subject: _subjectController.text.trim(),
             message: _messageController.text.trim(),
             riderId: ref.read(riderProvider).riderId,
+            attachments: uploadedUrl,
           );
       PostHogService.capture('ticket_created', properties: {
         'category': _selectedCategory,
@@ -190,7 +229,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     hintStyle: GoogleFonts.plusJakartaSans(
                         color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: AppColors.iconBackground,
+                    fillColor: AppColors.of(context).iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
@@ -237,7 +276,7 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     hintStyle: GoogleFonts.plusJakartaSans(
                         color: AppColors.onSurfaceDisabled),
                     filled: true,
-                    fillColor: AppColors.iconBackground,
+                    fillColor: AppColors.of(context).iconBackground,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       borderSide: BorderSide.none,
@@ -263,7 +302,88 @@ class _CreateTicketScreenState extends ConsumerState<CreateTicketScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
+
+                // Attachment Photo (SUPPORT P0-4)
+                Text(
+                  'Attachment (optional)',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  key: const Key('ticketAttachmentPicker'),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  onTap: _showAttachmentSourceSheet,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.outlineVariant),
+                    ),
+                    child: _attachmentFile == null
+                        ? Column(
+                            children: [
+                              const Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: AppColors.primary,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Add a photo',
+                                style: AppTypography.labelLarge
+                                    .copyWith(color: AppColors.onSurface),
+                              ),
+                              Text(
+                                'Attach evidence for the issue (camera or gallery)',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppColors.of(context).onSurfaceMuted,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    _attachmentFile!,
+                                    width: 48,
+                                    height: 48,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Photo attached',
+                                    style: AppTypography.labelLarge
+                                        .copyWith(color: AppColors.onSurface),
+                                  ),
+                                ),
+                                IconButton(
+                                  key: const Key('removeTicketAttachment'),
+                                  icon: Icon(Icons.close,
+                                      size: 20,
+                                      color:
+                                          AppColors.of(context).onSurfaceMuted),
+                                  onPressed: () =>
+                                      setState(() => _attachmentFile = null),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 32),
 
                 // Submit Button
                 SizedBox(

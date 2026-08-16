@@ -364,7 +364,7 @@ export function RestoreTab() {
               className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold $              {restoreStep === step
                   ? 'bg-primary text-primary-foreground'
                   : restoreSteps.indexOf(restoreStep) > i
-                    ? 'bg-emerald-500/10 text-emerald-600'
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                     : 'bg-muted text-muted-foreground'
               }`}
             >

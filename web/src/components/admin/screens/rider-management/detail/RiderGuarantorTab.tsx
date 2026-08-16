@@ -27,7 +27,7 @@ export function RiderGuarantorTab({
       className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
     >
       {rider.sharedGuarantorWith && rider.sharedGuarantorWith.length > 0 && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-600">
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-600 dark:text-rose-400">
           <ShieldAlert className="w-5 h-5 flex-shrink-0" />
           <div className="text-xs font-bold">
             Shared Backup Contact Risk: This contact phone is also linked to:{' '}
@@ -142,7 +142,7 @@ export function RiderGuarantorTab({
         <Button
           variant="ghost"
           size="sm"
-          className="text-red-500 hover:text-red-600 hover:bg-red-50 h-8 px-3"
+          className="text-red-500 hover:text-red-600 dark:text-red-400 hover:bg-red-50 h-8 px-3"
           onClick={handleClearGuarantor}
         >
           <Trash2 className="w-3 h-3 mr-1" /> Clear Guarantor

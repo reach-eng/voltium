@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:voltium_rider/models/hub_model.dart';
-import 'package:voltium_rider/widgets/pickup_hub_widgets.dart';
+import 'package:voltium_rider/features/pickup/widgets/pickup_hub_widgets.dart';
 import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
@@ -22,6 +22,14 @@ class AssignmentDetailsCard extends StatelessWidget {
 
   final String? selectedTeamLeader;
   final ValueChanged<String?> onTeamLeaderChanged;
+
+  // PR-ONBOARDING-2026-08-11 (audit 2.5): live list of team leaders for the
+  // selected hub. Replaces the hardcoded 3-entry `kPickupTeamLeaderOptions`
+  // const so a new TL added in admin shows up immediately. The screen keeps
+  // a fallback to the legacy const when the endpoint is unavailable (the
+  // first build of the screen, before the user picks a hub, or on network
+  // failure).
+  final List<String>? teamLeaderOptions;
 
   final bool isHubSelected;
   final String? selectedVehicleId;
@@ -48,6 +56,7 @@ class AssignmentDetailsCard extends StatelessWidget {
     required this.onHubChanged,
     this.selectedTeamLeader,
     required this.onTeamLeaderChanged,
+    this.teamLeaderOptions,
     required this.isHubSelected,
     this.selectedVehicleId,
     this.selectedVehicleLabel,
@@ -100,7 +109,11 @@ class AssignmentDetailsCard extends StatelessWidget {
           buildInputLabel(context, 'TEAM LEADER'),
           const SizedBox(height: 8),
           buildTeamLeaderDropdown(
-              context, selectedTeamLeader, onTeamLeaderChanged),
+            context,
+            selectedTeamLeader,
+            onTeamLeaderChanged,
+            teamLeaderOptions: teamLeaderOptions,
+          ),
           const SizedBox(height: 20),
           buildInputLabel(context, 'VEHICLE NUMBER'),
           const SizedBox(height: 8),
@@ -128,7 +141,16 @@ class AssignmentDetailsCard extends StatelessWidget {
             const SizedBox(height: 20),
             buildInputLabel(context, 'ENTER 6-DIGIT OTP'),
             const SizedBox(height: 8),
-            OtpGrid(controller: otpController),
+            // ONBOARDING-AUDIT 2026-08-14 P0-3: auto-submit when the
+            // rider has typed all 6 digits. The previous version
+            // had no onCompleted callback — the rider had to tap
+            // Verify by hand even after typing the full code.
+            OtpGrid(
+              controller: otpController,
+              onCompleted: (_) {
+                if (!isVerifyingOtp) onVerifyOtp();
+              },
+            ),
             const SizedBox(height: 16),
             buildVerifyOtpButton(
               isVerifying: isVerifyingOtp,
@@ -249,7 +271,7 @@ class VehicleConditionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.errorLight,
+                  color: AppColors.of(context).errorLight,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(

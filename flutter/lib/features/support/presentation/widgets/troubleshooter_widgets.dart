@@ -5,7 +5,11 @@ import '../../../../theme/app_theme.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
 
 const vfBlue = AppColors.primary;
-const vfBlueLight = AppColors.primarySurface;
+// NOTE: previously a `const vfBlueLight` here, removed because
+// `AppColors.of(context).primarySurface` is not a const expression.
+// Call sites that previously used `vfBlueLight` now read
+// `AppColors.of(context).primarySurface` directly so they are
+// brightness-aware in dark mode.
 
 IconData tsIconData(String name) {
   return switch (name) {
@@ -77,7 +81,7 @@ class CategoryCard extends StatelessWidget {
                         Text(
                           title,
                           style: AppTypography.titleSmall
-                              .copyWith(color: AppColors.slate800),
+                              .copyWith(color: AppColors.of(context).onSurface),
                         ),
                         if (description != null) ...[
                           SizedBox(height: 4),
@@ -85,7 +89,7 @@ class CategoryCard extends StatelessWidget {
                             description!,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
-                              color: AppColors.slate500,
+                              color: AppColors.of(context).onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -147,8 +151,8 @@ class QuestionCard extends StatelessWidget {
             Text(
               question,
               textAlign: TextAlign.center,
-              style: AppTypography.titleMedium
-                  .copyWith(color: AppColors.slate800, height: 1.4),
+              style: AppTypography.titleMedium.copyWith(
+                  color: AppColors.of(context).onSurface, height: 1.4),
             ),
             SizedBox(height: 12),
             Text(
@@ -156,7 +160,7 @@ class QuestionCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
-                color: AppColors.slate500,
+                color: AppColors.of(context).onSurfaceVariant,
               ),
             ),
           ],
@@ -257,7 +261,7 @@ class PathSummary extends StatelessWidget {
             'Your answers (${path.length})',
             style: AppTypography.bodyMedium
                 .copyWith(fontWeight: FontWeight.w600)
-                .copyWith(color: AppColors.slate500),
+                .copyWith(color: AppColors.of(context).onSurfaceVariant),
           ),
           children: [
             for (final answer in path)
@@ -287,7 +291,7 @@ class PathSummary extends StatelessWidget {
                         answer.question,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: AppColors.slate800,
+                          color: AppColors.of(context).onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -347,7 +351,7 @@ class ResolutionCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
-                color: AppColors.slate800,
+                color: AppColors.of(context).onSurface,
                 height: 1.5,
               ),
             ),
@@ -400,7 +404,7 @@ class PathStep extends StatelessWidget {
                   answer.question,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
-                    color: AppColors.slate800,
+                    color: AppColors.of(context).onSurface,
                   ),
                 ),
                 SizedBox(height: 2),
@@ -442,7 +446,7 @@ class TroubleshooterHeaderIcon extends StatelessWidget {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          color: vfBlueLight,
+          color: AppColors.of(context).primarySurface,
           borderRadius: BorderRadius.circular(AppRadius.radiusModal),
         ),
         child: const Icon(
@@ -470,7 +474,7 @@ class TroubleshooterStepCounter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: vfBlueLight,
+        color: AppColors.of(context).primarySurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
@@ -514,7 +518,7 @@ class TroubleshooterResultIcon extends StatelessWidget {
       'NEEDS_SUPPORT' => (
           Icons.support_agent_rounded,
           vfBlue,
-          vfBlueLight,
+          AppColors.of(context).primarySurface,
         ),
       'DANGER' => (
           Icons.warning_rounded,
@@ -573,7 +577,7 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
                 Text(
                   'Diagnostic path taken',
                   style: AppTypography.labelLarge
-                      .copyWith(color: AppColors.slate800),
+                      .copyWith(color: AppColors.of(context).onSurface),
                 ),
               ],
             ),
@@ -583,14 +587,14 @@ class TroubleshooterPathTakenCard extends StatelessWidget {
             for (int i = 0; i < path.length; i++) ...[
               PathStep(stepNumber: i + 1, answer: path[i]),
               if (i < path.length - 1) ...[
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(left: 13),
                   child: SizedBox(
                     height: 16,
                     child: VerticalDivider(
                       width: 2,
                       thickness: 1.5,
-                      color: AppColors.borderSubtle,
+                      color: AppColors.of(context).borderSubtle,
                     ),
                   ),
                 ),

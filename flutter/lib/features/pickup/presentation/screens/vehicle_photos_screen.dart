@@ -4,6 +4,7 @@ import 'package:voltium_rider/theme/app_theme.dart';
 
 import 'package:voltium_rider/core/state/riverpod_providers.dart';
 import 'package:voltium_rider/theme/app_typography.dart';
+import 'package:voltium_rider/widgets/pending_uploads_pill.dart';
 
 class VehiclePhotosScreen extends ConsumerWidget {
   const VehiclePhotosScreen({super.key});
@@ -33,7 +34,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                 child: Column(
                   children: [
-                    _buildVehicleInfoCard(vehicle),
+                    _buildVehicleInfoCard(context, vehicle),
                     const SizedBox(height: 20),
                     _buildPhotosGrid(context, photos),
                     const SizedBox(height: 32),
@@ -91,37 +92,43 @@ class VehiclePhotosScreen extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
-            onTap: () => Navigator.maybePop(context),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: AppShadows.glass,
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.maybePop(context),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: AppShadows.glass,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    size: 18,
+                    color: AppColors.onSurface,
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_back,
-                size: 18,
-                color: AppColors.onSurface,
+              const SizedBox(width: 16),
+              Text(
+                'Vehicle Photos',
+                style: AppTypography.titleLarge
+                    .copyWith(fontSize: 21)
+                    .copyWith(color: AppColors.onSurface),
               ),
-            ),
+            ],
           ),
-          SizedBox(width: 16),
-          Text(
-            'Vehicle Photos',
-            style: AppTypography.titleLarge
-                .copyWith(fontSize: 21)
-                .copyWith(color: AppColors.onSurface),
-          ),
+          const PendingUploadsPill(),
         ],
       ),
     );
   }
 
-  Widget _buildVehicleInfoCard(String vehicle) {
+  Widget _buildVehicleInfoCard(BuildContext context, String vehicle) {
     return Container(
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
@@ -135,7 +142,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primarySurface,
+              color: AppColors.of(context).primarySurface,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
@@ -200,7 +207,7 @@ class VehiclePhotosScreen extends ConsumerWidget {
                   : null,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.iconBackground,
+                  color: AppColors.of(context).iconBackground,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                   image: url != null && url.isNotEmpty
                       ? DecorationImage(
